@@ -13,8 +13,16 @@ use pdf_extract::{
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+// Per-page extraction budgets: each page gets its own allowance, so dense
+// multi-page documents are not rejected just because their cumulative text
+// is large. A separate document-wide backstop below still bounds total work.
 const MAX_EXTRACTED_TEXT_BYTES: usize = 2 * 1024 * 1024;
 const MAX_GEOMETRY_CHARS: usize = 250_000;
+// Document-wide backstop across all pages of one extraction request: 8x the
+// per-page allowance, enough for ~1000 pages of average density. Keeps
+// pathological documents fail-closed without capping ordinary large PDFs.
+const MAX_TOTAL_EXTRACTED_TEXT_BYTES: usize = 16 * 1024 * 1024;
+const MAX_TOTAL_GEOMETRY_CHARS: usize = 2_000_000;
 const MAX_RAW_TEXT_PARTS: usize = 65_536;
 const MAX_RAW_TEXT_PARTS_PER_PAGE: usize = 8_192;
 const MAX_NORMALIZED_TEXT_SEGMENTS: usize = 65_536;
@@ -306,6 +314,8 @@ struct TextItemOutput {
     current_item_geometry_valid: bool,
     text_bytes: usize,
     geometry_chars: usize,
+    total_text_bytes: usize,
+    total_geometry_chars: usize,
     raw_part_count: usize,
     page_raw_part_count: usize,
 }
@@ -369,6 +379,8 @@ impl OutputDev for TextItemOutput {
         self.finish_part();
         self.pages.push(Vec::new());
         self.page_raw_part_count = 0;
+        self.text_bytes = 0;
+        self.geometry_chars = 0;
         Ok(())
     }
 
@@ -387,9 +399,18 @@ impl OutputDev for TextItemOutput {
     ) -> Result<(), OutputError> {
         self.text_bytes = self.text_bytes.saturating_add(character.len());
         self.geometry_chars = self.geometry_chars.saturating_add(1);
+        self.total_text_bytes = self.total_text_bytes.saturating_add(character.len());
+        self.total_geometry_chars = self.total_geometry_chars.saturating_add(1);
         if self.text_bytes > MAX_EXTRACTED_TEXT_BYTES || self.geometry_chars > MAX_GEOMETRY_CHARS {
             return Err(OutputError::IoError(std::io::Error::other(
                 "selectable text exceeds bounded extraction budget",
+            )));
+        }
+        if self.total_text_bytes > MAX_TOTAL_EXTRACTED_TEXT_BYTES
+            || self.total_geometry_chars > MAX_TOTAL_GEOMETRY_CHARS
+        {
+            return Err(OutputError::IoError(std::io::Error::other(
+                "selectable text exceeds bounded document extraction budget",
             )));
         }
         if let Some(part) = self.current_part.as_mut() {
@@ -1880,6 +1901,136 @@ mod tests {
             .as_bytes(),
         );
         pdf
+    }
+
+    fn multi_page_text_pdf(page_texts: &[String]) -> Vec<u8> {
+        let page_count = page_texts.len();
+        let mut objects = vec![
+            "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
+            format!(
+                "<< /Type /Pages /Kids [{}] /Count {} >>",
+                (3..3 + page_count)
+                    .map(|index| format!("{index} 0 R"))
+                    .collect::<Vec<_>>()
+                    .join(" "),
+                page_count
+            ),
+        ];
+        let mut contents_object = 3 + page_count;
+        let font_object = contents_object + page_count;
+        for _text in page_texts {
+            objects.push(format!(
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 {font_object} 0 R >> >> /Contents {contents_object} 0 R >>"
+            ));
+            contents_object += 1;
+        }
+        for text in page_texts {
+            let content =
+                format!("BT /F1 12 Tf 1 0 0 1 72 700 Tm ({text}) Tj ET");
+            objects.push(format!(
+                "<< /Length {} >>\nstream\n{content}\nendstream",
+                content.len()
+            ));
+        }
+        objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".to_string());
+        let mut pdf = b"%PDF-1.4\n%\xE2\xE3\xCF\xD3\n".to_vec();
+        let mut offsets = Vec::with_capacity(objects.len());
+        for (index, object) in objects.iter().enumerate() {
+            offsets.push(pdf.len());
+            pdf.extend_from_slice(format!("{} 0 obj\n{object}\nendobj\n", index + 1).as_bytes());
+        }
+        let xref_offset = pdf.len();
+        pdf.extend_from_slice(format!("xref\n0 {}\n", objects.len() + 1).as_bytes());
+        pdf.extend_from_slice(b"0000000000 65535 f \n");
+        for offset in offsets {
+            pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
+        }
+        pdf.extend_from_slice(
+            format!(
+                "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n",
+                objects.len() + 1
+            )
+            .as_bytes(),
+        );
+        pdf
+    }
+
+    #[test]
+    fn per_page_budget_reset_accepts_dense_multi_page_documents() {
+        // Two pages whose cumulative text exceeds the old request-wide
+        // geometry budget, while each page stays inside the per-page cap.
+        let page_texts = vec!["x".repeat(130_000), "y".repeat(130_000)];
+        let temp = tempfile::tempdir().expect("tempdir");
+        let path = temp.path().join("dense-two-pages.pdf");
+        std::fs::write(&path, multi_page_text_pdf(&page_texts)).expect("write PDF");
+        let pages = extract_page_texts(&path, 4_000_000).expect("dense pages must extract");
+        assert_eq!(pages, page_texts);
+    }
+
+    #[test]
+    fn single_page_over_per_page_budget_still_fails_closed() {
+        let page_texts = vec!["x".repeat(MAX_GEOMETRY_CHARS + 1)];
+        let temp = tempfile::tempdir().expect("tempdir");
+        let path = temp.path().join("over-dense-page.pdf");
+        std::fs::write(&path, multi_page_text_pdf(&page_texts)).expect("write PDF");
+        let error = extract_page_texts(&path, 4_000_000).expect_err("per-page cap must hold");
+        assert!(
+            error.message.contains("bounded extraction budget"),
+            "unexpected error: {:?}",
+            error
+        );
+    }
+
+    #[test]
+    fn document_backstop_still_fails_closed() {
+        let mut output = TextItemOutput {
+            total_geometry_chars: MAX_TOTAL_GEOMETRY_CHARS,
+            total_text_bytes: MAX_TOTAL_EXTRACTED_TEXT_BYTES,
+            pages: vec![Vec::new()],
+            ..TextItemOutput::default()
+        };
+        output.begin_word().expect("begin word");
+        let error = output
+            .output_character(&Transform::identity(), 1.0, 0.0, 12.0, "x")
+            .expect_err("document backstop must fail closed");
+        assert!(
+            error
+                .to_string()
+                .contains("bounded document extraction budget"),
+            "unexpected error: {error}"
+        );
+    }
+
+    #[test]
+    fn page_counters_reset_and_document_counters_accumulate() {
+        let mut output = TextItemOutput {
+            text_bytes: MAX_EXTRACTED_TEXT_BYTES,
+            geometry_chars: MAX_GEOMETRY_CHARS,
+            total_text_bytes: 3,
+            total_geometry_chars: 3,
+            pages: vec![Vec::new()],
+            ..TextItemOutput::default()
+        };
+        output.begin_word().expect("begin word");
+        assert!(
+            output
+                .output_character(&Transform::identity(), 1.0, 0.0, 12.0, "x")
+                .is_err(),
+            "exhausted per-page budget must fail before begin_page resets it"
+        );
+        output
+            .begin_page(2, &MediaBox { llx: 0.0, lly: 0.0, urx: 612.0, ury: 792.0 }, None)
+            .expect("begin page");
+        output.begin_word().expect("begin word");
+        output
+            .output_character(&Transform::identity(), 1.0, 0.0, 12.0, "ab")
+            .expect("fresh per-page budget after begin_page");
+        // Note: the rejected character above still incremented the cumulative
+        // totals (admission happens before the cap check), so they start at 4.
+        assert_eq!(output.text_bytes, 2);
+        assert_eq!(output.geometry_chars, 1);
+        assert_eq!(output.total_text_bytes, 6);
+        assert_eq!(output.total_geometry_chars, 5);
     }
 
     #[test]
