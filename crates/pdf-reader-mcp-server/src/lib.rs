@@ -59,6 +59,66 @@ fn omit_absent_optional_fields(value: Value) -> Value {
     }
 }
 
+/// Formats defined by the JSON Schema specification (draft 2020-12). schemars
+/// annotates Rust integer/float types with non-standard formats ("uint32",
+/// "uint64", "double") that spec-strict client validators (AJV strict mode,
+/// Zod, ...) reject or log as unknown on every tool call.
+fn is_standard_schema_format(format: &str) -> bool {
+    matches!(
+        format,
+        "date-time"
+            | "date"
+            | "time"
+            | "duration"
+            | "email"
+            | "idn-email"
+            | "hostname"
+            | "idn-hostname"
+            | "ipv4"
+            | "ipv6"
+            | "uri"
+            | "uri-reference"
+            | "iri"
+            | "iri-reference"
+            | "uri-template"
+            | "json-pointer"
+            | "relative-json-pointer"
+            | "regex"
+            | "uuid"
+    )
+}
+
+fn sanitize_schema_formats(object: &mut serde_json::Map<String, Value>) {
+    if matches!(object.get("format"), Some(Value::String(format)) if !is_standard_schema_format(format))
+    {
+        object.remove("format");
+    }
+    for value in object.values_mut() {
+        match value {
+            Value::Object(child) => sanitize_schema_formats(child),
+            Value::Array(items) => {
+                for item in items {
+                    if let Value::Object(child) = item {
+                        sanitize_schema_formats(child);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn sanitized_tools(router: &ToolRouter<PdfReaderMcp>) -> Vec<rmcp::model::Tool> {
+    let mut tools = router.list_all();
+    for tool in &mut tools {
+        sanitize_schema_formats(std::sync::Arc::make_mut(&mut tool.input_schema));
+        if let Some(output_schema) = &mut tool.output_schema {
+            sanitize_schema_formats(std::sync::Arc::make_mut(output_schema));
+        }
+    }
+    tools
+}
+
 #[derive(Clone)]
 pub struct PdfReaderMcp {
     pub tool_router: ToolRouter<Self>,
@@ -220,7 +280,7 @@ impl ServerHandler for PdfReaderMcp {
         let supports_2026 = uses_2026_envelope(&context);
         let result = ListToolsResult {
             result_type: Some(ResultType::COMPLETE),
-            tools: self.tool_router.list_all(),
+            tools: sanitized_tools(&self.tool_router),
             meta: supports_2026.then(|| server_result_meta(&self.get_info().server_info)),
             next_cursor: None,
             ttl_ms: supports_2026.then_some(0),
@@ -269,7 +329,7 @@ impl ServerHandler for PdfReaderMcp {
 
 #[cfg(test)]
 mod tests {
-    use super::PdfReaderMcp;
+    use super::{is_standard_schema_format, sanitize_schema_formats, sanitized_tools, PdfReaderMcp};
     use rmcp::handler::server::wrapper::Parameters;
     use serde_json::Value;
     use std::fs;
@@ -328,6 +388,120 @@ mod tests {
                 assert!(props.contains_key("operation"));
             }
         }
+    }
+
+    #[test]
+    fn tools_list_strips_non_standard_schema_formats() {
+        // Raw router schemas carry schemars annotations (uint32, uint64,
+        // double) that spec-strict client validators report as unknown
+        // formats; the tools/list surface must not advertise them.
+        let raw = serde_json::to_value(&PdfReaderMcp::new().tool_router.list_all()[0].input_schema)
+            .expect("raw schema json");
+        let raw_formats = schema_format_values(&raw);
+        assert!(
+            raw_formats.iter().any(|format| format == "uint32"),
+            "precondition: raw schemars schema must contain a uint32 format, got {raw_formats:?}"
+        );
+
+        let tools = sanitized_tools(&PdfReaderMcp::new().tool_router);
+        for tool in tools {
+            let schema = serde_json::to_value(&tool.input_schema).expect("schema json");
+            let formats = schema_format_values(&schema);
+            for format in &formats {
+                assert!(
+                    is_standard_schema_format(format),
+                    "tool {} advertises non-standard format {format}",
+                    tool.name
+                );
+            }
+            // Bounds are the contract; losing the format annotation must not
+            // lose the numeric limits that back it.
+            let raw_tool = serde_json::to_value(
+                &PdfReaderMcp::new()
+                    .tool_router
+                    .list_all()
+                    .into_iter()
+                    .find(|raw_tool| raw_tool.name == tool.name)
+                    .expect("raw tool")
+                    .input_schema,
+            )
+            .expect("raw schema json");
+            assert_eq!(
+                schema_numeric_bounds(&schema),
+                schema_numeric_bounds(&raw_tool),
+                "tool {} numeric bounds changed during sanitization",
+                tool.name
+            );
+        }
+    }
+
+    #[test]
+    fn sanitize_schema_formats_keeps_standard_formats_and_bounds() {
+        let mut object = serde_json::json!({
+            "type": ["null", "integer"],
+            "format": "uint32",
+            "minimum": 1000,
+            "maximum": 1000000,
+            "standard": { "format": "uuid" },
+            "nested": { "format": "double" },
+            "list": [{ "format": "date-time" }, { "format": "uint64" }]
+        })
+        .as_object()
+        .expect("object")
+        .clone();
+        sanitize_schema_formats(&mut object);
+        let value = Value::Object(object);
+        assert!(value.get("format").is_none());
+        assert_eq!(value["minimum"], 1000);
+        assert_eq!(value["maximum"], 1000000);
+        assert_eq!(value["standard"]["format"], "uuid");
+        assert!(value["nested"].get("format").is_none());
+        assert_eq!(value["list"][0]["format"], "date-time");
+        assert!(value["list"][1].get("format").is_none());
+    }
+
+    fn schema_format_values(value: &Value) -> Vec<String> {
+        let mut formats = Vec::new();
+        match value {
+            Value::Object(object) => {
+                if let Some(Value::String(format)) = object.get("format") {
+                    formats.push(format.clone());
+                }
+                for child in object.values() {
+                    formats.extend(schema_format_values(child));
+                }
+            }
+            Value::Array(items) => {
+                for item in items {
+                    formats.extend(schema_format_values(item));
+                }
+            }
+            _ => {}
+        }
+        formats
+    }
+
+    fn schema_numeric_bounds(value: &Value) -> Vec<(String, f64)> {
+        let mut bounds = Vec::new();
+        match value {
+            Value::Object(object) => {
+                for key in ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"] {
+                    if let Some(number) = object.get(key).and_then(|value| value.as_f64()) {
+                        bounds.push((key.to_string(), number));
+                    }
+                }
+                for child in object.values() {
+                    bounds.extend(schema_numeric_bounds(child));
+                }
+            }
+            Value::Array(items) => {
+                for item in items {
+                    bounds.extend(schema_numeric_bounds(item));
+                }
+            }
+            _ => {}
+        }
+        bounds
     }
 
     fn tool_schema(name: &str) -> Value {
