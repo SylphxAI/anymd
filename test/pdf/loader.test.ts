@@ -1,7 +1,8 @@
+import dns from 'node:dns';
 import fs, * as realFsPromises from 'node:fs/promises';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadPdfDocument } from '../../src/pdf/loader.js';
+import { __setFetchUrlHopForTests, loadPdfDocument } from '../../src/pdf/loader.js';
 import { __resetSecurityConfigForTests } from '../../src/utils/config.js';
 import { ErrorCode, PdfError } from '../../src/utils/errors.js';
 import * as pathUtils from '../../src/utils/pathUtils.js';
@@ -46,6 +47,19 @@ const buildResponse = (
 
 let originalFetch: typeof globalThis.fetch;
 
+/**
+ * The URL loader connects through a DNS-pinned agent (GHSA-5r2f-7788-qp8v), so
+ * a `globalThis.fetch` stub no longer observes it. These tests stub the hop
+ * fetch itself and can assert that it was called with the validated URL.
+ */
+const stubUrlHopFetch = (
+  impl: (url: string, init: RequestInit) => Promise<Response>
+): ReturnType<typeof vi.fn> => {
+  const spy = vi.fn(impl);
+  __setFetchUrlHopForTests(spy as unknown as Parameters<typeof __setFetchUrlHopForTests>[0]);
+  return spy;
+};
+
 describe('loader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,6 +69,7 @@ describe('loader', () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    __setFetchUrlHopForTests(null);
   });
 
   describe('loadPdfDocument', () => {
@@ -93,8 +108,7 @@ describe('loader', () => {
     it('should load PDF from URL via fetch (not pdfjs URL loader)', async () => {
       const body = new TextEncoder().encode('mock pdf body');
       const mockDocument = { numPages: 3 };
-      const fetchMock = vi.fn().mockResolvedValue(buildResponse(body));
-      globalThis.fetch = fetchMock as typeof globalThis.fetch;
+      const fetchMock = stubUrlHopFetch(async () => buildResponse(body));
 
       pdfjsLib.getDocument.mockReturnValue({
         promise: Promise.resolve(mockDocument as unknown as pdfjsLib.PDFDocumentProxy),
@@ -108,7 +122,7 @@ describe('loader', () => {
       expect(result).toBe(mockDocument);
       expect(fetchMock).toHaveBeenCalledWith(
         'https://example.com/test.pdf',
-        expect.objectContaining({ redirect: 'manual' })
+        expect.objectContaining({ signal: expect.anything() })
       );
       // pdfjs now receives the body as `data`, not a `url`, so we control
       // size limits and SSRF policy ourselves.
@@ -120,7 +134,7 @@ describe('loader', () => {
     it('should reject URLs that resolve to private IPs (SSS-07)', async () => {
       // 169.254.169.254 is the AWS/GCP metadata endpoint; literal-IP hostname
       // is checked without DNS so the test stays hermetic.
-      globalThis.fetch = vi.fn() as typeof globalThis.fetch;
+      const fetchMock = stubUrlHopFetch(async () => buildResponse(new Uint8Array(0)));
 
       await expect(
         loadPdfDocument(
@@ -128,14 +142,14 @@ describe('loader', () => {
           'http://169.254.169.254/'
         )
       ).rejects.toThrow(/non-public address|SSRF/);
-      expect(globalThis.fetch).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     // Regression tests for https://github.com/SylphxAI/pdf-reader-mcp/issues/368
     // (GHSA-34gp-w56h-r2mv): the url branch must not bypass path confinement via
     // SSRF or file:// local-file reads.
     it('should reject loopback URLs before any network fetch (issue #368)', async () => {
-      globalThis.fetch = vi.fn() as typeof globalThis.fetch;
+      const fetchMock = stubUrlHopFetch(async () => buildResponse(new Uint8Array(0)));
 
       await expect(
         loadPdfDocument(
@@ -143,11 +157,11 @@ describe('loader', () => {
           'http://127.0.0.1:8080/internal.pdf'
         )
       ).rejects.toThrow(/non-public address|SSRF/);
-      expect(globalThis.fetch).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('should reject file:// URLs instead of reading arbitrary local files (issue #368)', async () => {
-      globalThis.fetch = vi.fn() as typeof globalThis.fetch;
+      const fetchMock = stubUrlHopFetch(async () => buildResponse(new Uint8Array(0)));
 
       await expect(
         loadPdfDocument(
@@ -155,19 +169,19 @@ describe('loader', () => {
           'file:///tmp/word_outside/anywhere.pdf'
         )
       ).rejects.toThrow(/Access denied|rejected/);
-      expect(globalThis.fetch).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
       expect(fs.readFile).not.toHaveBeenCalled();
       expect(pathUtils.resolvePath).not.toHaveBeenCalled();
     });
 
     it('should re-validate redirect targets and reject private-IP hops (issue #368)', async () => {
-      const fetchMock = vi.fn().mockResolvedValueOnce(
-        new Response(null, {
-          status: 302,
-          headers: { location: 'http://169.254.169.254/latest/meta-data/' },
-        })
+      const fetchMock = stubUrlHopFetch(
+        async () =>
+          new Response(null, {
+            status: 302,
+            headers: { location: 'http://169.254.169.254/latest/meta-data/' },
+          })
       );
-      globalThis.fetch = fetchMock as typeof globalThis.fetch;
 
       await expect(
         loadPdfDocument(
@@ -179,17 +193,38 @@ describe('loader', () => {
     });
 
     it('should reject URL responses whose Content-Length exceeds the cap (SSS-08)', async () => {
-      const fetchMock = vi.fn().mockResolvedValue(
-        new Response(new Uint8Array(0), {
-          status: 200,
-          headers: { 'content-length': String(200 * 1024 * 1024) },
-        })
+      stubUrlHopFetch(
+        async () =>
+          new Response(new Uint8Array(0), {
+            status: 200,
+            headers: { 'content-length': String(200 * 1024 * 1024) },
+          })
       );
-      globalThis.fetch = fetchMock as typeof globalThis.fetch;
 
       await expect(
         loadPdfDocument({ url: 'https://example.com/huge.pdf' }, 'https://example.com/huge.pdf')
       ).rejects.toThrow(/exceeds maximum size/i);
+    });
+
+    // The DNS-rebinding regression (GHSA-5r2f-7788-qp8v) needs a real socket to
+    // be meaningful, so it lives in test/pdf/rebind.test.ts.
+    it('refuses a hop whose answer is non-public, before opening a socket', async () => {
+      const resolved = vi
+        .spyOn(dns.promises, 'lookup')
+        .mockResolvedValue([{ address: '169.254.169.254', family: 4 }] as Awaited<
+          ReturnType<typeof dns.promises.lookup>
+        >);
+
+      try {
+        await expect(
+          loadPdfDocument(
+            { url: 'http://metadata.example/latest/meta-data/' },
+            'http://metadata.example/'
+          )
+        ).rejects.toThrow(/non-public address|SSRF/);
+      } finally {
+        resolved.mockRestore();
+      }
     });
 
     // Regression test for https://github.com/SylphxAI/pdf-reader-mcp/issues/271
@@ -332,9 +367,7 @@ describe('loader', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const body = new TextEncoder().encode('pdf body');
-      globalThis.fetch = vi
-        .fn()
-        .mockImplementation(async () => buildResponse(body)) as typeof globalThis.fetch;
+      stubUrlHopFetch(async () => buildResponse(body));
 
       // Build the rejected promise lazily inside mockImplementation so each
       // call gets a fresh rejection without leaving an unhandled one parked

@@ -91,6 +91,7 @@ export default defineConfig({
           { text: 'Design Philosophy', link: '/design/' },
           { text: 'Performance', link: '/performance/' },
           { text: 'Comparison', link: '/comparison/' },
+          { text: 'Security', link: '/security/maintainer-process' },
         ],
       },
       {

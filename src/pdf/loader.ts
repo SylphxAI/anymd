@@ -1,12 +1,17 @@
 // PDF document loading utilities
 
+import dns from 'node:dns';
 import fs from 'node:fs/promises';
+import http from 'node:http';
+import https from 'node:https';
 import { createRequire } from 'node:module';
+import net from 'node:net';
 import type * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {
   assertUrlNotPrivate,
   getSecurityConfig,
+  isPrivateIp,
   isUrlAllowed,
   type SecurityConfig,
 } from '../utils/config.js';
@@ -129,6 +134,168 @@ const validateUrlHop = async (urlString: string, config: SecurityConfig): Promis
 };
 
 /**
+ * Build the HTTP(S) agent that pins one hop's connection to the addresses the
+ * SSRF guard already approved.
+ *
+ * Without this the guard only *checks* the hostname: the client would resolve
+ * it again when it connects, so an attacker-controlled zone can answer the
+ * check with a public address and the connect with `169.254.169.254` — the
+ * standard DNS-rebinding (TOCTOU) bypass (GHSA-5r2f-7788-qp8v).
+ *
+ * The pinned `lookup` replaces socket-level resolution, so the address that was
+ * validated is the address dialed, on every hop. Host and TLS SNI still come
+ * from the URL, so virtual hosting and certificate validation are unaffected.
+ * A literal-IP host needs no pinning (it is already the connection target).
+ */
+type ResolvedAddress = { address: string; family: number };
+
+export const createPinnedAgent = async (urlString: string): Promise<http.Agent | https.Agent> => {
+  const parsed = new URL(urlString);
+  const hostname = parsed.hostname;
+  const isHttps = parsed.protocol === 'https:';
+
+  // A literal IP is already the connection target; nothing can rebind it.
+  if (net.isIP(hostname)) {
+    return isHttps ? new https.Agent({ keepAlive: false }) : new http.Agent({ keepAlive: false });
+  }
+
+  let addresses: dns.LookupAddress[];
+  try {
+    addresses = await dns.promises.lookup(hostname, { all: true });
+  } catch {
+    throw new PdfError(ErrorCode.InvalidRequest, `URL host '${hostname}' could not be resolved.`);
+  }
+  if (addresses.length === 0) {
+    throw new PdfError(
+      ErrorCode.InvalidRequest,
+      `URL host '${hostname}' resolved to no addresses.`
+    );
+  }
+
+  // Fail closed on any non-public answer. This repeats the guard's predicate on
+  // the same answer, so a hostile zone cannot satisfy the check and then
+  // re-answer at connect time.
+  const approved = addresses.filter(({ address }) => {
+    if (isPrivateIp(address)) {
+      throw new PdfError(
+        ErrorCode.InvalidRequest,
+        `Access denied: URL host '${hostname}' resolves to a non-public address (SSRF protection).`
+      );
+    }
+    return true;
+  });
+
+  const lookup = (
+    _lookupHostname: string,
+    options: dns.LookupOptions | ((...args: unknown[]) => void),
+    callback?: (...args: unknown[]) => void
+  ): void => {
+    const done = (typeof options === 'function' ? options : callback) as (
+      err: NodeJS.ErrnoException | null,
+      address: string | dns.LookupAddress[],
+      family?: number
+    ) => void;
+    if (typeof options !== 'object' || options === null) {
+      // Defensive: an unexpected calling convention must fail closed rather
+      // than silently hand back an unpinned answer.
+      const err: NodeJS.ErrnoException = new Error(
+        `URL host '${hostname}' could not be pinned (unexpected resolver call).`
+      );
+      err.code = 'EINVAL';
+      done(err, '');
+      return;
+    }
+    // Node 18+ passes `{ all: true }` for HTTP(S) connections. Honour it, or the
+    // client re-resolves the name and the pinned answer never reaches the socket.
+    if (options.all === true) {
+      done(null, approved);
+      return;
+    }
+    const first = approved[0] as ResolvedAddress;
+    done(null, first.address, first.family);
+  };
+
+  // The runtime contract is dns.lookup-shaped; Node's agent types expect the
+  // node:dns `LookupFunction` shape, which this satisfies.
+  const agentLookup = lookup as unknown as net.LookupFunction;
+  return isHttps
+    ? new https.Agent({ lookup: agentLookup, keepAlive: false })
+    : new http.Agent({ lookup: agentLookup, keepAlive: false });
+};
+
+/**
+ * Perform one hop through an agent whose resolver is pinned, so the address the
+ * SSRF guard approved is the address the socket connects to.
+ */
+const fetchThroughAgent = async (
+  urlString: string,
+  init: RequestInit,
+  agent: http.Agent | https.Agent
+): Promise<Response> => {
+  const parsed = new URL(urlString);
+  const requestFn = parsed.protocol === 'https:' ? https.request : http.request;
+  return await new Promise<Response>((resolve, reject) => {
+    const req = requestFn(urlString, { agent, method: 'GET' }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk: Buffer) => chunks.push(chunk));
+      res.on('end', () => {
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (typeof value === 'string') headers.set(key, value);
+          else if (Array.isArray(value)) headers.set(key, value.join(', '));
+        }
+        resolve(
+          new Response(Buffer.concat(chunks), {
+            status: res.statusCode ?? 502,
+            statusText: res.statusMessage ?? '',
+            headers,
+          })
+        );
+      });
+    });
+    req.on('error', reject);
+    // `redirect: 'manual'` semantics: a 3xx response is returned, not followed.
+    if (init.signal) init.signal.addEventListener('abort', () => req.destroy(), { once: true });
+    req.end();
+  });
+};
+
+/**
+ * Test seam for the socket I/O of one hop. The pin always runs; tests replace
+ * only the transport so policy, redirect, and size handling can be exercised
+ * without opening a socket.
+ */
+let fetchUrlHopForTests: ((url: string, init: RequestInit) => Promise<Response>) | null = null;
+
+export const __setFetchUrlHopForTests = (
+  impl: ((url: string, init: RequestInit) => Promise<Response>) | null
+): void => {
+  fetchUrlHopForTests = impl;
+};
+
+const fetchUrlHop = async (
+  urlString: string,
+  init: RequestInit,
+  config: SecurityConfig
+): Promise<Response> => {
+  if (config.allowPrivateIps) {
+    const init_ = init.signal
+      ? { redirect: 'manual', signal: init.signal }
+      : { redirect: 'manual' };
+    return fetch(urlString, init_ as RequestInit);
+  }
+  // The pin always runs: it is the security control, not an implementation
+  // detail the transport can skip. Tests substitute only the socket I/O.
+  const agent = await createPinnedAgent(urlString);
+  try {
+    if (fetchUrlHopForTests) return await fetchUrlHopForTests(urlString, init);
+    return await fetchThroughAgent(urlString, init, agent);
+  } finally {
+    agent.destroy();
+  }
+};
+
+/**
  * Fetch a PDF from `url` with SSRF protection, redirect re-validation, an
  * overall timeout, and a streaming size cap (SSS-07 + SSS-08). Returns the
  * full body as a Uint8Array so we can hand it to PDF.js as `data:` and keep
@@ -143,10 +310,11 @@ const fetchUrlBody = async (url: string, config: SecurityConfig): Promise<Uint8A
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
       await validateUrlHop(currentUrl, config);
 
-      const response = await fetch(currentUrl, {
-        redirect: 'manual',
-        signal: controller.signal,
-      });
+      // Pin at the connection boundary: the address validated above is the
+      // address dialed, and a second DNS answer cannot redirect the socket
+      // (GHSA-5r2f-7788-qp8v). `allowPrivateIps` keeps the plain fetch path so
+      // the documented opt-in for local fixtures still works.
+      const response = await fetchUrlHop(currentUrl, { signal: controller.signal }, config);
 
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get('location');
