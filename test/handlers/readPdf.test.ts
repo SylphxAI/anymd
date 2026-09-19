@@ -1,5 +1,6 @@
 import * as realFsPromises from 'node:fs/promises';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { __setFetchUrlHopForTests } from '../../src/pdf/loader.js';
 import { type SemanticCaptionKind, semanticCaptionKind } from '../../src/pdf/semanticPatterns.js';
 import { type Schema, safeParse } from '../../src/schema.js';
 import type {
@@ -394,6 +395,7 @@ beforeAll(async () => {
 });
 
 let originalFetch: typeof globalThis.fetch;
+let urlHopFetchMock: ReturnType<typeof vi.fn>;
 
 // Renamed describe block as it now only tests the handler
 describe('handleReadPdfFunc Integration Tests', () => {
@@ -407,16 +409,19 @@ describe('handleReadPdfFunc Integration Tests', () => {
     mockReadFile.mockResolvedValue(Buffer.from('mock pdf content'));
     mockStat.mockResolvedValue(fakeStats(Buffer.from('mock pdf content').length));
 
-    // Default fetch mock returns a small body so URL sources resolve. Tests
-    // that need different behavior override this per-case.
+    // Default hop stub returns a small body so URL sources resolve. Tests that
+    // need different behavior override this per-case. The URL loader connects
+    // through a DNS-pinned agent (GHSA-5r2f-7788-qp8v), so stubbing
+    // `globalThis.fetch` would not be observed.
     originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockImplementation(async () => {
+    urlHopFetchMock = vi.fn(async () => {
       const body = new TextEncoder().encode('mock pdf content');
       return new Response(body, {
         status: 200,
         headers: { 'content-length': String(body.byteLength) },
       });
-    }) as typeof globalThis.fetch;
+    });
+    __setFetchUrlHopForTests(urlHopFetchMock);
 
     const mockDocumentAPI = {
       numPages: 3,
@@ -489,6 +494,7 @@ describe('handleReadPdfFunc Integration Tests', () => {
   afterEach(() => {
     resetVisualEnrichmentMock();
     globalThis.fetch = originalFetch;
+    __setFetchUrlHopForTests(null);
   });
 
   // Removed unit tests for parsePageRanges
@@ -3289,9 +3295,9 @@ describe('handleReadPdfFunc Integration Tests', () => {
         iccUrl: expect.stringContaining('iccs'),
       })
     );
-    expect(globalThis.fetch).toHaveBeenCalledWith(
+    expect(urlHopFetchMock).toHaveBeenCalledWith(
       testUrl,
-      expect.objectContaining({ redirect: 'manual' })
+      expect.objectContaining({ signal: expect.anything() })
     );
     expect(mockGetMetadata).toHaveBeenCalled();
     expect(mockGetPage).not.toHaveBeenCalled();
@@ -3352,13 +3358,14 @@ describe('handleReadPdfFunc Integration Tests', () => {
     // pick the document API based on that body (since both inputs reach pdfjs
     // as `data:` now).
     const URL_BODY_TAG = 'URL_BODY_MARKER';
-    globalThis.fetch = vi.fn().mockImplementation(async () => {
+    urlHopFetchMock = vi.fn(async () => {
       const body = new TextEncoder().encode(URL_BODY_TAG);
       return new Response(body, {
         status: 200,
         headers: { 'content-length': String(body.byteLength) },
       });
-    }) as typeof globalThis.fetch;
+    });
+    __setFetchUrlHopForTests(urlHopFetchMock);
 
     mockGetDocument.mockReset();
     mockGetDocument.mockImplementation((source: { data?: Uint8Array }) => {
@@ -3413,9 +3420,9 @@ describe('handleReadPdfFunc Integration Tests', () => {
         iccUrl: expect.stringContaining('iccs'),
       })
     );
-    expect(globalThis.fetch).toHaveBeenCalledWith(
+    expect(urlHopFetchMock).toHaveBeenCalledWith(
       urlSource,
-      expect.objectContaining({ redirect: 'manual' })
+      expect.objectContaining({ signal: expect.anything() })
     );
     expect(mockGetPage).toHaveBeenCalledTimes(1); // Should be called once for local.pdf page 1
     expect(secondMockGetPage).toHaveBeenCalledTimes(2);
