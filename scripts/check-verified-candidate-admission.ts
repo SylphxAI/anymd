@@ -223,6 +223,11 @@ if (!review.evidence || !existsSync(join(root, review.evidence))) {
             rel.startsWith('docs/security/') ||
             rel.startsWith('docs/operations/') ||
             rel.startsWith('docs/adr/') ||
+            // The release/publish workflows and the admission gate itself: they
+            // decide how a release is delivered, not what the product does.
+            // Fixing a release-blocking workflow would otherwise block the
+            // release it unblocks.
+            rel.startsWith('.github/workflows/') ||
             rel.startsWith('verification/');
           // empty changed => identical trees; [].every(allow) is true.
           // Non-empty changed must be pin-path only (matrix/verification).
