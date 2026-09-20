@@ -63,3 +63,24 @@ Historical cross-run Rust vs TS numbers are not marketing claims. Showhand perfo
 - Package manifests, build, tarball smoke, runtime probes, and CI must mechanically prove TS production absence.
 - Capability-first admission (ADR-0005) remains the quality bar; Sole Rust does not weaken capability requirements.
 - Independent whole-product review must authorize sole-Rust production authority, TS deletion, performance claims, and goal-complete eligibility before stable publish.
+
+## Outcome (2026-09-20)
+
+Section 3 is executed, not merely decided:
+
+- **crates.io carries nothing resolvable.** `pdf-reader-core`,
+  `pdf-reader-mcp-server`, and `pdf-reader-cli` each have exactly one published
+  version (`3.1.1`) and it is **yanked**. The advertised `cargo install` path
+  resolves to nothing, so it is not a channel anyone can actually use.
+- **`docs/performance/why-rust.md` no longer lists crates.io** as a product
+  channel; it names the npm package.
+- **The admitted channels are the three in §3**: npm `@sylphx/citra` plus
+  platform optional natives, GitHub Release/tag identity, and the MCP Registry
+  entry `io.github.SylphxAI/citra` (published, `active`, pointing at the npm
+  package at the same version).
+- `publish-crates.yml` stays behind its explicit `PUBLISH FREEZE` confirmation
+  and publishes nothing on an ordinary run, which is the refusal §3 requires.
+
+Re-admitting crates requires a future ADR with versions aligned to the npm line
+and the same admission gates; until then the yanked versions are the correct
+state, not an oversight to fix.
