@@ -16,7 +16,6 @@ evidence without becoming a hosted Sylphx Platform BaaS service.
 
 - Lifecycle: `production`
 - Layer: `tooling`
-- Static instruction SSOT: [SylphxAI/skills](https://github.com/SylphxAI/skills)
 - Project facts and human projection: this file (`PROJECT.md`)
 - Agent local notes: `AGENTS.md`
 - Retired lineage (do not load as instruction or live state): Doctrine,
