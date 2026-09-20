@@ -215,6 +215,14 @@ if (!review.evidence || !existsSync(join(root, review.evidence))) {
             rel === 'CHANGELOG.md' ||
             rel === 'scripts/check-verified-candidate-admission.ts' ||
             rel.startsWith('docs/specs/') ||
+            // Documentation and evidence that record a release, not code that
+            // changes product behavior. Without these, landing the release
+            // record itself moves HEAD past the pin and blocks the next
+            // publish — which is exactly what happened to 5.0.2: the security
+            // record and the release proof pushed HEAD past the reviewed SHA.
+            rel.startsWith('docs/security/') ||
+            rel.startsWith('docs/operations/') ||
+            rel.startsWith('docs/adr/') ||
             rel.startsWith('verification/');
           // empty changed => identical trees; [].every(allow) is true.
           // Non-empty changed must be pin-path only (matrix/verification).
