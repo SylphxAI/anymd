@@ -7,13 +7,13 @@
     "url": "https://github.com/SylphxAI/pdf-reader-mcp",
     "source": "github"
   },
-  "version": "5.0.1",
+  "version": "5.0.2",
   "websiteUrl": "https://sylphxai.github.io/pdf-reader-mcp/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@sylphx/citra",
-      "version": "5.0.1",
+      "version": "5.0.2",
       "transport": {
         "type": "stdio"
       }

@@ -1,9 +1,9 @@
 {
   "profile": "pdf_provider_manifest_benchmark",
-  "generated_at": "2026-08-03T00:54:27.236Z",
+  "generated_at": "2026-09-20T04:17:00.050Z",
   "status": "passed",
   "strict": true,
-  "manifest_path": "/home/runner/work/pdf-reader-mcp/pdf-reader-mcp/test/fixtures/provider-analysis-manifest.json",
+  "manifest_path": "/home/runner/_work/pdf-reader-mcp/pdf-reader-mcp/test/fixtures/provider-analysis-manifest.json",
   "provider_status": {
     "readiness": "ready",
     "provider": "command",
@@ -136,7 +136,7 @@
         "figure_description",
         "image_description"
       ],
-      "duration_ms": 991.47,
+      "duration_ms": 1013.42,
       "region_count": 5,
       "assertion_count": 31,
       "passed_assertion_count": 31,

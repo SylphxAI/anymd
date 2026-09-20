@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.0.2
+
+### Patch Changes
+
+- [#689](https://github.com/SylphxAI/pdf-reader-mcp/pull/689) [`7e0eaea`](https://github.com/SylphxAI/pdf-reader-mcp/commit/7e0eaeab5bf377c5aafb26ce40888d86a4adfa8b) Thanks [@shtse8](https://github.com/shtse8)! - Pin the URL loader's connection to the DNS answer the SSRF guard validated, so a
+  hostile zone can no longer answer the check with a public address and the connect
+  with `169.254.169.254` (DNS-rebinding / TOCTOU bypass, GHSA-5r2f-7788-qp8v). Adds
+  `test/pdf/rebind.test.ts`, which fails without the pin.
+
+- [#676](https://github.com/SylphxAI/pdf-reader-mcp/pull/676) [`d41b574`](https://github.com/SylphxAI/pdf-reader-mcp/commit/d41b574c6d69172c3bd7c57db66f888a5052d982) Thanks [@shtse8](https://github.com/shtse8)! - Contain malformed inline-image (`BI`/`ID`/`EI`) content-stream failures in PDF text extraction so a damaged or adversarial page returns a structured `invalid content stream (page N)` extraction error instead of aborting the native server.
+
 ## 5.0.1
 
 ### Patch Changes

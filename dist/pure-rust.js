@@ -248,9 +248,9 @@ var getPureRustExportContract = () => ({
   platformId: resolveNativePlatformId()
 });
 export {
-  resolvePureRustServerBinary,
-  getPureRustExportContract,
-  createPureRustClient,
+  PURE_RUST_EXPORT,
   PureRustClient,
-  PURE_RUST_EXPORT
+  createPureRustClient,
+  getPureRustExportContract,
+  resolvePureRustServerBinary
 };
