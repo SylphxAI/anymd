@@ -213,6 +213,11 @@ if (!review.evidence || !existsSync(join(root, review.evidence))) {
             rel === 'dist/pure-rust.js' ||
             rel === 'README.md' ||
             rel === 'CHANGELOG.md' ||
+            // Repository governance prose: agent entry notes and project facts.
+            // Same class as README.md above - it describes the product, it does
+            // not implement it.
+            rel === 'AGENTS.md' ||
+            rel === 'PROJECT.md' ||
             rel === 'scripts/check-verified-candidate-admission.ts' ||
             // Any documentation: it records the product and its releases and
             // cannot change runtime behavior. Enumerating subdirectories one at
