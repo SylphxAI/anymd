@@ -115,7 +115,18 @@ jobs:
       - name: Restore canonical active status
         if: ${{ steps.canonical-state.outputs.exists == 'true' && steps.canonical-state.outputs.status != 'active' }}
         run: |
-          ./mcp-publisher status --status active io.github.SylphxAI/citra "$VERSION"
+          set -euo pipefail
+          # The publisher answers 400 "status and message are already set to the
+          # provided values" when the desired state is already in place. That is
+          # success for this step, not a failure.
+          if ! out=$(./mcp-publisher status --status active io.github.SylphxAI/citra "$VERSION" 2>&1); then
+            if grep -q 'already set to the provided values' <<<"$out"; then
+              echo "Canonical status already active; nothing to restore"
+            else
+              echo "$out" >&2
+              exit 1
+            fi
+          fi
 
       - name: Publish server to MCP Registry
         if: ${{ steps.canonical-state.outputs.exists != 'true' }}
@@ -159,14 +170,20 @@ jobs:
               break
             fi
             echo "Deprecating retired identity (attempt $attempt)"
-            if ./mcp-publisher status \
+            if out=$(./mcp-publisher status \
                  --status deprecated \
                  --all-versions \
                  --message 'Retired identity. Use io.github.SylphxAI/citra.' \
-                 io.github.SylphxAI/pdf-reader-mcp; then
+                 io.github.SylphxAI/pdf-reader-mcp 2>&1); then
               published=1
               break
             fi
+            if grep -q 'already set to the provided values' <<<"$out"; then
+              echo "Retired identity already deprecated"
+              published=1
+              break
+            fi
+            echo "$out" >&2
             sleep 10
           done
           URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fpdf-reader-mcp/versions/latest'
