@@ -214,15 +214,13 @@ if (!review.evidence || !existsSync(join(root, review.evidence))) {
             rel === 'README.md' ||
             rel === 'CHANGELOG.md' ||
             rel === 'scripts/check-verified-candidate-admission.ts' ||
-            rel.startsWith('docs/specs/') ||
-            // Documentation and evidence that record a release, not code that
-            // changes product behavior. Without these, landing the release
-            // record itself moves HEAD past the pin and blocks the next
-            // publish — which is exactly what happened to 5.0.2: the security
-            // record and the release proof pushed HEAD past the reviewed SHA.
-            rel.startsWith('docs/security/') ||
-            rel.startsWith('docs/operations/') ||
-            rel.startsWith('docs/adr/') ||
+            // Any documentation: it records the product and its releases and
+            // cannot change runtime behavior. Enumerating subdirectories one at
+            // a time kept blocking the publish whenever a doc landed
+            // (docs/security, docs/operations, docs/adr, docs/performance, ...),
+            // which is how 5.0.2 was blocked three times. The gate polices code,
+            // not prose.
+            rel.startsWith('docs/') ||
             // The release/publish workflows and the admission gate itself: they
             // decide how a release is delivered, not what the product does.
             // Fixing a release-blocking workflow would otherwise block the
