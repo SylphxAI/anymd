@@ -67,9 +67,30 @@ const localTarballIntegrity = (cwd: string): string => {
   }
 };
 
+/**
+ * npm can only build a sigstore provenance bundle on a GitHub-hosted runner.
+ * On a self-hosted runner `--provenance` fails the publish with
+ * E422 "Unsupported GitHub Actions runner environment", which silently blocks
+ * every release. This fleet is self-hosted (sylphx-linux-standard), so ask for
+ * provenance only where npm can produce it; otherwise publish without the
+ * bundle and record the absent attestation instead of claiming one.
+ */
+const provenanceArgs = (): string[] => {
+  const override = process.env['CITRA_NPM_PROVENANCE']?.trim().toLowerCase();
+  if (override === '1' || override === 'true') return ['--provenance'];
+  if (override === '0' || override === 'false') return [];
+  const runnerEnv = process.env['RUNNER_ENVIRONMENT']?.trim().toLowerCase();
+  const inActions = process.env['GITHUB_ACTIONS'] === 'true';
+  // Absent Actions context (a maintainer shell) cannot attest anywhere.
+  if (!inActions) return [];
+  return runnerEnv === 'github-hosted' ? ['--provenance'] : [];
+};
+
+const publishArgs = (): string[] => ['publish', '--access', 'public', ...provenanceArgs()];
+
 const publishOrVerify = (cwd: string) => {
   if (dryRun) {
-    run('npm', ['publish', '--access', 'public', '--provenance'], cwd, {
+    run('npm', publishArgs(), cwd, {
       allowDryRunSkip: true,
     });
     return;
@@ -97,7 +118,14 @@ const publishOrVerify = (cwd: string) => {
     return;
   }
 
-  run('npm', ['publish', '--access', 'public', '--provenance'], cwd);
+  const args = publishArgs();
+  console.log(
+    `[release-publish-with-natives] npm ${args.join(' ')}` +
+      (args.includes('--provenance')
+        ? ''
+        : ' (no provenance bundle: not a github-hosted runner)')
+  );
+  run('npm', args, cwd);
 };
 
 // A publish command must be bound to the reviewed release commit. Non-publishing
