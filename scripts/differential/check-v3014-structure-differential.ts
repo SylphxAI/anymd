@@ -11,6 +11,7 @@ import {
   parseToolPayload,
   spawnProductionMcp,
 } from "../../test/production/mcpContract.helpers.ts";
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   assertStructureMutationSensitivity,
   canonicalEqual,
@@ -23,7 +24,7 @@ const fixtureDir = join(repoRoot, "test/fixtures/differential");
 const corpusPath = join(scriptDir, "fixtures/v3014-structure-corpus.json");
 const oraclePath = join(scriptDir, "fixtures/v3014-structure-oracle.json");
 const manifestPath = join(scriptDir, "fixtures/v3014-structure-fixtures.json");
-const cli = join(repoRoot, "target/release/pdf-reader-cli");
+const cli = join(resolveCargoReleaseDir(repoRoot), "pdf-reader-cli");
 const corpus = JSON.parse(readFileSync(corpusPath, "utf8"));
 const oracle = JSON.parse(readFileSync(oraclePath, "utf8"));
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));

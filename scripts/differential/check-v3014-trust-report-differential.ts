@@ -5,8 +5,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
 import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
+import {
   canonicalTrustReportResult,
   TRUST_REPORT_DEPENDENCY_SURFACES,
   TRUST_REPORT_MUTATION_MANIFEST,

@@ -25,8 +25,8 @@ import {
 import { arch, cpus, platform, release, totalmem } from 'node:os';
 import { basename, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import {
 import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
+import {
   NATIVE_PLATFORM_PACKAGES,
   resolveNativePlatformId,
 } from '../../src/native/platform-package-map.ts';

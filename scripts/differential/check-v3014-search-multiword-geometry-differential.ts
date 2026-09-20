@@ -6,8 +6,8 @@ import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
 import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
+import {
   canonicalSearchMultiwordGeometryResult,
   type Json,
 } from './v3014-search-multiword-geometry-projection.ts';
