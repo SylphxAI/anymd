@@ -5,6 +5,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
+import { resolveCargoReleaseDir } from './native/cargo-target-dir.ts';
 
 const root = join(import.meta.dirname, '..');
 const steps = [
@@ -32,7 +33,7 @@ for (const [cmd, args] of steps) {
       ...process.env,
       CITRA_RUST_BIN:
         process.env.CITRA_RUST_BIN ||
-        join(root, 'target/release/citra-mcp-server'),
+        join(resolveCargoReleaseDir(root), 'citra-mcp-server'),
     },
   });
   const ok = r.status === 0;

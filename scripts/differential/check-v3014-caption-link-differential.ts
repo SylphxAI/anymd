@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   canonicalCaptionLinkResult,
   CAPTION_LINK_MUTATION_MANIFEST,
@@ -20,7 +21,7 @@ const manifestPath = join(scriptDir, 'fixtures/v3014-caption-link-fixture.json')
 const runnerPath = join(scriptDir, 'v3014-caption-link-baseline-runner.ts');
 const projectionPath = join(scriptDir, 'v3014-caption-link-projection.ts');
 const generatorPath = join(scriptDir, 'generate-v3014-caption-link-fixture.ts');
-const rustCliPath = join(repoRoot, 'target/release/pdf-reader-cli');
+const rustCliPath = join(resolveCargoReleaseDir(repoRoot), 'pdf-reader-cli');
 const outputFlag = process.argv.indexOf('--output');
 const outputPath = outputFlag >= 0 ? process.argv[outputFlag + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');

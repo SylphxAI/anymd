@@ -6,6 +6,7 @@ import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   canonicalSearchMultiwordGeometryResult,
   type Json,
@@ -19,7 +20,7 @@ const oraclePath = join(scriptDir, 'fixtures/v3014-search-multiword-geometry-ora
 const runnerPath = join(scriptDir, 'v3014-search-multiword-geometry-baseline-runner.ts');
 const projectionPath = join(scriptDir, 'v3014-search-multiword-geometry-projection.ts');
 const fixturePath = join(fixtureDir, 'v3014-behavior-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

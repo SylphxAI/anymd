@@ -6,6 +6,7 @@ import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   canonicalPageGeometryResidualResult,
   type Json,
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-page-geometry-residual-projection.
 const rotateFixture = join(fixtureDir, 'v3014-page-geometry-rotate-userunit-v1.pdf');
 const defaultFixture = join(fixtureDir, 'v3014-page-geometry-default-v1.pdf');
 const invertedFixture = join(fixtureDir, 'v3014-page-geometry-inverted-mediabox-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

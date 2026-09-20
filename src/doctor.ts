@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { resolveRustCliBinary } from './engine/rust-hash.js';
 import { loadPdfDocumentCore } from './pdf/loader.js';
+import { cargoBinaryCandidates } from './utils/cargoTargetDir.js';
 import { destroyLoadingTask } from './utils/pdfjs.js';
 
 export type DoctorStatus = 'ok' | 'warn' | 'fail';
@@ -101,9 +102,8 @@ const probeSamplePdf = async (): Promise<DoctorCheck> => {
 
 const probeRustMcpServer = (): DoctorCheck => {
   const candidates = [
+    ...cargoBinaryCandidates(packageRoot, 'citra-mcp-server'),
     path.join(packageRoot, 'bin/native/citra-mcp-server'),
-    path.join(packageRoot, 'target/release/citra-mcp-server'),
-    path.join(packageRoot, 'target/debug/citra-mcp-server'),
   ];
   const native = candidates.find((candidate) => existsSync(candidate));
   if (native) {

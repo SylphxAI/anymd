@@ -16,13 +16,14 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
+import { resolveCargoReleaseDir } from './native/cargo-target-dir.ts';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
 const rustBinCandidates = [
   process.env.CITRA_RUST_BIN,
   path.join(repoRoot, 'bin/native/citra-mcp-server'),
-  path.join(repoRoot, 'target/release/citra-mcp-server'),
+  path.join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server'),
 ].filter(Boolean) as string[];
 
 const args = process.argv.slice(2);

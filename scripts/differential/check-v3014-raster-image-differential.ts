@@ -6,6 +6,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   canonicalRasterImageResult,
   RASTER_IMAGE_MUTATION_MANIFEST,
@@ -21,7 +22,7 @@ const manifestPath = join(scriptDir, 'fixtures/v3014-raster-image-fixtures.json'
 const runnerPath = join(scriptDir, 'v3014-raster-image-baseline-runner.ts');
 const projectionPath = join(scriptDir, 'v3014-raster-image-projection.ts');
 const generatorPath = join(scriptDir, 'generate-v3014-raster-image-fixtures.ts');
-const rustServerPath = join(repoRoot, 'target/release/citra-mcp-server');
+const rustServerPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');

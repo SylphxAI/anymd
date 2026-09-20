@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalFormCheckboxAsValueResidualResult, type Json } from './v3014-form-checkbox-as-value-residual-projection.ts';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(scriptDir, '../..');
@@ -18,7 +19,7 @@ const projectionPath = join(scriptDir, 'v3014-form-checkbox-as-value-residual-pr
 const asOffFixture = join(fixtureDir, 'v3014-form-checkbox-as-overrides-v-off-v1.pdf');
 const asYesFixture = join(fixtureDir, 'v3014-form-checkbox-as-overrides-v-yes-v1.pdf');
 const noApFixture = join(fixtureDir, 'v3014-form-checkbox-as-noap-keeps-v-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

@@ -6,6 +6,7 @@
 import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveCliPath, resolveServerPath } from '../utils/cargoBinaries.js';
 
 export const repoRoot = path.resolve(import.meta.dirname, '../..');
 export const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
@@ -37,7 +38,7 @@ const resolveStagedRustBinary = (): string | null => {
   const forced = process.env.CITRA_RUST_BIN;
   if (forced && fs.existsSync(forced)) return forced;
   const candidates = [
-    path.join(repoRoot, 'target/release/citra-mcp-server'),
+    resolveServerPath(),
     path.join(repoRoot, 'bin/native/citra-mcp-server'),
     path.join(repoRoot, 'bin/native/linux-x64-gnu/citra-mcp-server'),
     path.join(repoRoot, 'bin/native/linux-arm64-gnu/citra-mcp-server'),

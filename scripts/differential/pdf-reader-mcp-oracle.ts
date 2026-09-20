@@ -19,13 +19,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '../..');
 const CORPUS_PATH = join(__dirname, 'fixtures/pdf-reader-mcp-corpus.json');
 const GOLDEN_PATH = join(REPO_ROOT, 'test/fixtures/read-pdf-golden.json');
 const FIXTURES_ROOT = join(REPO_ROOT, 'test/fixtures');
-const RUST_CLI = join(REPO_ROOT, 'target/release/pdf-reader-cli');
+const RUST_CLI = join(resolveCargoReleaseDir(REPO_ROOT), 'pdf-reader-cli');
 
 interface TransportContractCase {
   id: string;

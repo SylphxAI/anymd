@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cargoBinaryCandidates } from '../utils/cargoTargetDir.js';
 
 export type RustFileHash = {
   path: string;
@@ -22,14 +23,10 @@ export function resolveRustCliBinary(): string {
     return env;
   }
 
-  const release = path.join(here, '../../target/release/pdf-reader-cli');
-  if (existsSync(release)) {
-    return release;
-  }
-
-  const debug = path.join(here, '../../target/debug/pdf-reader-cli');
-  if (existsSync(debug)) {
-    return debug;
+  for (const candidate of cargoBinaryCandidates(path.join(here, '../..'), 'pdf-reader-cli')) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
   }
 
   return 'pdf-reader-cli';

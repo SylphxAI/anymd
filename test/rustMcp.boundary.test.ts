@@ -2,10 +2,11 @@ import { beforeAll, describe, expect, it } from 'bun:test';
 import { execSync, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { resolveCliPath, resolveServerPath } from './utils/cargoBinaries.js';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const rustServerBin = path.join(repoRoot, 'target/release/citra-mcp-server');
-const rustCliBin = path.join(repoRoot, 'target/release/pdf-reader-cli');
+const rustServerBin = resolveServerPath();
+const rustCliBin = resolveCliPath();
 const stagedRustBin = path.join(repoRoot, 'bin/native/citra-mcp-server');
 const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
 

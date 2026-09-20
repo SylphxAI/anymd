@@ -19,6 +19,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { resolveCargoReleaseDir } from './native/cargo-target-dir.ts';
 import {
   NATIVE_PLATFORM_PACKAGES,
   nativeBinaryRelativePath,
@@ -36,7 +37,7 @@ const meta = NATIVE_PLATFORM_PACKAGES[platformId];
 const sourceCandidates = [
   join(repoRoot, nativeBinaryRelativePath(platformId)),
   join(repoRoot, meta.packageDir, 'bin', meta.binaryName),
-  join(repoRoot, 'target/release', meta.binaryName),
+  join(resolveCargoReleaseDir(), meta.binaryName),
   join(repoRoot, 'bin/native', meta.binaryName),
 ];
 const sourceBinary = sourceCandidates.find((path) => existsSync(path));

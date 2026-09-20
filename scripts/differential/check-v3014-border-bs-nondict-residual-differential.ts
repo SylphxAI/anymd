@@ -6,6 +6,7 @@ import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   canonicalBorderBsNondictResidualResult,
   type Json,
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-border-bs-nondict-residual-project
 const polylineBorderBsNondictFixture = join(fixtureDir, 'v3014-annotation-polyline-border-bs-null-v1.pdf');
 const lineBorderBsNondictFixture = join(fixtureDir, 'v3014-annotation-line-border-bs-null-v1.pdf');
 const inkBorderBsNondictFixture = join(fixtureDir, 'v3014-annotation-ink-border-bs-null-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

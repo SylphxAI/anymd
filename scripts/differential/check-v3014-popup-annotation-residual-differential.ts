@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalPopupAnnotationResidualResult, type Json } from './v3014-popup-annotation-residual-projection.ts';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(scriptDir, '../..');
 const fixtureDir = join(repoRoot, 'test/fixtures/differential');
@@ -15,7 +16,7 @@ const runnerPath = join(scriptDir, 'v3014-popup-annotation-residual-baseline-run
 const projectionPath = join(scriptDir, 'v3014-popup-annotation-residual-projection.ts');
 const popupFixture = join(fixtureDir, 'v3014-annotation-popup-v1.pdf');
 const freeTextFixture = join(fixtureDir, 'v3014-annotation-freetext-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');

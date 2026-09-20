@@ -8,9 +8,27 @@ use std::process::{Command, Stdio};
 use pdf_reader_core::{read_pdf_from_value, ReadPdfErrorCode, READ_PDF_ROUTE};
 use serde_json::{json, Value};
 
-/// The workspace target directory cargo is actually using, honouring
-/// `CARGO_TARGET_DIR` when it is set.
+/// The directory cargo actually builds into.
+///
+/// Never guess `target/`: `CARGO_TARGET_DIR` moves it, and some setups append a
+/// content-addressed subdirectory, so a hardcoded path points at a directory
+/// cargo never writes. Ask cargo — `cargo metadata` reports the resolved
+/// `target_directory`, correct for every configuration. Falls back to
+/// `$CARGO_TARGET_DIR`, then `<repo>/target`, only when cargo cannot answer.
 fn cargo_target_dir() -> PathBuf {
+    if let Ok(output) = Command::new("cargo")
+        .args(["metadata", "--format-version", "1", "--no-deps"])
+        .current_dir(repo_root())
+        .output()
+    {
+        if output.status.success() {
+            if let Ok(meta) = serde_json::from_slice::<Value>(&output.stdout) {
+                if let Some(dir) = meta.get("target_directory").and_then(Value::as_str) {
+                    return PathBuf::from(dir);
+                }
+            }
+        }
+    }
     if let Ok(dir) = std::env::var("CARGO_TARGET_DIR") {
         if !dir.is_empty() {
             return PathBuf::from(dir);

@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   canonicalSelectableTableResult,
   SELECTABLE_TABLE_MUTATION_MANIFEST,
@@ -32,7 +33,7 @@ const generatorPath = join(
   scriptDir,
   "generate-v3014-selectable-table-fixture.ts"
 );
-const cli = join(repoRoot, "target/release/pdf-reader-cli");
+const cli = join(resolveCargoReleaseDir(repoRoot), "pdf-reader-cli");
 const outputFlag = process.argv.indexOf("--output");
 const outputPath = outputFlag >= 0 ? process.argv[outputFlag + 1] : undefined;
 type Case = { id: string; input: Record<string, unknown> };

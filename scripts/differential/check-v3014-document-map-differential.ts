@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 import {
   canonicalDocumentMapResult,
   DOCUMENT_MAP_DEPENDENCY_SURFACES,
@@ -21,7 +22,7 @@ const fixtureManifestPath = join(scriptDir, 'fixtures/v3014-document-map-fixture
 const runnerPath = join(scriptDir, 'v3014-document-map-baseline-runner.ts');
 const projectionPath = join(scriptDir, 'v3014-document-map-projection.ts');
 const generatorPath = join(scriptDir, 'generate-v3014-document-map-fixture.ts');
-const rustCliPath = join(repoRoot, 'target/release/pdf-reader-cli');
+const rustCliPath = join(resolveCargoReleaseDir(repoRoot), 'pdf-reader-cli');
 const outputFlag = process.argv.indexOf('--output');
 const outputPath = outputFlag >= 0 ? process.argv[outputFlag + 1] : undefined;
 

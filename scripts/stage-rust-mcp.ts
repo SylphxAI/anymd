@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveCargoReleaseDir } from './native/cargo-target-dir.ts';
 import {
   nativeBinaryRelativePath,
   resolveNativePlatformId,
@@ -13,7 +14,7 @@ const binaryName =
     : process.platform === 'win32'
       ? 'citra-mcp-server.exe'
       : 'citra-mcp-server';
-const source = path.join(repoRoot, 'target/release', binaryName);
+const source = path.join(resolveCargoReleaseDir(), binaryName);
 const legacyTargetDir = path.join(repoRoot, 'bin/native');
 const legacyTarget = path.join(legacyTargetDir, binaryName);
 

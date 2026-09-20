@@ -6,6 +6,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalLowercaseIndexResult, LOWERCASE_INDEX_MUTATION_MANIFEST, type Json } from './v3014-lowercase-index-projection.ts';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(scriptDir, '../..');
@@ -16,7 +17,7 @@ const manifestPath = join(scriptDir, 'fixtures/v3014-lowercase-index-fixture.jso
 const runnerPath = join(scriptDir, 'v3014-lowercase-index-baseline-runner.ts');
 const projectionPath = join(scriptDir, 'v3014-lowercase-index-projection.ts');
 const generatorPath = join(scriptDir, 'generate-v3014-lowercase-index-fixture.ts');
-const rustCliPath = join(repoRoot, 'target/release/pdf-reader-cli');
+const rustCliPath = join(resolveCargoReleaseDir(repoRoot), 'pdf-reader-cli');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');

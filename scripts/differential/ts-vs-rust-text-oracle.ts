@@ -21,12 +21,13 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '../..');
 const SAMPLE = join(REPO_ROOT, 'test/fixtures/sample.pdf');
 const FIXTURE_OUT = join(__dirname, 'fixtures/ts-text-oracle-baseline.json');
-const RUST_CLI = join(REPO_ROOT, 'target/release/pdf-reader-cli');
+const RUST_CLI = join(resolveCargoReleaseDir(REPO_ROOT), 'pdf-reader-cli');
 const writeFixture = process.argv.includes('--write-fixture');
 
 type Failure = { id: string; detail: string };

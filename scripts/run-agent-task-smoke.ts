@@ -6,6 +6,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { resolveCargoReleaseDir } from './native/cargo-target-dir.ts';
 import {
   callMcpTool,
   evaluateAcceptance,
@@ -25,7 +26,7 @@ const manifest = JSON.parse(
 ) as { taskFiles: string[]; publicTaskFiles?: string[] };
 const includePublic = publicTasksEnabled();
 const allowDownloads = publicDownloadsEnabled();
-const serverPath = join(root, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(root), 'citra-mcp-server');
 
 if (!existsSync(serverPath)) {
   const build = spawnSync('cargo', ['build', '-p', 'pdf-reader-mcp-server', '--release'], {
