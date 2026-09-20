@@ -1,8 +1,6 @@
 # pdf-reader-mcp — local agent notes only
 
-Static engineering and delivery standards load from the active Skills runtime
-([SylphxAI/skills](https://github.com/SylphxAI/skills) is binding instruction
-SSOT). Doctrine, Mission Control, and GroundAtlas package dogfood are retired
+Doctrine, Mission Control, and GroundAtlas package dogfood are retired
 historical lineage and must not be loaded as current instruction or live-state
 authority.
 
@@ -67,7 +65,6 @@ Native Rust engine is product authority; npm `dist/runtime-entry.js` and
 `dist/pure-rust.js` are packaging/launcher surfaces only, not an alternate PDF
 backend. Historical TypeScript LKG (if needed) is the external pin
 `@sylphx/pdf-reader-mcp@3.0.14`, not residual source under `src/`.
-
 
 ## Residual TypeScript (non-production)
 
