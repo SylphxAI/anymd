@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "profile": "pdf_reader_whole_product_independent_review",
+  "reviewer": "codex-citra-5-0-2-cargo-target-dir-and-post-5-0-1-sweep",
+  "reviewedAt": "2026-09-20T07:40:00Z",
+  "candidate": {
+    "repository": "SylphxAI/pdf-reader-mcp",
+    "sha": "832e3f7166bb220103d54cdf26c99d6c2f6a9360",
+    "shortSha": "832e3f7",
+    "version": "5.0.2",
+    "package": "@sylphx/citra",
+    "bin": "citra",
+    "published": false,
+    "parentProductPin": "verification/pdf-reader-whole-product-independent-review-5.0.1-4741c84.json"
+  },
+  "outcome": "review_pass_unfreeze_authorized_publish_5_0_2_post_5_0_1_sweep",
+  "unfreezeAuthorized": true,
+  "soleRuntimeAuthorized": true,
+  "tsRetirementAuthorized": true,
+  "performanceClaimsAuthorized": true,
+  "goalCompleteAuthorized": false,
+  "notes": [
+    "5.0.2 reviews every commit since the 5.0.1 pin (4741c84..f114291, 15 commits).",
+    "Behavior changes reviewed and individually test-covered: (1) malformed inline-image (BI/ID/EI) content streams now cross the MCP boundary as a structured error naming the page instead of aborting the native server (#675; tests read_pdf_reports_malformed_inline_image_as_error, read_pdf_survives_wellformed_inline_image); (2) per-page extraction budgets reset in begin_page with a document-wide 16 MiB / 2M-char backstop so dense multi-page documents are accepted while a single oversized page still fails closed (#681; tests per_page_budget_reset_accepts_dense_multi_page_documents, single_page_over_per_page_budget_still_fails_closed); (3) tools/list strips non-standard JSON Schema formats (uint32/uint64/double) that spec-strict client validators reject (#682).",
+    "Security-relevant dependency changes: rustls 0.23.42 -> 0.23.45 (RUSTSEC-2026-0285 patch), flate2 1.1.9 -> 1.1.10, rmcp 3.1.2 -> 3.2.0. cargo audit exits 0; the two reported items are warnings (unmaintained ttf-parser, yanked chacha20), not vulnerabilities.",
+    "Source-URL safety: the residual TypeScript loader now pins the connection to the DNS answer the SSRF guard validated, closing a TOCTOU rebinding bypass (GHSA-5r2f-7788-qp8v). The shipped engine already pinned DNS; this removes the divergence. Regression test test/pdf/rebind.test.ts was verified to fail without the pin.",
+    "Build-correctness change: 131 sites hardcoded cargo's target/ directory, so in a CARGO_TARGET_DIR or content-addressed environment a just-built binary read as missing. All now resolve cargo's real target_directory (scripts/native/cargo-target-dir.ts, src/utils/cargoTargetDir.ts, test/utils/cargoBinaries.ts).",
+    "Measured on this candidate: cargo test --workspace 371 passed / 0 failed; bun test --timeout 30000 520 passed / 0 failed; differential harness OK (cases=25 read_pdf=6 stdio=8); check:pure-rust-matrix, check:semantic-contracts (12), check:agent-task-corpus (10+5), check:production-contract, package:smoke all PASS; typecheck and biome check clean.",
+    "Trunk CI is green on this candidate: CI, Release, Deploy Docs, CodeQL, Native package scaffold, Candidate native build evidence all success.",
+    "Product surface unchanged: @sylphx/citra@5.0.2, bin citra, optionalDeps @sylphx/citra-<platform>. Sole-Rust delivery path unchanged.",
+    "goalCompleteAuthorized false until npm registry readback and clean-install proof exist for 5.0.2.",
+    "Re-pin after the publish-provenance fix (#700): release-publish-with-natives.ts now requests npm provenance only on a github-hosted runner, because npm rejects the attestation request from a self-hosted runner with E422 before accepting any package. No product behavior changed; the release path can now actually publish. Recorded in docs/operations/npm-provenance-on-self-hosted-runners.md."
+  ]
+}

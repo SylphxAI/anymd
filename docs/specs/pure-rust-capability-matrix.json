@@ -516,9 +516,9 @@
     "wholeProductReview": {
       "status": "review_pass_unfreeze_authorized_publish_5_0_2_post_5_0_1_sweep",
       "candidateVersion": "5.0.2",
-      "candidateSha": "f114291b78753df1a410cc212107cec45e256cc0",
-      "artifact": "verification/pdf-reader-whole-product-independent-review-5.0.2-f114291.json",
-      "evidence": "verification/pdf-reader-whole-product-independent-review-5.0.2-f114291.json",
+      "candidateSha": "832e3f7166bb220103d54cdf26c99d6c2f6a9360",
+      "artifact": "verification/pdf-reader-whole-product-independent-review-5.0.2-832e3f7.json",
+      "evidence": "verification/pdf-reader-whole-product-independent-review-5.0.2-832e3f7.json",
       "outcome": "review_pass_unfreeze_authorized_publish_5_0_2_post_5_0_1_sweep",
       "unfreezeAuthorized": true,
       "soleRuntimeAuthorized": true,
