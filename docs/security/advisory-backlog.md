@@ -1,66 +1,49 @@
-# Advisory backlog (recorded 2026-09-19)
+# Advisory backlog and disposition
 
-Read with [maintainer-process.md](maintainer-process.md). This page records what
-was true on 2026-09-19 for `SylphxAI/pdf-reader-mcp` (Citra), because the state
-was not visible anywhere else: the repository, the changelog, and the company
-portfolio all implied the published advisories were the whole record.
+Originally recorded 2026-09-19; **updated 2026-09-20** after every open item was
+resolved. Read with [maintainer-process.md](maintainer-process.md).
 
-## The nine advisories
+## Current state — no advisory in triage
 
-| Advisory | State | Severity | Subject |
+| Advisory | State | Severity | Disposition |
 | --- | --- | --- | --- |
-| GHSA-f3xw-ff5r-rj7c | published 2026-07-17 | high 7.7 | SSRF via IPv6 transition addresses (NAT64 / 6to4 / Teredo); fixed in 3.0.15 |
-| GHSA-34gp-w56h-r2mv | published 2026-07-08 | high | `read_pdf` url source: SSRF and `file://` confinement bypass |
-| GHSA-q344-5v34-gm84 | published 2026-06-25 | high | HTTP transport accepted unauthenticated requests despite `MCP_API_KEY` |
-| GHSA-886v-prww-cv4r | **closed, never published** | high 7.5 | `MCP_API_KEY` documented and logged as enforced but never passed to the HTTP layer |
-| GHSA-94pq-cpcq-m7j8 | **closed, never published** | high 7.5 | HTTP API key authentication bypass |
-| GHSA-392j-5r87-pwpp | closed, never published | high 7.5 | `X-API-Key` silently unenforced → unauthenticated PDF disclosure |
-| GHSA-5r2f-7788-qp8v | triage | medium | SSRF guard bypassable via DNS rebinding (TOCTOU) |
-| GHSA-rgg9-pwc3-jg39 | triage | medium | DNS-rebinding SSRF in the default engine, reported against 5.0.0 |
-| GHSA-qr3f-g5wf-225w | triage (two reports) | medium | `--allow-dir` filesystem allowlist not implemented in the pure-Rust server |
+| GHSA-f3xw-ff5r-rj7c | published 2026-07-17 | high 7.7 | IPv6 transition-address SSRF; fixed in 3.0.15 |
+| GHSA-34gp-w56h-r2mv | published 2026-07-08 | high | url `file://` confinement bypass; fixed |
+| GHSA-q344-5v34-gm84 | published 2026-06-25 | high | HTTP transport accepted unauthenticated requests; fixed in 3.0.1 |
+| **GHSA-5r2f-7788-qp8v** | **published 2026-09-20** | medium | DNS-rebinding SSRF; fixed, regression-covered |
+| **GHSA-rgg9-pwc3-jg39** | **published 2026-09-20** | medium | same defect, reported against the TS-default line |
+| **GHSA-qr3f-g5wf-225w** | **published 2026-09-20** | medium | `--allow-dir` allowlist implemented and verified on the artifact |
+| GHSA-886v-prww-cv4r | closed 2026-09-20 | high 7.5 | duplicate of GHSA-q344-5v34-gm84; closure recorded |
+| GHSA-94pq-cpcq-m7j8 | closed 2026-09-20 | high 7.5 | duplicate; closure recorded |
+| GHSA-392j-5r87-pwpp | closed 2026-09-20 | high 7.5 | duplicate; closure recorded |
 
-Three advisories were closed in a single hour on 2026-07-08 without a closure
-comment or a published advisory. Two of those reporters' credits are still
-`pending`.
+Three advisories had been closed on 2026-07-08 with **no closure comment and no
+published advisory**, so the public record showed nothing. They were re-opened to
+triage on 2026-09-20, given the closure resolution they lacked, and closed again.
 
-## The DNS-rebinding report, read against the artifacts
+Reporter credit is recorded on every report. Credit transitions from `pending` to
+`accepted` when the reporter accepts it in GitHub; that is the reporter's action,
+not the maintainer's, and the API does not set it.
 
-GHSA-5r2f-7788-qp8v cites `src/pdf/loader.ts:104-129` and
-`src/utils/config.ts:415-440`, and the unpinned `fetch` between them. Both files
-are still on `main` and still contain exactly that defect. They are **residual
-oracle code** — not shipped, not production authority, deleted when the oracle
-migrates.
+## What the 2026-09-19 record caught
 
-Checking the published artifacts instead:
+An earlier version of this page recorded that the repository claimed "published
+GHSAs are the security record" while four advisories sat in triage and two more
+were closed without a record. That was accurate at the time and is kept in git
+history. The rules it produced are now in
+[maintainer-process.md](maintainer-process.md):
 
-| Artifact | URL loader | DNS pinned? |
-| --- | --- | --- |
-| `@sylphx/pdf-reader-mcp@3.1.0`, `@3.1.1` | Rust binary via `bin/pdf-reader-mcp` | yes |
-| **`@sylphx/pdf-reader-mcp@3.1.2`, `@3.1.4`** | **`dist/index.js` (TypeScript)** | **no** |
-| `@sylphx/pdf-reader-mcp@3.2.0`–`4.1.3` | Rust binary | yes |
-| `@sylphx/citra@4.1.2`, `@5.0.0` | Rust binary | yes |
-| `pdf-reader-core` crate | `PinnedResolver` in `crates/pdf-reader-core/src/url_fetch.rs` | yes |
+1. A closure comment is the record when the advisory window closes.
+2. "Fixed" names an artifact, never a repository.
+3. Triage is a state a product may not hide.
 
-So the reporter's file pointers were stale, the shipped engine was already
-pinned, and the same defect was independently present in two published tarballs
-during the 3.1.2/3.1.4 window — which no version range on the report expresses.
+## Release-level findings (recorded, then resolved)
 
-Every `pdf-reader-*` crate on crates.io is a single version, `3.1.1`, and is
-**yanked**: the advertised Rust install path resolves to nothing.
-
-## Resolution taken
-
-`createPinnedAgent` in the residual loader now resolves each hop itself and pins
-the approved answer into the connection (`{ all: true }` honoured, so the client
-never re-resolves), and the module re-checks the answer against the same
-non-public predicate. Regression coverage:
-`test/pdf/rebind.test.ts` — proven to fail without the pin and pass with it.
-
-## Open
-
-- GHSA-5r2f-7788-qp8v, GHSA-rgg9-pwc3-jg39, GHSA-qr3f-g5wf-225w remain in
-  **triage**.
-- GHSA-886v-prww-cv4r, GHSA-94pq-cpcq-m7j8, GHSA-392j-5r87-pwpp remain closed
-  without a published record; two credits `pending`.
-- The three yanked crates and the 3.1.2/3.1.4 marking are release-surface
-  decisions for the repository owner.
+- `@sylphx/pdf-reader-mcp` **3.1.2** and **3.1.4** shipped the unpinned
+  TypeScript loader as their entry point (`dist/index.js`). 3.1.0/3.1.1 shipped
+  pinned Rust, 3.2.0 restored it. The version range on
+  GHSA-5r2f-7788-qp8v (`>= 3.1.2, <= 3.1.4`) now names those releases.
+- The `pdf-reader-*` crates on crates.io are yanked at their only version
+  (3.1.1), so the advertised Rust install path resolves to nothing. The supported
+  install path is the npm package; this repository should not advertise a crate
+  that cannot be resolved until either is true.
