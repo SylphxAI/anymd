@@ -31,8 +31,12 @@ function resolveRustCliBinary() {
 }
 
 // src/pdf/loader.ts
+import dns2 from "node:dns";
 import fs3 from "node:fs/promises";
+import http from "node:http";
+import https from "node:https";
 import { createRequire } from "node:module";
+import net2 from "node:net";
 
 // node_modules/pdfjs-dist/legacy/build/pdf.mjs
 var __webpack_modules__ = {
@@ -32205,6 +32209,89 @@ var validateUrlHop = async (urlString, config) => {
     }
   }
 };
+var createPinnedAgent = async (urlString) => {
+  const parsed = new URL(urlString);
+  const hostname = parsed.hostname;
+  const isHttps = parsed.protocol === "https:";
+  if (net2.isIP(hostname)) {
+    return isHttps ? new https.Agent({ keepAlive: false }) : new http.Agent({ keepAlive: false });
+  }
+  let addresses;
+  try {
+    addresses = await dns2.promises.lookup(hostname, { all: true });
+  } catch {
+    throw new PdfError(-32600 /* InvalidRequest */, `URL host '${hostname}' could not be resolved.`);
+  }
+  if (addresses.length === 0) {
+    throw new PdfError(-32600 /* InvalidRequest */, `URL host '${hostname}' resolved to no addresses.`);
+  }
+  const approved = addresses.filter(({ address }) => {
+    if (isPrivateIp(address)) {
+      throw new PdfError(-32600 /* InvalidRequest */, `Access denied: URL host '${hostname}' resolves to a non-public address (SSRF protection).`);
+    }
+    return true;
+  });
+  const lookup = (_lookupHostname, options, callback) => {
+    const done = typeof options === "function" ? options : callback;
+    if (typeof options !== "object" || options === null) {
+      const err = new Error(`URL host '${hostname}' could not be pinned (unexpected resolver call).`);
+      err.code = "EINVAL";
+      done(err, "");
+      return;
+    }
+    if (options.all === true) {
+      done(null, approved);
+      return;
+    }
+    const first = approved[0];
+    done(null, first.address, first.family);
+  };
+  const agentLookup = lookup;
+  return isHttps ? new https.Agent({ lookup: agentLookup, keepAlive: false }) : new http.Agent({ lookup: agentLookup, keepAlive: false });
+};
+var fetchThroughAgent = async (urlString, init, agent) => {
+  const parsed = new URL(urlString);
+  const requestFn = parsed.protocol === "https:" ? https.request : http.request;
+  return await new Promise((resolve, reject) => {
+    const req = requestFn(urlString, { agent, method: "GET" }, (res) => {
+      const chunks = [];
+      res.on("data", (chunk) => chunks.push(chunk));
+      res.on("end", () => {
+        const headers = new Headers;
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (typeof value === "string")
+            headers.set(key, value);
+          else if (Array.isArray(value))
+            headers.set(key, value.join(", "));
+        }
+        resolve(new Response(Buffer.concat(chunks), {
+          status: res.statusCode ?? 502,
+          statusText: res.statusMessage ?? "",
+          headers
+        }));
+      });
+    });
+    req.on("error", reject);
+    if (init.signal)
+      init.signal.addEventListener("abort", () => req.destroy(), { once: true });
+    req.end();
+  });
+};
+var fetchUrlHopForTests = null;
+var fetchUrlHop = async (urlString, init, config) => {
+  if (config.allowPrivateIps) {
+    const init_ = init.signal ? { redirect: "manual", signal: init.signal } : { redirect: "manual" };
+    return fetch(urlString, init_);
+  }
+  const agent = await createPinnedAgent(urlString);
+  try {
+    if (fetchUrlHopForTests)
+      return await fetchUrlHopForTests(urlString, init);
+    return await fetchThroughAgent(urlString, init, agent);
+  } finally {
+    agent.destroy();
+  }
+};
 var fetchUrlBody = async (url, config) => {
   let currentUrl = url;
   const controller = new AbortController;
@@ -32212,10 +32299,7 @@ var fetchUrlBody = async (url, config) => {
   try {
     for (let hop = 0;hop <= MAX_REDIRECTS; hop++) {
       await validateUrlHop(currentUrl, config);
-      const response = await fetch(currentUrl, {
-        redirect: "manual",
-        signal: controller.signal
-      });
+      const response = await fetchUrlHop(currentUrl, { signal: controller.signal }, config);
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get("location");
         if (!location) {

@@ -259,9 +259,9 @@ class Citra {
 }
 var sdk_default = Citra;
 export {
-  resolvePureRustServerBinary,
-  sdk_default as default,
-  createPureRustClient,
+  Citra,
   PureRustClient,
-  Citra
+  createPureRustClient,
+  sdk_default as default,
+  resolvePureRustServerBinary
 };

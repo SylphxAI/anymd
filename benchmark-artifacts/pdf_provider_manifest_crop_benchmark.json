@@ -1,9 +1,9 @@
 {
   "profile": "pdf_provider_manifest_crop_benchmark",
-  "generated_at": "2026-08-03T00:54:26.150Z",
+  "generated_at": "2026-09-20T04:16:58.864Z",
   "status": "passed",
   "strict": true,
-  "manifest_path": "/home/runner/work/pdf-reader-mcp/pdf-reader-mcp/test/fixtures/provider-crop-manifest.json",
+  "manifest_path": "/home/runner/_work/pdf-reader-mcp/pdf-reader-mcp/test/fixtures/provider-crop-manifest.json",
   "external_case_count": 1,
   "external_url_case_count": 0,
   "external_download_count": 0,
@@ -95,7 +95,7 @@
         "full_page_crop",
         "render_provenance"
       ],
-      "duration_ms": 355.16,
+      "duration_ms": 359.36,
       "num_pages": 1,
       "region_count": 1,
       "assertion_count": 5,
@@ -120,7 +120,7 @@
           "score": 1,
           "crop": {
             "evidence_id": "page-1-release-sample-page-1-full-page-crop-scale-2",
-            "byte_length": 632038,
+            "byte_length": 631847,
             "scale": 2,
             "crop_pixels": {
               "left": 0,
@@ -164,7 +164,7 @@
                 "min_byte_length": 1
               },
               "observed": {
-                "byte_length": 632038
+                "byte_length": 631847
               }
             },
             {

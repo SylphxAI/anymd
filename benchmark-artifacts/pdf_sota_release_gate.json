@@ -1,7 +1,7 @@
 {
   "profile": "pdf_sota_release_gate",
-  "generated_at": "2026-08-03T00:54:27.867Z",
-  "artifact_dir": "/home/runner/work/pdf-reader-mcp/pdf-reader-mcp/benchmark-artifacts",
+  "generated_at": "2026-09-20T04:17:00.740Z",
+  "artifact_dir": "/home/runner/_work/pdf-reader-mcp/pdf-reader-mcp/benchmark-artifacts",
   "status": "passed",
   "summary": {
     "total": 59,
@@ -205,7 +205,7 @@
       "status": "passed",
       "message": "v3 Agent Document Twin scenario has a positive average latency",
       "evidence": {
-        "average_ms": 20.13
+        "average_ms": 19.1
       }
     },
     {
@@ -218,7 +218,7 @@
       "status": "passed",
       "message": "default balanced auto-read scenario has a positive average latency",
       "evidence": {
-        "average_ms": 22.36
+        "average_ms": 57.81
       }
     },
     {
@@ -519,7 +519,7 @@
           {
             "id": "node",
             "status": "ok",
-            "message": "Node.js 24.3.0 meets the >=22.13 requirement."
+            "message": "Node.js 26.3.0 meets the >=22.13 requirement."
           },
           {
             "id": "pdfjs_resources",
@@ -529,12 +529,12 @@
           {
             "id": "rust_hash_cli",
             "status": "ok",
-            "message": "Rust hash CLI is available at /home/runner/work/pdf-reader-mcp/pdf-reader-mcp/target/release/pdf-reader-cli. Source hashing defaults to the native engine when built."
+            "message": "Rust hash CLI is available at /home/runner/_work/pdf-reader-mcp/pdf-reader-mcp/target/release/pdf-reader-cli. Source hashing defaults to the native engine when built."
           },
           {
             "id": "rust_mcp_server",
             "status": "ok",
-            "message": "Rust MCP server binary is present at /home/runner/work/pdf-reader-mcp/pdf-reader-mcp/bin/native/pdf-reader-mcp-server."
+            "message": "Rust MCP server binary is present at /home/runner/_work/pdf-reader-mcp/pdf-reader-mcp/bin/native/citra-mcp-server."
           },
           {
             "id": "sample_probe",
