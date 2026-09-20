@@ -8,6 +8,17 @@ use std::process::{Command, Stdio};
 use pdf_reader_core::{read_pdf_from_value, ReadPdfErrorCode, READ_PDF_ROUTE};
 use serde_json::{json, Value};
 
+/// The workspace target directory cargo is actually using, honouring
+/// `CARGO_TARGET_DIR` when it is set.
+fn cargo_target_dir() -> PathBuf {
+    if let Ok(dir) = std::env::var("CARGO_TARGET_DIR") {
+        if !dir.is_empty() {
+            return PathBuf::from(dir);
+        }
+    }
+    repo_root().join("target")
+}
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -201,7 +212,11 @@ fn assert_success_case(id: &str, fixture: &str, input: &Value, expected: &Value)
 }
 
 fn invoke_cli_read_pdf(fixture: &str, input: &Value) -> Value {
-    let cli = repo_root().join("target/release/pdf-reader-cli");
+    // Resolve the real target directory instead of assuming `target/`. A
+    // CARGO_TARGET_DIR (or a content-addressed target dir) puts the binary
+    // elsewhere, and the hardcoded path then fails with "No such file or
+    // directory" on a machine where the tests would otherwise pass.
+    let cli = cargo_target_dir().join("release/pdf-reader-cli");
     if !cli.is_file() {
         let status = Command::new("cargo")
             .args(["build", "--release", "-p", "pdf-reader-cli"])
