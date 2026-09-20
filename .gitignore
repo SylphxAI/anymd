@@ -19,7 +19,16 @@ test-report.junit.xml
 **/.pdf-reader-mcp/
 dist/pdf.worker*.mjs
 
-# staged native packaging outputs (never commit host binaries)
+# Staged native packaging outputs — never commit host binaries. The rename to
+# citra-mcp-server (#626) left these patterns naming the old binary, so
+# packages/citra-linux-x64-gnu/bin/citra-mcp-server was tracked anyway; that
+# made every Release run fail at "Create release PR" because changesets/action
+# commitMode=github-api refuses executable files.
+bin/native/**/citra-mcp-server
+bin/native/**/citra-mcp-server.exe
+packages/**/bin/citra-mcp-server
+packages/**/bin/citra-mcp-server.exe
+# Pre-rename names, kept so any stale checkout stays ignored.
 bin/native/**/pdf-reader-mcp-server
 bin/native/**/pdf-reader-mcp-server.exe
 bin/native/pdf-reader-mcp-server
