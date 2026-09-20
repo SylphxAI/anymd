@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import {
+import { resolveCargoReleaseDir } from './native/cargo-target-dir.ts';
   callMcpTool,
   evaluateAcceptance,
   extractMetrics,
@@ -36,7 +37,7 @@ const baselinePath = join(
     ? 'baselines/typescript-v3.0.14.public-url.json'
     : 'baselines/typescript-v3.0.14.local.json'
 );
-const rustServerPath = join(root, 'target/release/citra-mcp-server');
+const rustServerPath = join(resolveCargoReleaseDir(root), 'citra-mcp-server');
 const tsServerPath = join(root, 'dist/index.js');
 
 const args = process.argv.slice(2);

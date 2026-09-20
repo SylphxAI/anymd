@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   canonicalAnnotationDestResidualResult,
   type Json,
 } from './v3014-annotation-dest-residual-projection.ts';
@@ -20,7 +21,7 @@ const runnerPath = join(scriptDir, 'v3014-annotation-dest-residual-baseline-runn
 const projectionPath = join(scriptDir, 'v3014-annotation-dest-residual-projection.ts');
 const fitFixture = join(fixtureDir, 'v3014-annotation-dest-fit-v1.pdf');
 const xyzFixture = join(fixtureDir, 'v3014-annotation-dest-xyz-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

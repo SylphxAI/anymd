@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   canonicalInfoTrappedCustomResidualResult,
   type Json,
 } from './v3014-info-trapped-custom-residual-projection.ts';
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-info-trapped-custom-residual-proje
 const trappedTrueFixture = join(fixtureDir, 'v3014-info-trapped-true-v1.pdf');
 const trappedFalseFixture = join(fixtureDir, 'v3014-info-trapped-false-v1.pdf');
 const customMixedFixture = join(fixtureDir, 'v3014-info-custom-mixed-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

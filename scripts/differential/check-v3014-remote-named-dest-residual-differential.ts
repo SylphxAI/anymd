@@ -16,7 +16,7 @@ const projectionPath = join(scriptDir, 'v3014-remote-named-dest-residual-project
 const launchStringFixture = join(fixtureDir, 'v3014-annotation-gotor-named-string-v1.pdf');
 const launchDictFixture = join(fixtureDir, 'v3014-annotation-gotor-named-name-v1.pdf');
 const gotorFixture = join(fixtureDir, 'v3014-annotation-gotor-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');

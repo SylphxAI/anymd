@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   canonicalAnnotationApNamedStateSquareCircleResidualResult,
   type Json,
 } from './v3014-annotation-ap-named-state-square-circle-residual-projection.ts';
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-annotation-ap-named-state-square-c
 const lineApAsMissingFixture = join(fixtureDir, 'v3014-annotation-circle-ap-as-missing-v1.pdf');
 const lineApAsOnFixture = join(fixtureDir, 'v3014-annotation-square-ap-as-on-v1.pdf');
 const lineApAsInvalidFixture = join(fixtureDir, 'v3014-annotation-square-ap-as-invalid-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

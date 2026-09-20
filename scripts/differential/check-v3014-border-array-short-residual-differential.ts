@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   canonicalBorderArrayShortResidualResult,
   type Json,
 } from './v3014-border-array-short-residual-projection.ts';
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-border-array-short-residual-projec
 const polylineBorderArrayShortFixture = join(fixtureDir, 'v3014-annotation-polyline-border-short-v1.pdf');
 const lineBorderArrayEmptyFixture = join(fixtureDir, 'v3014-annotation-line-border-empty-v1.pdf');
 const inkBorderArrayShortFixture = join(fixtureDir, 'v3014-annotation-ink-border-short-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

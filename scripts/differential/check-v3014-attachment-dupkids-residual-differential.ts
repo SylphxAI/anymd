@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   canonicalAttachmentDupkidsResidualResult,
   type Json,
 } from './v3014-attachment-dupkids-residual-projection.ts';
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-attachment-dupkids-residual-projec
 const controlFixture = join(fixtureDir, 'v3014-attachment-dupkids-control-v1.pdf');
 const duplicateFixture = join(fixtureDir, 'v3014-attachment-dupkids-duplicate-v1.pdf');
 const cycleFixture = join(fixtureDir, 'v3014-attachment-dupkids-cycle-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

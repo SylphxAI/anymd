@@ -26,6 +26,7 @@ import { arch, cpus, platform, release, totalmem } from 'node:os';
 import { basename, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   NATIVE_PLATFORM_PACKAGES,
   resolveNativePlatformId,
 } from '../../src/native/platform-package-map.ts';
@@ -151,7 +152,7 @@ const resolveRustBinary = (): string | null => {
   if (!platformId) return null;
   const meta = NATIVE_PLATFORM_PACKAGES[platformId];
   const candidates = [
-    join(root, 'target/release/citra-mcp-server'),
+    join(resolveCargoReleaseDir(root), 'citra-mcp-server'),
     join(root, 'bin/native', platformId, meta.binaryName),
     join(root, meta.packageDir, 'bin', meta.binaryName),
     join(root, 'node_modules', meta.npmName, 'bin', meta.binaryName),

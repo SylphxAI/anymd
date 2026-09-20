@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   canonicalBorderBsWrongTypeResidualResult,
   type Json,
 } from './v3014-border-bs-wrong-type-residual-projection.ts';
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-border-bs-wrong-type-residual-proj
 const polylineBorderBsWrongTypeFixture = join(fixtureDir, 'v3014-annotation-polyline-border-bs-wrong-type-v1.pdf');
 const lineBorderBsWrongTypeFixture = join(fixtureDir, 'v3014-annotation-line-border-bs-wrong-type-v1.pdf');
 const inkBorderBsWrongTypeFixture = join(fixtureDir, 'v3014-annotation-ink-border-bs-wrong-type-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

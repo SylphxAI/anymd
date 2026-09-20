@@ -10,7 +10,7 @@
 import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   NATIVE_PLATFORM_PACKAGES,
@@ -18,6 +18,7 @@ import {
   nativeBinaryRelativePath,
   resolveNativePlatformId,
 } from './native/platform-package-map.js';
+import { cargoBinaryCandidates } from './utils/cargoTargetDir.js';
 
 export type { NativePlatformId };
 
@@ -59,19 +60,10 @@ const pushPlatformCandidates = (
 };
 
 const pushFallbackCandidates = (candidates: string[], packageRoot: string) => {
-  const cargoTargetDir = process.env['CARGO_TARGET_DIR']?.trim();
-  const targetDir = cargoTargetDir ? resolve(cargoTargetDir) : join(packageRoot, 'target');
   candidates.push(
+    ...cargoBinaryCandidates(packageRoot, 'citra-mcp-server'),
     join(packageRoot, 'bin/native/citra-mcp-server'),
-    join(packageRoot, 'bin/native/citra-mcp-server.exe'),
-    join(targetDir, 'release/citra-mcp-server'),
-    join(targetDir, 'release/citra-mcp-server.exe'),
-    join(targetDir, 'debug/citra-mcp-server'),
-    join(targetDir, 'debug/citra-mcp-server.exe'),
-    join(packageRoot, 'target/release/citra-mcp-server'),
-    join(packageRoot, 'target/release/citra-mcp-server.exe'),
-    join(packageRoot, 'target/debug/citra-mcp-server'),
-    join(packageRoot, 'target/debug/citra-mcp-server.exe')
+    join(packageRoot, 'bin/native/citra-mcp-server.exe')
   );
 };
 

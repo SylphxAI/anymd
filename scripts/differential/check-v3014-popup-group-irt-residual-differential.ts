@@ -15,7 +15,7 @@ const runnerPath = join(scriptDir, 'v3014-popup-group-irt-residual-baseline-runn
 const projectionPath = join(scriptDir, 'v3014-popup-group-irt-residual-projection.ts');
 const groupFixture = join(fixtureDir, 'v3014-annotation-popup-group-irt-v1.pdf');
 const nongroupFixture = join(fixtureDir, 'v3014-annotation-popup-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');

@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
   canonicalUtf16TextResidualResult,
   type Json,
 } from './v3014-utf16-text-residual-projection.ts';
@@ -21,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-utf16-text-residual-projection.ts'
 const annotFixture = join(fixtureDir, 'v3014-annot-utf16-odd-v1.pdf');
 const freetextFixture = join(fixtureDir, 'v3014-freetext-utf16-odd-v1.pdf');
 const catalogFixture = join(fixtureDir, 'v3014-catalog-utf16-odd-v1.pdf');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

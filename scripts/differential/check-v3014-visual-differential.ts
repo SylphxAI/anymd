@@ -6,6 +6,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import { resolveCargoReleaseDir } from '../native/cargo-target-dir.ts';
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 type Content = { type: string; text?: string; data?: string; mimeType?: string };
@@ -19,7 +20,7 @@ const oraclePath = join(scriptDir, 'fixtures/v3014-visual-oracle.json');
 const fixtureManifestPath = join(scriptDir, 'fixtures/v3014-visual-fixtures.json');
 const providerPath = join(scriptDir, 'reference-ocr-provider.ts');
 const regionProviderPath = join(scriptDir, 'reference-region-analysis-provider.ts');
-const serverPath = join(repoRoot, 'target/release/citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
 const outputFlag = process.argv.indexOf('--output');
 const outputPath = outputFlag >= 0 ? process.argv[outputFlag + 1] : undefined;
 

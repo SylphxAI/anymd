@@ -2,11 +2,12 @@ import { beforeAll, describe, expect, it } from 'bun:test';
 import { execSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { resolveCliPath, resolveServerPath } from './utils/cargoBinaries.js';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const fixturesRoot = path.join(repoRoot, 'test/fixtures');
 const goldenPath = path.join(fixturesRoot, 'read-pdf-golden.json');
-const rustCliBin = path.join(repoRoot, 'target/release/pdf-reader-cli');
+const rustCliBin = resolveCliPath();
 const samplePdf = path.join(fixturesRoot, 'sample.pdf');
 
 type GoldenCase = {
