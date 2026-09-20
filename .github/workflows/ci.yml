@@ -101,7 +101,7 @@ jobs:
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() && steps.coverage.outputs.lcov == 'true' }}
         continue-on-error: true
-        uses: codecov/codecov-action@v6.0.1
+        uses: codecov/codecov-action@v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
@@ -110,7 +110,7 @@ jobs:
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && steps.coverage.outputs.test_results == 'true' }}
         continue-on-error: true
-        uses: codecov/codecov-action@v6.0.1
+        uses: codecov/codecov-action@v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/*.xml
