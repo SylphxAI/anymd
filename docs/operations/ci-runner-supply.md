@@ -67,3 +67,36 @@ and report the state; it does not own the group.
 runner total.** Report the group and its online count, never the org count; an
 org-wide "runners are down" reading can be false for a given repository and
 true for its neighbours at the same time.
+
+
+## Update 2026-09-20: what the intermittent outage actually is
+
+The repository's group (`sylphx-repo-960549454`) went fully offline and back
+several times over one day — 0 online for long stretches, then 37-75 online and
+draining normally. Jobs queued through the outages (a fan-in job sat 71 minutes
+and then completed successfully; a Release run waited ~3 hours and passed).
+Nothing in this repository is wrong when that happens.
+
+What was true on the cluster side during the offline windows, observed directly:
+
+- Hands restarted (new pod hash at 16:34Z) and is healthy: `jit_width=431`,
+  no crashloop, no restart count.
+- But the only thing it logs is the periodic `jit_width` tick — no mint work is
+  being driven, so no runner registers and the whole org's queue stands still
+  (`cloud`, `apps`, `hands`, `agents`, `identity` all showed `in_progress=0`).
+- During the working windows the same Hands mints and settles runner jobs, and
+  the queue drains across every repository.
+
+So the condition is **upstream runner supply in `SylphxAI/hands` /
+`SylphxAI/cloud`**, not a property of this repository. Two consequences worth
+recording:
+
+1. **A queued job is not a failed job.** Every outage so far has drained: the
+   jobs completed on their own once supply returned. Do not re-push, re-run, or
+   loosen a gate because a queue looks stuck.
+2. **The admission gate interacts badly with this.** A release-blocking doc or
+   workflow change moves HEAD past the review pin, so the next publish needs a
+   fresh pin — and each re-pin is itself a new run queued behind the outage. That
+   is why `docs/**` and `.github/workflows/**` are now pin paths
+   (`scripts/check-verified-candidate-admission.ts`): the gate should block on
+   unreviewed code, not on the release's own paperwork.
