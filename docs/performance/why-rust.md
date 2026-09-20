@@ -57,8 +57,7 @@ Agent Document Twin fields.
 The withdrawn v3.1.x releases did **not** reach that end state. The intended
 replacement, once it passes the executable parity and release gates, is:
 
-- **npm**: `@sylphx/pdf-reader-mcp` → ships the native `pdf-reader-mcp-server`
-- **crates.io**: `pdf-reader-core`, `pdf-reader-mcp-server`, `pdf-reader-cli`
+- **npm**: `@sylphx/citra` → ships the native MCP server binary
 - **Tools**: `read_pdf`, `search_pdf`, and every `pdf_evidence` success and failure path
 
 ## What must not regress
