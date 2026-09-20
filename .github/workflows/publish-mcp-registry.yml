@@ -153,39 +153,17 @@ jobs:
       - name: Deprecate retired MCP Registry identity
         run: |
           set -euo pipefail
-          # The publisher writes the status change and then reads its own
-          # response; that read failed with "failed to read response: EOF" on a
-          # healthy write, which aborted the step and left the retired identity
-          # active. Retry the publisher itself, and treat a readback that already
-          # shows `deprecated` as success so a transient EOF cannot hide a write
-          # that landed.
-          retired_status() {
-            curl -fsS 'https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fpdf-reader-mcp/versions/4.1.2' \
-              | jq -r '._meta["io.modelcontextprotocol.registry/official"].status' 2>/dev/null || echo unknown
-          }
-          published=0
-          for attempt in $(seq 1 6); do
-            if [ "$(retired_status)" = 'deprecated' ]; then
-              published=1
-              break
-            fi
-            echo "Deprecating retired identity (attempt $attempt)"
-            if out=$(./mcp-publisher status \
-                 --status deprecated \
-                 --all-versions \
-                 --message 'Retired identity. Use io.github.SylphxAI/citra.' \
-                 io.github.SylphxAI/pdf-reader-mcp 2>&1); then
-              published=1
-              break
-            fi
-            if grep -q 'already set to the provided values' <<<"$out"; then
-              echo "Retired identity already deprecated"
-              published=1
-              break
-            fi
-            echo "$out" >&2
-            sleep 10
-          done
+          # `--all-versions` is a bulk operation, so the publisher asks
+          # "Continue? [y/N]" before writing. CI has no stdin, so that prompt
+          # failed with "failed to read response: EOF" and the step exited with
+          # the retired identity still active. `--yes` skips the prompt, which is
+          # the whole reason this never worked.
+          ./mcp-publisher status \
+            --status deprecated \
+            --all-versions \
+            --yes \
+            --message 'Retired identity. Use io.github.SylphxAI/citra.' \
+            io.github.SylphxAI/pdf-reader-mcp
           URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fpdf-reader-mcp/versions/latest'
           for attempt in $(seq 1 24); do
             if curl -fsS "$URL" > "$RUNNER_TEMP/retired-registry.json" && \
