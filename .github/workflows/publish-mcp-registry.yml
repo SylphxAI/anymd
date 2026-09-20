@@ -32,6 +32,14 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: Setup Node
+        # The version check reads the registry with `npm view`, so this job
+        # needs the npm CLI on PATH. Without it the check fails with
+        # "npm: command not found" before publishing anything.
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
       - name: Enforce verified-candidate admission
         run: bun scripts/check-verified-candidate-admission.ts --require-exact-head
 
