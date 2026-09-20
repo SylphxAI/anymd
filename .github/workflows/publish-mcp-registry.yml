@@ -21,6 +21,11 @@ jobs:
     steps:
       - name: Checkout admission policy
         uses: actions/checkout@v7
+        with:
+          # The verified-candidate admission check resolves the reviewed SHA and
+          # diffs it against HEAD, so it needs full history. A shallow clone made
+          # it report the pinned candidate as unreachable and refuse to publish.
+          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
