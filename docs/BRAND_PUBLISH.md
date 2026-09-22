@@ -9,7 +9,7 @@
 | **Canonical bin** | `citra` |
 | **MCP registry name** | `io.github.SylphxAI/citra` |
 | Retired package ID | `@sylphx/pdf-reader-mcp` (historical pins only) |
-| GitHub repository | `SylphxAI/pdf-reader-mcp` — source location, **not** a product identity |
+| GitHub repository | `SylphxAI/citra` (renamed 2026-09-22 from `SylphxAI/pdf-reader-mcp`, which redirects) — source location, **not** a product identity |
 
 ## Policy (clean break)
 
@@ -21,12 +21,14 @@
    **must** match the Citra umbrella version.
 5. The GitHub release, npm provenance, installed-launcher proof, and MCP Registry
    record must bind the same version and source SHA before release closeout.
-6. The repository slug is not part of this contract and renaming it is **not**
-   required for brand-sole: `io.github.SylphxAI/citra` was published from this
-   repository, so the registry name does not bind the slug. A rename would move
-   the GitHub Pages path behind `websiteUrl`/`homepage` and re-touch every
-   reference, so it is deferred — and if it is ever done, it is one crossing
-   that updates those fields and republishes the MCP record.
+6. The repository slug is not part of this contract — `io.github.SylphxAI/citra`
+   was published while the repository was still named `pdf-reader-mcp`, so the
+   registry name never bound the slug. It was renamed to `SylphxAI/citra` on
+   2026-09-22 to retire the last old identifier anyway. GitHub redirects every
+   old location **except project site URLs**, so the rename moved the Pages path
+   behind `websiteUrl`/`homepage` and required updating `base` in the VitePress
+   config alongside it. The retired slug `SylphxAI/pdf-reader-mcp` stays empty
+   so the git, issue, and PR redirects keep working.
 
 ## User install
 

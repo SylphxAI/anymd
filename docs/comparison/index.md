@@ -9,7 +9,7 @@ request focused evidence only when the answer needs source-level proof.
 > **Plain text extraction gives agents words. PDF Reader MCP gives agents words
 > with proof** — page, bbox, crops, trust signals, and release-gate benchmarks.
 > [Stop PDF hallucinations →](/articles/stop-pdf-hallucinations) ·
-> [⭐ Star the repo](https://github.com/SylphxAI/pdf-reader-mcp)
+> [⭐ Star the repo](https://github.com/SylphxAI/citra)
 
 | Capability | PDF Reader MCP | Text/CLI tools | Cloud PDF APIs | Generic filesystem MCP |
 | --- | --- | --- | --- | --- |

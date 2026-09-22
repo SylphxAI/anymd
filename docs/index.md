@@ -14,7 +14,7 @@ hero:
       link: /guide/installation
     - theme: alt
       text: Star on GitHub
-      link: https://github.com/SylphxAI/pdf-reader-mcp
+      link: https://github.com/SylphxAI/citra
     - theme: alt
       text: Stop PDF Hallucinations
       link: /articles/stop-pdf-hallucinations

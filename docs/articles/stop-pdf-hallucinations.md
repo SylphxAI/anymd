@@ -89,5 +89,5 @@ If that matches the stack you are building:
 
 - [Get started](../guide/getting-started.md)
 - [See capability comparison](../comparison/index.md)
-- [⭐ Star the repo](https://github.com/SylphxAI/pdf-reader-mcp) so the next
+- [⭐ Star the repo](https://github.com/SylphxAI/citra) so the next
   builder finds it before they ship another plain-text PDF dump

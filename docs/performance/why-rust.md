@@ -24,7 +24,7 @@ Primary product promise remains:
 
 > Give your AI agent eyes for PDFs.
 
-See the [README](https://github.com/SylphxAI/pdf-reader-mcp#readme) and [installation guide](/guide/installation).
+See the [README](https://github.com/SylphxAI/citra#readme) and [installation guide](/guide/installation).
 
 ## Capability-first admission (ADR-0005)
 

@@ -29,12 +29,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SylphxAI/pdf-reader-mcp.git"
+    "url": "git+https://github.com/SylphxAI/citra.git"
   },
   "bugs": {
-    "url": "https://github.com/SylphxAI/pdf-reader-mcp/issues"
+    "url": "https://github.com/SylphxAI/citra/issues"
   },
-  "homepage": "https://sylphxai.github.io/pdf-reader-mcp/",
+  "homepage": "https://sylphxai.github.io/citra/",
   "author": "Sylphx <contact@sylphx.com> (https://sylphx.com)",
   "license": "MIT",
   "keywords": [

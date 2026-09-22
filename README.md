@@ -11,7 +11,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@sylphx/citra?style=flat-square)](https://www.npmjs.com/package/@sylphx/citra)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/licenses/MIT)
-[![stars](https://img.shields.io/github/stars/SylphxAI/pdf-reader-mcp?style=flat-square)](https://github.com/SylphxAI/pdf-reader-mcp/stargazers)
+[![stars](https://img.shields.io/github/stars/SylphxAI/citra?style=flat-square)](https://github.com/SylphxAI/citra/stargazers)
 
 </div>
 
@@ -183,13 +183,13 @@ Current production is a **native Rust engine** on supported platforms via a thin
 
 > Local-first. Five platform packages. One clean install. Fail closed without the matching native.
 
-Unusually formed or broken ToUnicode CMaps are handled without crashing; the release binary is panic-unwind so a worker-thread panic fails the request instead of aborting the process ([#608](https://github.com/SylphxAI/pdf-reader-mcp/issues/608)).
+Unusually formed or broken ToUnicode CMaps are handled without crashing; the release binary is panic-unwind so a worker-thread panic fails the request instead of aborting the process ([#608](https://github.com/SylphxAI/citra/issues/608)).
 
 Engineering history and recovery pins: [docs/migration.md](docs/migration.md) — not the product pitch.
 
 ## Product proof & links
 
-- [Website / guide](https://sylphxai.github.io/pdf-reader-mcp/)
+- [Website / guide](https://sylphxai.github.io/citra/)
 - [Product proof](docs/guide/product-proof.md)
 - [Benchmark](docs/benchmark.md)
 - [Installation](docs/guide/installation.md)
