@@ -175,13 +175,27 @@ jobs:
           # A repository rename is exactly the edit case: the released version
           # is unchanged, but its published pointers went stale. Creating a new
           # version just to correct a link would misreport the release.
+          #
+          # Known limitation: `edit` is not grantable through github-oidc. That
+          # auth mints `publish` for the repository owner's namespace and
+          # nothing else (internal/api/handlers/v0/auth/github_oidc.go,
+          # buildPermissions), so this PUT answers 403 "You do not have edit
+          # permissions for this server" for us. If that happens, the drifted
+          # version is frozen as published: report it and stop rather than
+          # pretend it was corrected. A release is the only path to corrected
+          # pointers.
           echo "Registry record drifted; editing $NAME@$VERSION in place"
-          curl -fsS -X PUT \
+          if ! out=$(curl -sS -X PUT \
             -H "Authorization: Bearer $TOKEN" \
             -H 'Content-Type: application/json' \
             --data-binary @server.json \
-            "${REGISTRY}v0/servers/${ESCAPED_NAME}/versions/${VERSION}"
-          echo
+            "${REGISTRY}v0/servers/${ESCAPED_NAME}/versions/${VERSION}" 2>&1); then
+            echo "$out" >&2
+            echo "Cannot edit $NAME@$VERSION in place: this registry grants edit only to admins," >&2
+            echo "and github-oidc mints publish only. Cut a release to carry corrected pointers." >&2
+            exit 1
+          fi
+          echo "$out"
 
       - name: Read back canonical Citra identity
         run: |
