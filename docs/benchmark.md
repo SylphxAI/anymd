@@ -48,9 +48,9 @@ fixture-specific; reproduce with `bun run benchmark`.
 | Metadata + page count | 1.1 ms | 0.6 ms | 2.6 ms |
 | Full text extraction | 16.1 ms | 10.3 ms | 21.1 ms |
 | Single-page text | 13.7 ms | 8.3 ms | 24.4 ms |
-| Agent Document Twin | 27.2 ms | 20.1 ms | 39.0 ms |
+| structured document result | 27.2 ms | 20.1 ms | 39.0 ms |
 
-The **Agent Document Twin** scenario includes document map, text layer,
+The **structured document result** scenario includes document map, text layer,
 semantic AST, trust report, accessibility report, citation chunks, layout
 diagnostics, tables, and trust/accessibility routing — all in one call.
 
@@ -78,7 +78,7 @@ with `--output <path>` or `--output-dir <dir>`.
 
 - **Quality is deterministic**: 69/69 synthetic quality checks pass on every run,
   not just on the release machine.
-- **Performance is bounded**: full Agent Document Twin extraction completes in
+- **Performance is bounded**: full structured document result extraction completes in
   under 40 ms on a small fixture, with the metadata path under 3 ms.
 - **Release is gated**: no version ships unless all 39 release-gate checks pass.
 - **Providers are certified**: OCR, region analysis, and visual enrichment

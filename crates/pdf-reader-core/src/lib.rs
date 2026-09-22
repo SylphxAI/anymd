@@ -11,6 +11,7 @@ pub mod ocr_tables;
 pub mod page_cache;
 mod page_signals;
 mod pdfjs_text;
+pub mod compare_pdf;
 pub mod read_pdf;
 mod read_result_cache;
 pub mod render;
@@ -103,6 +104,7 @@ pub fn inspect_document_signal_presence(
 }
 
 pub use ocr_fusion::{fuse_ocr_outcomes, OcrPage, OcrWord, SourceOcrOutcome, OCR_STUB_WARNING};
+pub use compare_pdf::{compare_pdf, compare_pdf_from_value, ComparePdfError, ComparePdfInput, ComparePdfResponse};
 pub use read_pdf::{
     read_pdf, read_pdf_from_value, ReadPdfError, ReadPdfErrorCode, ReadPdfInput, ReadPdfResponse,
     ReadPdfSource, ReadPdfSourceResult, READ_PDF_ROUTE,

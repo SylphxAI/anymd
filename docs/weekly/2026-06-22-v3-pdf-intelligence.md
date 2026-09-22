@@ -5,13 +5,13 @@ much cleaner MCP surface.
 
 The headline change is simple: agents can now start with one smart call.
 `read_pdf` can inspect the document, choose a high-value extraction route, and
-return an Agent Document Twin with Markdown, chunks, document maps, table
+return an structured document result with Markdown, chunks, document maps, table
 signals, layout routing, trust signals, accessibility routing, OCR provenance,
 and visual evidence hooks.
 
 The public tool surface is also smaller and easier to learn:
 
-- `read_pdf` for smart Agent Document Twin extraction.
+- `read_pdf` for smart structured document result extraction.
 - `search_pdf` for cheap source-backed text evidence.
 - `pdf_evidence` for focused inspect, render, crop, OCR, and visual-analysis
   operations.

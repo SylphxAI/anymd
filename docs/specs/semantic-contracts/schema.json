@@ -30,7 +30,7 @@
     "tools": {
       "type": "array",
       "minItems": 1,
-      "items": { "type": "string", "enum": ["read_pdf", "search_pdf", "pdf_evidence"] }
+      "items": { "type": "string", "enum": ["read_pdf", "search_pdf", "pdf_compare", "pdf_evidence"] }
     },
     "matrixPaths": {
       "type": "array",

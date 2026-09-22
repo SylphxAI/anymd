@@ -4,6 +4,7 @@ pub mod evidence;
 pub mod http_transport;
 mod ocr_evidence;
 mod page_selection;
+pub mod pdf_compare;
 pub mod pdf_evidence;
 pub mod read_pdf;
 mod region_analysis_evidence;
@@ -26,13 +27,13 @@ use rmcp::{
     tool, tool_handler, tool_router, ErrorData, ServerHandler,
 };
 
-use crate::schema::{PdfEvidenceArgs, PdfEvidenceOperation, ReadPdfArgs, SearchPdfArgs};
+use crate::schema::{ComparePdfArgs, PdfEvidenceArgs, PdfEvidenceOperation, ReadPdfArgs, SearchPdfArgs};
 use crate::source_access::SourceAccessPolicy;
 use serde_json::Value;
 
 pub const SERVER_NAME: &str = "citra";
 /// Pure-Rust MCP server version — tracks the published npm product line when default.
-pub const SERVER_VERSION: &str = "5.0.3";
+pub const SERVER_VERSION: &str = "5.0.4";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
     "@sylphx/citra sole-Rust MCP server (platform native binary). \
@@ -188,6 +189,20 @@ impl PdfReaderMcp {
         } else {
             read_pdf::read_pdf(value)
         }
+    }
+
+    #[tool(
+        description = "Compare two local PDFs at text and page level and report changed pages and terms."
+    )]
+    pub async fn pdf_compare(
+        &self,
+        Parameters(args): Parameters<ComparePdfArgs>,
+    ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        args.validate().map_err(|message| ErrorData::invalid_params(message, None))?;
+        let value = serde_json::to_value(args).map_err(|error| {
+            ErrorData::invalid_params(format!("Failed to encode pdf_compare args: {error}"), None)
+        })?;
+        pdf_compare::pdf_compare(value)
     }
 
     #[tool(
@@ -355,6 +370,7 @@ mod tests {
         let names: Vec<_> = tools.iter().map(|tool| tool.name.to_string()).collect();
         assert!(names.contains(&"read_pdf".to_string()));
         assert!(names.contains(&"search_pdf".to_string()));
+        assert!(names.contains(&"pdf_compare".to_string()));
         assert!(names.contains(&"pdf_evidence".to_string()));
     }
 
@@ -376,11 +392,16 @@ mod tests {
                 .get("properties")
                 .and_then(|v| v.as_object())
                 .expect("properties object");
-            assert!(
-                props.contains_key("sources"),
-                "tool {} must document sources in inputSchema",
-                tool.name
-            );
+            if tool.name == "pdf_compare" {
+                assert!(props.contains_key("before"), "pdf_compare must document before");
+                assert!(props.contains_key("after"), "pdf_compare must document after");
+            } else {
+                assert!(
+                    props.contains_key("sources"),
+                    "tool {} must document sources in inputSchema",
+                    tool.name
+                );
+            }
             if tool.name == "search_pdf" {
                 assert!(props.contains_key("query"));
             }

@@ -51,6 +51,11 @@ export const readPdfArgsSchema = object({
       )
     )
   ),
+  profile: optional(
+    union(literal('fast'), literal('quality'), literal('research')).describe(
+      'Predictable work profile. Fast is the cheap default; quality requests richer extraction.'
+    )
+  ),
   auto_detail: optional(
     readPdfAutoDetailSchema.describe(
       'Automatic extraction depth. fast returns the core document twin route, balanced adds trust/accessibility evidence, and full adds fuller text/HTML/structure outputs. Defaults to balanced.'

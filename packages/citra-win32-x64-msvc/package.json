@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/citra-win32-x64-msvc",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "description": "Optional pure-Rust MCP server binary for win32-x64-msvc. Installed as an optionalDependency of @sylphx/citra. Sole-Rust; fail-closed if missing.",
   "license": "MIT",
   "os": [

@@ -1,6 +1,6 @@
 # Design Philosophy
 
-Citra is designed as an Agent Document Twin engine for MCP clients. The
+Citra is designed as an structured document result engine for MCP clients. The
 core design goal is to preserve source evidence and routing signals across text,
 visual, semantic, trust, accessibility, OCR, and provider-enriched layers while
 keeping one sole-Rust production engine local-first.

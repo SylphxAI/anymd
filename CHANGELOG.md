@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.0.4
+
+- Add `pdf_compare` for page- and term-level document review.
+- Add explicit `profile` controls (`fast`, `quality`, `research`) and remove automatic work from the public product story.
+- Refresh the public product surface around citable PDF answers.
 ## 5.0.3
 
 ### Patch Changes

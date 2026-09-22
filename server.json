@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.SylphxAI/citra",
   "title": "Citra",
-  "description": "Local-first PDF evidence for agents: structure, tables, OCR, and citations. SDK · CLI · MCP.",
+  "description": "Citra — PDF answers with page-level proof: structure, tables, OCR, and page citations.",
   "repository": {
     "url": "https://github.com/SylphxAI/citra",
     "source": "github"
   },
-  "version": "5.0.3",
+  "version": "5.0.4",
   "websiteUrl": "https://sylphxai.github.io/citra/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@sylphx/citra",
-      "version": "5.0.3",
+      "version": "5.0.4",
       "transport": {
         "type": "stdio"
       }

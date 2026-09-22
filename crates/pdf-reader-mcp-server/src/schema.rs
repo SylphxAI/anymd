@@ -110,6 +110,8 @@ pub struct ReadPdfArgs {
     pub auto: Option<bool>,
     #[schemars(description = "Automatic extraction depth: fast | balanced | full.")]
     pub auto_detail: Option<ReadPdfAutoDetail>,
+    #[schemars(description = "Predictable work profile: fast, quality, or research.")]
+    pub profile: Option<String>,
     #[schemars(range(min = 1, max = 20))]
     pub sample_pages: Option<u32>,
     pub include_full_text: Option<bool>,
@@ -152,6 +154,33 @@ impl ReadPdfArgs {
         }
         validate_u32_range("sample_pages", self.sample_pages, 1, 20)?;
         validate_u32_min("max_visual_enrichments", self.max_visual_enrichments, 1)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct ComparePdfArgs {
+    #[schemars(length(min = 1), description = "Local PDF path for the before document.")]
+    pub before: String,
+    #[schemars(length(min = 1), description = "Local PDF path for the after document.")]
+    pub after: String,
+    #[schemars(range(min = 1))]
+    pub max_file_bytes: Option<u64>,
+    #[schemars(range(min = 0, max = 1000))]
+    pub context_chars: Option<u32>,
+}
+
+impl ComparePdfArgs {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.before.trim().is_empty() || self.after.trim().is_empty() {
+            return Err("before and after are required".into());
+        }
+        if self.before == self.after {
+            return Err("before and after must be different PDFs".into());
+        }
+        if self.context_chars.is_some_and(|value| value > 1000) {
+            return Err("context_chars must be <= 1000".into());
+        }
+        Ok(())
     }
 }
 

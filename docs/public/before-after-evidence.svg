@@ -33,7 +33,7 @@
   <!-- right card -->
   <rect x="620" y="150" width="520" height="420" rx="24" fill="#052e1a" stroke="#166534" stroke-width="2"/>
   <text x="650" y="200" class="label">WITH PDF READER MCP</text>
-  <text x="650" y="240" class="card-title good">Agent Document Twin</text>
+  <text x="650" y="240" class="card-title good">structured document result</text>
   <text x="650" y="290" class="body">Page 14 · Table 3 · cell (4,2) = $12.4M</text>
   <text x="650" y="330" class="body">Rows, columns, cells, geometry</text>
   <text x="650" y="370" class="body">Page + bounding-box provenance</text>

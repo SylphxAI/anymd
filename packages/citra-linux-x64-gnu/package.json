@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/citra-linux-x64-gnu",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "description": "Optional pure-Rust MCP server binary for linux-x64-gnu. Installed as an optionalDependency of @sylphx/citra. Sole-Rust; fail-closed if missing.",
   "license": "MIT",
   "os": [

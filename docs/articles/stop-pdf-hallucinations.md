@@ -35,7 +35,7 @@ No system prompt fixes missing evidence.
 ## What evidence-first reading changes
 
 PDF Reader MCP does not stop at text extraction. One `read_pdf` call returns an
-**Agent Document Twin**:
+**structured document result**:
 
 - **Markdown and chunks** the agent can read.
 - **Tables with cell geometry** so structure survives.

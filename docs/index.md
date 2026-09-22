@@ -82,7 +82,7 @@ hero:
     <div class="cit-step">
   <div class="n">Step 2</div>
   <h3>Point at a PDF</h3>
-  <p>A single <code>read_pdf</code> call profiles the document and returns the Agent Document Twin: text, tables, structure, and citations.</p>
+  <p>A single <code>read_pdf</code> call profiles the document and returns the structured document result: text, tables, structure, and citations.</p>
 </div>
     <div class="cit-step">
   <div class="n">Step 3</div>
@@ -94,7 +94,7 @@ hero:
 
 <div class="cit-section">
   <span class="cit-eyebrow">What you get</span>
-  <h2 class="cit-h2">Three tools. One surface.</h2>
+  <h2 class="cit-h2">Four tools. One surface.</h2>
   <p class="cit-lead">Few, powerful, obvious — no near-duplicate vanity tools. Advanced work lives behind one operation enum.</p>
   <div class="cit-grid three" style="margin-top:26px">
     <div class="cit-card">
@@ -106,6 +106,11 @@ hero:
   <div class="cit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></div>
   <h3>search_pdf</h3>
   <p>Cheap literal retrieval first: page and bounding-box locators before you spend tokens on a deep read.</p>
+</div>
+    <div class="cit-card">
+  <div class="cit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3" /> <path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" /> <path d="M12 8v8" /> <path d="m9 13 3 3 3-3" /></svg></div>
+  <h3>pdf_compare</h3>
+  <p>Compare two local PDFs at page and term level without turning the whole document pair into context.</p>
 </div>
     <div class="cit-card">
   <div class="cit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14" /> <path d="M18 22V8a2 2 0 0 0-2-2H2" /></svg></div>

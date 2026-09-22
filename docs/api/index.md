@@ -6,7 +6,7 @@ the MCP tools below over stdio or the optional HTTP transport.
 
 The V3 API is organized around one smart default path. Agents call `read_pdf`
 first; when no explicit `include_*` options are supplied, it profiles the PDF,
-chooses high-value extraction options, and returns the Agent Document Twin in
+chooses high-value extraction options, and returns the structured document result in
 one response. `search_pdf` stays separate for cheap literal evidence retrieval,
 and `pdf_evidence` consolidates focused inspect, render, crop, OCR, and visual
 analysis operations behind one specialist tool.
@@ -58,7 +58,7 @@ private-IP, and size policies documented in the guide.
 
 ## `read_pdf`
 
-`read_pdf` is the primary Agent Document Twin entrypoint. With only `sources`,
+`read_pdf` is the primary structured document result entrypoint. With only `sources`,
 it defaults to automatic routing. Add `auto: false` or any explicit
 `include_*` option when the caller wants exact manual control.
 

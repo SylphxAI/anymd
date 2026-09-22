@@ -20,7 +20,7 @@
 
 ## Family
 
-Instrument line (local-first evidence). Not deliberation (Consultant). Prism is retired.
+product line (local-first evidence). Not deliberation (Consultant). Prism is retired.
 
 ## Zero-config CTA
 

@@ -5,10 +5,20 @@
   "status": "active",
   "layer": "interface",
   "capability": "mcp_surface",
-  "tools": ["read_pdf", "search_pdf", "pdf_evidence"],
-  "matrixPaths": ["tools.read_pdf", "tools.search_pdf", "tools.pdf_evidence"],
+  "tools": [
+    "read_pdf",
+    "search_pdf",
+    "pdf_compare",
+    "pdf_evidence"
+  ],
+  "matrixPaths": [
+    "tools.read_pdf",
+    "tools.search_pdf",
+    "tools.pdf_compare",
+    "tools.pdf_evidence"
+  ],
   "mustHold": [
-    "Tool names remain read_pdf, search_pdf, and pdf_evidence for the published surface",
+    "Tool names remain read_pdf, search_pdf, pdf_compare, and pdf_evidence for the published surface",
     "Required/optional input fields follow the published JSON Schema",
     "JSON-RPC/MCP envelopes and isError classification remain compatible",
     "Page numbers are 1-based",
