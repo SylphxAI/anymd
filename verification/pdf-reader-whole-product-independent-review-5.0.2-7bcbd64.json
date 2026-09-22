@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "profile": "pdf_reader_whole_product_independent_review",
+  "reviewer": "codex-citra-repo-rename-identity-migration",
+  "reviewedAt": "2026-09-22T02:45:00Z",
+  "candidate": {
+    "repository": "SylphxAI/citra",
+    "sha": "7bcbd645a5501748c0d44f29a584e884f3147402",
+    "shortSha": "7bcbd64",
+    "version": "5.0.2",
+    "package": "@sylphx/citra",
+    "bin": "citra",
+    "published": false,
+    "parentProductPin": "verification/pdf-reader-whole-product-independent-review-5.0.2-31367c5.json"
+  },
+  "outcome": "review_pass_unfreeze_authorized_publish_identity_migration",
+  "unfreezeAuthorized": true,
+  "soleRuntimeAuthorized": true,
+  "tsRetirementAuthorized": true,
+  "performanceClaimsAuthorized": true,
+  "goalCompleteAuthorized": false,
+  "notes": [
+    "Reviews the repository identity migration: SylphxAI/pdf-reader-mcp renamed to SylphxAI/citra (same repo id 960549454; the retired slug redirects). GitHub redirects every old location except project-site URLs, so the Pages path had to move with it.",
+    "Changes reviewed: VitePress base /pdf-reader-mcp/ -> /citra/ plus its canonical/og/twitter URLs; the websiteUrl the MCP server advertises on initialize (crates/pdf-reader-mcp-server/src/lib.rs) - the one user-visible runtime change; identity declarations in package.json, server.json, Cargo.toml, packages/citra-*/package.json and scripts/native/sync-native-package-manifests.ts; README/CONTRIBUTING/docs links. No capability, tool-surface, or extraction behavior changed.",
+    "Verification on this candidate: bun run check clean, bun run typecheck clean, bun run docs:build clean and emits /citra/ asset paths (the base change is what keeps the site working at its new location), cargo test -p pdf-reader-mcp-server all green.",
+    "Nothing renamed but the repository path. Tracked-file occurrence counts identical before/after: @sylphx/pdf-reader-mcp (249), pdf-reader-mcp-server (315), pdf-reader-mcp-oracle (23), pdf-reader-mcp-corpus (26), pdf-reader-mcp-migration-ledger (3). The breaking sylphxai.github.io/pdf-reader-mcp form went 8 -> 0.",
+    "Historical receipts (verification/, benchmark-artifacts/, CHANGELOG.md, docs/specs migration ledgers and release closeouts, test issue links) left untouched on purpose: they record past state and their repo URLs still redirect.",
+    "Known bounded residue: @sylphx/citra@5.0.2's published npm homepage is immutable and points at the old site path; this candidate corrects it for future releases.",
+    "Carries forward sole-Rust delivery authority and TS retirement from the parent pin. No new capability or performance claim is made."
+  ]
+}
