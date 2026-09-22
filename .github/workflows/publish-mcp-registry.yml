@@ -225,12 +225,23 @@ jobs:
           # failed with "failed to read response: EOF" and the step exited with
           # the retired identity still active. `--yes` skips the prompt, which is
           # the whole reason this never worked.
-          ./mcp-publisher status \
-            --status deprecated \
-            --all-versions \
-            --yes \
-            --message 'Retired identity. Use io.github.SylphxAI/citra.' \
-            io.github.SylphxAI/pdf-reader-mcp
+          # Idempotent: a re-run on an already-deprecated identity answers 400
+          # "No changes to apply: all versions already have the requested status
+          # and message". That is success, not a failure - the state is already
+          # exactly what this step asks for.
+          if ! out=$(./mcp-publisher status \
+              --status deprecated \
+              --all-versions \
+              --yes \
+              --message 'Retired identity. Use io.github.SylphxAI/citra.' \
+              io.github.SylphxAI/pdf-reader-mcp 2>&1); then
+            if grep -qE 'already set to the provided values|No changes to apply' <<<"$out"; then
+              echo "Retired identity already deprecated; nothing to do"
+            else
+              echo "$out" >&2
+              exit 1
+            fi
+          fi
           URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fpdf-reader-mcp/versions/latest'
           for attempt in $(seq 1 24); do
             if curl -fsS "$URL" > "$RUNNER_TEMP/retired-registry.json" && \
