@@ -17,7 +17,7 @@ Method bounds apply: first request still pays full parse cost; warm path may use
 process-local identical-request cache; not a multi-host guarantee.
 
 See [Product proof](/guide/product-proof) and the
-[4.1.0 report](https://github.com/SylphxAI/pdf-reader-mcp/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md).
+[4.1.0 report](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md).
 
 ---
 

@@ -4,11 +4,11 @@
   "title": "Citra",
   "description": "Local-first PDF evidence for agents: structure, tables, OCR, and citations. SDK · CLI · MCP.",
   "repository": {
-    "url": "https://github.com/SylphxAI/pdf-reader-mcp",
+    "url": "https://github.com/SylphxAI/citra",
     "source": "github"
   },
   "version": "5.0.2",
-  "websiteUrl": "https://sylphxai.github.io/pdf-reader-mcp/",
+  "websiteUrl": "https://sylphxai.github.io/citra/",
   "packages": [
     {
       "registryType": "npm",

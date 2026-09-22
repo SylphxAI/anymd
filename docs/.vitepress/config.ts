@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress';
 
 export default defineConfig({
-  base: '/pdf-reader-mcp/',
+  base: '/citra/',
   cleanUrls: true,
   title: 'Citra',
   description:
@@ -30,7 +30,7 @@ export default defineConfig({
           'The most-starred PDF MCP server. One read_pdf call returns markdown, tables, trust signals, and source evidence with page numbers and bounding boxes. Local-first and benchmark-gated.',
       },
     ],
-    ['meta', { property: 'og:url', content: 'https://sylphxai.github.io/pdf-reader-mcp/' }],
+    ['meta', { property: 'og:url', content: 'https://sylphxai.github.io/citra/' }],
     ['meta', { property: 'og:site_name', content: 'Citra' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: 'Citra' }],
@@ -43,8 +43,8 @@ export default defineConfig({
       },
     ],
     ['meta', { name: 'twitter:site', content: '@sylphxai' }],
-    ['meta', { property: 'og:image', content: 'https://sylphxai.github.io/pdf-reader-mcp/og-image.png' }],
-    ['meta', { name: 'twitter:image', content: 'https://sylphxai.github.io/pdf-reader-mcp/og-image.png' }],
+    ['meta', { property: 'og:image', content: 'https://sylphxai.github.io/citra/og-image.png' }],
+    ['meta', { name: 'twitter:image', content: 'https://sylphxai.github.io/citra/og-image.png' }],
     [
       'meta',
       {
@@ -55,7 +55,7 @@ export default defineConfig({
     ],
     ['meta', { name: 'author', content: 'Sylphx' }],
     ['meta', { name: 'robots', content: 'index, follow' }],
-    ['link', { rel: 'canonical', href: 'https://sylphxai.github.io/pdf-reader-mcp/' }],
+    ['link', { rel: 'canonical', href: 'https://sylphxai.github.io/citra/' }],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
   ],
 
@@ -130,12 +130,12 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/SylphxAI/pdf-reader-mcp' },
+      { icon: 'github', link: 'https://github.com/SylphxAI/citra' },
       { icon: 'npm', link: 'https://www.npmjs.com/package/@sylphx/citra' },
     ],
 
     editLink: {
-      pattern: 'https://github.com/SylphxAI/pdf-reader-mcp/edit/main/docs/:path',
+      pattern: 'https://github.com/SylphxAI/citra/edit/main/docs/:path',
       text: 'Edit this page on GitHub',
     },
 

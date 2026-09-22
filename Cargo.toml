@@ -11,8 +11,8 @@ resolver = "2"
 version = "3.1.1"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/SylphxAI/pdf-reader-mcp"
-homepage = "https://github.com/SylphxAI/pdf-reader-mcp"
+repository = "https://github.com/SylphxAI/citra"
+homepage = "https://github.com/SylphxAI/citra"
 authors = ["Sylphx <contact@sylphx.com>"]
 readme = "README.md"
 
@@ -20,7 +20,7 @@ readme = "README.md"
 # Keep debuginfo available via separate tooling/dSYM workflows in CI when needed.
 
 # pdf-extract depends on adobe-cmap-parser 0.4.1, which panics on malformed
-# CMap destinations (see SylphxAI/pdf-reader-mcp#608). Vendor a patched copy
+# CMap destinations (see SylphxAI/citra#608). Vendor a patched copy
 # so arbitrary PDFs can never abort the server from a CMap parse panic.
 [patch.crates-io]
 adobe-cmap-parser = { path = "vendor/adobe-cmap-parser" }

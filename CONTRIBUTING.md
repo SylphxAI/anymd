@@ -16,7 +16,7 @@ Thank you for considering contributing! We welcome contributions from the commun
    - Add tests for your changes and ensure all tests pass.
    - Ensure your commit messages follow the conventional commits standard.
    - Push your branch to your fork.
-   - Open a Pull Request against the `main` branch of the [SylphxAI/pdf-reader-mcp](https://github.com/SylphxAI/pdf-reader-mcp) repository.
+   - Open a Pull Request against the `main` branch of the [SylphxAI/citra](https://github.com/SylphxAI/citra) repository.
 
 ## Development Setup
 
@@ -29,7 +29,7 @@ This project uses [Bun](https://bun.sh/) and [Biome](https://biomejs.dev/).
 ### Getting Started
 
 ```bash
-git clone https://github.com/SylphxAI/pdf-reader-mcp.git
+git clone https://github.com/SylphxAI/citra.git
 cd pdf-reader-mcp
 bun install
 bun run build

@@ -22,10 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SylphxAI/pdf-reader-mcp.git",
+    "url": "git+https://github.com/SylphxAI/citra.git",
     "directory": "packages/citra-darwin-arm64"
   },
-  "homepage": "https://github.com/SylphxAI/pdf-reader-mcp#readme",
+  "homepage": "https://github.com/SylphxAI/citra#readme",
   "engines": {
     "node": ">=18"
   },

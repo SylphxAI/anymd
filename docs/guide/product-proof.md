@@ -54,7 +54,7 @@ claude mcp add pdf-reader -- npx @sylphx/citra
 
 **Outcome:** OCR kept separate from selectable text, with page evidence for verification.
 
-More copy-ready examples: [examples/demo](https://github.com/SylphxAI/pdf-reader-mcp/tree/main/examples/demo).
+More copy-ready examples: [examples/demo](https://github.com/SylphxAI/citra/tree/main/examples/demo).
 
 ## Why agents need more than text
 
@@ -92,8 +92,8 @@ Controlled **same-host linux-x64** dual-mode A/B vs `@sylphx/pdf-reader-mcp@3.0.
 
 Details:
 
-- [4.1.0 performance report](https://github.com/SylphxAI/pdf-reader-mcp/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
-- [claims policy](https://github.com/SylphxAI/pdf-reader-mcp/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
+- [4.1.0 performance report](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
+- [claims policy](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
 
 ## Engine
 

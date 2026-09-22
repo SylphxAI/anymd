@@ -43,10 +43,10 @@ for (const [platformId, meta] of Object.entries(NATIVE_PLATFORM_PACKAGES)) {
   pkg.scripts = { ...(typeof pkg.scripts === 'object' && pkg.scripts ? pkg.scripts : {}), prepublishOnly };
   pkg.repository = {
     type: 'git',
-    url: 'git+https://github.com/SylphxAI/pdf-reader-mcp.git',
+    url: 'git+https://github.com/SylphxAI/citra.git',
     directory: meta.packageDir,
   };
-  pkg.homepage = 'https://github.com/SylphxAI/pdf-reader-mcp#readme';
+  pkg.homepage = 'https://github.com/SylphxAI/citra#readme';
   pkg.engines = { node: '>=18' };
   // Stage B: publishable when binary present. Never leave private:true freeze.
   delete pkg.private;

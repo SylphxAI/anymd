@@ -267,7 +267,7 @@ impl ServerHandler for PdfReaderMcp {
                     .with_description(
                         "@sylphx/citra sole-Rust MCP server (native binary; no TypeScript PDF runtime)",
                     )
-                    .with_website_url("https://sylphxai.github.io/pdf-reader-mcp/"),
+                    .with_website_url("https://sylphxai.github.io/citra/"),
             )
             .with_instructions(SERVER_INSTRUCTIONS)
     }
@@ -619,7 +619,7 @@ mod tests {
 
     #[tokio::test]
     async fn read_pdf_contains_malformed_cff_custom_encoding_panic() {
-        // Regression for SylphxAI/pdf-reader-mcp#660: the CFF Custom encoding
+        // Regression for SylphxAI/citra#660: the CFF Custom encoding
         // panic must cross the MCP boundary as ErrorData, not kill the native
         // server process or leave the tool call timing out.
         let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(
@@ -639,7 +639,7 @@ mod tests {
 
     #[tokio::test]
     async fn read_pdf_reports_malformed_inline_image_as_error() {
-        // Regression for SylphxAI/pdf-reader-mcp#675: a malformed inline
+        // Regression for SylphxAI/citra#675: a malformed inline
         // image (missing `/CS` without `/IM`) panics inside lopdf 0.42's
         // content parser. It must cross the MCP boundary as ErrorData
         // naming the page, not kill the native server or time out the call.
@@ -744,7 +744,7 @@ mod tests {
 
     #[tokio::test]
     async fn search_pdf_handles_malformed_cid_cmap_fixture_without_aborting() {
-        // Regression for SylphxAI/pdf-reader-mcp#608: a pdfTeX ToUnicode CMap
+        // Regression for SylphxAI/citra#608: a pdfTeX ToUnicode CMap
         // using 1-byte beginbfrange destinations (like <C5> <D6> <C5>) made the
         // upstream adobe-cmap-parser panic with "bad length of hexstring",
         // aborting the whole MCP server. The tool entrypoint must return a
