@@ -1,6 +1,6 @@
 {
   "profile": "pdf_corpus_benchmark",
-  "generated_at": "2026-09-20T04:16:56.543Z",
+  "generated_at": "2026-09-22T05:35:34.202Z",
   "corpus_scope": "checked-in repository PDFs plus runtime-generated report, scanned-page, malformed, and encrypted archetypes exercised through read_pdf agent-document-twin flows",
   "case_count": 6,
   "assertion_count": 23,
@@ -219,7 +219,7 @@
         "selectable_text",
         "text_layer"
       ],
-      "duration_ms": 130.72,
+      "duration_ms": 138.68,
       "assertion_count": 6,
       "passed_assertion_count": 6,
       "score": 1,
@@ -322,7 +322,7 @@
         "reading_order",
         "runtime_generated"
       ],
-      "duration_ms": 20.97,
+      "duration_ms": 16.72,
       "assertion_count": 6,
       "passed_assertion_count": 6,
       "score": 1,
@@ -438,7 +438,7 @@
         "scanned_page",
         "source_render_evidence"
       ],
-      "duration_ms": 62.96,
+      "duration_ms": 61.1,
       "assertion_count": 3,
       "passed_assertion_count": 3,
       "score": 1,
@@ -517,7 +517,7 @@
         "table_structure",
         "word_boxes"
       ],
-      "duration_ms": 52.73,
+      "duration_ms": 51.75,
       "assertion_count": 4,
       "passed_assertion_count": 4,
       "score": 1,
@@ -610,7 +610,7 @@
         "runtime_generated",
         "trust_routing"
       ],
-      "duration_ms": 3.88,
+      "duration_ms": 3.83,
       "assertion_count": 2,
       "passed_assertion_count": 2,
       "score": 1,
@@ -625,7 +625,7 @@
             "structured_failure": true
           },
           "observed": {
-            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WSsGN6/corpus-malformed.pdf."
+            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WYQEqG/corpus-malformed.pdf."
           }
         },
         {
@@ -635,7 +635,7 @@
             "sanitized_error": true
           },
           "observed": {
-            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WSsGN6/corpus-malformed.pdf."
+            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WYQEqG/corpus-malformed.pdf."
           }
         }
       ]
@@ -649,7 +649,7 @@
         "runtime_generated",
         "trust_routing"
       ],
-      "duration_ms": 2.2,
+      "duration_ms": 2.05,
       "assertion_count": 2,
       "passed_assertion_count": 2,
       "score": 1,
@@ -664,7 +664,7 @@
             "structured_failure": true
           },
           "observed": {
-            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WSsGN6/corpus-encrypted.pdf."
+            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WYQEqG/corpus-encrypted.pdf."
           }
         },
         {
@@ -674,7 +674,7 @@
             "sanitized_error": true
           },
           "observed": {
-            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WSsGN6/corpus-encrypted.pdf."
+            "message": "All PDF sources failed to process: Failed to load PDF document from /tmp/pdf-reader-mcp-corpus-WYQEqG/corpus-encrypted.pdf."
           }
         }
       ]

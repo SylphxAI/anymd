@@ -32526,21 +32526,60 @@ import { readFile } from "node:fs/promises";
 // src/engine/rust-hash.ts
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import path from "node:path";
+import path2 from "node:path";
 import { fileURLToPath } from "node:url";
-var here = path.dirname(fileURLToPath(import.meta.url));
+
+// src/utils/cargoTargetDir.ts
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+var cache = new Map;
+var resolveCargoTargetDir = (root) => {
+  const key = path.resolve(root);
+  const hit = cache.get(key);
+  if (hit !== undefined)
+    return hit;
+  let resolved = null;
+  try {
+    const output = execFileSync("cargo", ["metadata", "--format-version", "1", "--no-deps"], {
+      cwd: key,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    });
+    resolved = JSON.parse(output).target_directory ?? null;
+  } catch {}
+  if (!resolved) {
+    const envDir = process.env["CARGO_TARGET_DIR"]?.trim();
+    resolved = envDir ? path.resolve(envDir) : path.join(key, "target");
+  }
+  cache.set(key, resolved);
+  return resolved;
+};
+var resolveCargoProfileDir = (root, profile) => path.join(resolveCargoTargetDir(root), profile);
+var cargoBinaryCandidates = (root, name, platformId) => {
+  const names = process.platform === "win32" ? [`${name}.exe`, name] : [name, `${name}.exe`];
+  const out = [];
+  for (const candidateName of names) {
+    out.push(path.join(resolveCargoProfileDir(root, "release"), candidateName));
+    out.push(path.join(resolveCargoProfileDir(root, "debug"), candidateName));
+  }
+  for (const candidateName of names) {
+    out.push(path.join(root, "target/release", candidateName));
+    out.push(path.join(root, "target/debug", candidateName));
+  }
+  return out;
+};
+
+// src/engine/rust-hash.ts
+var here = path2.dirname(fileURLToPath(import.meta.url));
 function resolveRustCliBinary() {
   const env = process.env["PDF_READER_CLI"];
   if (env && existsSync(env)) {
     return env;
   }
-  const release = path.join(here, "../../target/release/pdf-reader-cli");
-  if (existsSync(release)) {
-    return release;
-  }
-  const debug = path.join(here, "../../target/debug/pdf-reader-cli");
-  if (existsSync(debug)) {
-    return debug;
+  for (const candidate of cargoBinaryCandidates(path2.join(here, "../.."), "pdf-reader-cli")) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
   }
   return "pdf-reader-cli";
 }
@@ -32581,15 +32620,15 @@ function hashLocalFileViaRustEngine(filePath, maxFileBytes = 256 * 1024 * 1024) 
 }
 
 // src/evidence/envelope.ts
-async function hashLocalFile(path2) {
+async function hashLocalFile(path3) {
   if (shouldUseRustHashEngine()) {
-    const rustHash = hashLocalFileViaRustEngine(path2);
+    const rustHash = hashLocalFileViaRustEngine(path3);
     if (rustHash) {
       return rustHash;
     }
   }
   try {
-    const bytes = await readFile(path2);
+    const bytes = await readFile(path3);
     return createHash2("sha256").update(bytes).digest("hex");
   } catch {
     return;
@@ -32829,7 +32868,7 @@ var pdfEvidenceArgsSchema = object4({
 // src/pdf/regionAnalysis.ts
 import fs4 from "node:fs/promises";
 import os from "node:os";
-import path4 from "node:path";
+import path5 from "node:path";
 
 // src/utils/errors.ts
 class PdfError extends Error {
@@ -38944,33 +38983,33 @@ function renderRichText({
   container.append(fragment);
 }
 function makePathFromDrawOPS(data) {
-  const path2 = new Path2D;
+  const path3 = new Path2D;
   if (!data) {
-    return path2;
+    return path3;
   }
   for (let i = 0, ii = data.length;i < ii; ) {
     switch (data[i++]) {
       case DrawOPS.moveTo:
-        path2.moveTo(data[i++], data[i++]);
+        path3.moveTo(data[i++], data[i++]);
         break;
       case DrawOPS.lineTo:
-        path2.lineTo(data[i++], data[i++]);
+        path3.lineTo(data[i++], data[i++]);
         break;
       case DrawOPS.curveTo:
-        path2.bezierCurveTo(data[i++], data[i++], data[i++], data[i++], data[i++], data[i++]);
+        path3.bezierCurveTo(data[i++], data[i++], data[i++], data[i++], data[i++], data[i++]);
         break;
       case DrawOPS.quadraticCurveTo:
-        path2.quadraticCurveTo(data[i++], data[i++], data[i++], data[i++]);
+        path3.quadraticCurveTo(data[i++], data[i++], data[i++], data[i++]);
         break;
       case DrawOPS.closePath:
-        path2.closePath();
+        path3.closePath();
         break;
       default:
         warn(`Unrecognized drawing path operator: ${data[i - 1]}`);
         break;
     }
   }
-  return path2;
+  return path3;
 }
 var es_iterator_take = __webpack_require__(4972);
 var es_promise_with_resolvers = __webpack_require__(4628);
@@ -45167,11 +45206,11 @@ class FontFaceObject {
     } catch (ex) {
       warn(`getPathGenerator - ignoring character: "${ex}".`);
     }
-    const path2 = makePathFromDrawOPS(cmds?.path);
+    const path3 = makePathFromDrawOPS(cmds?.path);
     if (!this.fontExtraProperties) {
       objs.delete(objId);
     }
-    return this.compiledGlyphs[character] = path2;
+    return this.compiledGlyphs[character] = path3;
   }
   get black() {
     return this.#fontData.black;
@@ -47293,7 +47332,7 @@ class TilingPattern {
     Util.singularValueDecompose2dScale(this.baseTransform, scale);
     return [matrixScaleX * scale[0], matrixScaleY * scale[1]];
   }
-  drawPattern(owner, path2, useEOFill = false, [n, m], opIdx) {
+  drawPattern(owner, path3, useEOFill = false, [n, m], opIdx) {
     const [x0, y0, x1, y1] = this.bbox;
     const dependencyTracker = owner.dependencyTracker;
     if (dependencyTracker) {
@@ -47301,9 +47340,9 @@ class TilingPattern {
     }
     owner.save();
     if (useEOFill) {
-      owner.ctx.clip(path2, "evenodd");
+      owner.ctx.clip(path3, "evenodd");
     } else {
-      owner.ctx.clip(path2);
+      owner.ctx.clip(path3);
     }
     owner.ctx.setTransform(...this.patternBaseMatrix);
     owner.ctx.translate(n * this.xstep, m * this.ystep);
@@ -47985,13 +48024,13 @@ class CanvasGraphics {
     this.#knockoutElementDepth = 0;
     this.#knockoutGroupLevel = 0;
     this.cachedPatterns.clear();
-    for (const cache of this._cachedBitmapsMap.values()) {
-      for (const canvas of cache.values()) {
+    for (const cache2 of this._cachedBitmapsMap.values()) {
+      for (const canvas of cache2.values()) {
         if (typeof HTMLCanvasElement !== "undefined" && canvas instanceof HTMLCanvasElement) {
           canvas.width = canvas.height = 0;
         }
       }
-      cache.clear();
+      cache2.clear();
     }
     this._cachedBitmapsMap.clear();
     this.#drawFilter();
@@ -48085,12 +48124,12 @@ class CanvasGraphics {
     const fillColor = this.current.fillColor;
     const isPatternFill = this.current.patternFill;
     const currentTransform = getCurrentTransform(ctx);
-    let cache, cacheKey2, scaled, maskCanvas;
+    let cache2, cacheKey2, scaled, maskCanvas;
     if ((img.bitmap || img.data) && img.count > 1) {
       const mainKey = img.bitmap || img.data.buffer;
       cacheKey2 = JSON.stringify(isPatternFill ? currentTransform : [currentTransform.slice(0, 4), fillColor]);
-      cache = this._cachedBitmapsMap.getOrInsertComputed(mainKey, makeMap);
-      const cachedImage = cache.get(cacheKey2);
+      cache2 = this._cachedBitmapsMap.getOrInsertComputed(mainKey, makeMap);
+      const cachedImage = cache2.get(cacheKey2);
       if (cachedImage && !isPatternFill) {
         const offsetX2 = Math.round(Math.min(currentTransform[0], currentTransform[2]) + currentTransform[4]);
         const offsetY2 = Math.round(Math.min(currentTransform[1], currentTransform[3]) + currentTransform[5]);
@@ -48129,8 +48168,8 @@ class CanvasGraphics {
         this.canvasFactory.destroy(maskCanvas);
         maskCanvas = null;
       }
-      if (cache && isPatternFill) {
-        cache.set(cacheKey2, scaled);
+      if (cache2 && isPatternFill) {
+        cache2.set(cacheKey2, scaled);
         scaledEntry = null;
         maskCanvas = null;
       }
@@ -48147,13 +48186,13 @@ class CanvasGraphics {
     const inverse = Util.transform(getCurrentTransformInverse(fillCtx), [1, 0, 0, 1, -offsetX, -offsetY]);
     fillCtx.fillStyle = isPatternFill ? fillColor.getPattern(ctx, this, inverse, PathType.FILL, opIdx) : fillColor;
     fillCtx.fillRect(0, 0, width, height);
-    if (cache && !isPatternFill) {
-      cache.set(cacheKey2, fillCanvas.canvas);
+    if (cache2 && !isPatternFill) {
+      cache2.set(cacheKey2, fillCanvas.canvas);
     }
     this.dependencyTracker?.recordDependencies(opIdx, Dependencies.transformAndFill);
     return {
       canvas: fillCanvas.canvas,
-      canvasEntry: cache && !isPatternFill ? null : fillCanvas,
+      canvasEntry: cache2 && !isPatternFill ? null : fillCanvas,
       offsetX: Math.round(offsetX),
       offsetY: Math.round(offsetY)
     };
@@ -48658,15 +48697,15 @@ class CanvasGraphics {
     if (hasInnerCutout && maskX0 === layerOffsetX && maskY0 === layerOffsetY && maskX1 === layerOffsetX + layerWidth && maskY1 === layerOffsetY + layerHeight) {
       return;
     }
-    const path2 = new Path2D;
-    path2.rect(layerOffsetX, layerOffsetY, layerWidth, layerHeight);
+    const path3 = new Path2D;
+    path3.rect(layerOffsetX, layerOffsetY, layerWidth, layerHeight);
     if (hasInnerCutout) {
-      path2.rect(maskX0, maskY0, maskX1 - maskX0, maskY1 - maskY0);
+      path3.rect(maskX0, maskY0, maskX1 - maskX0, maskY1 - maskY0);
     }
     layerCtx.save();
     layerCtx.globalAlpha = alpha / 255;
     layerCtx.setTransform(1, 0, 0, 1, 0, 0);
-    layerCtx.clip(path2, "evenodd");
+    layerCtx.clip(path3, "evenodd");
     layerCtx.globalCompositeOperation = "destination-in";
     layerCtx.fillStyle = "#000000";
     layerCtx.fillRect(layerOffsetX, layerOffsetY, layerWidth, layerHeight);
@@ -48724,21 +48763,21 @@ class CanvasGraphics {
     this._cachedGetSinglePixelWidth = null;
   }
   constructPath(opIdx, op, data, minMax) {
-    let [path2] = data;
+    let [path3] = data;
     if (!minMax) {
-      path2 ||= data[0] = new Path2D;
+      path3 ||= data[0] = new Path2D;
       if (op !== OPS.stroke && op !== OPS.closeStroke) {
         this.current.tilingPatternDims = null;
       }
-      this[op](opIdx, path2);
+      this[op](opIdx, path3);
       return;
     }
     if (this.dependencyTracker !== null) {
       const outerExtraSize = op === OPS.stroke ? this.current.lineWidth / 2 : 0;
       this.dependencyTracker.resetBBox(opIdx).recordBBox(opIdx, this.ctx, minMax[0] - outerExtraSize, minMax[2] + outerExtraSize, minMax[1] - outerExtraSize, minMax[3] + outerExtraSize).recordDependencies(opIdx, ["transform"]);
     }
-    if (!(path2 instanceof Path2D)) {
-      path2 = data[0] = makePathFromDrawOPS(path2);
+    if (!(path3 instanceof Path2D)) {
+      path3 = data[0] = makePathFromDrawOPS(path3);
     }
     Util.axialAlignedBoundingBox(minMax, getCurrentTransform(this.ctx), this.current.minMax);
     const tilingDims = this.current.tilingPatternDims;
@@ -48750,13 +48789,13 @@ class CanvasGraphics {
         this.current.fillColor.updatePatternDims(clippedBBox, tilingDims);
       }
     }
-    this[op](opIdx, path2);
+    this[op](opIdx, path3);
     this._pathStartIdx = opIdx;
   }
   closePath(opIdx) {
     this.ctx.closePath();
   }
-  stroke(opIdx, path2, consumePath = true) {
+  stroke(opIdx, path3, consumePath = true) {
     const started = consumePath && this.#beginKnockoutElement(this.current.strokeAlpha);
     const ctx = this.ctx;
     const strokeColor = this.current.strokeColor;
@@ -48768,26 +48807,26 @@ class CanvasGraphics {
         ctx.strokeStyle = strokeColor.getPattern(ctx, this, getCurrentTransformInverse(ctx), PathType.STROKE, opIdx);
         if (baseTransform) {
           const newPath = new Path2D;
-          newPath.addPath(path2, ctx.getTransform().invertSelf().multiplySelf(baseTransform));
-          path2 = newPath;
+          newPath.addPath(path3, ctx.getTransform().invertSelf().multiplySelf(baseTransform));
+          path3 = newPath;
         }
-        this.rescaleAndStroke(path2, false);
+        this.rescaleAndStroke(path3, false);
         ctx.restore();
       } else {
-        this.rescaleAndStroke(path2, true);
+        this.rescaleAndStroke(path3, true);
       }
     }
     this.dependencyTracker?.recordDependencies(opIdx, Dependencies.stroke);
     if (consumePath) {
-      this.consumePath(opIdx, path2, this.current.getClippedPathBoundingBox(PathType.STROKE, getCurrentTransform(this.ctx)));
+      this.consumePath(opIdx, path3, this.current.getClippedPathBoundingBox(PathType.STROKE, getCurrentTransform(this.ctx)));
     }
     ctx.globalAlpha = this.current.fillAlpha;
     this.#endKnockoutElement(started);
   }
-  closeStroke(opIdx, path2) {
-    this.stroke(opIdx, path2);
+  closeStroke(opIdx, path3) {
+    this.stroke(opIdx, path3);
   }
-  fill(opIdx, path2, consumePath = true) {
+  fill(opIdx, path3, consumePath = true) {
     const started = consumePath && this.#beginKnockoutElement(this.current.fillAlpha);
     const ctx = this.ctx;
     const fillColor = this.current.fillColor;
@@ -48799,10 +48838,10 @@ class CanvasGraphics {
       const dims = this.current.tilingPatternDims;
       const tileIdx = dims && fillColor.canSkipPatternCanvas(dims);
       if (tileIdx) {
-        fillColor.drawPattern(this, path2, this.pendingEOFill, tileIdx, opIdx);
+        fillColor.drawPattern(this, path3, this.pendingEOFill, tileIdx, opIdx);
         this.pendingEOFill = false;
         if (consumePath) {
-          this.consumePath(opIdx, path2, intersect);
+          this.consumePath(opIdx, path3, intersect);
         }
         this.current.tilingPatternDims = null;
         this.#endKnockoutElement(started);
@@ -48814,17 +48853,17 @@ class CanvasGraphics {
       ctx.fillStyle = fillColor.getPattern(ctx, this, getCurrentTransformInverse(ctx), PathType.FILL, opIdx);
       if (baseTransform) {
         const newPath = new Path2D;
-        newPath.addPath(path2, ctx.getTransform().invertSelf().multiplySelf(baseTransform));
-        path2 = newPath;
+        newPath.addPath(path3, ctx.getTransform().invertSelf().multiplySelf(baseTransform));
+        path3 = newPath;
       }
       needRestore = true;
     }
     if (this.contentVisible && intersect !== null) {
       if (this.pendingEOFill) {
-        ctx.fill(path2, "evenodd");
+        ctx.fill(path3, "evenodd");
         this.pendingEOFill = false;
       } else {
-        ctx.fill(path2);
+        ctx.fill(path3);
       }
     }
     if (needRestore) {
@@ -48832,38 +48871,38 @@ class CanvasGraphics {
       this.dependencyTracker?.restore(opIdx);
     }
     if (consumePath) {
-      this.consumePath(opIdx, path2, intersect);
+      this.consumePath(opIdx, path3, intersect);
     }
     this.#endKnockoutElement(started);
   }
-  eoFill(opIdx, path2) {
+  eoFill(opIdx, path3) {
     this.pendingEOFill = true;
-    this.fill(opIdx, path2);
+    this.fill(opIdx, path3);
   }
-  fillStroke(opIdx, path2) {
+  fillStroke(opIdx, path3) {
     const started = this.#beginKnockoutElement(Math.min(this.current.fillAlpha, this.current.strokeAlpha));
-    this.fill(opIdx, path2, false);
-    this.stroke(opIdx, path2, false);
-    this.consumePath(opIdx, path2);
+    this.fill(opIdx, path3, false);
+    this.stroke(opIdx, path3, false);
+    this.consumePath(opIdx, path3);
     this.#endKnockoutElement(started);
   }
-  eoFillStroke(opIdx, path2) {
+  eoFillStroke(opIdx, path3) {
     this.pendingEOFill = true;
-    this.fillStroke(opIdx, path2);
+    this.fillStroke(opIdx, path3);
   }
-  closeFillStroke(opIdx, path2) {
-    this.fillStroke(opIdx, path2);
+  closeFillStroke(opIdx, path3) {
+    this.fillStroke(opIdx, path3);
   }
-  closeEOFillStroke(opIdx, path2) {
+  closeEOFillStroke(opIdx, path3) {
     this.pendingEOFill = true;
-    this.fillStroke(opIdx, path2);
+    this.fillStroke(opIdx, path3);
   }
-  endPath(opIdx, path2) {
-    this.consumePath(opIdx, path2);
+  endPath(opIdx, path3) {
+    this.consumePath(opIdx, path3);
   }
-  rawFillPath(opIdx, path2) {
+  rawFillPath(opIdx, path3) {
     const started = this.#beginKnockoutElement(this.current.fillAlpha);
-    this.ctx.fill(path2);
+    this.ctx.fill(path3);
     this.dependencyTracker?.recordDependencies(opIdx, Dependencies.rawFillPath).recordOperation(opIdx);
     this.#endKnockoutElement(started);
   }
@@ -48902,12 +48941,12 @@ class CanvasGraphics {
         x,
         y,
         fontSize,
-        path: path2
+        path: path3
       } of paths) {
-        if (!path2) {
+        if (!path3) {
           continue;
         }
-        newPath.addPath(path2, new DOMMatrix(transform2).preMultiplySelf(invTransf).translate(x, y).scale(fontSize, -fontSize));
+        newPath.addPath(path3, new DOMMatrix(transform2).preMultiplySelf(invTransf).translate(x, y).scale(fontSize, -fontSize));
       }
       ctx.clip(newPath);
     }
@@ -49000,9 +49039,9 @@ class CanvasGraphics {
     this.moveText(opIdx, 0, this.current.leading);
     this.dependencyTracker?.recordIncrementalData("moveText", this.dependencyTracker.getSimpleIndex("leading") ?? opIdx);
   }
-  #getScaledPath(path2, currentTransform, transform2) {
+  #getScaledPath(path3, currentTransform, transform2) {
     const newPath = new Path2D;
-    newPath.addPath(path2, new DOMMatrix(transform2).invertSelf().multiplySelf(currentTransform));
+    newPath.addPath(path3, new DOMMatrix(transform2).invertSelf().multiplySelf(currentTransform));
     return newPath;
   }
   paintChar(opIdx, character, x, y, patternFillTransform, patternStrokeTransform) {
@@ -49015,11 +49054,11 @@ class CanvasGraphics {
     const isAddToPathSet = !!(textRenderingMode & TextRenderingMode.ADD_TO_PATH_FLAG);
     const patternFill = current.patternFill && !font.missingFile;
     const patternStroke = current.patternStroke && !font.missingFile;
-    let path2;
+    let path3;
     if ((font.disableFontFace || isAddToPathSet || patternFill || patternStroke) && !font.missingFile) {
-      path2 = font.getPathGenerator(this.commonObjs, character);
+      path3 = font.getPathGenerator(this.commonObjs, character);
     }
-    if (path2 && (font.disableFontFace || patternFill || patternStroke)) {
+    if (path3 && (font.disableFontFace || patternFill || patternStroke)) {
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(fontSize, -fontSize);
@@ -49029,10 +49068,10 @@ class CanvasGraphics {
         if (patternFillTransform) {
           currentTransform = ctx.getTransform();
           ctx.setTransform(...patternFillTransform);
-          const scaledPath = this.#getScaledPath(path2, currentTransform, patternFillTransform);
+          const scaledPath = this.#getScaledPath(path3, currentTransform, patternFillTransform);
           ctx.fill(scaledPath);
         } else {
-          ctx.fill(path2);
+          ctx.fill(path3);
         }
       }
       if (fillStrokeMode === TextRenderingMode.STROKE || fillStrokeMode === TextRenderingMode.FILL_STROKE) {
@@ -49049,10 +49088,10 @@ class CanvasGraphics {
           const transf = Util.transform([a, b, c, d, 0, 0], invPatternTransform);
           Util.singularValueDecompose2dScale(transf, XY);
           ctx.lineWidth *= Math.max(XY[0], XY[1]) / fontSize;
-          ctx.stroke(this.#getScaledPath(path2, currentTransform, patternStrokeTransform));
+          ctx.stroke(this.#getScaledPath(path3, currentTransform, patternStrokeTransform));
         } else {
           ctx.lineWidth /= fontSize;
-          ctx.stroke(path2);
+          ctx.stroke(path3);
         }
       }
       ctx.restore();
@@ -49075,7 +49114,7 @@ class CanvasGraphics {
         x,
         y,
         fontSize,
-        path: path2
+        path: path3
       });
       this.dependencyTracker?.recordCharacterBBox(opIdx, ctx, font, fontSize, x, y);
     }
@@ -49470,9 +49509,9 @@ class CanvasGraphics {
         const [x0, y0, x1, y1] = group.bbox;
         clip.rect(x0, y0, x1 - x0, y1 - y0);
         if (group.matrix) {
-          const path2 = new Path2D;
-          path2.addPath(clip, new DOMMatrix(group.matrix));
-          clip = path2;
+          const path3 = new Path2D;
+          path3.addPath(clip, new DOMMatrix(group.matrix));
+          clip = path3;
         }
         currentCtx.clip(clip);
       }
@@ -49526,9 +49565,9 @@ class CanvasGraphics {
       const [x0, y0, x1, y1] = group.bbox;
       clip.rect(x0, y0, x1 - x0, y1 - y0);
       if (group.matrix) {
-        const path2 = new Path2D;
-        path2.addPath(clip, new DOMMatrix(group.matrix));
-        clip = path2;
+        const path3 = new Path2D;
+        path3.addPath(clip, new DOMMatrix(group.matrix));
+        clip = path3;
       }
       groupCtx.clip(clip);
     }
@@ -50003,7 +50042,7 @@ class CanvasGraphics {
   }
   beginCompat(opIdx) {}
   endCompat(opIdx) {}
-  consumePath(opIdx, path2, clipBox) {
+  consumePath(opIdx, path3, clipBox) {
     const isEmpty = this.current.isEmptyClip();
     if (this.pendingClip) {
       this.current.updateClipFromPath();
@@ -50015,9 +50054,9 @@ class CanvasGraphics {
     if (this.pendingClip) {
       if (!isEmpty) {
         if (this.pendingClip === EO_CLIP) {
-          ctx.clip(path2, "evenodd");
+          ctx.clip(path3, "evenodd");
         } else {
-          ctx.clip(path2);
+          ctx.clip(path3);
         }
       }
       this.pendingClip = null;
@@ -50090,7 +50129,7 @@ class CanvasGraphics {
     }
     return this._cachedScaleForStroking;
   }
-  rescaleAndStroke(path2, saveRestore) {
+  rescaleAndStroke(path3, saveRestore) {
     const {
       ctx,
       current: {
@@ -50100,7 +50139,7 @@ class CanvasGraphics {
     const [scaleX, scaleY] = this.getScaleForStroking();
     if (scaleX === scaleY) {
       ctx.lineWidth = (lineWidth || 1) * scaleX;
-      ctx.stroke(path2);
+      ctx.stroke(path3);
       return;
     }
     const dashes = ctx.getLineDash();
@@ -50111,7 +50150,7 @@ class CanvasGraphics {
     SCALE_MATRIX.a = 1 / scaleX;
     SCALE_MATRIX.d = 1 / scaleY;
     const newPath = new Path2D;
-    newPath.addPath(path2, SCALE_MATRIX);
+    newPath.addPath(path3, SCALE_MATRIX);
     if (dashes.length > 0) {
       const scale = Math.max(scaleX, scaleY);
       ctx.setLineDash(dashes.map((x) => x / scale));
@@ -61507,11 +61546,11 @@ class InkEditor extends DrawingEditor {
 
 class ContourDrawOutline extends InkDrawOutline {
   toSVGPath() {
-    let path2 = super.toSVGPath();
-    if (!path2.endsWith("Z")) {
-      path2 += "Z";
+    let path3 = super.toSVGPath();
+    if (!path3.endsWith("Z")) {
+      path3 += "Z";
     }
-    return path2;
+    return path3;
   }
 }
 var es_uint8_array_from_base64 = __webpack_require__(5213);
@@ -64274,7 +64313,7 @@ class DrawLayer {
       }
       const drawLayer = textLayerData.drawLayer;
       let div = textLayerData.selectionDiv;
-      let path2 = textLayerData.path;
+      let path3 = textLayerData.path;
       if (!div) {
         const clipPathId = `clip_selection_${DrawLayer.#selectionId++}`;
         div = document.createElement("div");
@@ -64293,18 +64332,18 @@ class DrawLayer {
         const clipPath = DrawLayer._svgFactory.createElement("clipPath");
         clipPath.setAttribute("id", clipPathId);
         clipPath.setAttribute("clipPathUnits", "objectBoundingBox");
-        path2 = DrawLayer._svgFactory.createElement("path");
-        clipPath.append(path2);
+        path3 = DrawLayer._svgFactory.createElement("path");
+        clipPath.append(path3);
         svg.append(clipPath);
         div.append(svg);
-        textLayerData.path = path2;
+        textLayerData.path = path3;
         textLayerData.selectionDiv = div;
       }
       if (!div.parentNode && drawLayer.#parent) {
         drawLayer.#parent.append(div);
         this.#selections.add(div);
       }
-      path2.setAttribute("d", boxes.join(" "));
+      path3.setAttribute("d", boxes.join(" "));
     }
   }
   static get _svgFactory() {
@@ -64351,13 +64390,13 @@ class DrawLayer {
     const root = this.#createSVG();
     const defs = DrawLayer._svgFactory.createElement("defs");
     root.append(defs);
-    const path2 = DrawLayer._svgFactory.createElement("path");
-    defs.append(path2);
+    const path3 = DrawLayer._svgFactory.createElement("path");
+    defs.append(path3);
     const pathId = `path_${id}`;
-    path2.setAttribute("id", pathId);
-    path2.setAttribute("vector-effect", "non-scaling-stroke");
+    path3.setAttribute("id", pathId);
+    path3.setAttribute("vector-effect", "non-scaling-stroke");
     if (isPathUpdatable) {
-      this.#toUpdate.set(id, path2);
+      this.#toUpdate.set(id, path3);
     }
     const clipPathId = hasClip ? this.#createClipPath(defs, pathId) : null;
     const use = DrawLayer._svgFactory.createElement("use");
@@ -64375,11 +64414,11 @@ class DrawLayer {
     const root = this.#createSVG();
     const defs = DrawLayer._svgFactory.createElement("defs");
     root.append(defs);
-    const path2 = DrawLayer._svgFactory.createElement("path");
-    defs.append(path2);
+    const path3 = DrawLayer._svgFactory.createElement("path");
+    defs.append(path3);
     const pathId = `path_${id}`;
-    path2.setAttribute("id", pathId);
-    path2.setAttribute("vector-effect", "non-scaling-stroke");
+    path3.setAttribute("id", pathId);
+    path3.setAttribute("vector-effect", "non-scaling-stroke");
     let maskId;
     if (mustRemoveSelfIntersections) {
       const mask = DrawLayer._svgFactory.createElement("mask");
@@ -64426,7 +64465,7 @@ class DrawLayer {
       root,
       bbox,
       rootClass,
-      path: path2
+      path: path3
     } = properties;
     const element = typeof elementOrId === "number" ? this.#mapping.get(elementOrId) : elementOrId;
     if (!element) {
@@ -64446,10 +64485,10 @@ class DrawLayer {
         classList.toggle(className, value);
       }
     }
-    if (path2) {
+    if (path3) {
       const defs = element.firstElementChild;
       const pathElement = defs.firstElementChild;
-      this.#updateProperties(pathElement, path2);
+      this.#updateProperties(pathElement, path3);
     }
   }
   updateParent(id, layer) {
@@ -64668,22 +64707,22 @@ globalThis.pdfjsLib = {
 import dns from "node:dns";
 import fs from "node:fs";
 import net from "node:net";
-import path2 from "node:path";
+import path3 from "node:path";
 var splitList = (value, separators) => value.split(separators).map((s) => s.trim()).filter((s) => s.length > 0);
 var canonicalizeDir = (p) => {
   try {
     return fs.realpathSync(p);
   } catch (err) {
     if (typeof err === "object" && err !== null && "code" in err && (err.code === "ENOENT" || err.code === "ENOTDIR")) {
-      const parent = path2.dirname(p);
+      const parent = path3.dirname(p);
       if (parent === p)
         return p;
-      return path2.join(canonicalizeDir(parent), path2.basename(p));
+      return path3.join(canonicalizeDir(parent), path3.basename(p));
     }
     throw err;
   }
 };
-var parseDirs = (values) => values.map((dir) => canonicalizeDir(path2.resolve(path2.normalize(dir))));
+var parseDirs = (values) => values.map((dir) => canonicalizeDir(path3.resolve(path3.normalize(dir))));
 var parseBool = (value, fallback) => {
   if (value === undefined)
     return fallback;
@@ -64738,14 +64777,14 @@ var isPathAllowed = (absPath, allowedDirs) => {
     return true;
   if (allowedDirs.length === 0)
     return false;
-  const normalized = path2.resolve(absPath);
+  const normalized = path3.resolve(absPath);
   return allowedDirs.some((dir) => {
-    const rel = path2.relative(dir, normalized);
+    const rel = path3.relative(dir, normalized);
     if (rel === "")
       return true;
     if (rel.startsWith(".."))
       return false;
-    if (path2.isAbsolute(rel))
+    if (path3.isAbsolute(rel))
       return false;
     return true;
   });
@@ -64927,17 +64966,17 @@ var assertUrlNotPrivate = async (hostname3) => {
 
 // src/utils/pathUtils.ts
 import fs2 from "node:fs";
-import path3 from "node:path";
+import path4 from "node:path";
 var PROJECT_ROOT = process.cwd();
 var canonicalize = (p) => {
   try {
     return fs2.realpathSync(p);
   } catch (err) {
     if (typeof err === "object" && err !== null && "code" in err && (err.code === "ENOENT" || err.code === "ENOTDIR")) {
-      const parent = path3.dirname(p);
+      const parent = path4.dirname(p);
       if (parent === p)
         return p;
-      return path3.join(canonicalize(parent), path3.basename(p));
+      return path4.join(canonicalize(parent), path4.basename(p));
     }
     throw err;
   }
@@ -64946,8 +64985,8 @@ var resolvePath = (userPath) => {
   if (typeof userPath !== "string") {
     throw new PdfError(-32602 /* InvalidParams */, "Path must be a string.");
   }
-  const normalizedUserPath = path3.normalize(userPath);
-  const resolved = path3.isAbsolute(normalizedUserPath) ? normalizedUserPath : path3.resolve(PROJECT_ROOT, normalizedUserPath);
+  const normalizedUserPath = path4.normalize(userPath);
+  const resolved = path4.isAbsolute(normalizedUserPath) ? normalizedUserPath : path4.resolve(PROJECT_ROOT, normalizedUserPath);
   const canonical = canonicalize(resolved);
   const { allowedDirs } = getSecurityConfig();
   if (!isPathAllowed(canonical, allowedDirs)) {
@@ -66266,8 +66305,8 @@ var parseOpenAiCompatibleChatCompletionResponse = (stdout) => {
 };
 var analyzeRegionCropWithCommandProvider = async (region, context, options) => {
   const config2 = readRegionAnalysisProviderConfig();
-  const tempDir = await fs4.mkdtemp(path4.join(os.tmpdir(), "pdf-reader-mcp-region-analysis-"));
-  const inputPath = path4.join(tempDir, `region-${String(region.page)}.png`);
+  const tempDir = await fs4.mkdtemp(path5.join(os.tmpdir(), "pdf-reader-mcp-region-analysis-"));
+  const inputPath = path5.join(tempDir, `region-${String(region.page)}.png`);
   try {
     await fs4.writeFile(inputPath, Buffer.from(region.data, "base64"));
     const box = region.source_bounding_box;
@@ -67400,7 +67439,7 @@ var extractPageContent = async (pdfDocument, pageNum, includeImages, sourceDescr
 import { spawnSync as spawnSync2 } from "node:child_process";
 import fs5 from "node:fs/promises";
 import os2 from "node:os";
-import path5 from "node:path";
+import path6 from "node:path";
 var logger10 = createLogger("Ocr");
 var DEFAULT_OCR_TIMEOUT_MS = 60000;
 var DEFAULT_OCR_MAX_OUTPUT_CHARS = 200000;
@@ -67755,8 +67794,8 @@ var parseOcrOutput = (stdout, options, context = {}) => {
 };
 var ocrRenderedPageWithCommandProvider = async (page, context, options) => {
   const config2 = readCommandProviderConfig();
-  const tempDir = await fs5.mkdtemp(path5.join(os2.tmpdir(), "pdf-reader-mcp-ocr-"));
-  const inputPath = path5.join(tempDir, `page-${String(page.page)}.png`);
+  const tempDir = await fs5.mkdtemp(path6.join(os2.tmpdir(), "pdf-reader-mcp-ocr-"));
+  const inputPath = path6.join(tempDir, `page-${String(page.page)}.png`);
   try {
     await fs5.writeFile(inputPath, Buffer.from(page.data, "base64"));
     const args = config2.argsTemplate.map((arg) => replacePlaceholders2(arg, {
@@ -69493,8 +69532,8 @@ var sectionRef = (node) => ({
   level: node.level ?? 1,
   page_start: node.page_start
 });
-var continuedFromSectionId = (path6, page) => {
-  const priorPageSection = path6.findLast((section) => section.page_start < page);
+var continuedFromSectionId = (path7, page) => {
+  const priorPageSection = path7.findLast((section) => section.page_start < page);
   return priorPageSection?.id;
 };
 var captionKind = (text2) => semanticCaptionKind(text2);
@@ -69800,11 +69839,11 @@ var syncSectionContext = (documentSectionStack, node) => {
         break;
       documentSectionStack.pop();
     }
-    const path7 = [...documentSectionStack.map(sectionRef), sectionRef(node)];
-    if (path7.length > 0) {
-      node.section_path = path7;
+    const path8 = [...documentSectionStack.map(sectionRef), sectionRef(node)];
+    if (path8.length > 0) {
+      node.section_path = path8;
     }
-    const continuedFrom2 = continuedFromSectionId(path7, node.page_start);
+    const continuedFrom2 = continuedFromSectionId(path8, node.page_start);
     if (continuedFrom2) {
       node.continued_from_section_id = continuedFrom2;
     }
@@ -69813,9 +69852,9 @@ var syncSectionContext = (documentSectionStack, node) => {
   }
   if (documentSectionStack.length === 0)
     return;
-  const path6 = documentSectionStack.map(sectionRef);
-  node.section_path = path6;
-  const continuedFrom = continuedFromSectionId(path6, node.page_start);
+  const path7 = documentSectionStack.map(sectionRef);
+  node.section_path = path7;
+  const continuedFrom = continuedFromSectionId(path7, node.page_start);
   if (continuedFrom) {
     node.continued_from_section_id = continuedFrom;
   }
@@ -72639,7 +72678,7 @@ ${page.text}`));
 // src/engine/rust-text-search.ts
 import { spawnSync as spawnSync3 } from "node:child_process";
 import { existsSync as existsSync2 } from "node:fs";
-import path6 from "node:path";
+import path7 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 var mapWireResult = (search) => ({
   numPages: search.num_pages,
@@ -72657,19 +72696,16 @@ var mapWireResult = (search) => ({
     route: match.route
   }))
 });
-var here2 = path6.dirname(fileURLToPath2(import.meta.url));
+var here2 = path7.dirname(fileURLToPath2(import.meta.url));
 function resolveRustCliBinary2() {
   const env = process.env["PDF_READER_CLI"];
   if (env && existsSync2(env)) {
     return env;
   }
-  const release = path6.join(here2, "../../target/release/pdf-reader-cli");
-  if (existsSync2(release)) {
-    return release;
-  }
-  const debug = path6.join(here2, "../../target/debug/pdf-reader-cli");
-  if (existsSync2(debug)) {
-    return debug;
+  for (const candidate of cargoBinaryCandidates(path7.join(here2, "../.."), "pdf-reader-cli")) {
+    if (existsSync2(candidate)) {
+      return candidate;
+    }
   }
   return "pdf-reader-cli";
 }

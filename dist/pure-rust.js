@@ -2,7 +2,7 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/native/platform-package-map.ts
@@ -62,6 +62,46 @@ var nativeBinaryRelativePath = (platformId) => {
 };
 if (false) {}
 
+// src/utils/cargoTargetDir.ts
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+var cache = new Map;
+var resolveCargoTargetDir = (root) => {
+  const key = path.resolve(root);
+  const hit = cache.get(key);
+  if (hit !== undefined)
+    return hit;
+  let resolved = null;
+  try {
+    const output = execFileSync("cargo", ["metadata", "--format-version", "1", "--no-deps"], {
+      cwd: key,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    });
+    resolved = JSON.parse(output).target_directory ?? null;
+  } catch {}
+  if (!resolved) {
+    const envDir = process.env["CARGO_TARGET_DIR"]?.trim();
+    resolved = envDir ? path.resolve(envDir) : path.join(key, "target");
+  }
+  cache.set(key, resolved);
+  return resolved;
+};
+var resolveCargoProfileDir = (root, profile) => path.join(resolveCargoTargetDir(root), profile);
+var cargoBinaryCandidates = (root, name, platformId) => {
+  const names = process.platform === "win32" ? [`${name}.exe`, name] : [name, `${name}.exe`];
+  const out = [];
+  for (const candidateName of names) {
+    out.push(path.join(resolveCargoProfileDir(root, "release"), candidateName));
+    out.push(path.join(resolveCargoProfileDir(root, "debug"), candidateName));
+  }
+  for (const candidateName of names) {
+    out.push(path.join(root, "target/release", candidateName));
+    out.push(path.join(root, "target/debug", candidateName));
+  }
+  return out;
+};
+
 // src/pure-rust.ts
 var PURE_RUST_EXPORT = {
   status: "sole-rust-production",
@@ -87,9 +127,7 @@ var pushPlatformCandidates = (candidates, packageRoot, platformId) => {
   } catch {}
 };
 var pushFallbackCandidates = (candidates, packageRoot) => {
-  const cargoTargetDir = process.env["CARGO_TARGET_DIR"]?.trim();
-  const targetDir = cargoTargetDir ? resolve(cargoTargetDir) : join(packageRoot, "target");
-  candidates.push(join(packageRoot, "bin/native/citra-mcp-server"), join(packageRoot, "bin/native/citra-mcp-server.exe"), join(targetDir, "release/citra-mcp-server"), join(targetDir, "release/citra-mcp-server.exe"), join(targetDir, "debug/citra-mcp-server"), join(targetDir, "debug/citra-mcp-server.exe"), join(packageRoot, "target/release/citra-mcp-server"), join(packageRoot, "target/release/citra-mcp-server.exe"), join(packageRoot, "target/debug/citra-mcp-server"), join(packageRoot, "target/debug/citra-mcp-server.exe"));
+  candidates.push(...cargoBinaryCandidates(packageRoot, "citra-mcp-server"), join(packageRoot, "bin/native/citra-mcp-server"), join(packageRoot, "bin/native/citra-mcp-server.exe"));
 };
 var resolvePureRustServerBinary = (options) => {
   const env = options?.env ?? process.env;
@@ -188,13 +226,13 @@ class PureRustClient {
     child.stdout.on("data", (chunk) => {
       buffer = drainStdout(buffer + chunk.toString(), pending);
     });
-    const request = (id, method, params) => new Promise((resolve2, reject) => {
+    const request = (id, method, params) => new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(new Error(`timeout ${method}: ${stderr.slice(-2000)}`));
       }, this.timeoutMs);
       pending.set(id, (value) => {
         clearTimeout(timer);
-        resolve2(value);
+        resolve(value);
       });
       child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}
 `);
