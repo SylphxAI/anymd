@@ -1,9 +1,9 @@
 {
   "profile": "pdf_provider_manifest_crop_benchmark",
-  "generated_at": "2026-09-20T04:16:58.864Z",
+  "generated_at": "2026-09-22T05:35:36.514Z",
   "status": "passed",
   "strict": true,
-  "manifest_path": "/home/runner/_work/pdf-reader-mcp/pdf-reader-mcp/test/fixtures/provider-crop-manifest.json",
+  "manifest_path": "/home/runner/_work/citra/citra/test/fixtures/provider-crop-manifest.json",
   "external_case_count": 1,
   "external_url_case_count": 0,
   "external_download_count": 0,
@@ -95,7 +95,7 @@
         "full_page_crop",
         "render_provenance"
       ],
-      "duration_ms": 359.36,
+      "duration_ms": 340.31,
       "num_pages": 1,
       "region_count": 1,
       "assertion_count": 5,

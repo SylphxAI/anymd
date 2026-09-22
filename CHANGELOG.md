@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.0.3
+
+### Patch Changes
+
+- [#722](https://github.com/SylphxAI/citra/pull/722) [`c8978a4`](https://github.com/SylphxAI/citra/commit/c8978a46ab1a0f0fc8b600930072b30e68b59237) Thanks [@shtse8](https://github.com/shtse8)! - Carry the repository identity migration into the published metadata and the queued dependency updates.
+  
+  The repository moved to `SylphxAI/citra` (retired slug redirects), and with it the GitHub Pages path behind `websiteUrl`/`homepage`. The previous release's published metadata is an immutable snapshot and still names the old path, and neither npm nor the MCP Registry allows rewriting it — npm manifests are immutable and the registry grants `edit` on an existing version only to admins (`github-oidc` mints `publish` only). So this release is what carries the corrected pointers onto `latest`.
+  
+  Also carries two dependency updates already on `main` and re-pinned in the release review: `rmcp` 3.2.0 → 3.4.0 and `pdf-extract` 0.12.0 → 0.12.1.
+
 ## 5.0.2
 
 ### Patch Changes
