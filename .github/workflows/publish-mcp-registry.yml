@@ -98,15 +98,28 @@ jobs:
         run: |
           set -euo pipefail
           URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fcitra/versions/latest'
+          WEBSITE="$(jq -r '.websiteUrl' server.json)"
+          REPO="$(jq -r '.repository.url' server.json)"
           if curl -fsS "$URL" > "$RUNNER_TEMP/citra-before.json" && \
             jq -e --arg version "$VERSION" \
               '.server.name == "io.github.SylphxAI/citra" and .server.version == $version and .server.packages[0].identifier == "@sylphx/citra" and .server.packages[0].version == $version' \
               "$RUNNER_TEMP/citra-before.json" >/dev/null; then
             echo 'exists=true' >> "$GITHUB_OUTPUT"
             echo "status=$(jq -r '._meta[\"io.modelcontextprotocol.registry/official\"].status' "$RUNNER_TEMP/citra-before.json")" >> "$GITHUB_OUTPUT"
+            # Not just "is it there" - does it still describe the same server?
+            # A rename changes repository.url and websiteUrl without changing
+            # the version, so existence alone hides stale metadata.
+            if jq -e --arg website "$WEBSITE" --arg repo "$REPO" \
+              '.server.websiteUrl == $website and .server.repository.url == $repo' \
+              "$RUNNER_TEMP/citra-before.json" >/dev/null; then
+              echo 'matches=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'matches=false' >> "$GITHUB_OUTPUT"
+            fi
           else
             echo 'exists=false' >> "$GITHUB_OUTPUT"
             echo 'status=missing' >> "$GITHUB_OUTPUT"
+            echo 'matches=false' >> "$GITHUB_OUTPUT"
           fi
 
       - name: Authenticate to MCP Registry
@@ -128,17 +141,47 @@ jobs:
             fi
           fi
 
-      - name: Publish server to MCP Registry
+      - name: Publish or edit the MCP Registry record
         run: |
           set -euo pipefail
-          # The registry's publish endpoint is an upsert - its contract is
-          # "Publish a new MCP server to the registry or update an existing one".
-          # This must run even when the version already exists: an earlier
-          # `if: exists != 'true'` guard silently skipped it, so a rename's
-          # corrected repository/website URLs never reached the live record and
-          # the readback below still passed because it never checked those
-          # fields.
-          ./mcp-publisher publish
+          TOKEN_FILE="$HOME/.config/mcp-publisher/token.json"
+          test -f "$TOKEN_FILE" || { echo "missing $TOKEN_FILE; did the login step run?" >&2; exit 1; }
+          TOKEN="$(jq -r '.token' "$TOKEN_FILE")"
+          REGISTRY="$(jq -r '.registry' "$TOKEN_FILE")"
+          case "$REGISTRY" in */) ;; *) REGISTRY="$REGISTRY/" ;; esac
+          NAME='io.github.SylphxAI/citra'
+          ESCAPED_NAME="$(node -p "encodeURIComponent(process.argv[1])" "$NAME")"
+
+          if [ "${{ steps.canonical-state.outputs.exists }}" != 'true' ]; then
+            ./mcp-publisher publish
+            exit 0
+          fi
+          if [ "${{ steps.canonical-state.outputs.matches }}" = 'true' ]; then
+            echo "Registry record already matches server.json; nothing to publish"
+            exit 0
+          fi
+
+          # The version exists but describes the server differently. Two
+          # registry rules apply here and they look contradictory until you
+          # separate the axes:
+          #
+          #   POST /v0/publish        - create only per version
+          #                             ("cannot publish duplicate version")
+          #   PUT  /v0/servers/{n}/versions/{v}
+          #                         - "Edit MCP server: Update the configuration
+          #                            of a specific version of an existing MCP
+          #                            server" (requires edit permission)
+          #
+          # A repository rename is exactly the edit case: the released version
+          # is unchanged, but its published pointers went stale. Creating a new
+          # version just to correct a link would misreport the release.
+          echo "Registry record drifted; editing $NAME@$VERSION in place"
+          curl -fsS -X PUT \
+            -H "Authorization: Bearer $TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @server.json \
+            "${REGISTRY}v0/servers/${ESCAPED_NAME}/versions/${VERSION}"
+          echo
 
       - name: Read back canonical Citra identity
         run: |
