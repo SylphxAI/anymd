@@ -5,7 +5,7 @@ title: Why a native Rust engine
 
 # Why a native Rust engine
 
-> **Product status:** `@sylphx/citra@5.0.0` is the brand-sole **sole-Rust production** package for the five published native targets (thin Node launcher + one platform native binary).
+> **Product status:** `@sylphx/citra` is the brand-sole **sole-Rust production** package for the five published native targets (thin Node launcher + one platform native binary).
 > Users should not need to “opt in” to Rust. Missing natives fail closed.  
 > Engineering residual catalogs below are **maintainer history**, not the product pitch.
 
@@ -167,7 +167,7 @@ paths fail closed; this is not TS 3.0.14 parity.
 
 ## Install
 
-Production: pin `@sylphx/citra@5.0.0` (sole-Rust production; no TypeScript production runtime).
+Production: pin `@sylphx/citra` to a released version (sole-Rust production; no TypeScript production runtime).
 See [installation guide](../guide/installation.md). The parity residuals below are
 historical engineering evidence, not an alternate production runtime.
 

@@ -6,7 +6,7 @@
 import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { resolveCliPath, resolveServerPath } from '../utils/cargoBinaries.js';
+import { resolveServerPath } from '../utils/cargoBinaries.js';
 
 export const repoRoot = path.resolve(import.meta.dirname, '../..');
 export const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');

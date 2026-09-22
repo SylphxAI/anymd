@@ -24,4 +24,4 @@ See product README + EVIDENCE_CONTRACT for surfaces.
 npx -y @sylphx/citra
 ```
 
-Bare invoke starts brand-sole MCP on stdio. Live: `@sylphx/citra@5.0.0`.
+Bare invoke starts brand-sole MCP on stdio. Live: the latest `@sylphx/citra` on npm.

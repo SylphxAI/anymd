@@ -28,4 +28,4 @@ Instrument line (local-first evidence). Not deliberation (Consultant). Prism is 
 npx -y @sylphx/citra
 ```
 
-Bare invoke starts brand-sole MCP on stdio. Live: `@sylphx/citra@5.0.0`.
+Bare invoke starts brand-sole MCP on stdio. Live: the latest `@sylphx/citra` on npm.

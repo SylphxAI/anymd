@@ -1,21 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <defs>
-    <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#8b5cf6"/>
-      <stop offset="50%" style="stop-color:#06b6d4"/>
-      <stop offset="100%" style="stop-color:#10b981"/>
-    </linearGradient>
-  </defs>
-  <!-- Document shape -->
-  <rect x="24" y="8" width="80" height="104" rx="8" fill="url(#logo-gradient)" opacity="0.9"/>
-  <!-- Folded corner -->
-  <path d="M84 8 L104 28 L84 28 Z" fill="rgba(255,255,255,0.3)"/>
-  <!-- PDF text lines -->
-  <rect x="36" y="44" width="56" height="6" rx="3" fill="rgba(255,255,255,0.8)"/>
-  <rect x="36" y="58" width="48" height="6" rx="3" fill="rgba(255,255,255,0.6)"/>
-  <rect x="36" y="72" width="52" height="6" rx="3" fill="rgba(255,255,255,0.6)"/>
-  <rect x="36" y="86" width="40" height="6" rx="3" fill="rgba(255,255,255,0.4)"/>
-  <!-- AI sparkle -->
-  <circle cx="96" cy="96" r="20" fill="#0a0a0f"/>
-  <path d="M96 82 L98 92 L108 94 L98 96 L96 106 L94 96 L84 94 L94 92 Z" fill="url(#logo-gradient)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Citra">
+  <!-- Citra mark: a citrus tile holding a document. Bold at 16px. -->
+  <rect width="128" height="128" rx="30" fill="#c3f53c"/>
+  <!-- document body -->
+  <path d="M38 22h33a9 9 0 0 1 9 9v71a9 9 0 0 1-9 9H38a9 9 0 0 1-9-9V31a9 9 0 0 1 9-9Z" fill="#0a0d0a"/>
+  <!-- folded corner -->
+  <path d="M71 22 88 39H80a9 9 0 0 1-9-9V22Z" fill="#2b3a05"/>
+  <!-- evidence lines -->
+  <rect x="41" y="50" width="46" height="7" rx="3.5" fill="#c3f53c"/>
+  <rect x="41" y="65" width="36" height="7" rx="3.5" fill="#c3f53c" opacity="0.75"/>
+  <rect x="41" y="80" width="41" height="7" rx="3.5" fill="#c3f53c" opacity="0.55"/>
+  <!-- citation pip -->
+  <circle cx="97" cy="97" r="18" fill="#0a0d0a"/>
+  <path d="M97 86.5l2.6 7.9 7.9 2.6-7.9 2.6-2.6 7.9-2.6-7.9-7.9-2.6 7.9-2.6Z" fill="#c3f53c"/>
 </svg>

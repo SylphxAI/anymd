@@ -1,118 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0a0e1a"/>
-      <stop offset="100%" stop-color="#111827"/>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0d07"/>
+      <stop offset="100%" stop-color="#111a08"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#22d3ee"/>
-      <stop offset="100%" stop-color="#3b82f6"/>
-    </linearGradient>
-    <linearGradient id="accent2" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#10b981"/>
-      <stop offset="100%" stop-color="#34d399"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+    <radialGradient id="glow" cx="0.85" cy="0.1" r="0.9">
+      <stop offset="0%" stop-color="#c3f53c" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#c3f53c" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
 
-  <!-- Subtle grid pattern -->
-  <g opacity="0.04">
-    <line x1="0" y1="210" x2="1200" y2="210" stroke="#22d3ee" stroke-width="1"/>
-    <line x1="0" y1="420" x2="1200" y2="420" stroke="#22d3ee" stroke-width="1"/>
-    <line x1="300" y1="0" x2="300" y2="630" stroke="#22d3ee" stroke-width="1"/>
-    <line x1="600" y1="0" x2="600" y2="630" stroke="#22d3ee" stroke-width="1"/>
-    <line x1="900" y1="0" x2="900" y2="630" stroke="#22d3ee" stroke-width="1"/>
+  <!-- mark -->
+  <g transform="translate(96 96) scale(1.35)">
+    <rect width="128" height="128" rx="30" fill="#c3f53c"/>
+    <path d="M38 22h33a9 9 0 0 1 9 9v71a9 9 0 0 1-9 9H38a9 9 0 0 1-9-9V31a9 9 0 0 1 9-9Z" fill="#0a0d0a"/>
+    <path d="M71 22 88 39H80a9 9 0 0 1-9-9V22Z" fill="#2b3a05"/>
+    <rect x="41" y="50" width="46" height="7" rx="3.5" fill="#c3f53c"/>
+    <rect x="41" y="65" width="36" height="7" rx="3.5" fill="#c3f53c" opacity="0.75"/>
+    <rect x="41" y="80" width="41" height="7" rx="3.5" fill="#c3f53c" opacity="0.55"/>
+    <circle cx="97" cy="97" r="18" fill="#0a0d0a"/>
+    <path d="M97 86.5l2.6 7.9 7.9 2.6-7.9 2.6-2.6 7.9-2.6-7.9-7.9-2.6 7.9-2.6Z" fill="#c3f53c"/>
   </g>
 
-  <!-- Left side: Document icon with evidence overlays -->
-  <g transform="translate(80, 120)">
-    <!-- Document outline -->
-    <rect x="0" y="0" width="200" height="260" rx="12" fill="none" stroke="#374151" stroke-width="2"/>
-    <!-- Document fold corner -->
-    <path d="M 150 0 L 200 50 L 150 50 Z" fill="#1f2937" stroke="#374151" stroke-width="2"/>
-    <!-- Text lines inside document -->
-    <line x1="30" y1="80" x2="170" y2="80" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
-    <line x1="30" y1="100" x2="140" y2="100" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
-    <line x1="30" y1="120" x2="170" y2="120" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
-    <line x1="30" y1="140" x2="110" y2="140" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
-    <line x1="30" y1="170" x2="160" y2="170" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
-    <line x1="30" y1="190" x2="130" y2="190" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
-    <line x1="30" y1="210" x2="170" y2="210" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
+  <!-- wordmark -->
+  <text x="300" y="185" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="72" font-weight="800" letter-spacing="-2.5" fill="#eaf2dd">Citra</text>
 
-    <!-- Bounding box overlays (evidence) -->
-    <rect x="20" y="70" width="160" height="40" rx="4" fill="none" stroke="url(#accent)" stroke-width="2" stroke-dasharray="6 4" filter="url(#glow)"/>
-    <rect x="20" y="160" width="150" height="40" rx="4" fill="none" stroke="url(#accent2)" stroke-width="2" stroke-dasharray="6 4" filter="url(#glow)"/>
+  <!-- headline -->
+  <text x="96" y="350" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="62" font-weight="750" letter-spacing="-2" fill="#eaf2dd">Give your AI agent eyes</text>
+  <text x="96" y="425" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="62" font-weight="750" letter-spacing="-2" fill="#eaf2dd">for PDFs — with <tspan fill="#c3f53c">proof</tspan>.</text>
 
-    <!-- Evidence checkmarks -->
-    <circle cx="190" cy="90" r="14" fill="url(#accent2)"/>
-    <path d="M 184 90 L 188 94 L 196 86" fill="none" stroke="#0a0e1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="180" cy="180" r="14" fill="url(#accent2)"/>
-    <path d="M 174 180 L 178 184 L 186 176" fill="none" stroke="#0a0e1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
+  <!-- sub -->
+  <text x="96" y="485" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="25" fill="#aebb9e">Local-first · tables with geometry · page-level citations</text>
 
-  <!-- Arrow from document to structured data -->
-  <g transform="translate(320, 240)">
-    <path d="M 0 20 L 50 20 M 40 10 L 50 20 L 40 30" fill="none" stroke="url(#accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-  </g>
+  <!-- install chip -->
+  <rect x="96" y="520" width="500" height="62" rx="31" fill="#151c0f" stroke="#2b3a05" stroke-width="2"/>
+  <text x="130" y="560" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="26" fill="#c3f53c">$</text>
+  <text x="160" y="560" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="26" fill="#eaf2dd">npx -y @sylphx/citra</text>
 
-  <!-- Right side: Structured data representation -->
-  <g transform="translate(400, 140)">
-    <!-- JSON-like blocks -->
-    <rect x="0" y="0" width="320" height="50" rx="6" fill="#1a1f2e" stroke="#2a3447" stroke-width="1"/>
-    <text x="16" y="32" font-family="monospace" font-size="13" fill="#6b7280">page:</text>
-    <text x="60" y="32" font-family="monospace" font-size="13" fill="#22d3ee">5</text>
-    <text x="80" y="32" font-family="monospace" font-size="13" fill="#6b7280">confidence:</text>
-    <text x="170" y="32" font-family="monospace" font-size="13" fill="#10b981">0.95</text>
-    <text x="215" y="32" font-family="monospace" font-size="13" fill="#6b7280">bbox:</text>
-    <text x="255" y="32" font-family="monospace" font-size="13" fill="#22d3ee">[72, 650]</text>
-
-    <rect x="0" y="60" width="280" height="50" rx="6" fill="#1a1f2e" stroke="#2a3447" stroke-width="1"/>
-    <text x="16" y="92" font-family="monospace" font-size="13" fill="#6b7280">type:</text>
-    <text x="55" y="92" font-family="monospace" font-size="13" fill="#3b82f6">table</text>
-    <text x="110" y="92" font-family="monospace" font-size="13" fill="#6b7280">rows:</text>
-    <text x="150" y="92" font-family="monospace" font-size="13" fill="#22d3ee">4</text>
-    <text x="165" y="92" font-family="monospace" font-size="13" fill="#6b7280">trust:</text>
-    <text x="215" y="92" font-family="monospace" font-size="13" fill="#10b981">verified</text>
-
-    <rect x="0" y="120" width="300" height="50" rx="6" fill="#1a1f2e" stroke="#2a3447" stroke-width="1"/>
-    <text x="16" y="152" font-family="monospace" font-size="13" fill="#6b7280">evidence:</text>
-    <text x="85" y="152" font-family="monospace" font-size="13" fill="#22d3ee">crop_el_005</text>
-    <text x="195" y="152" font-family="monospace" font-size="13" fill="#10b981">✓ provenance</text>
-  </g>
-
-  <!-- Title section -->
-  <g transform="translate(80, 430)">
-    <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="800" fill="#f9fafb">PDF Reader MCP</text>
-    <text x="0" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="500" fill="url(#accent)">Agent Document Twin · Evidence-First PDF Intelligence</text>
-  </g>
-
-  <!-- Feature pills -->
-  <g transform="translate(80, 510)">
-    <rect x="0" y="0" width="120" height="32" rx="16" fill="#1a2332" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
-    <text x="60" y="21" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#22d3ee" text-anchor="middle">read_pdf</text>
-
-    <rect x="135" y="0" width="130" height="32" rx="16" fill="#1a2332" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
-    <text x="200" y="21" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#22d3ee" text-anchor="middle">search_pdf</text>
-
-    <rect x="280" y="0" width="140" height="32" rx="16" fill="#1a2332" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
-    <text x="350" y="21" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#22d3ee" text-anchor="middle">pdf_evidence</text>
-
-    <rect x="435" y="0" width="100" height="32" rx="16" fill="#1a2332" stroke="#10b981" stroke-width="1" opacity="0.8"/>
-    <text x="485" y="21" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#10b981" text-anchor="middle">MCP Server</text>
-  </g>
-
-  <!-- Badge: npm -->
-  <g transform="translate(980, 560)">
-    <rect x="0" y="0" width="140" height="36" rx="6" fill="#1a1f2e" stroke="#2a3447" stroke-width="1"/>
-    <text x="70" y="24" font-family="monospace" font-size="14" font-weight="700" fill="#f9fafb" text-anchor="middle">@sylphx/citra</text>
-  </g>
+  <!-- url -->
+  <text x="1104" y="560" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" fill="#7d8a72">sylphxai.github.io/citra</text>
 </svg>

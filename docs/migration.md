@@ -4,7 +4,7 @@ This page is **secondary engineering history**. Product install lives on the [In
 
 ## Current production
 
-- Current production identity: `@sylphx/citra@5.0.0`
+- Current production identity: `@sylphx/citra` (version: see npm)
 - Engine: native Rust via thin Node launcher
 - No TypeScript PDF runtime in the production package
 - No `./typescript` export

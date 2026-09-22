@@ -1,89 +1,161 @@
-<!-- Marketing surface: scannable pitch first; engineering docs below the fold. -->
 <div align="center">
+
+<img src="docs/public/logo.svg" alt="Citra" width="108" height="108" />
 
 # Citra
 
 ### Give your AI agent eyes for PDFs — with proof.
 
-**Local-first PDF evidence for agents.** Structured text, tables, OCR, visual crops, and page-level citations your agent can **defend** — not invent.
+**Local-first PDF evidence for agents.** One call returns structured text, tables, OCR and
+**page-level citations your agent can defend** — not invent.
 
-**Canonical package** [`@sylphx/citra`](https://www.npmjs.com/package/@sylphx/citra) · **bin** `citra` · **MCP** `io.github.SylphxAI/citra` · **live** `5.0.0`
+[![npm](https://img.shields.io/npm/v/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
+[![downloads](https://img.shields.io/npm/dm/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
+[![stars](https://img.shields.io/github/stars/SylphxAI/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://github.com/SylphxAI/citra/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-c3f53c?style=flat-square&labelColor=0a0d07)](LICENSE)
+[![MCP registry](https://img.shields.io/badge/MCP%20registry-io.github.SylphxAI%2Fcitra-c3f53c?style=flat-square&labelColor=0a0d07)](https://registry.modelcontextprotocol.io/servers/io.github.SylphxAI%2Fcitra)
 
-[![npm version](https://img.shields.io/npm/v/@sylphx/citra?style=flat-square)](https://www.npmjs.com/package/@sylphx/citra)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/licenses/MIT)
-[![stars](https://img.shields.io/github/stars/SylphxAI/citra?style=flat-square)](https://github.com/SylphxAI/citra/stargazers)
+**npm** [`@sylphx/citra`](https://www.npmjs.com/package/@sylphx/citra) · **bin** `citra` · **MCP** `io.github.SylphxAI/citra`
 
 </div>
 
-## Zero-config in one line
+---
+
+## The problem
+
+Most PDF tools hand an agent a wall of text. The agent then *guesses* — the page
+number, the table grid, the region behind the claim. And a confidently wrong
+answer costs more than *"I can't tell."*
+
+## The difference
+
+<table>
+<tr><td width="50%">A text dump says</td><td width="50%"><strong>Citra returns</strong></td></tr>
+<tr>
+<td valign="top">
+
+```
+Revenue was about $12M.
+```
+
+</td>
+<td valign="top">
+
+```
+page 1 · table p1-table-1 · 3 cols / 9 cells
+bbox 72,151 → 454,79 · confidence 0.92
+continuation → page 2 (same column count)
+```
+
+</td>
+</tr>
+</table>
+
+Locators in, citations out. A human can check the claim.
+
+## One call. Locators included.
+
+```json
+{
+  "status": "ok",
+  "route":   { "engine": "rust-core", "path": "rust-read-pdf-v1" },
+  "source":  { "hash": "99d313eb…", "path": "…/selectable-table-v1.pdf" },
+  "results": [{
+    "data": {
+      "table_info": [{
+        "page": 1,
+        "bounding_box": { "left": 72, "top": 151, "right": 454.8, "bottom": 79 },
+        "colCount": 3,
+        "cellCount": 9,
+        "confidence": 0.92,
+        "provenance": { "engine": "pdf-reader-core", "source": "selectable_text" },
+        "continuation": {
+          "role": "starts",
+          "groupId": "table-continuation-p1-table-1-p2-table-1",
+          "signals": ["same_column_count", "repeated_header_candidate"]
+        },
+        "quality": {
+          "completeness": 0.79,
+          "cellBoundingBoxCoverage": 0.89,
+          "signals": ["missing_cells", "merged_cell_candidates"]
+        }
+      }]
+    }
+  }],
+  "gaps": []
+}
+```
+
+<sub>Excerpt of a **real** `read_pdf` response against `test/fixtures/differential/v3014-selectable-table-v1.pdf`
+(paths shortened). The table is detected **and** linked to its continuation on page 2 — and when
+Citra cannot prove something, it says so in `gaps` instead of guessing.</sub>
+
+## Install in 30 seconds
 
 ```bash
 npx -y @sylphx/citra
 ```
 
-No Docker. No API key. No global install. Spawns a **stdio MCP server** agents can use immediately.
+No Docker. No API key. No global install. That starts a **stdio MCP server** your agent
+can use immediately.
 
-| Client | Setup |
+| Your client | Setup |
 | --- | --- |
 | **Any agent / CLI** | `npx -y @sylphx/citra` |
 | **Claude Code** | `claude mcp add citra -- npx -y @sylphx/citra` |
 | **Claude Desktop / Cursor / VS Code / Codex** | `"command": "npx", "args": ["-y", "@sylphx/citra"]` |
 | **Global CLI** | `npm i -g @sylphx/citra` → `citra` |
 
-## Why Citra feels unfairly good
-
-Plain-text PDF tools make agents **guess**. Citra returns an **Agent Document Twin** they can **cite**.
-
-| Pain today | With Citra |
-| --- | --- |
-| Page numbers invented or missing | **Page + geometry + provenance** |
-| Tables flattened into soup | **Rows · columns · cells · bounding boxes** |
-| Scanned PDFs become noise | **OCR path linked to evidence** |
-| Install / config / “hope it works” | **`npx -y` — done** |
-| Silent engine fallbacks | **Fail closed** if the native binary is missing |
-
-### Five reasons teams pick Citra
-
-1. **Zero-config** — real `npx` MCP, not a 20-step bootstrap.
-2. **Evidence, not vibes** — citations agents can show a human.
-3. **Local-first** — PDFs stay on the machine; no required cloud vision API.
-4. **Brand-sole** — one package, one bin, one story (`@sylphx/citra` / `citra`).
-5. **Instrument family** — compose with Iris (image), Cue (video), Spine, Lookout, Locus.
-
-## See the difference
-
-![Plain text vs evidence](docs/public/before-after-evidence.svg)
-
-| Without evidence | With Citra |
-| --- | --- |
-| “Revenue was about $12M” | “Page 14, Table 3, cell (row 4, col 2) = `$12.4M`” |
-| Lost table structure | Rows, columns, cells, bounding boxes |
-| Scanned PDF = garbage text | OCR with page-linked evidence |
-| Hidden / adversarial text ignored | Trust signals when requested |
-
-## What you get
-
-Three tools. One product surface.
-
-| Tool | What agents use it for |
-| --- | --- |
-| `read_pdf` | Smart default: markdown, tables, structure, OCR, citations |
-| `search_pdf` | Find page + snippet matches before deep reading |
-| `pdf_evidence` | Crops, renders, inspect, focused evidence ops |
-
-Minimal call:
+<details>
+<summary><strong>Claude Desktop / Cursor / VS Code — full <code>mcpServers</code> snippet</strong></summary>
 
 ```json
 {
-  "sources": [{ "path": "/absolute/path/to/report.pdf" }]
+  "mcpServers": {
+    "citra": {
+      "command": "npx",
+      "args": ["-y", "@sylphx/citra"]
+    }
+  }
 }
 ```
 
-### Flagship use cases
+</details>
 
-1. **Financial reports** — extract table cells agents can cite by page and geometry  
-2. **Research papers** — headings, reading order, page-level quotes  
-3. **Scanned documents** — OCR path with evidence, not a text soup  
+## Why teams pick Citra
+
+- **Zero-config.** A real `npx` MCP server — not a 20-step bootstrap.
+- **Evidence, not vibes.** Page, geometry, table cells, provenance. Citations a human can check.
+- **Local-first.** PDFs stay on the machine. No required cloud vision API, no document upload.
+- **Fail closed.** No matching native binary? The process refuses to start. Never a silent engine fallback.
+- **Native and small.** A Rust PDF engine behind a thin launcher — not PDF.js plus a large JS tree.
+
+## What you get
+
+Three tools. One surface. Few, powerful, obvious.
+
+| Tool | What an agent uses it for |
+| --- | --- |
+| `read_pdf` | The smart default — markdown, tables with cells and geometry, structure, optional OCR, citation-ready chunks |
+| `search_pdf` | Cheap literal retrieval first: page and bounding-box locators before a deep read |
+| `pdf_evidence` | Focused verification: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, `analyze_regions` |
+
+Full option and result reference: **[docs/api](https://sylphxai.github.io/citra/api/)**
+
+## Proof, method-bounded
+
+| | |
+| --- | --- |
+| **≥ 10.4×** | median warm `read_pdf` latency vs the TypeScript engine — same host (linux-x64), 8 required fixture classes, median of class speedups ~15.4× |
+| **~3.4× smaller** | clean install — 82.3 MiB → 24.4 MiB of `node_modules` vs TS 3.0.14 |
+| **20 files** | on disk vs 4,101 — one native binary per platform, **zero** production JS dependencies |
+| **5 platforms** | macOS arm64/x64 · Linux x64/arm64 · Windows x64 |
+
+<sub>Warm-cache figure is **method-bounded**: long-lived MCP server, repeated *identical* local
+`read_pdf` after warm-up, measured on the sole-Rust lineage (4.1.0) against TS 3.0.14. The first
+request in a process pays full parse cost. No multi-host extrapolation.
+See the [performance report](docs/specs/performance/4.1.0-same-host-performance-report.md) and
+[claims policy](docs/specs/performance/4.1.0-performance-claims-policy.md).</sub>
 
 ## Platforms
 
@@ -97,103 +169,23 @@ One **optional** native package is selected for **your** host only:
 | Linux arm64 | `@sylphx/citra-linux-arm64-gnu` |
 | Windows x64 | `@sylphx/citra-win32-x64-msvc` |
 
-Missing native → **fail closed** (no silent TypeScript PDF engine).
+## Security & trust
 
-## Product docs
+- **Local-first** — no required cloud provider; the PDF is not uploaded.
+- **Fail closed** — a missing native binary stops the process; there is no silent TypeScript fallback.
+- **Panic-unwind** — a malformed document (e.g. a broken ToUnicode CMap) fails the request, never the process ([#608](https://github.com/SylphxAI/citra/issues/608)).
+- **HTTP transport is opt-in and hardened** — loopback by default, `MCP_API_KEY` enforced before binding elsewhere, and `--allow-dir` restricts filesystem reach. Details: [security docs](https://sylphxai.github.io/citra/security/maintainer-process) · report privately per [SECURITY.md](SECURITY.md).
 
-| Doc | Purpose |
+## Documentation
+
+| | |
 | --- | --- |
-| [docs/POSITIONING.md](docs/POSITIONING.md) | Strategic positioning |
-| [docs/COMPETITIVE.md](docs/COMPETITIVE.md) | Peer anchors and wedge |
-| [docs/EVIDENCE_CONTRACT.md](docs/EVIDENCE_CONTRACT.md) | Evidence = result contract |
-| [docs/TOOL_SURFACE.md](docs/TOOL_SURFACE.md) | Few clear tools policy |
-| [docs/PRODUCT_INDEPENDENCE.md](docs/PRODUCT_INDEPENDENCE.md) | This repo is SSOT |
-| [docs/IPPB.md](docs/IPPB.md) | Independent public product bar |
-| [docs/PUBLISH.md](docs/PUBLISH.md) | npm / git publish status |
-| [docs/guide/installation.md](docs/guide/installation.md) | Install & host config |
-| [skills/citra/SKILL.md](./skills/citra/SKILL.md) | Agent skill surface |
-
-## Surfaces (MCP · CLI · SDK)
-
-**MCP (default agent path)**
-
-```bash
-npx -y @sylphx/citra
-```
-
-**Claude Desktop / Cursor / VS Code / Codex**
-
-```json
-{
-  "mcpServers": {
-    "citra": {
-      "command": "npx",
-      "args": ["-y", "@sylphx/citra"]
-    }
-  }
-}
-```
-
-Dual-era hosts that send `server/discover` before `initialize` (e.g. Gemini Antigravity CLI) are supported on stdio.
-
-**CLI**
-
-```bash
-npx -y @sylphx/citra --help
-```
-
-**SDK**
-
-- `@sylphx/citra/sdk` → `Citra` (`read` / `search` / `evidence`)
-- `@sylphx/citra/pure-rust` → low-level client helpers  
-- Same tools as MCP: `read_pdf` · `search_pdf` · `pdf_evidence`  
-- Requires the platform optional native package (same as MCP)
-
-## Install footprint (honest)
-
-Compare **full clean installs**, not “JS wrapper tarball vs native executable”:
-
-| Metric (measured clean install, **linux-x64**) | Historical TS `3.0.14` | Sole-Rust `4.1.0` lineage |
-| --- | ---: | ---: |
-| Main package on disk | ~403 KB | ~77 KB |
-| Full `node_modules` | ~82.3 MiB | **~24.4 MiB** (~3.4× smaller) |
-| Installed files | 4,101 | **20** (~205× fewer) |
-| Production npm deps | PDF.js + MCP TS SDK + more | `{}` + **one** platform native |
-
-The native binary is multi-megabyte because it **is** the PDF engine. That is expected — and still a **cleaner install** than shipping PDF.js + a large JS tree.
-
-Details: [installed footprint comparison](docs/specs/performance/installed-footprint-comparison.md)
-
-## Performance (method-bounded)
-
-Controlled **same-host linux-x64** dual-mode A/B vs historical `@sylphx/pdf-reader-mcp@3.0.14`, using **registry-installed sole-Rust natives** (measured on the 4.1.x lineage; method applies to current sole-Rust packages):
-
-| Mode | What it measures | Result |
-| --- | --- | --- |
-| `persistent_warm` | long-lived server, repeated identical local `read_pdf` after warm-up | **≥ ~10×** median latency improvement on all 8 required fixture classes |
-| `startup_inclusive` | spawn + initialize + one task | large advantage on the same fixtures |
-
-`persistent_warm` includes a process-local cache for identical local path+options. First request in a process still pays full parse cost.
-
-**Not** a multi-host guarantee. Details: [4.1.0 report](docs/specs/performance/4.1.0-same-host-performance-report.md) · [claims policy](docs/specs/performance/4.1.0-performance-claims-policy.md)
-
-## Engine note
-
-Current production is a **native Rust engine** on supported platforms via a thin Node launcher.
-
-> Local-first. Five platform packages. One clean install. Fail closed without the matching native.
-
-Unusually formed or broken ToUnicode CMaps are handled without crashing; the release binary is panic-unwind so a worker-thread panic fails the request instead of aborting the process ([#608](https://github.com/SylphxAI/citra/issues/608)).
-
-Engineering history and recovery pins: [docs/migration.md](docs/migration.md) — not the product pitch.
-
-## Product proof & links
-
-- [Website / guide](https://sylphxai.github.io/citra/)
-- [Product proof](docs/guide/product-proof.md)
-- [Benchmark](docs/benchmark.md)
-- [Installation](docs/guide/installation.md)
-- [npm](https://www.npmjs.com/package/@sylphx/citra)
+| 🌐 **Website** | [sylphxai.github.io/citra](https://sylphxai.github.io/citra/) |
+| ⚡ **Quickstart** | [Getting started](https://sylphxai.github.io/citra/guide/getting-started) |
+| 📐 **API reference** | [docs/api](https://sylphxai.github.io/citra/api/) |
+| 📐 **Evidence contract** | [What "proof" means](docs/EVIDENCE_CONTRACT.md) |
+| 📊 **Performance** | [Method & results](https://sylphxai.github.io/citra/performance/) |
+| ⚖️ **Comparison** | [Why not the alternatives](https://sylphxai.github.io/citra/comparison/) |
 
 ---
 
@@ -204,5 +196,7 @@ Engineering history and recovery pins: [docs/migration.md](docs/migration.md) �
 ```bash
 npx -y @sylphx/citra
 ```
+
+[⭐ **Star this repo**](https://github.com/SylphxAI/citra/stargazers) if Citra made your agent tell the truth.
 
 </div>

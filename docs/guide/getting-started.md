@@ -1,907 +1,163 @@
-# Getting Started
+# Quickstart — from PDF to proof
 
-Citra (`@sylphx/citra@5.0.0`) is the evidence-first PDF MCP server for AI agents. If your agents
-read contracts, filings, or reports, start here — one `read_pdf` call returns an
-Agent Document Twin with markdown, tables, and source evidence instead of a
-lossy text dump. New to the problem?
-[Stop PDF hallucinations →](/articles/stop-pdf-hallucinations).
+Ten minutes from install to a claim a human can check. The point is not
+"extract text" — it is **never have to guess a page number again**.
 
-Once installed, Citra provides three public V3 tools:
+::: tip New to the problem?
+Read [Stop PDF hallucinations](/articles/stop-pdf-hallucinations) first — it
+explains why a text dump makes agents wrong in a way that sounds confident.
+:::
 
-- `read_pdf` is the smart default. With only `sources`, it profiles the PDF,
-  chooses an extraction route, and returns the Agent Document Twin.
-- `search_pdf` searches extracted PDF text with snippets, offsets,
-  bounding-box provenance, and optional OCR-layer matches.
-- `pdf_evidence` runs focused evidence operations: `inspect`, `render_page`,
-  `extract_regions`, `ocr_pages`, and `analyze_regions`.
+## 1. Install
 
-## Basic Usage
+```bash
+npx -y @sylphx/citra
+```
 
-### Read a PDF First
+Add it to your host as shown in [Installation](/guide/installation). Verify
+with `npx -y @sylphx/citra --help`.
 
-Use `read_pdf` when an agent needs to process an unfamiliar document. With no
-manual `include_*` flags, it samples a bounded number of pages, chooses useful
-read options, and returns both the Agent Document Twin and the selected route.
+## 2. Your first read
+
+One call. Let Citra choose the extraction route:
 
 ```json
 {
-  "sources": [{ "path": "/path/to/document.pdf" }]
+  "sources": [{ "path": "/absolute/path/to/report.pdf" }]
 }
 ```
 
-Each source must provide exactly one locator: `path` for a local PDF or `url`
-for a remote PDF.
+That is the whole request. With no `include_*` flags, `read_pdf` profiles the
+document, picks high-value extraction options, and returns the **Agent Document
+Twin**: text, tables, structure, and citations in one response.
 
-Typical response fields:
-
-- `auto_read`: source profile, workflow, provider readiness, and selected
-  `read_pdf` arguments
-- `results`: Markdown, chunks, document map, tables, trust/accessibility
-  routing, and other selected evidence
-- `warnings`: page, layout, OCR, provider, or trust signals the agent should
-  consider before citing
-
-Use `auto_detail` to control default output depth without learning every
-manual switch:
+Deepen it without learning every switch:
 
 ```json
 {
-  "sources": [{ "path": "/path/to/document.pdf" }],
+  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
   "auto_detail": "full"
 }
 ```
 
-Use `pdf_evidence` operation `inspect` when the agent only needs a cheap route
-profile without reading the document twin:
+## 3. Read the evidence, not the prose
+
+A real response (excerpt) against a two-page table fixture:
 
 ```json
 {
-  "operation": "inspect",
-  "sources": [{ "path": "/path/to/document.pdf" }],
-  "sample_pages": 5,
-  "include_metadata": true
-}
-```
-
-Typical inspect fields:
-
-- `profile`: `digital_text`, `scanned_or_image_only`, `mixed_text_and_scan`,
-  `low_text_or_form`, or `unknown`
-- `page_signals`: text density, token estimate, and image paint-operation count
-- `document_signals`: outline, labels, permissions, forms, attachments, and
-  structure-tree availability
-- `recommendation`: workflow, OCR need, reason, and ready-to-use `read_pdf`
-  arguments
-- `provider_status`: safe readiness and health metadata for optional
-  `ocr_pages` and `analyze_regions` providers without exposing local provider
-  paths
-
-### Search For Evidence
-
-Use `search_pdf` when an agent needs to find relevant pages and source
-snippets before running heavier extraction, rendering, OCR, or region cropping.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-20"
+  "route": { "engine": "rust-core", "path": "rust-read-pdf-v1" },
+  "source": { "hash": "99d313eb…", "path": "…/selectable-table-v1.pdf" },
+  "results": [{
+    "data": {
+      "table_info": [{
+        "page": 1,
+        "bounding_box": { "left": 72, "top": 151, "right": 454.8, "bottom": 79 },
+        "colCount": 3,
+        "cellCount": 9,
+        "confidence": 0.92,
+        "continuation": {
+          "role": "starts",
+          "groupId": "table-continuation-p1-table-1-p2-table-1",
+          "signals": ["same_column_count", "repeated_header_candidate"]
+        }
+      }]
+    }
   }],
-  "query": "risk controls",
-  "whole_word": true,
-  "include_ocr_text_layer": false,
-  "max_matches_per_source": 10
+  "gaps": []
 }
 ```
 
-Matches include page number, matched text, snippet, match offsets, text-item
-index or OCR word index, optional character-derived, text-item, or OCR-word
-bounding box, and provenance. Search is literal and bounded by `max_pages` and
-`max_matches_per_source`. OCR-layer search is opt-in through
-`include_ocr_text_layer` because it renders pages and runs the configured OCR
-provider.
+Three things worth noticing:
 
-### Get Metadata and Page Count
+1. **`page` + `bounding_box`** — the claim has a place in the document.
+2. **`continuation`** — the table continues onto page 2 with matching columns.
+   An agent that cites "the table" now knows to read the next page too.
+3. **`gaps`** — when Citra cannot prove something, it names the gap instead of
+   filling it. That is the whole difference.
+
+## 4. Search first, read second
+
+Reading everything is slow and expensive. Locate first:
 
 ```json
 {
-  "sources": [{ "path": "/path/to/document.pdf" }],
-  "include_full_text": false,
-  "include_metadata": true,
-  "include_page_count": true,
-  "include_images": false
+  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
+  "query": "revenue"
 }
 ```
 
-### Get Full Text
+`search_pdf` returns page numbers, snippets, offsets and bounding-box
+provenance — enough to decide *whether* to spend tokens on a deep read.
 
-```json
-{
-  "sources": [{ "path": "/path/to/document.pdf" }],
-  "include_full_text": true,
-  "include_metadata": false,
-  "include_page_count": false,
-  "include_images": false
-}
-```
+## 5. Verify before you claim
 
-### Get Specific Pages
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": [1, 3, 5]
-  }],
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": false,
-  "include_images": false
-}
-```
-
-Or use page ranges:
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5, 10, 15-20"
-  }],
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": false,
-  "include_images": false
-}
-```
-
-### Extract Images
-
-```json
-{
-  "sources": [{ "path": "/path/to/document.pdf" }],
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": false,
-  "include_images": true
-}
-```
-
-### Get Structured Elements
-
-Use `include_elements` when an agent needs stable page references, provenance,
-and best-effort coordinates instead of plain text alone.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-3"
-  }],
-  "include_elements": true,
-  "include_semantic_hints": true,
-  "include_full_text": false,
-  "include_metadata": true,
-  "include_page_count": true,
-  "include_images": false
-}
-```
-
-### Get An Agent Document Map
-
-Use `include_document_map` when an agent needs one navigable structure for the
-PDF instead of separate page, element, text-layer, chunk, layout, and safety
-outputs.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_document_map": true,
-  "include_full_text": false,
-  "include_metadata": true,
-  "include_page_count": true
-}
-```
-
-The map links pages to element IDs, text-layer page indexes and coverage
-counts, chunk IDs, safety finding indexes, trust report page and signal
-indexes, accessibility report page and issue indexes, layout diagnostics, routing
-signals, page geometry, and optional visual enrichment indexes. Enable
-`include_visual_enrichments` when a configured visual-region
-provider should analyze bounded table/image crops plus caption-derived visual
-regions for vector-drawn formulas, charts, figures, and diagrams, including
-side-caption layouts, then fuse the normalized evidence into the same document
-twin. Image bytes are not embedded inside the JSON map.
-
-### Render Page Evidence
-
-Use `pdf_evidence` operation `render_page` when an agent needs to inspect the
-original page image, verify visual layout, or prepare OCR routing for
-sparse/scanned pages.
-
-```json
-{
-  "operation": "render_page",
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-2"
-  }],
-  "scale": 2,
-  "max_pages": 2
-}
-```
-
-The response starts with JSON metadata for each rendered page, including page
-number, dimensions, pixel count, byte length, evidence ID, and provenance. PNG
-data is returned as MCP image content parts and referenced by
-`image_content_index`. By default the tool renders the first page only when no
-page range is provided, caps each source at 5 pages, and rejects pages above a
-16MP render budget.
-
-### Extract Region Evidence
-
-Use `pdf_evidence` operation `extract_regions` when a workflow has a bounding
-box from a table, figure, chart, formula, annotation, or citation and needs a
-focused crop from the original page.
+When an agent is about to assert a number, send it to the evidence tool:
 
 ```json
 {
   "operation": "extract_regions",
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "regions": [{
-      "id": "table-1",
-      "page": 1,
-      "bounding_box": { "left": 72, "bottom": 420, "right": 540, "top": 620 },
-      "padding": 8
-    }]
-  }],
-  "scale": 2,
-  "max_regions": 20
+  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
+  "regions": [{ "page": 1, "bounding_box": { "left": 72, "top": 151, "right": 454, "bottom": 79 } }]
 }
 ```
 
-The response starts with JSON metadata for each crop, including region ID,
-source bounding box, crop pixel bounds, evidence ID, and provenance. Cropped PNG
-data is returned as MCP image content parts and referenced by
-`image_content_index`.
-
-### Analyze Visual Regions
-
-Use `pdf_evidence` operation `analyze_regions` when a workflow has a table,
-figure, chart, formula, or image bounding box and wants local-provider
-enrichment linked back to source pixels. The region analysis provider is
-configured by environment variables, not by request arguments.
+Or render the page and look at it:
 
 ```json
 {
-  "operation": "analyze_regions",
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "regions": [{
-      "id": "chart-1",
-      "page": 2,
-      "bounding_box": { "left": 72, "bottom": 240, "right": 540, "top": 520 },
-      "padding": 8
-    }]
-  }],
-  "scale": 2,
-  "max_regions": 10,
-  "languages": ["eng"]
+  "operation": "render_page",
+  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
+  "pages": [1]
 }
 ```
 
-Set `MCP_PDF_REGION_ANALYSIS_COMMAND` to the local visual analysis executable
-or wrapper you want the server to run, or set
-`MCP_PDF_REGION_ANALYSIS_HTTP_URL` to an env-configured local model server.
-For Ollama, set `MCP_PDF_REGION_ANALYSIS_PRESET=ollama` plus
-`MCP_PDF_REGION_ANALYSIS_OLLAMA_MODEL`; the server sends the crop through
-Ollama `/api/generate` with a JSON-only prompt and normalizes the returned
-`response` JSON. For local or private OpenAI-compatible chat-completions vision
-servers, set `MCP_PDF_REGION_ANALYSIS_PRESET=openai-compatible`,
-`MCP_PDF_REGION_ANALYSIS_OPENAI_MODEL`, and
-`MCP_PDF_REGION_ANALYSIS_OPENAI_URL`; the server sends a JSON-only prompt plus
-an `image_url` data URL and normalizes `choices[0].message.content`. Command
-providers take precedence when both are configured. Local LM Studio and
-llama.cpp servers can use `MCP_PDF_REGION_ANALYSIS_PRESET=lmstudio` with
-`MCP_PDF_REGION_ANALYSIS_LMSTUDIO_MODEL`, or
-`MCP_PDF_REGION_ANALYSIS_PRESET=llamacpp` with
-`MCP_PDF_REGION_ANALYSIS_LLAMACPP_MODEL`; both use the same chat-completions
-payload with localhost defaults.
-Optionally set
-`MCP_PDF_REGION_ANALYSIS_ARGS_JSON` to a JSON string array that includes
-`{input}` and may also use `{page}`, `{source}`, `{region_id}`,
-`{evidence_id}`, `{left}`, `{bottom}`, `{right}`, `{top}`, `{language}`, and
-`{languages}` placeholders. HTTP providers receive JSON with crop image bytes,
-region metadata, crop coordinates, scale, and languages.
+`pdf_evidence` has five focused operations — `inspect`, `render_page`,
+`extract_regions`, `ocr_pages`, `analyze_regions`. One tool, one `op` enum; no
+near-duplicate vanity tools to learn.
 
-The response starts with JSON metadata using `profile: "region_analysis"`.
-Each analyzed region includes normalized `kind`, description, text, Markdown,
-confidence, optional table cell/span/box fields, formula LaTeX/MathML/AsciiMath
-fields, chart data/axis/series fields, warnings, provenance, and a
-`source_crop_evidence_id` pointing back to the crop used as provider input.
-
-### OCR Selected Pages
-
-Use `pdf_evidence` operation `ocr_pages` after `read_pdf` or `pdf_evidence`
-operation `inspect` flags scanned or sparse pages, or when a workflow needs a
-standalone text layer from pages with little selectable text. The OCR provider
-is configured by environment variables, not by request arguments.
+## 6. Scanned or mixed documents
 
 ```json
 {
-  "operation": "ocr_pages",
-  "sources": [{
-    "path": "/path/to/scanned-document.pdf",
-    "pages": "1-3"
-  }],
-  "scale": 2,
-  "max_pages": 3,
-  "languages": ["eng"]
+  "sources": [{ "path": "/absolute/path/to/scanned.pdf" }],
+  "pages": [1, 2, 3],
+  "include_ocr_text_layer": true,
+  "include_tables": true
 }
 ```
 
-Set `MCP_PDF_OCR_PRESET=tesseract` to use the plain-text Tesseract command
-template, or `MCP_PDF_OCR_PRESET=tesseract-tsv` to parse Tesseract TSV stdout
-into normalized words, confidence, and word boxes. You can also set
-`MCP_PDF_OCR_COMMAND` for a custom local OCR executable. Optionally set
-`MCP_PDF_OCR_ARGS_JSON` to a JSON string array that includes `{input}` and may
-also use `{page}`, `{source}`, `{language}`, `{languages}`, and
-`{languages_tesseract}` placeholders. Custom providers can return plain text
-or JSON with `text`, `confidence`, `language`, and `words`. `pdf_evidence`
-operation `inspect` reports built-in preset executable health; OCR-dependent
-routing is marked not ready when the selected preset binary is unavailable.
+OCR keeps its own provenance and confidence and is kept **separate** from
+selectable text. OCR word boxes can feed table extraction, so a scanned table
+still comes back with cells and geometry. Configure a provider per
+[Installation](/guide/installation#optional-providers) — core reading never
+needs one.
 
-The response starts with JSON metadata using `profile: "ocr_text_layer"`.
-Each page includes normalized OCR text, confidence when supplied, optional word
-boxes, language, provenance, and a `source_render_evidence_id` that points back
-to the temporary page render used as OCR input.
+## 7. Trust signals — only when you ask
 
-For `read_pdf` workflows, set `include_ocr_text_layer: true` to run the
-configured OCR provider for selected sparse/scanned pages and return a separate
-`ocr_text_layer`. When `include_document_map` is also enabled, OCR pages are
-linked through `document_map.layers`, page-level OCR fields, and
-`document_map.routing.ocr_applied_pages`. OCR text is not merged into
-`full_text`, so provenance stays explicit. When `include_tables` is also
-enabled, OCR word boxes can generate OCR-derived table elements for scanned
-pages that have no selectable text tables.
-
-### Get Markdown
-
-Use `include_markdown` when a workflow needs clean page-aware context for RAG,
-summarization, or note generation.
+Hidden text, prompt-injection attempts, overlapping or spoofed content:
 
 ```json
 {
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_markdown": true,
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": true,
-  "include_images": false
-}
-```
-
-### Get HTML
-
-Use `include_html` when a workflow needs escaped page-aware HTML for preview,
-export, or downstream conversion.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_html": true,
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": true
-}
-```
-
-### Get Citation-Ready Chunks
-
-Use `include_chunks` when an agent needs retrieval chunks with source
-references. Enable `include_semantic_hints` to split chunks on deterministic
-heading boundaries, and enable `include_tables` when table chunks should be
-available.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_chunks": true,
-  "include_semantic_hints": true,
-  "include_tables": true,
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": true
-}
-```
-
-### Get a Text Layer
-
-Use `include_text_layer` when an agent needs run, line, word, and character
-references with page-level ranges, estimated bounding boxes, direction-aware
-right-to-left run ordering, and metadata coverage counts, rather than only
-plain full text.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_text_layer": true,
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": true
-}
-```
-
-Response fields include page text, runs, lines, words, characters,
-`char_start`, `char_end`, estimated bounding boxes, provenance, and summary
-bbox and run-metadata coverage counts.
-
-### Get a Document AST
-
-Use `include_document_ast` when an agent needs a semantic tree instead of flat
-page text. The AST includes page, section, paragraph, list item, caption,
-header, footer, table, and image nodes with `element_ids`, `chunk_ids`,
-bounding boxes, confidence, semantic roles, and table quality metadata where
-available. When a page break continues an active section, AST nodes expose
-`section_path` and `continued_from_section_id` without moving evidence out of
-the page that owns it. Caption nodes can expose `caption_links` to nearby
-table, image, figure, chart, formula, or diagram evidence above, below,
-overlapping, or to the side, and linked targets can expose `caption_ids`.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_document_ast": true,
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": true
-}
-```
-
-### Get a Trust Report
-
-Use `include_trust_report` when an agent needs one risk summary before using
-PDF content as instructions, evidence, or retrieval context. The report
-consolidates content safety, visual-spoofing, tiny/off-page text, layout
-uncertainty, sparse/scanned-page, table quality, hidden-text, external-link, and
-unsafe-link signals without forcing those raw outputs into the top-level
-response. Summary counters group selected-page signals by type, safety findings
-by finding type, severities, and page-risk buckets so agents can route high-risk
-PDFs without scanning every signal first. Trust evidence snippets redact common
-sensitive values before they appear in the routing report. Use
-`trust_report_redaction: "strict"` for higher-sensitivity local runs that should
-also redact phone-like values and IPv4 addresses, or `"off"` only for
-controlled local debugging where raw snippets must be preserved and the policy
-is recorded explicitly.
-When `include_document_map` is also enabled, the document map carries trust
-page indexes, signal indexes, risk, scores, signal counts, high-signal routing
-arrays, high/medium-risk routing arrays, and summary counters in the same agent
-navigation contract.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_trust_report": true,
-  "trust_report_redaction": "strict",
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": true
-}
-```
-
-### Get an Accessibility Report
-
-Use `include_accessibility_report` when an agent needs to understand whether the
-PDF exposes reliable tagged structure for navigation, headings, figures, links,
-forms, and assisted reading workflows. The report is deterministic and does not
-claim PDF/UA certification.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_accessibility_report": true,
-  "include_full_text": false,
-  "include_metadata": false,
-  "include_page_count": true
-}
-```
-
-Response fields include `score`, `grade`, `tagged`, `suspected_tagging_issues`,
-page reports, tag-to-visible-content coverage, issue type counts, severity
-counts, page-grade counts, affected-page counts, and guidance. The report can
-use mark info, permissions, annotations, form fields, structured elements, and
-structure trees internally without forcing those raw outputs into the top-level
-response.
-
-### Get Layout Diagnostics
-
-Use `include_layout_diagnostics` when an agent needs to know whether local
-reading order is likely reliable before indexing, citing, or summarizing a
-page. Diagnostics are deterministic and use existing extracted item geometry;
-they do not add OCR, vision, or a heavy parser dependency. The extractor uses
-conservative recursive band and column segmentation so common spanning headers,
-multi-column sections, and footers are ordered by visual reading sequence.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_layout_diagnostics": true,
-  "include_chunks": true,
-  "include_semantic_hints": true,
-  "include_full_text": false
-}
-```
-
-Response fields include `profile`, `reading_order`, `confidence`,
-`column_count`, `positioned_item_ratio`, `signals`, and optional `warnings`.
-
-### Get Document Signals
-
-Use the document-signal flags when an agent needs PDF structure beyond page
-text.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
-  "include_outline": true,
-  "include_annotations": true,
-  "include_page_labels": true,
-  "include_page_geometry": true,
-  "include_permissions": true,
-  "include_structure_tree": true,
-  "include_form_fields": true,
-  "include_attachments": true
-}
-```
-
-### Inspect Content Safety
-
-Use `include_safety_findings` when an agent will use PDF text as context and
-needs deterministic warnings for common prompt-injection patterns, hidden or
-near-invisible text geometry, tiny text, off-page text, or overlapping text
-that may visually spoof or obscure content.
-
-```json
-{
-  "sources": [{
-    "path": "/path/to/document.pdf",
-    "pages": "1-5"
-  }],
+  "sources": [{ "path": "/absolute/path/to/untrusted.pdf" }],
   "include_safety_findings": true,
-  "include_full_text": false
+  "include_trust_report": true
 }
 ```
 
-## Multiple Sources
+These are off by default: you pay for them when you need them.
 
-Process multiple PDFs in a single request:
+## A prompt you can paste into your agent
 
-```json
-{
-  "sources": [
-    { "path": "/path/to/report.pdf" },
-    { "path": "/path/to/invoice.pdf" },
-    { "url": "https://example.com/whitepaper.pdf" }
-  ],
-  "include_full_text": true,
-  "include_metadata": true,
-  "include_page_count": true,
-  "include_images": false
-}
-```
+> Read `/absolute/path/to/report.pdf` with Citra. Then answer my question and
+> cite the page and — for numbers — the table and cell you took them from. If
+> the document does not prove an answer, say so instead of guessing.
 
-## Response Format
+That last sentence is what makes the evidence path do its job.
 
-```json
-{
-  "results": [
-    {
-      "source": "/path/to/document.pdf",
-      "success": true,
-      "data": {
-        "num_pages": 10,
-        "info": {
-          "Title": "Document Title",
-          "Author": "Author Name",
-          "CreationDate": "D:20231201120000"
-        },
-        "metadata": { ... },
-        "page_texts": [
-          { "page": 1, "text": "Page 1 content..." },
-          { "page": 2, "text": "Page 2 content..." }
-        ],
-        "markdown": "## Page 1\n\nPage 1 content...",
-        "html": "<section data-page=\"1\">\n<h2>Page 1</h2>\n<p>Page 1 content...</p>\n</section>",
-        "page_geometry": [
-          {
-            "page": 1,
-            "width": 612,
-            "height": 792,
-            "rotation": 0,
-            "user_unit": 1,
-            "view_box": {
-              "left": 0,
-              "bottom": 0,
-              "right": 612,
-              "top": 792
-            }
-          }
-        ],
-        "document_map": {
-          "version": "2026-06-15",
-          "profile": "agent_document_map",
-          "layers": [
-            "selectable_text",
-            "text_layer",
-            "semantic_hints",
-            "citation_chunks",
-            "layout_diagnostics",
-            "content_safety",
-            "page_geometry"
-          ],
-          "pages": [
-            {
-              "page": 1,
-              "element_ids": ["p1-text-1"],
-              "chunk_ids": ["p1-chunk-1"],
-              "safety_finding_indexes": [],
-              "text_layer_page_index": 0,
-              "text_layer_line_count": 3,
-              "text_layer_word_count": 18,
-              "text_layer_chars_with_bounding_boxes": 120,
-              "text_chars": 120,
-              "text_item_count": 3,
-              "image_count": 0,
-              "table_count": 0
-            }
-          ],
-          "routing": {
-            "low_confidence_pages": [],
-            "image_or_sparse_pages": [],
-            "needs_ocr_pages": []
-          },
-          "summary": {
-            "selected_pages": [1],
-            "processed_page_count": 1,
-            "element_count": 1,
-            "text_element_count": 1,
-            "image_element_count": 0,
-            "table_element_count": 0,
-            "chunk_count": 1,
-            "safety_finding_count": 0
-          }
-        },
-        "image_info": [
-          {
-            "page": 1,
-            "index": 0,
-            "width": 800,
-            "height": 600,
-            "format": "rgb"
-          }
-        ],
-        "table_info": [
-          {
-            "page": 1,
-            "tableIndex": 0,
-            "rowCount": 2,
-            "colCount": 2,
-            "cellCount": 4,
-            "bounding_box": {
-              "left": 72,
-              "bottom": 640,
-              "right": 420,
-              "top": 700
-            },
-            "confidence": 0.85,
-            "quality": {
-              "completeness": 1,
-              "nonEmptyCellRatio": 1,
-              "cellBoundingBoxCoverage": 1,
-              "inferredCellRatio": 0,
-              "rowAlignment": 1,
-              "rowSpacingConsistency": 1,
-              "cellBoundingBoxCount": 4,
-              "inferredCellCount": 0,
-              "missingCellCount": 0,
-              "mergedCellCandidateCount": 0,
-              "signals": ["complete_grid"]
-            }
-          }
-        ],
-        "elements": [
-          {
-            "id": "p1-text-1",
-            "type": "text",
-            "page": 1,
-            "content": "Page 1 content...",
-            "bounding_box": {
-              "left": 72,
-              "bottom": 720,
-              "right": 240,
-              "top": 732
-            },
-            "provenance": {
-              "engine": "pdfjs",
-              "source": "text-content"
-            },
-            "semantic_hint": {
-              "role": "paragraph",
-              "confidence": 0.5,
-              "signals": ["default-text"]
-            }
-          },
-          {
-            "id": "p1-table-1",
-            "type": "table",
-            "page": 1,
-            "bounding_box": {
-              "left": 72,
-              "bottom": 640,
-              "right": 420,
-              "top": 700
-            },
-            "table": {
-              "rows": [["Name", "Total"], ["Ada", "$100"]],
-              "cells": [
-                {
-                  "text": "Name",
-                  "rowIndex": 0,
-                  "colIndex": 0,
-                  "rowSpan": 1,
-                  "colSpan": 1,
-                  "isHeader": true,
-                  "inferred": false,
-                  "bounding_box": {
-                    "left": 72,
-                    "bottom": 680,
-                    "right": 120,
-                    "top": 700
-                  }
-                }
-              ],
-              "rowCount": 2,
-              "colCount": 2,
-              "confidence": 0.85,
-              "quality": {
-                "completeness": 1,
-                "nonEmptyCellRatio": 1,
-                "cellBoundingBoxCoverage": 1,
-                "inferredCellRatio": 0,
-                "rowAlignment": 1,
-                "rowSpacingConsistency": 1,
-                "cellBoundingBoxCount": 4,
-                "inferredCellCount": 0,
-                "missingCellCount": 0,
-                "mergedCellCandidateCount": 0,
-                "signals": ["complete_grid"]
-              }
-            },
-            "confidence": 0.85,
-            "provenance": {
-              "engine": "pdfjs",
-              "source": "table-detector"
-            }
-          }
-        ],
-        "chunks": [
-          {
-            "id": "p1-chunk-1",
-            "page_start": 1,
-            "page_end": 1,
-            "text": "Page 1 content...",
-            "element_ids": ["p1-text-1"],
-            "strategy": "page",
-            "bounding_boxes": [
-              {
-                "left": 72,
-                "bottom": 720,
-                "right": 240,
-                "top": 732
-              }
-            ]
-          }
-        ],
-        "structure_trees": [
-          {
-            "page": 1,
-            "tree": {
-              "role": "Root",
-              "children": [
-                {
-                  "role": "H1",
-                  "children": [{ "type": "content", "id": "p1-text-1" }]
-                }
-              ]
-            }
-          }
-        ],
-        "form_fields": [
-          {
-            "name": "customer_name",
-            "type": "text",
-            "value": "Ada Lovelace",
-            "page": 1
-          }
-        ],
-        "attachments": [
-          {
-            "name": "source_csv",
-            "filename": "source.csv",
-            "size_bytes": 1024
-          }
-        ],
-        "safety_findings": [
-          {
-            "type": "prompt_injection_pattern",
-            "severity": "high",
-            "page": 1,
-            "element_id": "p1-text-3",
-            "message": "Text matches a common prompt-injection instruction pattern.",
-            "snippet": "Ignore previous instructions..."
-          },
-          {
-            "type": "hidden_text",
-            "severity": "high",
-            "page": 1,
-            "element_id": "p1-text-4",
-            "message": "Text has zero or near-zero geometry and may be hidden or visually unavailable in the rendered page."
-          }
-        ]
-      }
-    }
-  ]
-}
-```
+## Where next
 
-## Error Handling
-
-If a source fails, it will be included in results with `success: false`:
-
-```json
-{
-  "results": [
-    {
-      "source": "/path/to/missing.pdf",
-      "success": false,
-      "error": {
-        "code": "FileNotFound",
-        "message": "File not found: /path/to/missing.pdf"
-      }
-    }
-  ]
-}
-```
-
-Other sources in the same request will still be processed.
+- [API reference](/api/) — every option and result field
+- [The evidence contract](/EVIDENCE_CONTRACT) — what "proof" means here
+- [Performance](/performance/) — how fast, and how that was measured
+- [Comparison](/comparison/) — why not the alternatives

@@ -1,69 +1,54 @@
-# Capability Overview
+# Comparison
 
-PDF Reader MCP is the most-starred open-source PDF MCP server on GitHub. It is
-designed as a full-fidelity PDF intelligence layer for agents. The comparison
-below is category-based and focuses on the agent workflow: read a smart Agent
-Document Twin first, search cheaply when the task has a literal query, and
-request focused evidence only when the answer needs source-level proof.
+The job: **PDF evidence for agents.** Not a cloud OCR wrapper, not an archive
+system, not "whatever text we could scrape."
 
-> **Plain text extraction gives agents words. PDF Reader MCP gives agents words
-> with proof** — page, bbox, crops, trust signals, and release-gate benchmarks.
-> [Stop PDF hallucinations →](/articles/stop-pdf-hallucinations) ·
-> [⭐ Star the repo](https://github.com/SylphxAI/citra)
+| Approach | What your agent gets | The gap |
+| --- | --- | --- |
+| **Cloud / API OCR MCPs** | Text from a paid remote OCR call | Documents leave the machine; structure and tables come back weak; per-call cost; no page-level cell geometry |
+| **Archive / document-management MCPs** | Search over a repository you built | Archive search, not an agent toolkit for citeable structure — you still lack tables, crops, and locators |
+| **Filesystem MCP + raw PDF text** | A wall of characters | Page numbers invented, tables flattened, scans become noise, regions impossible to cite |
+| **Ask a vision model** | A fluent summary | Unverifiable. The model reads an image; it does not return a page, a cell, or a bounding box you can check |
+| **PDF.js / a JS PDF library in-process** | Text you parse yourself | You own the parser, the OCR, the table model, the failure modes — and the install footprint |
+| **Citra** | Structured text, tables with cells **and geometry**, OCR with provenance, visual crops, and page-level citations | — |
 
-| Capability | PDF Reader MCP | Text/CLI tools | Cloud PDF APIs | Generic filesystem MCP |
-| --- | --- | --- | --- | --- |
-| MCP-native PDF tools | ✅ V3 three-tool surface | ❌ | ❌ | ⚠️ raw file access only |
-| Preflight inspection and routing | ✅ | ❌ | ⚠️ API-specific | ❌ |
-| Literal search with evidence | ✅ snippets, offsets, boxes, provenance | ⚠️ text only | ⚠️ varies | ❌ |
-| Text layer fidelity | ✅ runs, lines, words, chars, metadata coverage | ⚠️ usually text only | ⚠️ varies | ❌ |
-| Agent Document Twin | ✅ document map plus AST and evidence indexes | ❌ | ⚠️ vendor-specific | ❌ |
-| Page rendering evidence | ✅ bounded MCP image parts | ⚠️ external commands | ✅ | ❌ |
-| Region crop evidence | ✅ PDF-coordinate crops | ⚠️ custom glue | ✅ | ❌ |
-| Scanned-page OCR path | ✅ configured local provider with provenance | ⚠️ external glue | ✅ | ❌ |
-| OCR-derived tables | ✅ when OCR word boxes are available | ❌ | ⚠️ varies | ❌ |
-| Table quality diagnostics | ✅ cells, geometry, spans, warnings, continuation hints | ❌ | ⚠️ varies | ❌ |
-| Formula/chart/figure/image enrichment | ✅ configured visual-provider adapters | ❌ | ⚠️ vendor-specific | ❌ |
-| Trust report | ✅ hidden text, prompt-injection-like text, visual spoofing, unsafe links, redaction | ❌ | ⚠️ varies | ❌ |
-| Accessibility report | ✅ tagged-PDF, tag-visible coverage, forms, links, images, permissions, grades | ❌ | ⚠️ varies | ❌ |
-| Citation chunks | ✅ page, semantic, size, and table chunks | ❌ | ⚠️ varies | ❌ |
-| Local-first default | ✅ | ✅ | ❌ | ✅ |
-| No required API key | ✅ | ✅ | ❌ | ✅ |
-| Reproducible release proof | ✅ quality, corpus, provider, package-smoke, and release-gate artifacts | ❌ | ❌ | ❌ |
+## The distinction that matters
 
-## Why It Matters
+A text extractor answers *"what characters are on this page?"* Citra answers
+*"what can my agent safely assert, and where does the proof live?"*
 
-Agents need more than extracted text. For high-value PDFs they need to know
-where content came from, which page or crop proves it, whether the reading order
-looks uncertain, whether a page needs OCR, whether a table has weak geometry,
-and whether hidden or unsafe content should be treated as untrusted data.
+That is why the response carries `page`, `bounding_box`, `provenance`, `quality`
+signals, and `gaps` — not just `full_text`. See
+[the evidence contract](/EVIDENCE_CONTRACT).
 
-PDF Reader MCP exposes that as a compact V3 tool surface:
+## Local-first, for real
 
-1. `read_pdf` is the default entrypoint. With only `sources`, it profiles the
-   PDF, chooses useful extraction options, and returns the linked Agent Document
-   Twin.
-2. `search_pdf` finds source-backed text matches before spending more context
-   on broad extraction or visual proof.
-3. `pdf_evidence` handles focused follow-up operations: `inspect`,
-   `render_page`, `extract_regions`, `ocr_pages`, and `analyze_regions`.
+The default path never needs a network. No document upload, no API key, no
+per-call charge for reading a local PDF. Providers are **opt-in** for OCR and
+region analysis only — and even then the evidence stays linked to the local
+document. See [the local-first frontier](/LOCAL_FIRST_FRONTIER).
 
-## When PDF Reader MCP Is The Better Fit
+## Three tools, one surface
 
-- You want agents to start with one intelligent PDF read instead of learning a
-  long list of extraction tools.
-- You need stable page, element, chunk, crop, table, OCR, trust, and
-  accessibility references for downstream citations.
-- You need local-first execution and want OCR or visual models configured by the
-  deployment, not selected by each request.
-- You need source evidence for tables, charts, formulas, figures, and scanned
-  pages.
-- You want public benchmark artifacts and a release gate that prove the shipped
-  capability surface.
+| Tool | Job |
+| --- | --- |
+| `read_pdf` | smart default read |
+| `search_pdf` | cheap locate with locators |
+| `pdf_evidence` | focused verify: inspect / render / crop / OCR / regions |
 
-## Boundaries
+Advanced work lives behind one `op` enum instead of accumulating near-duplicate
+tool names. See [the tool surface](/TOOL_SURFACE).
 
-PDF Reader MCP does not bundle heavy OCR, vision, formula, or layout model
-weights. The production package is sole-Rust and local-first; advanced
-OCR and visual understanding are enabled through explicit local providers and
-validated through provider benchmarks.
+## Honest about limits
+
+- Performance numbers are **method-bounded** (same host, named mode, named task
+  family) — see [Performance](/performance/).
+- OCR and region analysis need an opt-in provider. Core reading does not.
+- Generative summaries are not evidence. Citra returns facts with locators; what
+  your agent concludes is its own responsibility.
+
+## Next
+
+- [The evidence contract](/EVIDENCE_CONTRACT)
+- [Product proof](/guide/product-proof)
+- [Performance](/performance/)
