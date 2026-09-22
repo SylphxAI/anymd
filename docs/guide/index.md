@@ -1,94 +1,78 @@
-# Introduction
+# Citra
 
-Citra gives AI agents **eyes for PDFs**.
+**Give your AI agent eyes for PDFs — with proof.**
 
-It is a full-fidelity Model Context Protocol (MCP) server that turns PDFs into
-agent-readable evidence — not a plain-text dump. The core product surface is an
-**Agent Document Twin**: text, tables, structure, crops, OCR, citations, trust,
-and accessibility signals linked through stable IDs.
+Citra is the local-first PDF evidence tool for AI agents. One `read_pdf` call
+returns structured text, tables with cells and geometry, optional OCR with its
+own provenance, and **page-level citations your agent can defend** — not invent.
 
-The production package is **sole-Rust** and local-first (`@sylphx/citra@5.0.0`).
-Core extraction works without heavy model downloads. Scanned OCR and visual
-table/chart/formula/figure understanding are enabled through configured local
-providers when you need them.
+::: tip Ten minutes to a citable claim
+Start with the [Quickstart](/guide/getting-started). It walks one document from
+install to a claim a human can check.
+:::
 
-## What It Does
+## Who this is for
 
-AI agents often need to access information from PDF documents - reports,
-invoices, research papers, manuals, and more. This server provides tools to
-inspect, verify, enrich, and extract:
+You are building agents that read **contracts, filings, research papers,
+invoices, or scanned records** — and you have been burned by an agent that
+confidently quoted a number it invented. Citra exists for that failure.
 
-- **Smart PDF reads** - `read_pdf` can profile unfamiliar PDFs, choose an extraction route, and return the Agent Document Twin in one response
-- **PDF profiles** - Detect text-rich, low-text, mixed, or scanned/image-like PDFs before extraction
-- **PDF search evidence** - Locate literal text matches with snippets, match offsets, character-derived or text-item bounding boxes, and provenance
-- **Visual page evidence** - Render selected pages as bounded PNG MCP image parts with provenance
-- **Region crop evidence** - Crop PDF-coordinate bounding boxes as focused PNG evidence
-- **Visual region analysis** - Send focused crops to a configured local provider and normalize table, chart, formula, figure, and image-description results
-- **Configured OCR text layers** - Run selected rendered pages through a local OCR provider and normalize text, confidence, words, language, and provenance
-- **Agent Document Twin** - Read one linked document map with pages, elements, text-layer coverage, chunks, layout diagnostics, OCR evidence, visual enrichment indexes, trust routing, accessibility routing, and page geometry
-- **Full text content** - Get all text from a PDF
-- **PDF text layers** - Return direction-aware run records, line records, word records, character records, estimated boxes, provenance, and metadata coverage diagnostics
-- **Page-specific text** - Extract text from specific pages or page ranges
-- **Metadata** - Author, title, creation date, and other document properties
-- **Page count** - Total number of pages
-- **Embedded images** - Extract images as base64-encoded PNG data
-- **Agent document maps** - Link pages, elements, text-layer and metadata coverage, chunks, layout confidence, safety findings, trust report routing and signal indexes, accessibility report routing and issue indexes, visual evidence routing, and geometry
-- **Trust reports** - Summarize page risk, scores, signal counts, redacted evidence snippets, and optional document-map trust signal routing
-- **Accessibility reports** - Summarize tagged-PDF coverage, tag-to-visible-content coverage, heading roles, images, forms, links, accessibility permissions, issue summaries, page-grade routing, and optional document-map issue indexes
-- **Citation chunks** - Return stable source references for retrieval workflows
-- **Safety signals** - Surface deterministic findings before agents trust PDF text
+## What makes it different
 
-## Key Features
+A text extractor answers *"what characters are on this page?"* Citra answers
+*"what can my agent safely assert, and where does the proof live?"*
 
-### Multiple Sources
-Process PDFs from local files or URLs in a single request. Mix and match sources
-as needed, but each source must provide exactly one locator: `path` or `url`.
+Every claim in a response can carry:
 
-### Batch Processing
-Send multiple PDF sources in one request. The server processes them concurrently for optimal performance.
+- **page** — where it is in the document
+- **bounding box** — where on the page, in PDF coordinates
+- **table / cell indices** — for numbers that came from a grid
+- **provenance** — which engine and which layer (selectable text vs OCR) produced it
+- **quality signals** — when the evidence is weak (sparse cells, merged cells, incomplete geometry)
+- **gaps** — what it could **not** prove, named instead of guessed
 
-### Flexible Extraction
-Choose exactly what data you need - visual page evidence, region crops, full text, specific pages, metadata only, an agent document map, or everything including images.
+That is [the evidence contract](/EVIDENCE_CONTRACT), and it is the whole point of
+the product.
 
-### Smart Default Read
-Call `read_pdf` with only `sources` when an agent does not know the document
-shape. V3 profiles the PDF, chooses a useful extraction route, and returns the
-selected arguments with the response so the agent can see what happened.
+## The three tools
 
-### PDF Search
-Use `search_pdf` to find relevant pages and source snippets before deciding whether an agent should read, render, OCR, crop, or cite a region. OCR-layer search is opt-in so fast selectable-text search stays the default.
+| Tool | Job |
+| --- | --- |
+| [`read_pdf`](/api/) | Smart default read — markdown, tables, structure, optional OCR, citation-ready chunks |
+| [`search_pdf`](/api/) | Cheap literal retrieval with page and bounding-box locators |
+| [`pdf_evidence`](/api/) | Focused verification: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, `analyze_regions` |
 
-### Focused Evidence
-Use `pdf_evidence` when the agent needs one specialist operation after reading
-or searching: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, or
-`analyze_regions`.
+Few, powerful, obvious. Advanced work lives behind one `op` enum instead of
+accumulating near-duplicate tool names — see [the tool surface](/TOOL_SURFACE).
 
-### PDF Text Layer
-Use `include_text_layer` when agents need direction-aware run, line, word, and character records with page-level ranges, estimated bounding boxes, and metadata coverage counts.
+## Local-first
 
-### Image Extraction
-Extract embedded images from PDFs for AI vision analysis. Images are returned as base64-encoded PNG data.
+Reading a local PDF needs **no** network, **no** API key, and uploads **no**
+document. OCR and region analysis are opt-in providers you choose. See
+[the local-first frontier](/LOCAL_FIRST_FRONTIER).
 
-### Page Rendering
-Render selected pages as visual evidence for layout inspection, OCR routing, and agent verification. Rendered PNGs are returned as MCP image parts while JSON carries only metadata and provenance.
+## Native and fail-closed
 
-### Region Cropping
-Crop PDF-coordinate bounding boxes into focused visual evidence for tables, figures, charts, formulas, annotations, and citation verification.
+The PDF engine is native Rust, selected per platform at install. The launcher
+ships zero production JS dependencies. If the matching native binary is
+missing, the process refuses to start — there is no silent fallback to a
+different engine.
 
-### Visual Region Analysis
-Analyze focused crops with a configured local command or HTTP provider for visual table recognition, chart-to-data extraction, formula recognition, figure descriptions, and image captions. Provider commands and endpoints are environment-configured, so request payloads cannot choose arbitrary executables or URLs. Outputs can preserve rich table cell geometry, formula formats, and chart axes/series.
+## Install in 30 seconds
 
-### OCR Provider Pipeline
-Run selected rendered pages through a configured local OCR command when scanned or sparse pages need a text layer. OCR commands are environment-configured, so request payloads cannot choose arbitrary executables.
+```bash
+npx -y @sylphx/citra
+```
 
-`read_pdf` can also opt into OCR text layer fusion with `include_ocr_text_layer`, keeping external OCR text separate from selectable PDF text while linking it into the agent document map. When `include_tables` is enabled, OCR word boxes can also produce OCR-derived table structure for scanned pages.
+Full per-client setup: [Installation](/guide/installation)
 
-### Accessibility Report
-Use `include_accessibility_report` when an agent needs page-level accessibility routing for tagged structure, tag-to-visible-content coverage, headings, image alt-text verifiability, form labels, link labels, copy-based accessibility permissions, issue summaries, and page-grade buckets.
+## Where to go
 
-## Supported Clients
-
-- **Claude Desktop** - Add to your `claude_desktop_config.json`
-- **Claude Code** - Use `claude mcp add` command
-- **Cursor** - Configure in MCP settings
-- **Any MCP Client** - Standard MCP protocol over stdio
+| If you want… | Go to |
+| --- | --- |
+| to use it right now | [Quickstart](/guide/getting-started) |
+| every option and result field | [API reference](/api/) |
+| to know what "proof" means here | [The evidence contract](/EVIDENCE_CONTRACT) |
+| the speed claims and their bounds | [Performance](/performance/) |
+| why not the alternatives | [Comparison](/comparison/) |
+| to report a vulnerability | [Security reporting](/security/maintainer-process) |

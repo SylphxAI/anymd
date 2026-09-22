@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { execSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { resolveCliPath, resolveServerPath } from './utils/cargoBinaries.js';
+import { resolveCliPath } from './utils/cargoBinaries.js';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const rustCliBin = resolveCliPath();

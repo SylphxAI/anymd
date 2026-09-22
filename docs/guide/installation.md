@@ -1,106 +1,97 @@
 # Installation
 
-## Zero-config (recommended)
+One line. No Docker, no API key, no global install.
 
 ```bash
 npx -y @sylphx/citra
 ```
 
-Agents and MCP hosts should prefer **npx** so users never install anything globally. Live package: **`@sylphx/citra@5.0.0`**.
-
-
-## Published stable
-
-Install from **npm**. Current production is **`@sylphx/citra@5.0.0`** — a **sole-Rust** MCP server launched by a thin Node entrypoint.
-
-```bash
-npm install -g @sylphx/citra
-# or pin
-npm install -g @sylphx/citra
-```
-
-What you get:
-
-1. Thin launcher package
-2. **One** platform native package as an optional dependency (auto-selected)
-
-There is **no** TypeScript PDF runtime in the production package. If the matching native binary is missing, the server **fails closed**.
+That starts a **stdio MCP server** your agent can use immediately. Prefer `npx`
+in host configuration so nothing is installed globally and upgrades are just a
+cache refresh.
 
 ## Requirements
 
-- **Node.js >= 22.13.0** (launcher only)
-- Supported platforms:
-  - macOS arm64 / x64
-  - Linux x64 gnu / arm64 gnu
-  - Windows x64
-- Optional OCR / visual providers are opt-in (not required for core text paths)
+| | |
+| --- | --- |
+| Node.js | **≥ 22.13.0** (the thin launcher only — the PDF engine is native) |
+| Platforms | macOS arm64 / x64 · Linux x64-gnu / arm64-gnu · Windows x64 |
+| Optional OCR / visual providers | opt-in; **not** required for text, tables, or citations |
 
-## Claude Code
+## Add it to your agent
 
-```bash
-claude mcp add citra -- npx @sylphx/citra
-```
-
-## Claude Desktop
-
-Add to `claude_desktop_config.json`:
-
-```json
+::: code-group
+```json [Claude Desktop / Cursor / VS Code / Codex]
 {
   "mcpServers": {
     "citra": {
       "command": "npx",
-      "args": ["@sylphx/citra"]
+      "args": ["-y", "@sylphx/citra"]
     }
   }
 }
 ```
 
-### Config file locations
-
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\\Claude\\claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-## Cursor / VS Code / Codex / other MCP clients
-
-```json
-{
-  "mcpServers": {
-    "citra": {
-      "command": "npx",
-      "args": ["@sylphx/citra"]
-    }
-  }
-}
+```bash [Claude Code]
+claude mcp add citra -- npx -y @sylphx/citra
 ```
 
-### Dual-era clients (Gemini Antigravity CLI)
+```bash [Any agent or CLI]
+npx -y @sylphx/citra
+```
+:::
 
-Some MCP hosts probe with SEP-2575 `server/discover` **before** the legacy
-`initialize` handshake (for example Gemini Antigravity CLI on Windows). The
-native server answers that discovery request on stdio without closing the
-transport, then completes `initialize` as usual. If an older published build
-fails with `expect initialized request` / `EOF` on plugin load, upgrade to a
-release that includes this fix.
+<details>
+<summary><strong>Claude Desktop config file locations</strong></summary>
 
-## Run directly
+- **macOS** — `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows** — `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux** — `~/.config/Claude/claude_desktop_config.json`
+
+</details>
+
+<details>
+<summary><strong>Dual-era clients</strong> (send <code>server/discover</code> before <code>initialize</code>)</summary>
+
+Hosts such as the Gemini Antigravity CLI probe with SEP-2575 `server/discover`
+before the legacy handshake. Citra answers both, on stdio and over HTTP.
+
+</details>
+
+## Global CLI
 
 ```bash
-npx @sylphx/citra
-# or after global install
-citra
+npm install -g @sylphx/citra
+citra --help
 ```
 
-HTTP transport:
+## Pin a version
+
+Any released version can be pinned by its exact number:
 
 ```bash
-MCP_TRANSPORT=http citra
+npx -y @sylphx/citra@<version>
 ```
 
-## Platforms
+## SDK
 
-| Platform | Native package |
+```ts
+import { Citra } from '@sylphx/citra/sdk';
+
+const citra = new Citra();
+const read = await citra.read({ sources: [{ path: '/absolute/path/report.pdf' }] });
+```
+
+`@sylphx/citra/sdk` exposes `read` / `search` / `evidence` — the same three
+surfaces as the MCP tools. `@sylphx/citra/pure-rust` exposes the low-level
+client helpers. Both require the platform native package, exactly like MCP.
+
+## What gets installed
+
+The launcher package ships **zero production JS dependencies**. npm selects
+exactly **one** platform native package for your host:
+
+| Platform | Optional native package |
 | --- | --- |
 | macOS arm64 | `@sylphx/citra-darwin-arm64` |
 | macOS x64 | `@sylphx/citra-darwin-x64` |
@@ -108,18 +99,53 @@ MCP_TRANSPORT=http citra
 | Linux arm64 | `@sylphx/citra-linux-arm64-gnu` |
 | Windows x64 | `@sylphx/citra-win32-x64-msvc` |
 
-## Next
+Measured clean install (linux-x64): **20 files**, ~**24.4 MiB** of `node_modules`
+— versus 4,101 files and ~82.3 MiB for the historical TypeScript engine. The
+native binary is multi-megabyte because it *is* the PDF engine.
 
-- [Product proof](/guide/product-proof) — before/after, flagship workflows, performance bounds
-- [Getting started](/guide/getting-started) — tools and first calls
-- [Migration / recovery](/migration) — historical notes only
+## Fail closed
 
-## Historical TypeScript baseline (not production)
+There is **no** TypeScript PDF runtime in the production package. If the
+matching native binary is missing or the wrong version, the launcher refuses to
+start and names the platform it expected. You will never get a silent
+downgrade to a different engine.
 
-Immutable external comparison/recovery pin only (transitional package id; **not** install CTA):
+## Verify
 
 ```bash
-npm install -g @sylphx/pdf-reader-mcp@3.0.14
+npx -y @sylphx/citra --help
 ```
 
-Production install CTA remains **`@sylphx/citra@5.0.0`** only.
+Then, in your agent, ask:
+
+> Read `/absolute/path/to/sample.pdf` and give me the page number and table cell
+> behind your answer.
+
+If the reply carries `page`, `bounding_box`, and `provenance`, you are on the
+evidence path. If it quotes text with no locators, you are not talking to Citra.
+
+## Optional providers
+
+Core text, tables and citations need **no** provider and no network. These are
+opt-in and configure by environment:
+
+| Purpose | Variables |
+| --- | --- |
+| OCR (scanned pages) | `MCP_PDF_OCR_PRESET` (`tesseract` / `tesseract-tsv`) or `MCP_PDF_OCR_COMMAND` + `MCP_PDF_OCR_ARGS_JSON` |
+| Region / visual analysis | `MCP_PDF_REGION_ANALYSIS_COMMAND`, or `MCP_PDF_REGION_ANALYSIS_PRESET` = `ollama` / `openai-compatible` / `lmstudio` / `llamacpp` |
+| HTTP transport | `MCP_TRANSPORT=http`, `MCP_HTTP_HOST`, `MCP_HTTP_PORT`, `MCP_API_KEY` |
+| Filesystem reach | `--allow-dir=<path>` (repeatable) or `MCP_PDF_ALLOWED_DIRS` |
+
+## Security defaults
+
+- Local files are read only from paths you pass; `--allow-dir` scopes that down further.
+- Remote URLs are guarded: scheme and host policy, an SSRF deny-list pinned to
+  the connected address (no DNS-rebinding gap), size caps, and bounded redirects.
+- The HTTP transport binds **loopback** by default and refuses a non-loopback
+  bind without `MCP_API_KEY`.
+
+Full reference: [API docs](/api/) · [security reporting](/security/maintainer-process)
+
+## Next
+
+→ [Quickstart: from PDF to proof](/guide/getting-started)

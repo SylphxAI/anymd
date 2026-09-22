@@ -32,4 +32,4 @@ Default path uses local native runtime; no cloud API key required for core read.
 npx -y @sylphx/citra
 ```
 
-Bare invoke starts brand-sole MCP on stdio. Live: `@sylphx/citra@5.0.0`.
+Bare invoke starts brand-sole MCP on stdio. Live: the latest `@sylphx/citra` on npm.

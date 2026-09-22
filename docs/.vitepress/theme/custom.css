@@ -1,377 +1,585 @@
-/* ==========================================
-   PDF Reader MCP - Modern/Sleek Theme
-   Tech Startup Aesthetic with Gradients & Animations
-   ========================================== */
+/* ==========================================================================
+   Citra design system — "citrus lab"
+   Ink surfaces + one citrus accent. Offline by design: no external fonts,
+   no external images, no third-party scripts.
+   ========================================================================== */
 
-/* ==========================================
-   CSS Variables - Dark Theme Primary
-   ========================================== */
 :root {
-  /* Brand Colors - Vibrant gradient palette */
-  --vp-c-brand-1: #8b5cf6;
-  --vp-c-brand-2: #a78bfa;
-  --vp-c-brand-3: #7c3aed;
-  --vp-c-brand-soft: rgba(139, 92, 246, 0.14);
+  /* citrus */
+  --cit: #c3f53c;
+  --cit-deep: #9fd21c;
+  --cit-ink: #243503;
+  --cit-soft: rgba(195, 245, 60, 0.14);
 
-  /* Accent gradient colors */
-  --gradient-start: #8b5cf6;
-  --gradient-mid: #06b6d4;
-  --gradient-end: #10b981;
+  /* brand wiring for VitePress (light) */
+  --vp-c-brand-1: #5c8a00;
+  --vp-c-brand-2: #6fa000;
+  --vp-c-brand-3: #82b800;
+  --vp-c-brand-soft: rgba(122, 176, 8, 0.14);
 
-  /* Smooth transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 400ms ease;
+  --vp-c-bg: #fbfcf8;
+  --vp-c-bg-alt: #f3f6ee;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f1f5e9;
+
+  --vp-c-text-1: #101408;
+  --vp-c-text-2: #414b38;
+  --vp-c-text-3: #6b7564;
+
+  --vp-c-divider: #e2e8d8;
+  --vp-c-gutter: #e7ecdf;
+
+  --vp-code-block-bg: #0d1206;
+  --vp-code-block-color: #e8f0dc;
+  --vp-custom-block-tip-border: #9fd21c;
+  --vp-custom-block-tip-bg: rgba(195, 245, 60, 0.12);
+
+  --cit-radius: 14px;
+  --cit-radius-sm: 9px;
+  --cit-shadow: 0 1px 2px rgba(16, 20, 8, 0.06), 0 8px 24px -12px rgba(16, 20, 8, 0.18);
+  --cit-shadow-lift: 0 2px 4px rgba(16, 20, 8, 0.08), 0 18px 44px -18px rgba(16, 20, 8, 0.28);
+
+  --vp-font-family-base: ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --vp-font-family-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono',
+    Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
-/* ==========================================
-   Dark Theme Enhancements
-   ========================================== */
 .dark {
-  --vp-c-bg: #0a0a0f;
-  --vp-c-bg-alt: #111118;
-  --vp-c-bg-soft: #1a1a24;
-  --vp-c-bg-elv: #1e1e2a;
+  --vp-c-brand-1: var(--cit);
+  --vp-c-brand-2: var(--cit-deep);
+  --vp-c-brand-3: #86b321;
+  --vp-c-brand-soft: var(--cit-soft);
 
-  /* Subtle border glow effect */
-  --vp-c-border: rgba(139, 92, 246, 0.15);
-  --vp-c-divider: rgba(139, 92, 246, 0.08);
+  --vp-c-bg: #0a0d07;
+  --vp-c-bg-alt: #0e120a;
+  --vp-c-bg-elv: #12170d;
+  --vp-c-bg-soft: #151c0f;
 
-  /* Text colors */
-  --vp-c-text-1: rgba(255, 255, 255, 0.95);
-  --vp-c-text-2: rgba(255, 255, 255, 0.7);
-  --vp-c-text-3: rgba(255, 255, 255, 0.5);
+  --vp-c-text-1: #eaf2dd;
+  --vp-c-text-2: #aebb9e;
+  --vp-c-text-3: #7d8a72;
+
+  --vp-c-divider: #222b18;
+  --vp-c-gutter: #1b2213;
+
+  --vp-code-block-bg: #070a04;
+  --vp-code-block-color: #e6efd8;
+  --vp-custom-block-tip-border: var(--cit);
+  --vp-custom-block-tip-bg: rgba(195, 245, 60, 0.08);
+
+  --cit-radius: 14px;
+  --cit-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 30px -14px rgba(0, 0, 0, 0.8);
+  --cit-shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.55), 0 22px 50px -20px rgba(0, 0, 0, 0.9);
 }
 
-/* ==========================================
-   Hero Section - Gradient Title
-   ========================================== */
-:root {
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(
-    135deg,
-    var(--gradient-start) 0%,
-    var(--gradient-mid) 50%,
-    var(--gradient-end) 100%
-  );
+/* ---------------------------------------------------------------- typography */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.VPDoc h1 {
+  letter-spacing: -0.022em;
 }
 
-.VPHero .name {
-  background-clip: text;
+.VPHomeHero .name,
+.VPHomeHero .text {
+  letter-spacing: -0.035em;
+}
+
+.VPHomeHero .name {
+  font-size: clamp(2.75rem, 7vw, 5.25rem);
+  line-height: 0.98;
+  background: linear-gradient(180deg, var(--vp-c-text-1) 30%, var(--vp-c-brand-1));
   -webkit-background-clip: text;
-  animation: gradient-shift 8s ease infinite;
-  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-@keyframes gradient-shift {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+.dark .VPHomeHero .name {
+  background: linear-gradient(180deg, var(--cit) 25%, var(--cit-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Hero tagline styling */
-.VPHero .tagline {
+.VPHomeHero .text {
+  max-width: 22ch;
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  line-height: 1.12;
+  color: var(--vp-c-text-1);
+}
+
+.VPHomeHero .tagline {
+  max-width: 58ch;
+  font-size: clamp(1rem, 1.4vw, 1.16rem);
+  line-height: 1.6;
   color: var(--vp-c-text-2);
-  font-size: 1.25rem;
+}
+
+.VPHomeHero .image-container {
+  max-width: 240px;
+}
+
+/* ------------------------------------------------------------------ buttons */
+.VPButton.brand,
+.vp-button.brand {
+  background: var(--cit);
+  border-color: var(--cit);
+  color: var(--cit-ink);
+  font-weight: 650;
+  border-radius: 999px;
+  padding: 0 22px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.dark .VPButton.brand,
+.dark .vp-button.brand {
+  color: var(--cit-ink);
+}
+
+.VPButton.brand:hover,
+.vp-button.brand:hover {
+  background: var(--cit-deep);
+  border-color: var(--cit-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -10px rgba(159, 210, 28, 0.7);
+}
+
+.VPButton.alt,
+.vp-button.alt {
+  border-radius: 999px;
+  border-color: var(--vp-c-divider);
+  color: var(--vp-c-text-1);
+  background: transparent;
+  font-weight: 600;
+  padding: 0 20px;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.VPButton.alt:hover,
+.vp-button.alt:hover {
+  border-color: var(--vp-c-brand-3);
+  transform: translateY(-1px);
+}
+
+/* ---------------------------------------------------------------- features */
+.VPHomeFeatures .container {
+  padding-top: 24px;
+}
+
+.VPHomeFeatures .items .VPFeature {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--cit-radius);
+  background: var(--vp-c-bg-elv);
+  box-shadow: var(--cit-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.dark .VPHomeFeatures .items .VPFeature {
+  background: var(--vp-c-bg-elv);
+}
+
+.VPHomeFeatures .items .VPFeature:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--cit-shadow-lift);
+  border-color: var(--vp-c-brand-3);
+}
+
+.VPHomeFeatures .icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--cit-radius-sm);
+  background: var(--cit-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark .VPHomeFeatures .icon {
+  background: rgba(195, 245, 60, 0.1);
+}
+
+.VPHomeFeatures .icon img {
+  width: 21px;
+  height: 21px;
+  filter: none;
+}
+
+.VPHomeFeatures .title {
+  letter-spacing: -0.015em;
+  font-weight: 640;
+}
+
+/* --------------------------------------------------------------- layout bits */
+.cit-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.cit-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vp-c-brand-2);
+  font-weight: 700;
+}
+
+.dark .cit-eyebrow {
+  color: var(--cit);
+}
+
+.cit-h2 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 10px;
+  color: var(--vp-c-text-1);
+}
+
+.cit-lead {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--vp-c-text-2);
+  max-width: 64ch;
+  margin: 0;
+}
+
+.cit-section {
+  margin: 88px 0;
+}
+
+.cit-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.cit-grid.two {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.cit-grid.three {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.cit-card {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--cit-radius);
+  background: var(--vp-c-bg-elv);
+  box-shadow: var(--cit-shadow);
+  padding: 22px;
+}
+
+.cit-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.02rem;
+  letter-spacing: -0.015em;
+}
+
+.cit-card p {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.95rem;
   line-height: 1.6;
 }
 
-/* Hero image glow effect */
-.VPHero .image-container {
-  position: relative;
+.cit-card .cit-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--cit-radius-sm);
+  background: var(--cit-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
 }
 
-.VPHero .image-container::before {
-  content: "";
-  position: absolute;
-  inset: -20%;
-  background: radial-gradient(circle at center, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
-  filter: blur(40px);
-  z-index: -1;
-  animation: pulse-glow 4s ease-in-out infinite;
+.cit-card .cit-icon img,
+.cit-card .cit-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.75;
 }
 
-@keyframes pulse-glow {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
+.cit-icon svg,
+.cit-step .cit-icon svg {
+  color: var(--vp-c-brand-1);
 }
 
-/* ==========================================
-   Action Buttons - Modern Style
-   ========================================== */
-.VPButton.brand {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
-  border: none;
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
-  transition: all var(--transition-normal);
+.dark .cit-icon svg,
+.dark .cit-step .cit-icon svg {
+  color: var(--cit);
 }
 
-.VPButton.brand:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+/* three-step band */
+.cit-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 18px;
 }
 
-.VPButton.alt {
-  background: transparent;
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  transition: all var(--transition-normal);
+.cit-step {
+  border-left: 2px solid var(--vp-c-brand-3);
+  padding: 4px 0 4px 20px;
 }
 
-.VPButton.alt:hover {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.6);
-  transform: translateY(-2px);
+.cit-step .n {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--vp-c-text-3);
+  text-transform: uppercase;
 }
 
-/* ==========================================
-   Feature Cards - Glassmorphism
-   ========================================== */
-.VPFeature {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(6, 182, 212, 0.02) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.1);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  transition: all var(--transition-normal);
+.cit-step h3 {
+  margin: 8px 0 8px;
+  font-size: 1.05rem;
+  letter-spacing: -0.018em;
 }
 
-.VPFeature:hover {
-  transform: translateY(-4px);
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 40px rgba(139, 92, 246, 0.1);
+.cit-step p {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
-.VPFeature .title {
-  color: var(--vp-c-text-1);
-  font-weight: 600;
+/* ---------------------------------------------------------- the evidence demo */
+.cit-demo {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--cit-radius);
+  overflow: hidden;
+  background: var(--vp-code-block-bg);
+  box-shadow: var(--cit-shadow-lift);
 }
 
-.VPFeature .details {
+.cit-demo .cit-demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(195, 245, 60, 0.16);
+  background: rgba(195, 245, 60, 0.05);
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.cit-demo .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cit);
+  opacity: 0.85;
+}
+
+.cit-demo pre {
+  margin: 0;
+  border-radius: 0;
+  background: transparent !important;
+  padding: 18px 20px;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.dark .cit-demo pre {
+  background: transparent !important;
+}
+
+.cit-demo pre code {
+  color: var(--vp-code-block-color);
+}
+
+.cit-cite {
+  color: var(--cit);
+  font-weight: 650;
+}
+
+/* ------------------------------------------------------------- proof numbers */
+.cit-proof {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px;
+  background: var(--vp-c-divider);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--cit-radius);
+  overflow: hidden;
+}
+
+.cit-proof .stat {
+  background: var(--vp-c-bg-elv);
+  padding: 26px 22px;
+}
+
+.cit-proof .num {
+  font-family: var(--vp-font-family-mono);
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--vp-c-brand-1);
+  line-height: 1;
+}
+
+.dark .cit-proof .num {
+  color: var(--cit);
+}
+
+.cit-proof .lbl {
+  margin-top: 10px;
+  font-size: 0.86rem;
+  line-height: 1.5;
   color: var(--vp-c-text-2);
 }
 
-/* Feature icon gradient */
-.VPFeature .icon {
-  font-size: 1.75rem;
+.cit-fine {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--vp-c-text-3);
 }
 
-/* ==========================================
-   Navigation - Clean & Modern
-   ========================================== */
-body .VPNav {
-  backdrop-filter: blur(16px) saturate(180%);
-  background: rgba(10, 10, 15, 0.8);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+/* ------------------------------------------------------------------ compare */
+.cit-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
 }
 
-.VPNavBarTitle .title {
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.cit-compare .side {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--cit-radius);
+  padding: 20px;
+  background: var(--vp-c-bg-soft);
 }
 
-.VPNavBarMenuLink {
-  transition: color var(--transition-fast);
+.cit-compare .side.good {
+  border-color: var(--vp-c-brand-3);
+  background: var(--cit-soft);
 }
 
-.VPNavBarMenuLink:hover {
-  color: var(--vp-c-brand-1);
+.cit-compare .side h3 {
+  margin: 0 0 12px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-3);
 }
 
-/* ==========================================
-   Sidebar - Subtle Styling
-   ========================================== */
-.VPSidebar {
-  background: linear-gradient(180deg, rgba(10, 10, 15, 0.95) 0%, rgba(17, 17, 24, 0.95) 100%);
-  backdrop-filter: blur(16px);
-}
-
-.VPSidebarItem.is-active > .item .link > .text {
-  color: var(--vp-c-brand-1);
-}
-
-.VPSidebarItem .link {
-  transition: all var(--transition-fast);
-  border-radius: 8px;
-  margin: 2px 0;
-}
-
-.VPSidebarItem .link:hover {
-  background: rgba(139, 92, 246, 0.08);
-}
-
-/* ==========================================
-   Code Blocks - Enhanced
-   ========================================== */
-.vp-code-group .tabs label {
-  transition: all var(--transition-fast);
-}
-
-.vp-code-group .tabs label:hover {
-  color: var(--vp-c-brand-1);
-}
-
-body div[class*="language-"] {
-  border-radius: 12px;
-  border: 1px solid rgba(139, 92, 246, 0.1);
-  background: rgba(17, 17, 24, 0.8);
-}
-
-div[class*="language-"]::before {
+.cit-compare .side.good h3 {
   color: var(--vp-c-brand-2);
 }
 
-/* Code copy button */
-.vp-copy-code-button {
-  transition: all var(--transition-fast);
+.dark .cit-compare .side.good h3 {
+  color: var(--cit);
 }
 
-.vp-copy-code-button:hover {
-  background: rgba(139, 92, 246, 0.2);
+.cit-compare .side p {
+  margin: 0;
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--vp-c-text-1);
 }
 
-/* ==========================================
-   Content - Typography & Links
-   ========================================== */
+/* ------------------------------------------------------------------ prose */
 .vp-doc a {
-  color: var(--vp-c-brand-1);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: all var(--transition-fast);
+  text-decoration-color: var(--vp-c-brand-soft);
+  text-underline-offset: 3px;
 }
 
 .vp-doc a:hover {
-  border-bottom-color: var(--vp-c-brand-1);
-}
-
-/* Headings with subtle gradient */
-.vp-doc h1,
-.vp-doc h2 {
-  border-bottom-color: rgba(139, 92, 246, 0.15);
-}
-
-.vp-doc h1 {
-  background: linear-gradient(135deg, var(--vp-c-text-1), var(--vp-c-brand-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ==========================================
-   Tables - Modern Styling
-   ========================================== */
-.vp-doc table {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  text-decoration-color: var(--vp-c-brand-2);
 }
 
 .vp-doc th {
-  background: rgba(139, 92, 246, 0.1);
-  font-weight: 600;
+  background: var(--vp-c-bg-soft);
+  letter-spacing: -0.01em;
 }
 
-.vp-doc tr {
-  transition: background var(--transition-fast);
+.vp-doc div[class*='language-'] {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: var(--cit-radius-sm);
 }
 
-.vp-doc tr:hover {
-  background: rgba(139, 92, 246, 0.05);
+.vp-doc :not(pre) > code {
+  border-radius: 5px;
+  background: var(--cit-soft);
+  color: var(--vp-c-brand-2);
+  border: 1px solid var(--vp-c-divider);
+  font-size: 0.85em;
+  padding: 2px 5px;
 }
 
-/* ==========================================
-   Custom Containers - Styled
-   ========================================== */
-.custom-block {
-  border-radius: 12px;
-  border-left-width: 4px;
+.dark .vp-doc :not(pre) > code {
+  color: var(--cit);
+  background: rgba(195, 245, 60, 0.08);
 }
 
-.custom-block.tip {
-  border-color: var(--vp-c-brand-1);
-  background: rgba(139, 92, 246, 0.08);
+/* --------------------------------------------------------------- chrome */
+.VPNavBarTitle .logo {
+  height: 28px;
+  width: 28px;
+  border-radius: 7px;
 }
 
-.custom-block.warning {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.08);
+.VPNavBarTitle .title {
+  font-weight: 750;
+  letter-spacing: -0.03em;
 }
 
-.custom-block.danger {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
+.VPNavBar {
+  border-bottom-color: var(--vp-c-divider);
 }
 
-/* ==========================================
-   Footer - Clean Design
-   ========================================== */
-.VPFooter {
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
-  background: rgba(10, 10, 15, 0.95);
+.dark .VPNavBar {
+  background: rgba(10, 13, 7, 0.82) !important;
 }
 
-/* ==========================================
-   Scrollbar - Custom Styling
-   ========================================== */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.VPSidebarItem.level-0 > .item > .text {
+  font-weight: 650;
+  letter-spacing: -0.012em;
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+.VPSidebarItem.level-1 > .item > .text {
+  font-size: 0.92rem;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
-  border-radius: 4px;
+.VPDocFooter {
+  border-top-color: var(--vp-c-divider);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+.cit-cta {
+  margin: 72px 0 24px;
+  border: 1px solid var(--vp-c-brand-3);
+  border-radius: var(--cit-radius);
+  background: linear-gradient(180deg, var(--cit-soft), transparent);
+  padding: 34px 28px;
+  text-align: center;
 }
 
-/* ==========================================
-   Page Transitions
-   ========================================== */
-.VPContent {
-  animation: fade-in 0.3s ease;
+.cit-cta h2 {
+  margin: 0 0 10px;
+  font-size: 1.5rem;
+  letter-spacing: -0.028em;
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.cit-cta p {
+  margin: 0 auto;
+  max-width: 56ch;
+  color: var(--vp-c-text-2);
 }
 
-/* ==========================================
-   Responsive Adjustments
-   ========================================== */
-@media (max-width: 768px) {
-  .VPHero .name {
-    font-size: 2.5rem;
+@media (max-width: 640px) {
+  .VPHomeHero .text {
+    max-width: 15ch;
   }
 
-  .VPHero .tagline {
-    font-size: 1.1rem;
+  .cit-section {
+    margin: 56px 0;
   }
 }
