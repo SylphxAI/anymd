@@ -16,7 +16,7 @@ See product README + EVIDENCE_CONTRACT for surfaces.
 2. Prefer Rust native MCP when present  
 3. Few tools; primary path documented in TOOL_SURFACE.md  
 4. Cloud / LLM only optional and non-authority  
-5. Product SSOT is this repository only (no instruments monorepo)
+5. Product SSOT is this repository only (no products monorepo)
 
 ## Zero-config CTA
 

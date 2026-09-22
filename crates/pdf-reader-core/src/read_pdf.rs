@@ -35,6 +35,7 @@ pub struct ReadPdfInput {
     pub include_document_map: bool,
     pub auto: Option<bool>,
     pub auto_detail: Option<String>,
+    pub profile: Option<String>,
     pub sample_pages: Option<u32>,
     pub include_images: bool,
     pub include_tables: bool,
@@ -1475,6 +1476,13 @@ pub fn read_pdf(input: &ReadPdfInput) -> Result<ReadPdfResponse, ReadPdfError> {
         ));
     }
 
+    if let Some(profile) = input.profile.as_deref() {
+        if !matches!(profile, "fast" | "quality" | "research") {
+            return Err(ReadPdfError::invalid_params(
+                "profile must be one of: fast, quality, research",
+            ));
+        }
+    }
     if let Some(detail) = input.auto_detail.as_deref() {
         if !matches!(detail, "fast" | "balanced" | "full") {
             return Err(ReadPdfError::invalid_params(
@@ -1583,6 +1591,13 @@ pub fn read_pdf_from_value(input: &Value) -> Result<ReadPdfResponse, ReadPdfErro
     }
 
     if parsed.auto.unwrap_or(false) {
+        if parsed.auto_detail.is_none() {
+            parsed.auto_detail = match parsed.profile.as_deref() {
+                Some("fast") => Some("fast".into()),
+                Some("quality") | Some("research") => Some("full".into()),
+                _ => Some("balanced".into()),
+            };
+        }
         let detail = parsed.auto_detail.as_deref().unwrap_or("balanced");
         let enable = |key: &str, field: &mut bool| {
             if input.get(key).is_none() {

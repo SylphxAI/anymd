@@ -65,7 +65,7 @@ const validateTaskFile = (rel: string, requirePublic: boolean) => {
   if (!task.id) failures.push(`${rel} missing id`);
   if (task.id && ids.has(task.id)) failures.push(`duplicate task id ${task.id}`);
   if (task.id) ids.add(task.id);
-  if (!['read_pdf', 'search_pdf', 'pdf_evidence'].includes(String(task.tool))) {
+  if (!['read_pdf', 'search_pdf', 'pdf_compare', 'pdf_evidence'].includes(String(task.tool))) {
     failures.push(`${rel} has invalid tool`);
   }
   if (!task.input || typeof task.input !== 'object') failures.push(`${rel} input must be object`);

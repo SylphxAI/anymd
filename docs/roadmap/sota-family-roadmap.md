@@ -11,4 +11,4 @@ Use:
 - [IPPB.md](../IPPB.md)
 - [PRODUCT_INDEPENDENCE.md](../PRODUCT_INDEPENDENCE.md)
 
-Historical multi-repo “family SSOT” repos (`reader-evidence`, `instruments`) are archived/non-authority.
+Historical multi-repo “family SSOT” repos (`reader-evidence`, `products`) are archived/non-authority.

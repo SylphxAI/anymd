@@ -34,12 +34,13 @@ Every claim in a response can carry:
 That is [the evidence contract](/EVIDENCE_CONTRACT), and it is the whole point of
 the product.
 
-## The three tools
+## The four tools
 
 | Tool | Job |
 | --- | --- |
 | [`read_pdf`](/api/) | Smart default read — markdown, tables, structure, optional OCR, citation-ready chunks |
 | [`search_pdf`](/api/) | Cheap literal retrieval with page and bounding-box locators |
+| [`pdf_compare`](/api/) | Compare two PDFs at page and term level |
 | [`pdf_evidence`](/api/) | Focused verification: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, `analyze_regions` |
 
 Few, powerful, obvious. Advanced work lives behind one `op` enum instead of

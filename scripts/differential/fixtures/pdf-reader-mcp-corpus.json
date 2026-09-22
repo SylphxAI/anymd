@@ -1,6 +1,6 @@
 {
   "corpusVersion": 1,
-  "description": "read_pdf + stdio transport differential corpus \u2014 frozen golden baseline via pdf-reader-cli oracle (rej-010)",
+  "description": "read_pdf + stdio transport differential corpus — frozen golden baseline via pdf-reader-cli oracle (rej-010)",
   "goldenFixture": "test/fixtures/read-pdf-golden.json",
   "transportContractCases": [
     {
@@ -126,6 +126,7 @@
         "tools": [
           "read_pdf",
           "search_pdf",
+          "pdf_compare",
           "pdf_evidence"
         ]
       }
@@ -173,6 +174,7 @@
     "tools": [
       "read_pdf",
       "search_pdf",
+      "pdf_compare",
       "pdf_evidence"
     ]
   }

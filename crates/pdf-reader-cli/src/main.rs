@@ -231,6 +231,24 @@ fn handle_read_pdf(input: &serde_json::Value) -> Result<ToolSuccessEnvelope, Err
     })
 }
 
+fn handle_pdf_compare(input: &serde_json::Value) -> Result<ToolSuccessEnvelope, ErrorEnvelope> {
+    match pdf_reader_core::compare_pdf_from_value(input) {
+        Ok(response) => Ok(ToolSuccessEnvelope {
+            status: "ok",
+            engine: pdf_reader_core::ENGINE_NAME,
+            version: pdf_reader_core::ENGINE_VERSION,
+            tool: "pdf_compare".into(),
+            result: serde_json::to_value(response).expect("serialize pdf_compare"),
+        }),
+        Err(error) => Err(ErrorEnvelope {
+            status: "error",
+            code: "INVALID_PARAMS".into(),
+            message: error.message,
+            next_action: "Pass different local before/after PDF paths.".into(),
+        }),
+    }
+}
+
 fn handle_pdf_evidence(input: &serde_json::Value) -> Result<ToolSuccessEnvelope, ErrorEnvelope> {
     let operation = input
         .get("operation")
@@ -352,6 +370,10 @@ fn main() {
         "read_pdf" => match handle_read_pdf(&request.input) {
             Ok(success) => serde_json::to_string(&success).expect("serialize"),
             Err(error) => serde_json::to_string(&error).expect("serialize"),
+        },
+        "pdf_compare" => match handle_pdf_compare(&request.input) {
+            Ok(response) => serde_json::to_string(&response).expect("serialize"),
+            Err(error) => serde_json::to_string(&error).expect("serialize error"),
         },
         "pdf_evidence" => match handle_pdf_evidence(&request.input) {
             Ok(success) => serde_json::to_string(&success).expect("serialize"),

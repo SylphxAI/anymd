@@ -36,9 +36,9 @@ When an agent answers a question from this lossy output, it is guessing. When
 it cites a page number, the number might be wrong. When it summarizes a table,
 the table might not exist in the extracted text at all.
 
-## The Solution: Agent Document Twin
+## The Solution: structured document result
 
-PDF Reader MCP's V3 architecture solves this with the **Agent Document Twin** —
+PDF Reader MCP's V3 architecture solves this with the **structured document result** —
 a linked, source-backed representation of the PDF that includes:
 
 1. **Document map** — a structured tree of pages, elements, headings,
@@ -67,11 +67,11 @@ only when needed**.
 ### Step 1: Read the PDF
 
 ```
-Agent → read_pdf(sources) → Agent Document Twin
+Agent → read_pdf(sources) → structured document result
 ```
 
 With no manual `include_*` flags, `read_pdf` profiles the PDF, chooses the best
-extraction route, and returns the complete Agent Document Twin. The agent gets
+extraction route, and returns the complete structured document result. The agent gets
 markdown, chunks, tables, trust/accessibility routing, and the selected
 extraction arguments — all in one call.
 
@@ -130,7 +130,7 @@ default install works without downloading any models.
 
 Consider an agent reading a financial report:
 
-1. **`read_pdf`** returns the Agent Document Twin. The twin includes a table on
+1. **`read_pdf`** returns the structured document result. The twin includes a table on
    page 5 with 4 rows and 3 columns: Quarter, Revenue, Growth. The table has
    a confidence score of 0.95 and no quality warnings.
 
@@ -165,7 +165,7 @@ machine-checked on every release.
 
 Agents that read PDFs need more than text. They need to know where the text
 came from, whether it is trustworthy, whether content was lost, and how to cite
-it. Evidence-first PDF reading, implemented through the Agent Document Twin
+it. Evidence-first PDF reading, implemented through the structured document result
 architecture, makes this the default — not an afterthought.
 
 PDF Reader MCP's V3 design delivers this through one smart tool (`read_pdf`),

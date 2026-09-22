@@ -2,7 +2,7 @@
 
 This repository is complete for the company programme only when all are true:
 
-1. **Independence** — product SSOT here; no central Instruments monorepo/hub authority
+1. **Independence** — product SSOT here; no central products monorepo/hub authority
 2. **Surfaces** — SDK + CLI + MCP documented and present
 3. **Tools** — few clear tools; schema not agent-confusing
 4. **Evidence** — result contract with locators/routes/warnings (not `evidence_first` tool)

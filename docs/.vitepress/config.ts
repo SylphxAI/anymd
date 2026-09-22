@@ -45,7 +45,7 @@ export default defineConfig({
       {
         name: 'twitter:description',
         content:
-          'Stop PDF hallucinations. Turn PDFs into an Agent Document Twin: tables with geometry, OCR with provenance, and citations agents can show a human.',
+          'Stop PDF hallucinations. Turn PDFs into an structured document result: tables with geometry, OCR with provenance, and citations agents can show a human.',
       },
     ],
     ['meta', { name: 'twitter:site', content: '@sylphxai' }],

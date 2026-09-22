@@ -52,7 +52,7 @@ truth is Citra 5.0.0 — see [migration notes](/migration).
 `@sylphx/pdf-reader-mcp` is a **starred public MCP**. Agents call it thousands of
 times. The right end state is not “half TypeScript, half Rust, please wait while
 we migrate” — it is **one native engine** with the same public tools and the same
-Agent Document Twin fields.
+structured document result fields.
 
 The withdrawn v3.1.x releases did **not** reach that end state. The intended
 replacement, once it passes the executable parity and release gates, is:
@@ -114,7 +114,7 @@ semantically equivalent candidate, and therefore cannot establish a speedup:
 | --- | --- |
 | Metadata + page count | 1.1 ms |
 | Full text | 16.1 ms |
-| Agent Document Twin | 27.2 ms |
+| structured document result | 27.2 ms |
 
 The pure-Rust harness currently writes a `comparison` block, but those ratios
 are diagnostic historical comparisons and must not be used as release or
@@ -128,8 +128,8 @@ Fixture: `test/fixtures/sample.pdf` · iterations=15 · warmup=3 · measuredAt=2
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Metadata + page count | 11.174 ms | 11.665 ms | 13.318 ms | 1.1 ms | 0.10× |
 | Full text | 8.041 ms | 5.875 ms | 14.169 ms | 16.1 ms | 2.00× |
-| Agent Document Twin (balanced) | 8.227 ms | 6.447 ms | 14.826 ms | 27.2 ms | 3.31× |
-| Agent Document Twin (full includes) | 12.916 ms | 12.516 ms | 18.278 ms | — | — |
+| structured document result (balanced) | 8.227 ms | 6.447 ms | 14.826 ms | 27.2 ms | 3.31× |
+| structured document result (full includes) | 12.916 ms | 12.516 ms | 18.278 ms | — | — |
 | search_pdf literal | 0.862 ms | 0.735 ms | 1.573 ms | — | — |
 | pdf_evidence inspect | 9.325 ms | 9.158 ms | 13.206 ms | — | — |
 

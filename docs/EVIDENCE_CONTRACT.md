@@ -2,7 +2,7 @@
 
 **Evidence First** means results carry citeable structure. There is **no** MCP tool named `evidence_first`.
 
-Family wire law: `SylphxAI/skills` `schemas/instrument-evidence-envelope.schema.json` (envelope_version `"1"`).
+Family wire law: `SylphxAI/skills` `schemas/product-evidence-envelope.schema.json` (envelope_version `"1"`).
 
 ## Locators and honesty (Citra)
 

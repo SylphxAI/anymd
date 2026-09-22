@@ -6,8 +6,7 @@
 
 ### Give your AI agent eyes for PDFs — with proof.
 
-**Local-first PDF evidence for agents.** One call returns structured text, tables, OCR and
-**page-level citations your agent can defend** — not invent.
+**Local-first PDF answers with page-level proof.** One call returns structured text, tables, OCR and citations your agent can defend — not invent.
 
 [![npm](https://img.shields.io/npm/v/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
 [![downloads](https://img.shields.io/npm/dm/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
@@ -90,6 +89,13 @@ Locators in, citations out. A human can check the claim.
 (paths shortened). The table is detected **and** linked to its continuation on page 2 — and when
 Citra cannot prove something, it says so in `gaps` instead of guessing.</sub>
 
+## Predictable defaults
+
+Citra keeps the default path cheap and explicit. `fast` reads the embedded text
+layer and structure. `quality` explicitly enables OCR, rendering, and richer
+crops. `research` is not hidden inside PDF reading. Expensive work is requested,
+never silently triggered.
+
 ## Install in 30 seconds
 
 ```bash
@@ -132,12 +138,13 @@ can use immediately.
 
 ## What you get
 
-Three tools. One surface. Few, powerful, obvious.
+Four tools. One surface. Few, powerful, obvious.
 
 | Tool | What an agent uses it for |
 | --- | --- |
-| `read_pdf` | The smart default — markdown, tables with cells and geometry, structure, optional OCR, citation-ready chunks |
+| `read_pdf` | The main read: markdown, tables with cells and geometry, structure, optional OCR, citation-ready chunks |
 | `search_pdf` | Cheap literal retrieval first: page and bounding-box locators before a deep read |
+| `pdf_compare` | Compare two local PDFs at page and term level |
 | `pdf_evidence` | Focused verification: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, `analyze_regions` |
 
 Full option and result reference: **[docs/api](https://sylphxai.github.io/citra/api/)**
@@ -175,6 +182,18 @@ One **optional** native package is selected for **your** host only:
 - **Fail closed** — a missing native binary stops the process; there is no silent TypeScript fallback.
 - **Panic-unwind** — a malformed document (e.g. a broken ToUnicode CMap) fails the request, never the process ([#608](https://github.com/SylphxAI/citra/issues/608)).
 - **HTTP transport is opt-in and hardened** — loopback by default, `MCP_API_KEY` enforced before binding elsewhere, and `--allow-dir` restricts filesystem reach. Details: [security docs](https://sylphxai.github.io/citra/security/maintainer-process) · report privately per [SECURITY.md](SECURITY.md).
+
+## Companion MCP tools
+
+| Product | Job |
+| --- | --- |
+| [Iris](https://github.com/SylphxAI/iris) | Image facts and pixel evidence |
+| [Cue](https://github.com/SylphxAI/cue) | Video timelines and timestamp evidence |
+| [Spine](https://github.com/SylphxAI/spine) | Repository architecture and impact |
+| [Locus](https://github.com/SylphxAI/locus) | Exact code-chunk retrieval |
+| [Lookout](https://github.com/SylphxAI/lookout) | Web research with source excerpts |
+
+Each product is independent. Install only the tools your agent needs.
 
 ## Documentation
 
