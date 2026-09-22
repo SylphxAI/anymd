@@ -120,7 +120,7 @@ jobs:
           # provided values" when the desired state is already in place. That is
           # success for this step, not a failure.
           if ! out=$(./mcp-publisher status --status active io.github.SylphxAI/citra "$VERSION" 2>&1); then
-            if grep -q 'already set to the provided values' <<<"$out"; then
+            if grep -qE 'already set to the provided values|No changes to apply' <<<"$out"; then
               echo "Canonical status already active; nothing to restore"
             else
               echo "$out" >&2
@@ -129,8 +129,16 @@ jobs:
           fi
 
       - name: Publish server to MCP Registry
-        if: ${{ steps.canonical-state.outputs.exists != 'true' }}
-        run: ./mcp-publisher publish
+        run: |
+          set -euo pipefail
+          # The registry's publish endpoint is an upsert - its contract is
+          # "Publish a new MCP server to the registry or update an existing one".
+          # This must run even when the version already exists: an earlier
+          # `if: exists != 'true'` guard silently skipped it, so a rename's
+          # corrected repository/website URLs never reached the live record and
+          # the readback below still passed because it never checked those
+          # fields.
+          ./mcp-publisher publish
 
       - name: Read back canonical Citra identity
         run: |
@@ -139,7 +147,9 @@ jobs:
           for attempt in $(seq 1 36); do
             if curl -fsS "$URL" > "$RUNNER_TEMP/citra-registry.json" && \
               jq -e --arg version "$VERSION" \
-                '.server.name == "io.github.SylphxAI/citra" and .server.version == $version and .server.packages[0].identifier == "@sylphx/citra" and .server.packages[0].version == $version and ._meta["io.modelcontextprotocol.registry/official"].status == "active"' \
+                --arg website "$(jq -r '.websiteUrl' server.json)" \
+              --arg repo "$(jq -r '.repository.url' server.json)" \
+              '.server.name == "io.github.SylphxAI/citra" and .server.version == $version and .server.packages[0].identifier == "@sylphx/citra" and .server.packages[0].version == $version and .server.websiteUrl == $website and .server.repository.url == $repo and ._meta["io.modelcontextprotocol.registry/official"].status == "active"' \
                 "$RUNNER_TEMP/citra-registry.json" >/dev/null; then
               cat "$RUNNER_TEMP/citra-registry.json"
               exit 0
