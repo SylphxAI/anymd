@@ -1,6 +1,6 @@
 {
   "profile": "pdf_quality_benchmark",
-  "generated_at": "2026-09-23T04:09:51.510Z",
+  "generated_at": "2026-09-23T14:09:29.212Z",
   "fixture_scope": "deterministic in-repository synthetic cases, runtime-generated document-signal, reading-order, and scanned PDF fixtures, and local mock providers",
   "passed": 69,
   "total": 69,
@@ -8,7 +8,7 @@
   "results": [
     {
       "name": "agent_document_twin_semantic_quality",
-      "duration_ms": 9.35,
+      "duration_ms": 9.76,
       "passed": 25,
       "total": 25,
       "score": 1,
@@ -16,7 +16,7 @@
     },
     {
       "name": "document_signal_fixture_quality",
-      "duration_ms": 136.46,
+      "duration_ms": 141.6,
       "passed": 7,
       "total": 7,
       "score": 1,
@@ -24,7 +24,7 @@
     },
     {
       "name": "real_reading_order_fixture_quality",
-      "duration_ms": 14.73,
+      "duration_ms": 14.58,
       "passed": 2,
       "total": 2,
       "score": 1,
@@ -32,7 +32,7 @@
     },
     {
       "name": "recursive_reading_order_quality",
-      "duration_ms": 0.52,
+      "duration_ms": 0.5,
       "passed": 1,
       "total": 1,
       "score": 1,
@@ -40,7 +40,7 @@
     },
     {
       "name": "ocr_text_layer_quality",
-      "duration_ms": 100.34,
+      "duration_ms": 104.97,
       "passed": 3,
       "total": 3,
       "score": 1,
@@ -48,7 +48,7 @@
     },
     {
       "name": "scanned_pdf_fixture_pipeline_quality",
-      "duration_ms": 76.64,
+      "duration_ms": 83.99,
       "passed": 3,
       "total": 3,
       "score": 1,
@@ -56,7 +56,7 @@
     },
     {
       "name": "ocr_table_extraction_quality",
-      "duration_ms": 52.61,
+      "duration_ms": 76.46,
       "passed": 4,
       "total": 4,
       "score": 1,
@@ -64,7 +64,7 @@
     },
     {
       "name": "visual_region_analysis_quality",
-      "duration_ms": 90.37,
+      "duration_ms": 99.74,
       "passed": 8,
       "total": 8,
       "score": 1,
@@ -72,7 +72,7 @@
     },
     {
       "name": "search_evidence_quality",
-      "duration_ms": 1.65,
+      "duration_ms": 2,
       "passed": 2,
       "total": 2,
       "score": 1,
@@ -80,7 +80,7 @@
     },
     {
       "name": "table_evidence_quality",
-      "duration_ms": 0.99,
+      "duration_ms": 1.02,
       "passed": 4,
       "total": 4,
       "score": 1,
@@ -88,7 +88,7 @@
     },
     {
       "name": "ai_safety_trust_report_quality",
-      "duration_ms": 1.52,
+      "duration_ms": 1.67,
       "passed": 10,
       "total": 10,
       "score": 1,

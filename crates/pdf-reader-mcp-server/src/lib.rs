@@ -33,7 +33,7 @@ use serde_json::Value;
 
 pub const SERVER_NAME: &str = "citra";
 /// Pure-Rust MCP server version — tracks the published npm product line when default.
-pub const SERVER_VERSION: &str = "5.0.5";
+pub const SERVER_VERSION: &str = "6.0.0";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
     "@sylphx/citra reads local PDFs for agents. A sources-only read_pdf uses the fast preset: \
