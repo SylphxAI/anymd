@@ -89,7 +89,9 @@ export default defineConfig({
         text: 'What you get',
         collapsed: true,
         items: [
-          { text: 'Tool surface — three tools', link: '/TOOL_SURFACE' },
+          { text: 'Vision', link: '/vision' },
+          { text: 'Capabilities', link: '/capabilities' },
+          { text: 'Tool surface — four tools', link: '/TOOL_SURFACE' },
           { text: 'The evidence contract', link: '/EVIDENCE_CONTRACT' },
           { text: 'Local-first frontier', link: '/LOCAL_FIRST_FRONTIER' },
           { text: 'Product proof', link: '/guide/product-proof' },
