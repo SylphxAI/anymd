@@ -32807,6 +32807,7 @@ var pdfSourceSchema = object4({
 var readPdfArgsSchema = object4({
   sources: array3(pdfSourceSchema),
   auto: optional3(bool(description("Automatically inspect each source and choose high-value extraction options before reading. Defaults to true when no explicit include_* options are supplied; explicit manual options keep precise extraction stable."))),
+  profile: optional3(union3(literal3("fast"), literal3("quality"), literal3("research")).describe("Predictable work profile. Fast is the cheap default; quality requests richer extraction.")),
   auto_detail: optional3(readPdfAutoDetailSchema.describe("Automatic extraction depth. fast returns the core document twin route, balanced adds trust/accessibility evidence, and full adds fuller text/HTML/structure outputs. Defaults to balanced.")),
   sample_pages: optional3(num(int2, gte(1), lte(20), description("Maximum number of pages to sample per source when automatic inspection is enabled. Defaults to 5."))),
   include_full_text: optional3(bool(description("Include the full text content of each PDF (only if 'pages' is not specified for that source)."))),
