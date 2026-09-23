@@ -120,6 +120,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { text: 'Security reporting', link: '/security/maintainer-process' },
+          { text: 'Remote URL policy', link: '/security/remote-url-policy' },
           { text: 'Advisory record', link: '/security/advisory-backlog' },
         ],
       },
