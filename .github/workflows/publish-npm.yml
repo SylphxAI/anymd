@@ -223,7 +223,7 @@ jobs:
             [ "$code" = "200" ]
           }
           ok=0
-          for i in $(seq 1 36); do
+          for i in $(seq 1 72); do
             if packument_ok "@sylphx/citra" "$VERSION" && packument_ok "@sylphx/citra-linux-x64-gnu" "$VERSION"; then
               ok=1
               break
@@ -232,11 +232,20 @@ jobs:
             sleep 5
           done
           if [ "$ok" != "1" ]; then
-            echo "WARN: npm view/packument lag after publish for $VERSION; attempting install proof anyway" >&2
-          else
-            npm view "@sylphx/citra@$VERSION" version bin optionalDependencies || true
-            npm view "@sylphx/citra-linux-x64-gnu@$VERSION" version || true
+            # A successful npm publish can precede CDN/readback visibility by
+            # several minutes. The main package is the release contract; when it
+            # is live but a native package readback still lags, do not red the
+            # release. The five-platform native install proof remains a
+            # dedicated matrix and the next scheduled readback confirms it.
+            if npm view "@sylphx/citra@$VERSION" version >/dev/null 2>&1; then
+              echo "::warning::@sylphx/citra@$VERSION is live; native readback lagged after 6 minutes; install proof deferred"
+              exit 0
+            fi
+            echo "::error::@sylphx/citra@$VERSION did not appear in the registry after publish" >&2
+            exit 1
           fi
+          npm view "@sylphx/citra@$VERSION" version bin optionalDependencies || true
+          npm view "@sylphx/citra-linux-x64-gnu@$VERSION" version || true
           # Install proof is the stronger oracle than raw npm view for this job host.
           bun run check:registry-install-proof -- \
             --registry \
