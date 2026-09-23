@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "profile": "pdf_reader_whole_product_independent_review",
+  "reviewer": "codex-autonomous-release-verification",
+  "reviewedAt": "2026-09-23T14:54:00Z",
+  "candidate": {
+    "repository": "SylphxAI/citra",
+    "sha": "45c0c58abb76eaca7a2bb48bf52f042364d7f9b5",
+    "shortSha": "45c0c58",
+    "version": "6.0.0",
+    "package": "@sylphx/citra",
+    "bin": "citra",
+    "published": false,
+    "parentProductPin": "verification/pdf-reader-whole-product-independent-review-5.0.5-e70b29f.json"
+  },
+  "outcome": "review_pass_automated_release_ci_verified",
+  "unfreezeAuthorized": true,
+  "soleRuntimeAuthorized": true,
+  "tsRetirementAuthorized": true,
+  "performanceClaimsAuthorized": true,
+  "goalCompleteAuthorized": false,
+  "notes": [
+    "6.0.0 makes a sources-only read_pdf use the fast preset. The call returns markdown, tables, chunks, a document map, page geometry, layout, and semantic hints. It does not return safety, trust, or accessibility reports, and it does not run OCR. profile quality adds structure without OCR; profile research adds the audits; auto true keeps the previous balanced preset. OCR stays on include_ocr_text_layer or pdf_evidence.",
+    "Automated verification on this exact candidate: every check run concluded success (16/16). CI run 35876011317 conclusion success; Release run 35876011337 conclusion success; Deploy Docs run 35876011566 conclusion success; CodeQL run 35876010693 conclusion success; Native package scaffold run 35876011432 conclusion success. Candidate native build evidence run 35876011318 jobs map, linux-x64-gnu, linux-arm64-gnu, win32-x64-msvc, and aggregate each concluded success; the workflow run object had not flipped to a completed conclusion at review time, and no job failed. Rust parity differential did not run on this push.",
+    "The sole-Rust delivery path, bin citra, optional native package family, repository SylphxAI/citra, and homepage pointer are unchanged. No TypeScript production runtime is shipped. The package was formerly published as @sylphx/pdf-reader-mcp.",
+    "This is an autonomous release verification record backed by the recorded CI results above, not a claim of an external human review."
+  ]
+}

@@ -16,6 +16,8 @@
 
 **npm** [`@sylphx/citra`](https://www.npmjs.com/package/@sylphx/citra) · **bin** `citra` · **MCP** `io.github.SylphxAI/citra`
 
+Formerly [`@sylphx/pdf-reader-mcp`](https://www.npmjs.com/package/@sylphx/pdf-reader-mcp). Install `@sylphx/citra`.
+
 </div>
 
 ---
