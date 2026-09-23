@@ -516,9 +516,9 @@
     "wholeProductReview": {
       "status": "review_pass_automated_release_ci_verified",
       "candidateVersion": "5.0.4",
-      "candidateSha": "4d55b22548d5425b0cd0d4abcd4348cab64758dc",
+      "candidateSha": "e70b29fba04d9f06a0fe1abf70fe2072c46fe2a1",
       "artifact": "verification/pdf-reader-whole-product-independent-review-5.0.4-4d55b22.json",
-      "evidence": "verification/pdf-reader-whole-product-independent-review-5.0.4-4d55b22.json",
+      "evidence": "verification/pdf-reader-whole-product-independent-review-5.0.5-e70b29f.json",
       "outcome": "review_pass_automated_release_ci_verified",
       "unfreezeAuthorized": true,
       "soleRuntimeAuthorized": true,
