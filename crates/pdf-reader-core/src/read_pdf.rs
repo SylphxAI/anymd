@@ -1568,7 +1568,11 @@ fn json_has_explicit_read_options(input: &Value) -> bool {
     input
         .get("sources")
         .and_then(Value::as_array)
-        .map(|sources| sources.iter().any(|source| source.get("pages").is_some()))
+        .map(|sources| {
+            sources
+                .iter()
+                .any(|source| source.get("pages").is_some_and(|pages| !pages.is_null()))
+        })
         .unwrap_or(false)
 }
 
@@ -2745,6 +2749,58 @@ mod tests {
     }
 
     #[test]
+    fn sources_only_auto_returns_the_document_twin_not_a_bare_info_shell() {
+        // A sources-only call is the advertised "one call returns the Agent
+        // Document Twin" path. If the auto policy is silently inert, the result
+        // collapses to engine/info/num_pages and the promise is broken.
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf");
+        if !fixture.is_file() {
+            return;
+        }
+        let response = read_pdf_from_value(&json!({
+            "sources":[{"path":fixture.to_string_lossy()}]
+        }))
+        .expect("read");
+        let data = response.results[0]
+            .data
+            .as_ref()
+            .expect("auto read returns data");
+        assert!(
+            data.markdown.is_some(),
+            "auto mode must return markdown, not a bare shell"
+        );
+        assert!(
+            data.page_texts.is_some() || data.chunks.is_some(),
+            "auto mode must materialize the text twin"
+        );
+    }
+
+    #[test]
+    fn injected_null_pages_key_does_not_disable_auto() {
+        // The MCP server always materializes each source as
+        // {"path": ..., "pages": null}. A null pages value is "not specified",
+        // so it must not count as an explicit option that turns auto off.
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf");
+        if !fixture.is_file() {
+            return;
+        }
+        let response = read_pdf_from_value(&json!({
+            "sources":[{"path":fixture.to_string_lossy(),"pages":Value::Null}]
+        }))
+        .expect("read");
+        let data = response.results[0]
+            .data
+            .as_ref()
+            .expect("auto read returns data");
+        assert!(
+            data.markdown.is_some(),
+            "a null pages key must not silently disable auto"
+        );
+    }
+
+    #[test]
     fn warm_cache_speeds_up_identical_local_table_reads() {
         crate::read_result_cache::clear_for_tests();
         let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -2776,3 +2832,4 @@ mod tests {
         );
     }
 }
+
