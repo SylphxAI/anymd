@@ -36,9 +36,10 @@ pub const SERVER_NAME: &str = "citra";
 pub const SERVER_VERSION: &str = "5.0.5";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
-    "@sylphx/citra sole-Rust MCP server (platform native binary). \
-Capability-first semantic compatibility with TypeScript 3.0.14 interface contracts (ADR-0005/0006). \
-No TypeScript PDF runtime is shipped in this package. Historical LKG: @sylphx/pdf-reader-mcp@3.0.14.";
+    "@sylphx/citra reads local PDFs for agents. A sources-only read_pdf uses the fast preset: \
+markdown, tables, chunks, a document map, page geometry, layout, and semantic hints. \
+It does not run OCR, rendering, or trust audits. Ask for profile quality or research, \
+or call pdf_evidence, when you need that work. No cloud API key is required.";
 
 fn omit_absent_optional_fields(value: Value) -> Value {
     match value {
@@ -163,7 +164,7 @@ fn uses_2026_envelope(context: &RequestContext<RoleServer>) -> bool {
 #[tool_router]
 impl PdfReaderMcp {
     #[tool(
-        description = "Primary PDF reader. Pure-Rust default: selectable text, markdown, chunks, tables, search, and evidence-oriented twin fields under capability-first semantic compatibility (ADR-0005)."
+        description = "Read a PDF. Sources only uses the fast preset: markdown, tables, chunks, document map, page geometry, layout, and semantic hints. No OCR and no trust audit. profile quality adds structure; profile research adds safety, trust, and accessibility. OCR and rendering stay on pdf_evidence or include_ocr_text_layer."
     )]
     pub async fn read_pdf(
         &self,

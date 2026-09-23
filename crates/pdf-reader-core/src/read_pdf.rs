@@ -1562,18 +1562,96 @@ fn json_has_explicit_read_options(input: &Value) -> bool {
         "trust_report_redaction",
         "include_accessibility_report",
     ];
-    if KEYS.iter().any(|key| input.get(*key).is_some()) {
-        return true;
+    // `pages` is a filter, not a mode switch. A null pages key is how the MCP
+    // server materializes "not specified"; a real page list still uses the preset.
+    KEYS.iter().any(|key| input.get(*key).is_some())
+}
+
+fn enable_absent(input: &Value, key: &str, field: &mut bool) {
+    if input.get(key).is_none() {
+        *field = true;
     }
-    input
-        .get("sources")
-        .and_then(Value::as_array)
-        .map(|sources| {
-            sources
-                .iter()
-                .any(|source| source.get("pages").is_some_and(|pages| !pages.is_null()))
-        })
-        .unwrap_or(false)
+}
+
+/// Named read presets. OCR, rendering, and visual analysis are never included.
+fn apply_read_preset(parsed: &mut ReadPdfInput, input: &Value, preset: &str) {
+    let structural = matches!(preset, "quality" | "research" | "full");
+    let audits = matches!(preset, "balanced" | "research" | "full");
+    let known = matches!(preset, "fast" | "balanced" | "quality" | "research" | "full");
+    if !known {
+        return;
+    }
+    enable_absent(input, "include_metadata", &mut parsed.include_metadata);
+    enable_absent(input, "include_page_count", &mut parsed.include_page_count);
+    enable_absent(
+        input,
+        "include_page_geometry",
+        &mut parsed.include_page_geometry,
+    );
+    enable_absent(input, "include_document_map", &mut parsed.include_document_map);
+    enable_absent(input, "include_chunks", &mut parsed.include_chunks);
+    enable_absent(input, "include_markdown", &mut parsed.include_markdown);
+    enable_absent(input, "include_tables", &mut parsed.include_tables);
+    enable_absent(
+        input,
+        "include_semantic_hints",
+        &mut parsed.include_semantic_hints,
+    );
+    enable_absent(
+        input,
+        "include_layout_diagnostics",
+        &mut parsed.include_layout_diagnostics,
+    );
+    if structural {
+        enable_absent(input, "include_full_text", &mut parsed.include_full_text);
+        enable_absent(input, "include_html", &mut parsed.include_html);
+        enable_absent(input, "include_elements", &mut parsed.include_elements);
+        enable_absent(input, "include_text_layer", &mut parsed.include_text_layer);
+        enable_absent(
+            input,
+            "include_document_ast",
+            &mut parsed.include_document_ast,
+        );
+        enable_absent(input, "include_outline", &mut parsed.include_outline);
+        enable_absent(input, "include_annotations", &mut parsed.include_annotations);
+        enable_absent(input, "include_page_labels", &mut parsed.include_page_labels);
+        enable_absent(input, "include_permissions", &mut parsed.include_permissions);
+        enable_absent(input, "include_form_fields", &mut parsed.include_form_fields);
+        enable_absent(input, "include_attachments", &mut parsed.include_attachments);
+        enable_absent(
+            input,
+            "include_structure_tree",
+            &mut parsed.include_structure_tree,
+        );
+    }
+    if audits {
+        enable_absent(
+            input,
+            "include_safety_findings",
+            &mut parsed.include_safety_findings,
+        );
+        enable_absent(input, "include_trust_report", &mut parsed.include_trust_report);
+        enable_absent(
+            input,
+            "include_accessibility_report",
+            &mut parsed.include_accessibility_report,
+        );
+    }
+}
+
+fn resolved_read_preset(parsed: &ReadPdfInput, legacy_auto: bool) -> String {
+    // `auto_detail` is the legacy depth switch and wins over `profile`.
+    if let Some(detail) = parsed.auto_detail.as_deref() {
+        return detail.to_string();
+    }
+    if let Some(profile) = parsed.profile.as_deref() {
+        return profile.to_string();
+    }
+    if legacy_auto {
+        "balanced".to_string()
+    } else {
+        "fast".to_string()
+    }
 }
 
 pub fn read_pdf_from_value(input: &Value) -> Result<ReadPdfResponse, ReadPdfError> {
@@ -1581,12 +1659,7 @@ pub fn read_pdf_from_value(input: &Value) -> Result<ReadPdfResponse, ReadPdfErro
         ReadPdfError::invalid_params(format!("Invalid read_pdf input: {error}"))
     })?;
 
-    // TypeScript-compatible auto default: omit auto => true only without explicit options.
-    if input.get("auto").is_none() {
-        parsed.auto = Some(!json_has_explicit_read_options(input));
-    }
-
-    // TS v3.0.14 defaults these two independent metadata surfaces to true.
+    // Metadata and page count stay on unless the caller turns them off.
     if input.get("include_metadata").is_none() {
         parsed.include_metadata = true;
     }
@@ -1594,57 +1667,20 @@ pub fn read_pdf_from_value(input: &Value) -> Result<ReadPdfResponse, ReadPdfErro
         parsed.include_page_count = true;
     }
 
-    if parsed.auto.unwrap_or(false) {
-        if parsed.auto_detail.is_none() {
-            parsed.auto_detail = match parsed.profile.as_deref() {
-                Some("fast") => Some("fast".into()),
-                Some("quality") | Some("research") => Some("full".into()),
-                _ => Some("balanced".into()),
-            };
+    let auto_specified = input.get("auto").is_some();
+    let legacy_auto = parsed.auto == Some(true);
+    let manual = (auto_specified && !legacy_auto)
+        || (!auto_specified && json_has_explicit_read_options(input));
+
+    if manual {
+        if !auto_specified {
+            parsed.auto = Some(false);
         }
-        let detail = parsed.auto_detail.as_deref().unwrap_or("balanced");
-        let enable = |key: &str, field: &mut bool| {
-            if input.get(key).is_none() {
-                *field = true;
-            }
-        };
-        enable("include_metadata", &mut parsed.include_metadata);
-        enable("include_page_count", &mut parsed.include_page_count);
-        enable("include_page_geometry", &mut parsed.include_page_geometry);
-        enable("include_document_map", &mut parsed.include_document_map);
-        enable("include_chunks", &mut parsed.include_chunks);
-        enable("include_markdown", &mut parsed.include_markdown);
-        enable("include_tables", &mut parsed.include_tables);
-        enable("include_semantic_hints", &mut parsed.include_semantic_hints);
-        enable(
-            "include_layout_diagnostics",
-            &mut parsed.include_layout_diagnostics,
-        );
-        if matches!(detail, "balanced" | "full") {
-            enable(
-                "include_safety_findings",
-                &mut parsed.include_safety_findings,
-            );
-            enable("include_trust_report", &mut parsed.include_trust_report);
-            enable(
-                "include_accessibility_report",
-                &mut parsed.include_accessibility_report,
-            );
-        }
-        if detail == "full" {
-            enable("include_full_text", &mut parsed.include_full_text);
-            enable("include_html", &mut parsed.include_html);
-            enable("include_elements", &mut parsed.include_elements);
-            enable("include_text_layer", &mut parsed.include_text_layer);
-            enable("include_document_ast", &mut parsed.include_document_ast);
-            enable("include_outline", &mut parsed.include_outline);
-            enable("include_annotations", &mut parsed.include_annotations);
-            enable("include_page_labels", &mut parsed.include_page_labels);
-            enable("include_permissions", &mut parsed.include_permissions);
-            enable("include_form_fields", &mut parsed.include_form_fields);
-            enable("include_attachments", &mut parsed.include_attachments);
-            enable("include_structure_tree", &mut parsed.include_structure_tree);
-        }
+    } else {
+        let preset = resolved_read_preset(&parsed, legacy_auto);
+        apply_read_preset(&mut parsed, input, &preset);
+        // Resolved presets read every requested page. Sampling belongs to
+        // pdf_evidence inspect, not this path.
         parsed.auto_policy_resolved = true;
     }
 
@@ -2748,11 +2784,32 @@ mod tests {
             .is_none());
     }
 
+    fn assert_fast_twin(data: &ReadPdfData) {
+        assert!(data.markdown.is_some(), "fast preset returns markdown");
+        assert!(data.chunks.is_some(), "fast preset returns chunks");
+        assert!(data.tables.is_some(), "fast preset returns tables");
+        assert!(data.document_map.is_some(), "fast preset returns a document map");
+        assert!(data.page_geometry.is_some(), "fast preset returns page geometry");
+        assert!(
+            data.layout_diagnostics.is_some(),
+            "fast preset returns layout"
+        );
+        // Semantic hints are folded into elements; there is no separate field.
+        assert!(data.elements.is_some(), "fast preset returns semantic hints");
+        assert!(data.ocr_text_layer.is_none(), "fast preset does not run OCR");
+        assert!(data.info.is_some(), "fast preset returns metadata");
+        assert!(data.num_pages.is_some(), "fast preset returns page count");
+        assert!(data.trust_report.is_none(), "fast preset omits trust");
+        assert!(data.safety_findings.is_none(), "fast preset omits safety");
+        assert!(
+            data.accessibility_report.is_none(),
+            "fast preset omits accessibility"
+        );
+        assert!(data.text_layer.is_none(), "fast preset omits the text layer");
+    }
+
     #[test]
     fn sources_only_auto_returns_the_document_twin_not_a_bare_info_shell() {
-        // A sources-only call is the advertised "one call returns the Agent
-        // Document Twin" path. If the auto policy is silently inert, the result
-        // collapses to engine/info/num_pages and the promise is broken.
         let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../test/fixtures/sample.pdf");
         if !fixture.is_file() {
@@ -2762,25 +2819,14 @@ mod tests {
             "sources":[{"path":fixture.to_string_lossy()}]
         }))
         .expect("read");
-        let data = response.results[0]
-            .data
-            .as_ref()
-            .expect("auto read returns data");
-        assert!(
-            data.markdown.is_some(),
-            "auto mode must return markdown, not a bare shell"
-        );
-        assert!(
-            data.page_texts.is_some() || data.chunks.is_some(),
-            "auto mode must materialize the text twin"
-        );
+        let data = response.results[0].data.as_ref().expect("data");
+        assert_fast_twin(data);
     }
 
     #[test]
     fn injected_null_pages_key_does_not_disable_auto() {
         // The MCP server always materializes each source as
-        // {"path": ..., "pages": null}. A null pages value is "not specified",
-        // so it must not count as an explicit option that turns auto off.
+        // {"path": ..., "pages": null}. A null pages value is "not specified".
         let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../test/fixtures/sample.pdf");
         if !fixture.is_file() {
@@ -2790,14 +2836,104 @@ mod tests {
             "sources":[{"path":fixture.to_string_lossy(),"pages":Value::Null}]
         }))
         .expect("read");
-        let data = response.results[0]
-            .data
-            .as_ref()
-            .expect("auto read returns data");
-        assert!(
-            data.markdown.is_some(),
-            "a null pages key must not silently disable auto"
-        );
+        let data = response.results[0].data.as_ref().expect("data");
+        assert_fast_twin(data);
+    }
+
+    #[test]
+    fn explicit_page_filter_keeps_the_fast_preset() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf");
+        if !fixture.is_file() {
+            return;
+        }
+        let response = read_pdf_from_value(&json!({
+            "sources":[{"path":fixture.to_string_lossy(),"pages":[1]}]
+        }))
+        .expect("read");
+        let data = response.results[0].data.as_ref().expect("data");
+        assert_fast_twin(data);
+    }
+
+    #[test]
+    fn explicit_auto_true_stays_on_the_balanced_audit_preset() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf");
+        if !fixture.is_file() {
+            return;
+        }
+        let response = read_pdf_from_value(&json!({
+            "sources":[{"path":fixture.to_string_lossy()}],
+            "auto": true
+        }))
+        .expect("read");
+        let data = response.results[0].data.as_ref().expect("data");
+        assert!(data.markdown.is_some());
+        assert!(data.trust_report.is_some(), "legacy auto stays balanced");
+        assert!(data.safety_findings.is_some());
+        assert!(data.accessibility_report.is_some());
+        assert!(data.text_layer.is_none(), "balanced does not add structure");
+    }
+
+    #[test]
+    fn quality_profile_adds_structure_without_audits_or_ocr() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf");
+        if !fixture.is_file() {
+            return;
+        }
+        let response = read_pdf_from_value(&json!({
+            "sources":[{"path":fixture.to_string_lossy()}],
+            "profile": "quality"
+        }))
+        .expect("read");
+        let data = response.results[0].data.as_ref().expect("data");
+        assert!(data.markdown.is_some());
+        assert!(data.text_layer.is_some(), "quality returns the text layer");
+        assert!(data.html.is_some(), "quality returns HTML");
+        assert!(data.elements.is_some(), "quality returns elements");
+        assert!(data.document_ast.is_some(), "quality returns the document AST");
+        assert!(data.trust_report.is_none(), "quality does not run trust");
+        assert!(data.safety_findings.is_none());
+        assert!(data.accessibility_report.is_none());
+        assert!(data.ocr_text_layer.is_none(), "quality does not enable OCR");
+    }
+
+    #[test]
+    fn research_profile_adds_trust_on_top_of_quality() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf");
+        if !fixture.is_file() {
+            return;
+        }
+        let response = read_pdf_from_value(&json!({
+            "sources":[{"path":fixture.to_string_lossy()}],
+            "profile": "research"
+        }))
+        .expect("read");
+        let data = response.results[0].data.as_ref().expect("data");
+        assert!(data.text_layer.is_some());
+        assert!(data.trust_report.is_some(), "research returns trust");
+        assert!(data.safety_findings.is_some());
+        assert!(data.accessibility_report.is_some());
+        assert!(data.ocr_text_layer.is_none());
+    }
+
+    #[test]
+    fn auto_detail_wins_over_profile() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf");
+        if !fixture.is_file() {
+            return;
+        }
+        let response = read_pdf_from_value(&json!({
+            "sources":[{"path":fixture.to_string_lossy()}],
+            "profile": "quality",
+            "auto_detail": "fast"
+        }))
+        .expect("read");
+        let data = response.results[0].data.as_ref().expect("data");
+        assert_fast_twin(data);
     }
 
     #[test]

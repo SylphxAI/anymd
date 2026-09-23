@@ -6,7 +6,7 @@
 
 ### Give your AI agent eyes for PDFs — with proof.
 
-**Local-first PDF answers with page-level proof.** One call returns structured text, tables, OCR and citations your agent can defend — not invent.
+**Local-first PDF answers with page-level proof.** One call returns markdown, tables, and citations. OCR stays off until you ask for it.
 
 [![npm](https://img.shields.io/npm/v/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
 [![downloads](https://img.shields.io/npm/dm/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
@@ -67,7 +67,7 @@ Locators in, citations out. A human can check the claim.
         "colCount": 3,
         "cellCount": 9,
         "confidence": 0.92,
-        "provenance": { "engine": "pdf-reader-core", "source": "selectable_text" },
+        "provenance": { "source": "selectable_text" },
         "continuation": {
           "role": "starts",
           "groupId": "table-continuation-p1-table-1-p2-table-1",
@@ -91,10 +91,21 @@ Citra cannot prove something, it says so in `gaps` instead of guessing.</sub>
 
 ## Predictable defaults
 
-Citra keeps the default path cheap and explicit. `fast` reads the embedded text
-layer and structure. `quality` explicitly enables OCR, rendering, and richer
-crops. `research` is not hidden inside PDF reading. Expensive work is requested,
-never silently triggered.
+A call with only `sources` uses **fast**. You get markdown, tables, chunks, a
+document map, page geometry, layout, and semantic hints — plus metadata and the
+page count. You do not get a trust audit, and you do not get OCR.
+
+| You send | You get |
+| --- | --- |
+| `sources` only, or a page filter | **fast** — the lean read above. Every requested page, not a sample. |
+| `"profile": "quality"` | fast, plus the text layer, HTML, elements, document AST, outline, annotations, forms, attachments, structure, permissions, full text, and page labels. Still no audit and no OCR. |
+| `"profile": "research"` | quality, plus safety findings, a trust report, and an accessibility report. |
+| `"auto": true` | the legacy **balanced** preset: fast plus the three audits, without the quality structure. |
+| `"auto_detail"` | wins over `profile`. `fast`, `balanced`, or `full`. |
+| `"auto": false` or any `include_*` | only the flags you set. Metadata and page count stay on unless you turn them off. |
+| OCR or a rendered page | `include_ocr_text_layer`, or `pdf_evidence` (`ocr_pages`, `render_page`, `extract_regions`). Never part of a profile. |
+
+`pages` filters the read. It does not turn the preset off.
 
 ## Install in 30 seconds
 
@@ -142,7 +153,7 @@ Four tools. One surface. Few, powerful, obvious.
 
 | Tool | What an agent uses it for |
 | --- | --- |
-| `read_pdf` | The main read: markdown, tables with cells and geometry, structure, optional OCR, citation-ready chunks |
+| `read_pdf` | The fast read: markdown, tables with cells and geometry, and citation-ready chunks. OCR is `pdf_evidence`. |
 | `search_pdf` | Cheap literal retrieval first: page and bounding-box locators before a deep read |
 | `pdf_compare` | Compare two local PDFs at page and term level |
 | `pdf_evidence` | Focused verification: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, `analyze_regions` |
@@ -159,10 +170,9 @@ Full option and result reference: **[docs/api](https://sylphxai.github.io/citra/
 | **5 platforms** | macOS arm64/x64 · Linux x64/arm64 · Windows x64 |
 
 <sub>Warm-cache figure is **method-bounded**: long-lived MCP server, repeated *identical* local
-`read_pdf` after warm-up, measured on the sole-Rust lineage (4.1.0) against TS 3.0.14. The first
-request in a process pays full parse cost. No multi-host extrapolation.
-See the [performance report](docs/specs/performance/4.1.0-same-host-performance-report.md) and
-[claims policy](docs/specs/performance/4.1.0-performance-claims-policy.md).</sub>
+`read_pdf` after warm-up, Rust 4.1.0 against the TypeScript engine 3.0.14, one linux-x64 host.
+The first request in a process pays full parse cost. No multi-host extrapolation.
+See [Performance](https://sylphxai.github.io/citra/performance/).</sub>
 
 ## Platforms
 

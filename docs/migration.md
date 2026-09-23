@@ -2,6 +2,19 @@
 
 This page is **secondary engineering history**. Product install lives on the [Installation](/guide/installation) guide and repository README.
 
+## 6.0 — fast is the default
+
+`read_pdf` with only `sources` now uses the **fast** preset. It no longer
+returns safety findings, a trust report, or an accessibility report unless you
+ask. `profile: "quality"` adds structure and still does not run OCR.
+`profile: "research"` adds the audits. `auto: true` keeps the previous
+balanced behavior. `auto_detail` wins over `profile`. A `pages` list filters
+the read and does not turn the preset off. OCR remains `include_ocr_text_layer`
+or `pdf_evidence`.
+
+Callers that depended on a sources-only trust report should send
+`"profile": "research"` or `"auto": true`.
+
 ## Current production
 
 - Current production identity: `@sylphx/citra` (version: see npm)

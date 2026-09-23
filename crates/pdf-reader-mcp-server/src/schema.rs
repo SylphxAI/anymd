@@ -105,14 +105,17 @@ pub enum TrustReportRedaction {
 pub struct ReadPdfArgs {
     pub sources: Vec<PdfSource>,
     #[schemars(
-        description = "Automatically choose high-value extraction options. Defaults to true only when no explicit include_* options are supplied."
+        description = "Legacy preset switch. true selects balanced (fast plus safety, trust, and accessibility) when profile and auto_detail are omitted. Omit it to use fast. false keeps manual control. auto_detail wins over profile. Never enables OCR."
     )]
     pub auto: Option<bool>,
-    #[schemars(description = "Automatic extraction depth: fast | balanced | full.")]
+    #[schemars(description = "Depth switch that wins over profile: fast, balanced, or full. full adds structure and audits. Never enables OCR or rendering.")]
     pub auto_detail: Option<ReadPdfAutoDetail>,
-    #[schemars(description = "Predictable work profile: fast, quality, or research.")]
+    #[schemars(description = "Named preset: fast (default), quality (structure, no audits, no OCR), or research (quality plus safety, trust, and accessibility). Ignored when auto is false or any include_* flag is set.")]
     pub profile: Option<String>,
-    #[schemars(range(min = 1, max = 20))]
+    #[schemars(
+        range(min = 1, max = 20),
+        description = "Not used by read_pdf presets, which read every requested page. Sampling belongs to pdf_evidence inspect. Limit a read with sources[].pages."
+    )]
     pub sample_pages: Option<u32>,
     pub include_full_text: Option<bool>,
     pub include_metadata: Option<bool>,

@@ -4,12 +4,11 @@ PDF Reader MCP exposes an MCP server contract. The package entrypoint starts the
 server; it is not an importable TypeScript SDK. Agents and clients should call
 the MCP tools below over stdio or the optional HTTP transport.
 
-The V3 API is organized around one smart default path. Agents call `read_pdf`
-first; when no explicit `include_*` options are supplied, it profiles the PDF,
-chooses high-value extraction options, and returns the structured document result in
-one response. `search_pdf` stays separate for cheap literal evidence retrieval,
-and `pdf_evidence` consolidates focused inspect, render, crop, OCR, and visual
-analysis operations behind one specialist tool.
+Agents call `read_pdf` first. With only `sources`, the **fast** preset returns
+markdown, tables, chunks, a document map, page geometry, layout, and semantic
+hints. It does not profile the file, sample pages, or run OCR. `search_pdf` is
+the cheap literal lookup. `pdf_evidence` is the specialist for inspect, render,
+crop, OCR, and visual analysis.
 
 ## Transports
 
@@ -32,7 +31,7 @@ analysis operations behind one specialist tool.
 
 | Tool | Purpose |
 | --- | --- |
-| `read_pdf` | Primary V3 entrypoint. With only `sources`, auto-inspect and read the PDF in one call; with explicit `include_*` options, run precise manual extraction. |
+| `read_pdf` | Primary read. Sources only uses fast. `profile` selects quality or research. Explicit `include_*` options, or `auto: false`, stay manual. |
 | `search_pdf` | Search selectable text and optional OCR text with snippets, page numbers, offsets, bounding-box provenance, and routing evidence. |
 | `pdf_evidence` | Focused evidence operations: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, and `analyze_regions`. |
 
@@ -58,33 +57,46 @@ private-IP, and size policies documented in the guide.
 
 ## `read_pdf`
 
-`read_pdf` is the primary structured document result entrypoint. With only `sources`,
-it defaults to automatic routing. Add `auto: false` or any explicit
-`include_*` option when the caller wants exact manual control.
+`read_pdf` reads every page you asked for. Sources only, including a source
+materialized as `"pages": null`, uses **fast**. A real page list is a filter,
+not a mode switch.
+
+| Profile | When | Returns | Does not return |
+| --- | --- | --- | --- |
+| `fast` | sources only, or `"profile": "fast"` | markdown, tables, chunks, document map, page geometry, layout, semantic hints (on elements), metadata, page count | trust, safety, accessibility, text layer, HTML, document AST, OCR |
+| `quality` | `"profile": "quality"` | fast, plus text layer, elements, HTML, document AST, outline, annotations, forms, attachments, structure tree, permissions, full text, page labels | audits, OCR, rendering |
+| `research` | `"profile": "research"` | quality, plus safety findings, trust report, accessibility report | OCR, rendering |
+| `balanced` | `"auto": true` and no `profile` / `auto_detail` | fast, plus safety, trust, and accessibility | the quality structure extras, OCR |
+| `full` | `"auto_detail": "full"` | structure and audits together | OCR, rendering |
+
+`auto_detail` wins over `profile`. `auto: false` or any `include_*` flag does
+not fill a preset. Metadata and page count stay on unless the caller sets them
+to false. OCR is `include_ocr_text_layer: true` or `pdf_evidence`.
 
 | Option | Type | Default | Output |
 | --- | --- | --- | --- |
-| `auto` | boolean | true when no explicit `include_*` options are supplied | Inspect each source and choose high-value extraction options before reading. |
-| `auto_detail` | `"fast" \| "balanced" \| "full"` | `"balanced"` | Automatic extraction depth. `fast` returns the core document twin route, `balanced` adds trust and accessibility evidence, and `full` adds fuller text, HTML, structure, and AST outputs. |
-| `sample_pages` | number | `5` in auto mode | Maximum pages sampled during automatic inspection. |
-| `pages` | number array or range string | all pages when full text is requested | Page selection. |
-| `include_full_text` | boolean | `false` | Concatenated text. |
+| `profile` | `"fast" \| "quality" \| "research"` | `fast` when no `include_*` and `auto` is omitted | Named preset. Ignored when `auto` is false or any `include_*` is set. |
+| `auto` | boolean | omitted (fast) | `true` selects balanced when `profile` and `auto_detail` are omitted. `false` is manual. |
+| `auto_detail` | `"fast" \| "balanced" \| "full"` | unset | Wins over `profile`. `full` adds structure and audits. Never enables OCR. |
+| `sample_pages` | number | unused | Accepted for compatibility. `read_pdf` presets do not sample. Use `sources[].pages`, or `pdf_evidence` inspect. |
+| `pages` | number array or range string, on each source | every page | Page filter. Does not disable the preset. |
+| `include_full_text` | boolean | on in quality | Concatenated text. |
 | `include_metadata` | boolean | `true` | PDF metadata. |
 | `include_page_count` | boolean | `true` | Total page count. |
 | `include_images` | boolean | `false` | Embedded image metadata and base64 payloads. |
-| `include_tables` | boolean | `false` | Selectable-text and OCR-derived tables with rows, cells, geometry, confidence, provenance, quality signals, and continuation hints. |
-| `include_elements` | boolean | `false` | Structured text, image, and table elements. |
-| `include_markdown` | boolean | `false` | Markdown rendering. |
-| `include_html` | boolean | `false` | HTML rendering. |
-| `include_chunks` | boolean | `false` | Citation-ready chunks. |
-| `include_text_layer` | boolean | `false` | Direction-aware run, line, word, and character evidence with metadata coverage counts. |
-| `include_layout_diagnostics` | boolean | `false` | Reading-order and page-layout confidence. |
-| `include_document_map` | boolean | `false` | Page, element, chunk, OCR, visual candidate, visual enrichment, safety, trust signal-index, accessibility issue-index, and routing map. |
-| `include_document_ast` | boolean | `false` | Semantic AST for page, section, paragraph, list, caption, header, footer, table, image, chart, formula, and figure nodes, including numbered/appendix headings and above/below/side caption evidence links. |
-| `include_safety_findings` | boolean | `false` | Prompt-injection, hidden or near-invisible text geometry, and visual-spoofing findings. |
-| `include_trust_report` | boolean | `false` | Consolidated risk report with page-level signals, category counts, page-risk counts, routing guidance, and optional document-map trust signal routing. |
+| `include_tables` | boolean | on in fast | Selectable-text and OCR-derived tables with rows, cells, geometry, confidence, provenance, quality signals, and continuation hints. |
+| `include_elements` | boolean | on in fast via semantic hints; also on in quality | Structured text, image, and table elements. Semantic hints are returned on these elements, not as a separate field. |
+| `include_markdown` | boolean | on in fast | Markdown rendering. |
+| `include_html` | boolean | on in quality | HTML rendering. |
+| `include_chunks` | boolean | on in fast | Citation-ready chunks. |
+| `include_text_layer` | boolean | on in quality | Direction-aware run, line, word, and character evidence with metadata coverage counts. |
+| `include_layout_diagnostics` | boolean | on in fast | Reading-order and page-layout confidence. |
+| `include_document_map` | boolean | on in fast | Page, element, chunk, OCR, visual candidate, visual enrichment, safety, trust signal-index, accessibility issue-index, and routing map. |
+| `include_document_ast` | boolean | on in quality | Semantic AST for page, section, paragraph, list, caption, header, footer, table, image, chart, formula, and figure nodes, including numbered/appendix headings and above/below/side caption evidence links. |
+| `include_safety_findings` | boolean | on in balanced and research | Prompt-injection, hidden or near-invisible text geometry, and visual-spoofing findings. |
+| `include_trust_report` | boolean | on in balanced and research | Consolidated risk report with page-level signals, category counts, page-risk counts, routing guidance, and optional document-map trust signal routing. |
 | `trust_report_redaction` | `"standard" \| "strict" \| "off"` | `"standard"` | Redaction policy for trust-report evidence snippets. `standard` redacts common secrets and personal identifiers, `strict` also redacts phone-like values and IPv4 addresses, and `off` preserves snippets while marking the policy explicitly. |
-| `include_accessibility_report` | boolean | `false` | Tagged-PDF, image-alt, form, permission, tag-visible coverage, issue-summary, page-grade routing, and optional document-map issue-index signals. |
+| `include_accessibility_report` | boolean | on in balanced and research | Tagged-PDF, image-alt, form, permission, tag-visible coverage, issue-summary, page-grade routing, and optional document-map issue-index signals. |
 | `include_ocr_text_layer` | boolean | `false` | OCR page text and PDF-coordinate word boxes from a configured OCR provider. OCR word boxes can also feed table extraction when `include_tables` is enabled. |
 | `include_visual_enrichments` | boolean | `false` | Bbox-grounded visual-region candidates plus provider-normalized table/image and caption-derived visual region evidence, including side-caption candidates, when a provider is configured. |
 

@@ -2,34 +2,40 @@
 
 ## Job
 
-PDF evidence for agents
+PDF evidence for agents: a local read with page and cell locators, cheap unless
+you ask for more.
 
 ## Wedge
 
-Local-first native PDF intelligence with page/cell/bbox evidence — not a cloud OCR wrapper.
+Local-first native PDF reading with page, cell, and bounding-box evidence.
+Not a cloud OCR wrapper, and not a model that runs on every call.
 
-## Local-first
+## What the default is
 
-Default path uses local native runtime; no cloud API key required for core read.
+`read_pdf` with only `sources` is the **fast** preset: markdown, tables, chunks,
+a document map, geometry, and layout. OCR, rendering, and trust audits are
+separate requests.
 
-## Peer anchors (learn; do not clone)
+## Peer anchors
 
-| Peer | Gap we exploit |
-| --- | --- |
-| Cloud/API OCR MCPs (e.g. Mistral OCR MCP) | Paid remote OCR; weak citeable structure/tables locally |
-| Paperless-style archive MCP | Archive/search system, not agent citeable PDF structure toolkit |
-| Generic filesystem MCP + raw PDF text | No structure, tables, visual evidence, or page locators |
+Learn from them. Do not pretend to be them.
+
+| Peer | What they are strong at | What Citra keeps different |
+| --- | --- | --- |
+| [Docling](https://github.com/docling-project/docling) | Layout models and document conversion | No model download on the default call. An MCP tool with explicit page evidence. |
+| [Marker](https://github.com/datalab-to/marker) | High-quality PDF to markdown | The fast path does not load a layout model. Deeper structure is `profile: quality`. |
+| [PyMuPDF4LLM](https://pymupdf.readthedocs.io/en/latest/pymupdf4llm/) | Fast local markdown for RAG | Citra is an MCP server and returns cell geometry and citations, not only markdown. |
+| [LlamaParse](https://developers.llamaindex.ai/python/cloud/llamaparse/) | Strong cloud parsing | Documents stay on the machine. No API key for the core read. |
+| [`@modelcontextprotocol/server-pdf`](https://github.com/modelcontextprotocol/servers) | A small MCP text extract | Tables, geometry, chunks, and an explicit way to ask for OCR. |
 
 ## Non-goals
 
-- Becoming a cloud SaaS wrapper as the default path
-- Multi-product monorepo for star aggregation
-- Generative summaries as the sole evidence authority
+- A cloud API as the default path
+- Silent OCR or a trust audit on every read
+- Generative summaries as the evidence
 
-## Zero-config CTA
+## Install
 
 ```bash
 npx -y @sylphx/citra
 ```
-
-Bare invoke starts brand-sole MCP on stdio. Live: the latest `@sylphx/citra` on npm.

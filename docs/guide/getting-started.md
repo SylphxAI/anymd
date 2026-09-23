@@ -19,7 +19,8 @@ with `npx -y @sylphx/citra --help`.
 
 ## 2. Your first read
 
-One call. Let Citra choose the extraction route:
+One call. The default is **fast** — markdown, tables, chunks, geometry, and
+citations. No OCR, no trust audit, no sampling.
 
 ```json
 {
@@ -27,18 +28,33 @@ One call. Let Citra choose the extraction route:
 }
 ```
 
-That is the whole request. With no `include_*` flags, `read_pdf` profiles the
-document, picks high-value extraction options, and returns the **Agent Document
-Twin**: text, tables, structure, and citations in one response.
-
-Deepen it without learning every switch:
+A page filter still uses fast, and it reads only those pages:
 
 ```json
 {
-  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
-  "auto_detail": "full"
+  "sources": [{ "path": "/absolute/path/to/report.pdf", "pages": [1, 2] }]
 }
 ```
+
+Ask for more by name:
+
+```json
+{ "sources": [{ "path": "/absolute/path/to/report.pdf" }], "profile": "quality" }
+```
+
+`quality` adds the text layer, HTML, elements, and the document AST. It still
+does not OCR. `research` adds safety, trust, and accessibility on top of that.
+`auto_detail` wins when both are set. `full` is the deepest preset and still
+does not render or OCR.
+
+OCR is a different tool:
+
+```json
+{ "sources": [{ "path": "/absolute/path/to/scan.pdf" }], "op": "ocr_pages" }
+```
+
+That is `pdf_evidence`, and it needs an OCR provider you configured. A missing
+provider returns a gap, not a guessed transcript.
 
 ## 3. Read the evidence, not the prose
 

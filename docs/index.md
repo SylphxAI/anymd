@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Citra
   text: Give your AI agent eyes for PDFs — with proof.
-  tagline: Local-first PDF intelligence your agent can defend. Structured text, tables, OCR and page-level citations from one call — no cloud API key, no Docker, no guesswork.
+  tagline: Local-first PDF evidence your agent can defend. Markdown, tables, and page-level citations from one call — OCR only when you ask, no cloud API key.
   image:
     src: /logo.svg
     alt: Citra — a citrus tile holding a document
@@ -48,7 +48,7 @@ hero:
         "colCount": 3,
         "cellCount": 9,
         "confidence": 0.92,
-        "provenance": { "engine": "pdf-reader-core", "source": "selectable_text" },
+        "provenance": { "source": "selectable_text" },
         "continuation": {
           "role": "starts",
           "groupId": "table-continuation-p1-table-1-p2-table-1",
@@ -82,7 +82,7 @@ hero:
     <div class="cit-step">
   <div class="n">Step 2</div>
   <h3>Point at a PDF</h3>
-  <p>A single <code>read_pdf</code> call profiles the document and returns the structured document result: text, tables, structure, and citations.</p>
+  <p>A single <code>read_pdf</code> call uses the fast preset: markdown, tables, geometry, and citations. It does not guess, and it does not run OCR.</p>
 </div>
     <div class="cit-step">
   <div class="n">Step 3</div>
@@ -100,7 +100,7 @@ hero:
     <div class="cit-card">
   <div class="cit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></svg></div>
   <h3>read_pdf</h3>
-  <p>The smart default. Markdown, tables with cells and geometry, structure, optional OCR, and citation-ready chunks.</p>
+  <p>The fast default. Markdown, tables with cells and geometry, and citation-ready chunks. OCR is a separate call.</p>
 </div>
     <div class="cit-card">
   <div class="cit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></div>

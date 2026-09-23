@@ -10,7 +10,7 @@ system, not "whatever text we could scrape."
 | **Filesystem MCP + raw PDF text** | A wall of characters | Page numbers invented, tables flattened, scans become noise, regions impossible to cite |
 | **Ask a vision model** | A fluent summary | Unverifiable. The model reads an image; it does not return a page, a cell, or a bounding box you can check |
 | **PDF.js / a JS PDF library in-process** | Text you parse yourself | You own the parser, the OCR, the table model, the failure modes — and the install footprint |
-| **Citra** | Structured text, tables with cells **and geometry**, OCR with provenance, visual crops, and page-level citations | — |
+| **Citra** | Fast local read: markdown, tables with cell geometry, and page citations. OCR and crops only when you ask | — |
 
 ## The distinction that matters
 
@@ -20,6 +20,21 @@ A text extractor answers *"what characters are on this page?"* Citra answers
 That is why the response carries `page`, `bounding_box`, `provenance`, `quality`
 signals, and `gaps` — not just `full_text`. See
 [the evidence contract](/EVIDENCE_CONTRACT).
+
+## Named peers
+
+These are the tools agents actually get compared with. Citra does not claim a
+speed win over them; that has not been measured here. The difference is the
+default contract.
+
+| Peer | Best at | Citra's default |
+| --- | --- | --- |
+| [Docling](https://github.com/docling-project/docling) | Model-backed layout conversion | No model on the fast path. Page and cell locators in the MCP response. |
+| [Marker](https://github.com/datalab-to/marker) | PDF to markdown with a layout model | Fast preset is embedded text and tables. `profile: quality` adds structure without OCR. |
+| [PyMuPDF4LLM](https://pymupdf.readthedocs.io/en/latest/pymupdf4llm/) | Local markdown for RAG pipelines | An MCP server, plus cell geometry and citation chunks. |
+| [LlamaParse](https://developers.llamaindex.ai/python/cloud/llamaparse/) | Hosted parsing quality | The PDF stays local. No API key for `read_pdf`. |
+| [`@modelcontextprotocol/server-pdf`](https://github.com/modelcontextprotocol/servers) | Minimal MCP text extraction | Tables, geometry, and an explicit OCR tool instead of a text dump. |
+
 
 ## Local-first, for real
 
@@ -32,7 +47,7 @@ document. See [the local-first frontier](/LOCAL_FIRST_FRONTIER).
 
 | Tool | Job |
 | --- | --- |
-| `read_pdf` | smart default read |
+| `read_pdf` | fast read: markdown, tables, geometry, citations |
 | `search_pdf` | cheap locate with locators |
 | `pdf_evidence` | focused verify: inspect / render / crop / OCR / regions |
 

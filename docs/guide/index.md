@@ -3,8 +3,8 @@
 **Give your AI agent eyes for PDFs — with proof.**
 
 Citra is the local-first PDF evidence tool for AI agents. One `read_pdf` call
-returns structured text, tables with cells and geometry, optional OCR with its
-own provenance, and **page-level citations your agent can defend** — not invent.
+returns markdown, tables with cells and geometry, and **page-level citations
+your agent can defend**. OCR stays off until you ask for it.
 
 ::: tip Ten minutes to a citable claim
 Start with the [Quickstart](/guide/getting-started). It walks one document from
@@ -38,7 +38,7 @@ the product.
 
 | Tool | Job |
 | --- | --- |
-| [`read_pdf`](/api/) | Smart default read — markdown, tables, structure, optional OCR, citation-ready chunks |
+| [`read_pdf`](/api/) | Fast read — markdown, tables, geometry, and citation-ready chunks. No OCR. |
 | [`search_pdf`](/api/) | Cheap literal retrieval with page and bounding-box locators |
 | [`pdf_compare`](/api/) | Compare two PDFs at page and term level |
 | [`pdf_evidence`](/api/) | Focused verification: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, `analyze_regions` |

@@ -38,7 +38,7 @@ number.
   **10.37×**, median of class speedups **15.38×**
 
 Evidence: [`verification/pdf-reader-same-host-ab-suite-4.1.0-registry.json`](https://github.com/SylphxAI/citra/blob/main/verification/pdf-reader-same-host-ab-suite-4.1.0-registry.json) ·
-report: [`docs/specs/performance/4.1.0-same-host-performance-report.md`](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
+report: [4.1.0 same-host performance report](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
 
 ## Install footprint
 
@@ -57,7 +57,7 @@ expected — and still a cleaner install than shipping PDF.js and a large JS tre
 
 ## What we do not claim
 
-The [claims policy](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
+The [4.1.0 claims policy](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
 forbids:
 
 - collapsing modes into one unqualified "Nx faster"

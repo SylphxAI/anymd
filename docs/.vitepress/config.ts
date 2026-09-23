@@ -18,6 +18,7 @@ export default defineConfig({
   appearance: 'dark',
   lastUpdated: true,
 
+  srcExclude: ['**/adr/**', '**/specs/**'],
   vite: {
     build: {
       target: 'esnext',
@@ -142,17 +143,9 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Engineering specs',
+        text: 'Release history',
         collapsed: true,
-        items: [
-          { text: 'V3 smart tool surface', link: '/specs/2026-06-22-v3-smart-tool-surface' },
-          { text: '2027 SOTA boundary', link: '/adr/0001-2027-sota-document-intelligence-boundary' },
-          {
-            text: 'Operating model',
-            link: '/specs/2026-06-16-2027-sota-document-intelligence-operating-model',
-          },
-          { text: 'Migration history', link: '/migration' },
-        ],
+        items: [{ text: 'Migration notes', link: '/migration' }],
       },
     ],
 

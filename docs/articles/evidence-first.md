@@ -70,10 +70,10 @@ only when needed**.
 Agent → read_pdf(sources) → structured document result
 ```
 
-With no manual `include_*` flags, `read_pdf` profiles the PDF, chooses the best
-extraction route, and returns the complete structured document result. The agent gets
-markdown, chunks, tables, trust/accessibility routing, and the selected
-extraction arguments — all in one call.
+With no manual `include_*` flags, `read_pdf` uses the fast preset. The agent
+gets markdown, chunks, tables, geometry, and layout. Trust and accessibility
+stay off until you send `profile: "research"` or `auto: true`. OCR is
+`pdf_evidence`, not part of this call.
 
 ### Step 2: Search When You Have a Specific Query
 
