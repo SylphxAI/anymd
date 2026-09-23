@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "SylphxAI/pdf-reader-mcp"
+      "repo": "SylphxAI/citra"
     }
   ],
   "commit": false,
