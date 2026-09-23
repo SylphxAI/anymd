@@ -10,7 +10,7 @@ evidence without becoming a hosted Sylphx Platform BaaS service.
 
 - Brand: **Citra**
 - Canonical npm: `@sylphx/citra`
-- Repository may retain historical GitHub name `pdf-reader-mcp`.
+- Repository: `SylphxAI/citra`, formerly `pdf-reader-mcp` (the old slug redirects here).
 
 ## Lifecycle
 

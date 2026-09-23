@@ -10,6 +10,8 @@ That starts a **stdio MCP server** your agent can use immediately. Prefer `npx`
 in host configuration so nothing is installed globally and upgrades are just a
 cache refresh.
 
+The package was formerly `@sylphx/pdf-reader-mcp`. New installs use `@sylphx/citra`.
+
 ## Requirements
 
 | | |
