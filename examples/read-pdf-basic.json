@@ -1,10 +1,10 @@
 {
   "tool": "read_pdf",
-  "description": "Smart one-call read: profile the PDF, choose the extraction route, return the Agent Document Twin.",
+  "description": "Fast read: markdown, tables, chunks, geometry, and citations. No OCR and no trust audit.",
   "arguments": {
     "sources": [
       { "path": "/absolute/path/to/report.pdf" }
     ]
   },
-  "_note": "With only sources and no include_* flags, read_pdf auto-inspects each PDF and chooses the best route."
+  "_note": "Sources only uses the fast preset and reads every page. Add profile quality or research when you need more. pages filters the read; it does not turn the preset off."
 }

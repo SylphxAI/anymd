@@ -133,7 +133,7 @@ Cheap search first, spend context only on relevant evidence.
 ### Pattern 3: Trust-Check Before Citing
 
 ```
-Agent → read_pdf(sources) → gets trust_report in the twin
+Agent → read_pdf(sources) → fast twin (markdown, tables, geometry). Trust is profile research or auto true.
 Agent → reviews trust warnings (hidden text, prompt-injection-like content)
 Agent → decides whether to cite or flag as untrusted
 ```
