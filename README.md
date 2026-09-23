@@ -181,6 +181,7 @@ One **optional** native package is selected for **your** host only:
 - **Local-first** — no required cloud provider; the PDF is not uploaded.
 - **Fail closed** — a missing native binary stops the process; there is no silent TypeScript fallback.
 - **Panic-unwind** — a malformed document (e.g. a broken ToUnicode CMap) fails the request, never the process ([#608](https://github.com/SylphxAI/citra/issues/608)).
+- **Remote URL policy** — a `url` source is a pinned, redirect-revalidated http(s) fetch, not a browser; private addresses are rejected unless `MCP_PDF_ALLOW_PRIVATE_IPS=true` is explicitly set ([policy](docs/security/remote-url-policy.md)).
 - **HTTP transport is opt-in and hardened** — loopback by default, `MCP_API_KEY` enforced before binding elsewhere, and `--allow-dir` restricts filesystem reach. Details: [security docs](https://sylphxai.github.io/citra/security/maintainer-process) · report privately per [SECURITY.md](SECURITY.md).
 
 ## Companion MCP tools
