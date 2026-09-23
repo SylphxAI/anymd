@@ -25,7 +25,7 @@ describe('published sole-Rust production package (no TS production runtime)', ()
     expect(pkg.files).toContain('dist/runtime-entry.js');
     expect(pkg.files).toContain('dist/pure-rust.js');
     expect(pkg.files).not.toContain('dist/');
-    expect(pkg.version).toMatch(/^5\./);
+    expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   it('parity bridge is deleted', () => {

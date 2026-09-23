@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/citra",
-  "version": "5.0.5",
+  "version": "6.0.0",
   "mcpName": "io.github.SylphxAI/citra",
   "description": "Citra — PDF answers with page-level proof. Local-first structured text, tables, OCR, visual evidence, and citations via MCP, CLI, and SDK.",
   "type": "module",
@@ -280,10 +280,10 @@
   },
   "packageManager": "bun@1.4.0",
   "optionalDependencies": {
-    "@sylphx/citra-darwin-arm64": "5.0.5",
-    "@sylphx/citra-darwin-x64": "5.0.5",
-    "@sylphx/citra-linux-arm64-gnu": "5.0.5",
-    "@sylphx/citra-linux-x64-gnu": "5.0.5",
-    "@sylphx/citra-win32-x64-msvc": "5.0.5"
+    "@sylphx/citra-darwin-arm64": "6.0.0",
+    "@sylphx/citra-darwin-x64": "6.0.0",
+    "@sylphx/citra-linux-arm64-gnu": "6.0.0",
+    "@sylphx/citra-linux-x64-gnu": "6.0.0",
+    "@sylphx/citra-win32-x64-msvc": "6.0.0"
   }
 }

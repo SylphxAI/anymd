@@ -1,6 +1,6 @@
 {
   "profile": "pdf_sota_release_gate",
-  "generated_at": "2026-09-23T04:09:56.543Z",
+  "generated_at": "2026-09-23T14:09:34.194Z",
   "artifact_dir": "/home/runner/_work/citra/citra/benchmark-artifacts",
   "status": "passed",
   "summary": {
@@ -205,7 +205,7 @@
       "status": "passed",
       "message": "v3 Agent Document Twin scenario has a positive average latency",
       "evidence": {
-        "average_ms": 18.76
+        "average_ms": 19.4
       }
     },
     {
@@ -218,7 +218,7 @@
       "status": "passed",
       "message": "default balanced auto-read scenario has a positive average latency",
       "evidence": {
-        "average_ms": 48.54
+        "average_ms": 60.78
       }
     },
     {
