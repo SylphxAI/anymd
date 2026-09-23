@@ -22,4 +22,4 @@ Policy: **few, powerful, obvious** tools.
 1. No near-duplicate vanity tools.
 2. Advanced ops live inside `pdf_evidence`, not new tool names.
 3. Fail closed on unsafe input / missing native.
-4. Composition with siblings via host/public contracts only (Prism is not part of the public product surface).
+4. Composition with companion tools is through public MCP and SDK contracts only.

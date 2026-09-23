@@ -1,31 +1,11 @@
-# Citra — positioning
+# Positioning — Citra
 
-## One-liner
+**One-liner:** PDF answers with page-level proof.
 
-**Citra**: PDF evidence for agents — local-first, fast, light, powerful.
+- **User:** an agent or developer who must answer from a PDF that cannot be uploaded.
+- **Job:** read, search, compare and verify a local PDF with citeable page-level evidence.
+- **Promise:** one call returns structured text, tables, OCR, crops and page/cell/bbox locators a human can check; unknown facts land in `gaps`.
+- **Identity:** package `@sylphx/citra`, bin `citra`, MCP `io.github.SylphxAI/citra`, site <https://sylphxai.github.io/citra/>.
+- **Companion tools:** Citra, Iris, Cue, Spine, Locus and Lookout are independent products composed through public MCP and SDK contracts.
 
-## Surfaces
-
-| Surface | Role |
-| --- | --- |
-| MCP | Agent tools over stdio (`npx @sylphx/citra`) |
-| CLI | `citra` |
-| SDK | `@sylphx/citra/sdk` |
-
-## Primary tools
-
-- `read_pdf`
-- `search_pdf`
-- `pdf_evidence`
-
-## Family
-
-product line (local-first evidence). Not deliberation (Consultant). Prism is retired.
-
-## Zero-config CTA
-
-```bash
-npx -y @sylphx/citra
-```
-
-Bare invoke starts brand-sole MCP on stdio. Live: the latest `@sylphx/citra` on npm.
+See [vision.md](./vision.md) and [capabilities.md](./capabilities.md) for the destination and the owned capabilities. [TOOL_SURFACE.md](./TOOL_SURFACE.md) is the tool policy and [EVIDENCE_CONTRACT.md](./EVIDENCE_CONTRACT.md) is the result contract.
