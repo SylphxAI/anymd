@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   map:
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
     steps:
@@ -51,7 +51,7 @@ jobs:
           # Darwin self-hosted pool is currently offline (2026-08-04 inventory).
           # Do not enqueue darwin legs that starve forever; restore when macos pool is online.
           # Residual: no darwin native binary proof in this workflow until capacity returns.
-          matrix='[{"platformId":"linux-x64-gnu","runner":"sylphx-linux-standard","target":"x86_64-unknown-linux-gnu"},{"platformId":"linux-arm64-gnu","runner":"sylphx-linux-standard","target":"aarch64-unknown-linux-gnu"},{"platformId":"win32-x64-msvc","runner":"sylphx-linux-standard","target":"x86_64-pc-windows-msvc"}]'
+          matrix='[{"platformId":"linux-x64-gnu","runner":"ubuntu-latest","target":"x86_64-unknown-linux-gnu"},{"platformId":"linux-arm64-gnu","runner":"ubuntu-latest","target":"aarch64-unknown-linux-gnu"},{"platformId":"win32-x64-msvc","runner":"ubuntu-latest","target":"x86_64-pc-windows-msvc"}]'
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
       - name: Verify package map and Stage B publishable posture
         run: |

@@ -13,7 +13,7 @@ permissions:
 jobs:
   release:
     name: Release
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     steps:
       - name: Create release bot token
         id: release-token

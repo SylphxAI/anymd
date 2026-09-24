@@ -17,7 +17,7 @@ permissions:
 jobs:
   publish:
     name: Publish MCP Registry metadata
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout admission policy
         uses: actions/checkout@v7

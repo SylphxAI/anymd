@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   map:
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
     steps:
@@ -43,9 +43,9 @@ jobs:
           # Darwin pool offline — omit macos legs so CI cannot starve on queued forever jobs.
           # Residual: darwin host/cross proof deferred until sylphx macos runners online.
           matrix='[
-            {"platformId":"linux-x64-gnu","runner":"sylphx-linux-standard","target":"x86_64-unknown-linux-gnu"},
-            {"platformId":"linux-arm64-gnu","runner":"sylphx-linux-standard","target":"aarch64-unknown-linux-gnu"},
-            {"platformId":"win32-x64-msvc","runner":"sylphx-linux-standard","target":"x86_64-pc-windows-msvc"}
+            {"platformId":"linux-x64-gnu","runner":"ubuntu-latest","target":"x86_64-unknown-linux-gnu"},
+            {"platformId":"linux-arm64-gnu","runner":"ubuntu-latest","target":"aarch64-unknown-linux-gnu"},
+            {"platformId":"win32-x64-msvc","runner":"ubuntu-latest","target":"x86_64-pc-windows-msvc"}
           ]'
           echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
@@ -189,7 +189,7 @@ jobs:
   aggregate:
     needs: proof
     if: always()
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
         with:

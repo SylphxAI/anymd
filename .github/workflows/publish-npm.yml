@@ -24,20 +24,20 @@ jobs:
       matrix:
         include:
           - platformId: linux-x64-gnu
-            runner: sylphx-linux-standard
+            runner: ubuntu-latest
             target: x86_64-unknown-linux-gnu
           - platformId: linux-arm64-gnu
-            runner: sylphx-linux-standard
+            runner: ubuntu-latest
             target: aarch64-unknown-linux-gnu
           # Product macOS: Sylphx self-hosted only (no GitHub-hosted macos-*).
           - platformId: darwin-arm64
-            runner: [self-hosted, sylphx, macos, standard]
+            runner: macos-latest
             target: aarch64-apple-darwin
           - platformId: darwin-x64
-            runner: [self-hosted, sylphx, macos, standard]
+            runner: macos-latest
             target: x86_64-apple-darwin
           - platformId: win32-x64-msvc
-            runner: sylphx-linux-standard
+            runner: ubuntu-latest
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.runner }}
     steps:
@@ -109,7 +109,7 @@ jobs:
     name: Publish natives + main
     needs: build-native
     if: ${{ github.event.inputs.confirm == 'I_UNDERSTAND_USER_IMPACT' }}
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     steps:
       - name: Create release bot token
         id: release-token
