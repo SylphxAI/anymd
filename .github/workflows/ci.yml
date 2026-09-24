@@ -46,7 +46,7 @@ jobs:
       - name: Check Code Quality (Biome)
         run: bun run check
 
-      - name: Forbid GitHub-hosted macOS product runners
+      - name: Public repository runs on GitHub-hosted runners only
         run: bun run check:no-github-hosted-macos
 
       - name: Typecheck

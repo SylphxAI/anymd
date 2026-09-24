@@ -14,7 +14,7 @@ on:
       - 'src/runtime-entry.ts'
       - 'src/native/**'
       - 'scripts/check-registry-install-proof.ts'
-      - 'scripts/check-no-github-hosted-macos.ts'
+      - 'scripts/check-public-runner-profiles.py'
       - 'scripts/stage-rust-mcp.ts'
       - 'docs/specs/host-runtime-proof-contract.md'
       - '.github/workflows/candidate-host-runtime-proof.yml'
