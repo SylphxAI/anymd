@@ -202,8 +202,8 @@ fn server_discover_before_initialize_keeps_session_alive() {
         .filter_map(|tool| tool.get("name").and_then(Value::as_str))
         .collect();
     assert!(
-        tool_names.iter().any(|name| *name == "read_pdf"),
-        "expected read_pdf in {tool_names:?}"
+        tool_names.iter().any(|name| *name == "read"),
+        "expected read in {tool_names:?}"
     );
 }
 
