@@ -2,6 +2,7 @@ mod command_provider;
 pub mod discover_compat;
 pub mod evidence;
 pub mod http_transport;
+pub mod lean;
 mod ocr_evidence;
 mod page_selection;
 pub mod pdf_compare;
@@ -36,10 +37,9 @@ pub const SERVER_NAME: &str = "citra";
 pub const SERVER_VERSION: &str = "6.0.0";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
-    "@sylphx/citra reads local PDFs for agents. A sources-only read_pdf uses the fast preset: \
-markdown, tables, chunks, a document map, page geometry, layout, and semantic hints. \
-It does not run OCR, rendering, or trust audits. Ask for profile quality or research, \
-or call pdf_evidence, when you need that work. No cloud API key is required.";
+    "Reads PDFs locally and returns clean Markdown with page markers (read_pdf), finds text \
+with page locators (search_pdf), and renders, crops, or OCRs pages on request (pdf_evidence). \
+Long documents return a cursor to continue. No cloud API key is required.";
 
 fn omit_absent_optional_fields(value: Value) -> Value {
     match value {
@@ -164,7 +164,7 @@ fn uses_2026_envelope(context: &RequestContext<RoleServer>) -> bool {
 #[tool_router]
 impl PdfReaderMcp {
     #[tool(
-        description = "Read a PDF. Sources only uses the fast preset: markdown, tables, chunks, document map, page geometry, layout, and semantic hints. No OCR and no trust audit. profile quality adds structure; profile research adds safety, trust, and accessibility. OCR and rendering stay on pdf_evidence or include_ocr_text_layer."
+        description = "Read PDFs (local path or URL) as clean Markdown: headings, paragraphs, lists, and tables, with <!-- page N --> markers for citation. Long documents stop at max_tokens (default 20000) and return a cursor to continue; pick pages with sources[].pages (e.g. \"1-5,8\"). Opt-in detail: profile fast|quality|research or any include_* flag returns the structured JSON (document map, elements, geometry, trust and accessibility reports); include_ocr_text_layer runs OCR."
     )]
     pub async fn read_pdf(
         &self,
@@ -175,6 +175,15 @@ impl PdfReaderMcp {
         self.source_access
             .admit_pdf_sources(&mut args.sources)
             .map_err(|message| ErrorData::invalid_params(message, None))?;
+        if !lean::read_wants_legacy(&args) {
+            return tokio::task::spawn_blocking(move || lean::read_pdf(&args))
+                .await
+                .map_err(|error| {
+                    ErrorData::internal_error(format!("read_pdf worker failed: {error}"), None)
+                })?;
+        }
+        args.max_tokens = None;
+        args.cursor = None;
         let provider_operation = args.include_ocr_text_layer == Some(true);
         let value = serde_json::to_value(args)
             .map(omit_absent_optional_fields)
@@ -207,7 +216,7 @@ impl PdfReaderMcp {
     }
 
     #[tool(
-        description = "Searches extracted PDF text with page, snippet, geometry, and provenance. Optional OCR uses the bounded command provider."
+        description = "Find text in PDFs: returns each match as page number plus a snippet with the hit in bold. Case-insensitive by default; whole_word for exact words. detail: true returns JSON with match geometry; include_ocr_text_layer searches OCR text."
     )]
     pub async fn search_pdf(
         &self,
@@ -218,6 +227,14 @@ impl PdfReaderMcp {
         self.source_access
             .admit_pdf_sources(&mut args.sources)
             .map_err(|message| ErrorData::invalid_params(message, None))?;
+        if !lean::search_wants_legacy(&args) {
+            return tokio::task::spawn_blocking(move || lean::search_pdf(&args))
+                .await
+                .map_err(|error| {
+                    ErrorData::internal_error(format!("search_pdf worker failed: {error}"), None)
+                })?;
+        }
+        args.detail = None;
         let provider_operation = args.include_ocr_text_layer == Some(true);
         let value = serde_json::to_value(args)
             .map(omit_absent_optional_fields)
