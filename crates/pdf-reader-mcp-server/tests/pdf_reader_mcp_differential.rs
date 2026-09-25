@@ -679,6 +679,7 @@ fn compare_stdio_probe_case(case: &OracleCase, client: &mut StdioMcpClient) {
                     "arguments": {
                         "sources": [{ "path": sample_pdf.to_string_lossy() }],
                         "query": "Lorem",
+                        "detail": true,
                     },
                 }),
             );
