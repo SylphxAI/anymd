@@ -15,6 +15,7 @@ mod metadata;
 mod reading;
 mod render;
 mod rows;
+mod tables;
 #[cfg(test)]
 mod tests;
 

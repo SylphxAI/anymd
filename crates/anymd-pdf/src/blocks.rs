@@ -2,10 +2,12 @@
 
 use std::collections::HashSet;
 
-use crate::extract::{Glyph, RawPage};
+use crate::extract::{Glyph, RawPage, Rule};
 use crate::margins::{in_margin, is_page_number, margin_key};
 use crate::reading::reading_regions;
-use crate::rows::{is_cjk, rows_of, segments_of_row, Segment};
+use crate::rows::{is_cjk, row_text, rows_of, segments_of_row, Segment};
+use crate::tables::ruled::{ruled_tables, Ruled, RuledTable};
+use crate::tables::stream::{stream_table, Stream};
 
 #[derive(Debug, Clone)]
 pub(crate) enum Block {
@@ -25,7 +27,8 @@ pub(crate) fn group_rows(mut segments: Vec<Segment>) -> Vec<Vec<Segment>> {
     for segment in segments {
         if let Some(row) = rows.last_mut() {
             let anchor = &row[0];
-            if (anchor.base - segment.base).abs() <= 0.45 * anchor.size.max(segment.size) {
+            let table = anchor.table.is_some() || segment.table.is_some();
+            if !table && (anchor.base - segment.base).abs() <= 0.45 * anchor.size.max(segment.size) {
                 row.push(segment);
                 continue;
             }
@@ -191,78 +194,22 @@ pub(crate) fn join_line(paragraph: &mut String, line: &str) {
     paragraph.push_str(line);
 }
 
-pub(crate) fn row_text(row: &[Segment]) -> String {
-    let mut text = String::new();
-    for segment in row {
-        if !text.is_empty() {
-            text.push(' ');
-        }
-        text.push_str(&segment.text);
-    }
-    text
+/// What a page's regions share while they are turned into blocks: the ruled
+/// tables already found (taken by their placeholder segments) and the
+/// page's ruling lines.
+pub(crate) struct PageTables {
+    pub(crate) found: Vec<Option<RuledTable>>,
+    pub(crate) rules: Vec<Rule>,
 }
 
-/// Build a pipe table from rows that each contain several aligned segments.
-pub(crate) fn build_table(rows: &[Vec<Segment>]) -> Option<Vec<Vec<String>>> {
-    let max_cells = rows.iter().map(Vec::len).max()?;
-    if max_cells < 2 {
-        return None;
-    }
-    // Column slots come from the rows with the most cells.
-    let mut spans: Vec<(f64, f64)> = rows
-        .iter()
-        .filter(|row| row.len() == max_cells)
-        .flat_map(|row| row.iter().map(|s| (s.x0, s.x1)))
-        .collect();
-    spans.sort_by(|a, b| a.0.total_cmp(&b.0));
-    let mut columns: Vec<(f64, f64)> = Vec::new();
-    for (start, end) in spans {
-        match columns.last_mut() {
-            Some(column) if start <= column.1 => column.1 = column.1.max(end),
-            _ => columns.push((start, end)),
+impl PageTables {
+    #[cfg(test)]
+    pub(crate) fn none() -> Self {
+        Self {
+            found: Vec::new(),
+            rules: Vec::new(),
         }
     }
-    if columns.len() < 2 {
-        return None;
-    }
-    let column_of = |segment: &Segment| -> usize {
-        let mid = (segment.x0 + segment.x1) / 2.0;
-        columns
-            .iter()
-            .enumerate()
-            .min_by(|(_, a), (_, b)| {
-                let da = if mid < a.0 {
-                    a.0 - mid
-                } else if mid > a.1 {
-                    mid - a.1
-                } else {
-                    0.0
-                };
-                let db = if mid < b.0 {
-                    b.0 - mid
-                } else if mid > b.1 {
-                    mid - b.1
-                } else {
-                    0.0
-                };
-                da.total_cmp(&db)
-            })
-            .map(|(index, _)| index)
-            .unwrap_or(0)
-    };
-    let mut table = Vec::with_capacity(rows.len());
-    for row in rows {
-        let mut cells = vec![String::new(); columns.len()];
-        for segment in row {
-            let cell = &mut cells[column_of(segment)];
-            if !cell.is_empty() {
-                cell.push(' ');
-            }
-            cell.push_str(&segment.text);
-        }
-        table.push(cells);
-    }
-    Some(table)
 }
 
 pub(crate) fn layout_page(
@@ -271,17 +218,37 @@ pub(crate) fn layout_page(
     body: f64,
     repeated: &HashSet<String>,
 ) -> Vec<Block> {
+    let (ruled, glyphs) = ruled_tables(&page.rules, glyphs.to_vec());
     let mut segments = Vec::new();
-    for row in rows_of(glyphs.to_vec()) {
+    for row in rows_of(glyphs) {
         segments.extend(segments_of_row(row));
     }
     segments.retain(|segment| {
         !(in_margin(segment, page)
             && (repeated.contains(&margin_key(&segment.text)) || is_page_number(&segment.text)))
     });
+    // Each ruled table takes part in reading order as one placeholder.
+    for (index, table) in ruled.iter().enumerate() {
+        segments.push(Segment {
+            x0: table.x0,
+            x1: table.x1,
+            base: table.top - body,
+            top: table.top,
+            bottom: table.bottom,
+            size: body,
+            text: String::new(),
+            mono: None,
+            words: Vec::new(),
+            table: Some(index),
+        });
+    }
+    let mut tables = PageTables {
+        found: ruled.into_iter().map(Some).collect(),
+        rules: page.rules.clone(),
+    };
     let mut blocks = Vec::new();
     for region in reading_regions(segments, body, 0) {
-        region_blocks(region, body, &mut blocks);
+        region_blocks(region, body, &mut tables, &mut blocks);
     }
     if !page.rotated.is_empty() {
         let mut lines = Vec::new();
@@ -302,8 +269,37 @@ pub(crate) fn layout_page(
     blocks
 }
 
-pub(crate) fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Block>) {
-    let rows = group_rows(region);
+/// Blocks for side-by-side columns of running text: each column's lines
+/// joined into paragraphs, left column first.
+fn column_blocks(columns: Vec<Vec<String>>, blocks: &mut Vec<Block>) {
+    for column in columns {
+        let mut paragraph = String::new();
+        let mut lines = 0;
+        for line in column.into_iter().chain([String::new()]) {
+            if line.is_empty() {
+                if !paragraph.is_empty() {
+                    blocks.push(Block::Paragraph {
+                        text: std::mem::take(&mut paragraph),
+                        size: 0.0,
+                        lines,
+                    });
+                }
+                lines = 0;
+                continue;
+            }
+            join_line(&mut paragraph, &line);
+            lines += 1;
+        }
+    }
+}
+
+pub(crate) fn region_blocks(
+    region: Vec<Segment>,
+    body: f64,
+    tables: &mut PageTables,
+    blocks: &mut Vec<Block>,
+) {
+    let mut rows = group_rows(region);
     if rows.is_empty() {
         return;
     }
@@ -313,7 +309,9 @@ pub(crate) fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Bl
         .map(|r| r.last().map_or(f64::NEG_INFINITY, |s| s.x1))
         .fold(f64::NEG_INFINITY, f64::max);
     let is_multi = |row: &Vec<Segment>| {
-        row.len() >= 2 && !(row.len() == 2 && is_equation_number(&row[1].text))
+        row.len() >= 2
+            && !(row.len() == 2 && is_equation_number(&row[1].text))
+            && row.iter().all(|s| s.table.is_none())
     };
 
     let mut index = 0;
@@ -341,6 +339,53 @@ pub(crate) fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Bl
         };
 
     while index < rows.len() {
+        // A ruled table found earlier takes its place in reading order here.
+        if let Some(slot) = rows[index].iter().find_map(|s| s.table) {
+            flush(
+                blocks,
+                &mut paragraph,
+                paragraph_size,
+                paragraph_lines,
+                in_list,
+            );
+            in_list = false;
+            paragraph_lines = 0;
+            if let Some(table) = tables.found.get_mut(slot).and_then(Option::take) {
+                match table.content {
+                    Ruled::Table { caption, grid } => {
+                        if let Some(caption) = caption {
+                            blocks.push(Block::Paragraph {
+                                text: caption,
+                                size: 0.0,
+                                lines: 1,
+                            });
+                        }
+                        blocks.push(Block::Table(grid.into_rows()));
+                    }
+                    Ruled::Frame(boxes) => {
+                        for glyphs in boxes {
+                            let segments: Vec<Segment> =
+                                rows_of(glyphs).into_iter().flat_map(segments_of_row).collect();
+                            let mut inner = PageTables {
+                                found: Vec::new(),
+                                rules: tables.rules.clone(),
+                            };
+                            for region in reading_regions(segments, body, 0) {
+                                region_blocks(region, body, &mut inner, blocks);
+                            }
+                        }
+                    }
+                }
+            }
+            // Text beside the table on its first line stays as its own row.
+            let rest: Vec<Segment> = rows[index].iter().filter(|s| s.table.is_none()).cloned().collect();
+            prev = None;
+            if rest.is_empty() {
+                index += 1;
+                continue;
+            }
+            rows[index] = rest;
+        }
         // Tables: runs of rows with several aligned cells.
         if is_multi(&rows[index]) {
             let mut end = index;
@@ -382,7 +427,8 @@ pub(crate) fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Bl
                 }
             }
             if multi >= 2 {
-                if let Some(table) = build_table(&rows[index..end]) {
+                let found = stream_table(&rows[index..end], &tables.rules);
+                if found != Stream::Nothing {
                     flush(
                         blocks,
                         &mut paragraph,
@@ -392,7 +438,11 @@ pub(crate) fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Bl
                     );
                     in_list = false;
                     paragraph_lines = 0;
-                    blocks.push(Block::Table(table));
+                    match found {
+                        Stream::Table(grid) => blocks.push(Block::Table(grid.into_rows())),
+                        Stream::Columns(columns) => column_blocks(columns, blocks),
+                        Stream::Nothing => {}
+                    }
                     let last = &rows[end - 1];
                     prev = Some((
                         last.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min),

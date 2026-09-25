@@ -19,6 +19,9 @@ pub(crate) struct Segment {
     pub(crate) mono: Option<bool>,
     /// The words of `text` (split at inferred spaces) with their extents.
     pub(crate) words: Vec<Word>,
+    /// A stand-in for the ruled table with this index, placed in reading
+    /// order like text.
+    pub(crate) table: Option<usize>,
 }
 
 /// One word of a segment and its horizontal extent.
@@ -394,6 +397,7 @@ pub(crate) fn new_segment(glyph: &Glyph, dominant: f64) -> Segment {
             x1: glyph.x1,
             text: glyph.text.clone(),
         }],
+        table: None,
     }
 }
 
@@ -450,4 +454,16 @@ pub(crate) fn body_font_size(pages: &[RawPage]) -> f64 {
     } else {
         10.0
     }
+}
+
+/// The text of a row: its segments joined by spaces.
+pub(crate) fn row_text(row: &[Segment]) -> String {
+    let mut text = String::new();
+    for segment in row {
+        if !text.is_empty() {
+            text.push(' ');
+        }
+        text.push_str(&segment.text);
+    }
+    text
 }

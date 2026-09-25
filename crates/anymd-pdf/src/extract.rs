@@ -26,6 +26,9 @@ pub(crate) struct Rule {
     pub(crate) at: f64,
     pub(crate) from: f64,
     pub(crate) to: f64,
+    /// An edge of a shaded box rather than a drawn line. A shaded column or
+    /// band does not divide cells the way a drawn line does.
+    pub(crate) soft: bool,
 }
 
 pub(crate) struct RawPage {
@@ -71,7 +74,7 @@ fn is_white(colorspace: &ColorSpace, color: &[f64]) -> bool {
 }
 
 impl Collector {
-    fn push_rule(&mut self, (x0, y0): (f64, f64), (x1, y1): (f64, f64)) {
+    fn push_rule(&mut self, (x0, y0): (f64, f64), (x1, y1): (f64, f64), soft: bool) {
         if self.rules.len() >= MAX_RULES_PER_PAGE
             || ![x0, y0, x1, y1].iter().all(|v| v.is_finite())
         {
@@ -84,6 +87,7 @@ impl Collector {
                 at: (y0 + y1) / 2.0,
                 from: x0.min(x1),
                 to: x0.max(x1),
+                soft,
             });
         } else if dx <= 0.5 && dy >= 1.0 {
             self.rules.push(Rule {
@@ -91,6 +95,7 @@ impl Collector {
                 at: (x0 + x1) / 2.0,
                 from: y0.min(y1),
                 to: y0.max(y1),
+                soft,
             });
         }
     }
@@ -294,7 +299,7 @@ impl OutputDev for Collector {
         for subpath in Self::subpaths(ctm, path) {
             if !subpath.curved {
                 for (from, to) in subpath.edges {
-                    self.push_rule(from, to);
+                    self.push_rule(from, to, false);
                 }
             }
         }
@@ -315,16 +320,16 @@ impl OutputDev for Collector {
             match subpath.as_box() {
                 // A thin bar is one rule along its middle.
                 Some([x0, y0, x1, y1]) if y1 - y0 <= BAR_THICKNESS && x1 - x0 > y1 - y0 => {
-                    self.push_rule((x0, (y0 + y1) / 2.0), (x1, (y0 + y1) / 2.0));
+                    self.push_rule((x0, (y0 + y1) / 2.0), (x1, (y0 + y1) / 2.0), false);
                 }
                 Some([x0, y0, x1, y1]) if x1 - x0 <= BAR_THICKNESS => {
-                    self.push_rule(((x0 + x1) / 2.0, y0), ((x0 + x1) / 2.0, y1));
+                    self.push_rule(((x0 + x1) / 2.0, y0), ((x0 + x1) / 2.0, y1), false);
                 }
                 // A shaded box (a header band, a cell background): its edges
                 // separate what is inside from what is outside.
                 Some(_) => {
                     for (from, to) in subpath.edges {
-                        self.push_rule(from, to);
+                        self.push_rule(from, to, true);
                     }
                 }
                 None => {}

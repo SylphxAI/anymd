@@ -115,7 +115,7 @@ fn monospace_lines_keep_their_breaks() {
     }
     assert!(segments.iter().any(|s| s.mono == Some(true)));
     let mut blocks = Vec::new();
-    region_blocks(segments, 10.0, &mut blocks);
+    region_blocks(segments, 10.0, &mut PageTables::none(), &mut blocks);
     match &blocks[..] {
         [Block::Paragraph { text, .. }] => assert_eq!(text, &lines.join("\n")),
         other => panic!("expected one line-preserving block, got {other:?}"),
@@ -190,6 +190,7 @@ fn segment(text: &str, x0: f64, x1: f64, base: f64) -> Segment {
         text: text.into(),
         mono: None,
         words: words_of(text, x0, x1),
+        table: None,
     }
 }
 
@@ -234,7 +235,12 @@ fn aligned_cells_become_a_table() {
         ],
     ];
     let mut blocks = Vec::new();
-    region_blocks(rows.into_iter().flatten().collect(), 10.0, &mut blocks);
+    region_blocks(
+        rows.into_iter().flatten().collect(),
+        10.0,
+        &mut PageTables::none(),
+        &mut blocks,
+    );
     match &blocks[..] {
         [Block::Table(table)] => {
             assert_eq!(table[0], ["Model", "BLEU", "Cost"]);
