@@ -117,7 +117,7 @@ until:
 ### 6. Architecture ownership
 
 Canonical document model and capability modules are owned by Rust
-(`pdf-reader-core` + MCP server boundary), not reverse-engineered from PDF.js
+(`anymd-core` + MCP server boundary), not reverse-engineered from PDF.js
 response shapes.
 
 ```text

@@ -1,8 +1,7 @@
 [workspace]
 members = [
-    "crates/pdf-reader-core",
-    "crates/pdf-reader-cli",
-    "crates/pdf-reader-mcp-server",
+    "crates/anymd-core",
+    "crates/anymd",
     "crates/anymd-formats",
     "crates/anymd-pdf",
     "crates/anymd-wasm",

@@ -1,0 +1,32 @@
+[package]
+name = "anymd-core"
+version.workspace = true
+edition.workspace = true
+rust-version = "1.92"
+license.workspace = true
+repository.workspace = true
+description = "Pure-Rust document intelligence core for anymd (read, search, document twin)"
+homepage.workspace = true
+authors.workspace = true
+readme.workspace = true
+keywords = ["pdf", "mcp", "rust", "document", "rag"]
+categories = ["parsing", "text-processing"]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+anymd-pdf = { path = "../anymd-pdf", version = "3.1.1" }
+base64 = "0.22"
+flate2 = "1"
+hayro = "0.7.1"
+image = { version = "0.25", default-features = false, features = ["png"] }
+lopdf = { version = "0.42", default-features = false }
+pdf-extract = "0.12"
+regex = "1.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+tempfile = "3.20.0"
+ureq = { version = "2.12", default-features = true, features = ["tls"] }
+url = "2"

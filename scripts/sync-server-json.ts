@@ -17,7 +17,7 @@ server.version = pkg.version;
 server.packages[0].version = pkg.version;
 writeFileSync('server.json', `${JSON.stringify(server, null, 2)}\n`);
 
-const rustServerLib = 'crates/pdf-reader-mcp-server/src/lib.rs';
+const rustServerLib = 'crates/anymd/src/lib.rs';
 const rustSource = readFileSync(rustServerLib, 'utf8');
 const dropIn = matrix.productTruth?.dropInFor3014 === true;
 

@@ -15,7 +15,7 @@ extraction, document maps, trust signals, and provenance. Hosts connect via
 **stdio** (default Rust `rmcp`) or **streamable HTTP** (`MCP_TRANSPORT=http`).
 PDF Reader MCP owns the Reader portfolio architecture ADR (ADR-0004).
 
-Rust crates (`pdf-reader-core`, `pdf-reader-cli`, `pdf-reader-mcp-server`)
+Rust crates (`anymd-core`, `anymd`)
 implement parsers and tool engines behind `rmcp`. Transitional TS MCP adapter
 and handlers remain until per-slice `ts_deleted`.
 
@@ -30,10 +30,10 @@ benchmark-gated npm release — portfolio SSOT for reader boundaries.
 | Layer | North Star | Transitional (until sunset slice) |
 | --- | --- | --- |
 | Cross-boundary contract | Protobuf + Buf (`proto/pdf_reader/v1/`) for tool I/O | rmcp JSON Schema + golden fixtures |
-| MCP transport (stdio) | Rust `pdf-reader-mcp-server` via `rmcp::transport::stdio()` | TS adapter `src/index.ts` |
+| MCP transport (stdio) | Rust `anymd` via `rmcp::transport::stdio()` | TS adapter `src/index.ts` |
 | MCP transport (HTTP) | Rust `http_transport.rs` (`rmcp::StreamableHttpService`) | TS Streamable HTTP opt-in |
-| Tool handlers | Rust `pdf-reader-mcp-server` → `pdf-reader-core` | `src/handlers/*.ts` |
-| PDF extraction / OCR routing | Rust `pdf-reader-core` | TS engine during cutover |
+| Tool handlers | Rust `anymd` → `anymd-core` | `src/handlers/*.ts` |
+| PDF extraction / OCR routing | Rust `anymd-core` | TS engine during cutover |
 | Reader portfolio contracts | `proto/` + ADR-0004 boundaries | Sibling repo delegation via public APIs |
 | Distribution | Thin npm `bin/pdf-reader-mcp` → native binary | npm dist + transport opt-in |
 | Deploy / packaging | CI-prebuilt native binary; benchmark-gated release | TS bundle in `dist/` |
@@ -75,7 +75,7 @@ benchmark-gated npm release — portfolio SSOT for reader boundaries.
 
 ## Consequences
 
-- New PDF logic defaults to `crates/pdf-reader-core`.
+- New PDF logic defaults to `crates/anymd-core`.
 - `proto/pdf_reader/v1/` is portfolio SSOT when cross-repo contracts land.
 - TS `src/` adapter deleted per slice when parity + differential_green pass.
 - Reader sibling repos align to portfolio proto contracts defined here.

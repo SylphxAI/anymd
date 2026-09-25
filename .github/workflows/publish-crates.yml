@@ -1,4 +1,4 @@
-# Publish pure-Rust crates to crates.io (pdf-reader-core, anymd, pdf-reader-cli).
+# Publish pure-Rust crates to crates.io (anymd-core, anymd).
 name: Publish crates.io
 
 # Crates are not an admitted product distribution channel for 3.2.x.
@@ -42,20 +42,19 @@ jobs:
       - name: Cargo test crates (unit + golden)
         run: |
           set -euo pipefail
-          cargo test -p pdf-reader-core
-          cargo test -p pdf-reader-cli
-          cargo test -p pdf-reader-mcp-server --lib
-          cargo test -p pdf-reader-mcp-server --test read_pdf_golden_parity
+          cargo test -p anymd-core
+          cargo test -p anymd --lib
+          cargo test -p anymd --test read_pdf_golden_parity
 
-      - name: Publish pdf-reader-core
+      - name: Publish anymd-core
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           set -euo pipefail
           if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
-            cargo publish -p pdf-reader-core --dry-run
+            cargo publish -p anymd-core --dry-run
           else
-            cargo publish -p pdf-reader-core
+            cargo publish -p anymd-core
           fi
 
       - name: Publish anymd
@@ -64,21 +63,9 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
-            cargo publish -p pdf-reader-mcp-server --dry-run
+            cargo publish -p anymd --dry-run
           else
             # Wait for crates.io index to pick up core.
             sleep 45
-            cargo publish -p pdf-reader-mcp-server
-          fi
-
-      - name: Publish pdf-reader-cli
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
-            cargo publish -p pdf-reader-cli --dry-run
-          else
-            sleep 45
-            cargo publish -p pdf-reader-cli
+            cargo publish -p anymd
           fi
