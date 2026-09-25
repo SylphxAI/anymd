@@ -35,11 +35,11 @@ fn spreadsheet_sample_renders_header_and_rows() {
     let first = &out.sections[0];
     assert_eq!(first.label, "sheet Sheet1");
     assert!(first.markdown.starts_with(
-        "| Alpha | Beta | Gamma | Delta |\n| --- | --- | --- | --- |\n| 89 | 82 | 100 | 12 |\n"
+        "|Alpha|Beta|Gamma|Delta|\n|-|-|-|-|\n|89|82|100|12|\n"
     ));
     assert!(first
         .markdown
-        .contains("| 58 | 6ff4173b-42a5-4784-9b19-f49caff4d93d | 22 | 9 |"));
+        .contains("|58|6ff4173b-42a5-4784-9b19-f49caff4d93d|22|9|"));
     for section in &out.sections {
         assert!(
             !section.markdown.contains(".0 |"),

@@ -688,7 +688,7 @@ mod tests {
         assert_eq!(opened.format, "csv");
         let units = opened.units(&[1]).unwrap();
         assert!(
-            units[0].markdown.contains("| a | b |"),
+            units[0].markdown.contains("|a|b|"),
             "{}",
             units[0].markdown
         );

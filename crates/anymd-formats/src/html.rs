@@ -1267,7 +1267,7 @@ mod tests {
              <tbody><tr><td>Ann <b>A</b></td><td>1|2</td></tr><tr><td colspan=2>total</td></tr></tbody></table>");
         assert_eq!(
             md,
-            "Scores\n\n| Name | Score |\n| --- | --- |\n| Ann **A** | 1\\|2 |\n| total |  |"
+            "Scores\n\n|Name|Score|\n|-|-|\n|Ann **A**|1\\|2|\n|total||"
         );
     }
 

@@ -162,11 +162,11 @@ mod tests {
         assert_eq!(labels, ["sheet Revenue", "sheet Empty", "sheet Big"]);
         assert_eq!(
             out.sections[0].markdown,
-            "| Region | Amount | Day |\n| --- | --- | --- |\n| EU\\|West | 1200 | 2024-03-09 |\n| US | 0.3 | TRUE |\n"
+            "|Region|Amount|Day|\n|-|-|-|\n|EU\\|West|1200|2024-03-09|\n|US|0.3|TRUE|\n"
         );
         assert_eq!(out.sections[1].markdown, "(empty sheet)\n");
         let big = &out.sections[2].markdown;
-        assert!(big.ends_with("| 2000 |\n\n… 100 more rows\n"), "{big}");
+        assert!(big.ends_with("|2000|\n\n… 100 more rows\n"), "{big}");
     }
 
     #[test]

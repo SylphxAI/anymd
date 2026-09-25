@@ -637,7 +637,7 @@ mod tests {
         );
         assert_eq!(
             out.sections[1].markdown,
-            "## Numbers\n\n| Region | Sales |\n| --- | --- |\n| EU | 12 |\n"
+            "## Numbers\n\n|Region|Sales|\n|-|-|\n|EU|12|\n"
         );
     }
 
@@ -649,7 +649,7 @@ mod tests {
         let root = ooxml::parse_xml(xml).unwrap();
         assert_eq!(
             chart_markdown(&root),
-            "### Chart: Revenue\n\n| Category | 2025 |\n| --- | --- |\n| Q1 | 10 |\n| Q2 | 12.5 |"
+            "### Chart: Revenue\n\n|Category|2025|\n|-|-|\n|Q1|10|\n|Q2|12.5|"
         );
     }
 

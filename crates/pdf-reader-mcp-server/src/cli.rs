@@ -359,6 +359,6 @@ mod tests {
         )
         .unwrap();
         assert!(!failed);
-        assert!(text.starts_with("| a | b |"), "{text}");
+        assert!(text.starts_with("|a|b|"), "{text}");
     }
 }

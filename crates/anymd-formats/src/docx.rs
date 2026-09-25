@@ -1064,7 +1064,7 @@ mod tests {
         );
         assert_eq!(
             md(&docx(&body, &[])),
-            "| Name | Q1 | Q2 |\n| --- | --- | --- |\n| wide\\|cell |  | x |\n| line1<br>line2 | n1; n2 |  |\n"
+            "|Name|Q1|Q2|\n|-|-|-|\n|wide\\|cell||x|\n|line1<br>line2|n1; n2||\n"
         );
     }
 

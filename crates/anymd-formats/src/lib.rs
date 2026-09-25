@@ -228,17 +228,17 @@ pub fn markdown_table(rows: &[Vec<String>]) -> String {
     }
     let mut out = String::new();
     for (index, row) in rows.iter().enumerate() {
+        // Compact pipe tables: padding spaces cost ~20% more tokens.
         out.push('|');
         for column in 0..width {
-            out.push(' ');
             out.push_str(&table_cell(row.get(column).map(String::as_str).unwrap_or("")));
-            out.push_str(" |");
+            out.push('|');
         }
         out.push('\n');
         if index == 0 {
             out.push('|');
             for _ in 0..width {
-                out.push_str(" --- |");
+                out.push_str("-|");
             }
             out.push('\n');
         }

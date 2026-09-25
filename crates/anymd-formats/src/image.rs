@@ -428,7 +428,7 @@ mod tests {
         let converted = convert(&png(64, 32), &Options::default()).unwrap();
         assert_eq!(converted.format, "image");
         let md = &converted.sections[0].markdown;
-        assert!(md.starts_with("| Property | Value |\n| --- | --- |\n| Format | PNG |\n| Dimensions | 64 × 32 px |"), "{md}");
+        assert!(md.starts_with("|Property|Value|\n|-|-|\n|Format|PNG|\n|Dimensions|64 × 32 px|"), "{md}");
         assert!(md.contains("`ocr: true`"));
     }
 

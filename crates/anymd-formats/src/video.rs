@@ -916,7 +916,7 @@ mod tests {
         .unwrap();
         assert_eq!(converted.title.as_deref(), Some("Clip"));
         let media = &converted.sections[0].markdown;
-        assert!(media.contains("| Kind | video |"), "{media}");
+        assert!(media.contains("|Kind|video|"), "{media}");
         assert!(media.contains("- Video: mpeg4, 64×48, 10 fps"), "{media}");
         assert!(media.contains("- Audio: flac, 44.1 kHz"), "{media}");
         assert!(media.contains("## Chapters\n\n- 00:00 Opening"), "{media}");

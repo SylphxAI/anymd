@@ -116,7 +116,7 @@ mod tests {
         let input = "\u{feff}name,note,amount\n\"Smith, J\",\"says \"\"hi\"\"\",1\nA|B,\"multi\nline\",2,extra\n,,\n";
         assert_eq!(
             md(input, b','),
-            "| name | note | amount |  |\n| --- | --- | --- | --- |\n| Smith, J | says \"hi\" | 1 |  |\n| A\\|B | multi line | 2 | extra |\n"
+            "|name|note|amount||\n|-|-|-|-|\n|Smith, J|says \"hi\"|1||\n|A\\|B|multi line|2|extra|\n"
         );
     }
 
@@ -129,9 +129,9 @@ mod tests {
         let out = convert(input.as_bytes(), b'\t', &Options::default()).unwrap();
         assert_eq!(out.format, "tsv");
         let markdown = &out.sections[0].markdown;
-        assert!(markdown.starts_with("| a | b |\n| --- | --- |\n| 0 | 0 |\n"));
-        assert!(markdown.contains("| 1999 | 3998 |\n\n… 500 more rows\n"));
-        assert!(!markdown.contains("\n| 2000 |"));
+        assert!(markdown.starts_with("|a|b|\n|-|-|\n|0|0|\n"));
+        assert!(markdown.contains("|1999|3998|\n\n… 500 more rows\n"));
+        assert!(!markdown.contains("\n|2000|"));
     }
 
     #[test]

@@ -1223,7 +1223,7 @@ mod tests {
     fn estimates_tokens_conservatively() {
         assert_eq!(estimate_tokens("hello world"), 2);
         assert_eq!(estimate_tokens("12345"), 2);
-        assert_eq!(estimate_tokens("| a |"), 3);
+        assert_eq!(estimate_tokens("|a|"), 3);
         assert_eq!(estimate_tokens("注意力"), 3);
     }
 
@@ -1303,7 +1303,7 @@ mod tests {
         };
         let text = text_of(&read(&args, &SourceAccessPolicy::unrestricted()).unwrap());
         assert!(text.contains("format: csv"), "{text}");
-        assert!(text.contains("| apple | 1.20 |"), "{text}");
+        assert!(text.contains("|apple|1.20|"), "{text}");
     }
 
     #[test]

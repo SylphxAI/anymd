@@ -1465,17 +1465,17 @@ fn render_blocks(
             Block::Table(rows) => {
                 let mut table = String::new();
                 for (index, row) in rows.iter().enumerate() {
+                    // Compact pipe tables: padding spaces cost ~20% more tokens.
                     table.push('|');
                     for cell in row {
-                        table.push(' ');
                         table.push_str(&escape_cell(cell));
-                        table.push_str(" |");
+                        table.push('|');
                     }
                     table.push('\n');
                     if index == 0 {
                         table.push('|');
                         for _ in row {
-                            table.push_str(" --- |");
+                            table.push_str("-|");
                         }
                         table.push('\n');
                     }
