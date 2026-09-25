@@ -1,0 +1,74 @@
+{
+  "name": "anymd",
+  "tagline": "Any file → clean Markdown for AI agents",
+  "description": "Any file → clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.",
+  "shortDescription": "Any file → clean Markdown for AI agents: PDF, Office, EPUB, HTML, images, audio/video. Local MCP.",
+  "formats": [
+    "PDF",
+    "Word",
+    "PowerPoint",
+    "Excel",
+    "EPUB",
+    "HTML",
+    "web pages",
+    "images",
+    "OCR",
+    "audio",
+    "video",
+    "subtitles",
+    "transcripts"
+  ],
+  "formerly": "pdf-reader-mcp",
+  "keywords": [
+    "markdown",
+    "mcp",
+    "model-context-protocol",
+    "pdf-to-markdown",
+    "docx-to-markdown",
+    "html-to-markdown",
+    "pdf",
+    "docx",
+    "pptx",
+    "xlsx",
+    "epub",
+    "ocr",
+    "transcription",
+    "rag",
+    "ai-agents",
+    "llm",
+    "markitdown-alternative",
+    "document-conversion",
+    "rust",
+    "cli"
+  ],
+  "benchmark": {
+    "results": "bench/results/2026-09-25-github-4cpu.json",
+    "tools": {
+      "anymd": "anymd",
+      "docling": "docling",
+      "markitdown": "MarkItDown",
+      "kreuzberg": "kreuzberg",
+      "pdftotext": "pdftotext"
+    },
+    "pdfOnly": ["pdftotext"],
+    "sample": { "doc": "attention", "name": "the 15-page *Attention Is All You Need* paper" },
+    "web": { "doc": "html", "name": "the Wikipedia article" }
+  },
+  "alsoFrom": [
+    {
+      "name": "repomap",
+      "url": "https://github.com/SylphxAI/repomap",
+      "description": "A map of your codebase for AI agents: code graph, search, call paths and change impact — with an interactive graph UI. Rust MCP server + CLI. Local, no API key, MIT."
+    },
+    {
+      "name": "lockdocs",
+      "url": "https://github.com/SylphxAI/lockdocs",
+      "description": "Exact-version library docs from your lockfile — local, offline, no rate limits."
+    },
+    {
+      "name": "readme-mark",
+      "url": "https://github.com/SylphxAI/readme-mark",
+      "description": "Beautiful README images from one URL — animated banners, shields-compatible badges, typing text, 3000+ tech icons, GitHub stats cards. Free, no token, drop-in for shields / capsule-render / skill-icons / readme-typing-svg / github-readme-stats."
+    }
+  ]
+}

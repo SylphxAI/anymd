@@ -2,6 +2,7 @@
 
 anymd against MarkItDown, Docling, Kreuzberg, and pdftotext on the same documents and the same machine.
 
+<!-- generated:bench-tables -->
 Benchmark run 2026-09-25 on 4 CPUs (x86_64), median of 3 runs (docling: 1).
 
 | document | anymd | markitdown | kreuzberg | docling | pdftotext |
@@ -26,6 +27,7 @@ Benchmark run 2026-09-25 on 4 CPUs (x86_64), median of 3 runs (docling: 1).
 | kreuzberg | 2.79 | 125,043 | 12/12 | 0/26 | 5/5 |
 | docling | 963.80 | 126,401 | 11/12 | 25/26 | 3/5 |
 | pdftotext | 0.36 | 74,090 | 12/12 | 0/26 | 5/5 |
+<!-- /generated:bench-tables -->
 
 The official `@modelcontextprotocol/server-pdf` is left out because it has no headless text path: it renders PDFs in an interactive viewer, and its `read_pdf_bytes` tool returns base64-encoded bytes.
 

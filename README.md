@@ -4,7 +4,9 @@
 
 <h1 hidden>anymd</h1>
 
-PDF, Word, PowerPoint, Excel, EPUB, HTML, images, audio/video. A fast Rust engine running on your machine, available as an MCP server and a CLI. No API key.
+<!-- generated:lead -->
+PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.
+<!-- /generated:lead -->
 
 [![npm](https://img.shields.io/npm/v/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
 [![downloads](https://img.shields.io/npm/dm/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
@@ -14,7 +16,9 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML, images, audio/video. A fast Rust engin
 
 [Install](#install) · [Benchmarks](#benchmarks) · [Tools](#mcp-tools) · [CLI](#cli) · [Formats](#formats) · [Docs](https://sylphxai.github.io/anymd/)
 
-<sub>Formerly **pdf-reader-mcp** / **Citra**. `@sylphx/pdf-reader-mcp` and `@sylphx/citra` still install and run anymd.</sub>
+<!-- generated:formerly -->
+<sub>Formerly **pdf-reader-mcp**. [Migrating from pdf-reader-mcp](https://sylphxai.github.io/anymd/guide/migration)</sub>
+<!-- /generated:formerly -->
 
 <img src="docs/public/demo.gif" alt="Real terminal session: anymd converts a PDF page with its table, searches a folder, reads a spreadsheet, then Claude Code answers from the PDF through the anymd MCP server" width="820" />
 
@@ -24,7 +28,9 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML, images, audio/video. A fast Rust engin
 
 ## Why anymd
 
-- **Fast.** Native Rust converts in parallel, page by page. A 15-page paper converts in about **0.1 s**. That is 20× faster than MarkItDown and 500× faster than docling, with every table intact.
+<!-- generated:bench-fast -->
+- **Fast.** Native Rust converts in parallel, page by page. On the 15-page *Attention Is All You Need* paper, anymd takes **0.13 s**: 23× faster than MarkItDown and 571× faster than docling, with every table intact.
+  <!-- /generated:bench-fast -->
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
 - **Every format, one call.** One tool reads every format listed below. It also accepts web URLs and whole directories, and `search` looks across all of them.
@@ -110,7 +116,8 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 
 ## Benchmarks
 
-Twelve real documents (papers, a two-column paper, statistical tables, CJK, a form, a borderless-table invoice, plus DOCX, PPTX, XLSX, EPUB, and a Wikipedia page), run on a GitHub-hosted runner with 4 CPUs:
+<!-- generated:bench-summary -->
+12 real documents (7 PDFs, plus DOCX, PPTX, XLSX, EPUB, and HTML), on 4 CPUs (x86_64), 2026-09-25:
 
 | | **anymd** | docling | MarkItDown | kreuzberg | pdftotext |
 |---|---|---|---|---|---|
@@ -122,7 +129,8 @@ Twelve real documents (papers, a two-column paper, statistical tables, CJK, a fo
 
 <sub>¹ pdftotext reads PDFs only and outputs plain text without tables.</sub>
 
-On the 15-page *Attention Is All You Need* paper, anymd takes **0.13 s**, docling 76 s, and MarkItDown 3.0 s, and MarkItDown glues the words together ("dominantsequencetransductionmodels"). On the Wikipedia article, anymd's main-content extraction uses **21.7k tokens**; docling uses 37.6k, kreuzberg 51.7k, and MarkItDown 54.6k.
+On the 15-page *Attention Is All You Need* paper, anymd takes **0.13 s**, docling 75.9 s, and MarkItDown 3.0 s; MarkItDown keeps 0 of 4 reference sentences intact. On the Wikipedia article, anymd's main-content extraction uses **21.7k tokens**; docling 37.6k, kreuzberg 51.7k, MarkItDown 54.6k.
+<!-- /generated:bench-summary -->
 
 Each tool runs as a fresh process, and every number is the median of 3 runs (docling runs once, after its models are warmed up). Tokens are counted with `o200k_base`. **Sentences intact** counts reference sentences that come out verbatim; glued words or split columns fail the check. **Table rows** counts ground-truth rows that come out as one Markdown table row with the cells in order. The method, corpus, ground truth, raw results, and scripts are in [`bench/`](bench/), and the [Benchmark workflow](.github/workflows/benchmark.yml) re-runs everything on GitHub-hosted runners.
 
@@ -175,8 +183,6 @@ showing: pages 1-9
 
 If nothing matches exactly, `search` falls back to BM25-ranked passages, so a question like "how does bidirectional pretraining work" still finds the right page.
 
-<sub>The pdf-reader-mcp tool names (`read_pdf`, `search_pdf`, `pdf_evidence`, `pdf_compare`) still work for this major version. They no longer appear in tools/list.</sub>
-
 ## CLI
 
 The same binary is a command-line converter, like MarkItDown but much faster:
@@ -222,7 +228,11 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ## Also from Sylphx
 
-[**repomap**](https://github.com/SylphxAI/repomap) gives your AI agent a map of your codebase: a code graph, search, call paths, change impact, and a graph UI. Like anymd, it runs locally, needs no API key, and is MIT licensed.
+<!-- generated:also-from -->
+- [**repomap**](https://github.com/SylphxAI/repomap): A map of your codebase for AI agents: code graph, search, call paths and change impact — with an interactive graph UI. Rust MCP server + CLI. Local, no API key, MIT.
+- [**lockdocs**](https://github.com/SylphxAI/lockdocs): Exact-version library docs from your lockfile — local, offline, no rate limits.
+- [**readme-mark**](https://github.com/SylphxAI/readme-mark): Beautiful README images from one URL — animated banners, shields-compatible badges, typing text, 3000+ tech icons, GitHub stats cards. Free, no token, drop-in for shields / capsule-render / skill-icons / readme-typing-svg / github-readme-stats.
+<!-- /generated:also-from -->
 
 ## Star history
 
