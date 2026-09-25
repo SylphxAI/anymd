@@ -41,19 +41,6 @@
     "rust",
     "cli"
   ],
-  "benchmark": {
-    "results": "bench/results/2026-09-25-github-4cpu.json",
-    "tools": {
-      "anymd": "anymd",
-      "docling": "docling",
-      "markitdown": "MarkItDown",
-      "kreuzberg": "kreuzberg",
-      "pdftotext": "pdftotext"
-    },
-    "pdfOnly": ["pdftotext"],
-    "sample": { "doc": "attention", "name": "the 15-page *Attention Is All You Need* paper" },
-    "web": { "doc": "html", "name": "the Wikipedia article" }
-  },
   "alsoFrom": [
     {
       "name": "repomap",

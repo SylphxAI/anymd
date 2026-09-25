@@ -28,9 +28,7 @@ features:
   - icon:
       src: /icons/zap.svg
     title: Fast
-    # generated:bench-fast
-    details: "Native Rust converts in parallel, page by page. The 15-page Attention Is All You Need paper takes 0.13 s; MarkItDown needs 3.0 s."
-    # /generated:bench-fast
+    details: "Native Rust converts in parallel, page by page, with no models to load. The benchmarks list the measured times."
     link: /guide/benchmarks
   - icon:
       src: /icons/table-2.svg
