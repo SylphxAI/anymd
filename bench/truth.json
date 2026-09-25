@@ -1,0 +1,257 @@
+{
+ "description": "Ground truth for the anymd benchmark. text: sentences that must appear verbatim (after whitespace and Markdown markup are normalized away). order: strings that must appear in this order. tables: rows that must appear as one Markdown table row, cells in order (the first cell may match as a substring).",
+ "docs": {
+  "attention": {
+   "text": [
+    "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder.",
+    "Most competitive neural sequence transduction models have an encoder-decoder structure",
+    "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2).",
+    "We trained our models on one machine with 8 NVIDIA P100 GPUs."
+   ],
+   "order": [
+    "Abstract",
+    "Introduction",
+    "Background",
+    "Model Architecture",
+    "Why Self-Attention",
+    "Training",
+    "Results",
+    "Conclusion"
+   ],
+   "tables": [
+    [
+     "Self-Attention",
+     "O(n2·d)",
+     "O(1)",
+     "O(1)"
+    ],
+    [
+     "Recurrent",
+     "O(n·d2)",
+     "O(n)",
+     "O(n)"
+    ],
+    [
+     "ByteNet [18]",
+     "23.75"
+    ],
+    [
+     "GNMT + RL [38]",
+     "24.6",
+     "39.92"
+    ],
+    [
+     "ConvS2S [9]",
+     "25.16",
+     "40.46"
+    ],
+    [
+     "MoE [32]",
+     "26.03",
+     "40.56"
+    ],
+    [
+     "GNMT + RL Ensemble [38]",
+     "26.30",
+     "41.16"
+    ],
+    [
+     "ConvS2S Ensemble [9]",
+     "26.36",
+     "41.29"
+    ],
+    [
+     "Transformer (base model)",
+     "27.3",
+     "38.1"
+    ],
+    [
+     "Transformer (big)",
+     "28.4",
+     "41.8"
+    ],
+    [
+     "Petrov et al. (2006) [29]",
+     "WSJ only, discriminative",
+     "90.4"
+    ],
+    [
+     "Transformer (4 layers)",
+     "semi-supervised",
+     "92.7"
+    ],
+    [
+     "Luong et al. (2015) [23]",
+     "multi-task",
+     "93.0"
+    ],
+    [
+     "Dyer et al. (2016) [8]",
+     "generative",
+     "93.3"
+    ]
+   ]
+  },
+  "bert": {
+   "text": [
+    "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers.",
+    "There are two existing strategies for applying pre-trained language representations to downstream tasks: feature-based and fine-tuning.",
+    "Learning widely applicable representations of words has been an active area of research for decades"
+   ],
+   "order": [
+    "Abstract",
+    "Introduction",
+    "Related Work",
+    "BERT",
+    "Experiments",
+    "Ablation Studies",
+    "Conclusion"
+   ],
+   "tables": [
+    [
+     "BERTBASE",
+     "84.6/83.4",
+     "71.2",
+     "90.5",
+     "93.5",
+     "52.1",
+     "85.8",
+     "88.9",
+     "66.4",
+     "79.6"
+    ],
+    [
+     "BERTLARGE",
+     "86.7/85.9",
+     "72.1",
+     "92.7",
+     "94.9",
+     "60.5",
+     "86.5",
+     "89.3",
+     "70.1",
+     "82.1"
+    ]
+   ]
+  },
+  "cjk": {
+   "text": [
+    "文內同時引用同一作者有多篇文章時，依照年代先後順序排列，舊在前、新在後。"
+   ],
+   "order": [
+    "參考文獻格式",
+    "正文內引時",
+    "文末參考文獻排列"
+   ],
+   "tables": [
+    [
+     "1 位作者",
+     "(作者，年代) 或 Author (Year)"
+    ]
+   ]
+  },
+  "h8": {
+   "text": [
+    "ASSETS AND LIABILITIES OF COMMERCIAL BANKS IN THE UNITED STATES"
+   ],
+   "order": [],
+   "tables": [
+    [
+     "Bank credit",
+     "8.3",
+     "6.7",
+     "-0.2",
+     "4.0",
+     "5.3"
+    ],
+    [
+     "Real estate loans",
+     "2.0",
+     "10.2",
+     "4.1",
+     "1.9",
+     "1.8"
+    ],
+    [
+     "Consumer loans",
+     "8.0",
+     "11.3",
+     "4.3",
+     "1.9",
+     "3.9"
+    ]
+   ]
+  },
+  "plz": {
+   "text": [
+    "Where passenger loading zones are provided, at least one accessible passenger loading zone is required in every continuous 100 linear feet of loading zone or fraction thereof."
+   ],
+   "order": [
+    "Passenger Loading Zones",
+    "Required Compliance",
+    "Accessible Passenger Loading Zones"
+   ],
+   "tables": []
+  },
+  "w9": {
+   "text": [
+    "Before you begin. For guidance related to the purpose of Form W-9, see Purpose of Form, below."
+   ],
+   "order": [],
+   "tables": []
+  },
+  "borderless": {
+   "text": [
+    "The inventory reconciliation reveals several key findings."
+   ],
+   "order": [
+    "INVENTORY RECONCILIATION REPORT",
+    "Variance Analysis",
+    "Extended Inventory Review"
+   ],
+   "tables": [
+    [
+     "SKU-8847",
+     "A-12",
+     "450"
+    ],
+    [
+     "SKU-9201",
+     "780",
+     "778",
+     "OK"
+    ],
+    [
+     "SKU-4563",
+     "D-22",
+     "156",
+     "CRITICAL"
+    ],
+    [
+     "SKU-9201",
+     "Hardware",
+     "$32.50",
+     "$25,285.00",
+     "2024-10-22",
+     "Verified"
+    ],
+    [
+     "SKU-6678",
+     "Software",
+     "$200.00",
+     "$42,000.00",
+     "2024-10-25",
+     "High Value"
+    ],
+    [
+     "SKU-1123",
+     "Hardware",
+     "$55.00",
+     "$27,500.00",
+     "2024-10-30",
+     "Verified"
+    ]
+   ]
+  }
+ }
+}
