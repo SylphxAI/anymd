@@ -137,6 +137,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "anymd-pdf"
+version = "3.1.1"
+dependencies = [
+ "pdf-extract",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1707,6 +1714,7 @@ dependencies = [
 name = "pdf-reader-core"
 version = "3.1.1"
 dependencies = [
+ "anymd-pdf",
  "base64 0.22.1",
  "flate2",
  "hayro",

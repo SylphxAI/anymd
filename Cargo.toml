@@ -4,6 +4,7 @@ members = [
     "crates/pdf-reader-cli",
     "crates/pdf-reader-mcp-server",
     "crates/anymd-formats",
+    "crates/anymd-pdf",
     "vendor/adobe-cmap-parser",
     "vendor/pdf-extract",
 ]
