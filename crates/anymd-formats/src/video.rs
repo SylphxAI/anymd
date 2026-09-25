@@ -10,6 +10,7 @@ use std::time::Duration;
 
 use serde_json::Value;
 
+use crate::whisper::{self, ModelConfig};
 use crate::{tool, ConvertError, Converted, Options, Section};
 
 const PROBE_TIMEOUT: Duration = Duration::from_secs(60);
@@ -17,8 +18,6 @@ const SUBTITLE_TIMEOUT: Duration = Duration::from_secs(60);
 const AUDIO_EXTRACT_TIMEOUT: Duration = Duration::from_secs(600);
 const TRANSCRIBE_TIMEOUT: Duration = Duration::from_secs(1800);
 const MAX_SIDECAR_BYTES: u64 = 10 * 1024 * 1024;
-const WHISPER_ADAPTERS: &[&str] = &["whisper-cli", "whisper-cpp"];
-const MODEL_ENV: &str = "ANYMD_WHISPER_MODEL";
 
 /// True when the leading bytes identify this media kind.
 pub fn sniff(head: &[u8]) -> bool {
@@ -317,17 +316,26 @@ fn render_probe(
 
     if has_audio {
         if options.transcript {
-            match transcribe(path) {
+            match transcribe(path, options.download_whisper_model) {
                 Ok(text) if !text.is_empty() => extra_sections.push(Section {
                     label: "transcript".into(),
                     markdown: text,
                 }),
                 Ok(_) => notes.push("_Transcript: no speech was recognised._".into()),
-                Err(error) => notes.push(format!("_Transcript unavailable: {error}_")),
+                Err(error) => {
+                    // First line is the summary; any further lines are how-to bullets.
+                    let (head, rest) = error.split_once('\n').unwrap_or((&error, ""));
+                    let mut note = format!("_Transcript unavailable: {head}_");
+                    if !rest.is_empty() {
+                        note.push('\n');
+                        note.push_str(rest);
+                    }
+                    notes.push(note);
+                }
             }
         } else {
             notes.push(
-                "_Pass `transcript: true` for a speech transcript (local whisper.cpp; see ANYMD_WHISPER_MODEL)._"
+                "_Pass `transcript: true` for a speech transcript (local whisper.cpp; `anymd doctor` shows what is installed)._"
                     .into(),
             );
         }
@@ -480,34 +488,41 @@ fn sidecar_sections(path: Option<&Path>) -> Vec<Section> {
 // ---------------------------------------------------------------------------
 // Transcript (whisper.cpp)
 
-fn transcribe(path: &Path) -> Result<String, String> {
-    let adapter = WHISPER_ADAPTERS.iter().find_map(|name| tool::find(name));
-    let model = std::env::var_os(MODEL_ENV)
-        .map(PathBuf::from)
-        .filter(|p| p.is_file());
+fn transcribe(path: &Path, download: bool) -> Result<String, String> {
+    let binary = whisper::find_binary();
     let ffmpeg = tool::find("ffmpeg");
-    let (Some(adapter), Some(model), Some(ffmpeg)) = (adapter, model, ffmpeg) else {
-        let mut missing = Vec::new();
-        if WHISPER_ADAPTERS
-            .iter()
-            .all(|name| tool::find(name).is_none())
-        {
-            missing.push("a whisper.cpp binary (`whisper-cli`) on PATH".to_string());
-        }
-        if std::env::var_os(MODEL_ENV)
-            .map(PathBuf::from)
-            .filter(|p| p.is_file())
-            .is_none()
-        {
-            missing.push(format!(
-                "{MODEL_ENV} set to a ggml model file (e.g. ggml-base.en.bin)"
-            ));
-        }
-        if tool::find("ffmpeg").is_none() {
-            missing.push("ffmpeg".to_string());
-        }
-        return Err(format!("needs {}", missing.join(", ")));
+    let config = ModelConfig::from_env();
+    // Only fetch a model once the tools that use it are present.
+    let tools_ready = matches!(binary, Ok(Some(_))) && ffmpeg.is_some();
+    let model = match &config {
+        Ok(config) if tools_ready => config.ensure(download),
+        Ok(config) => config.locate().and_then(|found| {
+            found.ok_or_else(|| {
+                if download || config.auto_download {
+                    format!(
+                        "{} will be downloaded into {} once the tools above are installed",
+                        config.spec.file_name(),
+                        config
+                            .dir
+                            .as_ref()
+                            .map(|d| d.display().to_string())
+                            .unwrap_or_else(|| "the anymd cache".into())
+                    )
+                } else {
+                    config.missing_hint()
+                }
+            })
+        }),
+        Err(error) => Err(error.clone()),
     };
+    let (Ok(Some(adapter)), Some(ffmpeg), Ok(model)) = (&binary, &ffmpeg, &model) else {
+        return Err(missing_message(
+            binary.as_ref().map(Option::is_some),
+            ffmpeg.is_some(),
+            model.as_ref().err().map(String::as_str),
+        ));
+    };
+    let (adapter, ffmpeg, model) = (adapter.clone(), ffmpeg.clone(), model.clone());
     let dir = tempfile::tempdir().map_err(|e| format!("temp dir: {e}"))?;
     let wav = dir.path().join("audio.wav");
     let extract: Vec<&std::ffi::OsStr> = vec![
@@ -532,7 +547,7 @@ fn transcribe(path: &Path) -> Result<String, String> {
         return Err("ffmpeg could not extract the audio track".into());
     }
     let prefix = dir.path().join("transcript");
-    let args: Vec<&std::ffi::OsStr> = vec![
+    let mut args: Vec<&std::ffi::OsStr> = vec![
         "-m".as_ref(),
         model.as_os_str(),
         "-f".as_ref(),
@@ -541,6 +556,13 @@ fn transcribe(path: &Path) -> Result<String, String> {
         "-of".as_ref(),
         prefix.as_os_str(),
     ];
+    // Multilingual models default to English in whisper.cpp; detect instead.
+    let english_only = model
+        .file_name()
+        .is_some_and(|name| name.to_string_lossy().contains(".en"));
+    if !english_only {
+        args.extend([std::ffi::OsStr::new("-l"), std::ffi::OsStr::new("auto")]);
+    }
     let output = tool::run(&adapter, args, TRANSCRIBE_TIMEOUT)?;
     if !output.success {
         return Err(format!(
@@ -555,6 +577,37 @@ fn transcribe(path: &Path) -> Result<String, String> {
     let json = std::fs::read_to_string(prefix.with_extension("json"))
         .map_err(|e| format!("whisper.cpp wrote no JSON output: {e}"))?;
     parse_whisper_json(&json)
+}
+
+/// "needs X and Y." plus one how-to bullet per missing piece.
+fn missing_message(binary: Result<bool, &String>, ffmpeg: bool, model: Option<&str>) -> String {
+    let mut needs = Vec::new();
+    let mut how = Vec::new();
+    match binary {
+        Ok(true) => {}
+        Ok(false) => {
+            needs.push("whisper.cpp");
+            how.push(format!("- whisper.cpp: {}", whisper::install_hint()));
+        }
+        Err(error) => {
+            needs.push("whisper.cpp");
+            how.push(format!("- whisper.cpp: {error}"));
+        }
+    }
+    if !ffmpeg {
+        needs.push("ffmpeg");
+        how.push(format!("- ffmpeg: install with {}", whisper::ffmpeg_hint()));
+    }
+    if let Some(model) = model {
+        needs.push("a whisper model");
+        how.push(format!("- model: {model}"));
+    }
+    let needs = match needs.as_slice() {
+        [] => "an unknown component".to_string(),
+        [one] => one.to_string(),
+        [init @ .., last] => format!("{} and {last}", init.join(", ")),
+    };
+    format!("needs {needs}.\n{}", how.join("\n"))
 }
 
 /// whisper.cpp `-oj` output → timestamped lines.
@@ -826,6 +879,24 @@ mod tests {
     }
 
     #[test]
+    fn missing_pieces_are_named_with_how_to_lines() {
+        let all = missing_message(Ok(false), false, Some("no whisper model; rerun with …"));
+        let (head, rest) = all.split_once('\n').unwrap();
+        assert_eq!(head, "needs whisper.cpp, ffmpeg and a whisper model.");
+        let lines: Vec<&str> = rest.lines().collect();
+        assert!(lines[0].starts_with("- whisper.cpp: "), "{all}");
+        assert!(lines[0].contains(whisper::BIN_ENV), "{all}");
+        assert!(lines[1].starts_with("- ffmpeg: install with "), "{all}");
+        assert_eq!(lines[2], "- model: no whisper model; rerun with …");
+
+        let model_only = missing_message(Ok(true), true, Some("x"));
+        assert_eq!(model_only, "needs a whisper model.\n- model: x");
+        let bad_env = "ANYMD_WHISPER_BIN is set to /x, which is not an executable".to_string();
+        let bin = missing_message(Err(&bad_env), true, None);
+        assert_eq!(bin, format!("needs whisper.cpp.\n- whisper.cpp: {bad_env}"));
+    }
+
+    #[test]
     fn timestamps_parse_and_reject_garbage() {
         assert_eq!(parse_timestamp("01:02:03,004"), Some(3_723_004));
         assert_eq!(parse_timestamp("02:03.5"), Some(123_500));
@@ -935,7 +1006,7 @@ mod tests {
         assert_eq!(converted.sections.len(), 2);
 
         // Transcript requested without whisper: a how-to line, not an error.
-        if tool::find("whisper-cli").is_none() && tool::find("whisper-cpp").is_none() {
+        if matches!(whisper::find_binary(), Ok(None)) {
             let converted = convert(
                 &bytes,
                 &Options {
@@ -947,10 +1018,11 @@ mod tests {
             assert!(
                 converted.sections[0]
                     .markdown
-                    .contains("Transcript unavailable: needs"),
+                    .contains("_Transcript unavailable: needs whisper.cpp"),
                 "{:?}",
                 converted
             );
+            assert!(converted.sections[0].markdown.contains("- whisper.cpp: "));
         }
     }
 }

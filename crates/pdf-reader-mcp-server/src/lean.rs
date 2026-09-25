@@ -486,7 +486,9 @@ pub fn read_text(
     }
     let options = OpenOptions {
         ocr: args.ocr,
-        transcript: args.transcript.unwrap_or(false),
+        transcript: args.transcript.unwrap_or(false)
+            || args.download_whisper_model.unwrap_or(false),
+        download_whisper_model: args.download_whisper_model.unwrap_or(false),
     };
     let read = match Opened::open(source, policy, &options) {
         Ok(mut opened) => read_opened(&mut opened, selection, cursor, budget, cursor.is_none()),
@@ -799,6 +801,7 @@ fn load_search_docs(
     let options = OpenOptions {
         ocr: Some(false),
         transcript: false,
+        download_whisper_model: false,
     };
     let mut results: Vec<Option<Result<SearchDoc, String>>> =
         (0..files.len()).map(|_| None).collect();
@@ -1300,6 +1303,7 @@ mod tests {
             cursor: None,
             ocr: None,
             transcript: None,
+            download_whisper_model: None,
         };
         let text = text_of(&read(&args, &SourceAccessPolicy::unrestricted()).unwrap());
         assert!(text.contains("format: csv"), "{text}");
@@ -1316,6 +1320,7 @@ mod tests {
             cursor: None,
             ocr: None,
             transcript: None,
+            download_whisper_model: None,
         };
         let text = text_of(&read(&args, &SourceAccessPolicy::unrestricted()).unwrap());
         assert!(text.contains("readable_files: 3"), "{text}");

@@ -33,7 +33,8 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 | `--max-tokens <n>` | Stop at a token budget and print a cursor. The CLI has no budget unless you set one. |
 | `--cursor <cursor>` | Continue from a cursor |
 | `--ocr` / `--no-ocr` | Force or disable OCR (default: automatic when tesseract is installed) |
-| `--transcript` | Transcribe audio/video with whisper.cpp (needs `ANYMD_WHISPER_MODEL`) |
+| `--transcript` | Transcribe audio/video with a local whisper.cpp |
+| `--download-whisper-model` | Download the ggml whisper model on first use (implies `--transcript`; see [Transcripts](formats.md#transcripts)) |
 | `--front-matter` | Print the source/title/pages header (always on for several inputs) |
 
 ## Search options

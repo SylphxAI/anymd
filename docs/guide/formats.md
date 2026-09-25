@@ -54,6 +54,20 @@ Dimensions and EXIF (camera, date, GPS), plus OCR text when `tesseract` is insta
 
 Duration, streams, chapters, and embedded and sidecar subtitles (SRT/VTT), via `ffprobe`/`ffmpeg`. With `transcript: true` (CLI: `--transcript`), a local whisper.cpp transcript.
 
+### Transcripts
+
+A transcript needs three things on your machine; nothing is uploaded.
+
+- **whisper.cpp**: `whisper-cli` (or `whisper-cpp`) on `PATH`, or `ANYMD_WHISPER_BIN` pointing at it. macOS: `brew install whisper-cpp`. Windows: `whisper-bin-x64.zip` from the [whisper.cpp releases](https://github.com/ggml-org/whisper.cpp/releases). Linux: build from source (`git clone https://github.com/ggml-org/whisper.cpp && cd whisper.cpp && cmake -B build && cmake --build build -j --config Release`, then put `build/bin/whisper-cli` on `PATH`), the release tarball, or Homebrew.
+- **ffmpeg**, to extract the audio track.
+- **A ggml model**. `ANYMD_WHISPER_MODEL` wins when set; otherwise anymd uses a `ggml-*.bin` in its cache (`$ANYMD_CACHE_DIR/models`, else `~/.cache/anymd/models`, `~/Library/Caches/anymd/models`, or `%LOCALAPPDATA%\anymd\cache\models`). To fetch one on first use, pass `download_whisper_model: true` (CLI: `--download-whisper-model`, which implies `--transcript`) or set `ANYMD_WHISPER_AUTO_DOWNLOAD=1`. anymd downloads `ggml-base.en.bin` (148 MB) from the official [ggerganov/whisper.cpp](https://huggingface.co/ggerganov/whisper.cpp) repository, checks its SHA-256, and renames it into place. `ANYMD_WHISPER_MODEL_SIZE` picks `tiny`, `tiny.en`, `base`, `base.en`, `small`, or `small.en`; `ANYMD_WHISPER_MODEL_BASE_URL` points at a mirror (the hash is still checked). Multilingual models detect the spoken language.
+
+```bash
+anymd talk.mp4 --download-whisper-model
+```
+
+When a piece is missing, the output names it with the install command for your OS instead of failing.
+
 ## Optional tools
 
 anymd never needs these, but uses them when they are on your `PATH`:
@@ -63,7 +77,7 @@ anymd never needs these, but uses them when they are on your `PATH`:
 | `tesseract` | OCR for images and scanned PDF pages |
 | `ffprobe` | Audio/video metadata and chapters |
 | `ffmpeg` | Embedded subtitles and transcript audio |
-| `whisper-cli` (whisper.cpp) | Local transcripts; set `ANYMD_WHISPER_MODEL` to a model file |
+| `whisper-cli` (whisper.cpp) | Local transcripts (see [Transcripts](#transcripts)) |
 
 Check what anymd found:
 
@@ -73,7 +87,9 @@ anymd 6.0.0 (native Rust)
   tesseract    found      OCR for images and scanned PDF pages
   ffprobe      found      audio/video metadata and chapters
   ffmpeg       found      embedded subtitles and transcript audio
-  whisper-cli  not found  local transcripts (with ANYMD_WHISPER_MODEL)
+Transcripts (--transcript):
+  whisper.cpp    found      /opt/homebrew/bin/whisper-cli
+  whisper model  not found  cache /Users/me/Library/Caches/anymd/models; `--download-whisper-model` fetches ggml-base.en.bin (148 MB)
 ```
 
 Typical installs: `brew install tesseract ffmpeg whisper-cpp` on macOS, `apt install tesseract-ocr ffmpeg` on Debian/Ubuntu. For other OCR languages, install the tesseract language pack (for example `tesseract-ocr-chi-tra`).

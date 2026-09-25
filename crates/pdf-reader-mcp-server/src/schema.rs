@@ -568,10 +568,15 @@ pub struct ReadArgs {
     )]
     pub ocr: Option<bool>,
     #[schemars(
-        description = "Transcribe audio/video with a local whisper.cpp (needs ANYMD_WHISPER_MODEL). Default false.",
+        description = "Transcribe audio/video with a local whisper.cpp. Uses ANYMD_WHISPER_MODEL or a model in the anymd cache. Default false.",
         schema_with = "option_bool_schema"
     )]
     pub transcript: Option<bool>,
+    #[schemars(
+        description = "Implies transcript. When no whisper model is installed, download ggml base.en (~148 MB, SHA-256 verified; ANYMD_WHISPER_MODEL_SIZE picks tiny/base/small) into the anymd cache first. Default false.",
+        schema_with = "option_bool_schema"
+    )]
+    pub download_whisper_model: Option<bool>,
 }
 
 impl ReadArgs {
