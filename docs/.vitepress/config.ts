@@ -11,14 +11,25 @@ export default defineConfig({
   cleanUrls: true,
   title: 'anymd',
   description:
-    'Any file → clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML, images. Fast Rust MCP server + CLI. Local, no API key.',
+    'Any file → clean Markdown for AI agents. PDF, Office, EPUB, HTML, images, audio/video. Fast Rust MCP server + CLI. Local, no API key.',
 
   // anymd's identity is ink + citrus; dark is the designed default and the
   // toggle still lets readers choose light.
   appearance: 'dark',
   lastUpdated: true,
 
-  srcExclude: ['**/adr/**', '**/specs/**'],
+  // Internal records kept for repository scripts and history; not part of the site.
+  srcExclude: [
+    '**/adr/**',
+    '**/specs/**',
+    '**/api/**',
+    '**/operations/**',
+    '**/reference/**',
+    '**/security/**',
+    '**/performance/**',
+    'BRAND_PUBLISH.md',
+    'PUBLISH.md',
+  ],
   vite: {
     build: {
       target: 'esnext',
@@ -28,25 +39,25 @@ export default defineConfig({
   head: [
     ['meta', { name: 'theme-color', content: '#c3f53c' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'anymd — PDF evidence for agents, with proof' }],
+    ['meta', { property: 'og:title', content: 'anymd — any file → clean Markdown for AI agents' }],
     [
       'meta',
       {
         property: 'og:description',
         content:
-          'One read_pdf call returns structured text, tables, OCR, and page-level citations your agent can defend — local-first, native, and fail-closed.',
+          'Any file → clean Markdown for AI agents. PDF, Office, EPUB, HTML, images, audio/video. Fast Rust MCP server + CLI. Local, no API key.',
       },
     ],
     ['meta', { property: 'og:url', content: 'https://sylphxai.github.io/anymd/' }],
     ['meta', { property: 'og:site_name', content: 'anymd' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'anymd — PDF evidence for agents, with proof' }],
+    ['meta', { name: 'twitter:title', content: 'anymd — any file → clean Markdown for AI agents' }],
     [
       'meta',
       {
         name: 'twitter:description',
         content:
-          'Stop PDF hallucinations. Turn PDFs into an structured document result: tables with geometry, OCR with provenance, and citations agents can show a human.',
+          'Any file → clean Markdown for AI agents. PDF, Office, EPUB, HTML, images, audio/video. Fast Rust MCP server + CLI. Local, no API key.',
       },
     ],
     ['meta', { name: 'twitter:site', content: '@sylphxai' }],
@@ -57,7 +68,7 @@ export default defineConfig({
       {
         name: 'keywords',
         content:
-          'mcp, pdf, reader, ai agent, claude, cursor, model context protocol, rust, rag, citations, pdf inspection, pdf intelligence, agent document twin, visual evidence, ocr provenance, trust report, accessibility report, layout analysis',
+          'anymd, markdown, mcp, model context protocol, pdf to markdown, docx to markdown, pptx, xlsx, epub, html to markdown, ocr, rag, ai agents, llm, claude, cursor, codex, rust, cli, markitdown alternative',
       },
     ],
     ['meta', { name: 'author', content: 'Sylphx' }],
@@ -71,81 +82,24 @@ export default defineConfig({
     siteTitle: 'anymd',
 
     nav: [
-      { text: 'Guide', link: '/guide/' },
-      { text: 'Reference', link: '/api/' },
-      { text: 'Proof', link: '/guide/product-proof' },
-      { text: 'Performance', link: '/performance/' },
+      { text: 'Guide', link: '/guide/getting-started', activeMatch: '^/guide/(?!benchmarks)' },
+      { text: 'Benchmarks', link: '/guide/benchmarks' },
+      { text: 'GitHub', link: 'https://github.com/SylphxAI/anymd' },
+      { text: 'npm', link: 'https://www.npmjs.com/package/@sylphx/anymd' },
     ],
 
     sidebar: [
       {
-        text: 'Get started',
+        text: 'Guide',
         items: [
-          { text: 'Introduction', link: '/guide/' },
-          { text: 'Installation', link: '/guide/installation' },
-          { text: 'Quickstart', link: '/guide/getting-started' },
+          { text: 'Getting started', link: '/guide/getting-started' },
+          { text: 'MCP tools', link: '/guide/tools' },
+          { text: 'CLI', link: '/guide/cli' },
+          { text: 'Formats', link: '/guide/formats' },
+          { text: 'Benchmarks', link: '/guide/benchmarks' },
+          { text: 'Migration', link: '/guide/migration' },
+          { text: 'Security', link: '/guide/security' },
         ],
-      },
-      {
-        text: 'What you get',
-        collapsed: true,
-        items: [
-          { text: 'Vision', link: '/vision' },
-          { text: 'Capabilities', link: '/capabilities' },
-          { text: 'Tool surface — four tools', link: '/TOOL_SURFACE' },
-          { text: 'The evidence contract', link: '/EVIDENCE_CONTRACT' },
-          { text: 'Local-first frontier', link: '/LOCAL_FIRST_FRONTIER' },
-          { text: 'Product proof', link: '/guide/product-proof' },
-        ],
-      },
-      {
-        text: 'Reference',
-        collapsed: true,
-        items: [
-          { text: 'API reference', link: '/api/' },
-          { text: 'Comparison', link: '/comparison/' },
-          { text: 'Design philosophy', link: '/design/' },
-        ],
-      },
-      {
-        text: 'Proof & performance',
-        collapsed: true,
-        items: [
-          { text: 'Performance', link: '/performance/' },
-          { text: 'Why Rust', link: '/performance/why-rust' },
-          { text: 'Benchmark proof', link: '/benchmark' },
-        ],
-      },
-      {
-        text: 'Security & operations',
-        collapsed: true,
-        items: [
-          { text: 'Security reporting', link: '/security/maintainer-process' },
-          { text: 'Remote URL policy', link: '/security/remote-url-policy' },
-          { text: 'Advisory record', link: '/security/advisory-backlog' },
-        ],
-      },
-      {
-        text: 'Articles',
-        collapsed: true,
-        items: [
-          { text: 'Stop PDF hallucinations', link: '/articles/stop-pdf-hallucinations' },
-          { text: 'Evidence-first PDF reading', link: '/articles/evidence-first' },
-        ],
-      },
-      {
-        text: 'Design & roadmap',
-        collapsed: true,
-        items: [
-          { text: 'Design philosophy', link: '/design/' },
-          { text: 'SOTA family roadmap', link: '/roadmap/sota-family-roadmap' },
-          { text: 'V3 PDF intelligence', link: '/weekly/2026-06-22-v3-pdf-intelligence' },
-        ],
-      },
-      {
-        text: 'Release history',
-        collapsed: true,
-        items: [{ text: 'Migration notes', link: '/migration' }],
       },
     ],
 
@@ -160,7 +114,7 @@ export default defineConfig({
     },
 
     footer: {
-      message: 'MIT licensed · local-first by design · no external calls from these docs',
+      message: 'MIT licensed · local, no API key',
       copyright: 'Copyright 2024–2026 Sylphx',
     },
 

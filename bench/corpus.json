@@ -1,0 +1,17 @@
+{
+  "description": "Benchmark documents. PDFs share corpus/markdown-regression.json (SHA-256 verified by scripts/fetch-markdown-corpus.sh); the Office/web samples are microsoft/markitdown's MIT-licensed test files at a pinned commit (bench/fetch.sh).",
+  "docs": [
+    {"id": "attention", "file": "attention.pdf", "kind": "pdf: paper, 15 pages, tables"},
+    {"id": "bert", "file": "bert.pdf", "kind": "pdf: two-column paper, 16 pages"},
+    {"id": "h8", "file": "h8.pdf", "kind": "pdf: statistical tables, 22 pages"},
+    {"id": "cjk", "file": "cjk.pdf", "kind": "pdf: Traditional Chinese + table"},
+    {"id": "plz", "file": "plz.pdf", "kind": "pdf: designed guide"},
+    {"id": "w9", "file": "w9.pdf", "kind": "pdf: IRS form"},
+    {"id": "borderless", "file": "SPARSE-2024-INV-1234_borderless_table.pdf", "kind": "pdf: borderless tables"},
+    {"id": "docx", "file": "test.docx", "kind": "docx"},
+    {"id": "pptx", "file": "test.pptx", "kind": "pptx"},
+    {"id": "xlsx", "file": "test.xlsx", "kind": "xlsx"},
+    {"id": "epub", "file": "test.epub", "kind": "epub"},
+    {"id": "html", "file": "test_wikipedia.html", "kind": "html: Wikipedia article"}
+  ]
+}

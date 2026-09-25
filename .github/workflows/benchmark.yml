@@ -1,0 +1,60 @@
+name: Benchmark
+
+# Head-to-head benchmark against markitdown, docling, kreuzberg, and pdftotext.
+# Runs on demand and whenever the harness changes; results land in the job
+# summary and the bench-results artifact.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'bench/**'
+      - '.github/workflows/benchmark.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build anymd
+        run: cargo build --release -p pdf-reader-mcp-server
+
+      - name: Install poppler (pdftotext)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
+      - name: Install competitors
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet --extra-index-url https://download.pytorch.org/whl/cpu -r bench/requirements.txt
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch corpus
+        run: bash bench/fetch.sh "$RUNNER_TEMP/bench-corpus"
+
+      - name: Warm up docling models
+        run: docling "$RUNNER_TEMP/bench-corpus/SPARSE-2024-INV-1234_borderless_table.pdf" --to md --output "$RUNNER_TEMP/warmup" > /dev/null
+
+      - name: Run benchmark
+        run: |
+          python bench/run.py --corpus "$RUNNER_TEMP/bench-corpus" --anymd target/release/anymd \
+            --tools anymd,markitdown,kreuzberg,docling,pdftotext --runs 3 \
+            --out bench-results.json --save-outputs bench-outputs
+          python bench/report.py bench-results.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bench-results
+          path: |
+            bench-results.json
+            bench-outputs/
