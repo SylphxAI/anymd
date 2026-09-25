@@ -4,8 +4,13 @@ set -euo pipefail
 
 ACTIONLINT_VERSION="1.7.12"
 
+# shellcheck integration is off: GitHub-hosted runners ship shellcheck, and it
+# takes minutes-to-forever on the multi-thousand-line differential workflow.
+# Workflow structure, expressions, and action inputs are still fully linted.
+ACTIONLINT_FLAGS=(-config-file .github/actionlint.yaml -shellcheck=)
+
 if command -v actionlint >/dev/null 2>&1; then
-  exec actionlint -config-file .github/actionlint.yaml "$@"
+  exec actionlint "${ACTIONLINT_FLAGS[@]}" "$@"
 fi
 
 platform="$(uname -s)"
@@ -36,4 +41,4 @@ curl --fail --location --retry 3 --silent --show-error "$url" --output "$actionl
 printf '%s  %s\n' "$archive_sha256" "$actionlint_tmp/$archive" | sha256sum --check --status
 tar -xzf "$actionlint_tmp/$archive" -C "$actionlint_tmp" actionlint
 
-exec "$actionlint_tmp/actionlint" -config-file .github/actionlint.yaml "$@"
+exec "$actionlint_tmp/actionlint" "${ACTIONLINT_FLAGS[@]}" "$@"
