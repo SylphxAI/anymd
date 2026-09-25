@@ -1,0 +1,35 @@
+[package]
+name = "anymd-formats"
+version.workspace = true
+edition.workspace = true
+rust-version = "1.92"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme.workspace = true
+description = "Non-PDF format converters for anymd: DOCX, PPTX, XLSX, CSV, EPUB, HTML, images, and video to Markdown"
+keywords = ["markdown", "docx", "xlsx", "epub", "mcp"]
+categories = ["parsing", "text-processing"]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+zip = { version = "8", default-features = false, features = ["deflate"] }
+quick-xml = "0.41"
+calamine = { version = "0.36", features = ["dates"] }
+csv = "1.4"
+scraper = "0.27"
+ego-tree = "0.11"
+url = "2.5"
+imagesize = "0.15"
+kamadak-exif = "0.6"
+tempfile = "3.20"
+wait-timeout = "0.2"
+
+[dev-dependencies]
+rust_xlsxwriter = { version = "0.99", default-features = false }
+image = { version = "0.25", default-features = false, features = ["png"] }

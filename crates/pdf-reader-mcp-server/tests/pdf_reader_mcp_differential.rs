@@ -533,14 +533,10 @@ fn compare_stdio_probe_case(case: &OracleCase, client: &mut StdioMcpClient) {
                 .filter_map(|tool| tool.get("name").and_then(Value::as_str).map(str::to_string))
                 .collect();
             names.sort();
-            let mut expected = case.output["tools"]
-                .as_array()
-                .expect("expected tools")
-                .iter()
-                .map(|value| value.as_str().expect("tool name").to_string())
-                .collect::<Vec<_>>();
-            expected.sort();
-            assert_eq!(names, expected, "{}: tools/list mismatch", case.id);
+            // anymd replaced the v3 surface (read_pdf, search_pdf, pdf_evidence,
+            // pdf_compare) with read, search, and inspect. The v3 names stay
+            // callable but unlisted, so the oracle's list is no longer the contract.
+            assert_eq!(names, ["inspect", "read", "search"], "{}: tools/list mismatch", case.id);
         }
         "readPdf" => {
             if case.output.get("status").and_then(Value::as_str) == Some("skipped") {

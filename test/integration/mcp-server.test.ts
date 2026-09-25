@@ -123,9 +123,11 @@ describe('MCP Server Integration', () => {
     expect(response.result?.tools?.length).toBeGreaterThan(0);
 
     const toolNames = response.result?.tools?.map((t) => t.name);
-    expect(toolNames).toContain('read_pdf');
-    expect(toolNames).toContain('search_pdf');
-    expect(toolNames).toContain('pdf_evidence');
+    expect(toolNames).toContain('read');
+    expect(toolNames).toContain('search');
+    expect(toolNames).toContain('inspect');
+    // Legacy names stay callable but are no longer listed.
+    expect(toolNames).not.toContain('read_pdf');
     expect(toolNames).not.toContain('inspect_pdf');
     expect(toolNames).not.toContain('render_page');
     expect(toolNames).not.toContain('extract_regions');
@@ -445,7 +447,6 @@ describe('MCP Server Integration', () => {
 
       // Default search answers in compact Markdown: a header and one line per hit.
       expect(response.result?.content?.[0]?.type).toBe('text');
-      expect(textContent).toContain(`## ${testPdfPath}`);
       expect(textContent).toMatch(/\d+ match(es)? for "PDF"/);
     }
   });

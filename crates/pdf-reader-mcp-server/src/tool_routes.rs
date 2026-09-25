@@ -7,7 +7,8 @@ pub enum ToolRoute {
 
 pub fn route_for_tool(tool: &str) -> Option<ToolRoute> {
     match tool {
-        "read_pdf" | "search_pdf" | "pdf_compare" | "pdf_hash" | "pdf_text_search" | "pdf_evidence" => {
+        "read" | "search" | "inspect" | "read_pdf" | "search_pdf" | "pdf_compare" | "pdf_hash"
+        | "pdf_text_search" | "pdf_evidence" => {
             Some(ToolRoute::RustCore)
         }
         _ => None,

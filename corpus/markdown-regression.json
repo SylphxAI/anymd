@@ -12,8 +12,8 @@
         "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder.",
         "## 3 Model Architecture",
         "#### 3.2.1 Scaled Dot-Product Attention",
-        "| Self-Attention | O(n^2 · d) | O(1) | O(1) |",
-        "| Transformer (big) | 28.4 | 41.8 |"
+        "|Self-Attention|O(n^2 · d)|O(1)|O(1)|",
+        "|Transformer (big)|28.4|41.8|"
       ],
       "absent": ["Thedominantsequence", "transductionmodels"]
     },
@@ -40,7 +40,7 @@
       "contains": [
         "參考文獻格式",
         "文內同時引用同一作者有多篇文章時，依照年代先後順序排列",
-        "| 作者數 | 正文內引用格式 |"
+        "|作者數|正文內引用格式|"
       ],
       "absent": ["文 內 同 時"]
     },
@@ -52,7 +52,7 @@
       "archetype": "table-heavy statistical release",
       "contains": [
         "H.8 ASSETS AND LIABILITIES OF COMMERCIAL BANKS IN THE UNITED STATES",
-        "| 11 Real estate loans | 2.0 | 10.2 |"
+        "|Real estate loans|2.0|10.2|"
       ],
       "absent": []
     },

@@ -151,6 +151,13 @@ impl SourceAccessPolicy {
         Ok(())
     }
 
+    /// Admit one local path (or pass a URL through); returns the path to open.
+    pub fn admit_path(&self, path: &str) -> Result<String, String> {
+        let mut slot = Some(path.to_string());
+        self.admit_optional_path(&mut slot)?;
+        Ok(slot.unwrap_or_default())
+    }
+
     fn admit_optional_path(&self, path: &mut Option<String>) -> Result<(), String> {
         let Some(allowed_dirs) = self.allowed_dirs.as_deref() else {
             return Ok(());
