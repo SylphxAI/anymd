@@ -19,6 +19,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  plain-language:
+    name: Plain language
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check added lines for plain language
+        uses: SylphxAI/.github/.github/actions/plain-language@64598b859231c51f32d0be39630f36893d84f204
+
   validate:
     name: Validate Code Quality
     runs-on: ubuntu-latest
