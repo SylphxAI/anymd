@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/anymd-darwin-x64",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "Optional pure-Rust MCP server binary for darwin-x64. Installed as an optionalDependency of @sylphx/anymd. Sole-Rust; fail-closed if missing.",
   "license": "MIT",
   "os": [
