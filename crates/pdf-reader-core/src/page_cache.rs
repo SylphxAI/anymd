@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::hash_file;
 use crate::text_index::{extract_page_texts, TextIndexError};
 
-pub const PAGE_CACHE_SCHEMA_VERSION: &str = "2.0.0-per-page-extraction";
+pub const PAGE_CACHE_SCHEMA_VERSION: &str = "2.1.0-inferred-word-spaces";
 pub const PAGE_CACHE_DIR: &str = ".pdf-reader-mcp/page-cache";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
