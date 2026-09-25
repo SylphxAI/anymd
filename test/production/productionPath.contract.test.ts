@@ -1,23 +1,20 @@
 /**
  * Star-project production contract suite.
  *
- * Sole-Rust production path: dist/runtime-entry.js + platform native binary (ADR-0006).
- * TypeScript remains oracle/test-only and is not the production package entry.
+ * Runs the cargo-built anymd binary, which the npm launcher starts in production.
  */
 
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { productVersion } from '../utils/cargoBinaries.js';
 import {
   callTool,
   ensureProductionArtifacts,
   initializeSession,
   listTools,
-  packageJson,
   parseToolPayload,
-  productionEnv,
-  repoRoot,
   samplePdf,
   spawnProductionMcp,
 } from './mcpContract.helpers.js';
@@ -50,7 +47,7 @@ const buildReadPdfArgs = (entry: { id: string; args: Record<string, unknown> }) 
   return args as Record<string, unknown>;
 };
 
-describe('production-path public contract (sole-Rust production entry)', () => {
+describe('production-path public contract', () => {
   let proc: ChildProcess;
   let reqId = 10;
 
@@ -61,7 +58,6 @@ describe('production-path public contract (sole-Rust production entry)', () => {
 
   beforeAll(() => {
     ensureProductionArtifacts();
-    expect(productionEnv().PDF_READER_ENGINE_MODE).toBeUndefined();
 
     proc = spawnProductionMcp();
   }, 420_000);
@@ -70,21 +66,10 @@ describe('production-path public contract (sole-Rust production entry)', () => {
     proc?.kill('SIGTERM');
   });
 
-  test('package public entry is sole-Rust runtime-entry without typescript export', () => {
-    expect(packageJson.bin?.anymd).toBe('./dist/runtime-entry.js');
-    expect(packageJson.exports?.['.']).toBe('./dist/runtime-entry.js');
-    expect(packageJson.exports?.['./typescript']).toBeUndefined();
-    expect(packageJson.files).toContain('dist/runtime-entry.js');
-    expect(packageJson.files).toContain('dist/pure-rust.js');
-    expect(packageJson.files).not.toContain('dist/');
-    expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
-    expect(fs.existsSync(path.join(repoRoot, 'dist/runtime-entry.js'))).toBe(true);
-  });
-
   test('initialize advertises anymd and package version', async () => {
     const init = await initializeSession(proc, 'production-contract-suite');
     expect(init.result?.serverInfo?.name).toBe('anymd');
-    expect(init.result?.serverInfo?.version).toBe(packageJson.version);
+    expect(init.result?.serverInfo?.version).toBe(productVersion);
   }, 60_000);
 
   test('tools/list exposes exactly the public V3 tool surface', async () => {

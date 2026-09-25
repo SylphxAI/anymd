@@ -1,50 +1,63 @@
-# Publish status — anymd
+# Publishing anymd
 
 | Field | Value |
 | --- | --- |
-| **Canonical npm** | `@sylphx/anymd` |
-| **Canonical bin** | `anymd` |
-| **MCP registry name** | `io.github.SylphxAI/anymd` |
-| Source tip version | `5.0.0` (this repository) |
-| Registry (live) | may lag tip — verify with `npm view @sylphx/anymd version` |
-| Aliases (same version) | `@sylphx/citra` (bin `citra`), `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`) |
-| Auth | npm trusted publishing (GitHub OIDC) from `publish-npm.yml`; no long-lived npm token |
+| npm package | `@sylphx/anymd` (bin `anymd`), in `packages/anymd` |
+| Platform packages | `@sylphx/anymd-<platform>` for darwin-arm64, darwin-x64, linux-x64-gnu, linux-arm64-gnu, win32-x64-msvc, in `packages/npm/<platform>` |
+| Alias packages | `@sylphx/citra` (bin `citra`) and `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`), in `packages/aliases/` |
+| MCP Registry | `io.github.SylphxAI/anymd`; the old names `io.github.SylphxAI/citra` and `io.github.SylphxAI/pdf-reader-mcp` are marked deprecated |
+| Release workflow | `.github/workflows/release.yml`, which calls the shared [mcp-kit release workflow](https://github.com/SylphxAI/mcp-kit) |
 
-## Install (canonical)
+## How a release happens
+
+1. In a pull request, run `bun scripts/set-version.ts X.Y.Z`, then `cargo update -w`,
+   and add a `## X.Y.Z` section to `CHANGELOG.md`. The script sets the version in
+   every npm manifest, `server.json` and the Cargo workspace; the binary reports
+   the Cargo version, so `anymd version` prints `anymd X.Y.Z`. CI fails when the
+   manifests disagree (`bun run check:versions`).
+2. Merging to `main` runs `release.yml`. When `@sylphx/anymd@X.Y.Z` is not on
+   npm yet, the mcp-kit workflow:
+   - builds the binary for the 5 platforms and runs `anymd version` where it can,
+   - publishes the platform packages, then `@sylphx/anymd`, then the two aliases,
+   - runs the smoke test with `npx`: `version`, a conversion of
+     `test/fixtures/sample.pdf`, and `version` through both aliases,
+   - creates the GitHub release `vX.Y.Z` with the binaries and the `CHANGELOG.md`
+     section as notes,
+   - publishes `server.json` to the MCP Registry and marks the old names deprecated.
+
+   A push whose version is already on npm does nothing, so every other merge is a
+   no-op for publishing. A failed run can be re-run; each step skips what is
+   already published.
+
+## npm trusted publishing
+
+Publishing uses npm trusted publishing (GitHub OIDC); no npm token is stored.
+npm checks the calling workflow file, so all 8 packages (`@sylphx/anymd`, the 5
+platform packages, `@sylphx/citra`, `@sylphx/pdf-reader-mcp`) trust GitHub
+Actions, organization `SylphxAI`, repository `anymd`, workflow `release.yml`, no
+environment. To set it for one package:
 
 ```bash
-npm i -g @sylphx/anymd
-# or
-npx @sylphx/anymd
+npm trust github @sylphx/anymd --file release.yml --repo SylphxAI/anymd --allow-publish --otp <code>
 ```
 
-## Former names (aliases)
+Each package's `repository.url` must stay `git+https://github.com/SylphxAI/anymd.git`;
+npm compares it with the publishing repository.
 
-`@sylphx/citra` and `@sylphx/pdf-reader-mcp` are live aliases of
-`@sylphx/anymd`, published at the same version by `publish-npm.yml`. Publishing
-uses npm trusted publishing (GitHub OIDC), which covers `npm publish` only.
-Deprecation is a one-off owner action, not part of the release; to clear a
-notice:
+## Aliases
+
+The alias packages depend on `@sylphx/anymd` at the same version and run its
+launcher, so `citra` and `pdf-reader-mcp` behave exactly like `anymd`. To clear
+an old deprecation notice on them (an owner action, outside the release):
 
 ```bash
 npm deprecate "@sylphx/pdf-reader-mcp@*" ""
 npm deprecate "@sylphx/citra@*" ""
 ```
 
-Trusted publisher, identical for all eight packages (`@sylphx/anymd`, the five
-`@sylphx/anymd-<platform>` natives, `@sylphx/citra`, `@sylphx/pdf-reader-mcp`):
-GitHub Actions, organization `SylphxAI`, repository `anymd`, workflow
-`publish-npm.yml`, no environment. No npm token is stored in the repository.
+## Repository slug
 
-Publish authority: Changesets through `release.yml`, then the admission-gated
-`publish-npm.yml` artifact path: natives, then `@sylphx/anymd`, then the two
-alias packages. There is no republish or unpublish workflow.
-
-A release is closed only after all five native packages and the umbrella package
-are read back at one exact version, the installed `anymd` launcher initializes
-with that version, the N-1 → N update and uninstall checks pass, and a GitHub
-release at the publishing source SHA triggers canonical MCP Registry publication.
-The registry workflow then reads back active `io.github.SylphxAI/anymd` metadata
-and deprecates every version of the retired MCP Registry identities
-(`io.github.SylphxAI/citra`, `io.github.SylphxAI/pdf-reader-mcp`). Cross-build
-success is artifact evidence, not host-runtime parity.
+The repository was `SylphxAI/citra` and `SylphxAI/pdf-reader-mcp`; GitHub
+redirects both, except project site URLs. A rename therefore moves the docs
+site path behind `websiteUrl` and `homepage`, and needs `base` in
+`docs/.vitepress/config.ts` updated with it.

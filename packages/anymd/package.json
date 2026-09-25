@@ -1,0 +1,61 @@
+{
+  "name": "@sylphx/anymd",
+  "version": "8.0.0",
+  "mcpName": "io.github.SylphxAI/anymd",
+  "description": "Any file → clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.",
+  "bin": {
+    "anymd": "bin/anymd.js"
+  },
+  "files": [
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
+    "@sylphx/anymd-darwin-arm64": "8.0.0",
+    "@sylphx/anymd-darwin-x64": "8.0.0",
+    "@sylphx/anymd-linux-x64-gnu": "8.0.0",
+    "@sylphx/anymd-linux-arm64-gnu": "8.0.0",
+    "@sylphx/anymd-win32-x64-msvc": "8.0.0"
+  },
+  "keywords": [
+    "anymd",
+    "markdown",
+    "mcp",
+    "model-context-protocol",
+    "pdf-to-markdown",
+    "docx-to-markdown",
+    "html-to-markdown",
+    "pdf",
+    "docx",
+    "pptx",
+    "xlsx",
+    "epub",
+    "ocr",
+    "transcription",
+    "rag",
+    "ai-agents",
+    "llm",
+    "markitdown-alternative",
+    "document-conversion",
+    "rust",
+    "cli"
+  ],
+  "license": "MIT",
+  "homepage": "https://sylphxai.github.io/anymd/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SylphxAI/anymd.git",
+    "directory": "packages/anymd"
+  },
+  "bugs": {
+    "url": "https://github.com/SylphxAI/anymd/issues"
+  },
+  "author": "Sylphx <contact@sylphx.com> (https://sylphx.com)",
+  "publishConfig": {
+    "access": "public"
+  }
+}

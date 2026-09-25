@@ -1,107 +1,32 @@
 {
-  "name": "@sylphx/anymd",
-  "version": "7.1.1",
-  "mcpName": "io.github.SylphxAI/anymd",
-  "description": "Any file → clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.",
+  "name": "anymd-workspace",
+  "private": true,
   "type": "module",
-  "bin": {
-    "anymd": "./dist/runtime-entry.js"
-  },
-  "files": [
-    "dist/runtime-entry.js",
-    "dist/pure-rust.js",
-    "examples/",
-    "corpus/",
-    "README.md",
-    "LICENSE",
-    "dist/sdk.js"
-  ],
-  "exports": {
-    ".": "./dist/runtime-entry.js",
-    "./sdk": "./dist/sdk.js",
-    "./pure-rust": "./dist/pure-rust.js"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "engines": {
-    "bun": ">=1.4.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/SylphxAI/anymd.git"
-  },
-  "bugs": {
-    "url": "https://github.com/SylphxAI/anymd/issues"
-  },
+  "description": "anymd repository tools: docs site, Biome, TypeScript tests over the Rust binary, and release scripts. The published packages are in packages/.",
   "homepage": "https://sylphxai.github.io/anymd/",
-  "author": "Sylphx <contact@sylphx.com> (https://sylphx.com)",
   "license": "MIT",
-  "keywords": [
-    "anymd",
-    "markdown",
-    "mcp",
-    "model-context-protocol",
-    "pdf-to-markdown",
-    "docx-to-markdown",
-    "html-to-markdown",
-    "pdf",
-    "docx",
-    "pptx",
-    "xlsx",
-    "epub",
-    "ocr",
-    "transcription",
-    "rag",
-    "ai-agents",
-    "llm",
-    "markitdown-alternative",
-    "document-conversion",
-    "rust",
-    "cli"
-  ],
+  "packageManager": "bun@1.4.0",
   "scripts": {
-    "build": "bun run build:package",
-    "inspector": "npx @modelcontextprotocol/inspector dist/runtime-entry.js",
+    "build": "cargo build --release -p anymd",
     "test": "bun test",
     "test:cov": "bun test --coverage --timeout=30000",
+    "test:rust": "cargo test",
     "lint": "biome lint .",
     "check": "biome check .",
-    "check:github-actions": "bash scripts/check-github-actions.sh",
     "check:fix": "biome check --write .",
+    "check:github-actions": "bash scripts/check-github-actions.sh",
+    "check:versions": "bun scripts/set-version.ts --check",
+    "check:copy": "bun scripts/render-copy.ts --check && python3 bench/leaderboard.py --check",
+    "check:no-github-hosted-macos": "python3 scripts/check-public-runner-profiles.py .",
+    "typecheck": "tsc --noEmit",
+    "version:set": "bun scripts/set-version.ts",
+    "render:copy": "bun scripts/render-copy.ts",
+    "inspector": "npx @modelcontextprotocol/inspector node packages/anymd/bin/anymd.js mcp",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "start": "bun dist/runtime-entry.js",
-    "typecheck": "tsc --noEmit",
-    "package:smoke": "bun scripts/package-smoke.ts",
-    "clean": "rm -rf dist coverage",
-    "prepublishOnly": "bun run clean && bun run build:package && bun run package:smoke && bun run check:ts-production-absence && bun run check:prod-dependency-closure",
-    "release:preflight": "bun run typecheck && bun run check && bun run build && bun run package:smoke && bun run test:cov && bun run docs:build",
-    "release": "echo \"PUBLISH FREEZE: refusing release until capability parity is approved\" && exit 1",
-    "build:rust": "cargo build --release -p anymd-core -p anymd && bun scripts/stage-rust-mcp.ts",
-    "test:rust": "cargo test",
-    "benchmark:pure-rust": "bun scripts/benchmark-pure-rust.ts",
-    "check:production-contract": "bun scripts/check-production-contract.ts",
-    "smoke:native-launcher": "bun scripts/smoke-native-launcher.ts",
-    "smoke:native-package-resolve": "bun scripts/smoke-native-package-resolve.ts",
-    "check:verified-candidate-admission": "bun scripts/check-verified-candidate-admission.ts",
-    "check:registry-install-proof": "bun scripts/check-registry-install-proof.ts",
-    "native:sync-manifests": "bun scripts/native/sync-native-package-manifests.ts",
-    "native:assert-ready": "bun scripts/native/assert-native-packages-ready.ts",
-    "native:stage-from-artifacts": "bun scripts/native/stage-native-artifacts.ts",
-    "release:publish-with-natives": "bun scripts/release-publish-with-natives.ts",
-    "sync:server-json": "bun scripts/sync-server-json.ts",
-    "sync:alias-packages": "bun scripts/sync-alias-packages.ts",
-    "render:copy": "bun scripts/render-copy.ts",
-    "check:copy": "bun scripts/render-copy.ts --check && bun scripts/sync-alias-packages.ts --check && python3 bench/leaderboard.py --check",
-    "build:package": "bun build src/runtime-entry.ts --outdir dist --target node && bun build src/pure-rust.ts --outdir dist --target node && bun build src/sdk.ts --outdir dist --target node",
-    "check:ts-production-absence": "bun scripts/check-ts-production-absence.ts",
-    "check:prod-dependency-closure": "bun scripts/check-prod-dependency-closure.ts",
-    "check:no-github-hosted-macos": "python3 scripts/check-public-runner-profiles.py .",
     "perf:installed-footprint": "bun scripts/perf/measure-installed-footprint.ts"
   },
-  "dependencies": {},
   "overrides": {
     "brace-expansion": "^5.0.6",
     "esbuild": "^0.28.1",
@@ -113,21 +38,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
-    "@changesets/changelog-github": "^1.0.1",
-    "@changesets/cli": "^3.0.2",
     "@types/node": "^26.1.1",
     "@types/pngjs": "^6.0.5",
     "markdown-it": "^14.3.2",
     "pngjs": "^7.0.0",
     "typescript": "^7.0.2",
     "vitepress": "^1.6.4"
-  },
-  "packageManager": "bun@1.4.0",
-  "optionalDependencies": {
-    "@sylphx/anymd-darwin-arm64": "7.1.1",
-    "@sylphx/anymd-darwin-x64": "7.1.1",
-    "@sylphx/anymd-linux-arm64-gnu": "7.1.1",
-    "@sylphx/anymd-linux-x64-gnu": "7.1.1",
-    "@sylphx/anymd-win32-x64-msvc": "7.1.1"
   }
 }

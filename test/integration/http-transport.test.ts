@@ -8,9 +8,10 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { productVersion, resolveServerPath } from '../utils/cargoBinaries.js';
 
 const repoRoot = path.resolve(__dirname, '../..');
-const binWrapper = path.join(repoRoot, 'bin/anymd');
+const serverBinary = resolveServerPath();
 const ocrProvider = path.join(repoRoot, 'test/fixtures/providers/reference-ocr-provider.ts');
 const regionProvider = path.join(
   repoRoot,
@@ -20,12 +21,6 @@ const RUST_HTTP_READY = 'Streamable HTTP MCP listening on http://';
 
 const TEST_HOST = '127.0.0.1';
 let baseUrl: string;
-const packageJson = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')
-) as {
-  version: string;
-};
-
 const getFreePort = async (): Promise<number> =>
   new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -139,7 +134,7 @@ describe('MCP Server HTTP Transport Integration (Rust rmcp)', () => {
   beforeAll(async () => {
     const testPort = await getFreePort();
     baseUrl = `http://${TEST_HOST}:${String(testPort)}/mcp`;
-    serverProc = spawn(binWrapper, [], {
+    serverProc = spawn(serverBinary, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -192,7 +187,7 @@ describe('MCP Server HTTP Transport Integration (Rust rmcp)', () => {
     ).toBe('anymd');
     const serverVersion = (response.result as { serverInfo?: { version?: string } })?.serverInfo
       ?.version;
-    expect(serverVersion).toBe(packageJson.version);
+    expect(serverVersion).toBe(productVersion);
   });
 
   it('should list available tools over HTTP', async () => {
@@ -547,7 +542,7 @@ describe('MCP Server HTTP Transport Authentication (Rust rmcp)', () => {
   beforeAll(async () => {
     const testPort = await getFreePort();
     authBaseUrl = `http://${TEST_HOST}:${String(testPort)}/mcp`;
-    serverProc = spawn(binWrapper, [], {
+    serverProc = spawn(serverBinary, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,

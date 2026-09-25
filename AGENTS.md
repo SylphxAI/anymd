@@ -1,80 +1,59 @@
-# anymd — local agent notes only
+# anymd — agent notes
 
-anymd (formerly Citra / pdf-reader-mcp): canonical npm `@sylphx/anymd`,
-repository `SylphxAI/anymd` (old slugs `SylphxAI/citra` and
-`SylphxAI/pdf-reader-mcp` redirect). `@sylphx/citra` and
-`@sylphx/pdf-reader-mcp` are thin aliases published at the same version.
+anymd (formerly Citra and pdf-reader-mcp) turns any file into Markdown for AI
+agents. It is one Rust binary (`crates/anymd`) that is both the MCP server and
+the CLI, published to npm as `@sylphx/anymd`. Project facts are in `PROJECT.md`;
+publishing is in `docs/PUBLISH.md`.
 
-Doctrine, Mission Control, and GroundAtlas package dogfood are retired
-historical lineage and must not be loaded as current instruction or live-state
-authority.
+## Layout
 
-Local truth:
-
-- `PROJECT.md` — project facts and human projection
+- `crates/anymd`: the binary: MCP server on rmcp (stdio and Streamable HTTP),
+  CLI, `setup` (client registration from mcp-kit) and `version`.
+- `crates/anymd-core`, `anymd-pdf`, `anymd-formats`: conversion; `anymd-wasm`:
+  the docs playground build.
+- `packages/anymd`: the npm package; `bin/anymd.js` is mcp-kit's launcher, which
+  runs the matching `packages/npm/<platform>` binary. `packages/aliases/*` are
+  `@sylphx/citra` and `@sylphx/pdf-reader-mcp`, which run the same launcher.
+- `test/`: TypeScript tests that spawn the cargo-built binary over MCP.
 
 ## Boundary hazards
 
 - Local-first privacy: do not upload documents or call remote providers unless
   the caller explicitly selects a remote provider adapter.
-- No hosted auth, billing, storage, tenancy, durable work, or customer-account
-  state in this package.
-- No direct provider secrets, Gateway credentials, or product-specific model
-  routing.
-- Optional OCR/vision/region providers stay behind typed adapters with
-  fail-closed defaults.
-- Public MCP schemas are contracts — version and regression-test option/output
-  shapes. Production schema authority is the Rust MCP server, not residual TS.
-- Preserve page/region/source provenance on extraction and analysis outputs.
-- Package publishing is Changesets / bot-owned; do not publish from a human shell.
-- Never commit secrets, private documents, or customer data.
+- No hosted auth, billing, storage, tenancy or customer-account state here.
+- Optional OCR, vision and region providers stay behind typed adapters that
+  fail closed.
+- Public MCP schemas are contracts: version and regression-test option and
+  output shapes. The Rust server is their only authority.
+- Keep page, region and source provenance on extraction and analysis outputs.
+- Publishing happens only in `release.yml` on `main`, because npm trusted
+  publishing accepts that workflow alone; a version bump PR is the release.
+- Never commit secrets, private documents or customer data.
 
-## Local commands
+## Commands
 
 ```bash
 bun install --frozen-lockfile
+bun run check             # Biome
+bun run check:versions    # every manifest carries one version
 bun run typecheck
-bun run test
-bun run check
-bun run build
+bun run build             # cargo build --release -p anymd
+bun run test:rust
+bun run test:cov          # needs the built binary
 bun run docs:build
-bun test test/project-control.test.ts
-bun run check:ts-production-absence
+bun run check:github-actions
 ```
 
-## Validation notes
+`ANYMD_BIN=/path/to/anymd` points the tests and the npm launcher at a binary
+built elsewhere (for example under `CARGO_TARGET_DIR`).
 
-- Prefer the **narrowest** affected check before full workspace runs.
-- Report layers honestly: local diff · trunk land · package publish · registry
-  readback (do not collapse).
-- Do not claim release or adoption completion while residual TS, version skew,
-  trunk CI, registry, or clean-install gaps remain open.
+## Releasing
 
-## Backend false-authority fence
+`bun scripts/set-version.ts X.Y.Z`, `cargo update -w`, and a `## X.Y.Z` section
+in `CHANGELOG.md`, in one pull request. Merging publishes it through the shared
+mcp-kit workflow; the post-release check is `npx -y @sylphx/anymd@X.Y.Z version`.
 
-If this repository has completed a **Rust backend** cutover:
+## Reporting
 
-1. Production backend behavior authority is the Rust crate/binary path declared
-   in package `bin` / native optional packages / Docker ENTRYPOINT when present.
-2. Residual TypeScript service trees or alternate TS engines are **not** product
-   authority unless explicitly proven still on the live path.
-3. Do not "fix production" by editing residual TypeScript and assuming
-   deploy/runtime will pick it up.
-4. Prefer deleting residual TS backend trees after sole-Rust proof; keep history
-   in Git.
-5. Intentional TypeScript packaging wrappers and native-binding surfaces may remain.
-
-### Repo-specific note
-
-Native Rust engine is product authority; npm `dist/runtime-entry.js` and
-`dist/pure-rust.js` are packaging/launcher surfaces only, not an alternate PDF
-backend. Historical TypeScript LKG (if needed) is the external pin
-`@sylphx/pdf-reader-mcp@3.0.14`, not residual source under `src/`.
-
-## Retired TypeScript oracle
-
-The TypeScript v3.0.14 engine, its `src/pdf/**` / `src/handlers/**` oracle
-trees, and the `scripts/differential/**` parity harness were deleted; the only
-TypeScript under `src/` is the launcher/SDK surface (`runtime-entry.ts`,
-`pure-rust.ts`, `sdk.ts`, `native/**`). Behavior is pinned by Rust tests and
-the Markdown corpus, not by parity with 3.0.14. Do not reintroduce an oracle.
+Report each layer separately: local diff, merged source, published npm
+version, MCP Registry entry.

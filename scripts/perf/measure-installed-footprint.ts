@@ -4,7 +4,7 @@
  * Compares full install closure — never wrapper tarball vs native exe alone.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 

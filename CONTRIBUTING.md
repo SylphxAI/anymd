@@ -20,19 +20,23 @@ Thank you for considering contributing! We welcome contributions from the commun
 
 ## Development Setup
 
-This project uses [Bun](https://bun.sh/) and [Biome](https://biomejs.dev/).
+anymd is a Rust binary (`crates/`) published to npm through a small launcher
+(`packages/`). [Bun](https://bun.sh/) runs the docs site, Biome, the
+repository scripts and the TypeScript tests that drive the binary over MCP.
 
 ### Prerequisites
 
+- Rust stable (`rustup`)
 - Bun >= 1.4.0 (`packageManager` `bun@1.4.0`; install frozen from `bun.lock`)
 
 ### Getting Started
 
 ```bash
 git clone https://github.com/SylphxAI/anymd.git
-cd pdf-reader-mcp
+cd anymd
 bun install
-bun run build
+bun run build                            # cargo build --release -p anymd
+node packages/anymd/bin/anymd.js version # the npm launcher finds target/release/anymd
 ```
 
 ### Useful Commands
@@ -40,31 +44,24 @@ bun run build
 ```bash
 bun run check          # Lint and format check (Biome)
 bun run check:fix      # Auto-fix lint and format issues
-bun run typecheck      # TypeScript type checking
-bun test               # Run tests
-bun run test:cov       # Run tests with coverage
-bun run build          # Build the package
-bun run package:smoke  # Verify package tarball
+bun run check:versions # Every manifest carries the same version
+bun run typecheck      # TypeScript type checking (scripts/)
+bun run test:rust      # Rust tests
+bun run test:cov       # TypeScript tests over the built binary, with coverage
 bun run docs:build     # Build docs site
-bun run benchmark      # Run performance benchmark
 ```
 
 ### Coding Standards
 
-- **Formatting and linting:** Handled by Biome (configuration in `biome.json`). Run `bun run check` before submitting.
-- **Testing:** Write tests using Bun's built-in test runner. Place test files in `test/` mirroring the source structure.
-- **Types:** All code must pass `bun run typecheck` with no errors.
+- **Formatting and linting:** `cargo fmt` and Biome (configuration in `biome.json`). Run `bun run check` before submitting.
+- **Testing:** Rust tests live beside the crates; TypeScript tests in `test/` spawn the built binary.
 - **Commits:** Follow conventional commits (e.g., `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`).
 
 ### Release Process
 
-Releases are automated via [Changesets](https://github.com/changesets/changesets):
-
-1. Add a changeset describing your change: `bunx changeset`
-2. The changeset bot will create a "Version Packages" PR when changesets accumulate.
-3. Merging the version PR triggers the release workflow to publish to npm and create a GitHub Release.
-
-Do not manually publish to npm or create tags/releases.
+A release is a pull request that runs `bun scripts/set-version.ts X.Y.Z` and adds
+a `## X.Y.Z` section to `CHANGELOG.md`. Merging it publishes every package; see
+[docs/PUBLISH.md](docs/PUBLISH.md). Do not publish to npm or create tags by hand.
 
 ## License
 

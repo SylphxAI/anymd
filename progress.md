@@ -16,7 +16,7 @@ oracle surface, npm vs Cargo version skew documentation, and trunk CI health.
 - [x] Agent Document Twin outputs (structure, provenance, trust/accessibility)
 - [x] Sole-Rust production path with fail-closed missing native binary
 - [x] npm package + optional native platform packages
-- [x] Changesets-based release workflow
+- [x] Release through the shared mcp-kit workflow (8.0.0)
 - [x] Capability parity, agent-task evals, host/registry proof artifacts
 - [x] Project control: Skills SSOT + project-manifest v2 (Doctrine adapter removed)
 

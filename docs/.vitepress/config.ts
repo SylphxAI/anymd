@@ -27,7 +27,6 @@ export default defineConfig({
     '**/reference/**',
     '**/security/**',
     '**/performance/**',
-    'BRAND_PUBLISH.md',
     'PUBLISH.md',
   ],
   vite: {

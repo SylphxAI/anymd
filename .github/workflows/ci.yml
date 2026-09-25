@@ -61,6 +61,9 @@ jobs:
       - name: Public copy matches product.json and benchmark results
         run: bun run check:copy
 
+      - name: Every manifest carries the same version
+        run: bun run check:versions
+
       - name: Public repository runs on GitHub-hosted runners only
         run: bun run check:no-github-hosted-macos
 
@@ -73,8 +76,8 @@ jobs:
       - name: Audit Rust dependencies
         run: bash scripts/check-cargo-advisories.sh
 
-      - name: Build Rust core and MCP server
-        run: bun run build:rust
+      - name: Build the anymd binary
+        run: bun run build
 
       - name: Fetch Markdown regression corpus
         run: bash scripts/fetch-markdown-corpus.sh "${RUNNER_TEMP}/markdown-corpus"
@@ -91,12 +94,6 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p anymd-wasm --target wasm32-unknown-unknown
-
-      - name: Build package
-        run: bun run build:package
-
-      - name: Verify package tarball
-        run: bun run package:smoke
 
       - name: Run Tests and Check Coverage
         run: bun run test:cov

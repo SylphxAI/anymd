@@ -12,10 +12,11 @@ evidence without becoming a hosted Sylphx Platform BaaS service.
 
 - Brand: **anymd** — "Any file → clean Markdown for AI agents"
 - Canonical npm: `@sylphx/anymd` (bin `anymd`; MCP registry `io.github.SylphxAI/anymd`)
-- Native optional packages: `@sylphx/anymd-<platformId>` (binary `anymd`)
+- Native optional packages: `@sylphx/anymd-<platform>` (binary `anymd`) in
+  `packages/npm/<platform>`
 - Compatibility aliases, published at the same version as `@sylphx/anymd`:
   `@sylphx/citra` (bin `citra`) and `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`)
-  in `packages/alias-*`, kept in lockstep by `scripts/sync-alias-packages.ts`.
+  in `packages/aliases/`. `scripts/set-version.ts` keeps every manifest at one version.
 - Repository: `SylphxAI/anymd`, formerly `SylphxAI/citra` and
   `SylphxAI/pdf-reader-mcp` (the old slugs redirect here).
 
@@ -49,10 +50,8 @@ evidence without becoming a hosted Sylphx Platform BaaS service.
 ## Boundaries
 
 PDF Reader MCP owns the local/open-source document-intelligence package and its
-public MCP contract. Production backend authority is the pure-Rust crates and
-native binary launched by the npm package entry. The TypeScript v3.0.14 engine
-and its parity oracle are retired and deleted; TypeScript remains only as the
-npm launcher and SDK wrapper.
+public MCP contract. The Rust crates and the native binary are the only
+implementation; the npm package is mcp-kit's launcher, which runs that binary.
 
 It does not own hosted customer accounts, billing, storage, tenant policy,
 Gateway routing, product audit, or durable state created after a tool is used.
@@ -61,25 +60,24 @@ and commercial controls.
 
 ## Public Surfaces
 
-- MCP package and CLI: `package.json` → `dist/runtime-entry.js` (native only)
+- MCP package and CLI: `packages/anymd` → `bin/anymd.js` → the platform binary
 - Rust core / server: `crates/anymd-core`, `crates/anymd`
 - Public docs: `README.md`, `docs/`
 - Tool/spec docs: `docs/specs/`
 - CI: `.github/workflows/ci.yml`
-- Release: Changesets + `.github/workflows/release.yml`
+- Release: `.github/workflows/release.yml`, calling the shared mcp-kit release
+  workflow (see `docs/PUBLISH.md`)
 
 ## Delivery
 
 Terminal delivery is **npm package release** (main package + platform optional
 native packages) with registry readback — not a hosted app deploy.
 
-Pull requests use the legacy `Validate Code Quality` context on Sylphx
-self-hosted runners. Darwin native package builds and registry proofs use
-`[self-hosted, sylphx, macos, standard]` only — never GitHub-hosted `macos-*`.
-Linux native ABI builds intentionally keep Ubuntu 22.04 images for GLIBC≤2.35;
-Windows natives remain on `windows-latest` until a self-hosted Windows pool exists.
-Package release is Changesets-driven through the repo release workflow, which
-mints a GitHub App token before creating version PRs or publishing to npm.
+Pull requests run `CI` on GitHub-hosted runners; `Validate Code Quality`,
+`security:secrets` and `Plain language` are the required checks. Merging a
+version bump to `main` publishes through `release.yml`: 5 native builds, npm
+with trusted publishing, an `npx` smoke test, the GitHub release and the MCP
+Registry entry.
 
 A past Control Plane decision retired in-repository GroundAtlas package dogfood.
 Doctrine adapters and Mission Control are retired historical lineage and must
@@ -104,8 +102,8 @@ customer analysis.
 ```bash
 bun install --frozen-lockfile
 bun run check:github-actions
-bun run typecheck
 bun run check
-bun run check:ts-production-absence
-bun run package:smoke
+bun run check:versions
+cargo check -p anymd
+bun run build && bun run test:cov
 ```

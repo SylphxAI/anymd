@@ -1,7 +1,7 @@
 /**
  * Sole-Rust production capability contract (ADR-0005/0006).
  *
- * Exercises the production sole-Rust path (runtime-entry + native binary).
+ * Exercises the cargo-built anymd binary that the npm launcher starts.
  * Key-presence alone is insufficient for full showhand admission; assertions mix
  * presence + selected semantic checks. Broader agent-task/quality closeout remains required.
  */

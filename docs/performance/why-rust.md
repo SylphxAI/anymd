@@ -35,8 +35,7 @@ Pure-Rust admission is **capability-first semantic compatibility**, not whole-pr
 - Frozen TS v3.0.14 differentials remain valuable regression/coverage evidence.
 - Exact residual families expand only for contract breaks, semantic regressions, or security/resource fail-closed gaps.
 
-See `docs/adr/0005-capability-first-semantic-compatibility.md` and
-`docs/specs/capability-first-admission-contract.md`.
+See `docs/adr/0005-capability-first-semantic-compatibility.md`.
 
 ## Engineering archive
 
@@ -64,9 +63,8 @@ replacement, once it passes the executable parity and release gates, is:
 
 Updating the implementation language must **not** remove public capabilities.
 The replacement must reproduce the Document Twin semantics, not merely return
-fields with these names. Today many pure-Rust fields are heuristic or empty;
-their current status is recorded in the
-[capability matrix](../specs/pure-rust-capability-matrix.json).
+fields with these names. The Rust tests and the Markdown regression corpus
+pin that behavior.
 
 | Capability group | Fields / operations |
 | --- | --- |

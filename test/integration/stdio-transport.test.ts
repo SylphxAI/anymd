@@ -9,9 +9,10 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { productVersion, resolveServerPath } from '../utils/cargoBinaries.js';
 
 const repoRoot = path.resolve(__dirname, '../..');
-const binWrapper = path.join(repoRoot, 'bin/anymd');
+const serverBinary = resolveServerPath();
 const fixturesRoot = path.join(repoRoot, 'test/fixtures');
 const goldenPath = path.join(fixturesRoot, 'read-pdf-golden.json');
 const samplePdf = path.join(fixturesRoot, 'sample.pdf');
@@ -153,17 +154,11 @@ const initializeSession = async (proc: ChildProcess) => {
   await new Promise((resolve) => setTimeout(resolve, 100));
 };
 
-const packageJson = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')
-) as {
-  version: string;
-};
-
 describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
   let serverProc: ChildProcess;
 
   beforeAll(async () => {
-    serverProc = spawn(binWrapper, [], {
+    serverProc = spawn(serverBinary, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -183,7 +178,7 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
   });
 
   it('should respond to initialize request over stdio', async () => {
-    const freshProc = spawn(binWrapper, [], {
+    const freshProc = spawn(serverBinary, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -209,7 +204,7 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
 
     expect(response.id).toBe(101);
     expect(response.result?.serverInfo?.name).toBe('anymd');
-    expect(response.result?.serverInfo?.version).toBe(packageJson.version);
+    expect(response.result?.serverInfo?.version).toBe(productVersion);
     // sole-runtime may advertise package version
     freshProc.kill('SIGTERM');
   });
@@ -253,7 +248,7 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
       const caseEntry = golden.cases.find((entry) => entry.id === caseId);
       expect(caseEntry).toBeDefined();
 
-      const freshProc = spawn(binWrapper, [], {
+      const freshProc = spawn(serverBinary, [], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
@@ -336,7 +331,7 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
       return;
     }
 
-    const freshProc = spawn(binWrapper, [], {
+    const freshProc = spawn(serverBinary, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -379,7 +374,7 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
       return;
     }
 
-    const freshProc = spawn(binWrapper, [], {
+    const freshProc = spawn(serverBinary, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
