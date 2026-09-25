@@ -52,6 +52,8 @@ Or add it by hand: every MCP client runs the same command, `npx -y @sylphx/anymd
 ```bash
 claude mcp add anymd -- npx -y @sylphx/anymd
 ```
+
+Or as a plugin, with the anymd skill: `/plugin marketplace add SylphxAI/anymd`, then `/plugin install anymd@anymd`.
 </details>
 
 <details>
