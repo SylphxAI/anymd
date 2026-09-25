@@ -1,0 +1,12 @@
+{
+  "name": "anymd",
+  "description": "Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video. Local Rust MCP server, no API key.",
+  "author": { "name": "Sylphx", "url": "https://github.com/SylphxAI" },
+  "homepage": "https://sylphxai.github.io/anymd/",
+  "repository": "https://github.com/SylphxAI/anymd",
+  "license": "MIT",
+  "keywords": ["mcp", "markdown", "pdf", "docx", "pptx", "xlsx", "epub", "ocr"],
+  "mcpServers": {
+    "anymd": { "command": "npx", "args": ["-y", "@sylphx/anymd"] }
+  }
+}

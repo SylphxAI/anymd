@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "anymd",
+  "description": "anymd for Claude Code: any file to clean Markdown for AI agents.",
+  "owner": { "name": "Sylphx", "url": "https://github.com/SylphxAI" },
+  "plugins": [
+    {
+      "name": "anymd",
+      "source": "./",
+      "description": "Read PDF, Office, EPUB, HTML, images, audio and video as Markdown, locally and without an API key.",
+      "category": "productivity"
+    }
+  ]
+}
