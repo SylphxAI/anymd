@@ -276,11 +276,25 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule]) -> Stream {
         let any_number = filled.iter().any(|&c| is_numeric(&line.cells[c]));
         let prev_number = prev_filled.iter().any(|&c| is_numeric(&prev.cells[c]));
         let first = &line.cells[0];
-        // The rest of a description whose first column is blank.
+        // The rest of a description whose first column is blank: it fills
+        // fewer columns than the row above, or every cell reads on from the
+        // one above. (A row that fills every column with values of its own
+        // belongs to a label that spans rows.)
+        let prev_values = prev_filled.iter().filter(|&&c| c > 0).count();
+        let reads_on = filled
+            .iter()
+            .all(|&c| starts_lower(&line.cells[c]) || ends_open(&prev.cells[c]));
         let continues_cells = first.is_empty()
             && !any_number
             && !filled.is_empty()
-            && filled.iter().all(|c| !prev.cells[*c].is_empty());
+            && filled.iter().all(|c| !prev.cells[*c].is_empty())
+            && (filled.len() < prev_values || reads_on);
+        // A label centred on a group of rows sits between the first two of
+        // them: it belongs to the first.
+        let centred_label = filled == [0]
+            && prev.cells[0].is_empty()
+            && prev_values > 0
+            && (prev.top - line.top) < size * 0.8;
         // The first line of a wrapped label, with the values on the next line.
         let label_head = prev_filled == [0]
             && !prev_number
@@ -291,9 +305,12 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule]) -> Stream {
             && !prev.cells[0].is_empty()
             && !any_number
             && (starts_lower(first) || ends_open(&prev.cells[0]));
-        // Rows separated by rules: everything between two rules is one row.
-        let same_band = separated_rows >= 2 && !any_number;
-        if continues_cells || label_head || label_tail || same_band {
+        // Rows separated by rules: text between two rules that reads on is
+        // one row (a group of value rows between rules is not).
+        let same_band = separated_rows >= 2
+            && !any_number
+            && (filled.iter().filter(|&&c| c > 0).count() < prev_values || reads_on);
+        if continues_cells || centred_label || label_head || label_tail || same_band {
             for (c, text) in line.cells.iter().enumerate() {
                 append(&mut prev.cells[c], text);
             }

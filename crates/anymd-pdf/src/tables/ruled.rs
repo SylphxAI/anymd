@@ -251,6 +251,11 @@ fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -
         lines.insert(*root, cell_lines(indexes.iter().map(|&i| glyphs[i].clone()).collect()));
     }
     let (cells, filled, chars, longest) = build_cells(nrows, ncols, &extent, &lines);
+    // Text never runs across a table's column line; it does across a
+    // chart's gridlines (a legend, an axis title).
+    if crosses_lines(&xs, &ys, vs, glyphs, claimed, (x0, bottom, x1, top)) {
+        return None;
+    }
     let mut grid = Grid { cells, header_rows: 0 };
     drop_empty(&mut grid);
     let (rows, cols) = (grid.cells.len(), grid.width());
@@ -318,6 +323,52 @@ fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -
     };
     if std::env::var("ANYMD_DEBUG_RULED").is_ok() { eprintln!("RULED bbox=({x0:.0},{bottom:.0},{x1:.0},{top:.0}) grid={}x{} kind={}", rows, cols, match &content { Ruled::Table{grid,..} => format!("table h={} first={:?}", grid.header_rows, grid.cells.first()), Ruled::Frame(b) => format!("frame {}", b.len()) }); }
     Some(RuledTable { x0, bottom, x1, top, content })
+}
+
+/// Whether words run across the grid's inner vertical lines: two glyphs of
+/// one word (closer than a word space) on either side of a drawn line.
+fn crosses_lines(
+    xs: &[f64],
+    ys: &[f64],
+    vs: &[&Line],
+    glyphs: &[Glyph],
+    claimed: &[bool],
+    (x0, bottom, x1, top): (f64, f64, f64, f64),
+) -> bool {
+    let inside: Vec<Glyph> = glyphs
+        .iter()
+        .zip(claimed)
+        .filter(|(g, taken)| {
+            let cx = (g.x0 + g.x1) / 2.0;
+            let cy = g.base + g.size * 0.3;
+            !**taken && !g.space && cx > x0 && cx < x1 && cy < top && cy > bottom
+        })
+        .map(|(g, _)| g.clone())
+        .collect();
+    let inner = &xs[1..xs.len() - 1];
+    let mut crossings = 0;
+    for mut row in rows_of(inside) {
+        row.sort_by(|a, b| a.x0.total_cmp(&b.x0));
+        for pair in row.windows(2) {
+            let (a, b) = (&pair[0], &pair[1]);
+            if b.x0 - a.x1 > a.size.max(b.size) * 0.15 {
+                continue;
+            }
+            let y = a.base + a.size * 0.3;
+            let drawn = |x: f64| {
+                vs.iter()
+                    .any(|v| (v.at - x).abs() <= SNAP && v.from <= y && v.to >= y)
+            };
+            if inner
+                .iter()
+                .any(|&x| (a.x0 + a.x1) / 2.0 < x && (b.x0 + b.x1) / 2.0 > x && drawn(x))
+            {
+                crossings += 1;
+            }
+        }
+    }
+    let _ = ys;
+    crossings >= 2
 }
 
 /// The lines of one cell, top to bottom, with their baselines.

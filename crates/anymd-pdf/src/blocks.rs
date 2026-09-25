@@ -294,7 +294,12 @@ fn header_lines_above(rows: &[Vec<Segment>], index: usize, end: usize, marks: &[
         }
         start = row_index;
     }
-    start
+    // Only a paragraph made of nothing but these lines: a short last line of
+    // running text (a caption's tail) is not a header.
+    match marks.first() {
+        Some(&(first, _)) if first == start => start,
+        _ => index,
+    }
 }
 
 /// Blocks for side-by-side columns of running text: each column's lines
