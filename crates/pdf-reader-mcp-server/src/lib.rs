@@ -1,3 +1,4 @@
+pub mod cli;
 mod command_provider;
 pub mod discover_compat;
 pub mod document;
