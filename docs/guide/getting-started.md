@@ -1,179 +1,84 @@
-# Quickstart — from PDF to proof
+# Getting started
 
-Ten minutes from install to a claim a human can check. The point is not
-"extract text" — it is **never have to guess a page number again**.
-
-::: tip New to the problem?
-Read [Stop PDF hallucinations](/articles/stop-pdf-hallucinations) first — it
-explains why a text dump makes agents wrong in a way that sounds confident.
-:::
-
-## 1. Install
+anymd is one binary that runs as an MCP server for your agent and as a command-line converter. Every MCP client runs the same command:
 
 ```bash
 npx -y @sylphx/anymd
 ```
 
-Add it to your host as shown in [Installation](/guide/installation). Verify
-with `npx -y @sylphx/anymd --help`.
+Node 18+ is the only requirement; npm installs the native binary for your platform. No API key, no account.
 
-## 2. Your first read
+## Claude Code
 
-One call. The default is **fast** — markdown, tables, chunks, geometry, and
-citations. No OCR, no trust audit, no sampling.
-
-```json
-{
-  "sources": [{ "path": "/absolute/path/to/report.pdf" }]
-}
+```bash
+claude mcp add anymd -- npx -y @sylphx/anymd
 ```
 
-A page filter still uses fast, and it reads only those pages:
+## Codex
 
-```json
-{
-  "sources": [{ "path": "/absolute/path/to/report.pdf", "pages": [1, 2] }]
-}
+```bash
+codex mcp add anymd -- npx -y @sylphx/anymd
 ```
 
-Ask for more by name:
+or in `~/.codex/config.toml`:
 
-```json
-{ "sources": [{ "path": "/absolute/path/to/report.pdf" }], "profile": "quality" }
+```toml
+[mcp_servers.anymd]
+command = "npx"
+args = ["-y", "@sylphx/anymd"]
 ```
 
-`quality` adds the text layer, HTML, elements, and the document AST. It still
-does not OCR. `research` adds safety, trust, and accessibility on top of that.
-`auto_detail` wins when both are set. `full` is the deepest preset and still
-does not render or OCR.
+## Cursor
 
-OCR is a different tool:
+[Add to Cursor](https://cursor.com/en/install-mcp?name=anymd&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBzeWxwaHgvYW55bWQiXX0=) with one click, or in `.cursor/mcp.json`:
 
 ```json
-{ "sources": [{ "path": "/absolute/path/to/scan.pdf" }], "op": "ocr_pages" }
+{ "mcpServers": { "anymd": { "command": "npx", "args": ["-y", "@sylphx/anymd"] } } }
 ```
 
-That is `pdf_evidence`, and it needs an OCR provider you configured. A missing
-provider returns a gap, not a guessed transcript.
+## VS Code
 
-## 3. Read the evidence, not the prose
+```bash
+code --add-mcp '{"name":"anymd","command":"npx","args":["-y","@sylphx/anymd"]}'
+```
 
-A real response (excerpt) against a two-page table fixture:
+or in `.vscode/mcp.json`:
 
 ```json
-{
-  "route": { "engine": "rust-core", "path": "rust-read-pdf-v1" },
-  "source": { "hash": "99d313eb…", "path": "…/selectable-table-v1.pdf" },
-  "results": [{
-    "data": {
-      "table_info": [{
-        "page": 1,
-        "bounding_box": { "left": 72, "top": 151, "right": 454.8, "bottom": 79 },
-        "colCount": 3,
-        "cellCount": 9,
-        "confidence": 0.92,
-        "continuation": {
-          "role": "starts",
-          "groupId": "table-continuation-p1-table-1-p2-table-1",
-          "signals": ["same_column_count", "repeated_header_candidate"]
-        }
-      }]
-    }
-  }],
-  "gaps": []
-}
+{ "servers": { "anymd": { "type": "stdio", "command": "npx", "args": ["-y", "@sylphx/anymd"] } } }
 ```
 
-Three things worth noticing:
+## Claude Desktop
 
-1. **`page` + `bounding_box`** — the claim has a place in the document.
-2. **`continuation`** — the table continues onto page 2 with matching columns.
-   An agent that cites "the table" now knows to read the next page too.
-3. **`gaps`** — when anymd cannot prove something, it names the gap instead of
-   filling it. That is the whole difference.
-
-## 4. Search first, read second
-
-Reading everything is slow and expensive. Locate first:
+Add to `claude_desktop_config.json` (Settings → Developer → Edit Config):
 
 ```json
-{
-  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
-  "query": "revenue"
-}
+{ "mcpServers": { "anymd": { "command": "npx", "args": ["-y", "@sylphx/anymd"] } } }
 ```
 
-`search_pdf` returns page numbers, snippets, offsets and bounding-box
-provenance — enough to decide *whether* to spend tokens on a deep read.
+## Windsurf, Zed, Cline, and other clients
 
-## 5. Verify before you claim
+Any client that speaks MCP over stdio: command `npx`, args `["-y", "@sylphx/anymd"]`.
 
-When an agent is about to assert a number, send it to the evidence tool:
+To keep the server inside one folder, add `--allow-dir`:
 
 ```json
-{
-  "operation": "extract_regions",
-  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
-  "regions": [{ "page": 1, "bounding_box": { "left": 72, "top": 151, "right": 454, "bottom": 79 } }]
-}
+{ "command": "npx", "args": ["-y", "@sylphx/anymd", "--allow-dir=/path/to/docs"] }
 ```
 
-Or render the page and look at it:
+## CLI only
 
-```json
-{
-  "operation": "render_page",
-  "sources": [{ "path": "/absolute/path/to/report.pdf" }],
-  "pages": [1]
-}
+```bash
+npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
+anymd report.pdf > report.md
 ```
 
-`pdf_evidence` has five focused operations — `inspect`, `render_page`,
-`extract_regions`, `ocr_pages`, `analyze_regions`. One tool, one `op` enum; no
-near-duplicate vanity tools to learn.
+## Try it
 
-## 6. Scanned or mixed documents
+Ask your agent something that needs a document:
 
-```json
-{
-  "sources": [{ "path": "/absolute/path/to/scanned.pdf" }],
-  "pages": [1, 2, 3],
-  "include_ocr_text_layer": true,
-  "include_tables": true
-}
-```
+> Summarize the results table in `papers/attention.pdf` and cite the page.
 
-OCR keeps its own provenance and confidence and is kept **separate** from
-selectable text. OCR word boxes can feed table extraction, so a scanned table
-still comes back with cells and geometry. Configure a provider per
-[Installation](/guide/installation#optional-providers) — core reading never
-needs one.
+The agent calls [`read`](./tools#read) and gets Markdown back with `<!-- page N -->` anchors, so it can cite the page. For a folder of files, it calls [`search`](./tools#search) first.
 
-## 7. Trust signals — only when you ask
-
-Hidden text, prompt-injection attempts, overlapping or spoofed content:
-
-```json
-{
-  "sources": [{ "path": "/absolute/path/to/untrusted.pdf" }],
-  "include_safety_findings": true,
-  "include_trust_report": true
-}
-```
-
-These are off by default: you pay for them when you need them.
-
-## A prompt you can paste into your agent
-
-> Read `/absolute/path/to/report.pdf` with anymd. Then answer my question and
-> cite the page and — for numbers — the table and cell you took them from. If
-> the document does not prove an answer, say so instead of guessing.
-
-That last sentence is what makes the evidence path do its job.
-
-## Where next
-
-- [API reference](/api/) — every option and result field
-- [The evidence contract](/EVIDENCE_CONTRACT) — what "proof" means here
-- [Performance](/performance/) — how fast, and how that was measured
-- [Comparison](/comparison/) — why not the alternatives
+Run `anymd doctor` to see which optional tools (OCR, audio/video) anymd found on your machine. See [Formats](./formats#optional-tools).
