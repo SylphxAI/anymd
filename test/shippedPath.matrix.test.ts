@@ -1,5 +1,5 @@
-import { beforeAll, describe, expect, it } from 'bun:test';
-import { execSync, spawnSync } from 'node:child_process';
+import { describe, expect, it } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { resolveCliPath } from './utils/cargoBinaries.js';
 
@@ -29,10 +29,6 @@ const invokeCli = (tool: string, input: Record<string, unknown>) => {
 };
 
 describe('shipped path matrix (Rust core)', () => {
-  beforeAll(() => {
-    execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
-  }, 300_000);
-
   it('pdf_hash returns deterministic Rust provenance', () => {
     const envelope = invokeCli('pdf_hash', { path: samplePdf });
     expect(envelope.status).toBe('ok');

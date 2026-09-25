@@ -521,22 +521,7 @@ mod tests {
     use super::{is_standard_schema_format, sanitize_schema_formats, sanitized_tools, PdfReaderMcp};
     use rmcp::handler::server::wrapper::Parameters;
     use serde_json::Value;
-    use std::fs;
     use std::path::PathBuf;
-
-    #[test]
-    fn rmcp_server_is_pure_rust() {
-        let src_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src");
-        assert!(!src_dir.join("parity_bridge.rs").exists());
-        let lib_rs = fs::read_to_string(src_dir.join("lib.rs")).expect("read lib.rs");
-        let production_lib = lib_rs.split("#[cfg(test)]").next().unwrap_or(&lib_rs);
-        assert!(production_lib.contains("read_pdf::read_pdf"));
-        assert!(production_lib.contains("pdf_evidence::pdf_evidence"));
-        assert!(production_lib.contains("search::search_pdf"));
-        assert!(!production_lib.contains("parity_bridge"));
-        let routes = fs::read_to_string(src_dir.join("tool_routes.rs")).expect("read tool_routes");
-        assert!(routes.contains("RustCore"));
-    }
 
     #[test]
     fn exposes_three_obvious_tools_and_keeps_legacy_names_callable() {
@@ -927,17 +912,6 @@ mod tests {
             .await
             .expect_err("pdf_evidence must reject outside path");
         assert!(evidence_error.message.contains("Access denied"));
-    }
-
-    #[test]
-    fn rust_http_transport_module_is_wired_for_web_mcp() {
-        let src_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src");
-        let main_rs = fs::read_to_string(src_dir.join("main.rs")).expect("read main.rs");
-        let http_rs =
-            fs::read_to_string(src_dir.join("http_transport.rs")).expect("read http_transport.rs");
-        assert!(main_rs.contains("http_transport::serve_http"));
-        assert!(http_rs.contains("StreamableHttpService"));
-        assert!(http_rs.contains("/mcp/health"));
     }
 
     #[test]

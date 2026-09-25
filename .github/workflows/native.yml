@@ -1,8 +1,10 @@
-name: Candidate native build evidence
+name: Native packages
 
-# Proves the native builds available on the current fleet. A matching host also
-# executes the installed launcher, but cross-build success is never reported as
-# runtime parity. Product Darwin remains Sylphx self-hosted only.
+# Builds the three fleet native targets once per run and, on the same
+# artifacts, checks the native package scaffold and records build evidence. A
+# matching host also executes the installed launcher, but cross-build success
+# is never reported as runtime parity. Product Darwin remains Sylphx
+# self-hosted only.
 on:
   workflow_dispatch:
   push:
@@ -11,16 +13,20 @@ on:
     paths:
       - 'crates/**'
       - 'packages/**'
+      - 'bin/anymd'
       - 'src/runtime-entry.ts'
       - 'src/native/**'
+      - 'scripts/native/**'
+      - 'scripts/stage-rust-mcp.ts'
+      - 'scripts/release-publish-with-natives.ts'
+      - 'scripts/smoke-native-launcher.ts'
+      - 'scripts/smoke-native-package-resolve.ts'
       - 'scripts/check-registry-install-proof.ts'
       - 'scripts/check-public-runner-profiles.py'
-      - 'scripts/stage-rust-mcp.ts'
       - 'docs/specs/host-runtime-proof-contract.md'
-      - '.github/workflows/candidate-host-runtime-proof.yml'
+      - '.github/workflows/native.yml'
       - '.github/workflows/registry-install-proof.yml'
       - '.github/workflows/publish-npm.yml'
-      - '.github/workflows/native-package-scaffold.yml'
       - 'package.json'
       - 'Cargo.toml'
       - 'Cargo.lock'
@@ -34,22 +40,34 @@ jobs:
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
     steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
       - id: set
         run: |
-          # Product policy: never GitHub-hosted runners. Darwin uses Sylphx self-hosted only.
-          # linux-x64 host-proves on sylphx-linux-standard.
-          # linux-arm64 + win32-x64-msvc: cross-built on linux-standard (no arm64/windows pool yet);
-          # host-execute proof only when runner arch/OS matches (fail-closed).
-          # Darwin pool offline — omit macos legs so CI cannot starve on queued forever jobs.
-          # Residual: darwin host/cross proof deferred until sylphx macos runners online.
+          # Product policy: never GitHub-hosted macOS. Darwin uses Sylphx self-hosted only.
+          # linux-x64 host-proves; linux-arm64 + win32-x64-msvc are cross-built
+          # (host-execute proof only when runner arch/OS matches, fail-closed).
+          # Darwin pool offline: omit macos legs so CI cannot starve on queued jobs.
           matrix='[
             {"platformId":"linux-x64-gnu","runner":"ubuntu-latest","target":"x86_64-unknown-linux-gnu"},
             {"platformId":"linux-arm64-gnu","runner":"ubuntu-latest","target":"aarch64-unknown-linux-gnu"},
             {"platformId":"win32-x64-msvc","runner":"ubuntu-latest","target":"x86_64-pc-windows-msvc"}
           ]'
           echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
+      - name: Verify package map and publishable manifests
+        run: |
+          bun test test/native-platform-package-map.test.ts
+          jq -e '.productTruth.dropInFor3014 == true or .productTruth.dropInFor3014 == false' docs/specs/pure-rust-capability-matrix.json >/dev/null
+          bun run native:sync-manifests
+          bun run native:assert-ready -- --manifests-only --all
+          for pkg in packages/anymd-*/package.json; do
+            jq -e '(.private != true) and (.anymdNativeBinary != null)' "$pkg" >/dev/null
+          done
 
-  proof:
+  build:
+    name: build (${{ matrix.platformId }})
     needs: map
     strategy:
       fail-fast: false
@@ -132,6 +150,20 @@ jobs:
         shell: bash
         run: bun run build:package
 
+      - name: Native package scaffold checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          platform="${{ matrix.platformId }}"
+          host_platform="$(bun -e 'import { resolveNativePlatformId } from "./scripts/native/platform-package-map.ts"; const id=resolveNativePlatformId(); if(!id) process.exit(2); process.stdout.write(id)')"
+          if [[ "$host_platform" == "$platform" ]]; then
+            bun run smoke:native-launcher
+            bun run smoke:native-package-resolve
+          else
+            echo "Skipping host execute smoke for cross-target ${platform} on host ${host_platform}"
+          fi
+          bun scripts/native/assert-native-packages-ready.ts --platform="$platform"
+
       - name: Record build evidence and matching-host launcher proof
         shell: bash
         env:
@@ -187,7 +219,7 @@ jobs:
           if-no-files-found: warn
 
   aggregate:
-    needs: proof
+    needs: build
     if: always()
     runs-on: ubuntu-latest
     steps:

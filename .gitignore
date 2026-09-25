@@ -17,7 +17,7 @@ test-report.junit.xml
 
 # Local page-cache artifacts from Rust text-index tests
 **/.pdf-reader-mcp/
-dist/pdf.worker*.mjs
+dist/
 
 # Staged native packaging outputs — never commit host binaries. A stale
 # pattern once let packages/*/bin/<binary> be tracked, which made every Release
@@ -38,9 +38,8 @@ bin/native/pdf-reader-mcp-server
 packages/**/bin/pdf-reader-mcp-server
 packages/**/bin/pdf-reader-mcp-server.exe
 
-# durable perf raw samples can be large; summaries live under verification/
-verification/perf/raw/
 *.tgz
 
 # Browser playground WebAssembly (scripts/build-wasm.sh output)
 docs/public/wasm/
+benchmark-artifacts/

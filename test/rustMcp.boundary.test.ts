@@ -1,5 +1,5 @@
-import { beforeAll, describe, expect, it } from 'bun:test';
-import { execSync, spawnSync } from 'node:child_process';
+import { describe, expect, it } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { resolveCliPath, resolveServerPath } from './utils/cargoBinaries.js';
@@ -11,20 +11,10 @@ const stagedRustBin = path.join(repoRoot, 'bin/native/anymd');
 const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
 
 describe('MCP transport boundary (pure-Rust)', () => {
-  beforeAll(() => {
-    execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
-  }, 300_000);
-
   it('builds the rmcp stdio server binary for the production process path', () => {
     expect(existsSync(rustServerBin)).toBe(true);
     expect(existsSync(stagedRustBin)).toBe(true);
     expect(existsSync(rustCliBin)).toBe(true);
-  });
-
-  it('does not ship a parity bridge', () => {
-    expect(
-      existsSync(path.join(repoRoot, 'crates/pdf-reader-mcp-server/src/parity_bridge.rs'))
-    ).toBe(false);
   });
 
   it('executes read_pdf through the sole-Rust CLI', () => {

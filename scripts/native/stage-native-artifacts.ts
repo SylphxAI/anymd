@@ -2,7 +2,7 @@
 /**
  * Stage downloaded CI native binary artifacts into packages/<platform>/bin and bin/native/<platform>/.
  *
- * Expected artifact layout (from native-package-scaffold / publish workflow):
+ * Expected artifact layout (from native / publish workflow):
  *   <artifactRoot>/anymd-<platformId>/<binary>
  * or:
  *   <artifactRoot>/<platformId>/<binary>

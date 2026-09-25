@@ -3,7 +3,7 @@
  * Tests the actual JSON-RPC communication over HTTP
  */
 
-import { type ChildProcess, execSync, spawn } from 'node:child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
@@ -137,8 +137,6 @@ describe('MCP Server HTTP Transport Integration (Rust rmcp)', () => {
   let serverProc: ChildProcess;
 
   beforeAll(async () => {
-    execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
-
     const testPort = await getFreePort();
     baseUrl = `http://${TEST_HOST}:${String(testPort)}/mcp`;
     serverProc = spawn(binWrapper, [], {
@@ -547,8 +545,6 @@ describe('MCP Server HTTP Transport Authentication (Rust rmcp)', () => {
   let authBaseUrl: string;
 
   beforeAll(async () => {
-    execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
-
     const testPort = await getFreePort();
     authBaseUrl = `http://${TEST_HOST}:${String(testPort)}/mcp`;
     serverProc = spawn(binWrapper, [], {

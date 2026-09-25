@@ -1,9 +1,0 @@
-{
-  "profile": "capability_parity_contract_sole_rust",
-  "generatedAt": "2026-07-24T02:32:10.032653+00:00",
-  "command": "bun test test/production/capabilityParity.contract.test.ts",
-  "result": "PASS",
-  "tests": 11,
-  "failures": 0,
-  "note": "Sole-Rust production capability contract suite is now default-on. Still not full showhand closeout of all PARTIAL matrix cells."
-}

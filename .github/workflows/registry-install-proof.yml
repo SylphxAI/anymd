@@ -3,7 +3,7 @@ name: Registry install proof
 # Host-runtime proof for a published @sylphx/anymd version.
 # Each job requires a matching native host (PROOF_REQUIRE_PLATFORM_ID).
 # There is currently no owned linux-arm64 or Windows self-hosted pool for
-# runtime proof (see candidate-host-runtime-proof.yml). Do not fake those
+# runtime proof (see native.yml). Do not fake those
 # platforms on x64 linux runners.
 
 on:

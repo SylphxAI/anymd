@@ -22,11 +22,4 @@ bun run sync:server-json
 # Synchronize every package manifest first, then refresh one lockfile for that final graph.
 bun install
 
-# Tracked dist/*.js are rebuilt earlier in Release and may gain +x from bun build.
-# changesets/action commitMode=github-api rejects executable files.
-if [[ -d dist ]]; then
-  echo "[release-version] clear executable bits on tracked dist artifacts"
-  find dist -type f \( -name '*.js' -o -name '*.mjs' \) -exec chmod a-x {} +
-fi
-
 echo "[release-version] PASS"
