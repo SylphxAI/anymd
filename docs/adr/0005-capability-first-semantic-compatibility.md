@@ -1,8 +1,8 @@
 # ADR-0005 — Capability-first semantic compatibility replaces exact PDF.js output parity
 
-- **Status:** Accepted
+- **Status:** Superseded in 8.0.0: the release admission gate, its capability matrix and its specs were retired; releases publish through the mcp-kit release workflow (`docs/PUBLISH.md`)
 - **Date:** 2026-07-22
-- **Relates to:** ADR-PROPOSED fleet Rust north star, `docs/specs/pure-rust-capability-matrix.json`, `docs/specs/temporary-rust-migration-fences.md`, `docs/specs/capability-first-admission-contract.md`
+- **Relates to:** ADR-PROPOSED fleet Rust north star
 - **Change class:** `required-now` for Rust admission and release bar
 
 ## Context

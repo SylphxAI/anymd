@@ -1,13 +1,13 @@
 /**
- * Shared helpers for production-path MCP contract tests.
- * Sole-Rust production path: dist/runtime-entry.js + platform native binary.
+ * Shared helpers for production-path MCP contract tests. They run the
+ * cargo-built anymd binary, the same binary the npm launcher starts.
  */
 import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { resolveServerPath } from '../utils/cargoBinaries.js';
+import { repoRoot, resolveServerPath } from '../utils/cargoBinaries.js';
 
-export const repoRoot = path.resolve(import.meta.dirname, '../..');
+export { repoRoot };
 export const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
 export const fixturesRoot = path.join(repoRoot, 'test/fixtures');
 
@@ -24,47 +24,13 @@ export type JsonRpcResponse = {
   error?: { code?: number; message?: string };
 };
 
-export const packageJson = JSON.parse(
-  fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')
-) as {
-  version: string;
-  bin?: Record<string, string>;
-  exports?: Record<string, string>;
-  files?: string[];
-};
-
-const resolveStagedRustBinary = (): string | null => {
-  const forced = process.env.ANYMD_RUST_BIN;
-  if (forced && fs.existsSync(forced)) return forced;
-  const candidates = [
-    resolveServerPath(),
-    path.join(repoRoot, 'bin/native/anymd'),
-    path.join(repoRoot, 'bin/native/linux-x64-gnu/anymd'),
-    path.join(repoRoot, 'bin/native/linux-arm64-gnu/anymd'),
-    path.join(repoRoot, 'bin/native/darwin-arm64/anymd'),
-    path.join(repoRoot, 'bin/native/darwin-x64/anymd'),
-    path.join(repoRoot, 'bin/native/win32-x64-msvc/anymd.exe'),
-  ];
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
-  }
-  return null;
-};
-
 export const ensureProductionArtifacts = () => {
-  // Sole-Rust production path. Reuse existing release binary when present to avoid
-  // multi-suite rebuild thrash in CI (test:cov runs many production suites).
-  if (!fs.existsSync(path.join(repoRoot, 'dist/runtime-entry.js'))) {
-    execSync('bun run build:package', { cwd: repoRoot, stdio: 'pipe', timeout: 120_000 });
+  // Reuse an existing build so the suites do not rebuild in turn.
+  if (!fs.existsSync(resolveServerPath())) {
+    execSync('cargo build --release -p anymd', { cwd: repoRoot, stdio: 'pipe', timeout: 420_000 });
   }
-  if (!resolveStagedRustBinary()) {
-    execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 420_000 });
-  }
-  if (!fs.existsSync(path.join(repoRoot, 'dist/runtime-entry.js'))) {
-    throw new Error('missing dist/runtime-entry.js — sole-Rust launcher not built');
-  }
-  if (!resolveStagedRustBinary()) {
-    throw new Error('missing staged/release pure-Rust MCP server binary');
+  if (!fs.existsSync(resolveServerPath())) {
+    throw new Error(`missing anymd binary at ${resolveServerPath()}`);
   }
 };
 
@@ -72,14 +38,6 @@ export const productionEnv = (overrides: NodeJS.ProcessEnv = {}): NodeJS.Process
   const env = { ...process.env, ...overrides };
   env.NODE_ENV = env.NODE_ENV ?? 'test';
   env.MCP_TRANSPORT = env.MCP_TRANSPORT ?? 'stdio';
-  const rustBin = resolveStagedRustBinary();
-  if (rustBin && !env.ANYMD_RUST_BIN) {
-    env.ANYMD_RUST_BIN = rustBin;
-  }
-  // Sole-Rust production does not use TS engine mode flags.
-  if (!overrides.PDF_READER_ENGINE_MODE) {
-    env.PDF_READER_ENGINE_MODE = undefined;
-  }
   return env;
 };
 
@@ -147,7 +105,7 @@ export const readResponse = (proc: ChildProcess, timeoutMs = 45_000): Promise<Js
   });
 
 export const spawnProductionMcp = (envOverrides: NodeJS.ProcessEnv = {}): ChildProcess => {
-  return spawn(process.execPath, [path.join(repoRoot, 'dist/runtime-entry.js')], {
+  return spawn(resolveServerPath(), [], {
     cwd: repoRoot,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: productionEnv(envOverrides),

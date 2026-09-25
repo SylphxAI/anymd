@@ -20,7 +20,9 @@ anymd doctor                                 # lists the optional tools anymd fo
 | `anymd - [options]` | Convert stdin (the format is detected from the bytes) |
 | `anymd search <query> [path\|url...]` | Search files and directories (default: `.`) |
 | `anymd mcp [--allow-dir=<path>]...` | Run the MCP server on stdio |
+| `anymd setup [--dry-run] [--remove]` | Add anymd to the MCP clients on this machine; `--remove` undoes it |
 | `anymd doctor` | Print the version and which optional tools were found |
+| `anymd version` | Print the version |
 
 With no file arguments and a piped stdin (which is how MCP clients launch it), `anymd` serves MCP over stdio, so `npx -y @sylphx/anymd` works as both a CLI and a server.
 

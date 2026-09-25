@@ -3,9 +3,8 @@
 ## Install
 
 ```bash
-npm i -g @sylphx/anymd
-# or
-npx @sylphx/anymd
+npx -y @sylphx/anymd setup   # add it to the MCP clients on this machine
+npm i -g @sylphx/anymd       # or install the CLI
 ```
 
 ## Tools
@@ -16,12 +15,11 @@ npx @sylphx/anymd
 | `search_pdf` | Literal search with page/bbox evidence |
 | `pdf_evidence` | inspect / render / crop / OCR follow-ups |
 
-## SDK
+## CLI
 
-```ts
-import { Anymd } from '@sylphx/anymd/sdk'
-const anymd = Anymd.create()
-const result = await anymd.read({ path: '/abs/doc.pdf' })
+```bash
+anymd /abs/doc.pdf > doc.md
+anymd search "indemnification" contracts/
 ```
 
 ## Rules

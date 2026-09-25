@@ -6,9 +6,10 @@
 import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { resolveServerPath } from '../utils/cargoBinaries.js';
 
 const repoRoot = path.resolve(__dirname, '../..');
-const binWrapper = path.join(repoRoot, 'bin/anymd');
+const serverBinary = resolveServerPath();
 
 // JSON-RPC message helpers
 const createRequest = (id: number, method: string, params?: unknown) => ({
@@ -65,9 +66,9 @@ describe('MCP Server Integration', () => {
   let serverProc: ChildProcess;
 
   beforeAll(async () => {
-    execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
+    execSync('cargo build --release -p anymd', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
 
-    serverProc = spawn(binWrapper, [], {
+    serverProc = spawn(serverBinary, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,

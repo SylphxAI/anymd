@@ -12,32 +12,6 @@ use serde_json::{json, Value};
 
 static REQUEST_ID: AtomicU64 = AtomicU64::new(1);
 
-fn repo_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(|p| p.parent())
-        .expect("repo root")
-        .to_path_buf()
-}
-
-fn resolve_mcp_binary() -> PathBuf {
-    for relative in [
-        "bin/native/anymd",
-        "target/release/anymd",
-        "target/debug/anymd",
-    ] {
-        let candidate = repo_root().join(relative);
-        if candidate.is_file() {
-            return candidate;
-        }
-    }
-    // Fall back to cargo-built test binary next to this test via CARGO_BIN_EXE
-    if let Ok(path) = std::env::var("CARGO_BIN_EXE_anymd") {
-        return PathBuf::from(path);
-    }
-    panic!("anymd binary not found; run cargo build -p anymd");
-}
-
 struct StdioClient {
     child: Child,
     stdin: std::process::ChildStdin,
@@ -46,7 +20,8 @@ struct StdioClient {
 
 impl StdioClient {
     fn spawn() -> Self {
-        let binary = resolve_mcp_binary();
+        // The anymd binary cargo builds for this test run.
+        let binary = PathBuf::from(env!("CARGO_BIN_EXE_anymd"));
         let mut child = Command::new(&binary)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -151,7 +126,10 @@ fn server_discover_before_initialize_keeps_session_alive() {
         .expect("discover result")
         .as_object()
         .expect("result object");
-    assert_eq!(result.get("resultType").and_then(Value::as_str), Some("complete"));
+    assert_eq!(
+        result.get("resultType").and_then(Value::as_str),
+        Some("complete")
+    );
     assert!(
         result
             .get("supportedVersions")

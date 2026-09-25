@@ -1,0 +1,24 @@
+{
+  "name": "@sylphx/anymd-win32-x64-msvc",
+  "version": "8.0.0",
+  "description": "anymd native binary for win32-x64-msvc. Installed as an optional dependency of @sylphx/anymd.",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "anymd.exe"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://sylphxai.github.io/anymd/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SylphxAI/anymd.git",
+    "directory": "packages/npm/win32-x64-msvc"
+  }
+}

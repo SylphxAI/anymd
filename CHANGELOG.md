@@ -1,5 +1,22 @@
 # Changelog
 
+## 8.0.0
+
+### Major Changes
+
+- The npm packages follow the [mcp-kit](https://github.com/SylphxAI/mcp-kit) layout. `@sylphx/anymd` is now only a small launcher (`bin/anymd.js`) that runs the binary from the matching `@sylphx/anymd-<platform>` package; the platform packages ship the binary at their root. The `@sylphx/citra` and `@sylphx/pdf-reader-mcp` aliases run the same launcher. MCP client configs (`npx -y @sylphx/anymd`) need no change.
+- Removed the `@sylphx/anymd/sdk` and `@sylphx/anymd/pure-rust` exports, the `Anymd`/`Citra` SDK classes, and the `CITRA_RUST_BIN` variable. Use the `anymd` CLI, or connect an MCP client to `anymd mcp`. The package no longer ships `examples/` or `corpus/`.
+- The binary override is `ANYMD_BIN=/path/to/anymd`; `ANYMD_RUST_BIN` still works.
+
+### Minor Changes
+
+- `anymd setup` adds anymd to the MCP clients on this machine (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI). `--dry-run` previews the changes, `--remove` undoes them, and running it again changes nothing. Try `npx -y @sylphx/anymd setup`.
+- `anymd version` prints `anymd X.Y.Z`. The binary, the npm packages and the MCP Registry entry now carry one version (the Rust crates were at 3.1.1).
+
+### Patch Changes
+
+- Releases publish through the shared mcp-kit release workflow: 5 native builds, npm trusted publishing, an `npx` smoke test, the GitHub release and the MCP Registry entry, whenever `main` carries a version that is not on npm yet. The Changesets flow and the release admission gate (`release/admission.json`, the capability matrix and its review specs) are retired.
+
 ## 7.1.1
 
 ### Patch Changes

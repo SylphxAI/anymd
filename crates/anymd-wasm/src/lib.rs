@@ -80,7 +80,7 @@ pub fn estimate_tokens(text: &str) -> usize {
 /// anymd version this module was built from.
 #[wasm_bindgen]
 pub fn version() -> String {
-    env!("ANYMD_VERSION").to_string()
+    env!("CARGO_PKG_VERSION").to_string()
 }
 
 /// Rust-side entry (also used by native tests).

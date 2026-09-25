@@ -1,7 +1,5 @@
 node_modules/
 target/
-bin/native/*
-!bin/native/.gitkeep
 build/
 *.log
 coverage/
@@ -19,24 +17,9 @@ test-report.junit.xml
 **/.pdf-reader-mcp/
 dist/
 
-# Staged native packaging outputs — never commit host binaries. A stale
-# pattern once let packages/*/bin/<binary> be tracked, which made every Release
-# run fail at "Create release PR" because changesets/action commitMode=github-api
-# refuses executable files. Keep one pattern per binary name ever shipped.
-bin/native/**/anymd
-bin/native/**/anymd.exe
-packages/**/bin/anymd
-packages/**/bin/anymd.exe
-bin/native/**/citra-mcp-server
-bin/native/**/citra-mcp-server.exe
-packages/**/bin/citra-mcp-server
-packages/**/bin/citra-mcp-server.exe
-# Pre-rename names, kept so any stale checkout stays ignored.
-bin/native/**/pdf-reader-mcp-server
-bin/native/**/pdf-reader-mcp-server.exe
-bin/native/pdf-reader-mcp-server
-packages/**/bin/pdf-reader-mcp-server
-packages/**/bin/pdf-reader-mcp-server.exe
+# Native binaries the release workflow stages into the platform packages.
+packages/npm/*/anymd
+packages/npm/*/anymd.exe
 
 *.tgz
 

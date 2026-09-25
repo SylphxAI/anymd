@@ -13,6 +13,7 @@ pub mod read_pdf;
 mod region_analysis_evidence;
 pub mod schema;
 pub mod search;
+pub mod setup;
 pub mod source_access;
 pub mod tool_routes;
 mod visual_evidence;
@@ -38,8 +39,8 @@ use crate::source_access::SourceAccessPolicy;
 use serde_json::Value;
 
 pub const SERVER_NAME: &str = "anymd";
-/// Pure-Rust MCP server version — tracks the published npm product line when default.
-pub const SERVER_VERSION: &str = "7.1.1";
+/// The product version: the workspace version, set with `bun scripts/set-version.ts`.
+pub const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
     "Local document reader for agents. read turns any file, URL, or directory listing into clean \
@@ -912,20 +913,5 @@ mod tests {
             .await
             .expect_err("pdf_evidence must reject outside path");
         assert!(evidence_error.message.contains("Access denied"));
-    }
-
-    #[test]
-    fn server_version_tracks_package_or_experimental_marker() {
-        // Sole-runtime default may advertise the package version; pre-cutover
-        // builds keep an experimental marker.
-        assert!(
-            super::SERVER_VERSION.contains("experimental")
-                || super::SERVER_VERSION.starts_with("0.")
-                || super::SERVER_VERSION
-                    .split('.')
-                    .take(1)
-                    .all(|part| part.chars().all(|c| c.is_ascii_digit()))
-        );
-        assert_ne!(super::SERVER_VERSION, "3.1.1");
     }
 }

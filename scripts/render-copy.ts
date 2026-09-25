@@ -106,7 +106,7 @@ export const targets = (p: Product): Target[] => [
       return fillRegion(out, 'also-from', alsoFromList(p));
     },
   },
-  jsonTarget('package.json', (j) => {
+  jsonTarget('packages/anymd/package.json', (j) => {
     j['description'] = p.description;
     j['keywords'] = [p.name, ...p.keywords];
   }),

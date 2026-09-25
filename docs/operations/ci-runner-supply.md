@@ -88,15 +88,7 @@ What was true on the cluster side during the offline windows, observed directly:
   the queue drains across every repository.
 
 So the condition is **upstream runner supply in `SylphxAI/hands` /
-`SylphxAI/cloud`**, not a property of this repository. Two consequences worth
-recording:
-
-1. **A queued job is not a failed job.** Every outage so far has drained: the
-   jobs completed on their own once supply returned. Do not re-push, re-run, or
-   loosen a gate because a queue looks stuck.
-2. **The admission gate interacts badly with this.** A release-blocking doc or
-   workflow change moves HEAD past the review pin, so the next publish needs a
-   fresh pin — and each re-pin is itself a new run queued behind the outage. That
-   is why `docs/**` and `.github/workflows/**` are now pin paths
-   (`scripts/check-verified-candidate-admission.ts`): the gate should block on
-   unreviewed code, not on the release's own paperwork.
+`SylphxAI/cloud`**, not a property of this repository. A queued job is not a
+failed job: every outage so far has drained, and the jobs completed on their
+own once supply returned. Do not re-push, re-run, or loosen a gate because a
+queue looks stuck.

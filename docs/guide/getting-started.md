@@ -8,6 +8,14 @@ npx -y @sylphx/anymd
 
 Node 18+ is the only requirement; npm installs the native binary for your platform. No API key, no account.
 
+To add anymd to every MCP client on your machine at once (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI):
+
+```bash
+npx -y @sylphx/anymd setup     # --dry-run to preview, --remove to undo
+```
+
+It is safe to run again. The sections below add it to one client by hand.
+
 ## Claude Code
 
 ```bash

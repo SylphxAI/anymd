@@ -17,7 +17,11 @@ Usage:
   anymd search <query> [path|url...]  Search files and directories (default: .)
   anymd mcp [--allow-dir=<path>]...   Run the MCP server on stdio
                                       (also the default when stdin is piped and no file is given)
+  anymd setup [--dry-run] [--remove]  Add anymd to the MCP clients on this machine
+                                      (Claude Code, Codex, Cursor, VS Code, Claude Desktop,
+                                      Windsurf, Gemini CLI); --remove undoes it
   anymd doctor                        Print version and optional tool availability
+  anymd version                       Print the version
 
 Read options:
   -p, --pages <spec>       Pages, slides, sheets, or chapters, e.g. 1-5,8
@@ -48,6 +52,8 @@ images (metadata + OCR), audio/video (metadata, chapters, subtitles), SRT/VTT.";
 pub enum Mode {
     Mcp,
     Doctor,
+    Version,
+    Setup(Vec<String>),
     Cli(Vec<String>),
 }
 
@@ -57,6 +63,8 @@ pub fn mode(arguments: &[String]) -> Mode {
     match arguments.first().map(String::as_str) {
         Some("mcp") | Some("serve") => return Mode::Mcp,
         Some("doctor") => return Mode::Doctor,
+        Some("version") => return Mode::Version,
+        Some("setup") => return Mode::Setup(arguments[1..].to_vec()),
         _ => {}
     }
     let only_server_flags = arguments

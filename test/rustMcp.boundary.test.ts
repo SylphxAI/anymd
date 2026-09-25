@@ -2,17 +2,28 @@ import { describe, expect, it } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { resolveServerPath } from './utils/cargoBinaries.js';
+import { productVersion, repoRoot, resolveServerPath } from './utils/cargoBinaries.js';
 
-const repoRoot = path.resolve(import.meta.dirname, '..');
 const rustServerBin = resolveServerPath();
-const stagedRustBin = path.join(repoRoot, 'bin/native/anymd');
 const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
 
 describe('MCP transport boundary (pure-Rust)', () => {
   it('builds the rmcp stdio server binary for the production process path', () => {
     expect(existsSync(rustServerBin)).toBe(true);
-    expect(existsSync(stagedRustBin)).toBe(true);
+  });
+
+  it('prints the product version, which the release smoke test runs', () => {
+    const result = spawnSync(rustServerBin, ['version'], { encoding: 'utf8' });
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe(`anymd ${productVersion}`);
+  });
+
+  it('previews MCP client registration without writing', () => {
+    const result = spawnSync(rustServerBin, ['setup', '--dry-run', '--client=cursor'], {
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('anymd setup (dry run)');
   });
 
   it('reports doctor diagnostics from the default Rust MCP entrypoint', () => {

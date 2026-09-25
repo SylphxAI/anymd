@@ -38,7 +38,13 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 
 ## Install
 
-Every MCP client runs the same command, `npx -y @sylphx/anymd`. Node 18+ is the only requirement; npm installs the native binary for your platform.
+Add anymd to every MCP client on your machine (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI) with one command:
+
+```bash
+npx -y @sylphx/anymd setup     # --dry-run to preview, --remove to undo
+```
+
+Or add it by hand: every MCP client runs the same command, `npx -y @sylphx/anymd`. Node 18+ is the only requirement; npm installs the native binary for your platform.
 
 <details open>
 <summary><b>Claude Code</b></summary>

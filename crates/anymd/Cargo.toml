@@ -24,8 +24,8 @@ axum = "0.8"
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 command-group = { version = "5", features = ["with-tokio"] }
-anymd-core = { path = "../anymd-core", version = "3.1.1" }
-anymd-formats = { path = "../anymd-formats", version = "3.1.1" }
+anymd-core = { path = "../anymd-core" }
+anymd-formats = { path = "../anymd-formats" }
 ignore = "0.4"
 url = "2"
 rmcp = { version = "3.1.2", features = ["server", "macros", "schemars", "transport-io", "transport-streamable-http-server"] }
@@ -34,6 +34,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 subtle = "2"
+sylphx-mcp-kit = { git = "https://github.com/SylphxAI/mcp-kit", tag = "v0.1.1" }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }

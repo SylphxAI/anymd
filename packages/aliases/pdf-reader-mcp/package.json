@@ -1,0 +1,39 @@
+{
+  "name": "@sylphx/pdf-reader-mcp",
+  "version": "8.0.0",
+  "description": "pdf-reader-mcp is now @sylphx/anymd. Any file → clean Markdown for AI agents. Compatibility alias that runs anymd as `pdf-reader-mcp`.",
+  "bin": {
+    "pdf-reader-mcp": "bin/pdf-reader-mcp.js"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "dependencies": {
+    "@sylphx/anymd": "8.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SylphxAI/anymd.git",
+    "directory": "packages/aliases/pdf-reader-mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/SylphxAI/anymd/issues"
+  },
+  "homepage": "https://sylphxai.github.io/anymd/",
+  "author": "Sylphx <contact@sylphx.com> (https://sylphx.com)",
+  "license": "MIT",
+  "keywords": [
+    "anymd",
+    "markdown",
+    "mcp",
+    "pdf-to-markdown",
+    "pdf-reader-mcp"
+  ]
+}

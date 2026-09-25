@@ -1,86 +1,44 @@
-name: Release
+name: release
+
+# Publishes when packages/anymd/package.json carries a version that is not on
+# npm yet, through the shared mcp-kit release workflow: 5 native binaries ->
+# npm (natives, @sylphx/anymd, then the citra and pdf-reader-mcp aliases) ->
+# npx smoke test -> GitHub release -> MCP Registry. Bump with
+# `bun scripts/set-version.ts X.Y.Z` in a pull request. npm trusted publishing
+# trusts this file (SylphxAI/anymd, release.yml) for all 8 packages.
 
 on:
   push:
-    branches:
-      - main
-
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
-    name: Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create release bot token
-        id: release-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.RELEASE_APP_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
-
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          token: ${{ steps.release-token.outputs.token }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: '1.4.0'
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Check Code Quality (Biome)
-        run: bun run check
-
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build package
-        run: bun run build:package
-
-      - name: Build Rust MCP server
-        run: bun run build:rust
-
-      - name: Verify package tarball
-        run: bun run package:smoke
-
-      - name: Run Tests and Check Coverage
-        run: bun run test:cov
-
-      - name: Build docs
-        run: bun run docs:build
-
-      # Keep this as a standalone shell boundary. changesets/action executes
-      # `publish` directly, so shell operators embedded in that input do not
-      # enforce a failing freeze.
-      - name: Enforce verified-candidate admission (trunk)
-        # Trunk Release is post-merge (often squash). Exact PR tip SHAs are not
-        # ancestors of squash commits, so require-exact-head belongs on publish-npm
-        # of an intentional release ref, not ordinary main pushes.
-        run: bun scripts/check-verified-candidate-admission.ts
-
-      - name: Create release PR
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          # Use node entrypoint (bun package-bin arg parsing is brittle here).
-          # Sync native optional package manifests + server.json after version bump.
-          version: bash scripts/release-version.sh
-          title: 'chore(release): version packages'
-          commit: 'chore(release): version packages'
-          commitMode: github-api
-          github-token: ${{ steps.release-token.outputs.token }}
-        env:
-          GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
+    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@v0
+    # packages: write is only used by the kit's optional GHCR image job, which
+    # anymd skips; GitHub still checks every called job's permissions.
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    with:
+      name: anymd
+      cargo-package: anymd
+      npm-package: '@sylphx/anymd'
+      mcp-name: io.github.SylphxAI/anymd
+      alias-dirs: packages/aliases/citra packages/aliases/pdf-reader-mcp
+      retired-mcp-names: io.github.SylphxAI/citra io.github.SylphxAI/pdf-reader-mcp
+      retired-message: Renamed to anymd. Use io.github.SylphxAI/anymd (npm @sylphx/anymd).
+      smoke: |
+        npx -y "@sylphx/anymd@$V" version
+        npx -y "@sylphx/anymd@$V" "$GITHUB_WORKSPACE/test/fixtures/sample.pdf" | tee sample.md
+        grep -q '<!-- page 1 -->' sample.md
+        npx -y "@sylphx/citra@$V" version
+        npx -y "@sylphx/pdf-reader-mcp@$V" version

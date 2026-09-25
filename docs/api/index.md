@@ -225,25 +225,16 @@ harness.
 
 ## Quality Gates
 
-Use these commands before publishing:
+Run these before opening a pull request; CI runs the same set:
 
 ```bash
 bun run check
+bun run check:versions
 bun run typecheck
-bun run build:rust
+bun run build              # cargo build --release -p anymd
 bun run test:rust          # set ANYMD_CORPUS_DIR to include the Markdown corpus regression
-bun run build
-bun run package:smoke
-bun run test:cov
+bun run test:cov           # TypeScript tests that drive the built binary over MCP
 bun run docs:build
 ```
 
-`bun run release:preflight` runs the JavaScript side of the same gate.
-`package:smoke` packs the package locally and verifies that the tarball ships
-only the sole-Rust launcher (`dist/runtime-entry.js`, `dist/pure-rust.js`,
-`dist/sdk.js`) with matching `bin` and `exports` metadata, plus the public
-corpus and provider-accuracy manifests under `corpus/`.
-
-Release admission is enforced by
-`bun scripts/check-verified-candidate-admission.ts`; the publish workflows run
-it with `--require-exact-head`.
+Publishing is described in [PUBLISH.md](../PUBLISH.md).

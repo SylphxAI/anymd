@@ -10,8 +10,8 @@ anymd was called **pdf-reader-mcp**, then **Citra**. Existing setups keep workin
 | `npx -y @sylphx/citra` (bin `citra`) | `npx -y @sylphx/anymd` |
 | MCP registry `io.github.SylphxAI/pdf-reader-mcp`, `io.github.SylphxAI/citra` | `io.github.SylphxAI/anymd` |
 | `@sylphx/citra-<platform>` native packages | `@sylphx/anymd-<platform>` |
-| `CITRA_RUST_BIN` | `ANYMD_RUST_BIN` (the old name is still read by the SDK) |
-| SDK class `Citra` | `Anymd` (`Citra` stays as a deprecated alias) |
+| `CITRA_RUST_BIN` | `ANYMD_BIN` (`ANYMD_RUST_BIN` still works) |
+| SDK `@sylphx/anymd/sdk` (class `Anymd` or `Citra`) | Removed in 8.0.0. Run the `anymd` CLI, or connect to `anymd mcp` with an MCP client |
 
 `@sylphx/pdf-reader-mcp` and `@sylphx/citra` are published at the same version as thin aliases that run anymd, so old configs need no change. For new installs, and to get a shorter server name in your client, switch the command to `npx -y @sylphx/anymd`.
 
