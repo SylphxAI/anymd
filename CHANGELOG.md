@@ -1,5 +1,49 @@
 # Changelog
 
+## 7.0.0
+
+### Major Changes
+
+- [#745](https://github.com/SylphxAI/anymd/pull/745) [`2f7fe33`](https://github.com/SylphxAI/anymd/commit/2f7fe33a70a663ed75987facdb842e8e9770aeb6) Thanks [@shtse8](https://github.com/shtse8)! - Read any document, not just PDFs, through three obvious tools.
+  
+  - `read {source}`: a path, http(s) URL, or directory. Formats: PDF, DOCX, PPTX, XLSX/XLS/ODS, CSV/TSV, EPUB, HTML and web pages (main-content extraction, SSRF-guarded fetch), Markdown/text, images (metadata plus OCR with a local tesseract), audio/video (ffprobe metadata, chapters, embedded and sidecar subtitles, optional whisper.cpp transcript), and SRT/VTT. Pages, slides, sheets, and chapters get citation markers, and `pages`, `max_tokens`, and `cursor` work for every format. Image-only PDF pages are OCR'd automatically when tesseract is installed.
+  - `search {query, sources}`: files, directories (recursive, .gitignore aware, `glob` filter), and URLs across every format. `mode` auto finds the exact phrase and falls back to BM25-ranked passages when there is none.
+  - `inspect {operation, sources}`: the PDF deep dive. It renders, crops, runs OCR or provider analysis, returns structured JSON (`structure`), and diffs two PDFs (`compare`).
+  - `read_pdf`, `search_pdf`, `pdf_evidence`, and `pdf_compare` still work under their old names for this major version, but tools/list no longer shows them.
+
+- [#740](https://github.com/SylphxAI/anymd/pull/740) [`2434a3c`](https://github.com/SylphxAI/anymd/commit/2434a3cfeb4a2798a34c3835237feca641679488) Thanks [@shtse8](https://github.com/shtse8)! - read_pdf and search_pdf now answer in clean, compact Markdown by default.
+  
+  - New PDF layout engine: word spaces inferred from glyph gaps (fixes "Thedominantsequence…" glued words), two-column reading order, headings, lists, sub/superscripts, running header/footer removal, and pipe tables.
+  - A sources-only read_pdf returns Markdown with `<!-- page N -->` markers and a small front-matter header instead of a 2 MB JSON envelope (Attention Is All You Need: 2.06 MB / 703k tokens → 42 KB / 11k tokens, 1.0 s → 0.1 s).
+  - Long documents stop at `max_tokens` (default 20000) and end with a `cursor` to continue; large documents with bookmarks get a short outline.
+  - search_pdf returns one line per hit: page number plus a snippet with the match in bold.
+  - The structured JSON (document map, elements, geometry, trust and accessibility reports) is still available: pass `profile` (fast, quality, research) or any `include_*` flag to read_pdf, or `detail: true` to search_pdf.
+
+- [#741](https://github.com/SylphxAI/anymd/pull/741) [`4d7adfd`](https://github.com/SylphxAI/anymd/commit/4d7adfd58c06ef4616bc28d0846c7e0d50205b7d) Thanks [@shtse8](https://github.com/shtse8)! - Rename to **anymd** — any file → clean Markdown for AI agents.
+  
+  - The npm package is now `@sylphx/anymd` with the `anymd` bin; the MCP registry
+    name is `io.github.SylphxAI/anymd`; the repository is `SylphxAI/anymd`; docs
+    live at https://sylphxai.github.io/anymd/.
+  - Native optional packages are renamed `@sylphx/anymd-<platform>` and ship the
+    binary `anymd` (`anymd.exe` on Windows).
+  - The MCP server identifies itself as `anymd`.
+  - `ANYMD_RUST_BIN` replaces `CITRA_RUST_BIN` (the old name is still read by the
+    SDK) and `ANYMD_NPM_PROVENANCE` replaces `CITRA_NPM_PROVENANCE`.
+  - The SDK class is `Anymd`; `Citra` stays exported as a deprecated alias.
+  - `@sylphx/citra` (bin `citra`) and `@sylphx/pdf-reader-mcp` (bin
+    `pdf-reader-mcp`) keep working: both are thin alias packages published at the
+    same version, depending on `@sylphx/anymd` and running its launcher.
+    Existing `npx -y @sylphx/citra` and `npx -y @sylphx/pdf-reader-mcp` configs
+    keep working; new installs should use `npx -y @sylphx/anymd`.
+
+### Minor Changes
+
+- [#746](https://github.com/SylphxAI/anymd/pull/746) [`89f3bd7`](https://github.com/SylphxAI/anymd/commit/89f3bd70419d5eb436616824fae5f279762fcf17) Thanks [@shtse8](https://github.com/shtse8)! - The same binary is now a CLI, like MarkItDown but faster: `anymd paper.pdf > paper.md` prints Markdown to stdout. It handles several files, URLs, directories (lists their readable files), and stdin (`cat deck.pptx | anymd -`). Options: `-p/--pages`, `-o/--output`, `--max-tokens` and `--cursor`, `--ocr`/`--no-ocr`, and `--transcript`. `anymd search "<query>" [paths...]` searches files and directories from the terminal, and `anymd doctor` reports which optional tools (tesseract, ffprobe, ffmpeg, whisper.cpp) it found. When run with no file arguments and a piped stdin (how MCP clients launch it), or as `anymd mcp`, it serves MCP over stdio as before.
+
+### Patch Changes
+
+- [#747](https://github.com/SylphxAI/anymd/pull/747) [`494a2a6`](https://github.com/SylphxAI/anymd/commit/494a2a69c9b1e9c0d16b8962de69db9da0b929a9) Thanks [@shtse8](https://github.com/shtse8)! - A new README and docs site that lead with features, plus a reproducible head-to-head benchmark: anymd, docling, MarkItDown, kreuzberg, and pdftotext run on 12 real documents, measuring time, output tokens, intact sentences, table rows, and reading order (`bench/`, Benchmark workflow).
+
 ## 6.0.0
 
 ### Major Changes
