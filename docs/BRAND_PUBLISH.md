@@ -40,9 +40,9 @@ npx @sylphx/anymd
 ## Former names (aliases)
 
 `@sylphx/citra` and `@sylphx/pdf-reader-mcp` are live aliases of
-`@sylphx/anymd`, published at the same version by `publish-npm.yml`. That
-workflow reports a lingering deprecation notice (OIDC authenticates only
-`npm publish`); an owner clears it by hand:
+`@sylphx/anymd`, published at the same version by `publish-npm.yml` through npm
+trusted publishing. Deprecation is a one-off owner action outside the release;
+to clear a notice:
 
 ```bash
 npm deprecate "@sylphx/pdf-reader-mcp@*" ""

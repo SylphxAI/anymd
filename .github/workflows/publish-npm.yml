@@ -14,11 +14,6 @@ on:
         description: 'Type I_UNDERSTAND_USER_IMPACT to publish (admission gate still enforced)'
         required: true
         default: ''
-      use_token_fallback:
-        description: 'Transitional: authenticate with the NPM_TOKEN secret instead of OIDC (only until every package has its trusted publisher)'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -218,50 +213,9 @@ jobs:
           echo "PREVIOUS_VERSION=$PREVIOUS_VERSION" >> "$GITHUB_ENV"
 
       - name: Publish natives, then main, then aliases
-        env:
-          USE_TOKEN_FALLBACK: ${{ inputs.use_token_fallback && 'true' || 'false' }}
-          NPM_TOKEN: ${{ inputs.use_token_fallback && secrets.NPM_TOKEN || '' }}
-        run: |
-          set -euo pipefail
-          if [ "$USE_TOKEN_FALLBACK" = "true" ]; then
-            if [ -z "${NPM_TOKEN:-}" ]; then
-              echo "::error::use_token_fallback=true but the NPM_TOKEN secret is absent; publish through OIDC instead" >&2
-              exit 1
-            fi
-            echo "::warning::publishing with the transitional NPM_TOKEN fallback, not trusted publishing"
-            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
-          else
-            # npm exchanges the job's GitHub OIDC token for a short-lived,
-            # per-package publish token. No npmrc credential is written.
-            echo "publishing through npm trusted publishing (GitHub OIDC)"
-          fi
-          bun run release:publish-with-natives
-
-      - name: Clear npm deprecation on the former names
-        env:
-          NPM_TOKEN: ${{ inputs.use_token_fallback && secrets.NPM_TOKEN || '' }}
-        run: |
-          set -uo pipefail
-          # @sylphx/citra and @sylphx/pdf-reader-mcp are live aliases of
-          # @sylphx/anymd, so any old "retired" deprecation must stay cleared.
-          # OIDC authenticates only npm publish, not npm deprecate, so this runs
-          # only on the token fallback; otherwise it checks and reports.
-          # Non-fatal either way: the packages are already published.
-          for name in @sylphx/pdf-reader-mcp @sylphx/citra; do
-            notice="$(npm view "$name" deprecated 2>/dev/null || true)"
-            if [ -z "$notice" ]; then
-              echo "${name}: no deprecation notice"
-              continue
-            fi
-            if [ -n "${NPM_TOKEN:-}" ]; then
-              printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
-              if npm deprecate "${name}@*" ""; then
-                echo "cleared deprecation on ${name}"
-                continue
-              fi
-            fi
-            echo "::warning::${name} is still deprecated; an owner clears it with: npm deprecate \"${name}@*\" \"\""
-          done
+        # npm trusted publishing: npm exchanges the job's GitHub OIDC token for
+        # a short-lived per-package publish token. No stored npm credential.
+        run: bun run release:publish-with-natives
 
       - name: Registry readback (main + host optional)
         run: |
