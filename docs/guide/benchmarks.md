@@ -199,7 +199,7 @@ pinned by SHA-256. Generated from `bench/corpus.json`:
 
 ```bash
 python3 bench/fetch.py .cache/bench-corpus          # download and verify the corpus
-cargo build --release -p pdf-reader-mcp-server     # anymd
+cargo build --release -p anymd     # anymd
 python3 -m venv .venv && .venv/bin/pip install -r bench/requirements/harness.txt -r bench/requirements/markitdown.txt
 
 ANYMD_BIN=target/release/anymd .venv/bin/python bench/run.py --tool anymd \

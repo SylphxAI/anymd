@@ -68,7 +68,7 @@ jobs:
               # Publish gate requires GLIBC <= 2.35. Host cargo on modern runners
               # can link newer glibc (e.g. 2.39). Use cargo-zigbuild for portable 2.17.
               cargo install cargo-zigbuild --version 0.23.0 --locked
-              cargo zigbuild --release -p pdf-reader-mcp-server --target ${{ matrix.target }}.2.17
+              cargo zigbuild --release -p anymd --target ${{ matrix.target }}.2.17
               ;;
             win32-x64-msvc)
               sudo apt-get update -y
@@ -83,10 +83,10 @@ jobs:
                 sudo ln -sf "$(command -v llvm-ar)" /usr/local/bin/llvm-lib
               fi
               cargo install cargo-xwin --locked --version '=0.18.4'
-              cargo xwin build --release -p pdf-reader-mcp-server --target ${{ matrix.target }}
+              cargo xwin build --release -p anymd --target ${{ matrix.target }}
               ;;
             *)
-              cargo build --release -p pdf-reader-mcp-server --target ${{ matrix.target }}
+              cargo build --release -p anymd --target ${{ matrix.target }}
               ;;
           esac
           if [[ "${{ matrix.platformId }}" == "win32-x64-msvc" ]]; then

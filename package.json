@@ -79,7 +79,7 @@
     "prepublishOnly": "bun run clean && bun run build:package && bun run package:smoke && bun run check:ts-production-absence && bun run check:prod-dependency-closure",
     "release:preflight": "bun run typecheck && bun run check && bun run build && bun run package:smoke && bun run test:cov && bun run docs:build",
     "release": "echo \"PUBLISH FREEZE: refusing release until capability parity is approved\" && exit 1",
-    "build:rust": "cargo build --release -p pdf-reader-core -p pdf-reader-cli -p pdf-reader-mcp-server && bun scripts/stage-rust-mcp.ts",
+    "build:rust": "cargo build --release -p anymd-core -p anymd && bun scripts/stage-rust-mcp.ts",
     "test:rust": "cargo test",
     "benchmark:pure-rust": "bun scripts/benchmark-pure-rust.ts",
     "check:production-contract": "bun scripts/check-production-contract.ts",

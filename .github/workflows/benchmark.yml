@@ -47,7 +47,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Build anymd
-        run: cargo build --release -p pdf-reader-mcp-server
+        run: cargo build --release -p anymd
 
       - uses: actions/upload-artifact@v7
         with:

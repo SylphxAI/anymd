@@ -1,5 +1,5 @@
 {
-  "description": "Real-world PDFs for the Markdown layout engine. Files are not vendored: scripts/fetch-markdown-corpus.sh downloads and SHA-256 verifies them, and crates/pdf-reader-core/tests/markdown_corpus.rs asserts the expectations when ANYMD_CORPUS_DIR is set.",
+  "description": "Real-world PDFs for the Markdown layout engine. Files are not vendored: scripts/fetch-markdown-corpus.sh downloads and SHA-256 verifies them, and crates/anymd-core/tests/markdown_corpus.rs asserts the expectations when ANYMD_CORPUS_DIR is set.",
   "cases": [
     {
       "id": "attention",

@@ -34,7 +34,7 @@ web should use Lookout.
 ## Evidence
 
 The guarantee is covered by the Rust tests in
-`crates/pdf-reader-core/src/url_fetch.rs`, including
+`crates/anymd-core/src/url_fetch.rs`, including
 `one_dns_resolution_is_pinned_to_the_actual_connection` and the redirect
 re-validation tests. The published artifact is the pure-Rust engine; residual
 TypeScript URL code is an oracle and not production authority.

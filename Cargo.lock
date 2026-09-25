@@ -116,6 +116,52 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
+name = "anymd"
+version = "3.1.1"
+dependencies = [
+ "anyhow",
+ "anymd-core",
+ "anymd-formats",
+ "axum",
+ "base64 0.22.1",
+ "chrono",
+ "command-group",
+ "ignore",
+ "rmcp",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2",
+ "subtle",
+ "tempfile",
+ "tokio",
+ "tokio-util",
+ "tower",
+ "ureq",
+ "url",
+]
+
+[[package]]
+name = "anymd-core"
+version = "3.1.1"
+dependencies = [
+ "anymd-pdf",
+ "base64 0.22.1",
+ "flate2",
+ "hayro",
+ "image",
+ "lopdf",
+ "pdf-extract",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "ureq",
+ "url",
+]
+
+[[package]]
 name = "anymd-formats"
 version = "3.1.1"
 dependencies = [
@@ -1711,61 +1757,6 @@ dependencies = [
  "type1-encoding-parser",
  "unicode-normalization",
  "ureq",
-]
-
-[[package]]
-name = "pdf-reader-cli"
-version = "3.1.1"
-dependencies = [
- "pdf-reader-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "pdf-reader-core"
-version = "3.1.1"
-dependencies = [
- "anymd-pdf",
- "base64 0.22.1",
- "flate2",
- "hayro",
- "image",
- "lopdf",
- "pdf-extract",
- "regex",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "ureq",
- "url",
-]
-
-[[package]]
-name = "pdf-reader-mcp-server"
-version = "3.1.1"
-dependencies = [
- "anyhow",
- "anymd-formats",
- "axum",
- "base64 0.22.1",
- "chrono",
- "command-group",
- "ignore",
- "pdf-reader-core",
- "rmcp",
- "schemars",
- "serde",
- "serde_json",
- "sha2",
- "subtle",
- "tempfile",
- "tokio",
- "tokio-util",
- "tower",
- "ureq",
- "url",
 ]
 
 [[package]]

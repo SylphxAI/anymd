@@ -126,9 +126,9 @@ jobs:
           set -euo pipefail
           echo "host=$(uname -s)-$(uname -m) nodeArch=$(node -p 'process.arch') required=${{ matrix.platformId }}"
           if [[ "${{ matrix.platformId }}" == "win32-x64-msvc" ]]; then
-            cargo xwin build --release -p pdf-reader-mcp-server --target ${{ matrix.target }}
+            cargo xwin build --release -p anymd --target ${{ matrix.target }}
           else
-            cargo build --release -p pdf-reader-mcp-server --target ${{ matrix.target }}
+            cargo build --release -p anymd --target ${{ matrix.target }}
           fi
           if [[ "${{ matrix.platformId }}" == "win32-x64-msvc" ]]; then
             src="target/${{ matrix.target }}/release/anymd.exe"

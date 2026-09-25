@@ -62,7 +62,7 @@ and commercial controls.
 ## Public Surfaces
 
 - MCP package and CLI: `package.json` → `dist/runtime-entry.js` (native only)
-- Rust core / server: `crates/pdf-reader-core`, `crates/pdf-reader-mcp-server`
+- Rust core / server: `crates/anymd-core`, `crates/anymd`
 - Public docs: `README.md`, `docs/`
 - Tool/spec docs: `docs/specs/`
 - CI: `.github/workflows/ci.yml`

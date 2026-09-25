@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check added lines for plain language
-        uses: SylphxAI/.github/.github/actions/plain-language@64598b859231c51f32d0be39630f36893d84f204
+        uses: SylphxAI/.github/.github/actions/plain-language@8eb02f8a9bd9c16c666829c5b1d315406df4dcdf
 
   validate:
     name: Validate Code Quality
