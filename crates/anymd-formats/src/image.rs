@@ -132,6 +132,28 @@ fn ocr_section(bytes: &[u8], format: &str) -> String {
     }
 }
 
+/// True when a local `tesseract` binary is on PATH.
+pub fn ocr_available() -> bool {
+    tool::find("tesseract").is_some()
+}
+
+/// OCR an image (PNG/JPEG/...) with the local `tesseract`; returns tidy text.
+pub fn ocr_text(bytes: &[u8], suffix: &str) -> Result<String, String> {
+    let tesseract = tool::find("tesseract")
+        .ok_or_else(|| "OCR needs `tesseract` installed (e.g. `apt install tesseract-ocr` or `brew install tesseract`).".to_string())?;
+    let file = tool::temp_file(bytes, suffix)?;
+    let path = file.path().as_os_str().to_owned();
+    let output = tool::run(&tesseract, [path.as_os_str(), "stdout".as_ref()], OCR_TIMEOUT)?;
+    if output.success {
+        Ok(tidy_ocr(&String::from_utf8_lossy(&output.stdout)))
+    } else {
+        Err(format!(
+            "tesseract failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ))
+    }
+}
+
 fn tidy_ocr(text: &str) -> String {
     let mut out = Vec::new();
     let mut blank = false;

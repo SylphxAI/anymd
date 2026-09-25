@@ -25,6 +25,9 @@ base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 command-group = { version = "5", features = ["with-tokio"] }
 pdf-reader-core = { path = "../pdf-reader-core", version = "3.1.1" }
+anymd-formats = { path = "../anymd-formats", version = "3.1.1" }
+ignore = "0.4"
+url = "2"
 rmcp = { version = "3.1.2", features = ["server", "macros", "schemars", "transport-io", "transport-streamable-http-server"] }
 schemars = { version = "1", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }

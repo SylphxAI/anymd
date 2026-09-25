@@ -384,6 +384,8 @@ const NOISE_TOKENS: &[&str] = &[
     "popup",
     "modal",
     "editsection",
+    "ambox",
+    "hatnote",
     "toolbar",
     "noprint",
     "catlinks",

@@ -22,6 +22,9 @@ use crate::text_index::TextIndexError;
 const MAX_GLYPHS_PER_PAGE: usize = 400_000;
 const MAX_WORKERS: usize = 8;
 
+/// A parsed PDF (lopdf document).
+pub type PdfDocument = Document;
+
 /// One page of converted Markdown.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MarkdownPage {
@@ -43,6 +46,20 @@ pub struct MarkdownDocument {
 /// Open a PDF from disk (decrypting with the empty password when needed).
 pub fn load_document(path: &Path) -> Result<Document, TextIndexError> {
     let mut doc = Document::load(path)
+        .map_err(|err| TextIndexError::extraction_failed(format!("Failed to open PDF: {err}")))?;
+    if doc.is_encrypted() {
+        doc.decrypt("").map_err(|err| {
+            TextIndexError::extraction_failed(format!(
+                "PDF is encrypted and needs a password: {err}"
+            ))
+        })?;
+    }
+    Ok(doc)
+}
+
+/// Open a PDF from memory (decrypting with the empty password when needed).
+pub fn load_document_bytes(bytes: &[u8]) -> Result<Document, TextIndexError> {
+    let mut doc = Document::load_mem(bytes)
         .map_err(|err| TextIndexError::extraction_failed(format!("Failed to open PDF: {err}")))?;
     if doc.is_encrypted() {
         doc.decrypt("").map_err(|err| {
@@ -1413,7 +1430,7 @@ fn resolve<'a>(doc: &'a Document, object: &'a Object) -> Option<&'a Object> {
     }
 }
 
-fn info_title(doc: &Document) -> Option<String> {
+pub fn info_title(doc: &Document) -> Option<String> {
     let info = resolve(doc, doc.trailer.get(b"Info").ok()?)?
         .as_dict()
         .ok()?;

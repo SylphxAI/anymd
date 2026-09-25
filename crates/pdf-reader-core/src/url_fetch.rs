@@ -33,11 +33,39 @@ impl ureq::Resolver for PinnedResolver {
     }
 }
 
+/// A fetched HTTP(S) body with the response facts a converter needs.
+#[derive(Debug, Clone)]
+pub struct FetchedUrl {
+    pub bytes: Vec<u8>,
+    pub content_type: Option<String>,
+    /// URL after redirects (base for relative links).
+    pub final_url: String,
+}
+
 fn fetch_url_to_temp_file_with<R, F>(
     url: &str,
     resolver: &R,
     is_denied: F,
 ) -> Result<PathBuf, String>
+where
+    R: DnsResolver,
+    F: Fn(IpAddr) -> bool + Copy,
+{
+    let fetched = fetch_url_with(url, resolver, is_denied)?;
+    let mut file = tempfile::Builder::new()
+        .prefix("pdf-reader-mcp-")
+        .suffix(".pdf")
+        .tempfile()
+        .map_err(|e| format!("secure temp file: {e}"))?;
+    file.write_all(&fetched.bytes)
+        .map_err(|e| format!("temp write: {e}"))?;
+    let (_file, path) = file
+        .keep()
+        .map_err(|e| format!("persist secure temp file: {}", e.error))?;
+    Ok(path)
+}
+
+fn fetch_url_with<R, F>(url: &str, resolver: &R, is_denied: F) -> Result<FetchedUrl, String>
 where
     R: DnsResolver,
     F: Fn(IpAddr) -> bool + Copy,
@@ -73,6 +101,8 @@ where
 
         let response = agent
             .get(parsed.as_str())
+            .set("User-Agent", concat!("anymd/", env!("CARGO_PKG_VERSION"), " (+https://github.com/SylphxAI/anymd)"))
+            .set("Accept", "*/*")
             .call()
             .map_err(|e| format!("URL fetch failed: {e}"))?;
 
@@ -92,6 +122,8 @@ where
             return Err(format!("URL fetch returned HTTP {status}."));
         }
 
+        let content_type = response.header("content-type").map(str::to_string);
+        let final_url = parsed.to_string();
         let mut reader = response.into_reader().take(MAX_BYTES + 1);
         let mut bytes = Vec::new();
         std::io::copy(&mut reader, &mut bytes)
@@ -104,18 +136,11 @@ where
         if bytes.is_empty() {
             return Err("URL body is empty.".into());
         }
-
-        let mut file = tempfile::Builder::new()
-            .prefix("pdf-reader-mcp-")
-            .suffix(".pdf")
-            .tempfile()
-            .map_err(|e| format!("secure temp file: {e}"))?;
-        file.write_all(&bytes)
-            .map_err(|e| format!("temp write: {e}"))?;
-        let (_file, path) = file
-            .keep()
-            .map_err(|e| format!("persist secure temp file: {}", e.error))?;
-        return Ok(path);
+        return Ok(FetchedUrl {
+            bytes,
+            content_type,
+            final_url,
+        });
     }
     Err(format!("Too many redirects (>{MAX_REDIRECTS})."))
 }
@@ -140,6 +165,16 @@ pub fn fetch_url_to_temp_file(url: &str) -> Result<PathBuf, String> {
         fetch_url_to_temp_file_with(url, &SystemDnsResolver, |_| false)
     } else {
         fetch_url_to_temp_file_with(url, &SystemDnsResolver, is_private_ip)
+    }
+}
+
+/// Fetch a URL body into memory with the same SSRF guard as
+/// [`fetch_url_to_temp_file`] (every redirect hop is re-validated and pinned).
+pub fn fetch_url(url: &str) -> Result<FetchedUrl, String> {
+    if env_allow_private_ips() {
+        fetch_url_with(url, &SystemDnsResolver, |_| false)
+    } else {
+        fetch_url_with(url, &SystemDnsResolver, is_private_ip)
     }
 }
 

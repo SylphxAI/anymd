@@ -81,6 +81,8 @@ pub enum Format {
     Video,
     /// Markdown, plain text, JSON, XML, source code: passed through as-is.
     Text,
+    /// SubRip / WebVTT subtitles.
+    Subtitles,
 }
 
 impl Format {
@@ -97,6 +99,7 @@ impl Format {
             Self::Image => "image",
             Self::Video => "video",
             Self::Text => "text",
+            Self::Subtitles => "subtitles",
         }
     }
 }
@@ -132,6 +135,7 @@ pub fn detect(path: Option<&Path>, head: &[u8]) -> Option<Format> {
         Some("pptx") => Some(Format::Pptx),
         Some("xlsx" | "xlsm" | "xls" | "ods") => Some(Format::Xlsx),
         Some("csv") => Some(Format::Csv),
+        Some("srt" | "vtt") => Some(Format::Subtitles),
         Some("tsv" | "tab") => Some(Format::Tsv),
         Some("epub") => Some(Format::Epub),
         Some("html" | "htm" | "xhtml") => Some(Format::Html),
@@ -187,6 +191,15 @@ pub fn convert(format: Format, bytes: &[u8], options: &Options) -> Result<Conver
             sections: vec![Section {
                 label: "document".into(),
                 markdown: String::from_utf8_lossy(bytes).into_owned(),
+            }],
+            metadata: Vec::new(),
+        }),
+        Format::Subtitles => Ok(Converted {
+            format: "subtitles".into(),
+            title: None,
+            sections: vec![Section {
+                label: "subtitles".into(),
+                markdown: video::subtitles_to_markdown(&String::from_utf8_lossy(bytes)),
             }],
             metadata: Vec::new(),
         }),

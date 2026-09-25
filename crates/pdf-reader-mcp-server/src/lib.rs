@@ -1,5 +1,6 @@
 mod command_provider;
 pub mod discover_compat;
+pub mod document;
 pub mod evidence;
 pub mod http_transport;
 pub mod lean;
@@ -28,7 +29,10 @@ use rmcp::{
     tool, tool_handler, tool_router, ErrorData, ServerHandler,
 };
 
-use crate::schema::{ComparePdfArgs, PdfEvidenceArgs, PdfEvidenceOperation, ReadPdfArgs, SearchPdfArgs};
+use crate::schema::{
+    ComparePdfArgs, InspectArgs, InspectOperation, PdfEvidenceArgs, PdfEvidenceOperation, ReadArgs,
+    ReadPdfArgs, SearchArgs, SearchPdfArgs,
+};
 use crate::source_access::SourceAccessPolicy;
 use serde_json::Value;
 
@@ -37,9 +41,10 @@ pub const SERVER_NAME: &str = "citra";
 pub const SERVER_VERSION: &str = "6.0.0";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
-    "Reads PDFs locally and returns clean Markdown with page markers (read_pdf), finds text \
-with page locators (search_pdf), and renders, crops, or OCRs pages on request (pdf_evidence). \
-Long documents return a cursor to continue. No cloud API key is required.";
+    "Local document reader for agents. read turns any file, URL, or directory listing into clean \
+Markdown (PDF, Office, EPUB, HTML, CSV, images, media) with page/slide/sheet markers and a cursor \
+for long documents. search finds text across files and directories with page locators. inspect \
+renders, crops, OCRs, diffs, or returns structured JSON for PDFs. No cloud API key is required.";
 
 fn omit_absent_optional_fields(value: Value) -> Value {
     match value {
@@ -164,8 +169,48 @@ fn uses_2026_envelope(context: &RequestContext<RoleServer>) -> bool {
 #[tool_router]
 impl PdfReaderMcp {
     #[tool(
-        description = "Read PDFs (local path or URL) as clean Markdown: headings, paragraphs, lists, and tables, with <!-- page N --> markers for citation. Long documents stop at max_tokens (default 20000) and return a cursor to continue; pick pages with sources[].pages (e.g. \"1-5,8\"). Opt-in detail: profile fast|quality|research or any include_* flag returns the structured JSON (document map, elements, geometry, trust and accessibility reports); include_ocr_text_layer runs OCR."
+        description = "Read any document as clean Markdown: PDF, Word (DOCX), PowerPoint (PPTX), Excel (XLSX/XLS/ODS), CSV, EPUB, HTML or a web URL, Markdown/text, images (metadata + OCR), audio/video (metadata, chapters, subtitles). Pages/slides/sheets carry <!-- page N --> style markers for citation. Long documents stop at max_tokens (default 20000) and end with a cursor to continue; choose pages with pages: \"1-5,8\". A directory returns its readable files."
     )]
+    pub async fn read(
+        &self,
+        Parameters(args): Parameters<ReadArgs>,
+    ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        args.validate()
+            .map_err(|message| ErrorData::invalid_params(message, None))?;
+        let policy = self.source_access.clone();
+        tokio::task::spawn_blocking(move || lean::read(&args, &policy))
+            .await
+            .map_err(|error| ErrorData::internal_error(format!("read worker failed: {error}"), None))?
+    }
+
+    #[tool(
+        description = "Search documents for text: one file, many files, whole directories (recursive, .gitignore aware), or URLs, across every format read supports. Returns each hit as file + page/slide/sheet + a snippet with the match in bold. mode auto (default) finds the exact phrase and falls back to BM25-ranked passages when there is none; literal or ranked force one. Narrow directories with glob, e.g. \"*.pdf\"."
+    )]
+    pub async fn search(
+        &self,
+        Parameters(args): Parameters<SearchArgs>,
+    ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        args.validate()
+            .map_err(|message| ErrorData::invalid_params(message, None))?;
+        let policy = self.source_access.clone();
+        tokio::task::spawn_blocking(move || lean::search(&args, &policy))
+            .await
+            .map_err(|error| ErrorData::internal_error(format!("search worker failed: {error}"), None))?
+    }
+
+    #[tool(
+        description = "Deep PDF inspection when Markdown is not enough. operation: inspect (page facts, metadata), render_page (PNG images), extract_regions (crop bounding boxes), ocr_pages / analyze_regions (configured OCR or vision provider), structure (JSON with document map, elements, geometry; profile quality|research adds trust and accessibility reports), compare (page-level diff of sources[0] vs sources[1])."
+    )]
+    pub async fn inspect(
+        &self,
+        Parameters(args): Parameters<InspectArgs>,
+    ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        self.run_inspect(args).await
+    }
+}
+
+/// Legacy tool names, still callable (not listed) for one major version.
+impl PdfReaderMcp {
     pub async fn read_pdf(
         &self,
         Parameters(mut args): Parameters<ReadPdfArgs>,
@@ -176,7 +221,8 @@ impl PdfReaderMcp {
             .admit_pdf_sources(&mut args.sources)
             .map_err(|message| ErrorData::invalid_params(message, None))?;
         if !lean::read_wants_legacy(&args) {
-            return tokio::task::spawn_blocking(move || lean::read_pdf(&args))
+            let policy = self.source_access.clone();
+            return tokio::task::spawn_blocking(move || lean::read_pdf(&args, &policy))
                 .await
                 .map_err(|error| {
                     ErrorData::internal_error(format!("read_pdf worker failed: {error}"), None)
@@ -201,9 +247,6 @@ impl PdfReaderMcp {
         }
     }
 
-    #[tool(
-        description = "Compare two local PDFs at text and page level and report changed pages and terms."
-    )]
     pub async fn pdf_compare(
         &self,
         Parameters(args): Parameters<ComparePdfArgs>,
@@ -215,9 +258,6 @@ impl PdfReaderMcp {
         pdf_compare::pdf_compare(value)
     }
 
-    #[tool(
-        description = "Find text in PDFs: returns each match as page number plus a snippet with the hit in bold. Case-insensitive by default; whole_word for exact words. detail: true returns JSON with match geometry; include_ocr_text_layer searches OCR text."
-    )]
     pub async fn search_pdf(
         &self,
         Parameters(mut args): Parameters<SearchPdfArgs>,
@@ -228,7 +268,8 @@ impl PdfReaderMcp {
             .admit_pdf_sources(&mut args.sources)
             .map_err(|message| ErrorData::invalid_params(message, None))?;
         if !lean::search_wants_legacy(&args) {
-            return tokio::task::spawn_blocking(move || lean::search_pdf(&args))
+            let policy = self.source_access.clone();
+            return tokio::task::spawn_blocking(move || lean::search_pdf(&args, &policy))
                 .await
                 .map_err(|error| {
                     ErrorData::internal_error(format!("search_pdf worker failed: {error}"), None)
@@ -255,9 +296,6 @@ impl PdfReaderMcp {
         }
     }
 
-    #[tool(
-        description = "Focused PDF evidence operations. Pure-Rust supports inspect, bounded page rendering/crops, opt-in bounded command-provider OCR, and region analysis via command, HTTP URL, or ollama/openai-compatible/lmstudio/llamacpp presets."
-    )]
     pub async fn pdf_evidence(
         &self,
         Parameters(mut args): Parameters<PdfEvidenceArgs>,
@@ -288,6 +326,118 @@ impl PdfReaderMcp {
         } else {
             pdf_evidence::pdf_evidence(value)
         }
+    }
+}
+
+/// Legacy tool names that stay callable (unlisted) for one major version.
+pub const LEGACY_TOOL_NAMES: &[&str] = &["read_pdf", "search_pdf", "pdf_evidence", "pdf_compare"];
+
+fn legacy_args<T: serde::de::DeserializeOwned>(
+    request: &rmcp::model::CallToolRequestParams,
+) -> Result<T, ErrorData> {
+    let value = Value::Object(request.arguments.clone().unwrap_or_default());
+    serde_json::from_value(value).map_err(|error| {
+        ErrorData::invalid_params(format!("Invalid arguments for {}: {error}", request.name), None)
+    })
+}
+
+impl PdfReaderMcp {
+    async fn run_inspect(&self, args: InspectArgs) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        match args.operation {
+            InspectOperation::Compare => {
+                let paths: Vec<String> = args
+                    .sources
+                    .iter()
+                    .filter_map(|source| source.path.clone())
+                    .collect();
+                let [before, after] = paths.as_slice() else {
+                    return Err(ErrorData::invalid_params(
+                        "compare needs exactly two local PDF sources: [before, after].",
+                        None,
+                    ));
+                };
+                let before = self
+                    .source_access
+                    .admit_path(before)
+                    .map_err(|message| ErrorData::invalid_params(message, None))?;
+                let after = self
+                    .source_access
+                    .admit_path(after)
+                    .map_err(|message| ErrorData::invalid_params(message, None))?;
+                self.pdf_compare(Parameters(ComparePdfArgs {
+                    before,
+                    after,
+                    max_file_bytes: None,
+                    context_chars: None,
+                }))
+                .await
+            }
+            InspectOperation::Structure => {
+                let profile = args.profile.clone().unwrap_or_else(|| "fast".into());
+                if profile.eq_ignore_ascii_case("markdown") {
+                    return Err(ErrorData::invalid_params(
+                        "structure returns JSON; use read for Markdown.",
+                        None,
+                    ));
+                }
+                self.read_pdf(Parameters(ReadPdfArgs {
+                    sources: args.sources.iter().map(|source| source.as_pdf_source()).collect(),
+                    profile: Some(profile),
+                    ..Default::default()
+                }))
+                .await
+            }
+            operation => {
+                let operation = match operation {
+                    InspectOperation::Inspect => PdfEvidenceOperation::Inspect,
+                    InspectOperation::RenderPage => PdfEvidenceOperation::RenderPage,
+                    InspectOperation::ExtractRegions => PdfEvidenceOperation::ExtractRegions,
+                    InspectOperation::OcrPages => PdfEvidenceOperation::OcrPages,
+                    InspectOperation::AnalyzeRegions => PdfEvidenceOperation::AnalyzeRegions,
+                    InspectOperation::Structure | InspectOperation::Compare => unreachable!(),
+                };
+                self.pdf_evidence(Parameters(PdfEvidenceArgs {
+                    operation,
+                    sources: args.sources,
+                    sample_pages: args.sample_pages,
+                    include_metadata: args.include_metadata,
+                    scale: args.scale,
+                    max_pages: args.max_pages,
+                    max_regions: args.max_regions,
+                    max_pixels_per_page: args.max_pixels_per_page,
+                    include_image: args.include_image,
+                    timeout_ms: args.timeout_ms,
+                    max_output_chars: args.max_output_chars,
+                    languages: args.languages,
+                }))
+                .await
+            }
+        }
+    }
+
+    async fn call_legacy(
+        &self,
+        request: &rmcp::model::CallToolRequestParams,
+    ) -> Option<Result<rmcp::model::CallToolResult, ErrorData>> {
+        Some(match request.name.as_ref() {
+            "read_pdf" => match legacy_args(request) {
+                Ok(args) => self.read_pdf(Parameters(args)).await,
+                Err(error) => Err(error),
+            },
+            "search_pdf" => match legacy_args(request) {
+                Ok(args) => self.search_pdf(Parameters(args)).await,
+                Err(error) => Err(error),
+            },
+            "pdf_evidence" => match legacy_args(request) {
+                Ok(args) => self.pdf_evidence(Parameters(args)).await,
+                Err(error) => Err(error),
+            },
+            "pdf_compare" => match legacy_args(request) {
+                Ok(args) => self.pdf_compare(Parameters(args)).await,
+                Err(error) => Err(error),
+            },
+            _ => return None,
+        })
     }
 }
 
@@ -328,8 +478,13 @@ impl ServerHandler for PdfReaderMcp {
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, ErrorData> {
         let supports_2026 = uses_2026_envelope(&context);
-        let tool_context = ToolCallContext::new(self, request, context);
-        let mut response = self.tool_router.call(tool_context).await?;
+        let mut response = match self.call_legacy(&request).await {
+            Some(result) => CallToolResponse::Complete(result?),
+            None => {
+                let tool_context = ToolCallContext::new(self, request, context);
+                self.tool_router.call(tool_context).await?
+            }
+        };
         if supports_2026 {
             if let CallToolResponse::Complete(ref mut result) = response {
                 result.meta = Some(server_result_meta(&self.get_info().server_info));
@@ -383,25 +538,23 @@ mod tests {
     }
 
     #[test]
-    fn exposes_v3_tool_surface() {
+    fn exposes_three_obvious_tools_and_keeps_legacy_names_callable() {
         let tools = PdfReaderMcp::new().tool_router.list_all();
-        let names: Vec<_> = tools.iter().map(|tool| tool.name.to_string()).collect();
-        assert!(names.contains(&"read_pdf".to_string()));
-        assert!(names.contains(&"search_pdf".to_string()));
-        assert!(names.contains(&"pdf_compare".to_string()));
-        assert!(names.contains(&"pdf_evidence".to_string()));
+        let mut names: Vec<_> = tools.iter().map(|tool| tool.name.to_string()).collect();
+        names.sort();
+        assert_eq!(names, ["inspect", "read", "search"]);
+        for legacy in super::LEGACY_TOOL_NAMES {
+            assert!(!names.contains(&legacy.to_string()), "{legacy} must not be listed");
+        }
     }
 
     #[test]
     fn tools_list_exposes_typed_object_schemas_not_empty_value() {
         let tools = PdfReaderMcp::new().tool_router.list_all();
         for tool in tools {
-            let schema = tool.input_schema;
-            let schema_value = serde_json::to_value(&schema).expect("schema json");
-            // Must not be a bare free-form Value with no properties for our tools
-            let ty = schema_value.get("type").and_then(|v| v.as_str());
+            let schema_value = serde_json::to_value(&tool.input_schema).expect("schema json");
             assert_eq!(
-                ty,
+                schema_value.get("type").and_then(|v| v.as_str()),
                 Some("object"),
                 "tool {} schema type must be object, got {schema_value}",
                 tool.name
@@ -410,21 +563,14 @@ mod tests {
                 .get("properties")
                 .and_then(|v| v.as_object())
                 .expect("properties object");
-            if tool.name == "pdf_compare" {
-                assert!(props.contains_key("before"), "pdf_compare must document before");
-                assert!(props.contains_key("after"), "pdf_compare must document after");
-            } else {
-                assert!(
-                    props.contains_key("sources"),
-                    "tool {} must document sources in inputSchema",
-                    tool.name
-                );
-            }
-            if tool.name == "search_pdf" {
-                assert!(props.contains_key("query"));
-            }
-            if tool.name == "pdf_evidence" {
-                assert!(props.contains_key("operation"));
+            let required: &[&str] = match tool.name.as_ref() {
+                "read" => &["source", "pages", "max_tokens", "cursor"],
+                "search" => &["query", "sources", "mode"],
+                "inspect" => &["operation", "sources"],
+                other => panic!("unexpected tool {other}"),
+            };
+            for key in required {
+                assert!(props.contains_key(*key), "tool {} must document {key}", tool.name);
             }
         }
     }
@@ -541,119 +687,6 @@ mod tests {
             _ => {}
         }
         bounds
-    }
-
-    fn tool_schema(name: &str) -> Value {
-        let tool = PdfReaderMcp::new()
-            .tool_router
-            .list_all()
-            .into_iter()
-            .find(|tool| tool.name == name)
-            .unwrap_or_else(|| panic!("missing tool {name}"));
-        serde_json::to_value(tool.input_schema).expect("schema json")
-    }
-
-    fn v3_0_14_schema_oracle() -> Value {
-        serde_json::from_str(include_str!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../test/fixtures/v3.0.14-input-schema-oracle.json"
-        )))
-        .expect("parse v3.0.14 schema oracle")
-    }
-
-    #[test]
-    fn tools_list_schema_encodes_immutable_v3_0_14_enums_and_ranges() {
-        let oracle = v3_0_14_schema_oracle();
-        for fact in oracle["schemaFacts"].as_array().expect("schema facts") {
-            let tool = fact["tool"].as_str().expect("fact tool");
-            let pointer = fact["pointer"].as_str().expect("fact pointer");
-            let schema = tool_schema(tool);
-            let actual = schema.pointer(pointer).expect("schema fact pointer");
-            let expected = &fact["expected"];
-            let matches = match (actual.as_f64(), expected.as_f64()) {
-                (Some(actual), Some(expected)) => actual == expected,
-                _ => actual == expected,
-            };
-            assert!(
-                matches,
-                "v3.0.14 schema fact {tool}{pointer}: expected {expected}, got {actual}"
-            );
-        }
-
-        for fact in oracle["enumFacts"].as_array().expect("enum facts") {
-            let tool = fact["tool"].as_str().expect("enum tool");
-            let schema_json = tool_schema(tool).to_string();
-            for value in fact["values"].as_array().expect("enum values") {
-                let value = value.as_str().expect("enum string");
-                assert!(
-                    schema_json.contains(&format!("\"{value}\"")),
-                    "v3.0.14 {tool} missing enum {value}"
-                );
-            }
-        }
-
-        // v3.0.14 tools/list did not advertise prefer_speed (unknown keys were
-        // stripped). Current product intentionally exposes prefer_speed as a
-        // post-3.0.14 additive search_pdf property while dropInFor3014 stays false.
-        const POST_3014_ADDITIVE: &[(&str, &str)] = &[("search_pdf", "prefer_speed")];
-        for fact in oracle["absentProperties"]
-            .as_array()
-            .expect("absent properties")
-        {
-            let tool = fact["tool"].as_str().expect("absent tool");
-            let property = fact["property"].as_str().expect("absent property");
-            let schema = tool_schema(tool);
-            let properties = schema["properties"].as_object().expect("tool properties");
-            if POST_3014_ADDITIVE.contains(&(tool, property)) {
-                assert!(
-                    properties.contains_key(property),
-                    "post-3.0.14 {tool} must expose additive property {property}"
-                );
-                let schema = &properties[property];
-                let is_boolean = schema
-                    .get("type")
-                    .map(|value| match value {
-                        Value::String(ty) => ty == "boolean",
-                        Value::Array(items) => {
-                            items.iter().any(|item| item.as_str() == Some("boolean"))
-                        }
-                        _ => false,
-                    })
-                    .unwrap_or(false)
-                    || schema
-                        .get("anyOf")
-                        .or_else(|| schema.get("oneOf"))
-                        .and_then(|value| value.as_array())
-                        .map(|items| {
-                            items.iter().any(|item| {
-                                item.get("type").and_then(|ty| ty.as_str()) == Some("boolean")
-                            })
-                        })
-                        .unwrap_or(false);
-                assert!(
-                    is_boolean,
-                    "post-3.0.14 {tool}.{property} must be boolean-typed, got {schema}"
-                );
-            } else {
-                assert!(
-                    !properties.contains_key(property),
-                    "v3.0.14 {tool} must not expose {property}"
-                );
-            }
-        }
-
-        // Provider-compat (#562): tools/list must not advertise exclusive path|url
-        // via oneOf + not/required — Fireworks/OpenCode reject that keyword shape.
-        // Runtime still enforces exactly-one-of via PdfSource::validate().
-        let read_json = tool_schema("read_pdf").to_string();
-        assert!(
-            !read_json.contains("\"not\""),
-            "read_pdf inputSchema must not use JSON Schema not for path|url XOR (OpenCode/Fireworks)"
-        );
-        assert!(
-            !read_json.contains("\"oneOf\""),
-            "read_pdf inputSchema must not use oneOf for path|url XOR after #562"
-        );
     }
 
     #[tokio::test]
