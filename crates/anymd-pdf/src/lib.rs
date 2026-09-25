@@ -17,7 +17,25 @@ use pdf_extract::{
     Path as PdfPath, Transform,
 };
 
-use crate::text_index::TextIndexError;
+/// A PDF that could not be opened or converted.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LayoutError {
+    pub message: String,
+}
+
+impl LayoutError {
+    fn new(message: impl Into<String>) -> Self {
+        Self { message: message.into() }
+    }
+}
+
+impl std::fmt::Display for LayoutError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl std::error::Error for LayoutError {}
 
 const MAX_GLYPHS_PER_PAGE: usize = 400_000;
 const MAX_WORKERS: usize = 8;
@@ -44,12 +62,12 @@ pub struct MarkdownDocument {
 }
 
 /// Open a PDF from disk (decrypting with the empty password when needed).
-pub fn load_document(path: &Path) -> Result<Document, TextIndexError> {
+pub fn load_document(path: &Path) -> Result<Document, LayoutError> {
     let mut doc = Document::load(path)
-        .map_err(|err| TextIndexError::extraction_failed(format!("Failed to open PDF: {err}")))?;
+        .map_err(|err| LayoutError::new(format!("Failed to open PDF: {err}")))?;
     if doc.is_encrypted() {
         doc.decrypt("").map_err(|err| {
-            TextIndexError::extraction_failed(format!(
+            LayoutError::new(format!(
                 "PDF is encrypted and needs a password: {err}"
             ))
         })?;
@@ -58,12 +76,12 @@ pub fn load_document(path: &Path) -> Result<Document, TextIndexError> {
 }
 
 /// Open a PDF from memory (decrypting with the empty password when needed).
-pub fn load_document_bytes(bytes: &[u8]) -> Result<Document, TextIndexError> {
+pub fn load_document_bytes(bytes: &[u8]) -> Result<Document, LayoutError> {
     let mut doc = Document::load_mem(bytes)
-        .map_err(|err| TextIndexError::extraction_failed(format!("Failed to open PDF: {err}")))?;
+        .map_err(|err| LayoutError::new(format!("Failed to open PDF: {err}")))?;
     if doc.is_encrypted() {
         doc.decrypt("").map_err(|err| {
-            TextIndexError::extraction_failed(format!(
+            LayoutError::new(format!(
                 "PDF is encrypted and needs a password: {err}"
             ))
         })?;
@@ -80,7 +98,7 @@ pub fn page_count(doc: &Document) -> u32 {
 pub fn pdf_to_markdown(
     doc: &Document,
     pages: Option<&[u32]>,
-) -> Result<MarkdownDocument, TextIndexError> {
+) -> Result<MarkdownDocument, LayoutError> {
     let page_map = doc.get_pages();
     let total = u32::try_from(page_map.len()).unwrap_or(u32::MAX);
     let selected: Vec<u32> = match pages {

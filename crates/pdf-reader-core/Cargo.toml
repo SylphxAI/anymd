@@ -16,6 +16,7 @@ categories = ["parsing", "text-processing"]
 path = "src/lib.rs"
 
 [dependencies]
+anymd-pdf = { path = "../anymd-pdf", version = "3.1.1" }
 base64 = "0.22"
 flate2 = "1"
 hayro = "0.7.1"

@@ -1,0 +1,19 @@
+[package]
+name = "anymd-pdf"
+version.workspace = true
+edition.workspace = true
+rust-version = "1.92"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme.workspace = true
+description = "anymd PDF layout engine: glyph geometry to clean Markdown (words, columns, headings, tables)"
+keywords = ["pdf", "markdown", "layout", "tables"]
+categories = ["parsing", "text-processing"]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+pdf-extract = "0.12"
