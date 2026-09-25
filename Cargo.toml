@@ -3,6 +3,7 @@ members = [
     "crates/pdf-reader-core",
     "crates/pdf-reader-cli",
     "crates/pdf-reader-mcp-server",
+    "crates/anymd-formats",
     "vendor/adobe-cmap-parser",
 ]
 resolver = "2"
