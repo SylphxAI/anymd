@@ -1,7 +1,7 @@
 {
   "profile": "pdf_sota_release_gate",
-  "generated_at": "2026-09-23T14:09:34.194Z",
-  "artifact_dir": "/home/runner/_work/citra/citra/benchmark-artifacts",
+  "generated_at": "2026-09-25T06:53:51.173Z",
+  "artifact_dir": "/home/runner/work/anymd/anymd/benchmark-artifacts",
   "status": "passed",
   "summary": {
     "total": 59,
@@ -205,7 +205,7 @@
       "status": "passed",
       "message": "v3 Agent Document Twin scenario has a positive average latency",
       "evidence": {
-        "average_ms": 19.4
+        "average_ms": 14.8
       }
     },
     {
@@ -218,7 +218,7 @@
       "status": "passed",
       "message": "default balanced auto-read scenario has a positive average latency",
       "evidence": {
-        "average_ms": 60.78
+        "average_ms": 25.18
       }
     },
     {
@@ -529,12 +529,12 @@
           {
             "id": "rust_hash_cli",
             "status": "ok",
-            "message": "Rust hash CLI is available at /home/runner/_work/citra/citra/target/release/pdf-reader-cli. Source hashing defaults to the native engine when built."
+            "message": "Rust hash CLI is available at /home/runner/work/anymd/anymd/target/release/pdf-reader-cli. Source hashing defaults to the native engine when built."
           },
           {
             "id": "rust_mcp_server",
             "status": "ok",
-            "message": "Rust MCP server binary is present at /home/runner/_work/citra/citra/target/release/citra-mcp-server."
+            "message": "Rust MCP server binary is present at /home/runner/work/anymd/anymd/target/release/anymd."
           },
           {
             "id": "sample_probe",
