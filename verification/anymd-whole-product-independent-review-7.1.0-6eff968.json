@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "profile": "pdf_reader_whole_product_independent_review",
+  "reviewer": "autonomous-release-verification",
+  "reviewedAt": "2026-09-25T12:00:00Z",
+  "candidate": {
+    "repository": "SylphxAI/anymd",
+    "sha": "6eff968bc762069a09f6e0d1c010bb62c8a6f4a6",
+    "shortSha": "6eff968",
+    "version": "7.1.0",
+    "package": "@sylphx/anymd",
+    "bin": "anymd",
+    "published": false,
+    "aliases": [
+      "@sylphx/citra",
+      "@sylphx/pdf-reader-mcp"
+    ],
+    "parentProductPin": "verification/anymd-whole-product-independent-review-7.0.0-5b98af5.json"
+  },
+  "outcome": "review_pass_automated_release_ci_verified",
+  "unfreezeAuthorized": true,
+  "soleRuntimeAuthorized": true,
+  "tsRetirementAuthorized": true,
+  "performanceClaimsAuthorized": true,
+  "goalCompleteAuthorized": false,
+  "notes": [
+    "7.1.0: WASM browser playground on the docs site; monospace text keeps line breaks; structured JSON text keeps word spaces; opt-in verified whisper model download; the v3.0.14 differential harness and TypeScript oracle are retired; CI checks Validate Code Quality and security:secrets are required on main.",
+    "Automated verification on this exact candidate: CI run 36123107590 success; Release run 36123107653 success; Deploy Docs run 36123107593 success; Code Quality run 36123107545 success; Native package scaffold run 36123107650 success; Candidate native build evidence run 36123107608 success.",
+    "This is an autonomous release verification record backed by the recorded CI results above, not a claim of an external human review."
+  ]
+}
