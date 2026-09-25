@@ -19,7 +19,7 @@ const projectionPath = join(scriptDir, 'v3014-form-radio-malformed-ap-residual-p
 const radioApStreamFixture = join(fixtureDir, 'v3014-form-radio-ap-stream-keeps-v-v1.pdf');
 const radioApnStreamFixture = join(fixtureDir, 'v3014-form-radio-apn-stream-keeps-v-v1.pdf');
 const radioApNamedFixture = join(fixtureDir, 'v3014-form-radio-ap-named-keeps-v-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

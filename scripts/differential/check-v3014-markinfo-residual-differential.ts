@@ -24,7 +24,7 @@ const fixtures = {
   'v3014-markinfo-alltrue-v1.pdf': join(fixtureDir, 'v3014-markinfo-alltrue-v1.pdf'),
   'v3014-markinfo-empty-v1.pdf': join(fixtureDir, 'v3014-markinfo-empty-v1.pdf'),
 } as const;
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

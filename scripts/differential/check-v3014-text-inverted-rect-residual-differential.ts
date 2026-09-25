@@ -21,7 +21,7 @@ const runnerPath = join(scriptDir, 'v3014-text-inverted-rect-residual-baseline-r
 const projectionPath = join(scriptDir, 'v3014-text-inverted-rect-residual-projection.ts');
 const invertedFixture = join(fixtureDir, 'v3014-annotation-text-inverted-v1.pdf');
 const noApFixture = join(fixtureDir, 'v3014-annotation-text-noap-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

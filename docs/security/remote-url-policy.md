@@ -1,6 +1,6 @@
-# Remote URL policy — Citra
+# Remote URL policy — anymd
 
-Citra accepts a `url` source because many agents are handed a PDF link rather
+anymd accepts a `url` source because many agents are handed a PDF link rather
 than a path. Remote URLs are in scope, but only as the narrow fetch described
 here.
 
@@ -41,5 +41,5 @@ TypeScript URL code is an oracle and not production authority.
 
 ## Boundaries
 
-Lookout owns web evidence. Citra's `url` source exists so an agent with a single
+Lookout owns web evidence. anymd's `url` source exists so an agent with a single
 PDF link does not have to fetch it first.

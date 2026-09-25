@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-annotation-action-precedence-resid
 const gotoOverDestFixture = join(fixtureDir, 'v3014-annotation-goto-over-dest-v1.pdf');
 const uriOverDestFixture = join(fixtureDir, 'v3014-annotation-uri-over-dest-v1.pdf');
 const launchFileFixture = join(fixtureDir, 'v3014-annotation-launch-file-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

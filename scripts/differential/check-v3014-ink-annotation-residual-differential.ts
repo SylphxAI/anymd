@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-ink-annotation-residual-projection
 const inkFixture = join(fixtureDir, 'v3014-annotation-ink-l-bbox-v1.pdf');
 const multiStrokeFixture = join(fixtureDir, 'v3014-annotation-ink-multistroke-v1.pdf');
 const border2Fixture = join(fixtureDir, 'v3014-annotation-ink-border2-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

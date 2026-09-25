@@ -265,9 +265,9 @@ fn handle_pdf_evidence(input: &serde_json::Value) -> Result<ToolSuccessEnvelope,
             status: "error",
             code: "UNSUPPORTED_OPERATION".into(),
             message: format!(
-                "pdf-reader-cli supports operation=inspect only; operation={operation} belongs to the citra-mcp-server tool surface."
+                "pdf-reader-cli supports operation=inspect only; operation={operation} belongs to the anymd tool surface."
             ),
-            next_action: "Use operation=inspect or call pdf_evidence through citra-mcp-server."
+            next_action: "Use operation=inspect or call pdf_evidence through anymd."
                 .into(),
         });
     }

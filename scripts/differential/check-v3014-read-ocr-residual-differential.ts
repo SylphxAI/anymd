@@ -26,7 +26,7 @@ const sharedProjectionPath = join(scriptDir, 'v3014-read-ocr-projection.ts');
 const providerPath = join(scriptDir, 'reference-ocr-residual-provider.ts');
 const visualFixturePath = join(fixtureDir, 'v3014-visual-v1.pdf');
 const candidateFixturePath = join(fixtureDir, 'v3014-visual-candidate-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

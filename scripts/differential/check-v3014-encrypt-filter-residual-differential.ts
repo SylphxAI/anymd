@@ -21,7 +21,7 @@ const runnerPath = join(scriptDir, 'v3014-encrypt-filter-residual-baseline-runne
 const projectionPath = join(scriptDir, 'v3014-encrypt-filter-residual-projection.ts');
 const encryptedFixture = join(fixtureDir, 'v3014-permissions-print-copy-fill-a11y-v1.pdf');
 const unencryptedFixture = join(fixtureDir, 'v3014-permissions-none-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

@@ -82,8 +82,8 @@ jobs:
           test "$(jq -r .version package.json)" = "$VERSION"
           test "$(jq -r .version server.json)" = "$VERSION"
           test "$(jq -r '.packages[0].version' server.json)" = "$VERSION"
-          test "$(jq -r '.packages[0].identifier' server.json)" = '@sylphx/citra'
-          test "$(npm view "@sylphx/citra@$VERSION" version)" = "$VERSION"
+          test "$(jq -r '.packages[0].identifier' server.json)" = '@sylphx/anymd'
+          test "$(npm view "@sylphx/anymd@$VERSION" version)" = "$VERSION"
           while IFS= read -r package_name; do
             test "$(npm view "${package_name}@${VERSION}" version)" = "$VERSION"
           done < <(jq -r '.optionalDependencies | keys[]' package.json)
@@ -97,29 +97,35 @@ jobs:
         id: canonical-state
         run: |
           set -euo pipefail
-          URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fcitra/versions/latest'
+          URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fanymd/versions/latest'
           WEBSITE="$(jq -r '.websiteUrl' server.json)"
           REPO="$(jq -r '.repository.url' server.json)"
-          if curl -fsS "$URL" > "$RUNNER_TEMP/citra-before.json" && \
+          if curl -fsS "$URL" > "$RUNNER_TEMP/anymd-before.json" && \
             jq -e --arg version "$VERSION" \
-              '.server.name == "io.github.SylphxAI/citra" and .server.version == $version and .server.packages[0].identifier == "@sylphx/citra" and .server.packages[0].version == $version' \
-              "$RUNNER_TEMP/citra-before.json" >/dev/null; then
-            echo 'exists=true' >> "$GITHUB_OUTPUT"
-            echo "status=$(jq -r '._meta[\"io.modelcontextprotocol.registry/official\"].status' "$RUNNER_TEMP/citra-before.json")" >> "$GITHUB_OUTPUT"
+              '.server.name == "io.github.SylphxAI/anymd" and .server.version == $version and .server.packages[0].identifier == "@sylphx/anymd" and .server.packages[0].version == $version' \
+              "$RUNNER_TEMP/anymd-before.json" >/dev/null; then
+            STATUS="$(jq -r '._meta["io.modelcontextprotocol.registry/official"].status' "$RUNNER_TEMP/anymd-before.json")"
             # Not just "is it there" - does it still describe the same server?
             # A rename changes repository.url and websiteUrl without changing
             # the version, so existence alone hides stale metadata.
             if jq -e --arg website "$WEBSITE" --arg repo "$REPO" \
               '.server.websiteUrl == $website and .server.repository.url == $repo' \
-              "$RUNNER_TEMP/citra-before.json" >/dev/null; then
-              echo 'matches=true' >> "$GITHUB_OUTPUT"
+              "$RUNNER_TEMP/anymd-before.json" >/dev/null; then
+              MATCHES=true
             else
-              echo 'matches=false' >> "$GITHUB_OUTPUT"
+              MATCHES=false
             fi
+            {
+              echo 'exists=true'
+              echo "status=$STATUS"
+              echo "matches=$MATCHES"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo 'exists=false' >> "$GITHUB_OUTPUT"
-            echo 'status=missing' >> "$GITHUB_OUTPUT"
-            echo 'matches=false' >> "$GITHUB_OUTPUT"
+            {
+              echo 'exists=false'
+              echo 'status=missing'
+              echo 'matches=false'
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Authenticate to MCP Registry
@@ -132,7 +138,7 @@ jobs:
           # The publisher answers 400 "status and message are already set to the
           # provided values" when the desired state is already in place. That is
           # success for this step, not a failure.
-          if ! out=$(./mcp-publisher status --status active io.github.SylphxAI/citra "$VERSION" 2>&1); then
+          if ! out=$(./mcp-publisher status --status active io.github.SylphxAI/anymd "$VERSION" 2>&1); then
             if grep -qE 'already set to the provided values|No changes to apply' <<<"$out"; then
               echo "Canonical status already active; nothing to restore"
             else
@@ -149,7 +155,7 @@ jobs:
           TOKEN="$(jq -r '.token' "$TOKEN_FILE")"
           REGISTRY="$(jq -r '.registry' "$TOKEN_FILE")"
           case "$REGISTRY" in */) ;; *) REGISTRY="$REGISTRY/" ;; esac
-          NAME='io.github.SylphxAI/citra'
+          NAME='io.github.SylphxAI/anymd'
           ESCAPED_NAME="$(node -p "encodeURIComponent(process.argv[1])" "$NAME")"
 
           if [ "${{ steps.canonical-state.outputs.exists }}" != 'true' ]; then
@@ -197,61 +203,66 @@ jobs:
           fi
           echo "$out"
 
-      - name: Read back canonical Citra identity
+      - name: Read back canonical anymd identity
         run: |
           set -euo pipefail
-          URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fcitra/versions/latest'
+          URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fanymd/versions/latest'
           for attempt in $(seq 1 36); do
-            if curl -fsS "$URL" > "$RUNNER_TEMP/citra-registry.json" && \
+            if curl -fsS "$URL" > "$RUNNER_TEMP/anymd-registry.json" && \
               jq -e --arg version "$VERSION" \
                 --arg website "$(jq -r '.websiteUrl' server.json)" \
               --arg repo "$(jq -r '.repository.url' server.json)" \
-              '.server.name == "io.github.SylphxAI/citra" and .server.version == $version and .server.packages[0].identifier == "@sylphx/citra" and .server.packages[0].version == $version and .server.websiteUrl == $website and .server.repository.url == $repo and ._meta["io.modelcontextprotocol.registry/official"].status == "active"' \
-                "$RUNNER_TEMP/citra-registry.json" >/dev/null; then
-              cat "$RUNNER_TEMP/citra-registry.json"
+              '.server.name == "io.github.SylphxAI/anymd" and .server.version == $version and .server.packages[0].identifier == "@sylphx/anymd" and .server.packages[0].version == $version and .server.websiteUrl == $website and .server.repository.url == $repo and ._meta["io.modelcontextprotocol.registry/official"].status == "active"' \
+                "$RUNNER_TEMP/anymd-registry.json" >/dev/null; then
+              cat "$RUNNER_TEMP/anymd-registry.json"
               exit 0
             fi
-            echo "MCP Registry readback wait $attempt for Citra $VERSION"
+            echo "MCP Registry readback wait $attempt for anymd $VERSION"
             sleep 5
           done
-          echo "Canonical Citra registry readback failed" >&2
+          echo "Canonical anymd registry readback failed" >&2
           exit 1
 
-      - name: Deprecate retired MCP Registry identity
+      - name: Deprecate retired MCP Registry identities
         run: |
           set -euo pipefail
+          # Both pre-anymd registry names point readers at the canonical one.
+          # The npm packages @sylphx/citra and @sylphx/pdf-reader-mcp stay live
+          # as thin aliases; only the registry listings retire.
           # `--all-versions` is a bulk operation, so the publisher asks
-          # "Continue? [y/N]" before writing. CI has no stdin, so that prompt
-          # failed with "failed to read response: EOF" and the step exited with
-          # the retired identity still active. `--yes` skips the prompt, which is
-          # the whole reason this never worked.
-          # Idempotent: a re-run on an already-deprecated identity answers 400
-          # "No changes to apply: all versions already have the requested status
-          # and message". That is success, not a failure - the state is already
-          # exactly what this step asks for.
-          if ! out=$(./mcp-publisher status \
-              --status deprecated \
-              --all-versions \
-              --yes \
-              --message 'Retired identity. Use io.github.SylphxAI/citra.' \
-              io.github.SylphxAI/pdf-reader-mcp 2>&1); then
-            if grep -qE 'already set to the provided values|No changes to apply' <<<"$out"; then
-              echo "Retired identity already deprecated; nothing to do"
-            else
-              echo "$out" >&2
+          # "Continue? [y/N]" before writing. CI has no stdin, so `--yes` skips
+          # the prompt. Idempotent: a re-run on an already-deprecated identity
+          # answers 400 "No changes to apply", which is success here.
+          for retired in io.github.SylphxAI/citra io.github.SylphxAI/pdf-reader-mcp; do
+            if ! out=$(./mcp-publisher status \
+                --status deprecated \
+                --all-versions \
+                --yes \
+                --message 'Renamed to anymd. Use io.github.SylphxAI/anymd (npm @sylphx/anymd).' \
+                "$retired" 2>&1); then
+              if grep -qE 'already set to the provided values|No changes to apply' <<<"$out"; then
+                echo "$retired already deprecated; nothing to do"
+              else
+                echo "$out" >&2
+                exit 1
+              fi
+            fi
+            ESCAPED="$(node -p "encodeURIComponent(process.argv[1])" "$retired")"
+            URL="https://registry.modelcontextprotocol.io/v0.1/servers/${ESCAPED}/versions/latest"
+            ok=false
+            for attempt in $(seq 1 24); do
+              if curl -fsS "$URL" > "$RUNNER_TEMP/retired-registry.json" && \
+                jq -e '._meta["io.modelcontextprotocol.registry/official"].status == "deprecated"' \
+                  "$RUNNER_TEMP/retired-registry.json" >/dev/null; then
+                cat "$RUNNER_TEMP/retired-registry.json"
+                ok=true
+                break
+              fi
+              echo "MCP Registry deprecation readback wait $attempt for $retired"
+              sleep 5
+            done
+            if [ "$ok" != true ]; then
+              echo "Retired registry identity $retired deprecation readback failed" >&2
               exit 1
             fi
-          fi
-          URL='https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fpdf-reader-mcp/versions/latest'
-          for attempt in $(seq 1 24); do
-            if curl -fsS "$URL" > "$RUNNER_TEMP/retired-registry.json" && \
-              jq -e '._meta["io.modelcontextprotocol.registry/official"].status == "deprecated"' \
-                "$RUNNER_TEMP/retired-registry.json" >/dev/null; then
-              cat "$RUNNER_TEMP/retired-registry.json"
-              exit 0
-            fi
-            echo "MCP Registry deprecation readback wait $attempt"
-            sleep 5
           done
-          echo "Retired registry identity deprecation readback failed" >&2
-          exit 1

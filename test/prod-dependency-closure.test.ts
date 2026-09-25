@@ -16,7 +16,7 @@ describe('production dependency closure (sole-Rust)', () => {
       expect(pkg.dependencies?.[banned]).toBeUndefined();
     }
     for (const name of Object.keys(pkg.optionalDependencies ?? {})) {
-      expect(name.startsWith('@sylphx/citra-')).toBe(true);
+      expect(name.startsWith('@sylphx/anymd-')).toBe(true);
     }
     expect(pkg.scripts?.build ?? '').not.toContain('oracle-ts');
     expect(pkg.scripts?.['build:oracle-ts']).toBeTruthy();

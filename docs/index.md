@@ -2,32 +2,34 @@
 layout: home
 
 hero:
-  name: Citra
+  name: anymd
   text: Give your AI agent eyes for PDFs — with proof.
   tagline: Local-first PDF evidence your agent can defend. Markdown, tables, and page-level citations from one call — OCR only when you ask, no cloud API key.
   image:
     src: /logo.svg
-    alt: Citra — a citrus tile holding a document
+    alt: anymd — a citrus tile holding a document
   actions:
     - theme: brand
       text: Get started in 30 seconds
       link: /guide/installation
     - theme: alt
       text: Star on GitHub
-      link: https://github.com/SylphxAI/citra
+      link: https://github.com/SylphxAI/anymd
 ---
+
+<p class="cit-fine" style="text-align:center">Formerly pdf-reader-mcp / Citra — <code>@sylphx/pdf-reader-mcp</code> and <code>@sylphx/citra</code> still install and run anymd. New installs: <code>npx -y @sylphx/anymd</code>.</p>
 
 <div class="cit-section">
   <span class="cit-eyebrow">The difference</span>
   <h2 class="cit-h2">Plain text makes agents guess.<br />Evidence makes them right.</h2>
-  <p class="cit-lead">A text dump drops the page number, the table grid and the region. Your agent fills the gap — and a confidently wrong answer costs more than <em>“I can’t tell.”</em> Citra returns the locators that let a human check the claim.</p>
+  <p class="cit-lead">A text dump drops the page number, the table grid and the region. Your agent fills the gap — and a confidently wrong answer costs more than <em>“I can’t tell.”</em> anymd returns the locators that let a human check the claim.</p>
   <div class="cit-compare" style="margin-top:28px">
     <div class="side">
       <h3>What a text dump says</h3>
       <p>“Revenue was about $12M.”</p>
     </div>
     <div class="side good">
-      <h3>What Citra returns</h3>
+      <h3>What anymd returns</h3>
       <p>page 1 · table <span class="cit-cite">p1-table-1</span> · 3 cols / 9 cells · bbox 72,151 → 454,79 · confidence 0.92</p>
     </div>
   </div>
@@ -68,7 +70,7 @@ hero:
 }
 ```
 
-<p class="cit-fine">Excerpt of a <strong>real</strong> <code>read_pdf</code> response against <code>test/fixtures/differential/v3014-selectable-table-v1.pdf</code> (paths shortened). The table is detected <em>and</em> linked to its continuation on page 2 — and when Citra cannot prove something, it says so in <code>gaps</code> instead of guessing.</p>
+<p class="cit-fine">Excerpt of a <strong>real</strong> <code>read_pdf</code> response against <code>test/fixtures/differential/v3014-selectable-table-v1.pdf</code> (paths shortened). The table is detected <em>and</em> linked to its continuation on page 2 — and when anymd cannot prove something, it says so in <code>gaps</code> instead of guessing.</p>
 
 <div class="cit-section">
   <span class="cit-eyebrow">How it works</span>
@@ -150,29 +152,29 @@ hero:
 ## Install in 30 seconds
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
 ::: code-group
 ```json [Claude Desktop / Cursor / VS Code]
 {
   "mcpServers": {
-    "citra": { "command": "npx", "args": ["-y", "@sylphx/citra"] }
+    "anymd": { "command": "npx", "args": ["-y", "@sylphx/anymd"] }
   }
 }
 ```
 
 ```bash [Claude Code]
-claude mcp add citra -- npx -y @sylphx/citra
+claude mcp add anymd -- npx -y @sylphx/anymd
 ```
 
 ```bash [Any agent / CLI]
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 :::
 
 <div class="cit-cta">
   <h2>Stop PDF hallucinations. Give agents proof.</h2>
   <p>Local-first by design. Five platform packages. One clean install. Fail-closed if the matching native binary is missing — never a silent fallback.</p>
-  <p style="margin-top:18px"><a class="VPButton brand" href="./guide/installation">Read the quickstart</a> <a class="VPButton alt" href="https://github.com/SylphxAI/citra">Star the repo</a></p>
+  <p style="margin-top:18px"><a class="VPButton brand" href="./guide/installation">Read the quickstart</a> <a class="VPButton alt" href="https://github.com/SylphxAI/anymd">Star the repo</a></p>
 </div>

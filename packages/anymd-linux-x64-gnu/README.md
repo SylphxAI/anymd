@@ -1,19 +1,19 @@
-# @sylphx/citra-linux-x64-gnu
+# @sylphx/anymd-linux-x64-gnu
 
-Platform native binary for `linux-x64-gnu` used by `@sylphx/citra`.
+Platform native binary for `linux-x64-gnu` used by `@sylphx/anymd`.
 
 ## Status
 
 - **Production path** for sole-Rust PDF Reader MCP on this platform
-- Installed automatically as an `optionalDependency` of `@sylphx/citra` when OS/CPU match
-- Binary path: `bin/citra-mcp-server`
+- Installed automatically as an `optionalDependency` of `@sylphx/anymd` when OS/CPU match
+- Binary path: `bin/anymd`
 
 ## Install
 
 Prefer the umbrella package (recommended):
 
 ```bash
-npm install -g @sylphx/citra
+npm install -g @sylphx/anymd
 ```
 
 You normally do **not** need to install this package directly. npm selects the matching platform package.

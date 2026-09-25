@@ -1,8 +1,8 @@
-# Citra
+# anymd
 
 **Give your AI agent eyes for PDFs — with proof.**
 
-Citra is the local-first PDF evidence tool for AI agents. One `read_pdf` call
+anymd is the local-first PDF evidence tool for AI agents. One `read_pdf` call
 returns markdown, tables with cells and geometry, and **page-level citations
 your agent can defend**. OCR stays off until you ask for it.
 
@@ -15,11 +15,11 @@ install to a claim a human can check.
 
 You are building agents that read **contracts, filings, research papers,
 invoices, or scanned records** — and you have been burned by an agent that
-confidently quoted a number it invented. Citra exists for that failure.
+confidently quoted a number it invented. anymd exists for that failure.
 
 ## What makes it different
 
-A text extractor answers *"what characters are on this page?"* Citra answers
+A text extractor answers *"what characters are on this page?"* anymd answers
 *"what can my agent safely assert, and where does the proof live?"*
 
 Every claim in a response can carry:
@@ -62,7 +62,7 @@ different engine.
 ## Install in 30 seconds
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
 Full per-client setup: [Installation](/guide/installation)

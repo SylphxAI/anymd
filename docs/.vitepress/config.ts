@@ -1,19 +1,19 @@
 import { defineConfig } from 'vitepress';
 
 /**
- * Citra — documentation site.
+ * anymd — documentation site.
  *
  * Local-first by construction: every asset here is served from this package.
  * No external fonts, scripts, trackers, or images.
  */
 export default defineConfig({
-  base: '/citra/',
+  base: '/anymd/',
   cleanUrls: true,
-  title: 'Citra',
+  title: 'anymd',
   description:
-    'Give your AI agent eyes for PDFs — with proof. Local-first PDF evidence for agents: structured text, tables, OCR, visual crops, and page-level citations your agent can defend.',
+    'Any file → clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML, images. Fast Rust MCP server + CLI. Local, no API key.',
 
-  // Citra's identity is ink + citrus; dark is the designed default and the
+  // anymd's identity is ink + citrus; dark is the designed default and the
   // toggle still lets readers choose light.
   appearance: 'dark',
   lastUpdated: true,
@@ -28,7 +28,7 @@ export default defineConfig({
   head: [
     ['meta', { name: 'theme-color', content: '#c3f53c' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'Citra — PDF evidence for agents, with proof' }],
+    ['meta', { property: 'og:title', content: 'anymd — PDF evidence for agents, with proof' }],
     [
       'meta',
       {
@@ -37,10 +37,10 @@ export default defineConfig({
           'One read_pdf call returns structured text, tables, OCR, and page-level citations your agent can defend — local-first, native, and fail-closed.',
       },
     ],
-    ['meta', { property: 'og:url', content: 'https://sylphxai.github.io/citra/' }],
-    ['meta', { property: 'og:site_name', content: 'Citra' }],
+    ['meta', { property: 'og:url', content: 'https://sylphxai.github.io/anymd/' }],
+    ['meta', { property: 'og:site_name', content: 'anymd' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'Citra — PDF evidence for agents, with proof' }],
+    ['meta', { name: 'twitter:title', content: 'anymd — PDF evidence for agents, with proof' }],
     [
       'meta',
       {
@@ -50,8 +50,8 @@ export default defineConfig({
       },
     ],
     ['meta', { name: 'twitter:site', content: '@sylphxai' }],
-    ['meta', { property: 'og:image', content: 'https://sylphxai.github.io/citra/og-image.png' }],
-    ['meta', { name: 'twitter:image', content: 'https://sylphxai.github.io/citra/og-image.png' }],
+    ['meta', { property: 'og:image', content: 'https://sylphxai.github.io/anymd/og-image.png' }],
+    ['meta', { name: 'twitter:image', content: 'https://sylphxai.github.io/anymd/og-image.png' }],
     [
       'meta',
       {
@@ -62,13 +62,13 @@ export default defineConfig({
     ],
     ['meta', { name: 'author', content: 'Sylphx' }],
     ['meta', { name: 'robots', content: 'index, follow' }],
-    ['link', { rel: 'canonical', href: 'https://sylphxai.github.io/citra/' }],
+    ['link', { rel: 'canonical', href: 'https://sylphxai.github.io/anymd/' }],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
   ],
 
   themeConfig: {
     logo: '/logo.svg',
-    siteTitle: 'Citra',
+    siteTitle: 'anymd',
 
     nav: [
       { text: 'Guide', link: '/guide/' },
@@ -150,12 +150,12 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/SylphxAI/citra' },
-      { icon: 'npm', link: 'https://www.npmjs.com/package/@sylphx/citra' },
+      { icon: 'github', link: 'https://github.com/SylphxAI/anymd' },
+      { icon: 'npm', link: 'https://www.npmjs.com/package/@sylphx/anymd' },
     ],
 
     editLink: {
-      pattern: 'https://github.com/SylphxAI/citra/edit/main/docs/:path',
+      pattern: 'https://github.com/SylphxAI/anymd/edit/main/docs/:path',
       text: 'Edit this page on GitHub',
     },
 

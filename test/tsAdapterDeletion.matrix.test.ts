@@ -18,7 +18,7 @@ describe('published sole-Rust production package (no TS production runtime)', ()
       version?: string;
       files?: string[];
     };
-    expect(pkg.bin?.citra).toBe('./dist/runtime-entry.js');
+    expect(pkg.bin?.anymd).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['.']).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['./typescript']).toBeUndefined();
     expect(pkg.exports?.['./pure-rust']).toBe('./dist/pure-rust.js');

@@ -18,11 +18,11 @@ const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
   dependencies?: Record<string, string>;
 };
 
-if (pkg.name !== '@sylphx/citra') {
-  failures.push('package name must be @sylphx/citra (brand-sole)');
+if (pkg.name !== '@sylphx/anymd') {
+  failures.push('package name must be @sylphx/anymd (brand-sole)');
 }
-if (pkg.bin?.['citra'] !== './dist/runtime-entry.js') {
-  failures.push('bin citra must be ./dist/runtime-entry.js');
+if (pkg.bin?.['anymd'] !== './dist/runtime-entry.js') {
+  failures.push('bin anymd must be ./dist/runtime-entry.js');
 }
 if (pkg.exports?.['./typescript']) {
   failures.push('package.json must not export ./typescript in sole-Rust production');
@@ -37,8 +37,8 @@ for (const banned of ['pdfjs-dist', '@modelcontextprotocol/sdk', 'pngjs', 'zod']
   }
 }
 
-if (pkg.bin?.citra !== './dist/runtime-entry.js') {
-  failures.push('bin citra must be ./dist/runtime-entry.js');
+if (pkg.bin?.anymd !== './dist/runtime-entry.js') {
+  failures.push('bin anymd must be ./dist/runtime-entry.js');
 }
 if (pkg.exports?.['.'] !== './dist/runtime-entry.js') {
   failures.push('exports["."] must be ./dist/runtime-entry.js');
@@ -114,7 +114,7 @@ console.log(
       profile: 'ts_production_absence',
       pass: true,
       version: pkg.version ?? null,
-      bin: pkg.bin?.citra ?? null,
+      bin: pkg.bin?.anymd ?? null,
       exports: pkg.exports ?? null,
       files,
     },

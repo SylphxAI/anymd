@@ -1,4 +1,4 @@
-# Citra — competitive positioning
+# anymd — competitive positioning
 
 ## Job
 
@@ -20,11 +20,11 @@ separate requests.
 
 Learn from them. Do not pretend to be them.
 
-| Peer | What they are strong at | What Citra keeps different |
+| Peer | What they are strong at | What anymd keeps different |
 | --- | --- | --- |
 | [Docling](https://github.com/docling-project/docling) | Layout models and document conversion | No model download on the default call. An MCP tool with explicit page evidence. |
 | [Marker](https://github.com/datalab-to/marker) | High-quality PDF to markdown | The fast path does not load a layout model. Deeper structure is `profile: quality`. |
-| [PyMuPDF4LLM](https://pymupdf.readthedocs.io/en/latest/pymupdf4llm/) | Fast local markdown for RAG | Citra is an MCP server and returns cell geometry and citations, not only markdown. |
+| [PyMuPDF4LLM](https://pymupdf.readthedocs.io/en/latest/pymupdf4llm/) | Fast local markdown for RAG | anymd is an MCP server and returns cell geometry and citations, not only markdown. |
 | [LlamaParse](https://developers.llamaindex.ai/python/cloud/llamaparse/) | Strong cloud parsing | Documents stay on the machine. No API key for the core read. |
 | [`@modelcontextprotocol/server-pdf`](https://github.com/modelcontextprotocol/servers) | A small MCP text extract | Tables, geometry, chunks, and an explicit way to ask for OCR. |
 
@@ -37,5 +37,5 @@ Learn from them. Do not pretend to be them.
 ## Install
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```

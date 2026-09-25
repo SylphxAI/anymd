@@ -37,7 +37,7 @@ Request provenance only where npm can actually attest it:
 | Self-hosted Actions runner (this fleet) | no — npm returns E422 |
 | No Actions context (maintainer shell) | no — nothing to attest |
 
-`CITRA_NPM_PROVENANCE=1|0` overrides the decision for a deliberate run. When the
+`ANYMD_NPM_PROVENANCE=1|0` overrides the decision for a deliberate run. When the
 flag is omitted the publish logs that it is publishing **without** a provenance
 bundle, so the record never claims an attestation that does not exist.
 

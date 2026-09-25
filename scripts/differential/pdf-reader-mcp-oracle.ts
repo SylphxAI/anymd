@@ -129,7 +129,7 @@ function resolveTransport(env: Record<string, string | undefined>): string {
 function surfaceFile(surface: SurfaceContractCase['surface']): string {
   switch (surface) {
     case 'bin':
-      return join(REPO_ROOT, 'bin/citra');
+      return join(REPO_ROOT, 'bin/anymd');
     case 'stdio':
       return join(REPO_ROOT, 'crates/pdf-reader-mcp-server/src/main.rs');
   }

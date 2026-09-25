@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-linearized-residual-projection.ts'
 const validFixture = join(fixtureDir, 'v3014-info-linearized-valid-v1.pdf');
 const spuriousFixture = join(fixtureDir, 'v3014-info-linearized-spurious-v1.pdf');
 const absentFixture = join(fixtureDir, 'v3014-info-linearized-absent-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

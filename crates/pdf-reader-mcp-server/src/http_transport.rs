@@ -1,4 +1,4 @@
-//! Streamable HTTP Web MCP transport for pdf-reader-mcp (rmcp).
+//! Streamable HTTP Web MCP transport for anymd (rmcp).
 //!
 //! Mirrors the TS adapter surface: `/mcp`, `/mcp/health`, optional `X-API-Key`, CORS.
 
@@ -272,19 +272,19 @@ pub async fn serve_http(
 
     let app = Router::new().nest("/mcp", mcp_router);
 
-    eprintln!("[pdf-reader-mcp] Streamable HTTP MCP listening on http://{addr}/mcp");
-    eprintln!("[pdf-reader-mcp] Health check: http://{addr}/mcp/health");
+    eprintln!("[anymd] Streamable HTTP MCP listening on http://{addr}/mcp");
+    eprintln!("[anymd] Health check: http://{addr}/mcp/health");
     if let Some(api_key) = shared_config.api_key.as_deref() {
         let _ = api_key;
-        eprintln!("[pdf-reader-mcp] API key authentication enabled (X-API-Key header)");
+        eprintln!("[anymd] API key authentication enabled (X-API-Key header)");
     } else if shared_config.allow_unauthenticated_remote {
         eprintln!(
-            "[pdf-reader-mcp] WARNING: explicit unauthenticated remote bind enabled for {}.",
+            "[anymd] WARNING: explicit unauthenticated remote bind enabled for {}.",
             shared_config.host
         );
     }
     if let Some(origin) = shared_config.cors_origin.as_deref() {
-        eprintln!("[pdf-reader-mcp] CORS allowed origin: {origin}");
+        eprintln!("[anymd] CORS allowed origin: {origin}");
     }
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

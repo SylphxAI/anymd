@@ -3,7 +3,7 @@
  * Stage downloaded CI native binary artifacts into packages/<platform>/bin and bin/native/<platform>/.
  *
  * Expected artifact layout (from native-package-scaffold / publish workflow):
- *   <artifactRoot>/citra-mcp-server-<platformId>/<binary>
+ *   <artifactRoot>/anymd-<platformId>/<binary>
  * or:
  *   <artifactRoot>/<platformId>/<binary>
  * or direct file path via --from=<file> --platform=<id>
@@ -66,13 +66,13 @@ const platforms = (onlyPlatform
 for (const platformId of platforms) {
   const meta = NATIVE_PLATFORM_PACKAGES[platformId];
   const candidates = [
-    join(artifactRoot, `citra-mcp-server-${platformId}`, meta.binaryName),
+    join(artifactRoot, `anymd-native-${platformId}`, meta.binaryName),
     join(artifactRoot, platformId, meta.binaryName),
-    join(artifactRoot, `citra-mcp-server-${platformId}`, nativeBinaryRelativePath(platformId)),
+    join(artifactRoot, `anymd-native-${platformId}`, nativeBinaryRelativePath(platformId)),
     join(artifactRoot, platformId, basename(nativeBinaryRelativePath(platformId))),
   ];
   // Also search one level deep for uploaded directory trees.
-  const platformArtifactDir = join(artifactRoot, `citra-mcp-server-${platformId}`);
+  const platformArtifactDir = join(artifactRoot, `anymd-native-${platformId}`);
   if (existsSync(platformArtifactDir)) {
     const walk = (dir: string, depth = 0) => {
       if (depth > 3) return;

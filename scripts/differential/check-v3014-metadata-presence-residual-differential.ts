@@ -21,7 +21,7 @@ const runnerPath = join(scriptDir, 'v3014-metadata-presence-residual-baseline-ru
 const projectionPath = join(scriptDir, 'v3014-metadata-presence-residual-projection.ts');
 const absentFixture = join(fixtureDir, 'v3014-metadata-absent-v1.pdf');
 const presentFixture = join(fixtureDir, 'v3014-metadata-present-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

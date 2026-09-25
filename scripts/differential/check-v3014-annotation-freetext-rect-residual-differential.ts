@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-annotation-freetext-rect-residual-
 const invertedFixture = join(fixtureDir, 'v3014-annotation-freetext-inverted-v1.pdf');
 const normalFixture = join(fixtureDir, 'v3014-annotation-freetext-normal-v1.pdf');
 const zeroFixture = join(fixtureDir, 'v3014-annotation-freetext-zero-width-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

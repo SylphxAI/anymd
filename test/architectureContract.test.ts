@@ -11,7 +11,7 @@ describe('architecture contract (sole-Rust production package)', () => {
       exports?: Record<string, string>;
       version?: string;
     };
-    expect(pkg.bin?.citra).toBe('./dist/runtime-entry.js');
+    expect(pkg.bin?.anymd).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['.']).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['./typescript']).toBeUndefined();
     expect(pkg.version).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);

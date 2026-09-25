@@ -1,4 +1,4 @@
-# Publish pure-Rust crates to crates.io (pdf-reader-core, citra-mcp-server, pdf-reader-cli).
+# Publish pure-Rust crates to crates.io (pdf-reader-core, anymd, pdf-reader-cli).
 name: Publish crates.io
 
 # Crates are not an admitted product distribution channel for 3.2.x.
@@ -40,7 +40,7 @@ jobs:
       - name: Enforce crates non-product-channel gate
         run: |
           echo "crates.io is not an admitted product distribution channel for pdf-reader-mcp 3.2.x."
-          echo "Primary product path: npm @sylphx/citra + optional native packages."
+          echo "Primary product path: npm @sylphx/anymd + optional native packages."
           echo "Refuse crates publish until an explicit ADR admits crates and versions match npm."
           exit 1
 
@@ -68,7 +68,7 @@ jobs:
             cargo publish -p pdf-reader-core
           fi
 
-      - name: Publish citra-mcp-server
+      - name: Publish anymd
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |

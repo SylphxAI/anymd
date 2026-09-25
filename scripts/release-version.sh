@@ -12,6 +12,9 @@ bun node_modules/@changesets/cli/bin.js version
 echo "[release-version] sync native optional package manifests to root version"
 bun run native:sync-manifests
 
+echo "[release-version] sync compatibility alias packages (@sylphx/citra, @sylphx/pdf-reader-mcp) to root version"
+bun run sync:alias-packages
+
 echo "[release-version] sync server.json + Rust SERVER_VERSION"
 bun run sync:server-json
 

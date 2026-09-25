@@ -34,5 +34,5 @@
   <line x1="216" y1="118" x2="260" y2="118" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/>
   <line x1="440" y1="118" x2="484" y2="118" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/>
   <line x1="664" y1="118" x2="708" y2="118" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="460" y="196" text-anchor="middle" fill="#64748b" font-size="11">Local-first · benchmark-gated · npm @sylphx/citra</text>
+  <text x="460" y="196" text-anchor="middle" fill="#64748b" font-size="11">Local-first · benchmark-gated · npm @sylphx/anymd</text>
 </svg>

@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-annotation-highlight-quadpoints-re
 const lineApAsMissingFixture = join(fixtureDir, 'v3014-annotation-highlight-quad-noap-v1.pdf');
 const lineApAsOnFixture = join(fixtureDir, 'v3014-annotation-highlight-ap-noext-v1.pdf');
 const lineApAsInvalidFixture = join(fixtureDir, 'v3014-annotation-highlight-ap-ext-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

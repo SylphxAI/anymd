@@ -6,7 +6,7 @@ use crate::schema::PdfSource;
 use crate::SERVER_VERSION;
 
 /// Family evidence envelope v1 product id.
-pub const PRODUCT: &str = "citra";
+pub const PRODUCT: &str = "anymd";
 pub const ENVELOPE_VERSION: &str = "1";
 
 #[derive(Debug, Clone, Serialize)]

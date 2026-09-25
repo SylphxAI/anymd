@@ -8,7 +8,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '../..');
-const binWrapper = path.join(repoRoot, 'bin/citra');
+const binWrapper = path.join(repoRoot, 'bin/anymd');
 
 // JSON-RPC message helpers
 const createRequest = (id: number, method: string, params?: unknown) => ({
@@ -100,7 +100,7 @@ describe('MCP Server Integration', () => {
     };
 
     expect(response.id).toBe(1);
-    expect(response.result?.serverInfo?.name).toBe('citra');
+    expect(response.result?.serverInfo?.name).toBe('anymd');
   });
 
   mcpIt('should list available tools', async () => {

@@ -21,7 +21,7 @@ See product README + EVIDENCE_CONTRACT for surfaces.
 ## Zero-config CTA
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
-Bare invoke starts brand-sole MCP on stdio. Live: the latest `@sylphx/citra` on npm.
+Bare invoke starts brand-sole MCP on stdio. Live: the latest `@sylphx/anymd` on npm.

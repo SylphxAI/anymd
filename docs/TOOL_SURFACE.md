@@ -1,4 +1,4 @@
-# Tool surface — Citra
+# Tool surface — anymd
 
 Policy: **few, powerful, obvious** tools.
 
@@ -14,8 +14,8 @@ Policy: **few, powerful, obvious** tools.
 | Surface | Role |
 | --- | --- |
 | MCP | Agent tools over stdio |
-| CLI | `citra` |
-| SDK | `@sylphx/citra/sdk` |
+| CLI | `anymd` |
+| SDK | `@sylphx/anymd/sdk` |
 
 ## Rules
 

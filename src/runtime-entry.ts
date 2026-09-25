@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Sole-Rust production package entry for @sylphx/citra.
+ * Sole-Rust production package entry for @sylphx/anymd.
  *
  * Launches the platform optional pure-Rust MCP server binary only.
  * There is no TypeScript PDF processing fallback in the production package.
@@ -36,7 +36,7 @@ const versionedPackageBinary = (nativePackageRoot: string, binaryName: string): 
     );
     if (nativeVersion !== packageVersion) {
       console.error(
-        `[citra] refusing native package version ${nativeVersion || 'unknown'}; wrapper version is ${packageVersion || 'unknown'}.`
+        `[anymd] refusing native package version ${nativeVersion || 'unknown'}; wrapper version is ${packageVersion || 'unknown'}.`
       );
       return null;
     }
@@ -87,7 +87,7 @@ if (
 ) {
   console.error(
     [
-      '[citra] TypeScript production runtime has been removed from this package.',
+      '[anymd] TypeScript production runtime has been removed from this package.',
       'Use the immutable historical LKG @sylphx/pdf-reader-mcp@3.0.14 for TypeScript rollback,',
       'or install/run the pure-Rust native binary for this package version.',
     ].join('\n')
@@ -101,9 +101,9 @@ if (!nativeBinary) {
   const platformLabel = platformId ?? `${process.platform}/${process.arch}`;
   console.error(
     [
-      `[citra] pure-Rust native binary not found for ${platformLabel}.`,
-      'Citra is sole-Rust: there is no bundled TypeScript PDF runtime.',
-      'Install the matching optional native package at the same Citra version.',
+      `[anymd] pure-Rust native binary not found for ${platformLabel}.`,
+      'anymd is sole-Rust: there is no bundled TypeScript PDF runtime.',
+      'Install the matching optional native package at the same anymd version.',
       'Historical TypeScript LKG remains available only as @sylphx/pdf-reader-mcp@3.0.14 (external pin).',
     ].join('\n')
   );
@@ -119,7 +119,7 @@ const child = spawn(nativeBinary, process.argv.slice(2), {
   },
 });
 child.once('error', (error) => {
-  console.error(`[citra] failed to start native server: ${error.message}`);
+  console.error(`[anymd] failed to start native server: ${error.message}`);
   process.exit(1);
 });
 

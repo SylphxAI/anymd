@@ -1,11 +1,11 @@
-# Citra — PDF evidence for agents
+# anymd — PDF evidence for agents
 
 ## Install
 
 ```bash
-npm i -g @sylphx/citra
+npm i -g @sylphx/anymd
 # or
-npx @sylphx/citra
+npx @sylphx/anymd
 ```
 
 ## Tools
@@ -19,9 +19,9 @@ npx @sylphx/citra
 ## SDK
 
 ```ts
-import { Citra } from '@sylphx/citra/sdk'
-const citra = Citra.create()
-const result = await citra.read({ path: '/abs/doc.pdf' })
+import { Anymd } from '@sylphx/anymd/sdk'
+const anymd = Anymd.create()
+const result = await anymd.read({ path: '/abs/doc.pdf' })
 ```
 
 ## Rules

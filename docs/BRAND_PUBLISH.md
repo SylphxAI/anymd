@@ -1,46 +1,49 @@
-# Citra — brand-sole publish (hard cut)
+# anymd — canonical publish
 
 **Publish authority:** this repository only.
 
 | Field | Value |
 | --- | --- |
-| Brand | **Citra** |
-| **Canonical npm** | `@sylphx/citra` |
-| **Canonical bin** | `citra` |
-| **MCP registry name** | `io.github.SylphxAI/citra` |
-| Retired package ID | `@sylphx/pdf-reader-mcp` (historical pins only) |
-| GitHub repository | `SylphxAI/citra` (renamed 2026-09-22 from `SylphxAI/pdf-reader-mcp`, which redirects) — source location, **not** a product identity |
+| Brand | **anymd** — any file → clean Markdown for AI agents |
+| **Canonical npm** | `@sylphx/anymd` |
+| **Canonical bin** | `anymd` |
+| **MCP registry name** | `io.github.SylphxAI/anymd` |
+| Alias packages (same version) | `@sylphx/citra` (bin `citra`), `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`) |
+| Retired MCP registry names | `io.github.SylphxAI/citra`, `io.github.SylphxAI/pdf-reader-mcp` (deprecated) |
+| GitHub repository | `SylphxAI/anymd` (formerly `SylphxAI/citra` and `SylphxAI/pdf-reader-mcp`, which redirect) — source location, **not** a product identity |
 
-## Policy (clean break)
+## Policy
 
-1. **One product / one identity:** `@sylphx/citra` is the only supported install path.
-2. Retired `@sylphx/pdf-reader-mcp` must not be a current install CTA or publish target.
-3. Do not create or publish an alias package. Git history and immutable historical
-   registry versions preserve migration evidence without a second product path.
-4. Native optional dependencies use the Citra package family and their versions
-   **must** match the Citra umbrella version.
-5. The GitHub release, npm provenance, installed-launcher proof, and MCP Registry
+1. **One product / one identity:** `@sylphx/anymd` is the canonical install path.
+2. The former names `@sylphx/citra` and `@sylphx/pdf-reader-mcp` are thin alias
+   packages in `packages/alias-*`. Each depends on `@sylphx/anymd` at the exact
+   same version and only runs its launcher. `scripts/release-version.sh` keeps
+   them in lockstep; `publish-npm.yml` publishes natives → main → aliases.
+3. Native optional dependencies use the `@sylphx/anymd-<platform>` family and
+   their versions **must** match the anymd umbrella version.
+4. The GitHub release, npm provenance, installed-launcher proof, and MCP Registry
    record must bind the same version and source SHA before release closeout.
-6. The repository slug is not part of this contract — `io.github.SylphxAI/citra`
-   was published while the repository was still named `pdf-reader-mcp`, so the
-   registry name never bound the slug. It was renamed to `SylphxAI/citra` on
-   2026-09-22 to retire the last old identifier anyway. GitHub redirects every
-   old location **except project site URLs**, so the rename moved the Pages path
-   behind `websiteUrl`/`homepage` and required updating `base` in the VitePress
-   config alongside it. The retired slug `SylphxAI/pdf-reader-mcp` stays empty
-   so the git, issue, and PR redirects keep working.
+5. The repository slug is not part of this contract. GitHub redirects every old
+   location **except project site URLs**, so a rename moves the Pages path behind
+   `websiteUrl`/`homepage` and requires updating `base` in the VitePress config
+   alongside it. Retired slugs stay empty so git, issue, and PR redirects keep
+   working.
 
 ## User install
 
 ```bash
-npm i -g @sylphx/citra
+npm i -g @sylphx/anymd
 # or
-npx @sylphx/citra
+npx @sylphx/anymd
 ```
 
-## Deprecate transitional (registry auth required)
+## Former names (aliases)
+
+`@sylphx/citra` and `@sylphx/pdf-reader-mcp` are live aliases of
+`@sylphx/anymd`, published at the same version by `publish-npm.yml`. That
+workflow clears their old deprecation notice after publishing; by hand:
 
 ```bash
-npm deprecate @sylphx/pdf-reader-mcp@"*" \
-  "Retired install CTA. Use @sylphx/citra (bin: citra)."
+npm deprecate "@sylphx/pdf-reader-mcp@*" ""
+npm deprecate "@sylphx/citra@*" ""
 ```

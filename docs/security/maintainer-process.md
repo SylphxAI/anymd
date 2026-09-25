@@ -32,8 +32,8 @@ repository as a whole. State which one:
 
 | Artifact | Example |
 | --- | --- |
-| Shipped npm tarball | `@sylphx/citra@5.0.1`, entry `dist/runtime-entry.js` |
-| Native optional package | `@sylphx/citra-linux-x64-gnu@5.0.1`, binary it launches |
+| Shipped npm tarball | `@sylphx/anymd@5.0.1`, entry `dist/runtime-entry.js` |
+| Native optional package | `@sylphx/anymd-linux-x64-gnu@5.0.1`, binary it launches |
 | Source tree | `crates/pdf-reader-core/src/url_fetch.rs` at `v4.1.3` |
 | Residual / oracle code | not shipped; not production authority |
 

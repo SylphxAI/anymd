@@ -113,16 +113,16 @@ jobs:
             cargo build --release -p pdf-reader-mcp-server --target ${{ matrix.target }}
           fi
           if [[ "${{ matrix.platformId }}" == "win32-x64-msvc" ]]; then
-            src="target/${{ matrix.target }}/release/citra-mcp-server.exe"
+            src="target/${{ matrix.target }}/release/anymd.exe"
           else
-            src="target/${{ matrix.target }}/release/citra-mcp-server"
+            src="target/${{ matrix.target }}/release/anymd"
           fi
-          mkdir -p "bin/native/${{ matrix.platformId }}" "packages/citra-${{ matrix.platformId }}/bin"
+          mkdir -p "bin/native/${{ matrix.platformId }}" "packages/anymd-${{ matrix.platformId }}/bin"
           cp "$src" "bin/native/${{ matrix.platformId }}/$(basename "$src")"
-          cp "$src" "packages/citra-${{ matrix.platformId }}/bin/$(basename "$src")"
+          cp "$src" "packages/anymd-${{ matrix.platformId }}/bin/$(basename "$src")"
           if [[ "${{ matrix.platformId }}" != "win32-x64-msvc" ]]; then
             chmod +x "bin/native/${{ matrix.platformId }}/$(basename "$src")" \
-              "packages/citra-${{ matrix.platformId }}/bin/$(basename "$src")"
+              "packages/anymd-${{ matrix.platformId }}/bin/$(basename "$src")"
           fi
           mkdir -p bin/native
           cp "$src" "bin/native/$(basename "$src")"

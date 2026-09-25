@@ -1,4 +1,6 @@
-# Citra (pdf-reader-mcp repository)
+# anymd
+
+Any file → clean Markdown for AI agents.
 
 PDF Reader MCP is a local-first public Model Context Protocol package for PDF
 and document intelligence. It gives agents typed tools for PDF inspection,
@@ -8,9 +10,14 @@ evidence without becoming a hosted Sylphx Platform BaaS service.
 
 ## Identity
 
-- Brand: **Citra**
-- Canonical npm: `@sylphx/citra`
-- Repository: `SylphxAI/citra`, formerly `pdf-reader-mcp` (the old slug redirects here).
+- Brand: **anymd** — "Any file → clean Markdown for AI agents"
+- Canonical npm: `@sylphx/anymd` (bin `anymd`; MCP registry `io.github.SylphxAI/anymd`)
+- Native optional packages: `@sylphx/anymd-<platformId>` (binary `anymd`)
+- Compatibility aliases, published at the same version as `@sylphx/anymd`:
+  `@sylphx/citra` (bin `citra`) and `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`)
+  in `packages/alias-*`, kept in lockstep by `scripts/sync-alias-packages.ts`.
+- Repository: `SylphxAI/anymd`, formerly `SylphxAI/citra` and
+  `SylphxAI/pdf-reader-mcp` (the old slugs redirect here).
 
 ## Lifecycle
 

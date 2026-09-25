@@ -8,37 +8,37 @@ import { fileURLToPath } from "node:url";
 // src/native/platform-package-map.ts
 var NATIVE_PLATFORM_PACKAGES = {
   "darwin-arm64": {
-    npmName: "@sylphx/citra-darwin-arm64",
-    packageDir: "packages/citra-darwin-arm64",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-darwin-arm64",
+    packageDir: "packages/anymd-darwin-arm64",
+    binaryName: "anymd",
     os: "darwin",
     cpu: "arm64"
   },
   "darwin-x64": {
-    npmName: "@sylphx/citra-darwin-x64",
-    packageDir: "packages/citra-darwin-x64",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-darwin-x64",
+    packageDir: "packages/anymd-darwin-x64",
+    binaryName: "anymd",
     os: "darwin",
     cpu: "x64"
   },
   "linux-arm64-gnu": {
-    npmName: "@sylphx/citra-linux-arm64-gnu",
-    packageDir: "packages/citra-linux-arm64-gnu",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-linux-arm64-gnu",
+    packageDir: "packages/anymd-linux-arm64-gnu",
+    binaryName: "anymd",
     os: "linux",
     cpu: "arm64"
   },
   "linux-x64-gnu": {
-    npmName: "@sylphx/citra-linux-x64-gnu",
-    packageDir: "packages/citra-linux-x64-gnu",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-linux-x64-gnu",
+    packageDir: "packages/anymd-linux-x64-gnu",
+    binaryName: "anymd",
     os: "linux",
     cpu: "x64"
   },
   "win32-x64-msvc": {
-    npmName: "@sylphx/citra-win32-x64-msvc",
-    packageDir: "packages/citra-win32-x64-msvc",
-    binaryName: "citra-mcp-server.exe",
+    npmName: "@sylphx/anymd-win32-x64-msvc",
+    packageDir: "packages/anymd-win32-x64-msvc",
+    binaryName: "anymd.exe",
     os: "win32",
     cpu: "x64"
   }
@@ -119,11 +119,11 @@ var pushPlatformCandidates = (candidates, packageRoot, platformId) => {
   } catch {}
 };
 var pushFallbackCandidates = (candidates, packageRoot) => {
-  candidates.push(...cargoBinaryCandidates(packageRoot, "citra-mcp-server"), join(packageRoot, "bin/native/citra-mcp-server"), join(packageRoot, "bin/native/citra-mcp-server.exe"));
+  candidates.push(...cargoBinaryCandidates(packageRoot, "anymd"), join(packageRoot, "bin/native/anymd"), join(packageRoot, "bin/native/anymd.exe"));
 };
 var resolvePureRustServerBinary = (options) => {
   const env = options?.env ?? process.env;
-  const explicit = env["CITRA_RUST_BIN"]?.trim();
+  const explicit = (env["ANYMD_RUST_BIN"] ?? env["CITRA_RUST_BIN"])?.trim();
   if (explicit && existsSync(explicit))
     return explicit;
   const packageRoot = options?.packageRoot ?? packageRootFromThisModule();
@@ -193,7 +193,7 @@ class PureRustClient {
       resolveOptions.env = options.env;
     const binaryPath = options.binaryPath ?? resolvePureRustServerBinary(resolveOptions);
     if (!binaryPath) {
-      throw new Error("Pure-Rust MCP server binary not found. Build/stage with `bun run build:rust` or set CITRA_RUST_BIN.");
+      throw new Error("Pure-Rust MCP server binary not found. Build/stage with `bun run build:rust` or set ANYMD_RUST_BIN.");
     }
     this.binaryPath = binaryPath;
     this.timeoutMs = options.timeoutMs ?? 45000;
@@ -274,13 +274,13 @@ class PureRustClient {
 var createPureRustClient = (options) => new PureRustClient(options);
 
 // src/sdk.ts
-class Citra {
+class Anymd {
   client;
   constructor(options = {}) {
     this.client = createPureRustClient(options);
   }
   static create(options) {
-    return new Citra(options);
+    return new Anymd(options);
   }
   read(input) {
     return this.client.readPdf(input);
@@ -295,8 +295,10 @@ class Citra {
     return this.client.callTool(tool, args);
   }
 }
-var sdk_default = Citra;
+var Citra = Anymd;
+var sdk_default = Anymd;
 export {
+  Anymd,
   Citra,
   PureRustClient,
   createPureRustClient,

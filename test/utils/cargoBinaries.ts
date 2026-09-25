@@ -21,8 +21,8 @@ export const resolveCliPath = (): string => {
 };
 
 export const resolveServerPath = (): string => {
-  for (const candidate of cargoBinaryCandidates(repoRoot, 'citra-mcp-server')) {
+  for (const candidate of cargoBinaryCandidates(repoRoot, 'anymd')) {
     if (existsSync(candidate)) return candidate;
   }
-  return path.join(repoRoot, 'target/release/citra-mcp-server');
+  return path.join(repoRoot, 'target/release/anymd');
 };

@@ -17,22 +17,22 @@ const server = existsSync(join(root, 'server.json'))
 
 const plan = {
   repoRoot: root,
-  canonicalName: '@sylphx/citra',
+  canonicalName: '@sylphx/anymd',
   actualName: pkg.name,
   version: pkg.version,
-  brandBin: pkg.bin?.citra,
+  brandBin: pkg.bin?.anymd,
   marketplaceTitle: server.title,
   marketplaceName: server.name,
-  hasSkill: existsSync(join(root, 'skills/citra/SKILL.md')),
+  hasSkill: existsSync(join(root, 'skills/anymd/SKILL.md')),
   brandPublishDoc: existsSync(join(root, 'docs/BRAND_PUBLISH.md')),
-  brandSole: pkg.name === '@sylphx/citra' && pkg.bin?.citra === './dist/runtime-entry.js',
+  brandSole: pkg.name === '@sylphx/anymd' && pkg.bin?.anymd === './dist/runtime-entry.js',
   transitionalDeprecated: true,
   npmAuthRequiredForLivePublish: true,
   ok: false as boolean,
 };
 plan.ok = Boolean(
   plan.brandSole &&
-    server.title === 'Citra' &&
+    server.title === 'anymd' &&
     plan.hasSkill &&
     plan.brandPublishDoc &&
     plan.version

@@ -11,7 +11,7 @@ on:
       - 'package.json'
       - 'scripts/smoke-native-launcher.ts'
       - 'scripts/smoke-native-package-resolve.ts'
-      - 'bin/citra'
+      - 'bin/anymd'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/native-package-scaffold.yml'
@@ -26,7 +26,7 @@ on:
       - 'package.json'
       - 'scripts/smoke-native-launcher.ts'
       - 'scripts/smoke-native-package-resolve.ts'
-      - 'bin/citra'
+      - 'bin/anymd'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/native-package-scaffold.yml'
@@ -61,8 +61,8 @@ jobs:
           bun run native:sync-manifests
           bun run native:assert-ready -- --manifests-only --all
           # Packages are publishable (not private) but still not sole-runtime defaults.
-          for pkg in packages/citra-*/package.json; do
-            jq -e '(.private != true) and (.citraNativeBinary != null)' "$pkg" >/dev/null
+          for pkg in packages/anymd-*/package.json; do
+            jq -e '(.private != true) and (.anymdNativeBinary != null)' "$pkg" >/dev/null
           done
 
   build:
@@ -120,11 +120,11 @@ jobs:
             cargo build --release -p pdf-reader-mcp-server --target ${{ matrix.target }}
           fi
           if [[ "${{ matrix.platformId }}" == "win32-x64-msvc" ]]; then
-            src="target/${{ matrix.target }}/release/citra-mcp-server.exe"
-            dest="bin/native/${{ matrix.platformId }}/citra-mcp-server.exe"
+            src="target/${{ matrix.target }}/release/anymd.exe"
+            dest="bin/native/${{ matrix.platformId }}/anymd.exe"
           else
-            src="target/${{ matrix.target }}/release/citra-mcp-server"
-            dest="bin/native/${{ matrix.platformId }}/citra-mcp-server"
+            src="target/${{ matrix.target }}/release/anymd"
+            dest="bin/native/${{ matrix.platformId }}/anymd"
           fi
           mkdir -p "$(dirname "$dest")"
           cp "$src" "$dest"
@@ -135,7 +135,7 @@ jobs:
       - name: Upload staged native binary
         uses: actions/upload-artifact@v7
         with:
-          name: citra-mcp-server-${{ matrix.platformId }}
+          name: anymd-native-${{ matrix.platformId }}
           path: bin/native/${{ matrix.platformId }}/**
           if-no-files-found: error
       - name: Stage package/legacy paths and host runtime smoke
@@ -144,17 +144,17 @@ jobs:
           set -euo pipefail
           platform="${{ matrix.platformId }}"
           if [[ "$platform" == "win32-x64-msvc" ]]; then
-            bin_name="citra-mcp-server.exe"
+            bin_name="anymd.exe"
           else
-            bin_name="citra-mcp-server"
+            bin_name="anymd"
           fi
           staged="bin/native/${platform}/${bin_name}"
           test -f "$staged"
-          mkdir -p "packages/citra-${platform}/bin" "bin/native"
-          cp "$staged" "packages/citra-${platform}/bin/${bin_name}"
+          mkdir -p "packages/anymd-${platform}/bin" "bin/native"
+          cp "$staged" "packages/anymd-${platform}/bin/${bin_name}"
           cp "$staged" "bin/native/${bin_name}"
           if [[ "$platform" != "win32-x64-msvc" ]]; then
-            chmod +x "$staged" "packages/citra-${platform}/bin/${bin_name}" "bin/native/${bin_name}"
+            chmod +x "$staged" "packages/anymd-${platform}/bin/${bin_name}" "bin/native/${bin_name}"
           fi
           # Host execute smoke is only valid when the matrix target matches the runner triple.
           # Sylphx self-hosted macOS is currently QEMU amd64 (darwin-x64); aarch64-apple-darwin is

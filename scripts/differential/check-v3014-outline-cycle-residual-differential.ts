@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-outline-cycle-residual-projection.
 const nextSelfFixture = join(fixtureDir, 'v3014-outline-cycle-next-self-v1.pdf');
 const siblingFixture = join(fixtureDir, 'v3014-outline-cycle-sibling-v1.pdf');
 const selfFirstFixture = join(fixtureDir, 'v3014-outline-cycle-self-first-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

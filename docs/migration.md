@@ -17,7 +17,7 @@ Callers that depended on a sources-only trust report should send
 
 ## Current production
 
-- Current production identity: `@sylphx/citra` (version: see npm)
+- Current production identity: `@sylphx/anymd` (version: see npm)
 - Engine: native Rust via thin Node launcher
 - No TypeScript PDF runtime in the production package
 - No `./typescript` export
@@ -25,10 +25,10 @@ Callers that depended on a sources-only trust report should send
 
 ## Install
 
-Use the brand-sole Citra package:
+Use the brand-sole anymd package:
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
 The retired `@sylphx/pdf-reader-mcp` package ID is historical evidence and a
@@ -52,9 +52,13 @@ npm install -g @sylphx/pdf-reader-mcp@3.0.14
 - `4.1.1`: npm README / claims sync of the authorized 4.1 narrative
 - `5.0.0`: hard cut to the brand-sole `@sylphx/citra` package, `citra` command,
   Citra native package family, and `io.github.SylphxAI/citra` MCP identity
+- `7.0.0`: rename to **anymd** — `@sylphx/anymd` package, `anymd` command,
+  `@sylphx/anymd-<platform>` native packages, and `io.github.SylphxAI/anymd` MCP
+  identity. `@sylphx/citra` and `@sylphx/pdf-reader-mcp` return as thin aliases
+  published at the same version, so old install commands keep working.
 
 ## Performance admission status
 
 Registry-bound dual-mode evidence for the 4.1 lineage remains historical and
-method-bounded. It does not by itself prove current Citra target coverage; see
+method-bounded. It does not by itself prove current anymd target coverage; see
 the current host-runtime and registry-install proof workflows.

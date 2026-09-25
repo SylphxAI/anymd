@@ -10,11 +10,11 @@ system, not "whatever text we could scrape."
 | **Filesystem MCP + raw PDF text** | A wall of characters | Page numbers invented, tables flattened, scans become noise, regions impossible to cite |
 | **Ask a vision model** | A fluent summary | Unverifiable. The model reads an image; it does not return a page, a cell, or a bounding box you can check |
 | **PDF.js / a JS PDF library in-process** | Text you parse yourself | You own the parser, the OCR, the table model, the failure modes — and the install footprint |
-| **Citra** | Fast local read: markdown, tables with cell geometry, and page citations. OCR and crops only when you ask | — |
+| **anymd** | Fast local read: markdown, tables with cell geometry, and page citations. OCR and crops only when you ask | — |
 
 ## The distinction that matters
 
-A text extractor answers *"what characters are on this page?"* Citra answers
+A text extractor answers *"what characters are on this page?"* anymd answers
 *"what can my agent safely assert, and where does the proof live?"*
 
 That is why the response carries `page`, `bounding_box`, `provenance`, `quality`
@@ -23,11 +23,11 @@ signals, and `gaps` — not just `full_text`. See
 
 ## Named peers
 
-These are the tools agents actually get compared with. Citra does not claim a
+These are the tools agents actually get compared with. anymd does not claim a
 speed win over them; that has not been measured here. The difference is the
 default contract.
 
-| Peer | Best at | Citra's default |
+| Peer | Best at | anymd's default |
 | --- | --- | --- |
 | [Docling](https://github.com/docling-project/docling) | Model-backed layout conversion | No model on the fast path. Page and cell locators in the MCP response. |
 | [Marker](https://github.com/datalab-to/marker) | PDF to markdown with a layout model | Fast preset is embedded text and tables. `profile: quality` adds structure without OCR. |
@@ -59,7 +59,7 @@ tool names. See [the tool surface](/TOOL_SURFACE).
 - Performance numbers are **method-bounded** (same host, named mode, named task
   family) — see [Performance](/performance/).
 - OCR and region analysis need an opt-in provider. Core reading does not.
-- Generative summaries are not evidence. Citra returns facts with locators; what
+- Generative summaries are not evidence. anymd returns facts with locators; what
   your agent concludes is its own responsibility.
 
 ## Next

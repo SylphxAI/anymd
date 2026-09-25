@@ -19,7 +19,7 @@ const projectionPath = join(scriptDir, 'v3014-form-pushbutton-default-null-resid
 const pushApFixture = join(fixtureDir, 'v3014-form-pushbutton-ap-default-null-v1.pdf');
 const pushNoApFixture = join(fixtureDir, 'v3014-form-pushbutton-noap-default-null-v1.pdf');
 const checkboxApFixture = join(fixtureDir, 'v3014-form-checkbox-ap-default-off-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

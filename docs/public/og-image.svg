@@ -26,7 +26,7 @@
   </g>
 
   <!-- wordmark -->
-  <text x="300" y="185" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="72" font-weight="800" letter-spacing="-2.5" fill="#eaf2dd">Citra</text>
+  <text x="300" y="185" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="72" font-weight="800" letter-spacing="-2.5" fill="#eaf2dd">anymd</text>
 
   <!-- headline -->
   <text x="96" y="350" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="62" font-weight="750" letter-spacing="-2" fill="#eaf2dd">Give your AI agent eyes</text>
@@ -38,8 +38,8 @@
   <!-- install chip -->
   <rect x="96" y="520" width="500" height="62" rx="31" fill="#151c0f" stroke="#2b3a05" stroke-width="2"/>
   <text x="130" y="560" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="26" fill="#c3f53c">$</text>
-  <text x="160" y="560" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="26" fill="#eaf2dd">npx -y @sylphx/citra</text>
+  <text x="160" y="560" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="26" fill="#eaf2dd">npx -y @sylphx/anymd</text>
 
   <!-- url -->
-  <text x="1104" y="560" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" fill="#7d8a72">sylphxai.github.io/citra</text>
+  <text x="1104" y="560" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" fill="#7d8a72">sylphxai.github.io/anymd</text>
 </svg>

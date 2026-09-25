@@ -28,10 +28,10 @@ const writeExtractedPackage = (packageDir: string, includeRuntime = true) => {
     fs.writeFileSync(path.join(packageDir, 'dist', 'runtime-entry.js'), 'export {};\n', 'utf8');
   }
   writeJson(path.join(packageDir, 'package.json'), {
-    name: '@sylphx/citra',
+    name: '@sylphx/anymd',
     version: '4.0.1',
     bin: {
-      citra: './dist/runtime-entry.js',
+      anymd: './dist/runtime-entry.js',
     },
     exports: {
       '.': './dist/runtime-entry.js',

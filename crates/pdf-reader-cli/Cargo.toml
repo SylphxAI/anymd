@@ -7,7 +7,7 @@ repository.workspace = true
 homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
-description = "JSON CLI for pdf-reader-core"
+description = "JSON CLI for pdf-reader-core (anymd)"
 
 [[bin]]
 name = "pdf-reader-cli"

@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-page-geometry-inheritance-residual
 const inheritedRotateFixture = join(fixtureDir, 'v3014-page-geometry-inherited-rotate-v1.pdf');
 const inheritedCropFixture = join(fixtureDir, 'v3014-page-geometry-inherited-crop-v1.pdf');
 const negativeRotateFixture = join(fixtureDir, 'v3014-page-geometry-negative-rotate-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

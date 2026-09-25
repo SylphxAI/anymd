@@ -100,8 +100,8 @@ const plan = {
   soleRuntimePrerequisite: [
     'productTruth.dropInFor3014=true',
     'native optional packages published with platform binaries',
-    'npm install @sylphx/citra@<version> resolves optional native package',
-    'MCP initialize succeeds through the installed Citra launcher on each platform',
+    'npm install @sylphx/anymd@<version> resolves optional native package',
+    'MCP initialize succeeds through the installed anymd launcher on each platform',
   ],
   commands: {
     plan: 'bun scripts/check-registry-install-proof.ts',
@@ -131,7 +131,7 @@ const resolveNativeBinaryFromInstall = (
       installRoot,
       'node_modules',
       '@sylphx',
-      'citra',
+      'anymd',
       'node_modules',
       meta.npmName,
       'bin',
@@ -158,7 +158,7 @@ const resolveInstalledLauncher = (
   const launcherPath = resolve(packageDir, bin);
   const packagePrefix = `${resolve(packageDir)}${process.platform === 'win32' ? '\\' : '/'}`;
   if (!launcherPath.startsWith(packagePrefix) || !existsSync(launcherPath)) {
-    fail(`installed Citra launcher is missing or escapes its package: ${bin}`);
+    fail(`installed anymd launcher is missing or escapes its package: ${bin}`);
   }
   return {
     command: process.execPath,
@@ -232,7 +232,7 @@ const mcpInitialize = async (
         const serverInfo = result?.serverInfo as Record<string, unknown> | undefined;
         const serverName = String(serverInfo?.name ?? '');
         const serverVersion = String(serverInfo?.version ?? '');
-        if (serverName !== 'citra') {
+        if (serverName !== 'anymd') {
           finish(new Error(`unexpected serverInfo.name=${serverName}`));
           return;
         }
@@ -311,7 +311,7 @@ if (requiredPlatformId) {
 
 if (mode === 'local-pack') {
   const meta = NATIVE_PLATFORM_PACKAGES[platformId];
-  const staged = join(root, 'packages', `citra-${platformId}`, 'bin', meta.binaryName);
+  const staged = join(root, 'packages', `anymd-${platformId}`, 'bin', meta.binaryName);
   if (!existsSync(staged)) {
     fail(
       `missing staged package binary at ${staged}; run bun run build:rust && bun scripts/stage-rust-mcp.ts`
@@ -356,14 +356,14 @@ if (mode === 'local-pack') {
       if (!nativeBinary) {
         fail(`native binary missing after local tarball install for ${platformId}`);
       }
-      const packageDir = join(installRoot, 'node_modules', '@sylphx', 'citra');
+      const packageDir = join(installRoot, 'node_modules', '@sylphx', 'anymd');
       const installedPackage = JSON.parse(
         readFileSync(join(packageDir, 'package.json'), 'utf8')
       ) as { version?: string; bin?: Record<string, string> };
       const installedVersion = String(installedPackage.version ?? '');
-      const bin = installedPackage.bin?.citra ?? '';
+      const bin = installedPackage.bin?.anymd ?? '';
       if (!installedVersion || !bin.includes('runtime-entry.js')) {
-        fail('local install did not produce the versioned sole-Rust Citra launcher');
+        fail('local install did not produce the versioned sole-Rust anymd launcher');
       }
       const nativePackageRoot = join(installRoot, 'node_modules', ...meta.npmName.split('/'));
       const nativeVersion = String(
@@ -430,14 +430,14 @@ try {
   if (fromVersionArg && fromVersionArg !== versionArg) {
     const previousInstall = spawnSync(
       'npm',
-      ['install', `@sylphx/citra@${fromVersionArg}`, '--no-fund', '--no-audit'],
+      ['install', `@sylphx/anymd@${fromVersionArg}`, '--no-fund', '--no-audit'],
       { cwd: temp, encoding: 'utf8', env: process.env }
     );
     if (previousInstall.status !== 0) {
       fail(previousInstall.stderr || previousInstall.stdout || 'previous-version install failed');
     }
     const previousPackage = JSON.parse(
-      readFileSync(join(temp, 'node_modules', '@sylphx', 'citra', 'package.json'), 'utf8')
+      readFileSync(join(temp, 'node_modules', '@sylphx', 'anymd', 'package.json'), 'utf8')
     ) as { version?: string };
     if (previousPackage.version !== fromVersionArg) {
       fail(
@@ -449,14 +449,14 @@ try {
 
   const install = spawnSync(
     'npm',
-    ['install', `@sylphx/citra@${versionArg}`, '--no-fund', '--no-audit'],
+    ['install', `@sylphx/anymd@${versionArg}`, '--no-fund', '--no-audit'],
     { cwd: temp, encoding: 'utf8', env: process.env }
   );
   if (install.status !== 0) {
     fail(install.stderr || install.stdout || 'npm install failed');
   }
 
-  const pkgDir = join(temp, 'node_modules', '@sylphx', 'citra');
+  const pkgDir = join(temp, 'node_modules', '@sylphx', 'anymd');
   if (!existsSync(pkgDir)) fail('installed package directory missing');
 
   const mainPkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8')) as {
@@ -468,7 +468,7 @@ try {
   if (mainPkg.version !== versionArg) {
     fail(`installed version ${mainPkg.version} != requested ${versionArg}`);
   }
-  const bin = mainPkg.bin?.citra ?? '';
+  const bin = mainPkg.bin?.anymd ?? '';
   const soleRuntime =
     bin.includes('runtime-entry.js') ||
     String(mainPkg.exports?.['.'] ?? '').includes('runtime-entry.js');
@@ -520,7 +520,7 @@ try {
     initialize = await mcpInitialize(launcher.command, launcher.args, temp, versionArg);
   }
 
-  const uninstall = spawnSync('npm', ['uninstall', '@sylphx/citra', '--no-fund', '--no-audit'], {
+  const uninstall = spawnSync('npm', ['uninstall', '@sylphx/anymd', '--no-fund', '--no-audit'], {
     cwd: temp,
     encoding: 'utf8',
     env: process.env,
@@ -528,7 +528,7 @@ try {
   if (uninstall.status !== 0) {
     fail(uninstall.stderr || uninstall.stdout || 'npm uninstall failed');
   }
-  const launcherShim = join(temp, 'node_modules', '.bin', 'citra');
+  const launcherShim = join(temp, 'node_modules', '.bin', 'anymd');
   if (
     existsSync(pkgDir) ||
     existsSync(nativePkgDir) ||
@@ -536,7 +536,7 @@ try {
     existsSync(`${launcherShim}.cmd`) ||
     existsSync(`${launcherShim}.ps1`)
   ) {
-    fail('npm uninstall left the Citra package or launcher shim installed');
+    fail('npm uninstall left the anymd package or launcher shim installed');
   }
 
   console.log(
@@ -555,7 +555,7 @@ try {
         nativeBinary,
         installedLauncher: launcher.path,
         initialize: initialize ?? null,
-        defaultBin: mainPkg.bin?.citra ?? null,
+        defaultBin: mainPkg.bin?.anymd ?? null,
         pureRustExport: mainPkg.exports?.['./pure-rust'] ?? null,
         lifecycle: {
           cleanInstall: true,
@@ -568,7 +568,7 @@ try {
           ? `Installed and executed native package for resolved host ${platformId}, but this does NOT prove a different matrix label if runner arch differs.`
           : skipInitialize
             ? 'Install + optional native binary presence only.'
-            : 'Registry install + exact optional native + installed Citra launcher MCP initialize succeeded on matching host platform.',
+            : 'Registry install + exact optional native + installed anymd launcher MCP initialize succeeded on matching host platform.',
       },
       null,
       2

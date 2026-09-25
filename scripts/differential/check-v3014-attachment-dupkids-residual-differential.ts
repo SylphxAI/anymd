@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-attachment-dupkids-residual-projec
 const controlFixture = join(fixtureDir, 'v3014-attachment-dupkids-control-v1.pdf');
 const duplicateFixture = join(fixtureDir, 'v3014-attachment-dupkids-duplicate-v1.pdf');
 const cycleFixture = join(fixtureDir, 'v3014-attachment-dupkids-cycle-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

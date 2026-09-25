@@ -10,7 +10,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '../..');
-const binWrapper = path.join(repoRoot, 'bin/citra');
+const binWrapper = path.join(repoRoot, 'bin/anymd');
 const ocrProvider = path.join(repoRoot, 'scripts/differential/reference-ocr-provider.ts');
 const regionProvider = path.join(
   repoRoot,
@@ -191,7 +191,7 @@ describe('MCP Server HTTP Transport Integration (Rust rmcp)', () => {
     expect(response.id).toBe(1);
     expect(
       (response.result as { serverInfo?: { name?: string; version?: string } })?.serverInfo?.name
-    ).toBe('citra');
+    ).toBe('anymd');
     const serverVersion = (response.result as { serverInfo?: { version?: string } })?.serverInfo
       ?.version;
     expect(serverVersion).toBe(packageJson.version);
@@ -602,7 +602,7 @@ describe('MCP Server HTTP Transport Authentication (Rust rmcp)', () => {
     const response = await initialize({ 'X-API-Key': API_KEY });
     expect(response.status).toBe(200);
     const data = await parseMcpResponse(response);
-    expect((data.result as { serverInfo?: { name?: string } })?.serverInfo?.name).toBe('citra');
+    expect((data.result as { serverInfo?: { name?: string } })?.serverInfo?.name).toBe('anymd');
   });
 
   it('does not list tools to an unauthenticated caller', async () => {

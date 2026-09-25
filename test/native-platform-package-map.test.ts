@@ -26,12 +26,8 @@ describe('native platform package map', () => {
   });
 
   test('uses platform-scoped staged binary paths', () => {
-    expect(nativeBinaryRelativePath('linux-x64-gnu')).toBe(
-      'bin/native/linux-x64-gnu/citra-mcp-server'
-    );
-    expect(nativeBinaryRelativePath('win32-x64-msvc')).toBe(
-      'bin/native/win32-x64-msvc/citra-mcp-server.exe'
-    );
+    expect(nativeBinaryRelativePath('linux-x64-gnu')).toBe('bin/native/linux-x64-gnu/anymd');
+    expect(nativeBinaryRelativePath('win32-x64-msvc')).toBe('bin/native/win32-x64-msvc/anymd.exe');
   });
 
   test('package metadata is publishable and binary-gated (Stage B)', async () => {
@@ -45,25 +41,25 @@ describe('native platform package map', () => {
     for (const platformId of Object.keys(NATIVE_PLATFORM_PACKAGES)) {
       const meta = NATIVE_PLATFORM_PACKAGES[platformId as keyof typeof NATIVE_PLATFORM_PACKAGES];
       const pkg = JSON.parse(
-        readFileSync(join(root, `packages/citra-${platformId}/package.json`), 'utf8')
+        readFileSync(join(root, `packages/anymd-${platformId}/package.json`), 'utf8')
       ) as {
         private?: boolean;
         name?: string;
         version?: string;
-        citraNativeBinary?: string;
+        anymdNativeBinary?: string;
         scripts?: { prepublishOnly?: string };
       };
       expect(pkg.private).not.toBe(true);
       expect(pkg.name).toBe(meta.npmName);
       expect(pkg.version).toBe(rootPkg.version);
-      expect(pkg.citraNativeBinary).toBe(`bin/${meta.binaryName}`);
+      expect(pkg.anymdNativeBinary).toBe(`bin/${meta.binaryName}`);
       expect(pkg.scripts?.prepublishOnly ?? '').toContain('REFUSE PUBLISH');
       expect(rootPkg.optionalDependencies?.[meta.npmName]).toBe(rootPkg.version);
     }
-    const dirs = readdirSync(join(root, 'packages')).filter((name) => name.startsWith('citra-'));
+    const dirs = readdirSync(join(root, 'packages')).filter((name) => name.startsWith('anymd-'));
     expect(dirs.sort()).toEqual(
       Object.keys(NATIVE_PLATFORM_PACKAGES)
-        .map((id) => `citra-${id}`)
+        .map((id) => `anymd-${id}`)
         .sort()
     );
   });

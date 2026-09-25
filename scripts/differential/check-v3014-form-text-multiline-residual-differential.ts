@@ -19,7 +19,7 @@ const projectionPath = join(scriptDir, 'v3014-form-text-multiline-residual-proje
 const lfFixture = join(fixtureDir, 'v3014-form-text-multiline-lf-v1.pdf');
 const crlfFixture = join(fixtureDir, 'v3014-form-text-multiline-crlf-v1.pdf');
 const rawlfFixture = join(fixtureDir, 'v3014-form-text-multiline-rawlf-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

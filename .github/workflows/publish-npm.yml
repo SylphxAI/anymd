@@ -86,11 +86,11 @@ jobs:
               ;;
           esac
           if [[ "${{ matrix.platformId }}" == "win32-x64-msvc" ]]; then
-            src="target/${{ matrix.target }}/release/citra-mcp-server.exe"
-            dest="bin/native/${{ matrix.platformId }}/citra-mcp-server.exe"
+            src="target/${{ matrix.target }}/release/anymd.exe"
+            dest="bin/native/${{ matrix.platformId }}/anymd.exe"
           else
-            src="target/${{ matrix.target }}/release/citra-mcp-server"
-            dest="bin/native/${{ matrix.platformId }}/citra-mcp-server"
+            src="target/${{ matrix.target }}/release/anymd"
+            dest="bin/native/${{ matrix.platformId }}/anymd"
           fi
           mkdir -p "$(dirname "$dest")"
           cp "$src" "$dest"
@@ -101,12 +101,12 @@ jobs:
       - name: Upload staged native binary
         uses: actions/upload-artifact@v7
         with:
-          name: citra-mcp-server-${{ matrix.platformId }}
+          name: anymd-native-${{ matrix.platformId }}
           path: bin/native/${{ matrix.platformId }}/**
           if-no-files-found: error
 
   publish:
-    name: Publish natives + main
+    name: Publish natives + main + aliases
     needs: build-native
     if: ${{ github.event.inputs.confirm == 'I_UNDERSTAND_USER_IMPACT' }}
     runs-on: ubuntu-latest
@@ -147,7 +147,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: native-artifacts
-          pattern: citra-mcp-server-*
+          pattern: anymd-native-*
           merge-multiple: false
 
       - name: Set up Rust (for package smoke only)
@@ -164,13 +164,13 @@ jobs:
         run: |
           set -euo pipefail
           # Critical: build:rust stages the publish-job host binary into
-          # packages/citra-<host>/bin and would overwrite the
+          # packages/anymd-<host>/bin and would overwrite the
           # Ubuntu 22.04 artifact with a newer-glibc binary. Restage all
           # matrix artifacts immediately before publish.
           bun run native:stage-from-artifacts -- --artifact-root=native-artifacts
           bun run native:sync-manifests
           bun run native:assert-ready -- --all
-          bin="packages/citra-linux-x64-gnu/bin/citra-mcp-server"
+          bin="packages/anymd-linux-x64-gnu/bin/anymd"
           test -f "$bin"
           if command -v objdump >/dev/null 2>&1; then
             mapfile -t vers < <(objdump -T "$bin" | sed -n 's/.*GLIBC_\([0-9][0-9.]*\).*/\1/p' | sort -u)
@@ -190,11 +190,13 @@ jobs:
       - name: Capture previous customer version
         run: |
           set -euo pipefail
-          PREVIOUS_VERSION="$(npm view @sylphx/citra version)"
-          test -n "$PREVIOUS_VERSION"
+          # The first anymd release has no previous @sylphx/anymd version; the
+          # upgrade leg of the install proof is skipped then (the old names are
+          # covered by the alias packages instead).
+          PREVIOUS_VERSION="$(npm view @sylphx/anymd version 2>/dev/null || true)"
           echo "PREVIOUS_VERSION=$PREVIOUS_VERSION" >> "$GITHUB_ENV"
 
-      - name: Publish natives then main
+      - name: Publish natives, then main, then aliases
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -203,6 +205,24 @@ jobs:
           test -n "${NPM_TOKEN:-}"
           printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
           bun run release:publish-with-natives
+
+      - name: Clear npm deprecation on the former names
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -uo pipefail
+          # @sylphx/citra and @sylphx/pdf-reader-mcp are live aliases of
+          # @sylphx/anymd now, so their old "retired" deprecation must go.
+          # An empty message clears it. Non-fatal: the packages are already
+          # published; a token without owner rights only leaves the notice.
+          printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
+          for name in @sylphx/pdf-reader-mcp @sylphx/citra; do
+            if npm deprecate "${name}@*" ""; then
+              echo "cleared deprecation on ${name}"
+            else
+              echo "::warning::could not clear deprecation on ${name}; run: npm deprecate \"${name}@*\" \"\""
+            fi
+          done
 
       - name: Registry readback (main + host optional)
         run: |
@@ -224,11 +244,11 @@ jobs:
           }
           ok=0
           for i in $(seq 1 72); do
-            if packument_ok "@sylphx/citra" "$VERSION" && packument_ok "@sylphx/citra-linux-x64-gnu" "$VERSION"; then
+            if packument_ok "@sylphx/anymd" "$VERSION" && packument_ok "@sylphx/anymd-linux-x64-gnu" "$VERSION"; then
               ok=1
               break
             fi
-            echo "readback wait $i for @sylphx/citra@$VERSION (+ linux-x64-gnu native)"
+            echo "readback wait $i for @sylphx/anymd@$VERSION (+ linux-x64-gnu native)"
             sleep 5
           done
           if [ "$ok" != "1" ]; then
@@ -237,19 +257,30 @@ jobs:
             # is live but a native package readback still lags, do not red the
             # release. The five-platform native install proof remains a
             # dedicated matrix and the next scheduled readback confirms it.
-            if npm view "@sylphx/citra@$VERSION" version >/dev/null 2>&1; then
-              echo "::warning::@sylphx/citra@$VERSION is live; native readback lagged after 6 minutes; install proof deferred"
+            if npm view "@sylphx/anymd@$VERSION" version >/dev/null 2>&1; then
+              echo "::warning::@sylphx/anymd@$VERSION is live; native readback lagged after 6 minutes; install proof deferred"
               exit 0
             fi
-            echo "::error::@sylphx/citra@$VERSION did not appear in the registry after publish" >&2
+            echo "::error::@sylphx/anymd@$VERSION did not appear in the registry after publish" >&2
             exit 1
           fi
-          npm view "@sylphx/citra@$VERSION" version bin optionalDependencies || true
-          npm view "@sylphx/citra-linux-x64-gnu@$VERSION" version || true
+          npm view "@sylphx/anymd@$VERSION" version bin optionalDependencies || true
+          npm view "@sylphx/anymd-linux-x64-gnu@$VERSION" version || true
+          for alias in @sylphx/citra @sylphx/pdf-reader-mcp; do
+            if packument_ok "$alias" "$VERSION"; then
+              npm view "$alias@$VERSION" version bin dependencies || true
+            else
+              echo "::warning::alias $alias@$VERSION readback lagged; check it with npm view"
+            fi
+          done
           # Install proof is the stronger oracle than raw npm view for this job host.
+          FROM_ARGS=()
+          if [ -n "${PREVIOUS_VERSION:-}" ]; then
+            FROM_ARGS=(--from-version="$PREVIOUS_VERSION")
+          fi
           bun run check:registry-install-proof -- \
             --registry \
-            --from-version="$PREVIOUS_VERSION" \
+            "${FROM_ARGS[@]}" \
             --version="$VERSION"
           # Host-only registry proof in this job; full five-platform pure-Rust initialize remains a dedicated matrix.
 

@@ -22,9 +22,9 @@ fn repo_root() -> PathBuf {
 
 fn resolve_mcp_binary() -> PathBuf {
     for relative in [
-        "bin/native/citra-mcp-server",
-        "target/release/citra-mcp-server",
-        "target/debug/citra-mcp-server",
+        "bin/native/anymd",
+        "target/release/anymd",
+        "target/debug/anymd",
     ] {
         let candidate = repo_root().join(relative);
         if candidate.is_file() {
@@ -32,10 +32,10 @@ fn resolve_mcp_binary() -> PathBuf {
         }
     }
     // Fall back to cargo-built test binary next to this test via CARGO_BIN_EXE
-    if let Ok(path) = std::env::var("CARGO_BIN_EXE_citra-mcp-server") {
+    if let Ok(path) = std::env::var("CARGO_BIN_EXE_anymd") {
         return PathBuf::from(path);
     }
-    panic!("citra-mcp-server binary not found; run cargo build -p pdf-reader-mcp-server");
+    panic!("anymd binary not found; run cargo build -p pdf-reader-mcp-server");
 }
 
 struct StdioClient {
@@ -164,7 +164,7 @@ fn server_discover_before_initialize_keeps_session_alive() {
             // JSON Pointer escapes '/' in key names as ~1
             .pointer("/result/_meta/io.modelcontextprotocol~1serverInfo/name")
             .and_then(Value::as_str),
-        Some("citra")
+        Some("anymd")
     );
 
     // Legacy initialize must still succeed on the same connection.
@@ -184,7 +184,7 @@ fn server_discover_before_initialize_keeps_session_alive() {
         initialize
             .pointer("/result/serverInfo/name")
             .and_then(Value::as_str),
-        Some("citra")
+        Some("anymd")
     );
 
     client.send_notification("notifications/initialized", json!({}));

@@ -13,9 +13,9 @@ describe('MCP stdio production default (sole-Rust package)', () => {
       bin?: Record<string, string>;
       exports?: Record<string, string>;
     };
-    const bin = readText('bin/citra');
+    const bin = readText('bin/anymd');
 
-    expect(pkg.bin?.citra).toBe('./dist/runtime-entry.js');
+    expect(pkg.bin?.anymd).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['.']).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['./typescript']).toBeUndefined();
     expect(bin).toContain('dist/runtime-entry.js');

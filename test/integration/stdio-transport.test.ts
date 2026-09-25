@@ -12,7 +12,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '../..');
-const binWrapper = path.join(repoRoot, 'bin/citra');
+const binWrapper = path.join(repoRoot, 'bin/anymd');
 const fixturesRoot = path.join(repoRoot, 'test/fixtures');
 const goldenPath = path.join(fixturesRoot, 'read-pdf-golden.json');
 const samplePdf = path.join(fixturesRoot, 'sample.pdf');
@@ -211,7 +211,7 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
     };
 
     expect(response.id).toBe(101);
-    expect(response.result?.serverInfo?.name).toBe('citra');
+    expect(response.result?.serverInfo?.name).toBe('anymd');
     expect(response.result?.serverInfo?.version).toBe(packageJson.version);
     // sole-runtime may advertise package version
     freshProc.kill('SIGTERM');

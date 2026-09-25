@@ -285,12 +285,12 @@ export const buildSotaReleaseGateReport = async (
     'Rust MCP server (modelcontextprotocol/rust-sdk rmcp) is present'
   );
 
-  const binWrapper = fs.readFileSync(path.join(repoRoot, 'bin/citra'), 'utf8');
+  const binWrapper = fs.readFileSync(path.join(repoRoot, 'bin/anymd'), 'utf8');
   addCheck(
     checks,
     'mcp:sole_rust_launcher_boundary',
     binWrapper.includes('dist/runtime-entry.js') &&
-      binWrapper.includes('citra-mcp-server') &&
+      binWrapper.includes('anymd') &&
       !binWrapper.includes('dist/index.js') &&
       !binWrapper.includes('legacy-engine-runtime') &&
       !fs.existsSync(path.join(repoRoot, 'crates/pdf-reader-mcp-server/src/parity_bridge.rs')),
