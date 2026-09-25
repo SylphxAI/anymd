@@ -1844,10 +1844,16 @@ impl<'a> Processor<'a> {
                                                as_num(&operation.operands[2]),
                                                as_num(&operation.operands[3])))
                 }
-                "s" | "f*" | "B" | "B*" | "b" => {
-                    dlog!("unhandled path op {:?}", operation);
+                "f*" => {
+                    output.fill(&gs.ctm, &gs.fill_colorspace, &gs.fill_color, &path)?;
+                    path.ops.clear();
                 }
-                "S" => {
+                "B" | "B*" | "b" | "b*" => {
+                    output.fill(&gs.ctm, &gs.fill_colorspace, &gs.fill_color, &path)?;
+                    output.stroke(&gs.ctm, &gs.stroke_colorspace, &gs.stroke_color, &path)?;
+                    path.ops.clear();
+                }
+                "S" | "s" => {
                     output.stroke(&gs.ctm, &gs.stroke_colorspace, &gs.stroke_color, &path)?;
                     path.ops.clear();
                 }

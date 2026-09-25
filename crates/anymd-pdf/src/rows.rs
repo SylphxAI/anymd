@@ -17,6 +17,16 @@ pub(crate) struct Segment {
     pub(crate) text: String,
     /// Some(true) when glyph advances are uniform (a monospace font).
     pub(crate) mono: Option<bool>,
+    /// The words of `text` (split at inferred spaces) with their extents.
+    pub(crate) words: Vec<Word>,
+}
+
+/// One word of a segment and its horizontal extent.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Word {
+    pub(crate) x0: f64,
+    pub(crate) x1: f64,
+    pub(crate) text: String,
 }
 
 impl Segment {
@@ -274,6 +284,29 @@ pub(crate) fn segments_of_row(mut row: Vec<Glyph>) -> Vec<Segment> {
         }
         let (letter_gap, base_threshold) = space_thresholds(&gaps);
         let group_mono = monospace(&group);
+        // Super- and subscripts are judged against their own group, not the
+        // whole row: a smaller table beside a body-text column is not a
+        // subscript of that column.
+        let dominant = {
+            let local = dominant_size(group.iter().map(|(g, _)| (g.size, 1)));
+            if local > 0.0 {
+                local
+            } else {
+                dominant
+            }
+        };
+        let ref_base = {
+            let mut bases: Vec<f64> = group
+                .iter()
+                .filter(|(g, _)| g.size >= dominant * 0.95)
+                .map(|(g, _)| g.base)
+                .collect();
+            if bases.is_empty() {
+                ref_base
+            } else {
+                median(&mut bases)
+            }
+        };
         let mut segment: Option<Segment> = None;
         let mut script = 0i8;
         let mut reach = f64::NEG_INFINITY;
@@ -296,6 +329,11 @@ pub(crate) fn segments_of_row(mut row: Vec<Glyph>) -> Vec<Segment> {
             );
             if wants_space && !current.text.ends_with(' ') {
                 current.text.push(' ');
+                current.words.push(Word {
+                    x0: glyph.x0,
+                    x1: glyph.x1,
+                    text: String::new(),
+                });
             }
             let glyph_script = if dominant <= 0.0 || glyph.size > dominant * 0.85 {
                 0
@@ -306,16 +344,21 @@ pub(crate) fn segments_of_row(mut row: Vec<Glyph>) -> Vec<Segment> {
             } else {
                 0
             };
+            let word = current.words.last_mut().expect("a segment has a word");
             if glyph_script != script {
                 let marks = next_char.is_some_and(char::is_alphanumeric);
                 if glyph_script != 0 && marks && !wants_space && prev_char.is_some() {
-                    current.text.push(if glyph_script > 0 { '^' } else { '_' });
+                    let mark = if glyph_script > 0 { '^' } else { '_' };
+                    current.text.push(mark);
+                    word.text.push(mark);
                     script = glyph_script;
                 } else if glyph_script == 0 || !marks {
                     script = 0;
                 }
             }
             current.text.push_str(&glyph.text);
+            word.text.push_str(&glyph.text);
+            word.x1 = word.x1.max(glyph.x1);
             current.x1 = current.x1.max(glyph.x1);
             current.top = current.top.max(glyph.base + glyph.size * 0.8);
             current.bottom = current.bottom.min(glyph.base - glyph.size * 0.2);
@@ -327,6 +370,7 @@ pub(crate) fn segments_of_row(mut row: Vec<Glyph>) -> Vec<Segment> {
             if trimmed.len() != segment.text.len() {
                 segment.text = trimmed.to_string();
             }
+            segment.words.retain(|word| !word.text.trim().is_empty());
             if !segment.text.is_empty() {
                 segments.push(segment);
             }
@@ -345,6 +389,11 @@ pub(crate) fn new_segment(glyph: &Glyph, dominant: f64) -> Segment {
         size: if dominant > 0.0 { dominant } else { glyph.size },
         text: glyph.text.clone(),
         mono: None,
+        words: vec![Word {
+            x0: glyph.x0,
+            x1: glyph.x1,
+            text: glyph.text.clone(),
+        }],
     }
 }
 

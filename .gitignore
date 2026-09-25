@@ -27,3 +27,6 @@ packages/npm/*/anymd.exe
 docs/public/wasm/
 benchmark-artifacts/
 __pycache__/
+
+# Local benchmark and regression corpora (bench/fetch.py, scripts/fetch-markdown-corpus.sh)
+.cache/

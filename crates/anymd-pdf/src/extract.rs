@@ -3,7 +3,7 @@
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use crate::{MAX_GLYPHS_PER_PAGE, MAX_WORKERS};
-use pdf_extract::{output_doc_page, ColorSpace, Document, MediaBox, OutputDev, OutputError, Path as PdfPath, Transform};
+use pdf_extract::{output_doc_page, ColorSpace, Document, MediaBox, OutputDev, OutputError, Path as PdfPath, PathOp, Transform};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Glyph {
@@ -17,12 +17,24 @@ pub(crate) struct Glyph {
     pub(crate) space: bool,
 }
 
+/// A straight horizontal or vertical line drawn on the page: a stroked
+/// segment, a thin filled bar, or an edge of a filled box. `at` is the y of a
+/// horizontal rule or the x of a vertical one; `from..to` is its extent.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct Rule {
+    pub(crate) horizontal: bool,
+    pub(crate) at: f64,
+    pub(crate) from: f64,
+    pub(crate) to: f64,
+}
+
 pub(crate) struct RawPage {
     pub(crate) number: u32,
     pub(crate) bottom: f64,
     pub(crate) top: f64,
     pub(crate) glyphs: Result<Vec<Glyph>, String>,
     pub(crate) rotated: Vec<Glyph>,
+    pub(crate) rules: Vec<Rule>,
 }
 
 #[derive(Default)]
@@ -30,6 +42,153 @@ pub(crate) struct Collector {
     pub(crate) media: Option<MediaBox>,
     pub(crate) glyphs: Vec<Glyph>,
     pub(crate) rotated: Vec<Glyph>,
+    pub(crate) rules: Vec<Rule>,
+}
+
+/// Rules beyond this many on one page are ignored (charts, hatching).
+const MAX_RULES_PER_PAGE: usize = 20_000;
+/// A filled box at most this thick is a rule, not a box.
+const BAR_THICKNESS: f64 = 3.0;
+
+fn apply(ctm: &Transform, x: f64, y: f64) -> (f64, f64) {
+    (
+        ctm.m11 * x + ctm.m21 * y + ctm.m31,
+        ctm.m12 * x + ctm.m22 * y + ctm.m32,
+    )
+}
+
+/// Whether a colour paints (almost) white, which draws nothing visible on a
+/// white page.
+fn is_white(colorspace: &ColorSpace, color: &[f64]) -> bool {
+    match colorspace {
+        ColorSpace::DeviceGray | ColorSpace::CalGray(_) => color.first().is_some_and(|v| *v > 0.95),
+        ColorSpace::DeviceRGB | ColorSpace::CalRGB(_) => {
+            color.len() >= 3 && color[..3].iter().all(|v| *v > 0.95)
+        }
+        ColorSpace::DeviceCMYK => color.len() >= 4 && color[..4].iter().all(|v| *v < 0.05),
+        _ => false,
+    }
+}
+
+impl Collector {
+    fn push_rule(&mut self, (x0, y0): (f64, f64), (x1, y1): (f64, f64)) {
+        if self.rules.len() >= MAX_RULES_PER_PAGE
+            || ![x0, y0, x1, y1].iter().all(|v| v.is_finite())
+        {
+            return;
+        }
+        let (dx, dy) = ((x1 - x0).abs(), (y1 - y0).abs());
+        if dy <= 0.5 && dx >= 1.0 {
+            self.rules.push(Rule {
+                horizontal: true,
+                at: (y0 + y1) / 2.0,
+                from: x0.min(x1),
+                to: x0.max(x1),
+            });
+        } else if dx <= 0.5 && dy >= 1.0 {
+            self.rules.push(Rule {
+                horizontal: false,
+                at: (x0 + x1) / 2.0,
+                from: y0.min(y1),
+                to: y0.max(y1),
+            });
+        }
+    }
+
+    /// The subpaths of a path in page space: each subpath's straight edges,
+    /// and its bounding box when it is an axis-aligned rectangle.
+    fn subpaths(ctm: &Transform, path: &PdfPath) -> Vec<Subpath> {
+        let mut out: Vec<Subpath> = Vec::new();
+        let mut open: Option<Subpath> = None;
+        let mut start = None;
+        let mut current = None;
+        for op in &path.ops {
+            match *op {
+                PathOp::MoveTo(x, y) => {
+                    out.extend(open.take());
+                    let point = apply(ctm, x, y);
+                    open = Some(Subpath::default());
+                    start = Some(point);
+                    current = Some(point);
+                }
+                PathOp::LineTo(x, y) => {
+                    let point = apply(ctm, x, y);
+                    let subpath = open.get_or_insert_with(Subpath::default);
+                    if let Some(from) = current {
+                        subpath.edges.push((from, point));
+                    }
+                    current = Some(point);
+                }
+                PathOp::CurveTo(_, _, _, _, x, y) => {
+                    // Curves are never rules; they break the current line.
+                    open.get_or_insert_with(Subpath::default).curved = true;
+                    current = Some(apply(ctm, x, y));
+                }
+                PathOp::Rect(x, y, w, h) => {
+                    out.extend(open.take());
+                    let corners = [
+                        apply(ctm, x, y),
+                        apply(ctm, x + w, y),
+                        apply(ctm, x + w, y + h),
+                        apply(ctm, x, y + h),
+                    ];
+                    out.push(Subpath {
+                        edges: (0..4).map(|i| (corners[i], corners[(i + 1) % 4])).collect(),
+                        curved: false,
+                        closed: true,
+                    });
+                    start = None;
+                    current = None;
+                }
+                PathOp::Close => {
+                    if let Some(subpath) = open.as_mut() {
+                        if let (Some(from), Some(to)) = (current, start) {
+                            subpath.edges.push((from, to));
+                        }
+                        subpath.closed = true;
+                    }
+                    current = start;
+                }
+            }
+        }
+        out.extend(open);
+        out
+    }
+}
+
+#[derive(Default)]
+struct Subpath {
+    edges: Vec<((f64, f64), (f64, f64))>,
+    curved: bool,
+    closed: bool,
+}
+
+impl Subpath {
+    /// The bounding box of a closed, straight, axis-aligned outline (a box
+    /// drawn with `re` or with four lines).
+    fn as_box(&self) -> Option<[f64; 4]> {
+        if self.curved || self.edges.len() < 3 || self.edges.len() > 5 {
+            return None;
+        }
+        let straight = self
+            .edges
+            .iter()
+            .all(|(a, b)| (a.0 - b.0).abs() < 0.5 || (a.1 - b.1).abs() < 0.5);
+        let first = self.edges.first()?.0;
+        let last = self.edges.last()?.1;
+        let closes = self.closed || ((first.0 - last.0).abs() < 0.5 && (first.1 - last.1).abs() < 0.5);
+        if !(straight && closes) {
+            return None;
+        }
+        let xs = self.edges.iter().flat_map(|(a, b)| [a.0, b.0]);
+        let ys = self.edges.iter().flat_map(|(a, b)| [a.1, b.1]);
+        Some([
+            xs.clone().fold(f64::INFINITY, f64::min),
+            ys.clone().fold(f64::INFINITY, f64::min),
+            xs.fold(f64::NEG_INFINITY, f64::max),
+            ys.fold(f64::NEG_INFINITY, f64::max),
+        ])
+    }
 }
 
 impl OutputDev for Collector {
@@ -124,21 +283,53 @@ impl OutputDev for Collector {
 
     fn stroke(
         &mut self,
-        _ctm: &Transform,
-        _colorspace: &ColorSpace,
-        _color: &[f64],
-        _path: &PdfPath,
+        ctm: &Transform,
+        colorspace: &ColorSpace,
+        color: &[f64],
+        path: &PdfPath,
     ) -> Result<(), OutputError> {
+        if is_white(colorspace, color) {
+            return Ok(());
+        }
+        for subpath in Self::subpaths(ctm, path) {
+            if !subpath.curved {
+                for (from, to) in subpath.edges {
+                    self.push_rule(from, to);
+                }
+            }
+        }
         Ok(())
     }
 
     fn fill(
         &mut self,
-        _ctm: &Transform,
-        _colorspace: &ColorSpace,
-        _color: &[f64],
-        _path: &PdfPath,
+        ctm: &Transform,
+        colorspace: &ColorSpace,
+        color: &[f64],
+        path: &PdfPath,
     ) -> Result<(), OutputError> {
+        if is_white(colorspace, color) {
+            return Ok(());
+        }
+        for subpath in Self::subpaths(ctm, path) {
+            match subpath.as_box() {
+                // A thin bar is one rule along its middle.
+                Some([x0, y0, x1, y1]) if y1 - y0 <= BAR_THICKNESS && x1 - x0 > y1 - y0 => {
+                    self.push_rule((x0, (y0 + y1) / 2.0), (x1, (y0 + y1) / 2.0));
+                }
+                Some([x0, y0, x1, y1]) if x1 - x0 <= BAR_THICKNESS => {
+                    self.push_rule(((x0 + x1) / 2.0, y0), ((x0 + x1) / 2.0, y1));
+                }
+                // A shaded box (a header band, a cell background): its edges
+                // separate what is inside from what is outside.
+                Some(_) => {
+                    for (from, to) in subpath.edges {
+                        self.push_rule(from, to);
+                    }
+                }
+                None => {}
+            }
+        }
         Ok(())
     }
 }
@@ -190,6 +381,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
             top,
             glyphs,
             rotated: collector.rotated,
+            rules: collector.rules,
         }
     };
     if workers <= 1 {
@@ -229,6 +421,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
                 top: 792.0,
                 glyphs: Err(format!("page {number}: text extraction failed")),
                 rotated: Vec::new(),
+                rules: Vec::new(),
             })
         })
         .collect()

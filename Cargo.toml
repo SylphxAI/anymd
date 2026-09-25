@@ -29,7 +29,8 @@ readme = "README.md"
 adobe-cmap-parser = { path = "vendor/adobe-cmap-parser" }
 # pdf-extract 0.12.1 runs Form XObjects with an identity CTM (figure text lands
 # at the wrong place) and parses image XObjects as content streams. Vendored
-# with a fix so figures stay where they are drawn.
+# with a fix so figures stay where they are drawn, and so every path-painting
+# operator (f*, B, b, s) reaches the output device (table rules).
 pdf-extract = { path = "vendor/pdf-extract" }
 
 [profile.release]

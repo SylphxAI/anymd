@@ -159,6 +159,26 @@ fn recognizes_page_numbers() {
     assert!(!is_page_number("Results"));
 }
 
+/// Words spread evenly over the segment's extent.
+fn words_of(text: &str, x0: f64, x1: f64) -> Vec<Word> {
+    let total = text.chars().count().max(1) as f64;
+    let per = (x1 - x0) / total;
+    let mut out = Vec::new();
+    let mut offset = 0usize;
+    for word in text.split(' ') {
+        let len = word.chars().count();
+        if len > 0 {
+            out.push(Word {
+                x0: x0 + offset as f64 * per,
+                x1: x0 + (offset + len) as f64 * per,
+                text: word.into(),
+            });
+        }
+        offset += len + 1;
+    }
+    out
+}
+
 fn segment(text: &str, x0: f64, x1: f64, base: f64) -> Segment {
     Segment {
         x0,
@@ -169,6 +189,7 @@ fn segment(text: &str, x0: f64, x1: f64, base: f64) -> Segment {
         size: 10.0,
         text: text.into(),
         mono: None,
+        words: words_of(text, x0, x1),
     }
 }
 
