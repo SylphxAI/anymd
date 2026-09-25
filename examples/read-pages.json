@@ -1,0 +1,16 @@
+{
+  "tool": "read",
+  "description": "Read chosen pages within a token budget, then continue with the cursor.",
+  "arguments": {
+    "source": "/absolute/path/to/contract.pdf",
+    "pages": "1-5,8",
+    "max_tokens": 8000
+  },
+  "_next_call": {
+    "tool": "read",
+    "arguments": {
+      "source": "/absolute/path/to/contract.pdf",
+      "cursor": "<cursor from the last line of the previous answer>"
+    }
+  }
+}

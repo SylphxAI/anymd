@@ -3,7 +3,10 @@
 **Status:** Accepted
 **Date:** 2026-06-25
 **Deciders:** Kyle Tse, Claude
-**Project:** pdf-reader-mcp
+**Project:** pdf-reader-mcp, now anymd
+
+> The TypeScript files named below (`src/index.ts`, `src/mcp.ts`) no longer exist.
+> The decision still holds: `crates/anymd/src/http_transport.rs` enforces it in Rust.
 
 ## Context
 

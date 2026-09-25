@@ -1,5 +1,7 @@
 # RETIRED family control-plane note
 
+> Historical: decided for pdf-reader-mcp, now anymd, and kept as written. The package, crate, tool and file names it uses may no longer exist; anymd is one Rust binary in `crates/anymd`, and [AGENTS.md](../../AGENTS.md) has the current layout.
+
 Superseded by product-local POSITIONING/IPPB. Historical only.
 
 # ADR-389: Adopt PDF Reader MCP Family SOTA Roadmap

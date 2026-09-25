@@ -1,27 +1,23 @@
 [
   {
     "step": 1,
-    "tool": "search_pdf",
-    "description": "Cheap literal search with evidence provenance before spending context on full reads.",
+    "tool": "search",
+    "description": "Find the phrase across a folder before reading whole documents.",
     "arguments": {
-      "sources": [
-        { "path": "/absolute/path/to/spec.pdf" }
-      ],
       "query": "warranty period",
-      "max_matches_per_source": 10,
+      "sources": ["/absolute/path/to/specs"],
+      "glob": "*.pdf",
+      "max_results": 10,
       "context_chars": 200
     }
   },
   {
     "step": 2,
-    "tool": "pdf_evidence",
-    "description": "Render the page containing the match for visual proof.",
+    "tool": "inspect",
+    "description": "Render the page that holds the match as visual proof.",
     "arguments": {
       "operation": "render_page",
-      "sources": [
-        { "path": "/absolute/path/to/spec.pdf" }
-      ],
-      "max_pages": 1,
+      "sources": [{ "path": "/absolute/path/to/specs/spec.pdf", "pages": [12] }],
       "include_image": true
     }
   }

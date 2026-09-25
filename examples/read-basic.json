@@ -1,0 +1,8 @@
+{
+  "tool": "read",
+  "description": "Read a document as Markdown. Pages carry <!-- page N --> markers for citation.",
+  "arguments": {
+    "source": "/absolute/path/to/report.pdf"
+  },
+  "_note": "source also takes an http(s) URL or a directory. Long documents stop at max_tokens (default 20000) and end with a cursor to continue."
+}

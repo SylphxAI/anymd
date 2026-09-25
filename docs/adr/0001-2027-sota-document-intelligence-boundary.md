@@ -1,5 +1,7 @@
 # ADR-0001: 2027 SOTA Document Intelligence Boundary
 
+> Historical: decided for pdf-reader-mcp, now anymd, and kept as written. The package, crate, tool and file names it uses may no longer exist; anymd is one Rust binary in `crates/anymd`, and [AGENTS.md](../../AGENTS.md) has the current layout.
+
 **Status:** Accepted
 **Date:** 2026-06-16
 **Deciders:** Kyle Tse, Codex

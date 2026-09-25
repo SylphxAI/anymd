@@ -1,4 +1,4 @@
-//! Rust-native search_pdf extraction for pdf-reader-mcp.
+//! Rust-native search_pdf extraction for anymd.
 
 use std::path::PathBuf;
 
