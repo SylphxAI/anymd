@@ -56,7 +56,7 @@ features:
 
 <p class="cit-fine" style="text-align:center">Formerly <strong>pdf-reader-mcp</strong> / <strong>Citra</strong>. <code>@sylphx/pdf-reader-mcp</code> and <code>@sylphx/citra</code> still install and run anymd. See <a href="./guide/migration">Migration</a>.</p>
 
-<img src="/demo.svg" alt="anymd converting a PDF, searching a folder, and reading a spreadsheet" style="display:block;margin:32px auto;max-width:100%" />
+<img src="/demo.gif" alt="Real terminal session: anymd converts a PDF, searches a folder, reads a spreadsheet, and Claude Code answers through the anymd MCP server" style="display:block;margin:32px auto;max-width:100%" />
 
 ## Quick start
 

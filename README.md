@@ -1,10 +1,8 @@
 <div align="center">
 
-<img src="docs/public/logo.svg" alt="anymd" width="96" height="96" />
+<img src="docs/public/og-image.png" alt="anymd — any file → clean Markdown for AI agents" width="820" />
 
-# anymd
-
-**Any file → clean Markdown for AI agents.**
+<h1 hidden>anymd</h1>
 
 PDF, Word, PowerPoint, Excel, EPUB, HTML, images, audio/video. A fast Rust engine running on your machine, available as an MCP server and a CLI. No API key.
 
@@ -18,7 +16,9 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML, images, audio/video. A fast Rust engin
 
 <sub>Formerly **pdf-reader-mcp** / **Citra**. `@sylphx/pdf-reader-mcp` and `@sylphx/citra` still install and run anymd.</sub>
 
-<img src="docs/public/demo.svg" alt="anymd converting a PDF, searching a folder, and reading a spreadsheet" width="760" />
+<img src="docs/public/demo.gif" alt="Real terminal session: anymd converts a PDF page with its table, searches a folder, reads a spreadsheet, then Claude Code answers from the PDF through the anymd MCP server" width="820" />
+
+<sub>A real, unedited terminal recording (asciinema + agg, <a href="bench/demo">script</a>). The last command is Claude Code answering from the PDF through the anymd MCP server.</sub>
 
 </div>
 
