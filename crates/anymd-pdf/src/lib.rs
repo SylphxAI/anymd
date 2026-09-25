@@ -400,6 +400,8 @@ struct Segment {
     bottom: f64,
     size: f64,
     text: String,
+    /// Some(true) when glyph advances are uniform (a monospace font).
+    mono: Option<bool>,
 }
 
 impl Segment {
@@ -553,6 +555,7 @@ fn segments_of_row(mut row: Vec<Glyph>) -> Vec<Segment> {
         } else {
             0.16
         };
+        let group_mono = monospace(&group);
         let mut segment: Option<Segment> = None;
         let mut script = 0i8;
         let mut reach = f64::NEG_INFINITY;
@@ -603,6 +606,7 @@ fn segments_of_row(mut row: Vec<Glyph>) -> Vec<Segment> {
             reach = reach.max(glyph.x1);
         }
         if let Some(mut segment) = segment {
+            segment.mono = group_mono;
             let trimmed = segment.text.trim();
             if trimmed.len() != segment.text.len() {
                 segment.text = trimmed.to_string();
@@ -624,7 +628,32 @@ fn new_segment(glyph: &Glyph, dominant: f64) -> Segment {
         bottom: glyph.base - glyph.size * 0.2,
         size: if dominant > 0.0 { dominant } else { glyph.size },
         text: glyph.text.clone(),
+        mono: None,
     }
+}
+
+/// Monospace test: every distinct character has the same advance width.
+/// Proportional fonts spread widely once a few distinct glyphs are present.
+fn monospace(group: &[(Glyph, bool)]) -> Option<bool> {
+    // Full-width CJK is uniform by design; it is not a monospace hint.
+    let cjk = group
+        .iter()
+        .filter(|(g, _)| g.text.chars().next().is_some_and(is_cjk))
+        .count();
+    if cjk * 4 >= group.len() {
+        return None;
+    }
+    let mut seen: HashMap<&str, f64> = HashMap::new();
+    for (glyph, _) in group {
+        let advance = (glyph.x1 - glyph.x0) / glyph.size.max(0.1);
+        seen.entry(glyph.text.as_str()).or_insert(advance);
+    }
+    if seen.len() < 5 {
+        return None;
+    }
+    let max = seen.values().cloned().fold(f64::NEG_INFINITY, f64::max);
+    let min = seen.values().cloned().fold(f64::INFINITY, f64::min);
+    Some(max > 0.0 && (max - min) / max < 0.08)
 }
 
 fn dominant_size(sizes: impl Iterator<Item = (f64, usize)>) -> f64 {
@@ -1251,6 +1280,7 @@ fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Block>) {
     let mut prev: Option<(f64, f64, f64)> = None; // (bottom, x1, size) of previous line
     let mut continuation_x0 = f64::NAN;
     let mut para_right = f64::NEG_INFINITY;
+    let mut prev_mono = false;
     let mut prev_x0 = f64::NAN;
 
     let flush =
@@ -1340,6 +1370,13 @@ fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Block>) {
         let bullet = bullet_body(&text);
         let enumerated = starts_enumerated(&text);
         let heading_like = numbered_heading_level(&text).is_some() || named_heading(&text);
+        // Monospace text (receipts, code, terminal output) keeps its line breaks.
+        let determined = row.iter().any(|s| s.mono.is_some());
+        let row_mono = if determined {
+            row.iter().any(|s| s.mono == Some(true)) && !row.iter().any(|s| s.mono == Some(false))
+        } else {
+            prev_mono
+        };
 
         let new_block = match prev {
             None => true,
@@ -1403,7 +1440,13 @@ fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Block>) {
         if paragraph_lines == 0 {
             para_right = f64::NEG_INFINITY;
         }
-        join_line(&mut paragraph, bullet.unwrap_or(&text));
+        if row_mono && prev_mono && !paragraph.is_empty() && !in_list {
+            paragraph.push('\n');
+            paragraph.push_str(&text);
+        } else {
+            join_line(&mut paragraph, bullet.unwrap_or(&text));
+        }
+        prev_mono = row_mono;
         paragraph_lines += 1;
         para_right = para_right.max(x1);
         prev_x0 = x0;
@@ -1740,6 +1783,47 @@ mod tests {
         assert_eq!(rows.len(), 1);
     }
 
+    fn mono_glyphs(line: &str, base: f64) -> Vec<Glyph> {
+        line.chars()
+            .enumerate()
+            .filter(|(_, ch)| *ch != ' ')
+            .map(|(i, ch)| Glyph {
+                x0: 72.0 + i as f64 * 6.0,
+                x1: 78.0 + i as f64 * 6.0,
+                base,
+                size: 10.0,
+                text: ch.to_string(),
+                space: false,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn monospace_lines_keep_their_breaks() {
+        let lines = [
+            "Wireless Noise-Cancelling",
+            "Headphones - Premium Black",
+            "AUDIO-5521 1 @ $349.99",
+            "Member Discount $-50.00",
+        ];
+        let mut segments = Vec::new();
+        for (i, line) in lines.iter().enumerate() {
+            let mut row = mono_glyphs(line, 700.0 - i as f64 * 12.0);
+            // Word gaps are one monospace cell.
+            for glyph in &mut row {
+                glyph.text = glyph.text.clone();
+            }
+            segments.extend(segments_of_row(row));
+        }
+        assert!(segments.iter().any(|s| s.mono == Some(true)));
+        let mut blocks = Vec::new();
+        region_blocks(segments, 10.0, &mut blocks);
+        match &blocks[..] {
+            [Block::Paragraph { text, .. }] => assert_eq!(text, &lines.join("\n")),
+            other => panic!("expected one line-preserving block, got {other:?}"),
+        }
+    }
+
     #[test]
     fn dehyphenates_line_breaks() {
         let mut text = String::from("trans-");
@@ -1786,6 +1870,7 @@ mod tests {
             bottom: base - 2.0,
             size: 10.0,
             text: text.into(),
+            mono: None,
         }
     }
 
