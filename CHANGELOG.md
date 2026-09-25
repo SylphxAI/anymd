@@ -1,5 +1,21 @@
 # Changelog
 
+## 7.1.0
+
+### Minor Changes
+
+- [#755](https://github.com/SylphxAI/anymd/pull/755) [`5787607`](https://github.com/SylphxAI/anymd/commit/57876075ff0ea3e5fccec1405e2f9897a11ed99e) Thanks [@shtse8](https://github.com/shtse8)! - Try anymd without installing: the docs site gains a browser playground. Drop a PDF, DOCX, PPTX, XLSX, EPUB, HTML, or CSV file and get the same Markdown the CLI produces, converted on your device with WebAssembly in a Web Worker. Files never leave the browser. `anymd-formats` gains a default-on `native` feature (local tesseract, ffprobe, whisper.cpp); without it, images report metadata and media the sniffed container.
+
+- [#750](https://github.com/SylphxAI/anymd/pull/750) [`cdbcdad`](https://github.com/SylphxAI/anymd/commit/cdbcdad7f0d127983e3da0b486cc2a84930eefac) Thanks [@shtse8](https://github.com/shtse8)! - Transcripts work with less setup: anymd finds a whisper model in its cache, downloads a SHA-256-verified ggml model on first use when asked (`download_whisper_model: true`, `--download-whisper-model`, or `ANYMD_WHISPER_AUTO_DOWNLOAD=1`; size via `ANYMD_WHISPER_MODEL_SIZE`), accepts `ANYMD_WHISPER_BIN` and more whisper.cpp binary names, prints the exact install command for your OS when something is missing, and `anymd doctor` reports the model and cache path.
+
+### Patch Changes
+
+- [#751](https://github.com/SylphxAI/anymd/pull/751) [`b42e2c3`](https://github.com/SylphxAI/anymd/commit/b42e2c31b079713feed6044508c3ecbd8147b840) Thanks [@shtse8](https://github.com/shtse8)! - Monospace text (receipts, code listings, terminal output) keeps its line breaks instead of being merged into prose paragraphs.
+
+- [#756](https://github.com/SylphxAI/anymd/pull/756) [`26308e1`](https://github.com/SylphxAI/anymd/commit/26308e1111324612e42b78c28d7a5864f625f00c) Thanks [@shtse8](https://github.com/shtse8)! - Structured JSON reads (`inspect` structure, legacy `read_pdf` profiles, and `search_pdf` detail) now keep word spaces on TeX and other PDFs that position words instead of emitting space glyphs: text such as "Thedominantsequence" reads "The dominant sequence", phrase search finds "multi-head attention" with its page and box, and page text puts each line on its own line.
+
+- [#754](https://github.com/SylphxAI/anymd/pull/754) [`435437f`](https://github.com/SylphxAI/anymd/commit/435437f7e2af26a5c4927663d5a33349d19ee07d) Thanks [@shtse8](https://github.com/shtse8)! - New social preview image and a real terminal recording (asciinema + agg) at the top of the README and the docs home page. The recording ends with Claude Code answering from a PDF through the anymd MCP server.
+
 ## 7.0.0
 
 ### Major Changes
