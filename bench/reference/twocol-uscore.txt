@@ -1,0 +1,2460 @@
+UScore: An Effective Approach to Fully
+Unsupervised Evaluation Metrics for Machine Translation
+Jonas Belouadi
+jonas.belouadi@uni-bielefeld.de
+
+Steffen Eger
+steffen.eger@uni-bielefeld.de
+
+Natural Language Learning Group (NLLG)
+Faculty of Technology, Bielefeld University
+nl2g.github.io
+Abstract
+
+m ( 𝑥, 𝑦)
+
+arXiv:2202.10062v3 [cs.CL] 11 Feb 2023
+
+Hund
+
+The vast majority of evaluation metrics for machine translation are supervised, i.e., (i) are
+trained on human scores, (ii) assume the existence of reference translations, or (iii) leverage parallel data. This hinders their applicability to cases where such supervision signals
+are not available. In this work, we develop
+fully unsupervised evaluation metrics. To do
+so, we leverage similarities and synergies between evaluation metric induction, parallel corpus mining, and MT systems. In particular,
+we use an unsupervised evaluation metric to
+mine pseudo-parallel data, which we use to
+remap deficient underlying vector spaces (iteratively) and to induce an unsupervised MT system, which then provides pseudo-references as
+an additional component in the metric. Finally,
+we also induce unsupervised multilingual sentence embeddings from pseudo-parallel data.
+We show that our fully unsupervised metrics
+are effective, i.e., they beat supervised competitors on four out of five evaluation datasets.
+We make our code publicly available.1
+
+1
+
+Introduction
+
+Evaluation metrics are essential for judging
+progress in natural language generation (NLG) tasks
+such as machine translation (MT) and summarization, as they identify the state-of-the-art in a key
+NLP technology. Despite their wide dissemination,
+classical lexical overlap evaluation metrics like
+BLEU (Papineni et al., 2002) and ROUGE (Lin,
+2004) have difficulties judging the quality of modern NLG systems (Mathur et al., 2020a; Marie et al.,
+2021), necessitating novel metrics that correlate better with humans. Lately, this has been a very active
+research area (Zhang et al., 2020; Zhao et al., 2019,
+2022; Colombo et al., 2021; Yuan et al., 2021).2
+Recently, more and more supervised metrics are
+being proposed. E.g., BLEURT (Sellam et al.,
+1github.com/potamides/unsupervised-metrics
+2Of course, the search for high quality metrics dates back
+at least to the invention of BLEU and its predecessors.
+
+(a)
+Katze
+
+cat
+cow
+pig
+Kuh
+
+(f)
+
+(d)
+
+(g)
+
+(b)
+
+Schwein
+dog
+
+(e)
+
+(c)
+
+I love cats.
+It was great.
+···
+
+Er mag Hunde.
+Toll!
+···
+
+Figure 1: Relationship between metrics m, vector
+spaces, parallel data, and MT systems: Metrics build
+on (potentially deficient) multilingual vector spaces (a),
+and can be used to mine (pseudo-)parallel sentences (b),
+which in turn can be used to improve deficient vector
+spaces (c). (Pseudo-)parallel data can also be used
+to train MT systems (d), which can generate pseudoreferences (e). Conversely, metrics can also be optimization criteria for MT systems, which in turn can
+generate additional pseudo-parallel data through translation (f & g; not explored in this work).
+
+2020) trains on human annotated datasets ranging from 5k-150k pairs, the COMET (Rei et al.,
+2020) models regress on 12k-370k data points and
+UniTE (Wan et al., 2022), before fine-tuning on
+the same data as COMET, pre-trains on 5m-10m
+parallel sentences. Of course, training on larger
+amounts of data leads to better metrics (measured
+on in-domain data), but also increases the risk of
+learning biases from the data (Poliak et al., 2018)—
+and limits the applicability to domains and language
+pairs where supervision is available. Here, we go
+the opposite route and try to minimize the amount
+of supervision as much as possible.
+We classify existing metrics making use of different types of supervision as follows (cf. Table 1). TYPE-1 metrics are trained on human
+assessments such as Direct-Assessment (DA) or
+Post-Editing (PE) scores, and compare system outputs to either human references (reference-based;
+Sellam et al., 2020; Rei et al., 2020) or directly
+to source texts (reference-free; Ranasinghe et al.,
+2021). TYPE-2 metrics, by comparison, do not
+use human assessments for training but still require
+
+Training
+
+References
+
+Parallel Data
+
+TYPE-1
+TYPE-2
+TYPE-3
+
+3
+7
+7
+
+(3)
+3
+7
+
+(3)
+(3)
+3
+
+Unsupervised
+
+7
+
+7
+
+7
+
+Table 1: Different types of supervision used by TYPE1/2/3 metrics compared to unsupervised metrics. Checkmarks surrounded by parentheses denote optional supervision signals.
+
+human references, i.e., are untrained and referencebased (Yuan et al., 2021; Zhao et al., 2019; Zhang
+et al., 2020). Finally, TYPE-3 metrics are untrained (unlike TYPE-1) and reference-free (unlike
+TYPE-2), i.e., do not use supervision as in TYPE1 or 2. However, to work well, they still rely on
+parallel data (Zhao et al., 2020; Song et al., 2021),
+which is considered a form of supervision, e.g., in
+the MT community (Artetxe et al., 2018; Lample
+et al., 2018).
+In contrast, we aim for fully unsupervised evaluation metrics (for MT) that do not use any form
+of supervision (cf. Table 1). In addition, subject to
+the constraint that no supervision is allowed, our
+metrics should be of maximally high quality, i.e.,
+correlation with human assessments. We have two
+use cases in mind: (a) Such sample efficiency3 is a
+prerequisite for the wide applicability of the metrics.
+This is especially important when we want to overcome the current English-centricity (Anastasopoulos and Neubig, 2020) of MT systems and evaluation
+metrics and also cover low-resource languages like
+Nepali or Sinhala (Fomicheva et al., 2021) and
+low-resource pairs like Yoruba-German.4 (b) Our
+fully unsupervised evaluation metrics should be
+considered strong lower bounds for any future work
+that uses (mild) forms of supervision for metric
+induction, i.e., we want to push the lower bounds
+for newly developed TYPE-k metrics.
+To achieve our goals, we employ selflearning (He et al., 2020; Wei et al., 2021) and
+in particular, we leverage the following dualities to
+make our metrics maximally effective, cf. Figure 1:
+3We use the term sample efficiency in a generalized sense
+to denote the amount of supervision required.
+4Neither Yoruba (a language spoken in Nigeria) nor German
+are classical low-resource languages. For German, this is clear
+and Yoruba is even included in mBERT, i.e., belongs to the
+languages with 100+ largest Wikipedias. Nonetheless, from
+own experience, we find it inherently difficult to obtain highquality annotations for the language pair, as a result of few
+competent parallel speakers as well as technical difficulties
+(e.g., lack of adequate compute infrastructure in Nigeria).
+
+(1) Evaluation metrics and NLG systems are closely
+related; e.g., a metric can be an optimization criterion for an NLG system (Böhm et al., 2019), and a
+system can conversely generate pseudo references
+(a.o.) from which to improve a metric. (2) Evaluation metrics and parallel corpus mining (Artetxe and
+Schwenk, 2019) are closely related; e.g., a metric
+can be used to mine parallel data, which in turn can
+be used to improve the metric (Zhao et al., 2020),
+e.g., by remapping deficient embedding spaces.
+Our contributions are: (i) We show that effective
+unsupervised evaluation metrics can be obtained by
+exploiting relationships with parallel corpus mining
+approaches and MT system induction; (ii) to do so,
+we explore ways to (a) make parallel corpus mining
+efficient (e.g., overcome cubic runtime complexity)
+and (b) induce unsupervised multilingual sentence
+embeddings from pseudo-parallel data; (iii) we
+show that pseudo-parallel data can rectify deficient
+vector spaces such as mBERT; (iv) we show that
+our metrics beat three state-of-the-art supervised
+metrics on four of five datasets we evaluate on.
+
+2
+
+Background
+
+We take inspiration from three recent supervised (reference-free; TYPE-3) metrics: XMoverScore (Zhao et al., 2020), DistilScore (Reimers
+and Gurevych, 2020), and SentSim (Song et al.,
+2021). Below, we review key aspects of them, and
+show where supervision plays a role.
+2.1 XMoverScore
+Central to XMoverScore is the use of Word
+Mover’s Distance (WMD) as a similarity between
+two sentences (Zhao et al., 2020). WMD and
+further enhancements are discussed below.
+WMD WMD is a distance function that compares sentences at the token level (Kusner et al.,
+2015), by leveraging word embeddings which in
+XMoverScore’s case come from mBERT (Devlin
+et al., 2019). From a source sentence 𝑥 and an MT
+hypothesis 𝑦, WMD constructs a distance matrix
+C ∈ R |𝑥 |, |𝑦 | , where C𝑖 𝑗 is the distance between two
+word embeddings, C𝑖 𝑗 = k E(𝑥 𝑖 ) − E(𝑦 𝑗 ) k; 𝑥 𝑖 , 𝑦 𝑗
+index respective words in 𝑥, 𝑦. WMD uses this
+distance matrix to compute the similarity of the
+two sentences. This can be defined as the linear
+programming problem
+WMD(𝑥, 𝑦) = min
+
+|𝑦 |
+|𝑥 | ∑︁
+∑︁
+
+F
+
+𝑖=1 𝑗=1
+
+F𝑖 𝑗 C𝑖 𝑗 ,
+
+(1)
+
+where F ∈ R |𝑥 |, |𝑦 | is an alignment matrix with F𝑖 𝑗
+denoting how much of word 𝑥 𝑖 travels to word 𝑦 𝑗 .
+Additional constraints prevent it from becoming a
+zero matrix.
+Vector space remapping Zhao et al. (2020), akin
+to similar earlier and subsequent work (Cao et al.,
+2020; Schuster et al., 2019), argue that the monolingual subspaces of mBERT are not well aligned. As
+a remedy, they investigate linear projection methods
+which post-hoc improve cross-lingual alignments.
+We refer to this approach as vector space remapping.
+XMoverScore explores two different remapping
+approaches, CLP and UMD. They both leverage
+parallel data on sentence-level from which they
+extract word-level alignments using fast-align,
+which are then used for remapping. We give more
+details in the Appendix A.
+Language Model XMoverScore linearly combines WMD with the perplexity of a GPT-2 language model (Radford et al., 2019). Allegedly this
+penalizes ungrammatical translations. This updates
+XMoverScores scoring function to
+𝔪(𝑥, 𝑦) = 𝑤 xlng WMD(𝑥, 𝑦) + 𝑤 lm LM(𝑦). (2)
+Here, 𝑤 xlng , 𝑤 lm are weights for the cross-lingual
+WMD and LM components of XMoverScore.
+2.2
+
+DistilScore
+
+Reimers and Gurevych (2020) show that the cosine between multilingual sentence embeddings
+captures semantic similarity and can be used to assess cross-lingual semantic textual similarity. Their
+approach to inducing embedding models is based
+on multilingual knowledge distillation. We refer
+to this metric as DistilScore. Their approach requires supervision at multiple levels. First, parallel
+sentences are needed to induce multilingual models,
+and second, NLI and STS corpora are required to
+induce teacher embeddings in the source language.
+2.3
+
+SentSim
+
+A key difference between XMoverScore and DistilScore is that one approach is based on wordand the other on sentence embeddings. Song et al.
+(2021) and Kaster et al. (2021) show that combining
+approaches based on word-level and sentence-level
+representations can substantially improve metrics.
+The metric of Song et al. (2021), which is called
+SentSim, combines supervised DistilScore with
+one of two word embedding-based metrics. The
+
+Score
+
+𝑤pseudo
+Word Mover’s
+Distance
+mBERT
+mBART
+
+𝑤xlng
+Word Mover’s
+Distance
+Remap
+
+𝑤lm
+Perplexity
+
+mBERT
+
+GPT-2
+
+Source Sentence
+
+Hypothesis
+
+Figure 2: UScorewrd with pseudo references (left), unsupervised remapping (middle) and a LM (right).
+
+first one is quite similar to XMoverScore, as it is
+also based on WMD. The other one is a multilingual
+variant of BERTScore (Zhang et al., 2020).
+
+3
+
+Methods
+
+In this section, we introduce our fully unsupervised metric UScore. UScore builds upon the
+existing metrics XMoverScore, DistilScore, and
+SentSim, but eliminates all supervision signals and
+instead leverages the dualities shown in Figure 1. In
+particular, we mine pseudo-parallel data from unsupervised metrics, which we use (iteratively) to (a)
+rectify deficient vector spaces (for XMoverScore)
+and to (b) train unsupervised MT systems which can
+generate pseudo-references (as pseudo-references
+are in the same language as the hypothesis, this
+eliminates problems of cross-lingual deficiency).
+Furthermore, we use pseudo-parallel data to (c)
+induce an unsupervised sentence embedding model
+analogous to DistilScore, which we can then (d)
+integrate with the unsupervised word based model
+analogous to SentSim. We now give details.
+3.1 UScorewrd
+XMoverScore uses sentence-parallel data to extract word pairs for vector space remapping. (i)
+We replace this parallel data with pseudo-parallel
+data.5 (ii) In addition, we use pseudo-references
+to address the issue of deficient vector spaces. We
+now give details on (i) and (ii) below.
+Efficient WMD Pseudo-Parallel Data Mining
+Metrics such as XMoverScore could in principle be used for pseudo-parallel corpus mining since
+5To extract the word pairs from the sentence-parallel data,
+XMoverScore uses fast-align (Dyer et al., 2013), but since
+this depends directly on how well sentences are aligned, we first
+replace it with unsupervised awesome-align (Dou and Neubig,
+2021) which only relies on pre-trained language models.
+
+they can compare arbitrary sentences. However,
+when WMD-based metrics are scaled to corpus
+mining, algorithmic efficiency problems arise: (a)
+the computational complexity of WMD scales cubically with sentence length (Kusner et al., 2015);
+(b) to compare 𝑚 source to 𝑚 target sentences, 𝑚 2
+WMD invocations are necessary, which quickly
+becomes intractable. Thus, we explore ways to
+improve the performance of WMD to mine efficiently. In particular, Kusner et al. (2015) define a
+linear approximation of WMD called word centroid
+distance (WCD) and a mining algorithm that first
+sorts all target samples according to their WCD to
+a given query and computes exact WMD for the
+𝑘 nearest neighbors. We use this algorithm for
+efficient WMD-based pseudo-parallel data mining.
+In our work, we apply this approach iteratively
+(cf. Figure 1): we start out with an initial WMD
+metric (based on mBERT), obtain sentence-level
+pseudo-parallel data with it via the efficient approximation algorithm described, and obtain a dictionary
+of word pairs from unsupervised awesome-align
+from the sentence pseudo-parallel data. We use the
+pseudo-parallel word pairs with UMD and CLP to
+remap mBERT. From this, we obtain a better WMD
+metric; then we iterate.
+Pseudo References Apart from remapping,
+pseudo-parallel data could be used to overcome
+problems of deficient vector spaces in other ways.
+Specifically, we want to mine enough pseudoparallel data to train an unsupervised MT system
+to translate source sentences into the target language to create pseudo references (Albrecht and
+Hwa, 2007; Gao et al., 2020; Fomicheva et al.,
+2020b). This would allow for a comparison with
+the hypothesis in the target language, similar to
+reference-based metrics, circumventing alignment
+problems in multilingual embeddings. This approach updates UScorewrd to
+𝔪(𝑥, 𝑦, 𝑦 0) = 𝑤 xlng WMD (𝑛) (𝑥, 𝑦) + 𝑤 lm LM(𝑦)
++ 𝑤 pseudo WMD(𝑦, 𝑦 0),
+(3)
+where 𝑛 denotes the iterations of remapping, and
+𝑤 pseudo is a new weight to control the influence
+of the pseudo reference 𝑦 0. All components of
+UScorewrd are illustrated in Figure 2.
+3.2
+
+UScoresnt
+
+Besides a word-based metric, we use pseudoparallel data to induce an unsupervised sentence
+
+level metric, UScoresnt = cos(𝑥, 𝑦), based on the
+cosine similarity between sentence embeddings.
+One could, similarly to DistilScore, perform
+knowledge distillation but since our initial experiments showed that this doesn’t work well with
+pseudo-parallel data, we chose another approach.
+Contrastive Learning We explore contrastive
+learning for unsupervised multilingual sentence
+embedding induction, which has recently been successfully used to train unsupervised monolingual
+sentence embeddings (Gao et al., 2021). In our
+context, the basic idea is to pull semantically close
+sentences together and to push distant sentences
+apart in the embedding space. Let 𝑥 𝑖 and 𝑦 𝑖 be the
+embeddings of two sentences that are semantically
+related and 𝑁 an arbitrary batch size. The training
+objective for this pair can be formulated as
+𝐿 𝑖 = − log Í
+
+exp ( cos( 𝑥𝜏𝑖 ,𝑦𝑖 ) )
+cos( 𝑥𝑖 ,𝑦 𝑗 )
+𝑁
+)
+𝑗=1, 𝑗≠𝑖 exp(
+𝜏
+
+,
+
+(4)
+
+where 𝜏 is a temperature hyperparameter that can
+be used to either amplify or dampen the assessed
+distances. For each sentence 𝑥 𝑖 , all remaining sentences 𝑦 𝑗≠𝑖 in the current batch should be pushed
+apart in the embedding space. For positive sentences that should be pulled together, we again use
+pseudo-parallel sentence pairs. Since noisy data
+is beneficial for contrastive learning (Gao et al.,
+2021), we expect this paradigm to work well with
+pseudo-parallel data. We use pooled XLM-R embeddings as sentence representations, and, as with
+unsupervised remapping, we experiment with multiple iterations of successive mining and sentence
+embedding induction operations.
+Ratio Margin Pseudo-Parallel Data Mining
+As UScoresnt is based on sentence embeddings,
+we cannot use the WMD-based mining algorithm
+to obtain pseudo-parallel sentences since it requires
+access to word-level representations. An alternative
+would be to just use cosine similarity for mining,
+but that approach is susceptible to noise in the
+data (Artetxe and Schwenk, 2019). Instead, we
+follow Artetxe and Schwenk (2019) and use a ratio
+margin function defined as
+margin(𝑥, 𝑦) = Í
+𝑧 ∈𝑁 𝑥
+
+cos(𝑥, 𝑦)
+Í
+
+cos( 𝑥,𝑧)
++
+2𝑘
+
+𝑧 ∈𝑁 𝑦
+
+cos( 𝑦,𝑧)
+2𝑘
+
+,
+
+(5)
+where 𝑁 𝑥 and 𝑁 𝑦 are the 𝑘 nearest neighbors of
+sentence embeddings 𝑥 and 𝑦 in the respective
+
+language. Informally, this ratio margin function divides the cosine similarities of the nearest neighbor
+by the average similarities of the neighborhood.
+3.3
+
+UScorewrd ⊕ snt
+
+Inspired by SentSim, which combines word
+and sentence embeddings, we similarly ensemble
+UScorewrd and UScoresnt . We refer to this final
+metric as UScore = UScorewrd ⊕ snt with two
+new weights 𝑤 wrd and 𝑤 snt = 1 − 𝑤 wrd :
+UScore(𝑥, 𝑦) = 𝑤 wrd UScorewrd (𝑥, 𝑦)
++ 𝑤 snt UScoresnt (𝑥, 𝑦).
+
+4
+
+(6)
+
+Experiments
+
+In this section, we evaluate all UScore variants
+at the segment level6 and compare them to TYPE1/2/3 upper bounds. We detail additional hyperparameters in Appendix D.
+4.1
+
+Datasets
+
+We use various datasets to assess the performance of
+our metrics on MT evaluation, i.e., computing the
+correlation with human assessments using Pearson’s
+r correlation, and parallel sentence matching, a
+standard evaluation measure in the corpus mining
+field where a set of shuffled parallel sentences is
+searched to recover correct translation pairs (Guo
+et al., 2018; Kvapilíková et al., 2020). For this we
+report Precision at N (P@N).
+MT evaluation In WMT-16 and WMT-17, each
+language pair consists of tuples of source sentences,
+hypotheses and references. Each tuple was annotated with a direct assessment (DA) score, which
+quantifies the adequacy of the hypothesis given the
+reference translation. Following Zhao et al. (2020)
+and Song et al. (2021), we use these DA scores
+to assess the adequacy of the hypothesis given the
+source. MLQE-PE has been used in the WMT
+2020 Shared Task on Quality Estimation (Specia
+et al., 2020), and only provides source sentences and
+hypotheses for its language pairs, with no references.
+Each source sentence and hypothesis pair was annotated with cross-lingual direct assessment (CLDA)
+scores. In terms of annotation, Eval4NLP is very
+similar to MLQE-PE but focuses on non-Englishcentric language directions, especially de-zh and
+ru-de. WMT-MQM uses fine-grained error annotations from the Multidimensional Quality Metrics
+6We do not evaluate at the system level since metrics there
+often perform very similarly, making it difficult to determine
+the best metric (Mathur et al., 2020b; Freitag et al., 2021b).
+
+(MQM) framework (Freitag et al., 2021a) for adequacy assessments. Like MLQE-PE and Eval4NLP,
+WMT-MQM also assigns scores based on source
+sentences and hypotheses. Additional statistics can
+be found in the appendix in Table 8. Using ISO 6391 codes, our datasets cover the language pairs de-zh,
+ru-de, en-ru, en-zh, cs-en, de-en, en-de, et-en, fi-en,
+lv-en, ne-en, ro-en, ru-en, si-en, tr-en, zh-en.
+Parallel sentence matching To evaluate on parallel sentence matching, we use the News Commentary7 dataset. It consists of parallel sentences
+crawled from economic and political data.
+4.2
+
+Fine-grained analysis on de-en
+
+To gain an understanding of the properties of the
+iterative techniques and the influence of individual
+parameters / components, we conduct a fine-grained
+analysis on the de-en language direction of WMT16 (for MT evaluation) and News Commentary v15
+(for parallel sentence matching). We list examples
+of pseudo-parallel data used during training in the
+appendix in Table 3. The mined sentences are often
+semantically similar, but contain factuality errors
+(e.g., have wrong places or numbers in hypotheses).
+Vector space remapping We explore if remapping works with pseudo-parallel data. We use News
+Crawl for mining. We randomly extract 40k monolingual sentences per language, and select the top
+5% sentence pairs with the highest metric scores
+for remapping. This gives us the same number of
+sentences (2k pairs) as were used for remapping
+XMoverScore.
+The results for UMD and CLP-based remapping
+on de-en can be seen in Figure 3 (top). The figure
+contains two graphs, one for correlation with human judgments and one for precision on parallel
+sentence matching. Each graph illustrates model
+performance before remapping (Iteration 0) and
+after remapping one to five times. After remapping
+once, both UMD and CLP improve substantially in
+Pearson’s r correlation. The improvement of CLP,
+however, is noticeably larger. For subsequent iterations, UMD seems to continue to improve slightly,
+but the correlations of CLP seem to drop. This
+can be explained by the results for precision where
+the P@1 of CLP drops each iteration, meaning
+the remapping capabilities of the metrics decrease.
+UMD does not exhibit this problem. Thus, UMD
+7data.statmt.org/news-commentary
+
+34
+
+90
+
+Precision
+
+32
+
+30
+
+86
+84
+
+Pearson’s r (CLP)
+Pearson’s r (UMD)
+
+28
+
+0
+
+1
+
+2
+
+3
+
+4
+
+P@1 (CLP)
+P@1 (UMD)
+
+82
+
+5
+
+0
+
+1
+
+Remapping Iteration
+
+2
+
+3
+
+4
+
+5
+
+8
+
+10
+
+Remapping Iteration
+
+30
+P@1
+
+80
+
+25
+
+Precision
+
+Correlation
+
+27
+
+22
+
+60
+
+40
+
+20
+17
+Pearson’s r
+
+𝑤 lm
+
+Correlation
+
+30
+
+35
+
+40
+
+45
+
+88
+
+1.0
+0.9
+0.8
+0.7
+0.6
+0.5
+0.4
+0.3
+0.2
+0.1
+0.0
+
+20
+
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+15
+
+0
+
+2
+
+4
+
+6
+
+Training Iteration
+
+8
+
+10
+
+39.1
+39.4 39.5
+39.8 40.0 40.1
+40.3 40.5 40.6 40.7
+40.9 41.1 41.2 41.4 41.4
+41.7 41.9 42.1 42.2 42.3 42.4
+42.6 43.0 43.2 43.4 43.5 42.5 43.5
+43.9 44.4 44.8 45.0 45.2 45.2 45.0 44.8
+45.1 46.0 46.8 47.2 47.4 47.3 47.0 46.5 45.9
+43.7 45.9 47.5 48.5 49.0 48.8 48.2 47.3 46.1 44.9
+28.3 31.8 34.9 37.4 39.1 39.8 39.8 39.0 37.9 36.6 35.2
+
+0
+
+2
+
+4
+
+6
+
+𝑤 pseudo
+
+Training Iteration
+
+Figure 3: Results for unsupervised vector space remapping (top) and contrastive learning with UScoresnt (bottom) for de-en. Pearson’s r is computed on WMT-16
+(MT evaluation) and P@1 on News Commentary v15
+(parallel sentence matching).
+
+could be a more robust choice for metrics that
+should perform reasonably well on both tasks.
+Pseudo References & Language Model Next,
+we add a language model to the metric and investigate pseudo-parallel corpus mining to train an MT
+system for pseudo references. Tran et al. (2020)
+show that fine-tuning mBART using pseudo-parallel
+data leads to very promising results, so we use
+mBART for our own experiments as well. Since finetuning for MT is a very resource-intensive undertaking requiring many parallel sentence pairs (Barrault
+et al., 2020), especially compared to our vector
+space remapping experiments, we need considerably more training data. On average, Tran et al.
+(2020) use around 200k pseudo-parallel sentence
+pairs for training. To obtain the same amount
+with our extraction rate of 5%, we now use a
+pool of 4m sentences per language for mining.
+Our results on the de-en data of WMT-16 are reported in Figure 4, which is similar to an ablation
+study. On the x-axis, we vary the weight 𝑤 pseudo ∈
+{0.0, 0.1, . . . , 0.9, 1.0} for UScorewrd with pseudo
+references, and on the y-axis, we explore different
+weights 𝑤 lm ∈ {0.0, 0.1, . . . , 0.9, 1.0} for the language model. We set 𝑤 xlng = 1−𝑤 pseudo −𝑤 lm . The
+best correlation uses 𝑤 pseudo = 0.4, 𝑤 lm = 0.1, and
+𝑤 xlng = 0.5. The improvement when pseudo references and a language model are included is substantial (over only using WMD)—e.g., we improve from
+28% correlation with humans (𝑤 pseudo = 𝑤 lm = 0)
+
+Figure 4: Influence of a language model and an MT system on UScorewrd , segment-level Pearson’s r for different values of 𝑤 pseudo (weight for pseudo references)
+and 𝑤 lm (weight for the language model) on WMT-16
+de-en data. Note that the point 𝑤 pseudo = 𝑤 lm = 0 uses
+only WMD(𝑥, 𝑦); see Equation 3. Here, 𝑛 = 1.
+
+to 49% with the best weight combination, an improvement of 75%.
+Contrastive Learning For UScoresnt , we also
+use 4m monolingual sentences per language for
+mining but only retain the top 100k sentence pairs,
+as for the contrastive training objective we additionally have to filter out duplicate sentences. The
+results of UScoresnt are shown in Figure 3 (bottom). The P@1 scores seem to steadily improve
+every two training iterations. Beginning with the
+sixth iteration, the precision seems to converge.
+4.3
+
+Other Languages: Results & Analysis
+
+We now test our metrics on other languages and
+datasets. For UScoresnt , we train its sentence embedding model for six iterations. For UScorewrd ,
+we remap mBERT once with UMD and make use of
+a language model and pseudo references obtained
+from an MT system. Based on Section 4.2, we
+set 𝑤 pseudo = 0.4, 𝑤 lm = 0.1, and 𝑤 xlng = 0.5.
+Additionally, based on analogous, unreported experiments, we set 𝑤 wrd = 0.6 and 𝑤 snt = 0.4 for
+ensembling. Since determining the weights for
+UScorewrd and UScorewrd ⊕ snt this way constitutes a form of supervision, we also evaluate weights
+chosen independently from our conducted experiments. Namely, we also evaluate UScore+ with
+𝑤 wrd = 𝑤 snt = 0.5. For 𝑤 lm , we follow XMoverScore and set it to 0.1 (setting 𝑤 lm lower makes
+sense because the LM only addresses the hypoth-
+
+esis without considering the source); accordingly,
+we set 𝑤 xlng = 𝑤 pseudo = 0.45. Since 𝑤 lm = 0.1
+coincides with our findings in Section 4.2, we also
+evaluate UScore++ where each component uses
+entirely uniform weights, i.e., 𝑤 wrd = 𝑤 snt = 21 and
+𝑤 lm = 𝑤 xlng = 𝑤 pseudo = 13 .
+Correlations with human judgments averaged
+over language pairs are shown in Table 2 (individual results are in the appendix). We also present
+the results of the popular TYPE-2 metric BLEU,
+where possible, and the recent TYPE-1 metrics
+MonoTransQuest (Ranasinghe et al., 2020b,a)
+and COMET-QE (Rei et al., 2021). Finally, as more
+direct competitors, we compare to the TYPE-3 metrics XMoverScore, SentSim, and DistilScore.
+We compute all reported scores ourselves.
+Overall, the tuned weights of UScore perform marginally better than UScore+ on most
+datasets, but UScore+ is usually a very close second. UScore++ performs worse, however, and only
+competitively on two of the five datasets. This
+indicates that the language model should be set to a
+lower value, a choice that makes intuitively sense.
+Expectedly, DistilScore, which uses parallel
+data, is always better than UScoresnt , which uses
+pseudo-parallel data. In contrast, UScorewrd is
+generally on par with XMoverScore, even though
+XMoverScore uses real parallel data—the difference is that UScorewrd also leverages pseudoreferences which XMoverScore does not. Indeed, from Figure 4, we observe that the pseudoreferences can make an improvement of up to 1–11
+points in correlation (comparing ‘column’ labeled
+𝑤 pseudo = 0 to the columns 𝑤 pseudo > 0).
+Our metrics beat reference-based TYPE-2 BLEU
+across the board. TYPE-1 metrics, which are finetuned on human scores, are generally the best.
+Intriguingly, the only two language pairs where our
+metrics are on par with them are the non-English
+de-zh and ru-de from Eval4NLP. These languages
+are outside the training scope of the current TYPE-1
+metrics and thus test their generalization abilities.
+For example, on ru-de our best metric outperforms
+MonoTransQuest by 5 points correlation and
+COMET-QE by 9 points (Table 7 in the appendix).
+UScore and UScore+ also outperform the
+TYPE-3 upper bounds on four of five datasets. On
+WMT-16, WMT-17 and Eval4NLP, they have the
+best overall results. On WMT-MQM, UScorewrd
+alone is best. The drop in performance for the
+combined metric is caused by UScoresnt , which
+
+on its own performs very badly. As supervised
+DistilScore exhibits the same issues, this could be
+a general problem for sentence embeddings based
+metrics on this dataset. We identify further reasons
+in Appendix E.
+For MLQE-PE, the SentSim metrics perform
+best on average among TYPE-3 and our metrics—
+although our reproduced scores for this dataset differ
+noticeably from the authors’ results, due to issues
+in their original code (Chen et al., 2022). Among
+our self-learned metrics, the combined variant performs best on average again, but still is 3–5 points
+below SentSim and DistilScore, even though it
+outperforms both XMoverScore variants by over 6
+points. Interestingly, UScoresnt works better than
+UScorewrd , unlike for the other datasets. Similarly,
+DistilScore clearly outperforms XMoverScore.
+This could be because MLQE-PE contains Sinhala,
+a language mBERT was not trained on. Another
+explanation is the data collection scheme for ru-en,
+which uses different sources of parallel sentences,
+mainly colloquial data and Russian proverbs, which
+use rather unconventional grammar (Fomicheva
+et al., 2022). This apparently confuses the language
+model and MT system which have been trained
+on data from other domains. When we exclude
+si-en and ru-en from MLQE-PE, UScorewrd ⊕ snt
+performs best, with an average Pearson’s r of 44.22
+for tuned weights and 44.45 for default weights vs.
+43.82 for SentSim (BERTScore). In Appendix C,
+we show that incorporating real parallel data (in
+addition to pseudo-parallel data) at an order of magnitude lower than SentSim allows us to outperform
+SentSim on MLQE-PE also.
+
+5
+
+Discussion
+
+Throughout, we have presented a mix of results and
+analysis, which we now summarize and discuss. In
+Figure 4, we conducted an ablation study on the
+individual components of UScorewrd (on de-en).
+This showed that all three components (pseudoreferences, language model, WMD) matter; by
+itself, the LM is more important than the pseudoreferences which are more important than WMD.
+However, in combination, the LM is least important. We also showed that pseudo-parallel data can
+successfully rectify deficient multilingual vector
+spaces, similar to real parallel data, see Figure 3.
+We note, however, that pseudo-parallel data may
+introduce an important bias in our data sampling:
+namely, it may mine factually incorrect parallel
+
+TYPE-1/2
+Supervised
+
+TYPE-3
+Supervised
+
+Unsupervised
+
+Metric
+
+WMT-16
+
+WMT-17
+
+MLQE-PE
+
+Eval4NLP
+
+WMT-MQM
+
+MonoTransQuest
+COMET-QE
+
+64.68
+65.76
+
+66.47
+68.77
+
+66.28
+49.97
+
+42.21
+40.00
+
+42.23
+45.89
+
+BLEU
+
+47.82
+
+47.01
+
+–
+
+–
+
+19.76
+
+XMoverScore (UMD)
+XMoverScore (CLP)
+SentSim (BERTScore)
+SentSim (WMD)
+DistilScore
+
+49.96
+53.10
+51.86
+50.66
+43.79
+
+51.02
+55.09
+55.57
+54.29
+51.22
+
+33.99
+31.98
+45.36
+44.72
+43.31
+
+29.60
+36.93
+26.60
+24.44
+28.90
+
+20.07
+20.59
+13.71
+12.24
+2.20
+
+UScorewrd
+UScoresnt
+UScorewrd ⊕ snt
+
+53.87
+36.06
+55.78
+
+53.52
+42.68
+57.55
+
+31.13
+37.51
+40.60
+
+36.96
+20.39
+39.87
+
+23.28
+-0.47
+19.35
+
+UScore+wrd
+UScore+wrd ⊕ snt
+
+53.66
+55.28
+
+52.97
+57.29
+
+30.94
+41.41
+
+36.29
+38.22
+
+23.15
+17.71
+
+UScore++
+wrd
+UScore++
+wrd ⊕ snt
+
+51.88
+54.99
+
+51.73
+56.49
+
+23.76
+34.15
+
+25.42
+32.05
+
+19.00
+17.08
+
+Table 2: Segment-level Pearson’s r correlations with human judgments, averaged over language directions. The
+best results are highlighted in bold, while results that are not significantly worse (as determined by a two-sample
+t-test with 10% significance level) are underlined.
+
+sentences, see Table 3 in the appendix, which may
+amplify issues of adversarial robustness; see our
+discussion in Section 8.
+We remark that, depending on the annotation
+scheme, better correlations with human judgments
+do not necessarily entail better metrics (Freitag et al.,
+2021a). The datasets in this work were annotated
+using either DA, CLDA, or MQM scores, with
+MQM explicitly addressing this problem. Since our
+metrics are consistent regardless of the annotation
+scheme, they are unlikely to overfit a particular one.
+We finally note that combining word and
+sentence-level models is meaningful, because they
+offer complementary views (Song et al., 2021).
+Kaster et al. (2021) also show that they capture orthogonal linguistic factors to varying degrees. Such
+complementarity may also stem from different underlying vector spaces, i.e., mBERT vs. XLM-R
+that we use in sentence- and word-level metrics.
+
+6
+
+Related Work
+
+All metrics in this work presented so far treated the
+MT model generating the hypotheses as a blackbox. There also exists a recent line of work of
+so-called glass-box metrics, which actively incorporate the MT model under test into the scoring
+process (Fomicheva et al., 2020a,b). In particular,
+Fomicheva et al. (2020b) explore whether the MT
+model under test can be used to generate additional
+hypotheses (Dreyer and Marcu, 2012). A crucial
+difference to our metrics is the required availability
+of the original MT model, which we are agnostic
+
+about. The MT models used in Fomicheva et al.
+(2020b) are all trained on parallel data, which makes
+their approach a supervised metric in our sense.
+Other recent metrics that leverage the relationship between metrics and (MT) systems
+are Prism (Thompson and Post, 2020) and
+BARTScore (Yuan et al., 2021). We do not classify
+them as unsupervised, however, as Prism is trained
+from scratch on parallel data and BARTScore uses
+a BART model fine-tuned on labeled summarization
+or paraphrasing datasets.
+There are also multilingual sentence embedding
+models which are highly relevant in our context.
+Kvapilíková et al. (2020), for example, fine-tune
+XLM-R on synthetic data translated with an unsupervised MT system. Similar to our contrastive
+learning approach, the resulting embedding model
+is completely unsupervised. Important differences
+are that our sentence embedding model can be
+improved iteratively and does not rely on an MT
+system. We leave a comparison to future work.
+Finally, the idea of fully unsupervised text generation systems has originated in the MT community (Artetxe et al., 2018; Lample et al., 2018;
+Artetxe et al., 2019). Given the similarity of MT
+systems and evaluation metrics, designing fully unsupervised evaluation metrics is an apparent next
+step, which we take in this work.
+
+7
+
+Conclusion
+
+In this work, we aimed for sample efficient evaluation metrics that do not use any form of supervision.
+
+In addition, our novel metrics should be maximally
+effective, i.e., of high quality. To achieve this,
+we leveraged pseudo-parallel data obtained from
+fully unsupervised evaluation metrics in three ways:
+we (i) remapped deficient vector spaces using the
+pseudo-parallel data, (ii) trained an unsupervised
+MT system from it (yielding pseudo references),
+and (iii) induced unsupervised multilingual sentence embeddings. To enable our approach, we also
+explored efficient pseudo-parallel corpus mining
+algorithms based on our metrics as an orthogonal
+contribution. Finally, we showed that our approach
+is effective and can outperform three supervised
+upper bounds (making use of parallel data) on 4
+out of 5 datasets we included in our comparison.
+In future work, we want to aim for algorithmic
+efficiency, include pseudo source texts as additional
+components (using the MT system in backward
+translation), and address the missing dualities discussed in Figure 1 (i.e., use of metrics as optimization criteria and MT systems to generate additional
+pseudo-parallel data). Further, our approach has
+substantial room for improvement given that we
+selected hyperparameters completely unsupervised
+or based on one high-resource language pair (de-en).
+Thus, it will be particularly intriguing to explore
+weakly-supervised approaches which leverage minimal forms of supervision.
+
+8
+
+Limitations
+
+Limitations of our metrics include (1) algorithmic inefficiency, (2) resource inefficiency, (3) the
+brittleness of unsupervised MT systems in certain
+situations, and (4) issues of adversarial robustness.
+(1) Some of the components of UScorewrd
+(mainly the MT system) have high computational costs. For example, XMoverScore and
+SentSim (BERTScore) take less than 30 seconds
+to score 1000 hypotheses on an Nvidia V100 GPU.
+UScorewrd , on the other hand, takes over 2.5 minutes. This algorithmic inefficiency trades off with
+our sample efficiency, by which we did not use
+any supervision signals. In future work, we aim
+to experiment with efficient MT architectures to
+reduce computational costs (Kamal Eddine et al.,
+2022; Grünwald et al., 2022).
+(2) Similarly to XMoverScore, MonoTransQuest or SentSim, our metrics use high-quality
+encoders such as mBERT, which are not only memory and inference inefficient but also leverage large
+monolingual resources. Future work should thus
+
+not only investigate using smaller mBERT models but also models that leverage smaller amounts
+of monolingual resources. Wang et al. (2020),
+for example, propose a competitive LSTM-based
+approach that completely forgoes monolingual resources and instead uses small parallel corpora
+(i.e., a few hundred parallel sentences as a weak
+supervision signal). Similarly, we give a recipe
+for improving mBERT for unseen languages using
+limited amounts of parallel data in Appendix C.
+(3) Using unsupervised MT approaches, as we do
+via pseudo references, may be less effective for truly
+low-resource languages (Marchisio et al., 2020).
+However, this remains a very active research field
+with a constant influx of more powerful solutions
+(Ranathunga et al., 2022; Sun et al., 2021).
+(4) As indicated in Sections 4.2 and 5, our mined
+pseudo-parallel data tends to contain factual inconsistencies such as “Uruguay was seventh” vs. (a
+translation of) “Russia was second”. As a consequence, our induced metrics may be less robust
+than existing metrics (Chen and Eger, 2022; Rony
+et al., 2022). An approach to address this inconsistency would be to retain only high probability
+aligned words in parallel sentences (recall that we
+infer word-level parallel data from sentence-level
+parallel data).
+
+9
+
+Acknowledgments
+
+We thank all reviewers for their valuable feedback,
+hard work, and time. The last author was supported
+by DFG grant EG 375/5–1.
+
+References
+Joshua Albrecht and Rebecca Hwa. 2007. Regression
+for sentence-level MT evaluation with pseudo references. In Proceedings of the 45th Annual Meeting of
+the Association of Computational Linguistics, pages
+296–303, Prague, Czech Republic. Association for
+Computational Linguistics.
+Antonios Anastasopoulos and Graham Neubig. 2020.
+Should all cross-lingual embeddings speak English?
+In Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, pages 8658–
+8679, Online. Association for Computational Linguistics.
+Mikel Artetxe, Gorka Labaka, and Eneko Agirre. 2019.
+An effective approach to unsupervised machine translation. In Proceedings of the 57th Annual Meeting of
+the Association for Computational Linguistics, pages
+194–203, Florence, Italy. Association for Computational Linguistics.
+
+Mikel Artetxe, Gorka Labaka, Eneko Agirre, and
+Kyunghyun Cho. 2018. Unsupervised neural machine translation. In International Conference on
+Learning Representations.
+Mikel Artetxe and Holger Schwenk. 2019. Marginbased parallel corpus mining with multilingual sentence embeddings. In ACL.
+Loïc Barrault, Magdalena Biesialska, Ondrej Bojar,
+Marta Costa-jussà, Christian Federmann, Yvette
+Graham, Roman Grundkiewicz, Barry Haddow,
+Matthias Huck, Eric Joanis, Tom Kocmi, Philipp
+Koehn, Chi kiu Lo, Nikola Ljubesic, Christof
+Monz, Makoto Morishita, Masaaki Nagata, Toshiaki Nakazawa, Santanu Pal, Matt Post, and Marcos
+Zampieri. 2020. Findings of the 2020 conference on
+machine translation (wmt20). In WMT@EMNLP.
+Florian Böhm, Yang Gao, Christian M. Meyer, Ori
+Shapira, Ido Dagan, and Iryna Gurevych. 2019. Better rewards yield better summaries: Learning to
+summarise without references. In Proceedings of
+the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International
+Joint Conference on Natural Language Processing
+(EMNLP-ĲCNLP), pages 3110–3120, Hong Kong,
+China. Association for Computational Linguistics.
+Steven Cao, Nikita Kitaev, and Dan Klein. 2020. Multilingual alignment of contextual word representations.
+In International Conference on Learning Representations.
+Yanran Chen, Jonas Belouadi, and Steffen Eger. 2022.
+Reproducibility issues for BERT-based evaluation
+metrics. In Proceedings of the 2022 Conference on
+Empirical Methods in Natural Language Processing,
+pages 2965–2989, Abu Dhabi, United Arab Emirates.
+Association for Computational Linguistics.
+Yanran Chen and Steffen Eger. 2022. Menli: Robust
+evaluation metrics from natural language inference.
+ArXiv, abs/2208.07316.
+Pierre Colombo, Guillaume Staerman, Chloé Clavel,
+and Pablo Piantanida. 2021. Automatic text evaluation through the lens of Wasserstein barycenters.
+In Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, pages
+10450–10466, Online and Punta Cana, Dominican
+Republic. Association for Computational Linguistics.
+Sunipa Dev and Jeff M. Phillips. 2019. Attenuating bias
+in word vectors. In AISTATS.
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+Kristina Toutanova. 2019. BERT: Pre-training of
+deep bidirectional transformers for language understanding. In Proceedings of the 2019 Conference
+of the North American Chapter of the Association
+for Computational Linguistics: Human Language
+Technologies, Volume 1 (Long and Short Papers),
+pages 4171–4186, Minneapolis, Minnesota. Association for Computational Linguistics.
+
+Zi-Yi Dou and Graham Neubig. 2021. Word alignment
+by fine-tuning embeddings on parallel corpora. In
+EACL.
+Markus Dreyer and D. Marcu. 2012. Hyter: Meaningequivalent semantics for translation evaluation. In
+NAACL.
+Sharad Duwal, Amir Manandhar, Saurav Maskey, and
+Subash Hada. 2019. Efforts in the development of an
+augmented english-nepali parallel corpus. Technical
+report, Kathmandu University.
+Chris Dyer, Victor Chahuneau, and Noah A. Smith.
+2013. A simple, fast, and effective reparameterization of ibm model 2. In HLT-NAACL.
+M. Fomicheva, Shuo Sun, Lisa Yankovskaya, F. Blain,
+Francisco Guzmán, M. Fishel, Nikolaos Aletras,
+Vishrav Chaudhary, and Lucia Specia. 2020a. Unsupervised quality estimation for neural machine translation. Transactions of the Association for Computational Linguistics, 8:539–555.
+Marina Fomicheva, Piyawat Lertvittayakumjorn, Wei
+Zhao, Steffen Eger, and Yang Gao. 2021. The
+Eval4NLP shared task on explainable quality estimation: Overview and results. In Proceedings of
+the 2nd Workshop on Evaluation and Comparison of
+NLP Systems, pages 165–178, Punta Cana, Dominican Republic. Association for Computational Linguistics.
+Marina Fomicheva, Lucia Specia, and Francisco
+Guzmán. 2020b. Multi-hypothesis machine translation evaluation. In Proceedings of the 58th Annual
+Meeting of the Association for Computational Linguistics, pages 1218–1232, Online. Association for
+Computational Linguistics.
+Marina Fomicheva, Shuo Sun, Erick Fonseca,
+Chrysoula Zerva, Frédéric Blain, Vishrav Chaudhary, Francisco Guzmán, Nina Lopatina, Lucia Specia, and André F. T. Martins. 2022. MLQE-PE:
+A multilingual quality estimation and post-editing
+dataset. In Proceedings of the Thirteenth Language
+Resources and Evaluation Conference, pages 4963–
+4974, Marseille, France. European Language Resources Association.
+Markus Freitag, George Foster, David Grangier, Viresh
+Ratnakar, Qĳun Tan, and Wolfgang Macherey.
+2021a. Experts, Errors, and Context: A Large-Scale
+Study of Human Evaluation for Machine Translation.
+Transactions of the Association for Computational
+Linguistics, 9:1460–1474.
+Markus Freitag, Ricardo Rei, Nitika Mathur, Chi-kiu
+Lo, Craig Stewart, George Foster, Alon Lavie, and
+Ondřej Bojar. 2021b. Results of the WMT21 metrics shared task: Evaluating metrics with expertbased human evaluations on TED and news domain.
+In Proceedings of the Sixth Conference on Machine
+Translation, pages 733–774, Online. Association for
+Computational Linguistics.
+
+Tianyu Gao, Xingcheng Yao, and Danqi Chen. 2021.
+SimCSE: Simple contrastive learning of sentence embeddings. In EMNLP.
+Yang Gao, Wei Zhao, and Steffen Eger. 2020. SUPERT: Towards new frontiers in unsupervised evaluation metrics for multi-document summarization. In
+Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, pages 1347–
+1354, Online. Association for Computational Linguistics.
+Jens Grünwald, Chris Leiter, and Steffen Eger. 2022.
+Can we do that simpler?
+simple, efficient,
+high-quality evaluation metrics for nlg. ArXiv,
+abs/2209.09593.
+Mandy Guo, Qinlan Shen, Yinfei Yang, Heming
+Ge, Daniel Matthew Cer, G. Ábrego, K. Stevens,
+Noah Constant, Yun-Hsuan Sung, B. Strope, and
+R. Kurzweil. 2018. Effective parallel corpus mining
+using bilingual sentence embeddings. In WMT.
+Junxian He, Jiatao Gu, Jiajun Shen, and Marc’Aurelio
+Ranzato. 2020. Revisiting self-training for neural
+sequence generation. In Proceedings of ICLR.
+Armand Joulin, Edouard Grave, Piotr Bojanowski, and
+Tomas Mikolov. 2017. Bag of tricks for efficient
+text classification. In Proceedings of the 15th Conference of the European Chapter of the Association
+for Computational Linguistics: Volume 2, Short Papers, pages 427–431, Valencia, Spain. Association
+for Computational Linguistics.
+Moussa Kamal Eddine, Guokan Shang, Antoine Tixier, and Michalis Vazirgiannis. 2022. FrugalScore:
+Learning cheaper, lighter and faster evaluation metrics for automatic text generation. In Proceedings
+of the 60th Annual Meeting of the Association for
+Computational Linguistics (Volume 1: Long Papers),
+pages 1305–1318, Dublin, Ireland. Association for
+Computational Linguistics.
+Marvin Kaster, Wei Zhao, and Steffen Eger. 2021.
+Global explainability of BERT-based evaluation metrics by disentangling along linguistic factors. In Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, pages 8912–
+8925, Online and Punta Cana, Dominican Republic.
+Association for Computational Linguistics.
+Phillip Keung, Julian Salazar, Yichao Lu, and Noah A.
+Smith. 2021. Unsupervised bitext mining and translation via self-trained contextual embeddings. Transactions of the Association for Computational Linguistics, 8:828–841.
+Philipp Koehn. 2005. Europarl: A parallel corpus for
+statistical machine translation. In MT summit.
+Matt J. Kusner, Yu Sun, Nicholas I. Kolkin, and Kilian Q. Weinberger. 2015. From word embeddings to
+document distances. In ICML.
+
+Ivana Kvapilíková, Mikel Artetxe, Gorka Labaka,
+Eneko Agirre, and Ondrej Bojar. 2020. Unsupervised multilingual sentence embeddings for parallel
+corpus mining. In ACL.
+Guillaume Lample, Myle Ott, Alexis Conneau, Ludovic Denoyer, and Marc’Aurelio Ranzato. 2018.
+Phrase-based & neural unsupervised machine translation. In Proceedings of the 2018 Conference on
+Empirical Methods in Natural Language Processing,
+pages 5039–5049, Brussels, Belgium. Association
+for Computational Linguistics.
+Chin-Yew Lin. 2004. ROUGE: A package for automatic evaluation of summaries. In Text Summarization Branches Out, pages 74–81, Barcelona, Spain.
+Association for Computational Linguistics.
+Ilya Loshchilov and Frank Hutter. 2019. Decoupled weight decay regularization. In 7th International Conference on Learning Representations,
+ICLR 2019, New Orleans, LA, USA, May 6-9, 2019.
+OpenReview.net.
+Kelly Marchisio, Kevin Duh, and Philipp Koehn. 2020.
+When does unsupervised machine translation work?
+In Proceedings of the Fifth Conference on Machine
+Translation, pages 571–583, Online. Association for
+Computational Linguistics.
+Benjamin Marie, Atsushi Fujita, and Raphael Rubino.
+2021. Scientific credibility of machine translation
+research: A meta-evaluation of 769 papers. In Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers), pages 7297–7306,
+Online. Association for Computational Linguistics.
+Nitika Mathur, Timothy Baldwin, and Trevor Cohn.
+2020a. Tangled up in BLEU: Reevaluating the evaluation of automatic machine translation evaluation
+metrics. In Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics,
+pages 4984–4997, Online. Association for Computational Linguistics.
+Nitika Mathur, Johnny Wei, Markus Freitag, Qingsong
+Ma, and Ondřej Bojar. 2020b. Results of the WMT20
+metrics shared task. In Proceedings of the Fifth Conference on Machine Translation, pages 688–725, Online. Association for Computational Linguistics.
+Tomás Mikolov, Quoc V. Le, and Ilya Sutskever. 2013.
+Exploiting similarities among languages for machine
+translation. CoRR, abs/1309.4168.
+Kishore Papineni, Salim Roukos, Todd Ward, and WeiJing Zhu. 2002. BLEU: a method for automatic evaluation of machine translation. In Proceedings of
+the 40th Annual Meeting of the Association for Computational Linguistics, pages 311–318, Philadelphia,
+Pennsylvania, USA. Association for Computational
+Linguistics.
+
+Adam Poliak, Jason Naradowsky, Aparajita Haldar,
+Rachel Rudinger, and Benjamin Van Durme. 2018.
+Hypothesis only baselines in natural language inference. In Proceedings of the Seventh Joint Conference
+on Lexical and Computational Semantics, pages 180–
+191, New Orleans, Louisiana. Association for Computational Linguistics.
+
+5645–5657, Dublin, Ireland. Association for Computational Linguistics.
+
+Alec Radford, Jeff Wu, Rewon Child, David Luan,
+Dario Amodei, and Ilya Sutskever. 2019. Language
+models are unsupervised multitask learners. In OpenAI Blog.
+
+Tal Schuster, Ori Ram, Regina Barzilay, and Amir
+Globerson. 2019. Cross-lingual alignment of contextual word embeddings, with applications to zeroshot dependency parsing. In Proceedings of the 2019
+Conference of the North American Chapter of the
+Association for Computational Linguistics: Human
+Language Technologies, Volume 1 (Long and Short
+Papers), pages 1599–1613, Minneapolis, Minnesota.
+Association for Computational Linguistics.
+
+Tharindu Ranasinghe, Constantin Orasan, and Ruslan
+Mitkov. 2020a. Transquest at wmt2020: Sentencelevel direct assessment. In Proceedings of the Fifth
+Conference on Machine Translation.
+
+Holger Schwenk, Vishrav Chaudhary, Shuo Sun,
+Hongyu Gong, and Francisco Guzmán. 2021. Wikimatrix: Mining 135m parallel sentences in 1620 language pairs from wikipedia. In EACL.
+
+Tharindu Ranasinghe, Constantin Orasan, and Ruslan
+Mitkov. 2020b. Transquest: Translation quality estimation with cross-lingual transformers. In Proceedings of the 28th International Conference on Computational Linguistics.
+
+Thibault Sellam, Dipanjan Das, and Ankur Parikh.
+2020. BLEURT: Learning robust metrics for text
+generation. In Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics,
+pages 7881–7892, Online. Association for Computational Linguistics.
+
+Tharindu Ranasinghe, Constantin Orasan, and Ruslan
+Mitkov. 2021. An exploratory analysis of multilingual word-level quality estimation with cross-lingual
+transformers. In Proceedings of the 59th Annual
+Meeting of the Association for Computational Linguistics and the 11th International Joint Conference
+on Natural Language Processing (Volume 2: Short
+Papers), pages 434–440, Online. Association for
+Computational Linguistics.
+Surangika Ranathunga, En-Shiun Annie Lee, Marjana Prifti Skenduli, Ravi Shekhar, Mehreen Alam,
+and Rishemjit Kaur. 2022. Neural machine translation for low-resource languages: A survey. ACM
+Comput. Surv.
+Ricardo Rei, Ana C Farinha, Chrysoula Zerva, Daan
+van Stigt, Craig Stewart, Pedro Ramos, Taisiya
+Glushkova, André F. T. Martins, and Alon Lavie.
+2021. Are references really needed? unbabel-IST
+2021 submission for the metrics shared task. In Proceedings of the Sixth Conference on Machine Translation, pages 1030–1040, Online. Association for Computational Linguistics.
+Ricardo Rei, Craig Stewart, Ana C Farinha, and Alon
+Lavie. 2020. COMET: A neural framework for MT
+evaluation. In Proceedings of the 2020 Conference
+on Empirical Methods in Natural Language Processing (EMNLP), pages 2685–2702, Online. Association for Computational Linguistics.
+
+Yurun Song, Junchen Zhao, and Lucia Specia. 2021.
+Sentsim: Crosslingual semantic evaluation of machine translation. In NAACL.
+Lucia Specia, F. Blain, M. Fomicheva, E. Fonseca,
+Vishrav Chaudhary, Francisco Guzmán, and André
+F. T. Martins. 2020. Findings of the wmt 2020 shared
+task on quality estimation. In WMT@EMNLP.
+Haipeng Sun, Rui Wang, Masao Utiyama, Benjamin
+Marie, Kehai Chen, Eiichiro Sumita, and Tiejun
+Zhao. 2021. Unsupervised neural machine translation for similar and distant language pairs: An empirical study. ACM Transactions on Asian and LowResource Language Information Processing (TALLIP), 20(1):1–17.
+Brian Thompson and Matt Post. 2020. Automatic machine translation evaluation in many languages via
+zero-shot paraphrasing. In EMNLP.
+Chau Tran, Yuqing Tang, Xian Li, and Jiatao Gu. 2020.
+Cross-lingual retrieval for iterative self-supervised
+training. In Advances in Neural Information Processing Systems, volume 33, pages 2207–2219. Curran
+Associates, Inc.
+
+Nils Reimers and Iryna Gurevych. 2020. Making
+monolingual sentence embeddings multilingual using knowledge distillation. In EMNLP.
+
+Yu Wan, Dayiheng Liu, Baosong Yang, Haibo Zhang,
+Boxing Chen, Derek Wong, and Lidia Chao. 2022.
+UniTE: Unified translation evaluation. In Proceedings of the 60th Annual Meeting of the Association for
+Computational Linguistics (Volume 1: Long Papers),
+pages 8117–8127, Dublin, Ireland. Association for
+Computational Linguistics.
+
+Md Rashad Al Hasan Rony, Liubov Kovriguina, Debanjan Chaudhuri, Ricardo Usbeck, and Jens Lehmann.
+2022. RoMe: A robust metric for evaluating natural language generation. In Proceedings of the
+60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages
+
+Zihan Wang, Karthikeyan K, Stephen Mayhew, and Dan
+Roth. 2020. Extending multilingual BERT to lowresource languages. In Findings of the Association
+for Computational Linguistics: EMNLP 2020, pages
+2649–2656, Online. Association for Computational
+Linguistics.
+
+Colin Wei, Kendrick Shen, Yining Chen, and Tengyu
+Ma. 2021. Theoretical analysis of self-training with
+deep networks on unlabeled data. In International
+Conference on Learning Representations.
+Chao Xing, Dong Wang, Chao Liu, and Yiye Lin. 2015.
+Normalized word embedding and orthogonal transform for bilingual word translation. In HLT-NAACL.
+Weizhe Yuan, Graham Neubig, and Pengfei Liu. 2021.
+BARTScore: Evaluating generated text as text generation. In Thirty-Fifth Conference on Neural Information Processing Systems.
+Tianyi Zhang, Varsha Kishore, Felix Wu, Kilian Q.
+Weinberger, and Yoav Artzi. 2020. Bertscore: Evaluating text generation with bert. In International
+Conference on Learning Representations.
+Wei Zhao, Goran Glavaš, Maxime Peyrard, Yang Gao,
+Robert West, and Steffen Eger. 2020. On the limitations of cross-lingual encoders as exposed by
+reference-free machine translation evaluation. In
+ACL.
+Wei Zhao, Maxime Peyrard, Fei Liu, Yang Gao, Christian M. Meyer, and Steffen Eger. 2019. MoverScore:
+Text generation evaluating with contextualized embeddings and earth mover distance. In Proceedings
+of the 2019 Conference on Empirical Methods in
+Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-ĲCNLP), pages 563–578, Hong
+Kong, China. Association for Computational Linguistics.
+Wei Zhao, Michael Strube, and Steffen Eger. 2022. DiscoScore: Evaluating text generation with BERT and
+discourse coherence.
+
+80
+
+Vector Space Remapping
+
+sample size
+70
+60
+50
+40
+30
+
+(7)
+Avg
+
+Here X, Y are matrices with embeddings of source
+and target words, respectively, where the tuples
+(𝑥 𝑖 , 𝑦 𝑖 ) ∈ X × Y come from parallel word pairs.
+XMoverScore constrains W to be an orthogonal
+matrix such that W | W = I, since this can lead to
+further improvements (Xing et al., 2015). Zhao et al.
+(2020) call this remapping Linear Cross-Lingual
+Projection remapping (CLP).
+De-biasing The second remapping method of
+XMoverScore is rooted in the removal of biases
+from word embeddings. Dev and Phillips (2019)
+explore a bias attenuation technique called Universal Language Mismatch-Direction (UMD). It
+involves a bias vector 𝑣 𝐵 , which is supposed to capture the bias direction. For each word embedding
+𝑒, an updated word embedding 𝑒 0 is computing by
+subtracting their projections onto 𝑣 𝐵 , as in
+𝑒 0 = 𝑒 − (𝑒 · 𝑣 𝐵 )𝑣 𝐵 ,
+
+(8)
+
+where · is the dot product. To obtain the bias
+vector 𝑣 𝐵 , Dev and Phillips (2019) use a set E of
+word pairs that should be de-biased (e.,g. man and
+woman). The subtractions of the embeddings of the
+words in each pair are then stacked to form a matrix
+Q, and the bias vector 𝑣 𝐵 is its top-left singular
+vector. Zhao et al. (2020) use the same approach for
+XMoverScore, but E instead consists of parallel
+word pairs.
+Zhao et al. (2020) show that these remapping
+methods lead to substantial improvements of their
+XMoverScore metric (on average, up to 10 points
+in correlation). The required parallel word pairs
+were extracted from sentences of the EuroParl corpus (Koehn, 2005) using the fast-align (Dyer et al.,
+2013) word alignment tool. The best results were
+obtained when remapping on 2k parallel sentences.
+
+n
+
+20
+et
+-e
+n
+ne
+-e
+n
+
+W
+
+—
+10k
+20k
+30k
+200k
+
+en
+-d
+e
+en
+-z
+h
+ru
+-e
+n
+ro
+-e
+n
+
+min ||WX − Y|| 2 .
+
+Pearson’s r
+
+Zhao et al. (2020) explore two different remapping
+approaches for XMoverScore, which are defined
+as follows:
+Procrustes alignment Mikolov et al. (2013)
+propose to compute a linear transformation matrix W which can be used to map a vector 𝑥 of
+a source word into the target language subspace
+by computing W𝑥. The transformation can be
+computed by solving the problem
+
+—
+
+10k
+
+20k
+
+30k
+
+200k
+
+40.60
+
+42.95
+
+44.42
+
+45.17
+
+46.57
+
+sie
+
+A
+
+Figure 5: Pearson’s r correlations on MLQE-PE for
+UScorewrd ⊕ snt when fine-tuning on limited amounts
+of parallel data. We explore sample sizes of 10k, 20k,
+30k, and 200k.
+
+B
+
+Filtering
+
+Since large corpora tend to include low-quality data
+points, we follow Artetxe and Schwenk (2019) and
+Keung et al. (2021) and apply three simple filtering
+techniques. We first remove all sentences from
+each monolingual corpus for which the fastText
+language identification tool (Joulin et al., 2017)
+predicts a different language. We then filter all
+sentences which are shorter than 3 tokens or longer
+than 30 tokens. As the last step, we discard sentence
+pairs sharing substantial lexical overlap, which
+prevents degenerate alignments of, e.g., proper
+names. We remove all sentence pairs for which
+the Levenshtein distance detects an overlap of over
+50%.
+
+C
+
+Fine-Tuning on Parallel Data
+
+To examine whether and by how much we can further improve our metrics using forms of supervision,
+we experiment with a fine-tuning step on parallel
+sentences and treat self-learning on pseudo-parallel
+data as pre-training (He et al., 2020). We use the
+parallel data to fine-tune the contrastive sentence
+embeddings of UScoresnt and the MT system of
+UScorewrd , which is responsible for generating
+pseudo references. Further, we also compute new
+remapping matrices for UScorewrd . Since CLP is
+superior to UMD when parallel data is used (see
+Section 4.2), we compute these remapping matrices
+using CLP instead of UMD. To assess how different
+
+amounts of parallel sentences affect performance,
+we fine-tune our metrics on 10k, 20k, 30k, and 200k
+parallel sentences. We use WikiMatrix (Schwenk
+et al., 2021) and the Nepali Translation Parallel
+Corpus (Duwal et al., 2019) to obtain parallel sentences.
+Pearson’s r correlations with human judgments
+for individual and averaged language pairs are
+shown in Figure 5; we focus on MLPQE-PE, where
+our metrics performed worst. Overall, introducing
+parallel data into the training process consistently
+improves performance for the majority of language
+directions; more parallel data leads to better results.
+The relatively biggest improvements are achieved
+for the si-en language direction, which is in accordance with our discussion above. When fine-tuning
+with 30k parallel sentences, the performance of our
+metrics is roughly on par with the SentSim variants (see Table 2). With 200k parallel sentences,
+our metrics clearly outperform SentSim, which
+uses millions of parallel sentences and NLI data as
+supervision signals.
+
+D
+
+Hyperparameters
+
+For efficient WMD pseudo-parallel mining, we
+set 𝑘 = 20 for remapping, and 𝑘 = 1 for training
+mBART. For ratio-margin-based pseudo-parallel
+mining, we use 𝑘 = 5. With regard to training
+UScoresnt , we follow Gao et al. (2021), and iteratively train XLM-R for one training epoch with
+a learning rate of 5e-5, a batch size of 256, and
+a temperature coefficient of 𝜏 = 0.05 utilizing the
+AdamW optimizer (Loshchilov and Hutter, 2019).
+Fine-tuning of mBART was performed for three
+epochs with a batch size of four and using the same
+learning rate of 5e-5 as well as AdamW optimizer.
+We decided to continue using mBERT in
+UScorewrd for two reasons. Firstly, we want
+UScorewrd to remain directly comparable to
+XMoverScore which is based on mBERT. Secondly,
+in our own experience, vanilla mBERT is very robust in terms of layer choice, especially compared to
+vanilla XLM-R. Intuitive choices like the first or last
+layer work very well for a lot of problems. This is an
+important property for unsupervised metrics, since
+we can’t easily justify a (supervised) hyperparameter search in an unsupervised setting to determine
+the best layer or even a linear combination of those.
+
+E
+
+Supplementary Data and Results
+
+Table 3 shows examples of pseudo-parallel data
+obtained with UScorewrd and UScoresnt . Tables 4, 5, 6, and 7 show segment-level Pearson’s r
+correlations with human judgments on WMT-16,
+WMT-17, MLQE-PE, as well as WMT-MQM and
+Eval4NLP, respectively. Table 8 provides additional
+statistics for each dataset.
+A surprising finding is the poor performance
+of UScoresnt and DistilScore on the GermanEnglish language pair in Table 7. It is well known
+that high-resource language directions, such as
+English-German, can be affected by a lack of lowquality translations (Fomicheva et al., 2022), and
+with only high-quality translations available, there
+is little variation in the scores, which makes a meaningful assessment of correlation difficult (Specia
+et al., 2020). Further, since both UScoresnt and
+DistilScore are based on sentence embeddings of
+XLM-R, and sentence embedding-based metrics
+are known to be a bit worse on average than their
+word embedding-based counterparts, we believe
+that both aspects combined could be the root cause
+for this.
+
+Case
+
+Source
+
+Target
+
+Top-WRD
+Top-WRD
+Rnd-WRD
+
+Uruguay belegt mit vier Punkten nur Platz Sieben.
+Soweit lautet zumindest die Theorie.
+Die USA stellen etwa 17.000 der insgesamt 47.000
+ausländischen Soldaten in Afghanistan.
+“Das ist eine schwierige Situation”, sagte Kaczynski.
+
+Russia was second with four gold and 13 medals.
+That, at least, is the theory.
+Currently, there are about 170,000 U.S. troops in Iraq
+and 26,000 in Afghanistan.
+“It seemed like a ridiculous situation,” Vanderjagt
+said.
+
+Die Wahlen für ein neues Parlament sollen dann Anfang Januar stattfinden.
+Anzeichen für die Blauzungenkrankheit sind Fieber,
+Entzündungen und Blutungen an der Zunge der Tiere.
+Riesen-Wirbel an der Universität Zagreb: An
+der wirtschaftlichen Fakultät und am Institut für
+Verkehrsstudien durchsuchen Polizisten die Büros von
+Dozenten.
+Frankfurt soll WM-Finale der Frauen ausrichten
+
+Parliamentary elections are to be held by January.
+
+Rnd-WRD
+Top-SNT
+Top-SNT
+Rnd-SNT
+
+Rnd-SNT
+
+Contact with the creatures can cause itching, rashes,
+conjunctivitis and, in some cases, breathing problems.
+Those attending the Soil Forensics International Conference work in the fields of science, policing, forensic
+services as well as private industries.
+The women’s tournament gets underway on Sunday.
+
+Table 3: Pseudo-parallel data obtained via UScorewrd and UScoresnt ; top and random sentence pairs. The mined
+sentences are semantically similar, but contain factuality errors (e.g., have wrong places or numbers in hypotheses).
+
+TYPE-1/2
+Supervised
+
+TYPE-3
+Supervised
+
+Unsupervised
+
+Metric
+
+de-en
+
+en-ru
+
+ru-en
+
+ro-en
+
+cs-en
+
+fi-en
+
+tr-en
+
+MonoTransQuest
+COMET-QE
+
+61.65
+65.73
+
+66.69
+71.91
+
+63.32
+69.71
+
+62.36
+66.40
+
+67.67
+67.98
+
+68.33
+64.83
+
+62.71
+53.73
+
+BLEU
+
+45.39
+
+55.08
+
+46.33
+
+47.09
+
+53.80
+
+39.92
+
+47.15
+
+XMoverScore (UMD)
+XMoverScore (CLP)
+SentSim (BERTScore)
+SentSim (WMD)
+DistilScore
+
+43.46
+45.29
+48.49
+47.78
+40.62
+
+62.16
+63.58
+50.37
+48.49
+41.21
+
+60.52
+56.12
+57.89
+56.19
+43.16
+
+47.88
+54.24
+55.06
+54.48
+51.22
+
+58.83
+58.89
+59.08
+56.87
+49.51
+
+43.52
+51.40
+46.66
+46.00
+39.65
+
+33.34
+42.14
+45.47
+44.84
+41.14
+
+UScorewrd
+UScoresnt
+UScorewrd ⊕ snt
+
+48.94
+30.48
+50.37
+
+60.97
+39.73
+62.92
+
+59.09
+35.31
+60.49
+
+56.06
+44.18
+60.07
+
+57.15
+40.80
+59.25
+
+53.76
+31.30
+52.93
+
+41.15
+30.62
+44.41
+
+UScore+wrd
+UScore+wrd ⊕ snt
+
+48.97
+50.29
+
+60.57
+62.37
+
+58.35
+59.43
+
+56.23
+60.71
+
+56.44
+58.47
+
+53.78
+51.48
+
+41.30
+44.19
+
+UScore++
+wrd
+UScore++
+wrd ⊕ snt
+
+44.50
+47.27
+
+61.45
+64.14
+
+53.50
+56.40
+
+56.03
+60.36
+
+52.95
+56.29
+
+54.08
+55.62
+
+40.65
+44.85
+
+Table 4: Segment-level Pearson’s r correlations with human judgments on the WMT-16 dataset.
+
+TYPE-1/2
+Supervised
+
+TYPE-3
+Supervised
+
+Unsupervised
+
+Metric
+
+cs-en
+
+de-en
+
+fi-en
+
+lv-en
+
+ru-en
+
+tr-en
+
+zh-en
+
+MonoTransQuest
+COMET-QE
+
+60.93
+68.99
+
+63.54
+69.34
+
+65.33
+72.83
+
+72.01
+64.75
+
+59.56
+69.06
+
+75.91
+68.43
+
+68.03
+68.01
+
+BLEU
+
+41.22
+
+41.29
+
+56.48
+
+39.28
+
+45.99
+
+53.06
+
+51.75
+
+XMoverScore (UMD)
+XMoverScore (CLP)
+SentSim (BERTScore)
+SentSim (WMD)
+DistilScore
+
+41.72
+47.76
+49.90
+47.62
+46.42
+
+51.19
+50.04
+52.26
+50.42
+45.64
+
+56.61
+62.22
+57.85
+56.59
+54.03
+
+56.11
+63.95
+57.42
+56.91
+55.51
+
+47.24
+48.79
+55.10
+53.42
+54.13
+
+46.52
+52.97
+56.84
+56.24
+54.04
+
+57.73
+59.88
+59.59
+58.86
+50.89
+
+UScorewrd
+UScoresnt
+UScorewrd ⊕ snt
+
+46.70
+38.89
+50.67
+
+52.71
+41.92
+56.50
+
+61.91
+39.77
+61.86
+
+59.22
+48.95
+64.54
+
+49.10
+37.27
+53.17
+
+50.06
+48.83
+57.31
+
+54.95
+43.10
+58.80
+
+UScore+wrd
+UScore+wrd ⊕ snt
+
+44.55
+48.62
+
+52.96
+56.31
+
+60.96
+60.44
+
+59.02
+63.62
+
+48.82
+54.19
+
+49.70
+57.54
+
+54.75
+60.28
+
+UScore++
+wrd
+UScore++
+wrd ⊕ snt
+
+45.41
+49.27
+
+48.00
+52.20
+
+61.33
+63.10
+
+60.64
+66.64
+
+49.65
+53.70
+
+47.06
+54.93
+
+50.00
+55.62
+
+Table 5: Segment-level Pearson’s r correlations with human judgments on the WMT-17 dataset.
+
+Metric
+
+en-de
+
+en-zh
+
+ru-en
+
+ro-en
+
+et-en
+
+ne-en
+
+si-en
+
+TYPE-1
+Supervised
+
+MonoTransQuest
+COMET-QE
+
+41.85
+36.03
+
+45.76
+30.70
+
+76.76
+49.33
+
+88.81
+64.95
+
+73.19
+63.45
+
+75.70
+57.46
+
+61.90
+47.85
+
+TYPE-3
+Supervised
+
+XMoverScore (UMD)
+XMoverScore (CLP)
+SentSim (BERTScore)
+SentSim (WMD)
+DistilScore
+
+16.56
+25.59
+6.15
+3.86
+12.96
+
+16.48
+20.25
+22.23
+22.62
+28.68
+
+28.07
+20.31
+47.30
+47.46
+45.34
+
+65.83
+57.34
+78.55
+77.72
+76.57
+
+53.95
+58.46
+55.09
+54.60
+51.16
+
+38.23
+25.15
+57.09
+57.00
+46.73
+
+18.81
+16.74
+51.14
+49.79
+41.76
+
+UScorewrd
+UScoresnt
+UScorewrd ⊕ snt
+
+24.53
+13.62
+24.67
+
+21.58
+13.27
+21.63
+
+16.66
+39.09
+27.83
+
+60.30
+66.50
+71.48
+
+54.83
+41.75
+57.62
+
+28.62
+46.83
+45.70
+
+11.38
+41.49
+35.25
+
+UScore+wrd
+UScore+wrd ⊕ snt
+
+23.78
+22.00
+
+21.40
+21.41
+
+15.18
+27.71
+
+60.39
+73.65
+
+56.27
+57.94
+
+27.34
+47.27
+
+12.22
+39.91
+
+UScore++
+wrd
+UScore++
+wrd ⊕ snt
+
+26.17
+26.37
+
+27.16
+27.26
+
+0.75
+9.29
+
+32.92
+57.70
+
+52.24
+56.81
+
+12.79
+31.24
+
+14.30
+30.38
+
+Unsupervised
+
+Table 6: Segment-level Pearson’s r correlations with human judgments on the MLQE-PE dataset.
+
+WMT-MQM
+
+TYPE-1/2
+Supervised
+
+TYPE-3
+Supervised
+
+Unsupervised
+
+Eval4NLP
+
+Metric
+
+en-de
+
+zh-en
+
+de-zh
+
+ru-de
+
+MonoTransQuest
+COMET-QE
+
+31.38
+40.94
+
+53.07
+50.84
+
+34.66
+33.51
+
+49.76
+46.49
+
+BLEU
+
+17.94
+
+21.58
+
+—
+
+—
+
+XMoverScore (UMD)
+XMoverScore (CLP)
+SentSim (BERTScore)
+SentSim (WMD)
+DistilScore
+
+12.72
+12.89
+1.03
+-0.23
+-2.66
+
+27.41
+28.29
+26.39
+24.70
+7.06
+
+10.85
+21.61
+-7.71
+-11.54
+6.57
+
+48.35
+52.25
+60.91
+60.42
+51.22
+
+UScorewrd
+UScoresnt
+UScorewrd ⊕ snt
+
+18.13
+-5.93
+13.94
+
+28.43
+4.99
+25.17
+
+29.29
+0.86
+24.66
+
+44.63
+39.91
+55.08
+
+UScore+wrd
+UScore+wrd ⊕ snt
+
+19.83
+13.72
+
+26.46
+21.7
+
+29.99
+22.64
+
+42.59
+53.8
+
+UScore++
+wrd
+UScore++
+wrd ⊕ snt
+
+20.19
+17.18
+
+17.80
+16.97
+
+36.51
+34.00
+
+14.32
+30.09
+
+Table 7: Segment-level Pearson’s r correlations with human judgments on the WMT-MQM and Eval4NLP datasets.
+
+Dataset
+
+Pairs
+
+Tokens
+
+Type
+
+WMT-16
+WMT-17
+MLQE-PE
+Eval4NLP
+WMT-MQM
+
+560
+560
+1000
+1295
+17090
+
+9886
+11189
+15263
+25975
+549835
+
+CA
+CA
+CLDA
+CLDA
+MQM
+
+Table 8: Statistics of our used datasets averaged over language pairs. For each dataset we report the number of
+sentences we evaluated on, the amount of tokens in these, and the type of human annotation. The number of tokens
+refers to source sentences.

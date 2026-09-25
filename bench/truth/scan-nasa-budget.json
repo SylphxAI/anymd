@@ -1,0 +1,99 @@
+{
+ "id": "scan-nasa-budget",
+ "derived_from": "Image-only scan (pdffonts: no fonts; pdftotext: empty). All strings read from page images at 110 dpi, pages 1, 2, 3 (all pages); page 2 table re-checked at 200 dpi.",
+ "sentences": [
+  "Only one high thrust booster development, and that the $140 million to be shifted from defense will be adequate to cover this development.",
+  "Certainly Project Mercury should be given complete support.",
+  "A strong recommendation should be made to support the NASA level of request which calls for about a 70% increase.",
+  "We should therefore support every effort to see that these questions are settled as quickly as possible but in an orderly manner.",
+  "This represents an increase of only 40% in the prosecution of an important new national effort."
+ ],
+ "order": [
+  "Office Memorandum",
+  "DISCUSSION",
+  "In a nutshell",
+  "At this level of overall thinking",
+  "In a little more detail",
+  "Work on complete vehicle system",
+  "The above assumptions led",
+  "With regard to these assumptions",
+  "There is general agreement",
+  "SUMMARY",
+  "With regard to general guidelines",
+  "If we are unable to strongly support"
+ ],
+ "tables": [
+  {
+   "caption": "Paragraph 1 budget summary (page 1)",
+   "page": 1,
+   "complete": true,
+   "rows": [
+    [
+     "1960 NASA Program",
+     "1961 NASA Request",
+     "1961 BOB Staff Recommended"
+    ],
+    [
+     "500.575",
+     "783.300",
+     "554.900"
+    ]
+   ]
+  },
+  {
+   "caption": "Recommendations by program (page 2)",
+   "page": 2,
+   "complete": true,
+   "rows": [
+    [
+     "",
+     "1960 Program",
+     "1961 Request",
+     "1961 Recommended"
+    ],
+    [
+     "1. Scientific Applications",
+     "97.720",
+     "162.200",
+     "85.000"
+    ],
+    [
+     "2. Meteorology & Communications",
+     "10.850",
+     "23.200",
+     "23.000"
+    ],
+    [
+     "3. Manned Space Flight",
+     "100.516",
+     "124.966",
+     "102.000"
+    ],
+    [
+     "4. Advanced Vehicle Development",
+     "70.620",
+     "138.300",
+     "68.400"
+    ],
+    [
+     "5. General Technical Development",
+     "41.059",
+     "74.150",
+     "58.500"
+    ],
+    [
+     "6. Supporting Research",
+     "109.232",
+     "163.247",
+     "127.000"
+    ],
+    [
+     "7. Supporting Operations",
+     "70.578",
+     "97.237",
+     "91.000"
+    ]
+   ]
+  }
+ ]
+}

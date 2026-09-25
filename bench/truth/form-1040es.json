@@ -1,0 +1,113 @@
+{
+ "id": "form-1040es",
+ "derived_from": "PDF text layer (pdftotext raw and -layout) for all 12 pages; standard deduction chart (page 2) and 2024 Tax Rate Schedules (page 7) checked visually at 90 dpi.",
+ "sentences": [
+  "Use Form 1040-ES to figure and pay your estimated tax for 2024.",
+  "This rule doesn't apply to farmers or fishermen.",
+  "A penalty may apply even if you have an overpayment on your tax return.",
+  "Don't send cash payments through the mail.",
+  "This limit doesn't apply to other methods of payment (such as electronic payments).",
+  "For details about repaying the first-time homebuyer credit, see the Instructions for Form 5405."
+ ],
+ "order": [
+  "Purpose of This Package",
+  "Who Must Make Estimated Tax",
+  "Increase Your Withholding",
+  "Standard deduction amount increased",
+  "Access Your Online Account",
+  "Name Change",
+  "Pay by Cash",
+  "Where To File Your Estimated Tax Payment Voucher",
+  "Line 9. Self-employment tax",
+  "Exception 2. Because the following",
+  "Schedule X—Use if your 2024",
+  "Record of Estimated Tax Payments"
+ ],
+ "tables": [
+  {
+   "caption": "Standard deduction chart (What's New, page 2)",
+   "page": 2,
+   "complete": true,
+   "rows": [
+    [
+     "IF your 2024 filing status is...",
+     "THEN your standard deduction is..."
+    ],
+    [
+     "Married filing jointly or Qualifying surviving spouse",
+     "$29,200"
+    ],
+    [
+     "Head of household",
+     "$21,900"
+    ],
+    [
+     "Single or Married filing separately",
+     "$14,600"
+    ]
+   ]
+  },
+  {
+   "caption": "2024 Tax Rate Schedules, Schedule X (Single): If line 3 is Over— / But not over— / The tax is: (amount, +, rate) / of the amount over— (body rows)",
+   "page": 7,
+   "complete": false,
+   "rows": [
+    [
+     "11,600",
+     "47,150",
+     "$1,160.00",
+     "+",
+     "12%",
+     "11,600"
+    ],
+    [
+     "100,525",
+     "191,950",
+     "17,168.50",
+     "+",
+     "24%",
+     "100,525"
+    ],
+    [
+     "609,350",
+     "-----------",
+     "183,647.25",
+     "+",
+     "37%",
+     "609,350"
+    ]
+   ]
+  },
+  {
+   "caption": "2024 Tax Rate Schedules, Schedule Y-1 (Married filing jointly or Qualifying surviving spouse) (body rows)",
+   "page": 7,
+   "complete": false,
+   "rows": [
+    [
+     "23,200",
+     "94,300",
+     "$2,320.00",
+     "+",
+     "12%",
+     "23,200"
+    ],
+    [
+     "383,900",
+     "487,450",
+     "78,221.00",
+     "+",
+     "32%",
+     "383,900"
+    ],
+    [
+     "731,200",
+     "---------",
+     "196,669.50",
+     "+",
+     "37%",
+     "731,200"
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "id": "scan-nasa-notes",
+ "derived_from": "Image-only scan (pdffonts: no fonts; pdftotext: empty). All strings read from page images at 110 dpi, pages 1, 2, 3 (all pages).",
+ "sentences": [
+  "Mr. Johnson and Mr. Holaday were designated Defense representatives for the studies.",
+  "To my knowledge no firm meeting dates have been determined.",
+  "Items (c) and (d) appear to contain the civil programs.",
+  "This could become a controversial item.",
+  "Whether NACA plans to discuss this matter formally with this office is unknown to this writer.",
+  "The former obviously has the possibility of creating a tremendous emotional (propaganda) response."
+ ],
+ "order": [
+  "MEMORANDUM FOR DR. KILLIAN",
+  "Pertinent dates",
+  "Mr. Quarles has written NACA",
+  "In view of the imminence of ARPA",
+  "Since the question of which ARPA programs",
+  "Items (c) and (d) appear",
+  "Certain Bureau of the Budget personnel",
+  "It is believed that Mr. Robert R.",
+  "In regard to the man-in-space",
+  "It is understood that Nike-Zeus",
+  "Robert Piland"
+ ],
+ "tables": [
+  {
+   "caption": "ARPA 1959 FY budget items (paragraph 4, typed list with amounts and total)",
+   "page": 2,
+   "complete": false,
+   "rows": [
+    [
+     "(a)",
+     "Anti-ICBM",
+     "157.4 million"
+    ],
+    [
+     "(b)",
+     "Military Recon. Satellite",
+     "152.0 million"
+    ],
+    [
+     "(c)",
+     "Military Development for and Application of Space Technology",
+     "138.2 million"
+    ],
+    [
+     "(d)",
+     "Other Advanced Research",
+     "72 million"
+    ],
+    [
+     "",
+     "Total:",
+     "519.6 million"
+    ]
+   ]
+  }
+ ]
+}

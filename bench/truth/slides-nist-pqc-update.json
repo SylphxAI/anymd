@@ -1,0 +1,48 @@
+{
+ "id": "slides-nist-pqc-update",
+ "derived_from": "PDF text layer (pdftotext raw + -layout) cross-checked against page images: all 16 pages at 50 dpi (montage). Order = slide titles as they appear in the text layer (upper case). Slides 8 (timeline graphic), 13 (hash-based signature boxes), 14 (memo images) and the title of slide 16 are images with no text layer; the truth avoids them. In the slide 4 table, 'Rainbow' and 'GeMSS' are struck through; the truth keeps them as plain text.",
+ "sentences": [
+  "Symmetric-key crypto (AES, SHA) would also be affected (by Grover’s algorithm), but less dramatically",
+  "We’d like feedback on specific use cases for Classic McEliece",
+  "Offers strong security assurances and mature decryption failure rate analysis",
+  "The SIKE team acknowledges that SIKE (and SIDH) are insecure and should not be used",
+  "NIST is primarily interested in additional general-purpose signature schemes that are not based on structured lattices.",
+  "Stateful hash-based signatures from SP 800-208 are allowed for signing software/firmware updates in CNSA 2.0",
+  "The United States must prioritize the transition of cryptographic systems to quantum-resistant cryptography, with the goal of mitigating as much of the quantum risk as is feasible by 2035.",
+  "NIST IS GRATEFUL FOR EVERYBODY’S EFFORTS"
+ ],
+ "order": [
+  "THE QUANTUM THREAT",
+  "THE NIST PQC “COMPETITION”",
+  "THE FIRST THREE ROUNDS",
+  "THE SELECTED ALGORITHMS",
+  "THE KEMS IN THE",
+  "AN ON-RAMP FOR SIGNATURES",
+  "OTHER STANDARDS ORGANIZATIONS",
+  "RECENT GUIDANCE",
+  "TRANSITION AND MIGRATION",
+  "THE NCCOE MIGRATION TO PQC PROJECT"
+ ],
+ "tables": [
+  {"caption": "Round 3 finalists and alternates (slide 4)", "page": 4, "complete": true, "rows": [
+   ["", "Finalists", "Alternates"],
+   ["KEM", "Kyber, NTRU, Saber, Classic McEliece", "Bike, FrodoKEM, HQC, NTRUPrime, SIKE"],
+   ["Signature", "Dilithium, Falcon, Rainbow", "GeMSS, Picnic, SPHINCS+"]
+  ]},
+  {"caption": "Round 3 results (slide 5)", "page": 5, "complete": true, "rows": [
+   ["KEMs", "Signatures"],
+   ["CRYSTALS-Kyber", "CRYSTALS-Dilithium, Falcon, SPHINCS+"]
+  ]},
+  {"caption": "On-ramp signature submissions by type (slide 11)", "page": 11, "complete": true, "rows": [
+   ["Type", "Number"],
+   ["Lattice", "7"],
+   ["Code-based", "6"],
+   ["Multivariate", "11"],
+   ["MPC in the head", "6"],
+   ["Symmetric", "4"],
+   ["Isogeny", "1"],
+   ["Other", "5"],
+   ["Total", "40"]
+  ]}
+ ]
+}

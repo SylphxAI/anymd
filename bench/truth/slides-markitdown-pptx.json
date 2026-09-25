@@ -1,0 +1,61 @@
+{
+ "id": "slides-markitdown-pptx",
+ "derived_from": "PPTX XML (ppt/slides/slide1-6.xml, a:t runs; deck order from ppt/presentation.xml), cross-checked with markitdown's own output. Order = slide titles in deck order. Slide 4 holds a chart (ppt/charts/chart1.xml, categories 2000-2003) that is not a table and is left out; slide 6's test strings are only inside an image (not checked).",
+ "sentences": [
+  "AutoGen is an open-source framework that allows developers to build LLM applications via multiple agents that can converse with each other to accomplish tasks.",
+  "AutoGen agents are customizable, conversable, and can operate in various modes that employ combinations of LLMs, human inputs, and tools.",
+  "Using AutoGen, developers can also flexibly define agent interaction behaviors.",
+  "AutoGen serves as a generic framework for building diverse applications of various complexities and LLM capacities.",
+  "Empirical studies demonstrate the effectiveness of the framework in many example applications, with domains ranging from mathematics, coding, question answering, operations research, online decision-making, entertainment, etc."
+ ],
+ "order": [
+  "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation",
+  "2cdda5c8-e50e-4db4-b5f0-9722a649f455",
+  "A table to test parsing:",
+  "A chart to test parsing:",
+  "A Nested Shape parsing",
+  "This is a nested shape with content in 2 shapes",
+  "These Test Strings are in the Image!"
+ ],
+ "tables": [
+  {
+   "caption": "A table to test parsing: (slide 3)",
+   "page": 3,
+   "complete": true,
+   "rows": [
+    [
+     "ColA",
+     "ColB",
+     "ColC",
+     "ColD",
+     "ColE",
+     "ColF"
+    ],
+    [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6"
+    ],
+    [
+     "7",
+     "8",
+     "9",
+     "1b92870d-e3b5-4e65-8153-919f4ff45592",
+     "11",
+     "12"
+    ],
+    [
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "18"
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,196 @@
+參考文獻格式
+一、 正文內引時，有以下注意事項：
+(一) 文內同時引用同一作者有多篇文章時，依照年代先後順序排列，舊在前、新在後。
+採用逗號作為區隔。
+例如：作者（年代，年代）
+Author (year, year)
+(二) 文內引用多筆參考文獻，中文部分採用筆畫排；英文用字母順序排列，採用分號
+作為區隔。
+例如：(吳佳賢，2002；吳雅雯，2006；汪俐君，2003；湯麗玉，1991）
+(Abelson, 2008; Carson, 2009)
+(羅嵐，2005；Cox, 2006; Jacso, 2004; Luther, 2003)
+(三) 文內引用單篇文獻有多位作者時：
+作者數
+正文內引用格式
+1 位作者
+(作者，年代) 或 Author (Year)
+2 位作者
+(作者 A、作者 A，年代)；作者 A 與作者 B（年代）
+(Author A & Author B, Year) or Author A and Author B (Year)
+3-5 位作者
+第一次引用，所有作者均須列出：
+(作者 A、作者 B、作者 C、作者 D，年代) 或 作者 A、作
+者 B、作者 C 與作者 D（年代）
+(Author A, Author B, Author C, & Author D, Year) or
+Author A, Author B, Author C and Author D (Year)
+第二次引用只需列出第一位作者：
+(作者 A 等人，年代) 或 作者 A 等人（年代）
+(Author A et al., Year) or Author A et al. ( Year)
+6 位以上作者 第一次引用和後續引用都只需列出自第一位作者：
+(第一作者 A 等人，年代) 或 第一作者 A 等人（年代）
+(Author A et al., Year) or Author A et al.(Year)
+團體作者
+第一次引用：
+Australian Institute of Health and Welfare (AIHW, 2005) or
+(Australian Institute of Health and Welfare [AIHW], 2005)
+第二次引用：
+AIHW(2005) or (AIHW, 2005)
+二、 文末參考文獻排列，有以下注意事項：
+(一) 參考文獻排列順序，中日文文獻在前，外文文獻在後。
+(二) 中日文文獻依作者姓氏筆畫數為依據；外文文獻依作者姓氏字母順序為依據。
+(三) 參考文獻有多位作者時(以專書為例)：
+作者數
+參考文獻作者呈現格式
+Author, A.A. (Year). Title of the book. Location: Publisher.
+1 位作者
+作者（年代）。書名。出版地：出版者。
+Author, A.A., & Author, B.B. (Year). Title of the book.
+2 位作者
+Location: Publisher.
+作者 A、作者 B（年代）
+。書名。出版地：出版者。
+Author, A. A., Author, B. B., Author, C. C., Author, D. D.,
+3-7 位作者
+Author, E. E., Author, F. F., & Author, G. G. (Year). Title of the
+book. Location: Publisher.
+作者 A、作者 B、作者 C、作者 D、作者 E、作者 F、作者
+G（年代）。書名。出版地：出版者。
+8 位以上作者 Author, A.A., Author, B.B., Author, C.C., Author, D.D.,
+
+1
+
+團體作者
+
+Author, E.E., Author, F.F., ...Author, H.H. (Year).Title of the
+book. Location: Publisher.
+作者 A、作者 B、作者 C、作者 D、作者 E、作者 F、...作
+者 H（年代）
+。書名。出版地：出版者。
+Name of group author. (Year).Title of the book. Location:
+Publisher.
+團體名稱（年代）
+。書名。出版地：出版者。
+
+(四) 格式及範例
+1、期刊雜誌﹕
+格式：
+
+Author, A. A., Author, B. B., & Author, C. C. (Year). Title of article. Title of
+Periodical, xx(xx), xxx-xxx. doi: xx.xxxxxxxxxx
+作者(年代)。文章名稱。期刊名稱，卷(期)，碼別。
+範例：
+
+Powers, J. M., & Cookson, P. W. Jr. (1999). The politics of school choice
+research. Educational Policy, 13(1), 104-122.
+doi:10.1177/0895904899131009
+丁一顧、林瑜一、張德銳(民96)。國民小學教學有困難教師教學輔導策略之研
+究。教育行政與評鑑學刊，3(1)，19-44。
+二、專書：
+格式：
+
+Author, A. A. (Year). Book title. Location: Publisher.
+作者(出版年)。書名。出版地：出版者。
+範例：
+
+Shotton, M. A. (1989). Computer addition? A study of computer dependency.
+London, England: Taylor & Francis.
+林文達(民81)。教育行政學。臺北市：三民。
+三、技術及研究報告
+格式：
+
+Author, A. A. (Year). Report title (Rep. No.).
+Author, A. A. (year). Report title (Rep. No.). Location: Publisher.
+作者(年代)。報告名稱。政府部門委託報告名稱(報告編號：xxx)，未出版。
+作者(年代)。報告名稱。政府部門委託之專題研究成果報告(報告編號：xxx)。
+出版地點：出版者（商）。
+範例：
+
+McDaniel, J. E., & Miskel, C. G. (2002). The effect of groups and individuals
+on national decisionmaking: Influence and domination in the reading
+policymaking environment (CIERA Report 3-025).
+Kilkeary, R. (2002). The energy crisis and decision making in the family
+(NTIS No. PB 238782).Washington, DC: U.S. Department of
+2
+
+Commerce.
+吳清山、林天祐、黃三吉(民89)。國民中小學教師專業能力的評鑑與教師遴選
+
+之研究。行政院國家科學委員會專題研究成果報告(編號：NSC88-2418
+-H-133-001-F19)，未出版。
+黃政傑、李春芳、周愚文、潘慧玲(民81)。大陸小學教育政策與教育內容之研
+
+究總結報告。教育部委託之專題研究成果報告(編號：F0033518)。臺北市：
+教育部。
+四、會議專刊或專題研討會論文
+格式：
+
+Author, A. A. (Year, Month). Title of paper. Paper presented at the
+Conference Title, Location.
+作者（年月）。論文名稱。研討會名稱發表（張貼）之論文，舉行地點。
+範例：
+
+Liu, S. (2005, May). Defending against business crises with the help of
+intelligent agent based early warning solutions. Paper presented at the
+Seventh International Conference on Enterprise Information Systems,
+Miami, FL.
+林天祐（2008 年10 月）。透過親師合作提升學生學習效能：轉變中學校親師
+關係的思維。
+「2008 臺北親師高峰會」發表之論文，臺北市教師研習中心。
+五、報紙
+格式：
+
+Author, A. A. (Year, Month Day). Article title. Newspaper Title, pp.xx-xx.
+作者（年月日）。文章名稱。報紙名稱，版別。
+範例：
+
+Schwartz, J. (1993, September 30). Obesity affects economic, social status.
+The Washington Post, pp. A1, A4.
+陳揚盛（民90 年2 月20 日）。基本學力測驗考慮加考國三下課程。臺灣立報，
+6 版。
+六、網路資源
+格式：
+(一)有作者之網路文章：
+
+Author, A. A. (Year). Title of webpage. Retrieved from URL (Retrieval date)
+作者(年代)。文章名稱。檢自URL (檢索日期)。
+
+(二)一般網頁：
+網頁，檢索資料內容（文件登載日期）。檢自URL（檢索日期）
+範例：
+(一)有作者之網路文章：
+
+American Society for Indexing. (2010). Software tools for indexing.
+3
+
+Retrieved from http://www.asindexing.org/site/software.shtml (May 15,
+2013)
+教師與教師團體之定位與合理協商、協議權工作小組(2002)。教師組織工會問
+題之研析。檢自http://www.edu.tw/ed.ures/911126 /910920-1.htm (Jun.
+
+29, 2003)
+(二)一般網頁：
+中研院近史所檔案館近代重要外交經濟檔案數位典藏計畫網頁，計畫內容
+（民92年9月24日）
+。檢自http://dipeco.sinica.edu.tw/main/main1.html (Oct.
+12, 2003)
+
+七、檔案資料：
+格式：
+檔案產生機關（檔案產生日期）。案由，案名。檔案管有機關，檔號。
+範例：
+
+國防部史政編譯局（1946年4月8日）
+。為飭查明繳還國立中央圖書館善本書
+籍一百箱具報由，台灣區日俘(僑)處理案。國家發展委員會檔案管理局。
+檔號：B5018230601/0034/545/4010/5/151。
+參考資料
+American Psychological Association. (2009). Publication manual of the American
+Psychological Association (6th ed.). Washington, DC: Author.
+林天祐(2010)。APA格式第六版。檢自：
+http://lib.utaipei.edu.tw/UTWeb/wSite/public/Attachment/f1313563395738.pdf
+(Jun. 15, 2015)
+國立臺灣師範大學圖書資訊學研究所(2014)。APA格式(APA Style Format)參考範
+例。檢自http://jlis.glis.ntnu.edu.tw/doc/JLIS_APA_style_format.pdf (Jun. 15,
+2015)
+
+4

@@ -1,0 +1,1995 @@
+SMiLE: Schema-augmented Multi-level Contrastive Learning for
+Knowledge Graph Link Prediction
+Miao Peng1 , Ben Liu1 , Qianqian Xie2 , Wenjie Xu1 , Hua Wang3 , Min Peng1∗
+1
+School of Computer Science, Wuhan University, China
+2
+Department of Computer Science, The University of Manchester, United Kingdom
+3
+Centre for Applied Informatics, Victoria University, Australia
+{pengmiao,liuben123,vingerxu,pengm}@whu.edu.cn
+qianqian.xie@manchester.ac.uk,hua.wang@vu.edu.au
+Type
+
+Abstract
+Type Level
+
+arXiv:2210.04870v3 [cs.CL] 4 Mar 2024
+
+Link prediction is the task of inferring missing links between entities in knowledge graphs.
+Embedding-based methods have shown effectiveness in addressing this problem by modeling relational patterns in triples. However,
+the link prediction task often requires contextual information in entity neighborhoods,
+while most existing embedding-based methods fail to capture it. Additionally, little attention is paid to the diversity of entity representations in different contexts, which often leads
+to false prediction results. In this situation, we
+consider that the schema of knowledge graph
+contains the specific contextual information,
+and it is beneficial for preserving the consistency of entities across contexts. In this paper, we propose a novel Schema-augmented
+Multi-level contrastive LEarning framework
+(SMiLE) to conduct knowledge graph link prediction. Specifically, we first exploit network
+schema as the prior constraint to sample negatives and pre-train our model by employing
+a multi-level contrastive learning method to
+yield both prior schema and contextual information. Then we fine-tune our model under
+the supervision of individual triples to learn
+subtler representations for link prediction. Extensive experimental results on four knowledge
+graph datasets with thorough analysis of each
+component demonstrate the effectiveness of
+our proposed framework against state-of-theart baselines. The implementation of SMiLE is
+available at https://github.com/GKNL/SMiLE.
+
+1
+
+Introduction
+
+Knowledge graph (KG), as a well-structured representation of knowledge, stores a vast number of
+human knowledge in the format of triples-(head,
+relation, tail). KGs are essential components for
+various artificial intelligence applications, including question answering (Diefenbach et al., 2018),
+recommendation systems (Wang et al., 2021b), etc.
+∗
+
+*Corresponding author
+
+Type Of
+
+Entity
+Film
+Festival
+
+Prize
+
+Relation
+School
+
+Jury of
+
+Educated at
+Country
+
+Winner of
+Born in
+
+Movie
+
+Actress
+
+Acted in
+
+Citizen
+Located in
+
+Directed by
+
+Worked in
+
+Friend with
+
+Theatre
+
+Director
+
+Best
+Actress
+
+Lane Cove
+Public School
+
+66th Cannes
+
+?
+
+?
+
+Australia
+
+Winner of
+
+The
+Hours
+Directed by
+
+Entity Level
+
+Friend with
+
+Stephen
+Daldry
+
+Born in
+
+Nicole
+Kidman
+
+Acted in
+
+Located in
+Worked in
+
+Phillip Street
+Theatre
+
+Figure 1: An example of KG fragment. Nicole Kidman
+has two types Actress and Citizen, and each of them
+preserves different information in different contexts.
+
+In real world, KGs always suffer from the incompleteness problem, meaning that there are a large
+number of valid links in KG are missing. In this
+situation, link prediction techniques, which aim to
+automatically predict whether a relationship exists
+between a head entity and a tail entity, are essential
+for triple construction and verification.
+To address the link prediction problem in KG,
+a variety of methods have been proposed. Traditional rule-based methods like Markov logic networks (Richardson and Domingos, 2006) and reinforcement learning-based method (Xiong et al.,
+2017) learn logic rules from KGs to conduct link
+prediction. The other mainstream methods are
+based on knowledge graph embeddings, including translational models like TransE (Bordes et al.,
+2013), TransR (Lin et al., 2015) and semantic
+matching models like RESCAL (Nickel et al.,
+2011), DistMult (Yang et al., 2015). Besides,
+embedding-based methods leverage graph neural
+networks to explore graph topology (Vashishth
+et al., 2020) and utilize type information (Ma et al.,
+2017) to enhance representations in KG.
+
+Nevertheless, the aforementioned methods fail
+to model the contextual information in entity neighbors. In fact, the context of an entity preserves
+specific structural and semantic information, and
+link prediction task is essentially dependent on the
+contexts related to specific entities and triples. Furthermore, not much attention is paid to the diversity of entity representations in different contexts,
+which may often result in false predictions. Quantitatively, dataset FB15k has 14579 entities and
+154916 triples, and the number of entities with
+types is 14417 (98.89%). There are 13853 entities
+(95.02%) that have more than two types, and each
+entity has 10.02 types on average. For example,
+entity Nicole Kidman in Figure 1 has two different
+types (Actress and Citizen), expressing different
+semantics in two different contexts. Specifically,
+the upper left in the figure describes the contextual
+information in type level about "Awards and works
+of Nicole Kidman as an actress". In this case, it is
+well-founded that there exists a relation between
+Nicole Kidman and 66th Cannes, and intuitively
+the prediction of (Nicole Kidman, ?, Lane Cove
+Public School) does not make sense, since there
+is no direct relationship between type Actress and
+type School. But considering that Nicole Kidman
+is also an Australian citizen, it is hence reasonable
+to conduct such a prediction.
+We argue that the key challenge of preserving
+contextual information in embeddings is how to
+encapsulate complex contexts of entity neighborhoods. Simply considering all information in the
+subgraph of entities as the context may bring in
+redundant and noisy information. Schema, as a
+high-order meta pattern of KG, contains the type
+constraint between entities and relations, and it can
+naturally be used to capture the structural and semantic information in context. As for the problem
+of inconsistent entity representations, the diverse
+representations of an entity are indispensable to
+be considered in different contexts. As different
+schema defines diverse type restrictions between
+entities, it is able to preserve subtle and precise
+semantic information in a specific context. Additionally, to yield consistent and robust entity representations for each contextual semantics, entities
+in contexts of the same schema are supposed to
+contain similar features but disparate in different
+contexts.
+To tackle the aforementioned issues, inspired
+by the advanced contrastive learning techniques,
+
+we proposed a novel schema-augmented multilevel contrastive learning framework to allow efficient link prediction in KGs. To tackle the incompleteness problem of KG schema, we first extract and build a <head_type, relation, tail_type>
+tensor from an input KG (Rosso et al., 2021)
+to represent the high-order schema information.
+Then, we design a multi-level contrastive learning
+method under the guidance of schema. Specifically,
+we optimize the contrastive learning objective in
+contextual-level and global-level of our model separately. In the contextual-level, contrasting entities
+within subgraphs of the same schema can learn semantic and structural characteristics in a specific
+context. In the global-level, differences and global
+connections between contexts of an entity can be
+captured via a cross-view contrast. Overall, we
+exploit the aforementioned contrastive strategy to
+obtain entity representations with structural and
+high-order semantic information in the pre-train
+phase and then fine-tune representations of entities
+and relations to learn subtler knowledge of KG.
+To summarize, we make three major contributions in this work as follows:
+• We propose a novel multi-level contrastive
+learning framework to preserve contextual information in entity embeddings. Furthermore,
+we learn different entity representations from
+different contexts.
+• We design a novel approach to sample hard
+negatives by utilizing KG schema as a prior
+constraint, and perform the contrast estimation in both contextual-level and global-level,
+enforcing the embeddings of entities in the
+same context closer while pushing apart entities in dissimilar contexts.
+• We conduct extensive experiments on four different kinds of knowledge graph datasets and
+demonstrate that our model outperforms stateof-the-art baselines on the link prediction task.
+
+2
+
+Related Work
+
+2.1
+
+KG Inference
+
+To conduct inference like link prediction on incomplete KG, most traditional methods enumerate
+relational paths as candidate logic rules, including
+Markov logic network (Richardson and Domingos, 2006), rule mining algorithm (Meilicke et al.,
+2019) and path ranking algorithm (Lao et al., 2011).
+
+However, these rule-based methods suffer from limited generalization performance due to consuming
+searching space.
+The other mainstream methods are based on reinforcement learning, which defines the problem as
+a sequential decision-making process (Xiong et al.,
+2017; Lin et al., 2018). They train a pathfinding
+agent and then extract logic rules from reasoning
+paths. However, the reward signal in these methods
+can be exceedingly sparse.
+2.2
+
+KG Embedding Models
+
+Various methods have been explored yet to perform KG inference based on KG embeddings.
+Translation-based models including TransE (Bordes et al., 2013), TransR (Lin et al., 2015) and
+RotatE (Sun et al., 2019) model the relation as a
+translation operation from head entity to tail entity.
+Semantic matching methods like DistMult (Yang
+et al., 2015) and QuatE (Zhang et al., 2019) measure the authenticity of triples through a similarity score function. GNN-based methods are proposed to comprehensively exploit structural information of neighbors by a message-passing mechanism. R-GCN (Schlichtkrull et al., 2018) and
+CompGCN (Vashishth et al., 2020) employ GCNs
+to model multi-relational KG.
+More recently, some methods integrate auxiliary information into KG embeddings. JOIE (Hao
+et al., 2019) considers ontological concepts as supplemental knowledge in representation learning.
+TransT (Ma et al., 2017) and TKRL (Xie et al.,
+2016) leverage rich information in entity types to
+enhance representations. Nevertheless, these graphbased methods further capture relational and structural information but fail to capture the contextual
+semantics and schema information in KG.
+2.3
+
+Graph Contrastive Learning
+
+Contrastive learning is an effective technique to
+learn representation by contrasting similarities between positive and negative samples (Le-Khac
+et al., 2020). More recently, the self-supervised
+contrastive learning method has been introduced
+into graph representation area. HeCo (Wang et al.,
+2021c) proposes a co-contrastive learning strategy
+for learning node representations from the metapath view and schema view. CPT-KG (Jiang et al.,
+2021b) and PTHGNN (Jiang et al., 2021a) optimize
+contrastive estimation on node feature level to pretrain GNNs on heterogeneous graphs. Furthermore,
+Ouyang et al. (2021) proposes a hierarchical con-
+
+trastive model to deal with representation learning
+on imperfect KG. SimKGC (Wang et al., 2022) explores a more effective contrastive learning method
+for text-based knowledge representation learning
+with pre-trained language models.
+
+3
+
+The Proposed SMiLE Framework
+
+In this section, we first present notations related
+to this work. Then we introduce the detail and
+training strategy of our proposed framework. The
+overall architecture of SMiLE is shown in Figure 2.
+3.1
+
+Notations
+
+A knowledge graph can be defined as
+G = (E, R, T , P), where E and R indicate
+the set of entities and relations, respectively. T
+represents the collection of triples (s, r, o) and P is
+the set of all entity types. Each entity s(or o) ∈ E
+has one or multiple types ts1 , ts2 , ..., tsn ∈ P.
+The goal of our SMiLE model is to study the
+structure- and context-preserving properties of entity representations to perform effective link prediction tasks in knowledge graphs, which aim to
+infer missing links in an incomplete G. Ideally, the
+probability scores of positive triples are supposed
+to be higher than those of corrupted negative ones.
+Context Subgraph. Given an entity s, we regard
+its k-hop neighbors with related edges as its context
+subgraph, denoted as gc (s). Likewise, we define
+the context subgraph between two entities s and o
+as the k-hop neighbors connecting s and o via several relations, which can be represented as gc (s, o).
+Knowledge Graph Schema. The schema of KG
+can be defined as S = (P, R), where P is the set
+of all entity types and R is the set of all relations.
+Consequently, the schema of a KG can be characterized as a set of entity-typed triples (ts , r, to ),
+meaning that entity s of type ts has a connection
+with entity o of type to via a relation r.
+3.2
+
+Network Schema Construction
+
+By reason of some existing KGs do not contain
+complete schema, inspired by RETA (Rosso et al.,
+2021), we design a simple but effective approach
+to construct schema S from a KG G.
+First, for all triples (s, r, o) in KG, we convert
+each entity to its corresponding type, hence all
+entity-typed triples form a typed collection S =
+{(ts , r, to )|(ts , r, to ) ∈ P × R × P}. Noticing that
+each entity in KG may have multiple types, we take
+each combination of entity types in an entity-typed
+
+A1
+
+Anchor
+
+A1
+
+...
+
+Pos
+
+...
+
+Neg
+
+...
+
+Queued
+Neg
+
+...
+
+Context-view
+Encoder
+
+Same schema
+
+A1
+
+A2
+
+Contextual-level Contrastive
+Learning
+
+Context-view
+Embedding
+
+Intra-schema Samples
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Contextual-level
+Contrast
+
+Positive Pairs
+Negative Pairs
+
+(b) Intra-schema Sampling in Contextual-level
+A2
+A1
+
+Anchor
+
+...
+
+A1
+
+C3
+
+Context-view
+Encoder
+
+Different schema
+
+Pos
+
+Global-level Cross-view
+Contrastive Learning
+
+Context-view
+Embedding
+
+Inter-schema Samples
+
+...
+
+...
+
+...
+
+Global-level
+Cross-view
+Contrast
+
+Structure-view
+Embedding
+
+Neg
+
+...
+
+Structure-view
+Encoder
+
+...
+
+...
+
+C3
+
+(a) Knowledge graph fragment
+(c) Inter-schema Sampling in Global-level
+
+Positive Pairs
+Negative Pairs
+
+Figure 2: Overall illustration of the proposed SMiLE model: detailed framework of SMiLE model(left) and a sketch
+map of multi-level contrastive learning mechanism(right).
+
+triple into consideration. Then, we calculate the
+frequency of each entity-typed triple and filter out
+those with a frequency below threshold α, which
+indicates few contributions to the schema in KG.
+Finally, we obtain the KG schema represented in
+s
+o
+the form of a boolean tensor T ∈ B|P |×|R|×|P | ,
+where P s and P o are the set of filtered head and
+tail types respectively.
+Context Schema. Given an entity s and its context
+subgraph gc (s), we get an entity-typed subgraph
+St (s) by converting all entities in gc (s) to their corresponding types. Then we apply the intersection
+operation between St (s) and KG schema S, hence
+we obtain the context schema of gc (s) as:
+
+Sc (s) = (ts , r, to ) | (ts , r, to ) ∈ St (s) ∩ S .
+3.3
+
+Context-view Encoder. To capture inherent knowledge in a context schema, we employ the k-layer
+stacked contextual translation function (Wang et al.,
+2021a) to learn contextual embeddings of entities
+Ec with embeddings Hc = (h1 , h2 , ..., h|Ec | ) ∈
+Rd×|Ec | in a context subgraph gc of entity s:
+Hci+1 = Enc(Wsc Hci Āi + Hci ), i = 0, 1, ..., k − 1,
+where Enc(·) is a MLP encoder, Wsc ∈ Rdk ×dk+1
+is a layer-specific parameter matrix and Āi ∈
+R|Ec |×|Ec | denotes the semantic association matrix
+which is computed by multi-head attention mechanism. Then we get the context-view embedding of
+node s by aggregating the output of each layer:
+cs = h0s ⊕ h1s ⊕ ... ⊕ hk−1
+.
+s
+
+Multi-view Entity Encoder
+
+Generally, entities preserve multiple expressions
+under different views, hence we encode entities into
+different representations to preserve diverse features in context- and structure-view, respectively.
+Structure-view Encoder. Given an entity s and
+a relation r, we first obtain their global structureaware representations as follows:
+hs = fe (s; G); zr = fr (r).
+To obtain graph-structure based embeddings in
+KG, we adopt the GNN model as the implementation of fe (·; G) and we use the i.i.d. embedding
+network to implement fr (·).
+
+3.4
+
+Contextual-level Contrastive Learning
+
+We exploit contextual-level contrastive learning to
+capture latent semantics and correlations of entities
+within context schemas. A context schema constrains the type of tail entities and relations that
+a head entity can be related to, and it is helpful
+to obtain harder negative samples, contributing to
+more effective contrast estimation.
+Positive Samples. Given a context subgraph gc (s)
+and its corresponding context schema Sc (s), let
+s be the anchor entity of gc (s) and Sc (s), while
+the others in gc (s) be the context entities. We define the positive samples of anchor entity s in both
+
+3.5
+
+contextual-level and global-level as follows:
+
+Ps = u | (s, r, u) ∈ Tc (s), u ̸= s ,
+where Tc (s) is the set of triples in gc (s).
+Intra-schema Negative Samples. For two anchor
+entities u and v matching the same type, if context
+subgraphs gc (u) and gc (v) generated from them
+can be projected to the same context schema, we
+define their neighbor entities within gc (s) as negative samples of each other. Formally, given a batch
+of anchor entities EB , we denote the negative samples of entity s as:
+
+Nscur = Pi | i ∈ EB \ {s}, Sc (i) = Sc (s), ti = ts .
+
+Generally, the number of intra-schema negative
+samples in a batch is usually coupled with batch
+size. We employ a dynamic queue to store entity
+embeddings from previous batches (He et al., 2020;
+Wang et al., 2022), aiming to increase the number
+of intra-schema negative samples. We denote the
+queued pre-batch negative samples of entity s as:
+Nspre =
+
+
+
+Pj | j ∈ EB−1 ∪ EB−2 ... ∪ EB−n ,
+Sc (j) = Sc (s), tj = ts ,
+
+where EB−n represents entities of n-th pre-batch.
+Since embeddings from previous batches are computed with previous model parameters, we usually
+limit n with a small number to ensure that they are
+consistent with negative samples in Nscur . The total intra-schema negative samples of anchor entity
+s in contextual-level are:
+
+Contextual-level Optimization. With contextview embeddings of entities, we apply InfoNCE
+loss (Ouyang et al., 2021) to perform contrast estimation as follows:
+
+Lcs = − log
+
+exp (ϕ(cs , ct )/τ )
+
+t∈Ps
+
+P
+
+exp (ϕ(cs , ck )/τ )
+
+In addition to local contexts, it is essential to capture correlations among various context subgraphs.
+We apply the cross-view contrastive learning strategy to strike a balance between global schema and
+contextual features of KG representations.
+Inter-schema Negative Samples. If u and v are
+two anchor entities corresponding to two different
+context schemas, we define their context entities as
+negative samples of each other:
+
+Nsie = Eci | i ∈ EB \ {s}, Sc (i) ̸= Sc (s)},
+where EB indicates a batch of anchor entities.
+Global-level Optimization. Obtaining the embeddings of entity s under context- and structure-view,
+we feed them into an MLP encoder with one hidden
+layer, hence they are mapped into the space where
+the contrastive loss is calculated:
+hps = W 2 σ(W 1 hs + b1 ) + b2 ,
+cps = W 2 σ(W 1 cs + b1 ) + b2 ,
+where σ is ELU activation function. It is worth
+noting that weight matrix {W 1 , W 2 } and bias parameter {b1 , b2 } are shared with embeddings of
+two different views. Then we perform cross-view
+contrastive learning between context- and structureview representations of entities as follows:
+P (ϕ(cp ,cp )/τ )
+s t
+e
+Lgs = − log P
+
+t∈Ps
+p
+
+p
+
+e(ϕ(cs ,ck )/τ ) +
+
+k∈Ps
+
+P
+
+p
+
+p
+
+e(ϕ(cs ,hk )/τ )
+
+,
+
+k∈Nie
+s
+
+where τ is the temperature hyper-parameter and
+ϕ is the cosine similarity score function.
+
+Nsia = Nscur ∪ Nspre .
+
+P
+
+Global-level Contrastive Learning
+
+,
+
+k∈{Ps ∪Nia
+s }
+
+where τ is the temperature hyper-parameter to
+control the sensitivity of score function, and we
+apply cosine similarity as the score function ϕ. Different from previous contrast-based methods, we
+take multiple positive samples into consideration
+in computing contrastive loss.
+
+3.6
+
+Training Objective for link prediction
+
+To capture both semantic and structural information in the context schema and individual triple for
+link prediction, we employ a pre-train & fine-tune
+pipeline to optimize our proposed SMiLE model.
+3.6.1 Contrastive optimization in pre-training
+In pre-train phase, we employ the multi-level contrastive learning strategy mentioned in 3.4 and 3.5
+to optimize model parameters θ. To capture semantic and structural knowledge of entities in both
+contextual- and global-level, we jointly minimize
+the contextual- and global-level loss as follows:
+1 X
+L=
+[λ · Lgs + (1 − λ) · Lcs ] ,
+|E|
+s∈E
+
+where λ is a balancing coefficient that controls the
+weight of two losses under different levels.
+3.6.2
+
+Fine-tuning for link prediction
+
+With pre-trained model parameters θ as an initialization, we further fine-tune the model to learn subtler representations of individual entities and relations under the supervision of each individual triple.
+For a positive triple in KG, we construct its negative samples by corrupting the head or tail entity,
+with the restriction that the replaced entity should
+have the same type as the original one. Then, for
+each triple (s, r, o), we obtain the relation-aware
+embedding of head entity s as hrs = Φ(hs , zr ),
+where Φ(·) denotes the non-parameterized entityrelation composition operation (Vashishth et al.,
+2020), which can be subtraction, multiplication,
+circular-correlation, etc.
+Next, for a triple (s, r, o), we generate its corresponding context subgraph gc (s, o) by employing
+a shortest path strategy, which considers the shortest path between entity s and entity o as the context. Feeding entities in gc (s, o) with their relationaware embeddings into context-view encoder, we
+obtain the context-view embeddings of entity s and
+o in triple (s, r, o), denoted as crs and co .
+The training objective in fine-tune phase is as
+follows:
+X
+L=
+log (ϕr (crs , co ))
+(s,r,o)∈Tp
+
++
+
+X
+
+log (1 − ϕr (crs′ , co′ )) ,
+
+(s′ ,r,o′ )∈Tn
+
+where Tp and Tn represent the set of positive and
+negative triples, respectively. ϕr (cs , co ) denotes
+the score function to measure the compatibility
+between entities pair via relation r. Here we adopt
+to the dot product similarity as ϕr (cs , co ) = σ(cs ·
+cTo ), where σ is the sigmoid function.
+3.7
+
+Complexity Analysis
+
+Theoretically, the major difference between SMiLE
+and previous baseline models is the negative sampling and contrastive loss, which is related to the
+number of negative samples. The complexity of the
+pre-training phase is O(|E|∗|P|∗(k1 +k2 )), where
+|E| is the number of entity nodes, |P| denotes the
+size of positive samples in both contextual-level
+and global-level, k1 and k2 are the number of negative samples per positive sample in contextual-level
+and global-level. The complexity of fine-tuning
+
+Dataset
+
+FB15k-237
+
+#Entities
+#Types
+#Relations
+#Edges
+#Triples
+
+14,541
+583
+237
+248,611
+310,116
+
+FB15k
+
+JF17k HumanWiki
+
+14,579 9,233
+588
+511
+1,208
+326
+117,580 18,049
+154,916 19,342
+
+38,949
+388
+221
+105,688
+108,199
+
+Table 1: Statistics of datasets used in this paper.
+
+phase is O(|R| ∗ Nc ), where |R| is the number
+of relation edges and Nc denotes the maximum
+number of nodes in any context subgraph.
+
+4
+
+Experiments
+
+4.1
+
+Experimental Setup
+
+Datasets. We evaluate our model on four synthetic
+and real-world KG datasets: FB15k (Bordes et al.,
+2013), FB15k-237 (Toutanova and Chen, 2015),
+JF17k (Wen et al., 2016), and HumanWiki (Rosso
+et al., 2021). More precisely, FB15k and JF17k are
+subsets of Freebase, and FB15k-237 is a pruned
+version of FB15k. HumanWiki is extracted from
+Wikidata by extracting all triples involving a head
+entity of type human. For entity type information,
+we use the data built in Rosso et al. (2021) and
+we generate equal number of positive and negative
+edges for the link prediction task. Statistics of these
+four datasets are shown in Table 1.
+Baselines. We compare the proposed SMiLE
+against nine representative models, which can be
+divided into two categories. The first category
+is KGE-based models including TransE (Bordes
+et al., 2013), ComplEx-N3 (Lacroix et al., 2018),
+TransR (Lin et al., 2015), TypeComplex (Jain
+et al., 2018) with additional type information,
+SANS (Ahrabian et al., 2020) with structure-aware
+negative samples and SOTA model PairRE (Chao
+et al., 2021) with paired relation vectors. The second category is GNN-based models that employ
+a GNN model to exploit structural information in
+KG, including random-walk based homogeneous
+network Node2vec (Grover and Leskovec, 2016),
+multi-relational model CompGCN (Vashishth et al.,
+2020), and SOTA approach SLiCE (Wang et al.,
+2021a) with subgraph-based contextualization.
+Implementation Details. We implement our
+SMiLE with Pytorch and adopt Adam as the optimizer to train our model with the learning rate of 1e4 for pre-train phase and 1e-3 for fine-tune phase.
+Models are trained on NVIDIA TITAN V GPUs.
+We utilize the random walk approach to generate
+
+FB15k
+
+Model
+
+FB15k-237
+
+JF17k
+
+HumanWiki
+
+F1
+
+AUC-ROC
+
+F1
+
+AUC-ROC
+
+F1
+
+AUC-ROC
+
+F1
+
+AUC-ROC
+
+50.36
+71.96
+49.63
+88.09
+88.97
+88.27
+
+50.13
+76.96
+49.63
+93.90
+94.59
+92.67
+
+47.78
+67.19
+50.19
+50.05
+50.03
+49.62
+
+48.18
+70.76
+50.34
+50.25
+50.26
+49.30
+
+44.68
+62.06
+48.44
+73.73
+68.62
+71.89
+
+46.18
+68.14
+49.15
+78.53
+79.41
+79.65
+
+49.06
+61.56
+54.53
+80.17
+78.18
+80.07
+
+49.31
+66.54
+52.86
+85.58
+83.69
+87.68
+
+Node2vec (Grover and Leskovec, 2016) 80.23
+CompGCN (Vashishth et al., 2020)
+60.35
+SLiCE (Wang et al., 2021a)
+88.34
+
+88.91
+63.59
+94.66
+
+83.69
+65.39
+90.26
+
+89.77
+72.01
+96.41
+
+93.30
+66.27
+96.16
+
+98.01
+52.13
+98.89
+
+80.13
+56.88
+88.92
+
+87.54
+40.09
+96.19
+
+96.53
+
+88.75
+
+94.92
+
+96.98
+
+99.22
+
+93.40
+
+97.92
+
+TransE (Bordes et al., 2013)
+TransR (Lin et al., 2015)
+ComplEx-N3 (Lacroix et al., 2018)
+TypeComplex (Jain et al., 2018)
+SANS (Ahrabian et al., 2020)
+PairRE (Chao et al., 2021)
+
+SMiLE(ours)
+
+90.76
+
+Table 2: Link prediction performance of our method(SMiLE) and recent models on FB15k-237, FB15k, JF17k and
+HumanWiki datasets. The best results are in bold and the second best results are underlined.
+Model
+contextual
+
+FB15k
+
+HumanWiki
+
+F1
+
+AUC-ROC
+
+F1
+
+AUC-ROC
+
+F1
+
+AUC-ROC
+
+✓
+✓
+
+90.57
+91.04
+90.76
+
+96.40
+96.49
+96.54
+
+96.78
+96.44
+96.98
+
+99.16
+98.96
+99.22
+
+92.88
+91.33
+93.40
+
+97.75
+96.90
+97.92
+
+✓
+✓
+
+JF17k
+
+global
+
+Table 3: Ablation study results on FB15k, JF17k and HumanWiki datasets. The best results are in bold.
+
+subgraphs, and the embedding dimension is set to
+128. Temperature τ is initialized to 0.8 and the
+number of contextual translation layers k is set to 4.
+The maximum number of negative samples in two
+levels is both set to 512. The GNN model fe (·; G)
+is implemented by Node2vec or CompGCN. Please
+see Appendix A.3 for more details.
+Evaluation Protocol. We evaluate the performance of our SMiLE on the link prediction task.
+We regard the following two measurements as the
+evaluation metrics ( Wang et al., 2021a; Shen et al.,
+2021) of prediction performance: (1) Micro-F1
+score; (2) AUC-ROC score.
+4.2
+
+Main Results
+
+We compare our proposed SMiLE with various
+state-of-the-art models, and experimental results
+are summarized in Table 2. We reuse the results
+on FB15k-237 reported by Wang et al. (2021a) for
+TransE, CompGCN and SLiCE. Clearly, we can
+observe that our proposed model SMiLE obtains
+competitive results compared with the baselines.
+Specifically, SMiLE performs better than relationbased method CompGCN which only models relational connection within a triple, emphasizing
+the contextual information learned from context
+schema is more effective in link prediction. Furthermore, SMiLE outperforms the state-of-the-art
+
+baseline SLiCE(that shares the same backbone with
+SMiLE but is free of the schema context and global
+correlations between contexts) by a large margin
+on the FB15k, JF17k and HumanWiki datasets, but
+marginally lags behind on FB15k-237.
+Compared to other datasets, the graph in FB15k237 is much denser as the degree number of each
+entity is larger. In this case, models are more dependent on generalizable logic rules for KG inference.
+As SLiCE automatically learns meta-paths from
+contexts, it is quite helpful for link prediction. Besides, FB15k-237 dataset is reported to exist plenty
+of unpredictable links (Cao et al., 2021). Hence it is
+reasonable for the unsatisfactory result of SMiLE.
+4.3
+
+Ablation Study
+
+We consider two ablated variants (contextual-level
+and global-level contrastive learning) of our model
+in the ablation study. The experimental results on
+FB15k and HumanWiki datasets are described in table 3. We can observe that the full model(the third
+row) outperforms all those with a single component
+by a large margin on both micro-F1 and AUC-ROC
+scores, further certifying that semantic and structural information in contextual- and global-level
+both play fruitful contributions to SMiLE.
+Moreover, we have an interesting observation
+that global-level information contributes more to
+
+25000
+
+Negative Triples
+Positive Triples
+
+20000
+15000
+10000
+5000
+0
+
+0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+Frequency of testing triples
+
+Frequency of testing triples
+
+the performance of the full model on FB15k than
+HumanWiki dataset. We believe that the graph of
+FB15k dataset is much denser, because each entity
+in it has a larger degree on average and naturally
+gains more information from its local neighbors.
+Under this circumstance, global-level information
+can be a significant promotion to KG embeddings.
+
+Scores(via sigmoid) of triples
+
+FB15k
+
+Negatives
+
+Relation
+Schema
+
+HumanWiki
+
+F1
+
+AUC-ROC
+
+F1
+
+AUC-ROC
+
+89.14
+90.76
+
+95.45
+96.53
+
+92.41
+93.40
+
+97.51
+97.92
+
+Frequency of testing triples
+
+Impact of Negative Samples
+20000
+
+Negative Triples
+Positive Triples
+
+15000
+10000
+5000
+0
+
+0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+Scores(via sigmoid) of triples
+
+(c) Node2vec on HumanWiki
+
+Negative Triples
+Positive Triples
+
+25000
+20000
+15000
+10000
+5000
+0
+
+0.0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+Scores(via sigmoid) of triples
+
+1.0
+
+(b) SMiLE on FB15k
+Frequency of testing triples
+
+(a) Node2vec on FB15k
+
+4.4
+
+30000
+
+20000
+17500
+15000
+12500
+10000
+7500
+5000
+2500
+0
+
+Negative Triples
+Positive Triples
+
+0.0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+Scores(via sigmoid) of triples
+
+1.0
+
+(d) SMiLE on HumanWiki
+
+Table 4: Performance of SMiLE with different kinds
+of negative samples on FB15k-237 and HumanWiki
+datasets.
+
+Figure 3: Histogram distribution of triple scores on
+FB15k and HumanWiki datasets.
+
+In SMiLE, we adopt a contrastive learning strategy in the pre-train phase, which relies on the quality of negative samples. To verify whether our
+schema-guided sampling strategy obtains harder
+negatives, we compared it with a simpler relationlevel sampling strategy, which randomly corrupts h
+or t in a positive triple (s, r, o) with the constraint
+on entity type as follows:
+
+Nsrel = v | v ∈ E, (s, ∗, v) ∈
+/ T , tv = to ,
+
+As shown in Figure 3, Node2vec model in 3a and
+3c can not precisely discriminate positive triples
+and corrupted negative triples in test set, as a result
+of that a large number of negative triples still obtain high scores. Conversely, SMiLE in 3b and 3d
+increases the margin of distribution between positive triples and negative triples, offering strong evidence that our model brings positive triples closer
+while pushing negative triples farther away.
+
+where ∗ means that there is no relation directly
+connecting entity s and entity v.
+As shown in Table 4, by switching the negative
+sampling method from schema-level to relationlevel, the micro-F1 score drops from 92.08% to
+90.77%, and the AUC-ROC score drops from
+97.23% to 96.48% on average, while it still leads
+to a competitive performance comparing to other
+KGE baselines. It is evident that the relation-level
+sampling strategy only focuses on an individual
+triple with type constraints on each entity, ignoring
+the context information of an entity. To summarize, the proposed schema-guided negative sampling strategy is capable of sampling effective hard
+negatives compared with traditional vanilla ones.
+4.5
+
+Analysis on Discriminative Capacity
+
+In this section, to further demonstrate the discriminative capacity of SMiLE on link prediction task,
+we visualize the distribution of positive and negative triple scores computed by SMiLE, and compare it with another GNN-based model Node2vec.
+
+4.6
+
+Case Study
+
+To examine the effectiveness and interpretability of
+our proposed model, we visualize the entity embeddings in 6 different contexts. We randomly select 6
+tail entities from FB15k dataset, and for each tail
+entity we randomly sample 50 head entities that are
+connected to it via a relation. We visualize these
+entity embeddings computed with Node2vec and
+SMiLE, respectively.
+As shown in Figure 4, model Node2vec in Figure 4a can not separate entities in different contexts
+distinctly, especially there are some overlap between entities in context Warner Bros. and those
+in context London. Conversely, entities in different
+contexts are well separated by utilizing SMiLE in
+Figure 4b as an encoder. Moreover, the distance
+of entities within the same context is much closer,
+while the distribution of different contexts is much
+wider. Less overlap among clusters demonstrates
+that the proposed SMiLE effectively models the
+contextual information of entities while it distinguishes entities of different types more apart.
+
+Entity Instance
+1
+
+Warner Bros.
+
+Type Information
+
+Context Schema
+
+business.employer
+
+Entity-typed Triples:
+
+award.award_winner
+film.production_company
+
+(award_winner, /place_lived/location, administrative_division)
+
+government.political_district
+
+2
+
+California
+
+3
+
+African Americans
+
+location.administrative_division
+people.ethnicity
+
+(award_winner, /person/ethnicity, book_subject)
+(administrative_division, /location/containedby, book_subject)
+
+book.book_subject
+
+Table 5: Examples of representative entities on the test set of FB15k dataset with their detailed type information.
+Types of Warner Bros., California, African Americans and relations among them make up a context schema.
+
+20
+
+African Americans
+California
+India
+London
+Midfielder
+Warner Bros.
+
+15
+10
+5
+0
+5
+10
+
+20
+
+specific contextual information and correlations between different contexts of an entity.
+
+African Americans
+California
+India
+London
+Midfielder
+Warner Bros.
+
+10
+
+Limitations
+
+0
+
+In this paper, we utilize KG schema as a prior constraint to capture contextual information. However,
+there are several limitations in our method: 1) The
+construction of schema relies on explicit type information of entities while some KGs lack them.
+A promising improvement is to model recapitulate
+type semantics by utilizing linguistic information
+of concepts and word embeddings to capture the
+similarity between entities. 2) The proposed negative sampling strategy may be time-consuming in
+large-scale KGs. For future work, a more effective
+way to incorporate schema contexts into both entity
+and relation representations is worth exploring.
+
+10
+
+15
+20
+
+15 10 5 0
+
+5 10 15 20 25
+
+(a) Node2vec
+
+20
+
+20
+
+10
+
+0
+
+10
+
+20
+
+(b) SMiLE
+
+Figure 4: The visualization of entity embeddings on
+FB15k dataset using t-SNE(Van der Maaten and Hinton,
+2008). Points in same color indicate that they are head
+entities connected to the same tail entity via a relation.
+
+More concretely, we list more details of related
+type information in Table 5. We can observe that
+entities of Warner Bros., California, African Americans and relations among them make up a bigger
+context schema. It is evident that there exist some
+semantic connections about "America" between
+them, hence distance among these clusters is closer.
+
+5
+
+Conclusion
+
+In this paper, we propose SMiLE, a schemaaugmented multi-level contrastive learning framework for knowledge graph link prediction. We
+identify the critical issue of conducting effective
+link prediction is how to model precise and consistent contextual information of entities in different
+contexts. We propose an approach to automatically
+extract the complete schema from a KG. To fully
+capture contextual information of entities, we first
+sample the two-level negatives and perform contrast estimation in contextual-level and global-level,
+and then fine-tune the representations of entities
+and relations to learn subtler knowledge. Empirical
+experiments on four benchmark datasets demonstrate that our proposed model effectively captures
+
+Acknowledgements
+We would like to thank all the anonymous reviewers for their insightful and valuable comments. This work was supported by the National Key Research and Development Program
+of China (Grant No.2021ZD0113304), General
+Program of Natural Science Foundation of China
+(NSFC) (Grant No.62072346), Key R&D Project
+of Hubei Province (Grant NO.2020BAA021,
+NO.2021BBA099, NO.2021BAA029) and Application Foundation Frontier Project of Wuhan
+(Grant NO.2020010601012168).
+
+References
+Kian Ahrabian, Aarash Feizi, Yasmin Salehi, William L.
+Hamilton, and Avishek Joey Bose. 2020. Structure
+aware negative sampling in knowledge graphs. In
+Proceedings of the 2020 Conference on Empirical
+Methods in Natural Language Processing (EMNLP),
+pages 6093–6101, Online. Association for Computational Linguistics.
+
+Antoine Bordes, Nicolas Usunier, Alberto GarcíaDurán, Jason Weston, and Oksana Yakhnenko.
+2013. Translating embeddings for modeling multirelational data. In Advances in Neural Information
+Processing Systems 26: 27th Annual Conference on
+Neural Information Processing Systems 2013. Proceedings of a meeting held December 5-8, 2013, Lake
+Tahoe, Nevada, United States, pages 2787–2795.
+Yixin Cao, Xiang Ji, Xin Lv, Juanzi Li, Yonggang Wen,
+and Hanwang Zhang. 2021. Are missing links predictable? an inferential benchmark for knowledge
+graph completion. In Proceedings of the 59th Annual
+Meeting of the Association for Computational Linguistics and the 11th International Joint Conference
+on Natural Language Processing (Volume 1: Long
+Papers), pages 6855–6865, Online. Association for
+Computational Linguistics.
+Linlin Chao, Jianshan He, Taifeng Wang, and Wei Chu.
+2021. PairRE: Knowledge graph embeddings via
+paired relation vectors. In Proceedings of the 59th
+Annual Meeting of the Association for Computational
+Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1:
+Long Papers), pages 4360–4369, Online. Association
+for Computational Linguistics.
+Dennis Diefenbach, Kamal Deep Singh, and Pierre
+Maret. 2018. Wdaqua-core1: A question answering service for RDF knowledge bases. In Companion
+of the The Web Conference 2018 on The Web Conference 2018, WWW 2018, Lyon , France, April 23-27,
+2018, pages 1087–1091.
+
+Xunqiang Jiang, Tianrui Jia, Yuan Fang, Chuan Shi, Zhe
+Lin, and Hui Wang. 2021a. Pre-training on largescale heterogeneous graph. In KDD ’21: The 27th
+ACM SIGKDD Conference on Knowledge Discovery
+and Data Mining, Virtual Event, Singapore, August
+14-18, 2021, pages 756–766. ACM.
+Xunqiang Jiang, Yuanfu Lu, Yuan Fang, and Chuan Shi.
+2021b. Contrastive pre-training of gnns on heterogeneous graphs. In CIKM ’21: The 30th ACM International Conference on Information and Knowledge
+Management, Virtual Event, Queensland, Australia,
+November 1 - 5, 2021, pages 803–812.
+Timothée Lacroix, Nicolas Usunier, and Guillaume
+Obozinski. 2018. Canonical tensor decomposition
+for knowledge base completion. In Proceedings of
+the 35th International Conference on Machine Learning, ICML 2018, Stockholmsmässan, Stockholm, Sweden, July 10-15, 2018, volume 80 of Proceedings
+of Machine Learning Research, pages 2869–2878.
+PMLR.
+Ni Lao, Tom Mitchell, and William W. Cohen. 2011.
+Random walk inference and learning in a large scale
+knowledge base. In Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing, pages 529–539, Edinburgh, Scotland, UK.
+Association for Computational Linguistics.
+Phuc H. Le-Khac, Graham Healy, and Alan F. Smeaton.
+2020. Contrastive representation learning: A framework and review. IEEE Access, 8:193907–193934.
+
+Aditya Grover and Jure Leskovec. 2016. node2vec:
+Scalable feature learning for networks. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining,
+San Francisco, CA, USA, August 13-17, 2016, pages
+855–864. ACM.
+
+Xi Victoria Lin, Richard Socher, and Caiming Xiong.
+2018. Multi-hop knowledge graph reasoning with
+reward shaping. In Proceedings of the 2018 Conference on Empirical Methods in Natural Language
+Processing, pages 3243–3253, Brussels, Belgium.
+Association for Computational Linguistics.
+
+Junheng Hao, Muhao Chen, Wenchao Yu, Yizhou Sun,
+and Wei Wang. 2019. Universal representation learning of knowledge bases by jointly embedding instances and ontological concepts. In Proceedings
+of the 25th ACM SIGKDD International Conference
+on Knowledge Discovery & Data Mining, KDD 2019,
+Anchorage, AK, USA, August 4-8, 2019, pages 1709–
+1719.
+
+Yankai Lin, Zhiyuan Liu, Maosong Sun, Yang Liu, and
+Xuan Zhu. 2015. Learning entity and relation embeddings for knowledge graph completion. In Proceedings of the Twenty-Ninth AAAI Conference on
+Artificial Intelligence, January 25-30, 2015, Austin,
+Texas, USA, pages 2181–2187.
+
+Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and
+Ross B. Girshick. 2020. Momentum contrast for unsupervised visual representation learning. In 2020
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, CVPR 2020, Seattle, WA, USA,
+June 13-19, 2020, pages 9726–9735.
+
+Shiheng Ma, Jianhui Ding, Weijia Jia, Kun Wang, and
+Minyi Guo. 2017. Transt: Type-based multiple embedding representations for knowledge graph completion. In Machine Learning and Knowledge Discovery
+in Databases - European Conference, ECML PKDD
+2017, Skopje, Macedonia, September 18-22, 2017,
+Proceedings, Part I, volume 10534 of Lecture Notes
+in Computer Science, pages 717–733.
+
+Prachi Jain, Pankaj Kumar, Mausam, and Soumen
+Chakrabarti. 2018. Type-sensitive knowledge base
+inference without explicit type supervision. In Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 2: Short
+Papers), pages 75–80, Melbourne, Australia. Association for Computational Linguistics.
+
+Christian Meilicke, Melisachew Wudage Chekol, Daniel
+Ruffinelli, and Heiner Stuckenschmidt. 2019. Anytime bottom-up rule learning for knowledge graph
+completion. In Proceedings of the Twenty-Eighth
+International Joint Conference on Artificial Intelligence, IJCAI 2019, Macao, China, August 10-16,
+2019, pages 3137–3143. ijcai.org.
+
+Maximilian Nickel, Volker Tresp, and Hans-Peter
+Kriegel. 2011. A three-way model for collective
+learning on multi-relational data. In Proceedings of
+the 28th International Conference on Machine Learning, ICML 2011, Bellevue, Washington, USA, June
+28 - July 2, 2011, pages 809–816. Omnipress.
+Bo Ouyang, Wenbing Huang, Runfa Chen, Zhixing
+Tan, Yang Liu, Maosong Sun, and Jihong Zhu. 2021.
+Knowledge representation learning with contrastive
+completion coding. In Findings of the Association
+for Computational Linguistics: EMNLP 2021, pages
+3061–3073, Punta Cana, Dominican Republic. Association for Computational Linguistics.
+Matthew Richardson and Pedro M. Domingos. 2006.
+Markov logic networks. Mach. Learn., 62(1-2):107–
+136.
+Paolo Rosso, Dingqi Yang, Natalia Ostapuk, and
+Philippe Cudré-Mauroux. 2021. RETA: A schemaaware, end-to-end solution for instance completion
+in knowledge graphs. In WWW ’21: The Web Conference 2021, Virtual Event / Ljubljana, Slovenia, April
+19-23, 2021, pages 845–856.
+Michael Sejr Schlichtkrull, Thomas N. Kipf, Peter
+Bloem, Rianne van den Berg, Ivan Titov, and Max
+Welling. 2018. Modeling relational data with graph
+convolutional networks. In The Semantic Web - 15th
+International Conference, ESWC 2018, Heraklion,
+Crete, Greece, June 3-7, 2018, Proceedings, volume
+10843 of Lecture Notes in Computer Science, pages
+593–607.
+Yuxin Shen, Zhao Li, Xin Wang, Jianxin Li, and Xiaowang Zhang. 2021. Datatype-aware knowledge
+graph representation learning in hyperbolic space. In
+CIKM ’21: The 30th ACM International Conference
+on Information and Knowledge Management, Virtual
+Event, Queensland, Australia, November 1 - 5, 2021,
+pages 1630–1639.
+Zhiqing Sun, Zhi-Hong Deng, Jian-Yun Nie, and Jian
+Tang. 2019. Rotate: Knowledge graph embedding
+by relational rotation in complex space. In 7th International Conference on Learning Representations,
+ICLR 2019, New Orleans, LA, USA, May 6-9, 2019.
+Kristina Toutanova and Danqi Chen. 2015. Observed
+versus latent features for knowledge base and text
+inference. In Proceedings of the 3rd Workshop on
+Continuous Vector Space Models and their Compositionality.
+Laurens Van der Maaten and Geoffrey Hinton. 2008.
+Visualizing data using t-sne. Journal of machine
+learning research, 9(11).
+Shikhar Vashishth, Soumya Sanyal, Vikram Nitin, and
+Partha P. Talukdar. 2020. Composition-based multirelational graph convolutional networks. In 8th International Conference on Learning Representations,
+ICLR 2020, Addis Ababa, Ethiopia, April 26-30,
+2020.
+
+Liang Wang, Wei Zhao, Zhuoyu Wei, and Jingming
+Liu. 2022. SimKGC: Simple contrastive knowledge
+graph completion with pre-trained language models.
+In Proceedings of the 60th Annual Meeting of the
+Association for Computational Linguistics (Volume
+1: Long Papers), pages 4281–4294, Dublin, Ireland.
+Association for Computational Linguistics.
+Ping Wang, Khushbu Agarwal, Colby Ham, Sutanay
+Choudhury, and Chandan K. Reddy. 2021a. Selfsupervised learning of contextual embeddings for link
+prediction in heterogeneous networks. In WWW ’21:
+The Web Conference 2021, Virtual Event / Ljubljana,
+Slovenia, April 19-23, 2021, pages 2946–2957. ACM
+/ IW3C2.
+Xiang Wang, Tinglin Huang, Dingxian Wang, Yancheng
+Yuan, Zhenguang Liu, Xiangnan He, and Tat-Seng
+Chua. 2021b. Learning intents behind interactions
+with knowledge graph for recommendation. In WWW
+’21: The Web Conference 2021, Virtual Event / Ljubljana, Slovenia, April 19-23, 2021, pages 878–887.
+Xiao Wang, Nian Liu, Hui Han, and Chuan Shi. 2021c.
+Self-supervised heterogeneous graph neural network
+with co-contrastive learning. In KDD ’21: The 27th
+ACM SIGKDD Conference on Knowledge Discovery
+and Data Mining, Virtual Event, Singapore, August
+14-18, 2021, pages 1726–1736. ACM.
+Jianfeng Wen, Jianxin Li, Yongyi Mao, Shini Chen,
+and Richong Zhang. 2016. On the representation
+and embedding of knowledge bases beyond binary
+relations. In Proceedings of the Twenty-Fifth International Joint Conference on Artificial Intelligence,
+IJCAI 2016, New York, NY, USA, 9-15 July 2016,
+pages 1300–1307. IJCAI/AAAI Press.
+Ruobing Xie, Zhiyuan Liu, and Maosong Sun. 2016.
+Representation learning of knowledge graphs with hierarchical types. In Proceedings of the Twenty-Fifth
+International Joint Conference on Artificial Intelligence, IJCAI 2016, New York, NY, USA, 9-15 July
+2016, pages 2965–2971.
+Wenhan Xiong, Thien Hoang, and William Yang Wang.
+2017. DeepPath: A reinforcement learning method
+for knowledge graph reasoning. In Proceedings of
+the 2017 Conference on Empirical Methods in Natural Language Processing, pages 564–573, Copenhagen, Denmark. Association for Computational Linguistics.
+Bishan Yang, Wen-tau Yih, Xiaodong He, Jianfeng Gao,
+and Li Deng. 2015. Embedding entities and relations
+for learning and inference in knowledge bases. In
+3rd International Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May 7-9,
+2015, Conference Track Proceedings.
+Shuai Zhang, Yi Tay, Lina Yao, and Qi Liu. 2019.
+Quaternion knowledge graph embeddings. In Advances in Neural Information Processing Systems 32:
+Annual Conference on Neural Information Processing Systems 2019, NeurIPS 2019, December 8-14,
+2019, Vancouver, BC, Canada, pages 2731–2741.
+
+A.1
+
+Datasets
+
+In this paper, we utilize FB15k (Bordes et al.,
+2013), FB15k-237 (Toutanova and Chen,
+2015), JF17k (Bordes et al., 2013) and HumanWiki (Rosso et al., 2021) to conduct experiments.
+The FB15k-237 dataset can be download on
+https://github.com/malllabiisc/CompGCN/
+tree/master/data_compressed and the FB15k,
+JF17k and HumanWiki datasets with their corresponding type information sets are taken from
+RETA (Rosso et al., 2021) and can be download
+on http://bit.ly/3t2WFTE.
+A.2
+
+Baselines
+
+The results of all baselines are obtained with their
+original implementations. For all baselines, we set
+the embedding dimension to 128. The other parameters that are not mentioned follow their original
+official settings.
+We use the implementations of TransE and
+ComplEx-N3 provided in KGEmb1 and we adopt
+the origin implementation of TransR provided in
+OpenKE2 . We use the original settings of TypeComplEx3 and PairRE4 for the evaluation. The
+implementation of SANS5 is based on DistMult
+with self-adversarial approach. CompGCN6 is
+implemented by using the DistMult score function with multiplication composition operator. For
+Node2vec7 , we sample 10 random walks with the
+walk length of 80. In SLiCE8 , we use global embedding feature from Node2vec and both the number
+of self-attention heads and contextual translation
+layers are set to 4.
+A.3
+
+Hyperparameters
+
+To select the best hyperparameters for our model,
+we conduct the grid search on hyperparameters
+listed in Table 6 using the validation data. We
+set the embedding dimension on all datasets to
+128. For batch size of pre-training, we use 1024,
+2048, 512 and 1024 for FB15k, FB15k-237, JF17k
+1
+
+https://github.com/HazyResearch/KGEmb
+https://github.com/thunlp/OpenKE
+3
+https://github.com/dair-iitd/KBI/tree/master/
+kbi-pytorch
+4
+https://github.com/DeepGraphLearning/
+KnowledgeGraphEmbedding
+5
+https://github.com/kahrabian/SANS
+6
+https://github.com/malllabiisc/CompGCN
+7
+https://github.com/aditya-grover/node2vec
+8
+https://github.com/pnnl/SLiCE
+2
+
+Hyperparameters
+
+Values
+
+Temperature τ
+{0.5, 0.6, 0.7, 0.8, 0.9}
+{0.0001, 0.001, 0.03, 0.1}
+Learning rate
+Balancing coefficient λ
+{0.2, 0.4, 0.6, 0.8}
+{1, 2, 5, 8, 10}
+Queued Negative Batches n
+Context subgraph size |Ec |
+{6, 12, 18}
+Embedding dimension
+{64, 128, 256, 512}
+{128, 256, 512, 1024, 2048}
+Batch size(Pre-train)
+Batch size(Fine-tune)
+{64, 128, 256, 512}
+{10, 15, 20}
+epoch(Pre-train)
+epoch(Fine-tune)
+{10, 15, 20}
+
+Table 6: Details of hyperparameters.
+
+and HumanWiki datasets. For fine-tuning batch
+size, we all set to 256. For schema frequency
+threshold, we use 700, 1000, 70 and 50 for FB15k,
+FB15k-237, JF17k and HumanWiki datasets. The
+queued negatives hyperparameter n is set to 2 for
+all datasets. The maximum number of entities in a
+context subgraph is set to 12 on FB15k-237 and 6
+on the other three datasets. We adopt multiplication
+as the implementation of entity-relation composition operation ϕ(·).
+Each epoch in pre-train phase takes ∼ 70s for
+FB15k, ∼ 130s for FB15k-237, ∼ 54s for JF17k
+and ∼ 600s for HumanWiki dataset.
+
+B
+
+Additional Analysis Results
+
+B.1
+
+Analysis on Hyper-parameters
+
+1.00
+0.98
+0.96
+0.94
+0.92
+0.90
+0.88
+0.86
+
+1.00
+
+0.0
+
+FB15k
+JF17k
+0.2
+
+AUC-ROC score
+
+More details about Experiment
+
+Micro-F1 score
+
+A
+
+0.4
+
+0.6
+
+0.8
+
+Balancing coefficient
+
+(a) Micro-F1
+
+1.0
+
+0.99
+0.98
+0.97
+0.96
+0.95
+
+0.0
+
+FB15k
+JF17k
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+Balancing coefficient
+
+1.0
+
+(b) AUC-ROC
+
+Figure 5: Effects of balancing coefficient λ on datasets
+FB15k and JF17k with SMiLE.
+
+In Figure 5, we display how the balancing coefficient λ affects the performance of SMiLE on
+FB15k and JF17k datasets.
+As mentioned in Section 3.2, we adopt the frequency threshold α to filter those meaningless
+entity-typed triples. In Table 7, we report the performance of SMiLE trained with different schema
+in different scales on FB15k dataset.
+
+FB15k
+
+Threshold α
+
+Size
+
+Ratio
+
+F1
+
+AUC-ROC
+
+400
+600
+700
+800
+
+10469
+5532
+4239
+3528
+
+0.044%
+0.023%
+0.018%
+0.015%
+
+87.97
+89.22
+90.76
+89.04
+
+94.52
+95.47
+96.54
+95.47
+
+Table 7: Performance of SMiLE trained with schema
+in different scale on FB15k. Coverage Ratio indicates
+the ratio of filtered entity-typed triples to all candidate
+ones.
+
+Model
+F1
+w/o pre-batch
+w/ pre-batch
+
+90.58
+90.76
+
+AUC-ROC
+96.42
+96.53
+
+HumanWiki
+F1
+92.77
+93.40
+
+AUC-ROC
+97.62
+97.92
+
+Table 8: Performance of SMiLE in "without queued
+pre-batch negatives" and "full" modes on FB15k and
+HumanWiki datasets.
+
+B.2
+
+Ablation on queued pre-batch negatives
+
+Additional Results of Discriminative
+Capacity
+
+To supplement the analysis in 4.5 and further
+demonstrate the discriminative capacity of our proposed SMiLE on link prediction, in Figure 6 we
+visualize the distribution of triple scores computed
+with state-of-the-art GNN-based multi-relational
+model CompGCN (Vashishth et al., 2020).
+17500
+15000
+12500
+10000
+7500
+5000
+2500
+0
+
+Negative Triples
+Positive Triples
+
+0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+Scores(via sigmoid) of triples
+
+(a) CompGCN on FB15k
+Frequency of testing triples
+
+FB15k
+
+B.4
+
+Frequency of testing triples
+
+Coverage
+
+25000
+
+Negative Triples
+Positive Triples
+
+20000
+15000
+10000
+5000
+0
+
+0.0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+Scores(via sigmoid) of triples
+
+1.0
+
+30000
+
+Negative Triples
+Positive Triples
+
+25000
+20000
+15000
+10000
+5000
+0
+
+0.0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+Scores(via sigmoid) of triples
+
+1.0
+
+(b) SMiLE on FB15k
+Frequency of testing triples
+
+Schema
+
+Frequency of testing triples
+
+Frequency
+
+20000
+17500
+15000
+12500
+10000
+7500
+5000
+2500
+0
+
+Negative Triples
+Positive Triples
+
+0.0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+Scores(via sigmoid) of triples
+
+1.0
+
+(c) CompGCN on HumanWiki (d) SMiLE on HumanWiki
+
+To explore how much the dynamic queue for the
+negatives contribute, we report the experimental
+results in Table 8. We can observe that combining pre-batch negatives in contrastive learning is a
+promotion to the model performance.
+B.3
+
+Effect of pre-training
+
+FB15k
+
+Model
+
+SMiLEw/oP T
+SMiLE
+
+HumanWiki
+
+F1
+
+AUC-ROC
+
+F1
+
+AUC-ROC
+
+65.84
+90.76
+
+60.46
+96.53
+
+65.22
+93.40
+
+59.85
+97.92
+
+Table 9: Performance of SMiLE in "without pre-train"
+and "full" modes on FB15k and HumanWiki datasets.
+
+To demonstrate the effect of pre-training phase
+on capturing the contextual knowledge of entities, we disable the pre-train phase from
+SMiLE(denoted as SMiLEw/oP T ) and only conduct fine-tune phase for link prediction. We report
+the result in Table 9, and we can observe that without pre-trained entity embeddings with contextual
+knowledge, the performance of SMiLE decreased
+on both FB15k and HumanWiki datasets.
+
+Figure 6: Histogram distribution of triple scores computed with CompGCN and SMiLE respectively.

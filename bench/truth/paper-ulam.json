@@ -1,0 +1,31 @@
+{
+ "id": "paper-ulam",
+ "derived_from": "PDF text layer (pdftotext, NFKC-normalised) for sentences and order; page 7 image checked at 110 dpi for Table 1. Table 1 cells are math: transcribed as printed with Unicode math (the text layer renders the not-in sign as '∈/' and drops spaces, so compare cells whitespace-insensitively and treat '∈/' as '∉')",
+ "sentences": [
+  "Dual to the notion of codes are anticodes—i.e., sets where any two elements must be close—which in the language of geometry are sets of small diameter.",
+  "This paper addresses the metric space of permutations under the Ulam distance.",
+  "Our paper addresses anticodes in this space.",
+  "We now turn our attention to a proof of Lemma 2.",
+  "We first outline our argument for clarity's sake.",
+  "The most natural direction for future work would be the resolution of Conjecture 1.",
+  "As a note of caution, one tempting idea might be to strengthen the main conjecture in the spirit of the Hilton-Milner theorem [22]."
+ ],
+ "order": [
+  "One of the most active branches of research",
+  "Ulam distance and our main question",
+  "Notation and proof of Lemma 2",
+  "Proofs of Propositions 2 and 3",
+  "Process for selecting",
+  "Analyzing this selection process",
+  "Concluding remarks",
+  "Another direction for further research"
+ ],
+ "tables": [
+  {"caption": "Table 1: How the relative order of each x, y is determined", "page": 7, "complete": true,
+   "rows": [["", "x ∉ A ∪ B", "x ∈ A \\ B", "x ∈ B \\ A", "x ∈ A ∩ B"],
+            ["y ∉ A ∪ B", "γ − A, γ − B", "γ − B", "γ − A", "(Step 4)"],
+            ["y ∈ A \\ B", "γ − B", "γ − B", "(Step 3)", "(Step 4)"],
+            ["y ∈ B \\ A", "γ − A", "(Step 3)", "γ − A", "(Step 4)"],
+            ["y ∈ A ∩ B", "(Step 4)", "(Step 4)", "(Step 4)", "(Step 4)"]]}
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "id": "slides-epa-1bp",
+ "derived_from": "PPTX XML (ppt/slides/slideN.xml, deck order from ppt/presentation.xml): paragraph text via a:t runs; table cells from a:tbl with paragraphs inside a cell joined by one space, zero-width spaces removed and NBSP turned into a space. Order = slide titles in deck order. In most slides the title shape comes after the body shapes in XML order, so a converter that follows shape order will put the title below the body.",
+ "sentences": [
+  "1-BP is a volatile chemical with a low global warming potential.",
+  "It is used in vapor degreasing, as an industrial solvent in aerospace and defense applications, and in a variety of commercial and consumer products.",
+  "The section 6(a) menu of regulatory options can be applied alone or in combination.",
+  "EPA is also proposing workplace training requirements in accordance with OSHA’s general PPE requirement standards.",
+  "Potentially useful information for comments should include relevant data from the last 20 years.",
+  "All comments in order to be considered should be submitted to the docket at EPA-HQ-OPPT-2020-0471"
+ ],
+ "order": [
+  "EPA’s Proposal and the Toxic Substances Control Act (TSCA)",
+  "1-BP Risk Evaluation: Unreasonable Risk for Workers and Consumers",
+  "Principles for Transparency During Risk Management",
+  "The Proposed Regulation",
+  "Proposed Regulation: Prescriptive Controls",
+  "Alternative Regulatory Actions Considered",
+  "Proposed Compliance Dates",
+  "Benefits of Proposed Rule",
+  "Request for Comments",
+  "Types of Information that Best Inform Comments",
+  "Contact Us"
+ ],
+ "tables": [
+  {
+   "caption": "Proposed Compliance Dates (slide 21)",
+   "page": 21,
+   "complete": true,
+   "rows": [
+    [
+     "Regulatory Requirement",
+     "Proposed time until requirement is effective after the publication date of the final rule"
+    ],
+    [
+     "Prohibition",
+     "6 months for manufacturers (including import) 9 months for processors 12 months for distributing to retailers 15 months for all distributors (including retailers) 18 months for industrial and commercial users"
+    ],
+    [
+     "WCPP",
+     "6 months for initial monitoring, (*33 months) 9 months to institute a training program (*36 months) 9 months to establish a regulated area (*36 months) 9 months to ensure that no person is exposed above the ECEL (*36 months) 9 months to provide PPE (if needed) (*36 months) 12 months to establish an exposure control plan (*36 months)"
+    ],
+    [
+     "Prescriptive Controls",
+     "6 months (*36 months)"
+    ],
+    [
+     "Self Certification",
+     "At time of purchase"
+    ]
+   ]
+  },
+  {
+   "caption": "Next Steps (slide 25)",
+   "page": 25,
+   "complete": true,
+   "rows": [
+    [
+     "Process Step",
+     "Date"
+    ],
+    [
+     "Publication of 1-BP proposed rule in docket (EPA-HQ-OPPT-2020-0471) and open comment period",
+     "August 8, 2024"
+    ],
+    [
+     "Closure of comment period: EPA will review and consider new information submitted",
+     "September 23, 2024"
+    ],
+    [
+     "Publication of 1-BP Final Rule (estimated)",
+     "2025"
+    ],
+    [
+     "Prohibition and WCPP for most uses would be in full effect 12 months after date of the final rule (36 months for Federal agencies and Federal contractors acting for or on behalf of the Federal Government) (estimated)",
+     "2026"
+    ]
+   ]
+  }
+ ]
+}

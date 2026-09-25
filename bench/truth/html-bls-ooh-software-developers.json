@@ -1,0 +1,244 @@
+{
+ "id": "html-bls-ooh-software-developers",
+ "derived_from": "Wayback id_ snapshot (served with Content-Encoding: gzip; file is the decoded HTML). Parsed with BeautifulSoup. The page is a tabbed OOH profile: the Summary tab repeats some section sentences and headings, and glossary pop-ups repeat heading names, so order uses distinctive paragraph openings from the full-profile sections (What They Do .. Contacts) checked to occur once. Tables read from the <table> elements (tab tables have no header row; captions are the preceding sentence).",
+ "sentences": [
+  "Software engineers take a broad view of a project's system and software requirements, planning its scope and order of work.",
+  "Developing software is usually a collaborative process.",
+  "Software developers can advance to become project management specialists or computer and information systems managers, positions in which they oversee the software development process.",
+  "The lowest 10 percent earned less than $61,440, and the highest 10 percent earned more than $167,010.",
+  "In response to concerns over threats to computer security, organizations are expected to increase investment in software that protects their electronic networks and infrastructure.",
+  "This table shows a list of occupations with job duties that are similar to those of software developers, quality assurance analysts, and testers."
+ ],
+ "order": [
+  "Software developers create the computer applications that allow users",
+  "Software developers held about 1.7 million jobs in 2025.",
+  "Although writing code is not their primary responsibility",
+  "Problem-solving skills. Because these workers produce software",
+  "In May 2025, the median annual wages for software developers in some of the top industries",
+  "Demand for software developers, software quality assurance analysts, and testers is projected to be strong",
+  "The Occupational Employment and Wage Statistics (OEWS) program produces",
+  "Postsecondary teachers instruct students",
+  "Last modified date: August 27, 2026"
+ ],
+ "tables": [
+  {
+   "caption": "Quick Facts: Software Developers, Quality Assurance Analysts, and Testers (title row spans 2 columns; body rows only; pay cell has a line break between per-year and per-hour)",
+   "page": null,
+   "complete": false,
+   "rows": [
+    [
+     "2025 Median Pay",
+     "$134,040 per year $64.44 per hour"
+    ],
+    [
+     "Typical Entry-Level Education",
+     "Bachelor's degree"
+    ],
+    [
+     "Work Experience in a Related Occupation",
+     "None"
+    ],
+    [
+     "On-the-job Training",
+     "None"
+    ],
+    [
+     "Number of Jobs, 2025",
+     "1,905,400"
+    ],
+    [
+     "Job Outlook, 2025–35",
+     "10% (Much faster than average)"
+    ],
+    [
+     "Employment Change, 2025–35",
+     "185,400"
+    ]
+   ]
+  },
+  {
+   "caption": "Largest employers of software developers, 2025 (Work Environment)",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Computer systems design and related services",
+     "29%"
+    ],
+    [
+     "Finance and insurance",
+     "11"
+    ],
+    [
+     "Software publishers",
+     "10"
+    ],
+    [
+     "Manufacturing",
+     "8"
+    ],
+    [
+     "Management of companies and enterprises",
+     "6"
+    ]
+   ]
+  },
+  {
+   "caption": "Largest employers of software quality assurance analysts and testers, 2025 (Work Environment)",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Computer systems design and related services",
+     "30%"
+    ],
+    [
+     "Finance and insurance",
+     "13"
+    ],
+    [
+     "Software publishers",
+     "9"
+    ],
+    [
+     "Manufacturing",
+     "9"
+    ],
+    [
+     "Administrative and support services",
+     "6"
+    ]
+   ]
+  },
+  {
+   "caption": "Median annual wages for software developers in top industries, May 2025 (Pay)",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Software publishers",
+     "$164,550"
+    ],
+    [
+     "Manufacturing",
+     "136,330"
+    ],
+    [
+     "Management of companies and enterprises",
+     "135,680"
+    ],
+    [
+     "Finance and insurance",
+     "135,460"
+    ],
+    [
+     "Computer systems design and related services",
+     "132,050"
+    ]
+   ]
+  },
+  {
+   "caption": "Median annual wages for software quality assurance analysts and testers in top industries, May 2025 (Pay)",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Manufacturing",
+     "$129,930"
+    ],
+    [
+     "Finance and insurance",
+     "104,260"
+    ],
+    [
+     "Administrative and support services",
+     "102,660"
+    ],
+    [
+     "Software publishers",
+     "101,070"
+    ],
+    [
+     "Computer systems design and related services",
+     "99,960"
+    ]
+   ]
+  },
+  {
+   "caption": "Employment projections data for software developers, quality assurance analysts, and testers, 2025–35 (two-level spanning header; body rows only)",
+   "page": null,
+   "complete": false,
+   "rows": [
+    [
+     "Software developers, quality assurance analysts, and testers",
+     "—",
+     "1,905,400",
+     "2,090,800",
+     "10",
+     "185,400",
+     "—"
+    ],
+    [
+     "Software developers",
+     "15-1252",
+     "1,717,800",
+     "1,892,600",
+     "10",
+     "174,700",
+     "Get data"
+    ],
+    [
+     "Software quality assurance analysts and testers",
+     "15-1253",
+     "187,600",
+     "198,200",
+     "6",
+     "10,600",
+     "Get data"
+    ]
+   ]
+  },
+  {
+   "caption": "Similar Occupations (first column is an image link; first 5 body rows)",
+   "page": null,
+   "complete": false,
+   "rows": [
+    [
+     "",
+     "Computer and Information Research Scientists",
+     "Computer and information research scientists design innovative uses for new and existing computing technology.",
+     "Master's degree",
+     "$140,300"
+    ],
+    [
+     "",
+     "Computer and Information Systems Managers",
+     "Computer and information systems managers plan, coordinate, and direct computer-related activities in an organization.",
+     "Bachelor's degree",
+     "$175,140"
+    ],
+    [
+     "",
+     "Computer Hardware Engineers",
+     "Computer hardware engineers research, design, develop, and test computers and related equipment.",
+     "Bachelor's degree",
+     "$161,740"
+    ],
+    [
+     "",
+     "Computer Network Architects",
+     "Computer network architects design and implement data communication networks, including local area networks (LANs), wide area networks (WANs), and intranets.",
+     "Bachelor's degree",
+     "$134,050"
+    ],
+    [
+     "",
+     "Computer Programmers",
+     "Computer programmers write, modify, and test code and scripts that allow computer software and applications to function properly.",
+     "Bachelor's degree",
+     "$100,390"
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1181 @@
+Form
+
+W-4
+
+Department of the Treasury
+Internal Revenue Service
+
+Step 1:
+Enter
+Personal
+Information
+
+Employee’s Withholding Certificate
+
+OMB No. 1545-0074
+
+Complete Form W-4 so that your employer can withhold the correct federal income tax from your pay.
+Give Form W-4 to your employer.
+Your withholding is subject to review by the IRS.
+
+2024
+
+(a) First name and middle initial
+
+(b) Social security number
+
+Last name
+
+Address
+
+Does your name match the
+name on your social security
+card? If not, to ensure you get
+credit for your earnings,
+contact SSA at 800-772-1213
+or go to www.ssa.gov.
+
+City or town, state, and ZIP code
+
+(c)
+
+Single or Married filing separately
+Married filing jointly or Qualifying surviving spouse
+Head of household (Check only if you’re unmarried and pay more than half the costs of keeping up a home for yourself and a qualifying individual.)
+
+Complete Steps 2–4 ONLY if they apply to you; otherwise, skip to Step 5. See page 2 for more information on each step, who can
+claim exemption from withholding, and when to use the estimator at www.irs.gov/W4App.
+
+Step 2:
+Multiple Jobs
+or Spouse
+Works
+
+Complete this step if you (1) hold more than one job at a time, or (2) are married filing jointly and your spouse
+also works. The correct amount of withholding depends on income earned from all of these jobs.
+Do only one of the following.
+(a) Use the estimator at www.irs.gov/W4App for most accurate withholding for this step (and Steps 3–4). If you
+or your spouse have self-employment income, use this option; or
+(b) Use the Multiple Jobs Worksheet on page 3 and enter the result in Step 4(c) below; or
+(c) If there are only two jobs total, you may check this box. Do the same on Form W-4 for the other job. This
+option is generally more accurate than (b) if pay at the lower paying job is more than half of the pay at the
+higher paying job. Otherwise, (b) is more accurate . . . . . . . . . . . . . . . . . .
+
+Complete Steps 3–4(b) on Form W-4 for only ONE of these jobs. Leave those steps blank for the other jobs. (Your withholding will
+be most accurate if you complete Steps 3–4(b) on the Form W-4 for the highest paying job.)
+
+Step 3:
+Claim
+Dependent
+and Other
+Credits
+Step 4
+(optional):
+Other
+Adjustments
+
+Step 5:
+Sign
+Here
+
+If your total income will be $200,000 or less ($400,000 or less if married filing jointly):
+Multiply the number of qualifying children under age 17 by $2,000 $
+Multiply the number of other dependents by $500
+
+.
+
+.
+
+.
+
+.
+
+. $
+
+Add the amounts above for qualifying children and other dependents. You may add to
+this the amount of any other credits. Enter the total here . . . . . . . . . .
+
+3
+
+(a) Other income (not from jobs). If you want tax withheld for other income you
+expect this year that won’t have withholding, enter the amount of other income here.
+This may include interest, dividends, and retirement income . . . . . . . .
+
+4(a) $
+
+(b) Deductions. If you expect to claim deductions other than the standard deduction and
+want to reduce your withholding, use the Deductions Worksheet on page 3 and enter
+the result here . . . . . . . . . . . . . . . . . . . . . . .
+
+4(b) $
+
+(c) Extra withholding. Enter any additional tax you want withheld each pay period .
+
+4(c) $
+
+Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.
+
+Employee’s signature (This form is not valid unless you sign it.)
+
+Employers
+Only
+
+.
+
+$
+
+Employer’s name and address
+
+For Privacy Act and Paperwork Reduction Act Notice, see page 3.
+
+Date
+First date of
+employment
+
+Cat. No. 10220Q
+
+Employer identification
+number (EIN)
+
+Form W-4 (2024)
+
+Page 2
+
+Form W-4 (2024)
+
+General Instructions
+
+Specific Instructions
+
+Section references are to the Internal Revenue Code.
+
+Step 1(c). Check your anticipated filing status. This will
+determine the standard deduction and tax rates used to
+compute your withholding.
+Step 2. Use this step if you (1) have more than one job at the
+same time, or (2) are married filing jointly and you and your
+spouse both work.
+Option (a) most accurately calculates the additional tax
+you need to have withheld, while option (b) does so with a
+little less accuracy.
+Instead, if you (and your spouse) have a total of only two
+jobs, you may check the box in option (c). The box must also
+be checked on the Form W-4 for the other job. If the box is
+checked, the standard deduction and tax brackets will be
+cut in half for each job to calculate withholding. This option
+is accurate for jobs with similar pay; otherwise, more tax
+than necessary may be withheld, and this extra amount will
+be larger the greater the difference in pay is between the two
+jobs.
+Multiple jobs. Complete Steps 3 through 4(b) on only
+! one Form W-4. Withholding will be most accurate if
+CAUTION
+you do this on the Form W-4 for the highest paying job.
+Step 3. This step provides instructions for determining the
+amount of the child tax credit and the credit for other
+dependents that you may be able to claim when you file your
+tax return. To qualify for the child tax credit, the child must
+be under age 17 as of December 31, must be your
+dependent who generally lives with you for more than half
+the year, and must have the required social security number.
+You may be able to claim a credit for other dependents for
+whom a child tax credit can’t be claimed, such as an older
+child or a qualifying relative. For additional eligibility
+requirements for these credits, see Pub. 501, Dependents,
+Standard Deduction, and Filing Information. You can also
+include other tax credits for which you are eligible in this
+step, such as the foreign tax credit and the education tax
+credits. To do so, add an estimate of the amount for the year
+to your credits for dependents and enter the total amount in
+Step 3. Including these credits will increase your paycheck
+and reduce the amount of any refund you may receive when
+you file your tax return.
+Step 4 (optional).
+Step 4(a). Enter in this step the total of your other
+estimated income for the year, if any. You shouldn’t include
+income from any jobs or self-employment. If you complete
+Step 4(a), you likely won’t have to make estimated tax
+payments for that income. If you prefer to pay estimated tax
+rather than having tax on other income withheld from your
+paycheck, see Form 1040-ES, Estimated Tax for Individuals.
+Step 4(b). Enter in this step the amount from the
+Deductions Worksheet, line 5, if you expect to claim
+deductions other than the basic standard deduction on your
+2024 tax return and want to reduce your withholding to
+account for these deductions. This includes both itemized
+deductions and other deductions such as for student loan
+interest and IRAs.
+Step 4(c). Enter in this step any additional tax you want
+withheld from your pay each pay period, including any
+amounts from the Multiple Jobs Worksheet, line 4. Entering
+an amount here will reduce your paycheck and will either
+increase your refund or reduce any amount of tax that you
+owe.
+
+Future Developments
+For the latest information about developments related to
+Form W-4, such as legislation enacted after it was published,
+go to www.irs.gov/FormW4.
+
+Purpose of Form
+Complete Form W-4 so that your employer can withhold the
+correct federal income tax from your pay. If too little is
+withheld, you will generally owe tax when you file your tax
+return and may owe a penalty. If too much is withheld, you
+will generally be due a refund. Complete a new Form W-4
+when changes to your personal or financial situation would
+change the entries on the form. For more information on
+withholding and when you must furnish a new Form W-4,
+see Pub. 505, Tax Withholding and Estimated Tax.
+Exemption from withholding. You may claim exemption
+from withholding for 2024 if you meet both of the following
+conditions: you had no federal income tax liability in 2023
+and you expect to have no federal income tax liability in
+2024. You had no federal income tax liability in 2023 if (1)
+your total tax on line 24 on your 2023 Form 1040 or 1040-SR
+is zero (or less than the sum of lines 27, 28, and 29), or (2)
+you were not required to file a return because your income
+was below the filing threshold for your correct filing status. If
+you claim exemption, you will have no income tax withheld
+from your paycheck and may owe taxes and penalties when
+you file your 2024 tax return. To claim exemption from
+withholding, certify that you meet both of the conditions
+above by writing “Exempt” on Form W-4 in the space below
+Step 4(c). Then, complete Steps 1(a), 1(b), and 5. Do not
+complete any other steps. You will need to submit a new
+Form W-4 by February 15, 2025.
+Your privacy. Steps 2(c) and 4(a) ask for information
+regarding income you received from sources other than the
+job associated with this Form W-4. If you have concerns with
+providing the information asked for in Step 2(c), you may
+choose Step 2(b) as an alternative; if you have concerns with
+providing the information asked for in Step 4(a), you may
+enter an additional amount you want withheld per pay period
+in Step 4(c) as an alternative.
+When to use the estimator. Consider using the estimator at
+www.irs.gov/W4App if you:
+1. Expect to work only part of the year;
+2. Receive dividends, capital gains, social security, bonuses,
+or business income, or are subject to the Additional
+Medicare Tax or Net Investment Income Tax; or
+3. Prefer the most accurate withholding for multiple job
+situations.
+Self-employment. Generally, you will owe both income and
+self-employment taxes on any self-employment income you
+receive separate from the wages you receive as an
+employee. If you want to pay these taxes through
+withholding from your wages, use the estimator at
+www.irs.gov/W4App to figure the amount to have withheld.
+Nonresident alien. If you’re a nonresident alien, see Notice
+1392, Supplemental Form W-4 Instructions for Nonresident
+Aliens, before completing this form.
+
+▲
+
+Page 3
+
+Form W-4 (2024)
+
+Step 2(b)—Multiple Jobs Worksheet (Keep for your records.)
+If you choose the option in Step 2(b) on Form W-4, complete this worksheet (which calculates the total extra tax for all jobs) on only
+ONE Form W-4. Withholding will be most accurate if you complete the worksheet and enter the result on the Form W-4 for the highest
+paying job. To be accurate, submit a new Form W-4 for all other jobs if you have not updated your withholding since 2019.
+Note: If more than one job has annual wages of more than $120,000 or there are more than three jobs, see Pub. 505 for additional
+tables; or, you can use the online withholding estimator at www.irs.gov/W4App.
+1
+
+2
+
+Two jobs. If you have two jobs or you’re married filing jointly and you and your spouse each have one
+job, find the amount from the appropriate table on page 4. Using the “Higher Paying Job” row and the
+“Lower Paying Job” column, find the value at the intersection of the two household salaries and enter
+that value on line 1. Then, skip to line 3 . . . . . . . . . . . . . . . . . . . . .
+
+4
+
+$
+
+Three jobs. If you and/or your spouse have three jobs at the same time, complete lines 2a, 2b, and
+2c below. Otherwise, skip to line 3.
+a
+
+3
+
+1
+
+Find the amount from the appropriate table on page 4 using the annual wages from the highest
+paying job in the “Higher Paying Job” row and the annual wages for your next highest paying job
+in the “Lower Paying Job” column. Find the value at the intersection of the two household salaries
+and enter that value on line 2a . . . . . . . . . . . . . . . . . . . . . . .
+
+2a $
+
+b Add the annual wages of the two highest paying jobs from line 2a together and use the total as the
+wages in the “Higher Paying Job” row and use the annual wages for your third job in the “Lower
+Paying Job” column to find the amount from the appropriate table on page 4 and enter this amount
+on line 2b
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+2b $
+
+c
+
+2c $
+
+Add the amounts from lines 2a and 2b and enter the result on line 2c .
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+Enter the number of pay periods per year for the highest paying job. For example, if that job pays
+weekly, enter 52; if it pays every other week, enter 26; if it pays monthly, enter 12, etc. . . . . .
+
+3
+
+Divide the annual amount on line 1 or line 2c by the number of pay periods on line 3. Enter this
+amount here and in Step 4(c) of Form W-4 for the highest paying job (along with any other additional
+amount you want withheld) . . . . . . . . . . . . . . . . . . . . . . . . .
+
+4
+
+$
+
+1
+
+$
+
+Step 4(b)—Deductions Worksheet (Keep for your records.)
+1
+
+Enter an estimate of your 2024 itemized deductions (from Schedule A (Form 1040)). Such deductions
+may include qualifying home mortgage interest, charitable contributions, state and local taxes (up to
+$10,000), and medical expenses in excess of 7.5% of your income . . . . . . . . . . . .
+
+{
+
+}
+
+• $29,200 if you’re married filing jointly or a qualifying surviving spouse
+• $21,900 if you’re head of household
+• $14,600 if you’re single or married filing separately
+
+2
+
+Enter:
+
+.
+
+2
+
+$
+
+3
+
+If line 1 is greater than line 2, subtract line 2 from line 1 and enter the result here. If line 2 is greater
+than line 1, enter “-0-”
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+
+3
+
+$
+
+Enter an estimate of your student loan interest, deductible IRA contributions, and certain other
+adjustments (from Part II of Schedule 1 (Form 1040)). See Pub. 505 for more information
+. . . .
+
+4
+
+$
+
+Add lines 3 and 4. Enter the result here and in Step 4(b) of Form W-4 .
+
+5
+
+$
+
+4
+5
+
+Privacy Act and Paperwork Reduction Act Notice. We ask for the information
+on this form to carry out the Internal Revenue laws of the United States. Internal
+Revenue Code sections 3402(f)(2) and 6109 and their regulations require you to
+provide this information; your employer uses it to determine your federal income
+tax withholding. Failure to provide a properly completed form will result in your
+being treated as a single person with no other entries on the form; providing
+fraudulent information may subject you to penalties. Routine uses of this
+information include giving it to the Department of Justice for civil and criminal
+litigation; to cities, states, the District of Columbia, and U.S. commonwealths and
+territories for use in administering their tax laws; and to the Department of Health
+and Human Services for use in the National Directory of New Hires. We may also
+disclose this information to other countries under a tax treaty, to federal and state
+agencies to enforce federal nontax criminal laws, or to federal law enforcement
+and intelligence agencies to combat terrorism.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+You are not required to provide the information requested on a form that is
+subject to the Paperwork Reduction Act unless the form displays a valid OMB
+control number. Books or records relating to a form or its instructions must be
+retained as long as their contents may become material in the administration of
+any Internal Revenue law. Generally, tax returns and return information are
+confidential, as required by Code section 6103.
+The average time and expenses required to complete and file this form will vary
+depending on individual circumstances. For estimated averages, see the
+instructions for your income tax return.
+If you have suggestions for making this form simpler, we would be happy to hear
+from you. See the instructions for your income tax return.
+
+Page 4
+
+Form W-4 (2024)
+
+Married Filing Jointly or Qualifying Surviving Spouse
+Lower Paying Job Annual Taxable Wage & Salary
+
+Higher Paying Job
+Annual Taxable
+Wage & Salary
+
+$0 9,999
+
+$0 - 9,999
+$10,000 - 19,999
+$20,000 - 29,999
+$30,000 - 39,999
+$40,000 - 49,999
+$50,000 - 59,999
+$60,000 - 69,999
+$70,000 - 79,999
+$80,000 - 99,999
+$100,000 - 149,999
+$150,000 - 239,999
+$240,000 - 259,999
+$260,000 - 279,999
+$280,000 - 299,999
+$300,000 - 319,999
+$320,000 - 364,999
+$365,000 - 524,999
+$525,000 and over
+
+$0
+0
+780
+850
+940
+1,020
+1,020
+1,020
+1,020
+1,870
+1,960
+2,040
+2,040
+2,040
+2,040
+2,040
+2,720
+3,140
+
+$10,000 - $20,000 - $30,000 - $40,000 - $50,000 - $60,000 - $70,000 - $80,000 - $90,000 - $100,000 - $110,000 19,999
+29,999
+39,999
+49,999
+59,999
+69,999
+79,999
+89,999
+99,999
+109,999
+120,000
+$0
+780
+1,780
+1,940
+2,140
+2,220
+2,220
+2,220
+2,220
+4,070
+4,360
+4,440
+4,440
+4,440
+4,440
+4,440
+6,010
+6,840
+
+$780
+1,780
+2,870
+3,140
+3,340
+3,420
+3,420
+3,420
+3,620
+6,270
+6,760
+6,840
+6,840
+6,840
+6,840
+6,840
+9,510
+10,540
+
+$850
+1,940
+3,140
+3,410
+3,610
+3,690
+3,690
+3,690
+4,890
+7,540
+8,230
+8,310
+8,310
+8,310
+8,310
+8,310
+12,080
+13,310
+
+$940
+2,140
+3,340
+3,610
+3,810
+3,890
+3,890
+4,240
+6,090
+8,740
+9,630
+9,710
+9,710
+9,710
+9,710
+9,710
+14,580
+16,010
+
+$1,020
+2,220
+3,420
+3,690
+3,890
+3,970
+4,320
+5,320
+7,170
+9,820
+10,910
+10,990
+10,990
+10,990
+10,990
+11,280
+16,950
+18,590
+
+$1,020
+2,220
+3,420
+3,690
+3,890
+4,320
+5,320
+6,320
+8,170
+10,820
+12,110
+12,190
+12,190
+12,190
+12,190
+13,280
+19,250
+21,090
+
+$1,020
+2,220
+3,420
+3,690
+4,240
+5,320
+6,320
+7,320
+9,170
+11,820
+13,310
+13,390
+13,390
+13,390
+13,390
+15,280
+21,550
+23,590
+
+$1,020
+2,220
+3,420
+4,040
+5,240
+6,320
+7,320
+8,320
+10,170
+12,830
+14,510
+14,590
+14,590
+14,590
+14,590
+17,280
+23,850
+26,090
+
+$1,020
+2,220
+3,770
+5,040
+6,240
+7,320
+8,320
+9,320
+11,170
+14,030
+15,710
+15,790
+15,790
+15,790
+15,980
+19,280
+26,150
+28,590
+
+$1,020
+2,570
+4,770
+6,040
+7,240
+8,320
+9,320
+10,320
+12,170
+15,230
+16,910
+16,990
+16,990
+16,990
+17,980
+21,280
+28,450
+31,090
+
+$1,370
+3,570
+5,770
+7,040
+8,240
+9,320
+10,320
+11,320
+13,170
+16,430
+18,110
+18,190
+18,190
+18,380
+19,980
+23,280
+30,750
+33,590
+
+Single or Married Filing Separately
+Lower Paying Job Annual Taxable Wage & Salary
+
+Higher Paying Job
+Annual Taxable
+Wage & Salary
+
+$0 9,999
+
+$0 - 9,999
+$10,000 - 19,999
+$20,000 - 29,999
+$30,000 - 39,999
+$40,000 - 59,999
+$60,000 - 79,999
+$80,000 - 99,999
+$100,000 - 124,999
+$125,000 - 149,999
+$150,000 - 174,999
+$175,000 - 199,999
+$200,000 - 249,999
+$250,000 - 399,999
+$400,000 - 449,999
+$450,000 and over
+
+$240
+870
+1,020
+1,020
+1,390
+1,870
+1,870
+2,040
+2,040
+2,040
+2,040
+2,720
+2,970
+2,970
+3,140
+
+$10,000 - $20,000 - $30,000 - $40,000 - $50,000 - $60,000 - $70,000 - $80,000 - $90,000 - $100,000 - $110,000 19,999
+29,999
+39,999
+49,999
+59,999
+69,999
+79,999
+89,999
+99,999
+109,999
+120,000
+$870
+1,680
+1,830
+1,830
+3,200
+3,680
+3,690
+4,050
+4,050
+4,050
+4,710
+5,610
+6,080
+6,080
+6,450
+
+$1,020
+1,830
+1,980
+2,510
+4,360
+4,830
+5,040
+5,400
+5,400
+5,400
+6,860
+8,060
+8,540
+8,540
+9,110
+
+$1,020
+1,830
+2,510
+3,510
+5,360
+5,840
+6,240
+6,600
+6,600
+6,860
+8,860
+10,360
+10,840
+10,840
+11,610
+
+$1,020
+2,350
+3,510
+4,510
+6,360
+7,040
+7,440
+7,800
+7,800
+8,860
+10,860
+12,660
+13,140
+13,140
+14,110
+
+$1,540
+3,350
+4,510
+5,510
+7,370
+8,240
+8,640
+9,000
+9,000
+10,860
+12,860
+14,960
+15,440
+15,440
+16,610
+
+$1,870
+3,680
+4,830
+5,830
+7,890
+8,770
+9,170
+9,530
+10,180
+12,180
+14,380
+16,590
+17,060
+17,060
+18,430
+
+$1,870
+3,680
+4,830
+5,870
+8,090
+8,970
+9,370
+9,730
+11,180
+13,180
+15,680
+17,890
+18,360
+18,360
+19,930
+
+$1,870
+3,680
+4,870
+6,070
+8,290
+9,170
+9,570
+10,180
+12,180
+14,230
+16,980
+19,190
+19,660
+19,660
+21,430
+
+$1,870
+3,720
+5,070
+6,270
+8,490
+9,370
+9,770
+11,180
+13,180
+15,530
+18,280
+20,490
+20,960
+20,960
+22,930
+
+$1,910
+3,920
+5,270
+6,470
+8,690
+9,570
+9,970
+12,180
+14,180
+16,830
+19,580
+21,790
+22,260
+22,260
+24,430
+
+$2,040
+4,050
+5,400
+6,600
+8,820
+9,700
+10,810
+13,120
+15,310
+18,060
+20,810
+23,020
+23,500
+23,500
+25,870
+
+Head of Household
+Lower Paying Job Annual Taxable Wage & Salary
+
+Higher Paying Job
+Annual Taxable
+Wage & Salary
+
+$0 9,999
+
+$0 - 9,999
+$10,000 - 19,999
+$20,000 - 29,999
+$30,000 - 39,999
+$40,000 - 59,999
+$60,000 - 79,999
+$80,000 - 99,999
+$100,000 - 124,999
+$125,000 - 149,999
+$150,000 - 174,999
+$175,000 - 199,999
+$200,000 - 249,999
+$250,000 - 449,999
+$450,000 and over
+
+$0
+510
+850
+1,020
+1,020
+1,070
+1,870
+2,020
+2,040
+2,040
+2,040
+2,720
+2,970
+3,140
+
+$10,000 - $20,000 - $30,000 - $40,000 - $50,000 - $60,000 - $70,000 - $80,000 - $90,000 - $100,000 - $110,000 19,999
+29,999
+39,999
+49,999
+59,999
+69,999
+79,999
+89,999
+99,999
+109,999
+120,000
+$510
+1,510
+2,020
+2,220
+2,220
+3,270
+4,070
+4,420
+4,440
+4,440
+4,510
+5,920
+6,470
+6,840
+
+$850
+2,020
+2,560
+2,760
+2,810
+4,810
+5,670
+6,160
+6,180
+6,180
+7,050
+8,620
+9,310
+9,880
+
+$1,020
+2,220
+2,760
+2,960
+4,010
+6,010
+7,070
+7,560
+7,580
+7,580
+9,250
+11,120
+11,810
+12,580
+
+$1,020
+2,220
+2,760
+3,160
+5,010
+7,070
+8,270
+8,760
+8,780
+9,250
+11,250
+13,420
+14,110
+15,080
+
+$1,020
+2,220
+2,960
+4,160
+6,010
+8,270
+9,470
+9,960
+9,980
+11,250
+13,250
+15,720
+16,410
+17,580
+
+$1,020
+2,420
+3,960
+5,160
+7,070
+9,470
+10,670
+11,160
+11,250
+13,250
+15,250
+18,020
+18,710
+20,080
+
+$1,220
+3,420
+4,960
+6,160
+8,270
+10,670
+11,870
+12,360
+13,250
+15,250
+17,530
+20,320
+21,010
+22,580
+
+$1,870
+4,070
+5,610
+6,900
+9,120
+11,520
+12,720
+13,210
+14,900
+16,900
+19,480
+22,270
+22,960
+24,730
+
+$1,870
+4,070
+5,700
+7,100
+9,320
+11,720
+12,920
+13,880
+15,900
+18,030
+20,780
+23,570
+24,260
+26,230
+
+$1,870
+4,160
+5,900
+7,300
+9,520
+11,920
+13,120
+14,880
+16,900
+19,330
+22,080
+24,870
+25,560
+27,730
+
+$1,960
+4,360
+6,100
+7,500
+9,720
+12,120
+13,450
+15,880
+17,900
+20,630
+23,380
+26,170
+26,860
+29,230

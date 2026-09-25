@@ -1,0 +1,189 @@
+{
+ "id": "report-crs-dod-approps",
+ "derived_from": "PDF text layer (pdftotext -layout and raw) + page images at 90 dpi (PDF pages 1, 3, 10). Table 1 (PDF page 10, printed page 8) transcribed from the page image and checked against the text layer. Header cells are stacked multi-line text in ONE header row, joined with single spaces (line-break hyphens that are real, e.g. 'House-passed', kept). Superscript footnote letters a-k are omitted from cells (e.g. 'Military Personneld' -> 'Military Personnel', '$10.0j' -> '$10.0', '$152.3k' -> '$152.3'); wrapped row labels joined with one space; '-' cells are printed dashes. Italic subset rows (TRICARE for Life, IC Mgmt. Account, (Mandatory) CIA Retirement Fund, Rescissions) are ordinary rows. Headings appear in the table of contents, so order uses passage openings instead.",
+ "sentences": [
+  "Funding tables in the House Report did not include an “FY2026 Requested” column.",
+  "The rule provided for one hour of general debate on the bill and consideration of various amendments under the five-minute rule.",
+  "The Senate took no further action on S. 2572.",
+  "The funding gap occurred because Congress had not enacted legislation to provide the department with FY2026 funding by October 1, 2025, when the fiscal year began.",
+  "This second lapse occurred partly over a weekend.",
+  "The bill was presented to the President and signed into law on February 3, 2026, becoming Public Law 119-75 (P.L. 119-75).",
+  "CRS Reports, as a work of the United States Government, are not subject to copyright protection in the United States."
+ ],
+ "order": [
+  "Congress provided FY2026 appropriations totaling $839.2 billion",
+  "Title 31, Section 1105 of the U.S. Code",
+  "On June 16, 2025, the House Committee on Appropriations",
+  "On July 31, 2025, the Senate Committee on Appropriations",
+  "DOD began FY2026 under a lapse in appropriations",
+  "The 42-day lapse in appropriations ended on November 12, 2025",
+  "On January 23, 2026, Congress enacted full-year appropriations",
+  "Apart from DOD MILCON and Family Housing activities",
+  "Congress enacted full-year appropriations for most FY2026 DOD activities",
+  "Totals may not sum due to rounding",
+  "Analyst in Defense Logistics",
+  "This document was prepared by the Congressional Research Service"
+ ],
+ "tables": [
+  {
+   "caption": "Table 1. FY2026 Department of Defense Appropriations Contained in Division A of the Consolidated Appropriations Act, 2026 (P.L. 119-75)",
+   "page": 10,
+   "complete": true,
+   "rows": [
+    [
+     "Appropriations Bill Title",
+     "FY2025 Enacted (P.L. 119-4 Title IV; P.L. 118-158 Division A-B)",
+     "FY2025 Budget Reconciliation (P.L. 119-21)",
+     "FY2026 Request",
+     "FY2026 House-passed (H.R. 4016)",
+     "FY2026 Senate-reported (S. 2572)",
+     "FY2026 Enacted (Div. A, P.L. 119-75)"
+    ],
+    [
+     "Military Personnel",
+     "$182.4",
+     "-",
+     "$194.7",
+     "$189.0",
+     "$193.2",
+     "$193.3"
+    ],
+    [
+     "TRICARE for Life",
+     "$11.0",
+     "-",
+     "$12.9",
+     "$12.9",
+     "$12.9",
+     "$12.9"
+    ],
+    [
+     "Operation and Maintenance (O&M)",
+     "$290.3",
+     "-",
+     "$295.7",
+     "$283.3",
+     "$302.8",
+     "$294.4"
+    ],
+    [
+     "Procurement",
+     "$167.5",
+     "-",
+     "$153.1",
+     "$174.0",
+     "$171.3",
+     "$167.5"
+    ],
+    [
+     "RDT&E",
+     "$141.2",
+     "-",
+     "$142.0",
+     "$147.7",
+     "$140.5",
+     "$145.9"
+    ],
+    [
+     "Revolving and Management Funds",
+     "$1.8",
+     "-",
+     "$2.0",
+     "$1.7",
+     "$2.2",
+     "$2.1"
+    ],
+    [
+     "Other DOD Programs [including O&M Defense Health Program]",
+     "$42.8",
+     "-",
+     "$42.1",
+     "$42.8",
+     "$43.2",
+     "$43.6"
+    ],
+    [
+     "Related Agencies",
+     "$1.1",
+     "-",
+     "$1.2",
+     "$1.2",
+     "$1.1",
+     "$1.1"
+    ],
+    [
+     "IC Mgmt. Account",
+     "$0.6",
+     "-",
+     "$0.6",
+     "$0.6",
+     "$0.6",
+     "$0.6"
+    ],
+    [
+     "(Mandatory) CIA Retirement Fund",
+     "$0.5",
+     "-",
+     "$0.5",
+     "$0.5",
+     "$0.5",
+     "$0.5"
+    ],
+    [
+     "General Provisions",
+     "$4.8",
+     "-",
+     "-",
+     "-$7.7",
+     "-$1.9",
+     "-$8.8"
+    ],
+    [
+     "Rescissions",
+     "-$1.4",
+     "-",
+     "-",
+     "-",
+     "-$3.2",
+     "-$5.7"
+    ],
+    [
+     "Total discretionary, DOD Appropriations Act",
+     "$831.5",
+     "-",
+     "$830.7",
+     "$831.5",
+     "$851.9",
+     "$838.6"
+    ],
+    [
+     "Emergency-designated discretionary",
+     "$10.0",
+     "-",
+     "-",
+     "-",
+     "-",
+     "-"
+    ],
+    [
+     "Total, Mandatory",
+     "$0.5",
+     "$152.3",
+     "$0.5",
+     "$0.5",
+     "$0.5",
+     "$0.5"
+    ],
+    [
+     "Grand Total (including scorekeeping adjustments)",
+     "$842.0",
+     "$152.3",
+     "$831.2",
+     "$832.0",
+     "$852.5",
+     "$839.2"
+    ]
+   ]
+  }
+ ]
+}

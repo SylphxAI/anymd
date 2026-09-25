@@ -1,0 +1,210 @@
+{
+ "id": "docx-hhs-market-research",
+ "derived_from": "DOCX XML (word/document.xml): paragraph text, list numbering (numPr) and the 4 w:tbl tables. The section headings ('1. Program/Project Information' ... '9. Conclusions and Recommendations') are plain paragraphs with typed numbers, not Heading styles. Order = those section headings in document order. Tables are blank template tables; empty cells are \"\". The EDWOSB cell is split across two paragraphs ('Economically Disadvantaged Women-' and 'Owned Small Business (EDWOSB)'); the truth joins them as 'Women-Owned'.",
+ "sentences": [
+  "Areas in the template of special interest to the OSDBU have been emphasized in bold type.",
+  "Guidance: Explain the specific outcomes to be met in conducting the market research.",
+  "Guidance: Include a description of the service addressed by this market research report.",
+  "Is there a possibility of shared services?",
+  "Guidance: Use the table to build a list of potential vendors and known sources with the capability to provide the service required.",
+  "How does industry sell the service, and are the requirements written in those terms?",
+  "Guidance: Summarize your analysis with recommendations for:"
+ ],
+ "order": [
+  "Market Research Report Template",
+  "1. Program/Project Information",
+  "2. Market Research Objectives",
+  "3. Service/Product Description",
+  "4. Background",
+  "5. Potential Supplier Information",
+  "6. Other pertinent information",
+  "7. Performance Requirements",
+  "8. Market Intelligence/Industry Analysis",
+  "9. Conclusions and Recommendations",
+  "PREPARED BY:"
+ ],
+ "tables": [
+  {
+   "caption": "Acquisition Team",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "NAME",
+     "TITLE",
+     "OFFICE",
+     "TELEPHONE",
+     "E-MAIL ADDRESS",
+     "MARKET RESEARCH ROLE"
+    ],
+    [
+     "",
+     "Program Official",
+     "",
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "Contracting Officer",
+     "",
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "Contracting Specialist",
+     "",
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "Contracting Officer’s Representative (COR)",
+     "",
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "Small Business Liaison",
+     "",
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "Other",
+     "",
+     "",
+     "",
+     ""
+    ]
+   ]
+  },
+  {
+   "caption": "Potential Supplier Information",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Vendor Name",
+     "Location",
+     "Point of Contact",
+     "Capability Assessment"
+    ],
+    [
+     "",
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "",
+     "",
+     ""
+    ]
+   ]
+  },
+  {
+   "caption": "TOTAL NUMBER OF SOURCES CONTACTED BY BUSINESS SIZE",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Business Size Category",
+     "Total Number of Potential Source(s) per Size Category"
+    ],
+    [
+     "Service-Disabled, Veteran-Owned Small Business (SDVOSB)",
+     ""
+    ],
+    [
+     "Veteran-Owned Small Business (VOSB)",
+     ""
+    ],
+    [
+     "Women-Owned Small Business (WOSB)",
+     ""
+    ],
+    [
+     "Economically Disadvantaged Women-Owned Small Business (EDWOSB)",
+     ""
+    ],
+    [
+     "HUBZone Small Business (HUBZone)",
+     ""
+    ],
+    [
+     "Section 8(a) Small Business (8(a))",
+     ""
+    ],
+    [
+     "Small/Disadvantaged Business (SDB)",
+     ""
+    ],
+    [
+     "Small Business (SB)",
+     ""
+    ],
+    [
+     "Large Business (LG)",
+     ""
+    ],
+    [
+     "Government/Non-Government",
+     ""
+    ]
+   ]
+  },
+  {
+   "caption": "SYNOPSIS OF BUSINESS SOURCES CONTACTED",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Name",
+     "Business Size Category",
+     "Capability / Interest Assessment"
+    ],
+    [
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "",
+     ""
+    ],
+    [
+     "",
+     "",
+     ""
+    ]
+   ]
+  }
+ ]
+}

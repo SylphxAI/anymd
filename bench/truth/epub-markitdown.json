@@ -1,0 +1,18 @@
+{
+ "id": "epub-markitdown",
+ "derived_from": "Unzipped the EPUB and read EPUB/content.opf (spine: nav, chap_1, chap_2), EPUB/chap_1.xhtml and EPUB/chap_2.xhtml directly; the file is tiny, so all body sentences are listed. Note: the first and second sentences contain inline <strong>/<em> on one word ('test', 'different').",
+ "sentences": [
+  "This is a test paragraph with some formatting.",
+  "Here's a second chapter with a different style.",
+  "This is a blockquote for testing."
+ ],
+ "order": [
+  "Chapter 1: Test Content",
+  "It includes:",
+  "A bullet point",
+  "Another point",
+  "Chapter 2: More Content",
+  "This is a blockquote for testing."
+ ],
+ "tables": []
+}

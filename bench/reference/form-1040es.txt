@@ -1,0 +1,1725 @@
+2024
+
+Department of the Treasury
+Internal Revenue Service
+
+Form 1040-ES
+Estimated Tax for Individuals
+
+Purpose of This Package
+
+Use Form 1040-ES to figure and pay your estimated tax
+for 2024.
+Estimated tax is the method used to pay tax on income
+that isn’t subject to withholding (for example, earnings
+from self-employment, interest, dividends, rents, alimony,
+etc.). In addition, if you don’t elect voluntary withholding,
+you should make estimated tax payments on other taxable
+income, such as unemployment compensation and the
+taxable part of your social security benefits.
+
+Preprinted vouchers. If you made estimated tax
+payments for 2023, this package may contain vouchers
+that are preprinted with your name, address, and SSN.
+If your name or SSN isn't correct, make the
+
+TIP necessary changes on the vouchers. Cross out
+
+the name and SSN of a deceased or divorced
+spouse.
+
+Change of address. If your address has changed, file
+Form 8822, to update your record.
+Future developments. For the latest information about
+developments related to Form 1040-ES and its
+instructions, such as legislation enacted after they were
+published, go to IRS.gov/Form1040ES.
+
+Who Must Make Estimated Tax
+Payments
+
+and you had no tax liability for the full 12-month 2023 tax
+year. You had no tax liability for 2023 if your total tax was
+zero or you didn’t have to file an income tax return.
+
+Special Rules
+
+There are special rules for farmers, fishermen, certain
+household employers, and certain higher income
+taxpayers.
+Farmers and fishermen. If at least two-thirds of your
+gross income for 2023 or 2024 is from farming or fishing,
+substitute 662/3% for 90% in (2a) under General Rule.
+Household employers. When estimating the tax on your
+2024 tax return, include your household employment
+taxes if either of the following applies.
+• You will have federal income tax withheld from wages,
+pensions, annuities, gambling winnings, or other income.
+• You would be required to make estimated tax payments
+to avoid a penalty even if you didn’t include household
+employment taxes when figuring your estimated tax.
+Higher income taxpayers. If your adjusted gross
+income (AGI) for 2023 was more than $150,000 ($75,000
+if your filing status for 2024 is married filing separately),
+substitute 110% for 100% in (2b) under General Rule,
+earlier. This rule doesn’t apply to farmers or fishermen.
+
+Increase Your Withholding
+
+If you also receive salaries and wages, you may be able to
+avoid having to make estimated tax payments on your
+other income by asking your employer to take more tax out
+of your earnings. To do this, file a new Form W-4,
+Employee's Withholding Certificate, with your employer.
+
+The estimated tax rules apply to:
+• U.S. citizens and resident aliens;
+• Residents of Puerto Rico, the U.S. Virgin Islands,
+Guam, the Commonwealth of the Northern Mariana
+Islands, and American Samoa; and
+• Nonresident aliens (use Form 1040-ES (NR)).
+
+Generally, if you receive a pension or annuity you can
+use Form W-4P, Withholding Certificate for Periodic
+Pension or Annuity Payments, to start or change your
+withholding from these payments.
+
+General Rule
+
+In most cases, you must pay estimated tax for 2024 if both
+of the following apply.
+1. You expect to owe at least $1,000 in tax for 2024,
+after subtracting your withholding and refundable credits.
+2. You expect your withholding and refundable credits
+to be less than the smaller of:
+a. 90% of the tax to be shown on your 2024 tax return,
+or
+b. 100% of the tax shown on your 2023 tax return. Your
+2023 tax return must cover all 12 months.
+
+You can also choose to have federal income tax
+withheld from certain government payments (see Form
+W-4V, Voluntary Withholding Request) or from
+nonperiodic payments and eligible rollover distributions
+(see Form W-4R, Withholding Certificate for Nonperiodic
+Payments and Eligible Rollover Distributions).
+
+Note. These percentages may be different if you are a
+farmer, fisherman, or higher income taxpayer. See Special
+Rules, later.
+
+You can find most of the information you will need in Pub.
+505, Tax Withholding and Estimated Tax, and in the
+instructions for the 2023 Form 1040 and 1040-SR.
+
+Exception. You don’t have to pay estimated tax for 2024
+if you were a U.S. citizen or resident alien for all of 2023
+
+For details on how to get forms and publications, see
+the 2023 Instructions for Form 1040.
+
+Dec 7, 2023
+
+You can use the Tax Withholding Estimator at
+
+TIP IRS.gov/W4App to determine whether you need to
+have your withholding increased or decreased.
+
+Additional Information You May Need
+
+Cat. No. 11340T
+
+What's New
+
+In figuring your 2024 estimated tax, be sure to consider
+the following.
+Standard deduction amount increased. For 2024, the
+standard deduction amount has been increased for all
+filers. If you don't itemize your deductions, you can take
+the 2024 standard deduction listed in the following chart
+for your filing status.
+IF your 2024 filing status is...
+
+THEN your standard
+deduction is...
+
+Married filing jointly or
+Qualifying surviving spouse
+
+$29,200
+
+Head of household
+
+$21,900
+
+Single or Married filing separately
+
+$14,600
+
+However, if you can be claimed as a dependent on
+another person's 2024 return, your standard deduction is
+the greater of:
+• $1,300, or
+• Your earned income plus $450 (up to the standard
+deduction amount).
+Your standard deduction is increased by the following
+amount if, at the end of 2024, you are:
+• An unmarried individual (single or head of household)
+and are:
+65 or older or blind . . . . . . . . . . . . . . . . . . . . . . . .
+65 or older and blind . . . . . . . . . . . . . . . . . . . . . . .
+
+$1,950
+$3,900
+
+• A married individual (filing jointly or separately) or a
+qualifying surviving spouse and are:
+65 or older or blind . . . . . . . . . . . . . . . . . . . . . . . .
+$1,550
+65 or older and blind . . . . . . . . . . . . . . . . . . . . . . .
+$3,100
+Both spouses 65 or older . . . . . . . . . . . . . . . . . . . .
+$3,100*
+Both spouses 65 or older and blind . . . . . . . . . . . . . .
+$6,200*
+*Only if married filing jointly. If married filing separately, these amounts
+do not apply.
+
+Your standard deduction is zero if (a) your spouse
+itemizes on a separate return, or (b) you were a
+CAUTION dual-status alien and you do not elect to be taxed
+as a resident alien for 2024.
+
+!
+
+Social security tax. For 2024, the maximum amount of
+earned income (wages and net earnings from
+self-employment) subject to the social security tax is
+$168,600.
+Additional child tax credit amount increased For
+2024, the maximum additional child tax credit amount is
+$1,700 for each qualifying child.
+Adoption credit or exclusion. For 2024, the maximum
+adoption credit or exclusion for employer-provided
+adoption benefits has increased to $16,810. In order to
+claim either the credit or exclusion, your modified adjusted
+gross income must be less than $292,150.
+2
+
+Form 1040-SS filers. For 2024, the Estimated Tax
+Worksheet for filers of Form 1040-SS has been added to
+Form 1040-ES.
+
+Reminders
+Individual taxpayer identification number (ITIN) renewal. If you have an ITIN that you haven’t included on a
+tax return in the last 3 consecutive years, you may need to
+renew it. For more information, see the Instructions for
+Form W-7.
+Advance payments of the premium tax credit. If you
+buy health care insurance through the Health Insurance
+Marketplace, you may be eligible for advance payments of
+the premium tax credit to help pay for your insurance
+coverage. Receiving too little or too much in advance will
+affect your refund or balance due. Promptly report
+changes in your income or family size to your
+Marketplace. See Form 8962 and its instructions for more
+information.
+
+Access Your Online Account
+
+Go to IRS.gov/Account to securely access information
+about your federal tax account.
+• View the amount you owe and a breakdown by tax year.
+• See payment plan details or apply for a new payment
+plan.
+• Make a payment, view 5 years of payment history and
+any pending or scheduled payments.
+• Access your tax records, including key data from your
+most recent tax return, your economic impact payment
+amounts, and transcripts.
+• View digital copies of select notices from the IRS.
+• Approve or reject authorization requests from tax
+professionals.
+• Update your address or manage your communication
+preferences.
+
+How To Figure Your Estimated Tax
+
+You will need:
+• The 2024 Estimated Tax Worksheet,
+• The Instructions for the 2024 Estimated Tax Worksheet,
+• The 2024 Tax Rate Schedules, and
+• Your 2023 tax return and instructions to use as a guide
+to figuring your income, deductions, and credits (but be
+sure to consider the items listed under What's New,
+earlier).
+Matching estimated tax payments to income. If you
+receive your income unevenly throughout the year (for
+example, because you operate your business on a
+seasonal basis or you have a large capital gain late in the
+year), you may be able to lower or eliminate the amount of
+your required estimated tax payment for one or more
+periods by using the annualized income installment
+method. See chapter 2 of Pub. 505 for details.
+Changing your estimated tax. To amend or correct your
+estimated tax, see How To Amend Estimated Tax
+Payments, later.
+You can’t make joint estimated tax payments if you
+or your spouse is a nonresident alien, you are
+CAUTION separated under a decree of divorce or separate
+
+!
+
+Form 1040-ES (2024)
+
+maintenance, or you and your spouse have different tax
+years.
+Additionally, individuals who are in registered domestic
+partnerships, civil unions, or other similar formal
+relationships that aren’t marriages under state law cannot
+make joint estimated tax payments. These individuals can
+take credit only for the estimated tax payments that they
+made.
+
+Payment Due Dates
+
+You can pay all of your estimated tax by April 15, 2024, or
+in four equal amounts by the dates shown below.
+1st payment . . . . . . . . . . . . . . . . .
+2nd payment . . . . . . . . . . . . . . . .
+3rd payment . . . . . . . . . . . . . . . . .
+4th payment . . . . . . . . . . . . . . . . .
+
+April 15, 2024
+June 17, 2024
+Sept. 16, 2024
+Jan. 15, 2025*
+
+* You don’t have to make the payment due January 15,
+2025, if you file your 2024 tax return by January 31, 2025,
+and pay the entire balance due with your return.
+
+If you mail your payment and it is postmarked by the
+due date, the date of the U.S. postmark is considered the
+date of payment. If your payments are late or you didn’t
+pay enough, you may be charged a penalty for
+underpaying your tax. See When a Penalty Is Applied,
+later.
+You can make more than four estimated tax
+
+TIP payments. To do so, make a copy of one of your
+
+unused estimated tax payment vouchers, fill it in,
+and mail it with your payment. If you make more than four
+payments, to avoid a penalty, make sure the total of the
+amounts you pay during a payment period is at least as
+much as the amount required to be paid by the due date
+for that period. For other payment methods, see How To
+Pay Estimated Tax, later.
+No income subject to estimated tax during first payment period. If, after March 31, 2024, you have a large
+change in income, deductions, additional taxes, or credits
+that requires you to start making estimated tax payments,
+you should figure the amount of your estimated tax
+payments by using the annualized income installment
+method, explained in chapter 2 of Pub. 505. If you use the
+annualized income installment method, file Form 2210,
+including Schedule AI, with your 2024 tax return even if no
+penalty is owed.
+Farmers and fishermen. If at least two-thirds of your
+gross income for 2023 or 2024 is from farming or fishing,
+you can do one of the following.
+• Pay all of your estimated tax by January 15, 2025.
+• File your 2024 Form 1040 or 1040-SR by March 3,
+2025, and pay the total tax due. In this case, 2024
+estimated tax payments aren’t required to avoid a penalty.
+Fiscal year taxpayers. You are on a fiscal year if your
+12-month tax period ends on any day except December
+31. Due dates for fiscal year taxpayers are the 15th day of
+the 4th, 6th, and 9th months of your current fiscal year and
+the 1st month of the following fiscal year. If any payment
+date falls on a Saturday, Sunday, or legal holiday, use the
+Form 1040-ES (2024)
+
+next business day. See Pub. 509, Tax Calendars, for a list
+of all legal holidays.
+
+Name Change
+
+If you changed your name because of marriage, divorce,
+etc., and you made estimated tax payments using your
+former name, attach a statement to the front of your 2024
+paper tax return. On the statement, show all of the
+estimated tax payments you (and your spouse, if filing
+jointly) made for 2024 and the name(s) and SSN(s) under
+which you made the payments.
+Be sure to report the change to your local Social
+Security Administration office before filing your 2024 tax
+return. This prevents delays in processing your return and
+issuing refunds. It also safeguards your future social
+security benefits. For more details, call the Social Security
+Administration at 800-772-1213 (TTY/TDD
+800-325-0778).
+
+How To Amend Estimated Tax
+Payments
+
+To change or amend your estimated tax payments,
+refigure your total estimated tax payments due (see the
+2024 Estimated Tax Worksheet). Then, to figure the
+payment due for each remaining payment period, see
+Amended estimated tax in chapter 2 of Pub. 505. If an
+estimated tax payment for a previous period is less than
+one-fourth of your amended estimated tax, you may owe a
+penalty when you file your return.
+
+When a Penalty Is Applied
+
+In some cases, you may owe a penalty when you file your
+return. The penalty is imposed on each underpayment for
+the number of days it remains unpaid. A penalty may be
+applied if you didn’t pay enough estimated tax for the year
+or you didn’t make the payments on time or in the required
+amount. A penalty may apply even if you have an
+overpayment on your tax return.
+The penalty may be waived under certain conditions.
+See the Instructions for Form 2210 for details.
+
+How To Pay Estimated Tax
+Pay Online
+
+Paying online is convenient and secure and helps make
+sure we get your payments on time. To pay your taxes
+online or for more information, go to IRS.gov/Payments.
+Once you are issued a social security number (SSN),
+use it when paying your estimated taxes online. Use your
+SSN even if your SSN does not authorize employment or
+if you have been issued an SSN that authorizes
+employment and you lose your employment authorization.
+An ITIN will not be issued to you once you have been
+issued an SSN. If you received your SSN after previously
+using an ITIN, stop using your ITIN. Use your SSN
+instead.
+You can pay using any of the following methods.
+
+• Your Online Account. You can now make tax
+
+payments through your online account, including balance
+payments, estimated tax payments, or other types. You
+can also see your payment history and other tax records
+there. Go to IRS.gov/Account.
+3
+
+• IRS Direct Pay. For online transfers directly from your
+checking or savings account at no cost to you, go to
+IRS.gov/Payments.
+• Pay by Card or Digital Wallet. To pay by debit or
+credit card or digital wallet, go to IRS.gov/Payments. A fee
+is charged by these service providers.You can also pay by
+phone with a debit or credit card. See Debit or credit card
+under Pay by Phone, later.
+• Electronic Fund Withdrawal. (EFW) is an integrated
+e-file/e-pay option offered when filing your federal taxes
+electronically using tax preparation software, through a tax
+professional, or the IRS at IRS.gov/OPA.
+• Online Payment Agreement. If you can’t pay in full by
+the due date of your tax return, you can apply for an online
+monthly installment agreement at IRS.gov/Payments.
+Once you complete the online process, you will receive
+immediate notification of whether your agreement has
+been approved. A user fee is charged.
+Electronic Federal Tax Payment System (EFTPS)
+
+Allows you to pay your taxes online or by phone directly
+from your checking or saving account.There is no fee for
+this service. You must be enrolled either online or have an
+enrollment form mailed to you. See EFTPS under Pay by
+Phone, later.
+
+Pay by Phone
+
+Paying by phone is another safe and secure method of
+paying electronically. Use one of the following methods:
+(1) call one of the debit or credit card service providers, or
+(2) the Electronic Federal Tax Payment System (EFTPS)
+to pay directly from your checking or savings account.
+
+Debit or credit card. Call one of our service providers.
+Each charges a fee that varies by provider, card type, and
+payment amount.
+WorldPay US, Inc.
+844-PAY-TAX-8TM (844-729-8298)
+www.payUSAtax.com
+ACI Payments, Inc.
+888-UPAY-TAXTM (888-872-9829)
+fed.acipayonline.com
+Link2Gov Corporation
+888-PAY-1040TM (888-729-1040)
+www.PAY1040.com
+EFTPS. To get more information about EFTPS or to enroll
+in EFTPS, visit EFTPS.gov or call 800-555-4477. To
+contact EFTPS using Telecommunications Relay Services
+(TRS) for people who are deaf, hard of hearing, or have a
+speech disability, dial 711 and then provide the TRS
+assistant the 800-555-4477 number above or
+800-733-4829. Additional information about EFTPS is also
+available in Pub. 966.
+
+Mobile Device
+To pay through your mobile device, download the IRS2Go
+app.
+
+4
+
+Pay by Cash
+Cash is an in-person payment option for individuals
+provided through retail partners with a maximum of $1,000
+per day per transaction. To make a cash payment, you
+must choose a payment processor online at
+fed.acipayonline.com or www.Pay1040.com. For more
+information, go to IRS.gov/paywithcash or see Pub 5250.
+Don't send cash payments through the mail.
+
+Pay by Check or Money Order Using the
+Estimated Tax Payment Voucher
+
+Before submitting a payment through the mail using the
+estimated tax payment voucher, please consider
+alternative methods. One of our safe, quick, and easy
+online payment options might be right for you.
+If you choose to mail in your payment, there is a
+separate estimated tax payment voucher for each due
+date. The due date is shown in the upper right corner.
+Complete and send in the voucher only if you are making
+a payment by check or money order. If you and your
+spouse plan to file separate returns, file separate
+vouchers instead of a joint voucher.
+To complete the voucher, do the following.
+
+• Print or type your name, address, and SSN in the space
+
+provided on the estimated tax payment voucher. Enter
+your SSN even if your SSN does not authorize
+employment or if you have been issued an SSN that
+authorizes employment and you lose your employment
+authorization. If you have an ITIN, enter it wherever your
+SSN is requested. An ITIN will not be issued to you once
+you have been issued an SSN. If you received your SSN
+after previously using an ITIN, stop using your ITIN. Use
+your SSN instead. If filing a joint voucher, also enter your
+spouse's name and SSN. List the names and SSNs in the
+same order on the joint voucher as you will list them on
+your joint return.
+• Enter in the box provided on the estimated tax payment
+voucher only the amount you are sending in by check or
+money order. When making payments of estimated tax, be
+sure to take into account any 2023 overpayment that you
+choose to credit against your 2024 tax, but don’t include
+the overpayment amount in this box.
+• Make your check or money order payable to “United
+States Treasury.” Don’t send cash. To help process your
+payment accurately, enter the amount on the right side of
+the check like this: $ XXX.XX. Don’t use dashes or lines
+(for example, don’t enter “$ XXX—” or “$ XXX xx/100”).
+• Enter “2024 Form 1040-ES” and your SSN on your
+check or money order. If you are filing a joint estimated tax
+payment voucher, enter the SSN that you will show first on
+your joint return.
+• Enclose, but don’t staple or attach, your payment with
+the estimated tax payment voucher.
+Notice to taxpayers presenting checks. When you
+provide a check as payment, you authorize us either to
+use information from your check to make a one-time
+electronic fund transfer from your account or to process
+the payment as a check transaction. When we use
+information from your check to make an electronic fund
+transfer, funds may be withdrawn from your account as
+soon as the same day we receive your payment, and you
+Form 1040-ES (2024)
+
+will not receive your check back from your financial
+institution.
+No checks of $100 million or more accepted. The
+IRS can’t accept a single check (including a cashier’s
+check) for amounts of $100,000,000 ($100 million) or
+more. If you are sending $100 million or more by check,
+
+you will need to spread the payment over 2 or more
+checks with each check made out for an amount less than
+$100 million. This limit doesn’t apply to other methods of
+payment (such as electronic payments). Please consider
+a method of payment other than check if the amount of the
+payment is over $100 million.
+
+Where To File Your Estimated Tax Payment Voucher if Paying by Check or Money Order
+Mail your estimated tax payment voucher and check or money order to the address shown below for the place where you live. Do not mail your tax return to this address
+or send an estimated tax payment without a payment voucher. Also, do not mail your estimated tax payments to the address shown in the Form 1040 instructions. If you
+need more payment vouchers, you can make a copy of one of your unused vouchers.
+Caution: For proper delivery of your estimated tax payment to a P.O. box, you must include the box number in the address. Also, note that only the U.S. Postal Service
+can deliver to P.O. boxes. Therefore, you cannot use a private delivery service to make estimated tax payments required to be sent to a P.O. box.
+IF you live in . . .
+
+THEN send it to . . .
+
+IF you live in . . .
+
+THEN send it to . . .
+
+Alabama, Arizona, Florida, Georgia,
+Louisiana, Mississippi, New Mexico,
+North Carolina, South Carolina,
+Tennessee, Texas
+
+Internal Revenue Service
+P.O. Box 1300
+Charlotte, NC 28201-1300
+
+A foreign country, American Samoa,
+or Puerto Rico (or are excluding
+income under Internal Revenue
+Code 933), or use an APO or FPO
+address, or file Form 2555 or 4563,
+or are a dual-status alien or
+nonpermanent resident of Guam or
+the U.S. Virgin Islands
+
+Internal Revenue Service
+P.O. Box 1303
+Charlotte, NC 28201-1303
+
+Arkansas, Connecticut, Delaware,
+District of Columbia, Illinois, Indiana,
+Iowa, Kentucky, Maine, Maryland,
+Massachusetts, Minnesota, Missouri,
+New Hampshire, New Jersey, New
+York, Oklahoma, Rhode Island,
+Vermont, Virginia, West Virginia,
+Wisconsin
+
+Internal Revenue Service
+P.O. Box 931100
+Louisville, KY 40293-1100
+
+Guam:
+Bona fide residents*
+
+Department of
+Revenue and Taxation
+Government of Guam
+P.O. Box 23607
+GMF, GU 96921
+
+Alaska, California, Colorado, Hawaii,
+Idaho, Kansas, Michigan, Montana,
+Nebraska, Nevada, Ohio, Oregon,
+North Dakota, Pennsylvania, South
+Dakota, Utah, Washington, Wyoming
+
+Internal Revenue Service
+P.O. Box 802502
+Cincinnati, OH 45280-2502
+
+U.S. Virgin Islands:
+Bona fide residents*
+
+Virgin Islands Bureau
+of Internal Revenue
+6115 Estate Smith Bay
+Suite 225
+St. Thomas, VI 00802
+
+*Bona fide residents must prepare separate vouchers for estimated income tax and self-employment tax payments. Send the income tax vouchers to the address for
+bona fide residents and the self-employment tax vouchers to the address for non-bona fide residents.
+
+Instructions for the 2024 Estimated
+Tax Worksheet
+
+!
+
+If you file Form 1040-SS, use the 2024 Estimated
+Tax Worksheet for Filers of Form 1040-SS.
+
+CAUTION
+
+Line 1. Adjusted gross income. When figuring the
+adjusted gross income you expect in 2024, be sure to
+consider the items listed under What’s New, earlier. For
+more details on figuring your AGI, see Expected
+AGI—Line 1 in chapter 2 of Pub. 505.
+If you are self-employed, be sure to take into account
+the deduction for self-employment tax. Use the 2024
+Self-Employment Tax and Deduction Worksheet for Lines
+1 and 9 of the Estimated Tax Worksheet to figure the
+amount to subtract when figuring your expected AGI. This
+worksheet will also give you the amount to enter on line 9
+of your estimated tax worksheet.
+Line 7. Credits. See the 2023 Form 1040 or 1040-SR,
+line 19, and Schedule 3 (Form 1040), lines 1 through 6z,
+and the related instructions for the types of credits
+allowed.
+
+Form 1040-ES (2024)
+
+Line 9. Self-employment tax. If you and your spouse
+make joint estimated tax payments and both of you have
+self-employment income, figure the self-employment tax
+for each of you separately. Enter the total on line 9. When
+estimating your 2024 net earnings from self-employment,
+be sure to use only 92.35% (0.9235) of your total net profit
+from self-employment.
+Line 10. Other taxes. Use the 2023 Instructions for Form
+1040 to determine if you expect to owe, for 2024, any of
+the taxes that would have been entered on your 2023
+Schedule 2 (Form 1040), line 8 through 12 and 14 through
+17z (see Exception 2, later). On line 10, enter the total of
+those taxes, subject to the following two exceptions.
+Exception 1. Include household employment taxes
+from Schedule 2 (Form 1040), line 9, on this line only if:
+• You will have federal income tax withheld from wages,
+pensions, annuities, gambling winnings, or other income;
+or
+• You would be required to make estimated tax payments
+(to avoid a penalty) even if you didn’t include household
+employment taxes when figuring your estimated tax.
+If you meet either of the above, include the total of your
+household employment taxes on line 10.
+
+5
+
+2024 Self-Employment Tax and Deduction Worksheet for
+Lines 1 and 9 of the Estimated Tax Worksheet
+1a. Enter your expected income and profits subject to self-employment tax* . . . . . . . . . . . . .
+
+Keep for Your Records
+1a.
+
+b. If you will have farm income and also receive social security retirement or disability
+benefits, enter your expected Conservation Reserve Program payments that will be
+included on Schedule F (Form 1040) or listed on Schedule K-1 (Form 1065) . . . . . . . . .
+
+b.
+
+2. Subtract line 1b from line 1a . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+2.
+
+3. Multiply line 2 by 92.35% (0.9235) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+3.
+
+4. Multiply line 3 by 2.9% (0.029) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5. Social security tax maximum income
+
+......................................
+
+5.
+
+6. Enter your expected wages (if subject to social security tax or the 6.2% portion of
+tier 1 railroad retirement tax) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+6.
+
+7. Subtract line 6 from line 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+7.
+
+4.
+
+$168,600
+
+Note. If line 7 is zero or less, enter -0- on line 9 and skip to line 10.
+8. Enter the smaller of line 3 or line 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+8.
+
+9. Multiply line 8 by 12.4% (0.124) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+9.
+
+10. Add lines 4 and 9. Enter the result here and on line 9 of your 2024 Estimated Tax Worksheet . . . . . . . . . . . . . . . . . .
+
+10.
+
+11. Multiply line 10 by 50% (0.50). This is your expected deduction for self-employment tax on
+Schedule 1 (Form 1040), line 15. Subtract this amount when figuring your expected AGI on
+line 1 of your 2024 Estimated Tax Worksheet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+11.
+
+* Your net profit from self-employment is found on Schedule C (Form 1040), line 31; Schedule F (Form 1040), line 34; and Schedule K-1 (Form 1065), box 14, code A.
+
+Exception 2. Because the following taxes are not
+required to be paid until the due date of your income tax
+(not including extensions), do not include them on line 10.
+• Uncollected social security and Medicare or RRTA tax
+on tips or group-term life insurance (Schedule 2, line 13),
+• Recapture of federal mortgage subsidy (Schedule 2,
+line 17b),
+• Excise tax on excess golden parachute payments
+(Schedule 2, line 17k),
+• Excise tax on insider stock compensation from an
+expatriated corporation (Schedule 2, line 17m), and
+• Look-back interest under section 167(g) or 460(b)
+(Schedule 2, line 17n).
+Additional Medicare Tax. For information about the
+Additional Medicare Tax, see the Instructions for Form
+8959.
+Net Investment Income Tax (NIIT). For information
+about the Net Investment Income Tax, see the Instructions
+for Form 8960.
+Repayment of first-time homebuyer credit. You
+must repay the first-time homebuyer credit if you bought
+the home in 2008.
+For details about repaying the first-time homebuyer
+credit, see the Instructions for Form 5405.
+Line 12b. Prior year's tax. Enter the 2023 tax you figure
+according to the instructions in Figuring your 2023 tax
+unless you meet one of the following exceptions.
+• If the AGI shown on your 2023 return is more than
+$150,000 ($75,000 if married filing separately for 2024),
+enter 110% of your 2023 tax as figured next.
+Note. This doesn’t apply to farmers or fishermen.
+• If you will file a joint return for 2024 but you didn’t file a
+joint return for 2023, add the tax shown on your 2023
+return to the tax shown on your spouse's 2023 return and
+enter the total on line 12b.
+6
+
+• If you filed a joint return for 2023 but you will not file a
+joint return for 2024, first figure the tax both you and your
+spouse would have paid had you filed separate returns for
+2023 using the same filing status as for 2024. Then
+multiply the tax on the joint return by a fraction, the
+numerator being the tax you would have paid had you filed
+a separate return, over the total tax you and your spouse
+would have paid had you filed separate returns. Enter this
+amount on line 12b.
+• If you didn’t file a return for 2023 or your 2023 tax year
+was less than 12 full months, don’t complete line 12b.
+Instead, enter the amount from line 12a on line 12c.
+Figuring your 2023 tax. Use the following instructions
+to figure your 2023 tax.
+The tax shown on your 2023 Form 1040 or 1040-SR is
+the amount on Form 1040 or 1040-SR, line 24, reduced
+by:
+1. Unreported social security and Medicare tax or
+RRTA tax from Schedule 2 (Form 1040), lines 5 and 6;
+2. Any tax included on Schedule 2 (Form 1040), line 8,
+on excess contributions to an IRA, Archer MSA, Coverdell
+education savings account, health savings account, ABLE
+account, or on excess accumulations in qualified
+retirement plans;
+3. Amounts on Schedule 2 (Form 1040) as listed
+under Exception 2, earlier; and
+4. Any refundable credit amounts on Form 1040 or
+1040-SR, lines 27, 28, and 29, Schedule 3 (Form 1040),
+lines 9 and 12, and Schedule H lines 8e and 8f.
+
+Form 1040-ES (2024)
+
+2024 Tax Rate Schedules
+Caution. Don’t use these Tax Rate Schedules to figure your 2023 taxes. Use only to figure your 2024 estimated taxes.
+Schedule X—Use if your 2024 filing status is
+Single
+
+Schedule Z—Use if your 2024 filing status is
+Head of household
+
+If line 3
+is:
+
+If line 3
+is:
+
+The tax is:
+
+Over—
+
+But not
+over—
+
+$0
+11,600
+47,150
+100,525
+191,950
+243,725
+609,350
+
+$11,600
+47,150
+100,525
+191,950
+243,725
+609,350
+-----------
+
+----------$1,160.00
+5,426.00
+17,168.50
+39,110.50
+55,678.50
+183,647.25
+
+of the
+amount
+over—
++
++
++
++
++
++
++
+
+10%
+12%
+22%
+24%
+32%
+35%
+37%
+
+$0
+11,600
+47,150
+100,525
+191,950
+243,725
+609,350
+
+The tax is:
+
+Over—
+
+But not
+over—
+
+$0
+16,550
+63,100
+100,500
+191,950
+243,700
+609,350
+
+$16,550
+63,100
+100,500
+191,950
+243,700
+609,350
+-----------
+
+----------$1,655.00
+7,241.00
+15,469.00
+37,417.00
+53,977.00
+181,954.50
+
+of the
+amount
+over—
++
++
++
++
++
++
++
+
+10%
+12%
+22%
+24%
+32%
+35%
+37%
+
+Schedule Y-1— Use if your 2024 filing status is
+Married filing jointly or Qualifying surviving spouse
+
+Schedule Y-2—Use if your 2024 filing status is
+Married filing separately
+
+If line 3
+is:
+
+If line 3
+is:
+
+The tax is:
+
+Over—
+
+But not
+over—
+
+$0
+23,200
+94,300
+201,050
+383,900
+487,450
+731,200
+
+$23,200
+94,300
+201,050
+383,900
+487,450
+731,200
+---------
+
+of the
+amount
+over—
+----------$2,320.00
+10,852.00
+34,337.00
+78,221.00
+111,357.00
+196,669.50
+
++
++
++
++
++
++
++
+
+10%
+12%
+22%
+24%
+32%
+35%
+37%
+
+$0
+23,200
+94,300
+201,050
+383,900
+487,450
+731,200
+
+$0
+16,550
+63,100
+100,500
+191,950
+243,700
+609,350
+
+The tax is:
+
+Over—
+
+But not
+over—
+
+$0
+11,600
+47,150
+100,525
+191,950
+243,725
+365,600
+
+$11,600
+47,150
+100,525
+191,950
+243,725
+365,600
+-----------
+
+of the
+amount
+over—
+--------$1,160.00
+5,426.00
+17,168.50
+39,110.50
+55,678.50
+98,334.75
+
++
++
++
++
++
++
++
+
+10%
+12%
+22%
+24%
+32%
+35%
+37%
+
+$0
+11,600
+47,150
+100,525
+191,950
+243,725
+365,600
+
+Keep for Your Records
+
+2024 Estimated Tax Worksheet for Filers of Form 1040-SS
+1. Complete lines 1 through 10 of the 2024 Self-Employment Tax and Deduction Worksheet and enter the amount from
+line 10 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+1.
+
+2. Household employment taxes and the Additional Medicare Tax . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+2.
+
+3. Add lines 1 and 2
+
+3.
+
+................................................................
+
+4. Bona fide residents of Puerto Rico only, enter the amount of your additional child tax credit (if any)
+
+............
+
+4.
+
+5. Subtract line 4 from line 3. If less than the sum of $1,000 and household employment taxes, no payment is
+required . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+5.
+
+6a. Multiple line 5 by 90% (66 2/3% for farmers and fishermen) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+6a.
+
+b. Enter the tax amount from your 2023 tax return (the amount from Form 1040-SS, line 6 minus the sum of Form
+1040-SS, lines 8 through 11b) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+6b.
+
+c. Enter the smaller of line 6a or 6b (minus the expected amount of Additional Medicare Tax withholding). This is the
+annual payment you must make . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+6c.
+
+Caution: Generally, if you do not prepay at least the amount shown on line 6c, you may owe a penalty for not paying enough
+estimated tax. To avoid a penalty, make sure your estimate on line 1 is as accurate as possible. If you are not sure of the
+amount of estimated tax, and line 6a is smaller than line 6b, it would be convenient for you to pay an amount of at least the
+amount shown on line 6b. Even if you pay the required annual payment, you may still owe tax when you file your return. If you
+prefer, you can pay the amount shown on line 1. For details, see chapter 2 of Pub. 505.
+7. Amount of the installments. If the first payment you are required to make is due April 15, 2024, enter ¼ of line 6c
+(minus any 2023 overpayment that you are applying to this installment) here, and on your estimated tax payment
+voucher(s) if you are paying by check or money order. (Even when you are not required to make the payment due on
+April 15, 2024, your economic situation might change in a way that you might need to present a payment voucher and
+make a payment in the future. See Annualized Income Installment Method in chapter 2 of Pub. 505, for
+more information.) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+Form 1040-ES (2024)
+
+7.
+
+7
+
+2024 Estimated Tax Worksheet
+
+Keep for Your Records
+. .
+1
+. .
+2a
+
+1
+2a
+
+Adjusted gross income you expect in 2024 (see instructions) . . . . . . . . . . . .
+Deductions . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+• If you plan to itemize deductions, enter the estimated total of your itemized deductions.
+• If you don’t plan to itemize deductions, enter your standard deduction.
+b If you can take the qualified business income deduction, enter the estimated amount of the deduction
+c Add lines 2a and 2b . . . . . . . . . . . . . . . . . . . . . . . . . . .
+3
+Subtract line 2c from line 1 . . . . . . . . . . . . . . . . . . . . . . . . .
+4
+Tax. Figure your tax on the amount on line 3 by using the 2024 Tax Rate Schedules.
+Caution: If you will have qualified dividends or a net capital gain, or expect to exclude or deduct foreign
+earned income or housing, see Worksheets 2-5 and 2-6 in Pub. 505 to figure the tax
+. . . . . .
+5
+6
+
+Alternative minimum tax from Form 6251 . . . . . . . . . . . . . . . . . . . .
+Add lines 4 and 5. Add to this amount any other taxes you expect to include in the total on Form 1040
+or 1040-SR, line 16 . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+7
+8
+9
+10
+11a
+b
+
+Credits (see instructions). Do not include any income tax withholding on this line . . . . . . .
+Subtract line 7 from line 6. If zero or less, enter -0- . . . . . . . . . . . . . . . . .
+Self-employment tax (see instructions) . . . . . . . . . . . . . . . . . . . . .
+Other taxes (see instructions) . . . . . . . . . . . . . . . . . . . . . . . .
+Add lines 8 through 10 . . . . . . . . . . . . . . . . . . . . . . . . . .
+Earned income credit, additional child tax credit, fuel tax credit, net premium tax credit, refundable
+American opportunity credit, and section 1341 credit . . . . . . . . . . . . . . . .
+
+2b
+2c
+3
+
+4
+
+5
+6
+7
+8
+9
+10
+11a
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+11b
+11c
+
+12a Multiply line 11c by 90% (662/3% for farmers and fishermen) . . . . . .
+12a
+b Required annual payment based on prior year’s tax (see instructions) . . .
+12b
+c Required annual payment to avoid a penalty. Enter the smaller of line 12a or 12b .
+
+.
+
+.
+
+.
+
+.
+
+c
+
+Total 2024 estimated tax. Subtract line 11b from line 11a. If zero or less, enter -0-
+
+.
+
+12c
+
+Caution: Generally, if you do not prepay (through income tax withholding and estimated tax payments)
+at least the amount on line 12c, you may owe a penalty for not paying enough estimated tax. To avoid
+a penalty, make sure your estimate on line 11c is as accurate as possible. Even if you pay the required
+annual payment, you may still owe tax when you file your return. If you prefer, you can pay the amount
+shown on line 11c. For details, see chapter 2 of Pub. 505.
+Income tax withheld and estimated to be withheld during 2024 (including income tax withholding on
+pensions, annuities, certain deferred income, and Additional Medicare Tax withholding) . . . . .
+
+13
+
+Subtract line 13 from line 12c . . . . . . . . . . . . . . . .
+14a
+Is the result zero or less?
+Yes. Stop here. You are not required to make estimated tax payments.
+No. Go to line 14b.
+b Subtract line 13 from line 11c . . . . . . . . . . . . . . . .
+14b
+Is the result less than $1,000?
+Yes. Stop here. You are not required to make estimated tax payments.
+No. Go to line 15 to figure your required payment.
+15
+If the first payment you are required to make is due April 15, 2024, enter ¼ of line 14a (minus any
+2023 overpayment that you are applying to this installment) here, and on your estimated tax payment
+voucher(s) if you are paying by check or money order . . . . . . . . . . . . . . . .
+
+15
+
+13
+
+14a
+
+Form 1040-ES (2024)
+
+-8-
+
+Payment
+number
+
+Record of Estimated Tax Payments (Farmers, fishermen, and fiscal
+year taxpayers, see Payment Due Dates.)
+Payment
+due
+date
+
+1
+
+4/15/2024
+
+2
+
+6/17/2024
+
+3
+
+9/16/2024
+
+4
+
+1/15/2025*
+
+Total
+
+.
+
+.
+
+.
+
+(a) Amount
+due
+
+.
+
+.
+
+.
+
+.
+
+.
+
+(c) Check or
+money order number, or
+credit or debit card
+confirmation number
+
+(b) Date
+paid
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+(d) Amount paid
+(do not include
+any convenience fee)
+
+Keep for Your Records
+
+(e) 2023
+overpayment
+credit applied
+
+(f) Total amount
+paid and credited
+(add (d) and (e))
+
+.
+
+*You do not have to make this payment if you file your 2024 tax return by January 31, 2025, and pay the entire balance due with your return.
+Privacy Act and Paperwork Reduction Act Notice. We ask for this
+information to carry out the tax laws of the United States. We need it to
+figure and collect the right amount of tax. Our legal right to ask for this
+information is Internal Revenue Code section 6654, which requires that
+you pay your taxes in a specified manner to avoid being penalized.
+Additionally, sections 6001, 6011, and 6012(a) and their regulations
+require you to file a return or statement for any tax for which you are
+liable; section 6109 requires you to provide your identifying number.
+Failure to provide this information, or providing false or fraudulent
+information, may subject you to penalties.
+You are not required to provide the information requested on a form
+that is subject to the Paperwork Reduction Act unless the form displays
+a valid OMB control number. Books or records relating to a form or its
+instructions must be retained as long as their contents may become
+material in the administration of any Internal Revenue law. Generally, tax
+returns and return information are confidential, as stated in Code section
+6103.
+We may disclose the information to the Department of Justice for civil
+and criminal litigation and to other federal agencies, as provided by law.
+
+We may disclose it to cities, states, the District of Columbia, and U.S.
+commonwealths or territories to carry out their tax laws. We may also
+disclose this information to other countries under a tax treaty, to federal
+and state agencies to enforce federal nontax criminal laws, or to federal
+law enforcement and intelligence agencies to combat terrorism.
+If you do not file a return, do not give the information asked for, or
+give fraudulent information, you may be charged penalties and be
+subject to criminal prosecution.
+Please keep this notice with your records. It may help you if we ask
+you for other information. If you have any questions about the rules for
+filing and giving information, please call or visit any Internal Revenue
+Service office.
+The average time and expenses required to complete and file this
+form will vary depending on individual circumstances. For the estimated
+averages, see the instructions for your income tax return.
+If you have suggestions for making this package simpler, we would be
+happy to hear from you. See the instructions for your income tax return.
+
+-9-
+
+Form 1040-ES (2024)
+
+Need to make a payment?
+Save time by paying online. Paying
+online is convenient and secure.
+The IRS offers easy ways to electronically pay your taxes.
+Use Your
+Online Account
+
+Pay by
+Bank Account
+
+Pay by
+Card
+
+(no fees)
+
+(no fees)
+
+(processing fees apply)
+
+• Go to www.irs.gov/Account to login
+and make a payment.
+• Make a tax payment online directly
+from your checking or savings account.
+• View your balance, payment plan
+details and options, digital copies of
+certain notices, and more.
+
+• Use Direct Pay online to make an
+individual tax payment from your
+checking or savings account without
+registration.
+
+• Pay online or by phone.
+
+• Register for the Electronic Federal Tax
+Payment System (EFTPS) to make
+one-time or recurring payments from
+your checking or savings account.
+
+• Processing fees go to a payment
+processor and limits apply. The IRS
+does not receive any fees.
+
+• When e-filing pay through tax
+preparation software.
+
+• When you e-file with tax software or a
+tax professional, you can schedule an
+electronic funds withdrawal (EFW).
+
+Go to www.irs.gov/Payments for more details or to make a payment.
+
+Form
+
+Separate here.
+
+1040-ES
+
+Department of the Treasury
+Internal Revenue Service
+
+2024 Estimated Tax
+
+File only if you are making a payment of estimated tax by check or money order. Mail this
+voucher with your check or money order payable to “United States Treasury.” Write your
+social security number and “2024 Form 1040-ES” on your check or money order. Do not send
+cash. Enclose, but do not staple or attach, your payment with this voucher.
+
+Your first name and middle initial
+
+Simple.
+Fast.
+Secure.
+
+4
+
+OMB No. 1545-0074
+
+Calendar year—Due Jan. 15, 2025
+Amount of estimated tax you are paying
+by check or
+money order.
+
+Your last name
+
+Your social security number
+
+Spouse’s last name
+
+Spouse’s social security number
+
+If joint payment, complete for spouse
+Print or type
+
+Pay online at
+www.irs.gov/
+etpay
+
+Payment
+Voucher
+
+Spouse’s first name and middle initial
+Address (number, street, and apt. no.)
+
+City, town, or post office. If you have a foreign address, also complete spaces below.
+Foreign country name
+
+Foreign province/county
+
+For Disclosure, Privacy Act, and Paperwork Reduction Act Notice, see instructions.
+
+-10-
+
+State
+
+ZIP code
+Foreign postal code
+
+Form 1040-ES (2024)
+
+Form
+
+1040-ES
+
+Department of the Treasury
+Internal Revenue Service
+
+2024 Estimated Tax
+
+File only if you are making a payment of estimated tax by check or money order. Mail this
+voucher with your check or money order payable to “United States Treasury.” Write your
+social security number and “2024 Form 1040-ES” on your check or money order. Do not send
+cash. Enclose, but do not staple or attach, your payment with this voucher.
+
+Your first name and middle initial
+
+Simple.
+Fast.
+Secure.
+
+3
+
+OMB No. 1545-0074
+
+Calendar year—Due Sept. 16, 2024
+Amount of estimated tax you are paying
+by check or
+money order.
+
+Your last name
+
+Your social security number
+
+Spouse’s last name
+
+Spouse’s social security number
+
+If joint payment, complete for spouse
+Print or type
+
+Pay online at
+www.irs.gov/
+etpay
+
+Payment
+Voucher
+
+Spouse’s first name and middle initial
+Address (number, street, and apt. no.)
+
+City, town, or post office. If you have a foreign address, also complete spaces below.
+Foreign country name
+
+State
+
+ZIP code
+Foreign postal code
+
+Foreign province/county
+
+For Disclosure, Privacy Act, and Paperwork Reduction Act Notice, see instructions.
+
+Form
+
+Separate here.
+
+1040-ES
+
+Department of the Treasury
+Internal Revenue Service
+
+2024 Estimated Tax
+
+File only if you are making a payment of estimated tax by check or money order. Mail this
+voucher with your check or money order payable to “United States Treasury.” Write your
+social security number and “2024 Form 1040-ES” on your check or money order. Do not send
+cash. Enclose, but do not staple or attach, your payment with this voucher.
+
+Your first name and middle initial
+
+Simple.
+Fast.
+Secure.
+
+2
+
+OMB No. 1545-0074
+
+Calendar year—Due June 17, 2024
+Amount of estimated tax you are paying
+by check or
+money order.
+
+Your last name
+
+Your social security number
+
+Spouse’s last name
+
+Spouse’s social security number
+
+If joint payment, complete for spouse
+Print or type
+
+Pay online at
+www.irs.gov/
+etpay
+
+Payment
+Voucher
+
+Spouse’s first name and middle initial
+Address (number, street, and apt. no.)
+
+City, town, or post office. If you have a foreign address, also complete spaces below.
+Foreign country name
+
+State
+
+ZIP code
+Foreign postal code
+
+Foreign province/county
+
+For Disclosure, Privacy Act, and Paperwork Reduction Act Notice, see instructions.
+
+Form
+
+Separate here.
+
+1040-ES
+
+Department of the Treasury
+Internal Revenue Service
+
+2024 Estimated Tax
+
+File only if you are making a payment of estimated tax by check or money order. Mail this
+voucher with your check or money order payable to “United States Treasury.” Write your
+social security number and “2024 Form 1040-ES” on your check or money order. Do not send
+cash. Enclose, but do not staple or attach, your payment with this voucher.
+
+Your first name and middle initial
+
+Simple.
+Fast.
+Secure.
+
+1
+
+OMB No. 1545-0074
+
+Calendar year—Due April 15, 2024
+Amount of estimated tax you are paying
+by check or
+money order.
+
+Your last name
+
+Your social security number
+
+Spouse’s last name
+
+Spouse’s social security number
+
+If joint payment, complete for spouse
+Print or type
+
+Pay online at
+www.irs.gov/
+etpay
+
+Payment
+Voucher
+
+Spouse’s first name and middle initial
+Address (number, street, and apt. no.)
+
+City, town, or post office. If you have a foreign address, also complete spaces below.
+Foreign country name
+
+Foreign province/county
+
+For Disclosure, Privacy Act, and Paperwork Reduction Act Notice, see instructions.
+
+-11-
+
+State
+
+ZIP code
+Foreign postal code
+
+Form 1040-ES (2024)
+
+THIS PAGE INTENTIONALLY LEFT BLANK
+
+-12-

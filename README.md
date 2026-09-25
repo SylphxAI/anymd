@@ -116,25 +116,12 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 
 ## Benchmarks
 
-<!-- generated:bench-summary -->
-12 real documents (7 PDFs, plus DOCX, PPTX, XLSX, EPUB, and HTML), on 4 CPUs (x86_64), 2026-09-25:
+[AgentDocBench](docs/guide/benchmarks.md) is an open benchmark for document → Markdown conversion for agents: license-clean documents in 12 categories (math papers, two-column papers, financial tables, forms, scans, CJK, slides, spreadsheets, Word, EPUB, HTML), scored on verbatim sentences, text F1, reading order, and table cells, with time and output tokens. Every tool runs on the same GitHub-hosted runner with 4 CPUs:
 
-| | **anymd** | docling | MarkItDown | kreuzberg | pdftotext |
-|---|---|---|---|---|---|
-| Total time, 12 documents | **0.40 s** | 964 s | 22.5 s | 2.8 s | 0.36 s ¹ |
-| Sentences intact (12) | **12** | 11 | 5 | 12 | 12 |
-| Table rows recovered (26) | **26** | 25 | 15 | 0 | 0 |
-| Reading order correct (5) | **5** | 3 | 3 | 5 | 5 |
-| Output tokens (o200k) | **98.6k** | 126.4k | 144.7k | 125.0k | 74.1k ¹ |
+<!-- headline:start -->
+<!-- headline:end -->
 
-<sub>¹ pdftotext reads PDFs only and outputs plain text without tables.</sub>
-
-On the 15-page *Attention Is All You Need* paper, anymd takes **0.13 s**, docling 75.9 s, and MarkItDown 3.0 s; MarkItDown keeps 0 of 4 reference sentences intact. On the Wikipedia article, anymd's main-content extraction uses **21.7k tokens**; docling 37.6k, kreuzberg 51.7k, MarkItDown 54.6k.
-<!-- /generated:bench-summary -->
-
-Each tool runs as a fresh process, and every number is the median of 3 runs (docling runs once, after its models are warmed up). Tokens are counted with `o200k_base`. **Sentences intact** counts reference sentences that come out verbatim; glued words or split columns fail the check. **Table rows** counts ground-truth rows that come out as one Markdown table row with the cells in order. The method, corpus, ground truth, raw results, and scripts are in [`bench/`](bench/), and the [Benchmark workflow](.github/workflows/benchmark.yml) re-runs everything on GitHub-hosted runners.
-
-The official `@modelcontextprotocol/server-pdf` is left out of the table because it has no headless text path. It renders PDFs in an interactive viewer, and its `read_pdf_bytes` tool returns base64-encoded bytes.
+The generated leaderboard, per-category scores (including where anymd loses), and method are in the [benchmark guide](docs/guide/benchmarks.md). The corpus, ground truth, adapters, and raw results are in [`bench/`](bench/), and the [Benchmark workflow](.github/workflows/benchmark.yml) reruns everything; new tools can join with a single adapter file.
 
 ## MCP tools
 

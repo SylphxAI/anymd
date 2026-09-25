@@ -1,0 +1,108 @@
+{
+ "id": "twocol-uscore",
+ "derived_from": "PDF text layer (pdftotext, NFKC-normalised) for sentences/order/cells; page 17 image checked at 110 dpi (Tables 6-8); pages 5 and 9 read via pdftotext for column order; Table 6 partial rows repeat the merged row-group label (e.g. \"TYPE-3 Supervised\") in the first cell",
+ "sentences": [
+  "Here, we go the opposite route and try to minimize the amount of supervision as much as possible.",
+  "Each source sentence and hypothesis pair was annotated with cross-lingual direct assessment (CLDA) scores.",
+  "It consists of parallel sentences crawled from economic and political data.",
+  "In addition, our novel metrics should be maximally effective, i.e., of high quality.",
+  "This algorithmic inefficiency trades off with our sample efficiency, by which we did not use any supervision signals.",
+  "However, this remains a very active research field with a constant influx of more powerful solutions (Ranathunga et al., 2022; Sun et al., 2021)."
+ ],
+ "order": [
+  "The vast majority of evaluation metrics for machine translation",
+  "Evaluation metrics are essential for judging",
+  "Inspired by SentSim, which combines word",
+  "MT evaluation In WMT-16 and WMT-17",
+  "(MQM) framework (Freitag et al., 2021a) for adequacy assessments.",
+  "Parallel sentence matching To evaluate",
+  "In future work, we want to aim for algorithmic",
+  "Limitations of our metrics include",
+  "(3) Using unsupervised MT approaches"
+ ],
+ "tables": [
+  {
+   "caption": "Table 8: Statistics of our used datasets averaged over language pairs.",
+   "page": 17,
+   "complete": true,
+   "rows": [
+    [
+     "Dataset",
+     "Pairs",
+     "Tokens",
+     "Type"
+    ],
+    [
+     "WMT-16",
+     "560",
+     "9886",
+     "CA"
+    ],
+    [
+     "WMT-17",
+     "560",
+     "11189",
+     "CA"
+    ],
+    [
+     "MLQE-PE",
+     "1000",
+     "15263",
+     "CLDA"
+    ],
+    [
+     "Eval4NLP",
+     "1295",
+     "25975",
+     "CLDA"
+    ],
+    [
+     "WMT-MQM",
+     "17090",
+     "549835",
+     "MQM"
+    ]
+   ]
+  },
+  {
+   "caption": "Table 6: Segment-level Pearson's r correlations with human judgments on the MLQE-PE dataset.",
+   "page": 17,
+   "complete": false,
+   "rows": [
+    [
+     "TYPE-1 Supervised",
+     "COMET-QE",
+     "36.03",
+     "30.70",
+     "49.33",
+     "64.95",
+     "63.45",
+     "57.46",
+     "47.85"
+    ],
+    [
+     "TYPE-3 Supervised",
+     "XMoverScore (CLP)",
+     "25.59",
+     "20.25",
+     "20.31",
+     "57.34",
+     "58.46",
+     "25.15",
+     "16.74"
+    ],
+    [
+     "TYPE-3 Supervised",
+     "DistilScore",
+     "12.96",
+     "28.68",
+     "45.34",
+     "76.57",
+     "51.16",
+     "46.73",
+     "41.76"
+    ]
+   ]
+  }
+ ]
+}

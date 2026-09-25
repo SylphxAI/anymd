@@ -1,0 +1,89 @@
+{
+ "id": "cjk-tw-archives",
+ "derived_from": "PDF text layer (pdftotext raw + -layout) + page images at 80 dpi (pages 1, 2). Multi-line table cells joined in visual order: no space where a line break falls between two CJK characters, one space otherwise. Text layer spacing between CJK and Latin (e.g. '作者 A') is kept; scorers should drop whitespace adjacent to CJK characters before matching. Table 2 continues from page 1 onto page 2.",
+ "sentences": [
+  "文內同時引用同一作者有多篇文章時，依照年代先後順序排列，舊在前、新在後。",
+  "文內引用多筆參考文獻，中文部分採用筆畫排；英文用字母順序排列，採用分號作為區隔。",
+  "參考文獻排列順序，中日文文獻在前，外文文獻在後。",
+  "中日文文獻依作者姓氏筆畫數為依據；外文文獻依作者姓氏字母順序為依據。",
+  "檔案產生機關（檔案產生日期）。案由，案名。檔案管有機關，檔號。"
+ ],
+ "order": [
+  "參考文獻格式",
+  "正文內引時",
+  "文末參考文獻排列",
+  "格式及範例",
+  "期刊雜誌",
+  "二、專書",
+  "技術及研究報告",
+  "會議專刊或專題研討會論文",
+  "五、報紙",
+  "網路資源",
+  "檔案資料",
+  "參考資料"
+ ],
+ "tables": [
+  {
+   "caption": "(三) 文內引用單篇文獻有多位作者時 (作者數 / 正文內引用格式)",
+   "page": 1,
+   "complete": true,
+   "rows": [
+    [
+     "作者數",
+     "正文內引用格式"
+    ],
+    [
+     "1 位作者",
+     "(作者，年代) 或 Author (Year)"
+    ],
+    [
+     "2 位作者",
+     "(作者 A、作者 A，年代)；作者 A 與作者 B（年代） (Author A & Author B, Year) or Author A and Author B (Year)"
+    ],
+    [
+     "3-5 位作者",
+     "第一次引用，所有作者均須列出： (作者 A、作者 B、作者 C、作者 D，年代) 或 作者 A、作者 B、作者 C 與作者 D（年代） (Author A, Author B, Author C, & Author D, Year) or Author A, Author B, Author C and Author D (Year) 第二次引用只需列出第一位作者： (作者 A 等人，年代) 或 作者 A 等人（年代） (Author A et al., Year) or Author A et al. ( Year)"
+    ],
+    [
+     "6 位以上作者",
+     "第一次引用和後續引用都只需列出自第一位作者： (第一作者 A 等人，年代) 或 第一作者 A 等人（年代） (Author A et al., Year) or Author A et al.(Year)"
+    ],
+    [
+     "團體作者",
+     "第一次引用： Australian Institute of Health and Welfare (AIHW, 2005) or (Australian Institute of Health and Welfare [AIHW], 2005) 第二次引用： AIHW(2005) or (AIHW, 2005)"
+    ]
+   ]
+  },
+  {
+   "caption": "(三) 參考文獻有多位作者時(以專書為例) (作者數 / 參考文獻作者呈現格式)",
+   "page": 1,
+   "complete": true,
+   "rows": [
+    [
+     "作者數",
+     "參考文獻作者呈現格式"
+    ],
+    [
+     "1 位作者",
+     "Author, A.A. (Year). Title of the book. Location: Publisher. 作者（年代）。書名。出版地：出版者。"
+    ],
+    [
+     "2 位作者",
+     "Author, A.A., & Author, B.B. (Year). Title of the book. Location: Publisher. 作者 A、作者 B（年代）。書名。出版地：出版者。"
+    ],
+    [
+     "3-7 位作者",
+     "Author, A. A., Author, B. B., Author, C. C., Author, D. D., Author, E. E., Author, F. F., & Author, G. G. (Year). Title of the book. Location: Publisher. 作者 A、作者 B、作者 C、作者 D、作者 E、作者 F、作者 G（年代）。書名。出版地：出版者。"
+    ],
+    [
+     "8 位以上作者",
+     "Author, A.A., Author, B.B., Author, C.C., Author, D.D., Author, E.E., Author, F.F., ...Author, H.H. (Year).Title of the book. Location: Publisher. 作者 A、作者 B、作者 C、作者 D、作者 E、作者 F、...作者 H（年代）。書名。出版地：出版者。"
+    ],
+    [
+     "團體作者",
+     "Name of group author. (Year).Title of the book. Location: Publisher. 團體名稱（年代）。書名。出版地：出版者。"
+    ]
+   ]
+  }
+ ]
+}

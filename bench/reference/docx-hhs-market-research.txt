@@ -1,0 +1,247 @@
+Department of Health and Human Services (HHS)
+Market Research Report Template
+
+REMINDER: **Remove all guidance language shown in red in the final document as well as in the non-bolded italicized guidance under each paragraph, as appropriate. **
+
+1. Program/Project Information
+
+Program/Project Title:
+
+Author(s): (Name and Title)
+
+Report Date: (mm/dd/yyyy)
+
+Organization:
+
+Product or Service Code: (Code and description)
+
+NAICS Code: (Code and description)
+
+Portfolio: (Facilities Related Services, Biomedical Services, Electronics & Communications Services, Medical Services/Studies, etc.)
+
+Estimated Value: ($ value including all options)
+
+Acquisition Team:
+
+Describe the involvement of the individual Acquisition Team members and any other participants in the market research effort. (The titles listed in the table below are examples.)
+
+NAME
+TITLE
+OFFICE
+TELEPHONE
+E-MAIL ADDRESS
+MARKET RESEARCH ROLE
+
+Program Official
+
+Contracting Officer
+
+Contracting Specialist
+
+Contracting Officer’s Representative (COR)
+
+Small Business Liaison
+
+Other
+
+2. Market Research Objectives
+
+a. Objective:  Per FAR 10.001(a)(2), this report is in support of (check as many as apply):
+
+A new requirement
+A procurement is at or below the simplified acquisition threshold (SAT) (see FAR 2.101 for current threshold) and no small business is capable of performing
+An acquisition with an estimated value in excess of the simplified acquisition threshold (see FAR 2.101 for current threshold)
+An acquisition with an estimated value less than the simplified acquisition threshold where adequate information is not available to develop the requirements package and the circumstances justify the cost of performing the market research;
+An acquisition that could lead to consolidation (15 U.S.C. 657q) or a bundled contract (15 U.S.C. 644(e)(2)(A)) (see FAR 2.101 for bundled contract definition);
+A requirement less than the micro-purchase threshold (see FAR  2.101 for current threshold) that is not being purchased using the Governmentwide Purchase Card (GPC)
+Other (describe):       
+
+b. Outcomes. (Enter text here and delete Guidance in italics below.)
+
+The framework below offers some suggested lines of inquiry in support of market research outcomes. The overall level of effort an integrated procurement team will undertake may vary widely given scope, complexity, and value of an acquisition. It falls to the team to determine the appropriate level of effort to apply to market research.
+
+Areas in the template of special interest to the OSDBU have been emphasized in bold type.
+
+Guidance: Explain the specific outcomes to be met in conducting the market research.
+
+Refinement of the requirement in industry terms (or standards, if applicable)
+Increased competition
+Determine if small businesses are available and capable to perform requirement
+Understanding of cost
+Insight on effective contract structure
+Viability of incentive approaches with suppliers
+Insight on metrics related to cost, schedule, and performance in the delivery of services (e.g., considerations such as adequate application of skill mix, efficiency in processes to establish cost avoidance, and reduced rework)
+Understanding of the potential for major subcontractor involvement and the strategy to balance monitoring of key subcontractors with prime contractor privity
+Early identification of potential Organizational Conflict of Interest (OCI) risks and the anticipated mitigation plans
+Understanding of the intellectual property (e.g., tech data and software) landscape necessary to increase competition (e.g., what does the U.S. Government already own across HHS, and what do we need to procure through future contracts or via deferred ordering/delivery on existing contracts)
+Anticipate industry need for Government Furnished Material/Equipment/Information/ Real Property and how it affects the acquisition approach
+Determination of commercial service availability to meet the requirement
+
+3. Service/Product Description
+
+(Enter text here and delete Guidance in italics below.)
+Guidance: Include a description of the service addressed by this market research report.
+
+What is the service?
+What are the components or elements of the service?
+When is the service required?
+Where will the service be performed?
+Are there unique requirements?
+Are there mandatory source requirements?
+What other customers or agencies are buying the service?
+What current contract vehicles are available?
+Are there related requirements that will affect this service? Conversely, will this service affect other requirements?
+Is there a possibility of shared services?
+
+4. Background
+
+(Enter text here and delete Guidance in italics below.)
+
+Guidance: Provide a short narrative on the HHS mission this product or service will support or fulfill. Include information relevant to the award, such as:
+
+Is the requirement new? If not, how long has the service been required and how has it been resourced to date?
+If the requirement was previously resourced via contract, was a commerciality determination made? When? Is the determination still viable?
+Is relevant market research already available based on similar procurements?
+What prior acquisition strategies were used?
+What prior commercial or government work have potential service providers performed?
+What prior efforts were taken to remove barriers to competition?
+What problems were encountered during prior contract performance?
+What is the past performance baseline?
+What changes have occurred in the marketplace (suppliers, trends, technologies) that impact previously relevant market research?
+What lessons learned/best practices inform this acquisition?
+
+5. Potential Supplier Information
+
+(Enter text here and delete Guidance in italics below.)
+
+Guidance: Use the table to build a list of potential vendors and known sources with the capability to provide the service required.
+
+Vendor Name
+Location
+Point of Contact
+Capability Assessment
+
+Small Business Analysis:
+
+Guidance: Use this section to:
+
+Identify the number and names of sources contacted.
+Identify whether they were: small business (see FAR subpart 19.5); small/disadvantaged business (see FAR 19.304); a Small Business Administration (SBA) (8(a) Program small business concern participant (see FAR subpart 19.8); Service-Disabled Veteran-Owned Small Business (SDVOSB) (see FAR subpart 19.14) or Veteran-Owned Small Business (VOSB); women-owned small business or Economically Disadvantaged Women-Owned Small Business (WOSB/EDWOSB) (see FAR subpart 19.15); an Historically Underutilized Business Zone (HUBZone) small business concern (see FAR subpart 19.13); large business, or government/non-government (i.e., AbilityOne non-profit entity) who may have responded to any sources sought or request for information (RFI) published by the contracting officer.
+Describe efforts to locate sources and explain the rationale used to exclude sources.
+Use the table below to summarize the number of sources by business size.
+
+Note the date when an assessment of AbilityOne, Federal Prison Industries, etc., (see FAR 8.002) offerings was completed and any point of contact information relating to direct engagement with representatives of these programs. If these programs have eligible offerings, but will not receive an award, document that a waiver (purchase exception) was completed.
+
+TOTAL NUMBER OF SOURCES CONTACTED BY BUSINESS SIZE
+Business Size Category
+Total Number of Potential Source(s) per Size Category
+Service-Disabled, Veteran-Owned Small Business (SDVOSB)
+
+Veteran-Owned Small Business (VOSB)
+
+Women-Owned Small Business (WOSB)
+
+Economically Disadvantaged Women-
+Owned Small Business (EDWOSB)
+
+HUBZone Small Business (HUBZone)
+
+Section 8(a) Small Business (8(a))
+
+Small/Disadvantaged Business (SDB)
+
+Small Business (SB)
+
+Large Business (LG)
+
+Government/Non-Government
+
+SYNOPSIS OF BUSINESS SOURCES CONTACTED
+Name
+Business Size Category
+Capability / Interest Assessment
+
+6. Other pertinent information (e.g., certifications/required licenses, availability, or lack of domestic manufacturers.)  Determine applicability of Buy American statute, Trade Agreement Act, or exception to Buy American statute. Detail whether there are domestic end products available for this acquisition. Reference (see FAR part 25 including subparts 25.1, Buy American Act—Supplies; subpart 25.2—Buy American Act—Construction Materials; and FAR subpart 25.4, Trade Agreements.)
+
+a. Does the Buy American statute, Trade Agreements Act, or an Exception to Buy American statute apply (FAR part 25)?  Are there domestic end products available for this  acquisition?
+
+If the head of the contracting activity (HCA) has determined that a nonavailability waiver exception to Made in America laws is needed (see HHS Federal Acquisition Regulation (FAR) Class Deviation (2022-01), Regarding Requirements for Nonavailability Determinations Under the Buy American Act, dated November 22, 2021, and FAR 25.103(b)), the contracting officer must submit a digital waiver to the Office of Management and Budget’s Made in America Office (MIAO) for review after review and approval by the head of the contracting activity (HCA). In order to accomplish this, the program/project office and contracting officer must complete market research and provide the following specific information, after approval by the HCA, that will then be submitted into the MIAO digital waiver portal. Therefore, the program/project office should assist the contracting officer in determining the appropriate market research and proposed response.
+
+Specific Buy American statute and Made in America related market research considerations: Appropriate market research analyses might include a review of information on category management dashboards on the acquisition gateway; consultation with category managers and other agency SAOs buying similar items; and supplier scouting with supply chain experts who study domestic capabilities and market trends (e.g., the Manufacturing Extension Partnership), chambers of commerce, industry and trade associations that represent domestic suppliers, and relevant labor unions or worker organizations. Documentation should describe the market research activities and methods used to identify domestically manufactured items capable of satisfying the requirement, including the timing of the research and conclusions reached on the availability of sources (e.g., sources are available but cannot offer sufficient quantity; sources are available but cannot offer sufficient quality).
+
+MANDATORY MARKET RESEARCH, when applicable—see FAR 25.103(b)(2)(iii) (FAR Class Deviation) and PGI 325.103(b)(2)-70, and PGI Part 325, Digital Waiver Portal – Data Fields – Nonavailability Waiver, and the entry for “Market Research and Non-availability Determination”:
+Describe the market research activities and methods used to identify domestically manufactured items capable of satisfying the requirement, including the timing of the research and conclusions reached on the availability of sources (e.g., sources are available but cannot offer sufficient quantity; sources are available but cannot offer sufficient quality; no sources can be identified). Such analysis might include a review of information on category management dashboards on the acquisition gateway, consultation with category managers, supplier scouting with supply chain experts who study domestic capabilities and market trends, such as the MEP, chambers of commerce, industry and trade associations that represent domestic suppliers, and relevant labor unions or worker organizations. (250-word limit)
+7. Performance Requirements
+
+(Enter text here and delete Guidance in italics below.)
+
+Guidance: State the critical performance requirements that the service or supply must meet. See FAR 10.001(a)(3).
+What are the performance requirements, and how are they measured? If the requirement is not performance based, what special considerations justify that decision?
+What commercial solutions can address the requirement? Are commercial products or commercial services available to meet the Government’s needs? (see FAR 10.001(a)(3)).
+If a commercial solution is not feasible, what are the specific requirements that must be met?
+To the extent commercial products suitable to meet the agency’s needs are not available, determine if nondevelopmental items are available that-
+Meet the agency’s requirements;
+Could be modified to meet the agency’s requirements; or
+Could meet the agency’s requirements if those requirements were modified to a reasonable extent.
+What are the requirements/performance trade-offs to better align with the commercial market?
+How does industry sell the service, and are the requirements written in those terms?
+8. Market Intelligence/Industry Analysis
+
+(Enter text here and delete Guidance in italics below.)
+
+Guidance: Describe any available commercial factors.
+What is the availability of the service?
+What is the demand for the service?
+What is the industry experience level for this service?
+How many suppliers are in the market and what is the market share (e.g., are the majority of the services provided by a small number of suppliers, or is the supplier pool more diverse)?
+What is the Government’s market share/leverage in the marketplace (e.g., is the Government the only buyer, making a minority of buys in the market, or making the majority of buys)?
+What is the small business footprint?
+What socio-economic entities participate in this market (e.g., are Small Business Administration 8(a), Historically Underutilized Business Zone, Service-disabled Veteran-owned Small Business, economically disadvantaged women-owned small business, or women-owned small business entities present in the market segment)? (See FAR 19.202-1)
+What is the structure of the supply chain?
+What is the pricing structure?
+How are the services segmented (e.g., how do offerors develop, market, and deliver services based on the characteristics of current and target customers such as geographic location, use cases, price, and risk sensitivity, and/or other purchasing behaviors)?
+What business, trade, legal, political, and other developments affect the market?
+What is fair/reasonable market price for services within the industry, which may include an assessment of available price data, price ranges, known pricing issues, or an explanation of price variations? Explain if the price might be unstable.
+What are the applicable industry standards, regulations, trade journals, or process guides germane to the service to be acquired?
+What, if any, are the environmental or safety regulations that affect the required service?
+What are the standard industry terms and conditions offered to commercial customers in the marketplace?
+
+9. Conclusions and Recommendations
+
+(Enter text here and delete Guidance in italics below.)
+
+Guidance: Summarize your analysis with recommendations for:
+Acquisition strategies to pursue (e.g., commercial acquisition, 8(a) sole source or competitive, small business program (state which program and why) set-aside, sole source, full and open competition, Native American direct, etc.)
+Potential existing contract vehicles that may be employed to satisfy your requirement
+Recommendations on improvements to the quality and thoroughness of the Government’s technical performance documents and configuration control data based on research results
+Relevant risks to be considered as part of any source selection activities
+Specific contract terms and conditions
+Organizational Conflicts of Interest concerns
+Intellectual property considerations
+Government-furnished material/equipment/information/real property concerns or details
+
+PREPARED BY:
+
+NAME:      
+
+TITLE:      
+
+REQUIRING OFFICE:      
+
+EMAIL ADDRESS:      
+
+DATE:       
+
+CONTRACTING OFFICER:
+
+APPROVEDDISAPPROVED:
+
+NAME:      
+
+TITLE:      
+
+CONTRACTING OFFICE:      
+
+EMAIL ADDRESS:      
+
+DATE:

@@ -1,0 +1,42 @@
+{
+ "id": "paper-evsched",
+ "derived_from": "PDF text layer (pdftotext and pdftotext -layout, NFKC-normalised) for sentences, order and cells; page 14 image checked at 90 dpi (Table 4); Tables 1 and 3 read from pdftotext -layout on pages 11 and 13; partial rows repeat the merged row-group label (Grid / No Grid, interval) in the first cell",
+ "sentences": [
+  "We consider an online problem, where a schedule for the charging of EVs needs to be generated with the objective to minimize the average delay.",
+  "These parking lots are connected by cables with a given maximum capacity.",
+  "We observe that delays almost disappear when we take away the grid layout.",
+  "This difference justifies the additional modeling effort required to account for the topology of the network.",
+  "These results together show that the use of flexible charging rates allows for better outcomes.",
+  "The quality of the generated schedules is such that frequent updates are not necessary.",
+  "Many avenues for future research exist."
+ ],
+ "order": [
+  "We study Electric Vehicle (EV) charging",
+  "Problem description",
+  "Schedule generation schemes",
+  "Destroy-and-repair",
+  "Computational results",
+  "Network constraints",
+  "Flexible charging rates",
+  "Overall performance",
+  "Conclusions and future work",
+  "Acknowledgements"
+ ],
+ "tables": [
+  {"caption": "Table 4: Results for the most promising approaches", "page": 14, "complete": true,
+   "rows": [["", "FCFS", "P-EDD", "PR-15min"],
+            ["Max. delay (s)", "31287.96", "13882.98", "5237.77"],
+            ["Avg. delay (s)", "1114.21", "106.03", "95.23"],
+            ["EVs delayed (%)", "11.72", "1.48", "1.60"],
+            ["Delay ≥ 15 min", "470.20", "58.00", "55.40"],
+            ["Runtime (s)", "16168.70", "12743.83", "15324.67"]]},
+  {"caption": "Table 1: Comparison of results taking the network layout into account and those ignoring the grid", "page": 11, "complete": false,
+   "rows": [["Grid", "Max. delay (s)", "14236.27", "13882.98", "5033.37", "4847.46"],
+            ["Grid", "Avg. delay (s)", "121.19", "106.03", "88.14", "86.56"],
+            ["No Grid", "Max. delay (s)", "36.41", "0.00", "36.41", "10.40"]]},
+  {"caption": "Table 3: Comparison of results for a number of scheduling intervals.", "page": 13, "complete": false,
+   "rows": [["15 min.", "Runtime (s)", "8688.63", "7143.22", "27071.67", "15324.67"],
+            ["1 hour", "Max. delay (s)", "14889.79", "14027.18", "8399.59", "5135.09"],
+            ["1 hour", "Avg. delay (s)", "127.69", "103.22", "136.22", "96.95"]]}
+ ]
+}

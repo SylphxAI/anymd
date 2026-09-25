@@ -1,0 +1,25 @@
+{
+ "id": "report-plz",
+ "derived_from": "PDF text layer (pdftotext -layout and raw) + all 5 page images checked at 60 dpi. No data tables (page 2 is a labelled diagram with callout boxes; order omits the callouts because their reading order is ambiguous).",
+ "sentences": [
+  "Where passenger loading zones are provided, at least one accessible passenger loading zone is required in every continuous 100 linear feet of loading zone or fraction thereof.",
+  "Requirements for accessible passenger loading zones address vehicle pull-up spaces and access aisles, including their dimensions, surfacing, and vertical clearance.",
+  "On-street bus stops also must comply with requirements in §810.2 to the maximum extent practicable.",
+  "Yes, the access aisle at accessible passenger loading zones must be at the same level as the vehicle pull-up space it serves.",
+  "State or local codes and regulations may specify such markings.",
+  "Vehicle pull-up spaces are not required to be marked."
+ ],
+ "order": [
+  "This guide explains requirements in the ADA Standards",
+  "Required Compliance [§209]",
+  "Required Passenger Loading Zones",
+  "Accessible Passenger Loading Zones [§503]",
+  "Bus Loading Areas and On-Street Bus Stops",
+  "Common Questions",
+  "What constitutes a",
+  "Must the access aisle be flush with the pull-up space?",
+  "Can curb ramps overlap access aisles?",
+  "Advancing Full Access and Inclusion for All"
+ ],
+ "tables": []
+}

@@ -1,0 +1,240 @@
+{
+ "id": "html-markitdown-wikipedia",
+ "derived_from": "Parsed the HTML with BeautifulSoup; sentences and order strings come from <p> elements inside #mw-content-text (article body, not sidebar/nav/navboxes); tables are the three .wikitable elements in the Financial and Ownership sections. Section headings are repeated in the sidebar table of contents, so order uses paragraph openings instead. Every string was checked against the normalized full-page text (occurrence count 1 for order strings).",
+ "sentences": [
+  "Its flagship hardware products are the Xbox video game consoles and the Microsoft Surface lineup of touchscreen personal computers.",
+  "In 1972, they founded Traf-O-Data, which sold a rudimentary computer to track and analyze automobile traffic data.",
+  "Microsoft Office 2007, released at the same time, featured a \"Ribbon\" user interface which was a significant departure from its predecessors.",
+  "The company is run by a board of directors made up of mostly company outsiders, as is customary for publicly traded companies.",
+  "Microsoft is frequently accused of using anticompetitive tactics and abusing its monopolistic power.",
+  "Negotiations with the European Commission continued until the summer of 2023, but, as it became known to the media, they reached an impasse."
+ ],
+ "order": [
+  "Microsoft was founded by Bill Gates and Paul Allen on April 4, 1975",
+  "Childhood friends Bill Gates and Paul Allen",
+  "Released in January 2007, the next version of Windows",
+  "In September 2018, Microsoft discontinued Skype Classic.",
+  "The company is run by a board of directors",
+  "The 10 largest shareholder of Microsoft",
+  "In 2020, Salesforce, the manufacturer of the Slack platform"
+ ],
+ "tables": [
+  {
+   "caption": "Sales by region (2023)",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Region",
+     "Sales in billion $",
+     "share"
+    ],
+    [
+     "United States",
+     "106.7",
+     "50.4%"
+    ],
+    [
+     "Other countries",
+     "105.2",
+     "49.6%"
+    ]
+   ]
+  },
+  {
+   "caption": "Financial table (Year / Revenue / Net income / Total Assets / Employees), body rows only; header cells contain line breaks and citation markers",
+   "page": null,
+   "complete": false,
+   "rows": [
+    [
+     "2005",
+     "39,788",
+     "12,254",
+     "70,815",
+     "61,000"
+    ],
+    [
+     "2006",
+     "44,282",
+     "12,599",
+     "69,597",
+     "71,000"
+    ],
+    [
+     "2007",
+     "51,122",
+     "14,065",
+     "63,171",
+     "79,000"
+    ],
+    [
+     "2008",
+     "60,420",
+     "17,681",
+     "72,793",
+     "91,000"
+    ],
+    [
+     "2009",
+     "58,437",
+     "14,569",
+     "77,888",
+     "93,000"
+    ],
+    [
+     "2010",
+     "62,484",
+     "18,760",
+     "86,113",
+     "89,000"
+    ],
+    [
+     "2011",
+     "69,943",
+     "23,150",
+     "108,704",
+     "90,000"
+    ],
+    [
+     "2012",
+     "73,723",
+     "16,978",
+     "121,271",
+     "94,000"
+    ],
+    [
+     "2013",
+     "77,849",
+     "21,863",
+     "142,431",
+     "99,000"
+    ],
+    [
+     "2014",
+     "86,833",
+     "22,074",
+     "172,384",
+     "128,000"
+    ],
+    [
+     "2015",
+     "93,580",
+     "12,193",
+     "174,472",
+     "118,000"
+    ],
+    [
+     "2016",
+     "91,154",
+     "20,539",
+     "193,468",
+     "114,000"
+    ],
+    [
+     "2017",
+     "96,571",
+     "25,489",
+     "250,312",
+     "124,000"
+    ],
+    [
+     "2018",
+     "110,360",
+     "16,571",
+     "258,848",
+     "131,000"
+    ],
+    [
+     "2019",
+     "125,843",
+     "39,240",
+     "286,556",
+     "144,106"
+    ],
+    [
+     "2020",
+     "143,015",
+     "44,281",
+     "301,311",
+     "163,000"
+    ],
+    [
+     "2021",
+     "168,088",
+     "61,271",
+     "333,779",
+     "181,000"
+    ],
+    [
+     "2022",
+     "198,270",
+     "72,738",
+     "364,840",
+     "221,000"
+    ],
+    [
+     "2023",
+     "211,915",
+     "73,307",
+     "411,976",
+     "238,000"
+    ]
+   ]
+  },
+  {
+   "caption": "The 10 largest shareholders of Microsoft in early 2024 (Ownership section)",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Shareholder name",
+     "Percentage"
+    ],
+    [
+     "The Vanguard Group",
+     "8.9%"
+    ],
+    [
+     "BlackRock",
+     "5.6%"
+    ],
+    [
+     "State Street Corporation",
+     "4.0%"
+    ],
+    [
+     "Fidelity Investments",
+     "2.9%"
+    ],
+    [
+     "Geode Capital Management",
+     "2.1%"
+    ],
+    [
+     "T. Rowe Price International",
+     "1.9%"
+    ],
+    [
+     "Eaton Vance",
+     "1.7%"
+    ],
+    [
+     "JP Morgan Investment Management",
+     "1.6%"
+    ],
+    [
+     "Bill Gates",
+     "1.4%"
+    ],
+    [
+     "BlackRock Life",
+     "1.4%"
+    ],
+    [
+     "Others",
+     "68.5%"
+    ]
+   ]
+  }
+ ]
+}

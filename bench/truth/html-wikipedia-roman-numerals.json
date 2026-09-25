@@ -1,0 +1,207 @@
+{
+ "id": "html-wikipedia-roman-numerals",
+ "derived_from": "Wayback id_ snapshot of https://en.wikipedia.org/wiki/Roman_numerals (served with Content-Encoding: gzip; file is the decoded HTML; page is revision 1374259684). Parsed with BeautifulSoup; sentences/order from <p> elements in #mw-content-text (article body, not sidebar TOC, navboxes or references). Section headings also appear in the sidebar table of contents, so order uses paragraph openings. Tables from the five .wikitable elements.",
+ "sentences": [
+  "Forms exist that vary in one way or another from the general standard represented above.",
+  "The modern form can only write numbers up to 3999, and without M in early Roman times only numbers up to 899 could be written.",
+  "Rome was founded sometime between 850 and 750 BC, next to the southern edge of the Etruscan domain, which covered a large part of north-central Italy.",
+  "In entomology, the broods of the thirteen- and seventeen-year periodical cicadas are identified by Roman numerals.",
+  "In seismology, Roman numerals are used to designate degrees of the Mercalli intensity scale of earthquakes.",
+  "A notable exception to the use of Roman numerals in Europe is in Greece, where Greek numerals (based on the Greek alphabet) are generally used in contexts where Roman numerals would be used elsewhere."
+ ],
+ "order": [
+  "Roman numerals are a numeral system that originated in ancient Rome",
+  "Roman numerals use different symbols for each power of ten",
+  "Forms exist that vary in one way or another",
+  "As a non-positional numeral system",
+  "The base \"Roman fraction\" is S",
+  "The system is closely associated with the ancient city-state of Rome",
+  "Lower case, or minuscule, letters were developed",
+  "By the 11th century, Arabic numerals had been introduced",
+  "When typing on Russian typewriters",
+  "The \"Number Forms\" block of the Unicode"
+ ],
+ "tables": [
+  {
+   "caption": "Individual decimal places",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "",
+     "Thousands",
+     "Hundreds",
+     "Tens",
+     "Units"
+    ],
+    [
+     "1",
+     "M",
+     "C",
+     "X",
+     "I"
+    ],
+    [
+     "2",
+     "MM",
+     "CC",
+     "XX",
+     "II"
+    ],
+    [
+     "3",
+     "MMM",
+     "CCC",
+     "XXX",
+     "III"
+    ],
+    [
+     "4",
+     "",
+     "CD",
+     "XL",
+     "IV"
+    ],
+    [
+     "5",
+     "",
+     "D",
+     "L",
+     "V"
+    ],
+    [
+     "6",
+     "",
+     "DC",
+     "LX",
+     "VI"
+    ],
+    [
+     "7",
+     "",
+     "DCC",
+     "LXX",
+     "VII"
+    ],
+    [
+     "8",
+     "",
+     "DCCC",
+     "LXXX",
+     "VIII"
+    ],
+    [
+     "9",
+     "",
+     "CM",
+     "XC",
+     "IX"
+    ]
+   ]
+  },
+  {
+   "caption": "Roman fractions 1/12 to 12/12 (Fraction / Roman numeral / Name / Meaning); fractions use U+2044 fraction slash and some cells contain line breaks - representative rows",
+   "page": null,
+   "complete": false,
+   "rows": [
+    [
+     "1⁄12",
+     "·",
+     "Uncia, unciae",
+     "\"Ounce\""
+    ],
+    [
+     "6⁄12 = 1⁄2",
+     "S",
+     "Semis, semissis",
+     "\"Half\""
+    ],
+    [
+     "11⁄12",
+     "S····· or S⁙",
+     "Deunx, deuncis",
+     "\"Less an ounce\" (de-uncia → deunx)"
+    ],
+    [
+     "12⁄12 = 1",
+     "I",
+     "As, assis",
+     "\"Unit\""
+    ]
+   ]
+  },
+  {
+   "caption": "Medieval Roman numerals (Number / Abbrev. / Notes and etymology) - representative rows",
+   "page": null,
+   "complete": false,
+   "rows": [
+    [
+     "5",
+     "A, U",
+     "A resembles an upside-down V. Also said to equal 500."
+    ],
+    [
+     "7",
+     "S, Z",
+     "Presumed abbreviation of septem, Latin for 7."
+    ],
+    [
+     "40",
+     "F",
+     "Presumed abbreviation of English forty."
+    ],
+    [
+     "80",
+     "R",
+     ""
+    ],
+    [
+     "2000",
+     "Z",
+     ""
+    ]
+   ]
+  },
+  {
+   "caption": "Roman numerals in Russian typewriting",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Number",
+     "I",
+     "II",
+     "III",
+     "IV",
+     "V",
+     "VI",
+     "VII",
+     "VIII",
+     "IX",
+     "X",
+     "L",
+     "C",
+     "D",
+     "M"
+    ],
+    [
+     "Typewritten",
+     "1",
+     "П",
+     "Ш",
+     "1У",
+     "У",
+     "У1",
+     "УП",
+     "УШ",
+     "1Х",
+     "Х",
+     "Л",
+     "С",
+     "Д",
+     "М"
+    ]
+   ]
+  }
+ ]
+}

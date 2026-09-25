@@ -1,5 +1,0 @@
-# Competitor versions used by bench/run.py (pinned for reproducible numbers).
-markitdown[all]==0.1.8
-docling==2.130.0
-kreuzberg==4.10.4
-tiktoken==0.14.0
