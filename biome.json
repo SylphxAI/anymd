@@ -73,7 +73,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/handlers/readPdf.ts", "src/pdf/**/*.ts", "test/**/*.ts"],
+      "includes": ["test/**/*.ts"],
       "linter": {
         "rules": {
           "complexity": {

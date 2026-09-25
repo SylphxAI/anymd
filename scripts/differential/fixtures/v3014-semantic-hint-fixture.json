@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "generator": "scripts/differential/generate-v3014-semantic-hint-fixture.ts",
-  "fixture": {
-    "path": "test/fixtures/differential/v3014-semantic-hints-v1.pdf",
-    "bytes": 1752,
-    "sha256": "46cb878d7dca59aceec09a54b7f7e9b39ccd50c9f42128083d4eea3f7c9d6a40"
-  }
-}

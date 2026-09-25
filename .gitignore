@@ -38,10 +38,6 @@ bin/native/pdf-reader-mcp-server
 packages/**/bin/pdf-reader-mcp-server
 packages/**/bin/pdf-reader-mcp-server.exe
 
-# same-host A/B working trees (never commit installs)
-benchmark-artifacts/same-host-ab/ts-lkg-install/
-benchmark-artifacts/same-host-ab/per-fixture/
-
 # durable perf raw samples can be large; summaries live under verification/
 verification/perf/raw/
 *.tgz

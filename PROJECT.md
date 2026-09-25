@@ -50,8 +50,9 @@ evidence without becoming a hosted Sylphx Platform BaaS service.
 
 PDF Reader MCP owns the local/open-source document-intelligence package and its
 public MCP contract. Production backend authority is the pure-Rust crates and
-native binary launched by the npm package entry. Residual TypeScript PDF trees
-are non-authoritative (oracle/history only).
+native binary launched by the npm package entry. The TypeScript v3.0.14 engine
+and its parity oracle are retired and deleted; TypeScript remains only as the
+npm launcher and SDK wrapper.
 
 It does not own hosted customer accounts, billing, storage, tenant policy,
 Gateway routing, product audit, or durable state created after a tool is used.

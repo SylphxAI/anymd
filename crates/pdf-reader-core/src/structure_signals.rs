@@ -1090,9 +1090,9 @@ mod tests {
     }
 
     #[test]
-    fn public_normalizer_matches_frozen_ts_mock_boundary_oracle() {
+    fn public_normalizer_matches_frozen_golden() {
         let oracle: Value = serde_json::from_str(include_str!(
-            "../../../scripts/differential/fixtures/v3014-structure-normalizer-oracle.json"
+            "../tests/fixtures/structure-normalizer-golden.json"
         ))
         .unwrap();
         assert_eq!(

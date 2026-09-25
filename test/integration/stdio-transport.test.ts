@@ -2,8 +2,7 @@
  * Integration test for MCP server with opt-in Rust rmcp stdio transport.
  * Tests JSON-RPC communication over stdio and golden read_pdf parity.
  *
- * Production default is TypeScript (dist/index.js). These cases prove the
- * experimental Rust engine path via PDF_READER_MCP_ENGINE=rust.
+ * Exercises the native Rust server through the bin/anymd launcher.
  */
 
 import { type ChildProcess, execSync, spawn } from 'node:child_process';

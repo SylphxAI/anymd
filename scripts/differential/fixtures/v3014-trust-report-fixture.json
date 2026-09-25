@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "generator": "scripts/differential/generate-v3014-trust-report-fixture.ts",
-  "fixture": {
-    "path": "test/fixtures/differential/v3014-trust-report-v1.pdf",
-    "bytes": 2705,
-    "sha256": "2c8c8e43c35c8fc8f920dcfc48bff2ce523bce8d4bb7164fbebd136f48a22605"
-  }
-}

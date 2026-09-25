@@ -71,8 +71,10 @@ Native Rust engine is product authority; npm `dist/runtime-entry.js` and
 backend. Historical TypeScript LKG (if needed) is the external pin
 `@sylphx/pdf-reader-mcp@3.0.14`, not residual source under `src/`.
 
-## Residual TypeScript (non-production)
+## Retired TypeScript oracle
 
-`src/pdf/**`, `src/handlers/**`, `src/legacy-engine-runtime.ts`, and related trees are **oracle/benchmark-only**.
-They are **not** shipped (`package.json` files allowlist) and are **not** production authority.
-Do not restore them as a production runtime. Prefer deleting after oracle migration to Rust-only.
+The TypeScript v3.0.14 engine, its `src/pdf/**` / `src/handlers/**` oracle
+trees, and the `scripts/differential/**` parity harness were deleted; the only
+TypeScript under `src/` is the launcher/SDK surface (`runtime-entry.ts`,
+`pure-rust.ts`, `sdk.ts`, `native/**`). Behavior is pinned by Rust tests and
+the Markdown corpus, not by parity with 3.0.14. Do not reintroduce an oracle.
