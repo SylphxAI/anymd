@@ -2,7 +2,11 @@ name: Publish npm
 
 # Admission-gated multi-platform native optional package + main package publish.
 # dropInFor3014 remains false until sole-runtime registry proof.
-# Uses secrets.NPM_TOKEN. Does not re-run the heavy changesets release matrix.
+# Authenticates with npm trusted publishing (GitHub OIDC): every published
+# package trusts SylphxAI/anymd + this workflow filename (publish-npm.yml), so
+# no long-lived npm token is needed. The publish job must stay on a
+# GitHub-hosted runner; npm does not accept OIDC from self-hosted runners.
+# Does not re-run the heavy changesets release matrix.
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +14,11 @@ on:
         description: 'Type I_UNDERSTAND_USER_IMPACT to publish (admission gate still enforced)'
         required: true
         default: ''
+      use_token_fallback:
+        description: 'Transitional: authenticate with the NPM_TOKEN secret instead of OIDC (only until every package has its trusted publisher)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -109,6 +118,8 @@ jobs:
     name: Publish natives + main + aliases
     needs: build-native
     if: ${{ github.event.inputs.confirm == 'I_UNDERSTAND_USER_IMPACT' }}
+    # GitHub-hosted on purpose: npm trusted publishing and --provenance both
+    # require a GitHub-hosted runner.
     runs-on: ubuntu-latest
     steps:
       - name: Create release bot token
@@ -133,9 +144,19 @@ jobs:
       - name: Setup Node
         # Node is the npm CLI / customer installer host, not the company TypeScript toolchain.
         uses: actions/setup-node@v7
+        # No registry-url: that writes an npmrc bound to NODE_AUTH_TOKEN, and
+        # publishing authenticates through OIDC instead.
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          set -euo pipefail
+          # Trusted publishing (OIDC) needs npm >= 11.5.1 and Node >= 22.14.0.
+          npm install -g npm@11
+          node -e 'const [a,b,c]=process.argv[1].split(".").map(Number); if (a<11||(a===11&&(b<5||(b===5&&c<1)))) { console.error("npm "+process.argv[1]+" < 11.5.1"); process.exit(1) }' "$(npm --version)"
+          node -e 'const [a,b]=process.versions.node.split(".").map(Number); if (a<22||(a===22&&b<14)) { console.error("node "+process.versions.node+" < 22.14.0"); process.exit(1) }'
+          echo "node $(node --version), npm $(npm --version)"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -198,30 +219,48 @@ jobs:
 
       - name: Publish natives, then main, then aliases
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          USE_TOKEN_FALLBACK: ${{ inputs.use_token_fallback && 'true' || 'false' }}
+          NPM_TOKEN: ${{ inputs.use_token_fallback && secrets.NPM_TOKEN || '' }}
         run: |
           set -euo pipefail
-          test -n "${NPM_TOKEN:-}"
-          printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
+          if [ "$USE_TOKEN_FALLBACK" = "true" ]; then
+            if [ -z "${NPM_TOKEN:-}" ]; then
+              echo "::error::use_token_fallback=true but the NPM_TOKEN secret is absent; publish through OIDC instead" >&2
+              exit 1
+            fi
+            echo "::warning::publishing with the transitional NPM_TOKEN fallback, not trusted publishing"
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
+          else
+            # npm exchanges the job's GitHub OIDC token for a short-lived,
+            # per-package publish token. No npmrc credential is written.
+            echo "publishing through npm trusted publishing (GitHub OIDC)"
+          fi
           bun run release:publish-with-natives
 
       - name: Clear npm deprecation on the former names
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ inputs.use_token_fallback && secrets.NPM_TOKEN || '' }}
         run: |
           set -uo pipefail
           # @sylphx/citra and @sylphx/pdf-reader-mcp are live aliases of
-          # @sylphx/anymd now, so their old "retired" deprecation must go.
-          # An empty message clears it. Non-fatal: the packages are already
-          # published; a token without owner rights only leaves the notice.
-          printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
+          # @sylphx/anymd, so any old "retired" deprecation must stay cleared.
+          # OIDC authenticates only npm publish, not npm deprecate, so this runs
+          # only on the token fallback; otherwise it checks and reports.
+          # Non-fatal either way: the packages are already published.
           for name in @sylphx/pdf-reader-mcp @sylphx/citra; do
-            if npm deprecate "${name}@*" ""; then
-              echo "cleared deprecation on ${name}"
-            else
-              echo "::warning::could not clear deprecation on ${name}; run: npm deprecate \"${name}@*\" \"\""
+            notice="$(npm view "$name" deprecated 2>/dev/null || true)"
+            if [ -z "$notice" ]; then
+              echo "${name}: no deprecation notice"
+              continue
             fi
+            if [ -n "${NPM_TOKEN:-}" ]; then
+              printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
+              if npm deprecate "${name}@*" ""; then
+                echo "cleared deprecation on ${name}"
+                continue
+              fi
+            fi
+            echo "::warning::${name} is still deprecated; an owner clears it with: npm deprecate \"${name}@*\" \"\""
           done
 
       - name: Registry readback (main + host optional)
