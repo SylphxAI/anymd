@@ -61,7 +61,12 @@ jobs:
       - name: Build Rust core and MCP server
         run: bun run build:rust
 
+      - name: Fetch Markdown regression corpus
+        run: bash scripts/fetch-markdown-corpus.sh "${RUNNER_TEMP}/markdown-corpus"
+
       - name: Rust core tests
+        env:
+          ANYMD_CORPUS_DIR: ${{ runner.temp }}/markdown-corpus
         run: bun run test:rust
 
       - name: Build package

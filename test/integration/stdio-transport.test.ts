@@ -356,6 +356,7 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
         arguments: {
           sources: [{ path: samplePdf }],
           query: 'Lorem',
+          detail: true,
         },
       })
     );

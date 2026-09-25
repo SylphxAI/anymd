@@ -6,6 +6,7 @@ mod cos_document;
 pub mod document_twin;
 mod form_attachment_signals;
 mod image_signals;
+pub mod markdown_layout;
 pub mod ocr_fusion;
 pub mod ocr_tables;
 pub mod page_cache;

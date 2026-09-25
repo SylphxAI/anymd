@@ -1,0 +1,82 @@
+{
+  "description": "Real-world PDFs for the Markdown layout engine. Files are not vendored: scripts/fetch-markdown-corpus.sh downloads and SHA-256 verifies them, and crates/pdf-reader-core/tests/markdown_corpus.rs asserts the expectations when ANYMD_CORPUS_DIR is set.",
+  "cases": [
+    {
+      "id": "attention",
+      "file": "attention.pdf",
+      "url": "https://arxiv.org/pdf/1706.03762v7",
+      "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "archetype": "single-column paper with TeX kerning spaces, math, and tables",
+      "contains": [
+        "# Attention Is All You Need",
+        "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder.",
+        "## 3 Model Architecture",
+        "#### 3.2.1 Scaled Dot-Product Attention",
+        "| Self-Attention | O(n^2 · d) | O(1) | O(1) |",
+        "| Transformer (big) | 28.4 | 41.8 |"
+      ],
+      "absent": ["Thedominantsequence", "transductionmodels"]
+    },
+    {
+      "id": "bert",
+      "file": "bert.pdf",
+      "url": "https://arxiv.org/pdf/1810.04805v2",
+      "sha256": "5692a5514787a8c6727b4ff3b726a3385798bc68e12138d1d4af83947e2acf6e",
+      "archetype": "two-column ACL paper",
+      "contains": [
+        "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers.",
+        "## 1 Introduction",
+        "Language model pre-training has been shown to be effective for improving many natural language processing tasks"
+      ],
+      "ordered": ["## Abstract", "## 1 Introduction", "## 2 Related Work"],
+      "absent": ["Weintroduce"]
+    },
+    {
+      "id": "cjk",
+      "file": "cjk.pdf",
+      "url": "https://www.archives.gov.tw/wSite/public/Attachment/0/f1715062099077.pdf",
+      "sha256": "b28e5e6d91923d27d6fa2d29b42018584e71b3a38ff04aa9acc638b0c11e1bd3",
+      "archetype": "Traditional Chinese government guide with a table",
+      "contains": [
+        "參考文獻格式",
+        "文內同時引用同一作者有多篇文章時，依照年代先後順序排列",
+        "| 作者數 | 正文內引用格式 |"
+      ],
+      "absent": ["文 內 同 時"]
+    },
+    {
+      "id": "h8",
+      "file": "h8.pdf",
+      "url": "https://www.federalreserve.gov/releases/h8/20260918/h8.pdf",
+      "sha256": "a56c5e4c4ac5391770abff75d3d9f9ab8d2d3cd9a9f9e057ad83f9828841a768",
+      "archetype": "table-heavy statistical release",
+      "contains": [
+        "H.8 ASSETS AND LIABILITIES OF COMMERCIAL BANKS IN THE UNITED STATES",
+        "| 11 Real estate loans | 2.0 | 10.2 |"
+      ],
+      "absent": []
+    },
+    {
+      "id": "plz",
+      "file": "plz.pdf",
+      "url": "https://www.access-board.gov/files/ada/guides/plz.pdf",
+      "sha256": "0f8daeba6773577fac1d443828d6ff4bf8755e03d119d1ca13ca3827ffd8f66e",
+      "archetype": "designed guide with letter-spaced headings and bullets",
+      "contains": [
+        "U.S. ACCESS BOARD TECHNICAL GUIDE",
+        "# Passenger Loading Zones",
+        "- parking facilities where valet parking service is provided (§209.4); and"
+      ],
+      "absent": ["T E C H N I C A L"]
+    },
+    {
+      "id": "w9",
+      "file": "w9.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/fw9--2024.pdf",
+      "sha256": "2d420cbb4123dcf1fb82595b2359cfbb5d81f00b9df9d359fcc7af361d093f53",
+      "archetype": "government fillable form",
+      "contains": ["Taxpayer Identification Number", "Before you begin. For guidance related to the purpose of Form W-9, see Purpose of Form, below."],
+      "absent": []
+    }
+  ]
+}
