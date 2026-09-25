@@ -261,8 +261,8 @@
     "wholeProductReviewPackage": "docs/specs/whole-product-independent-review-package-4.0.0-sole-rust.md",
     "wholeProductReview": {
       "status": "review_pass_automated_release_ci_verified",
-      "candidateVersion": "7.1.0",
-      "candidateSha": "6eff968bc762069a09f6e0d1c010bb62c8a6f4a6",
+      "candidateVersion": "7.1.1",
+      "candidateSha": "8b8ad782142cc0e022f18aae14b6e4708b59716a",
       "artifact": "release/admission.json",
       "evidence": "release/admission.json",
       "outcome": "review_pass_automated_release_ci_verified",
@@ -271,9 +271,9 @@
       "tsRetirementAuthorized": true,
       "performanceClaimsAuthorized": true,
       "goalCompleteAuthorized": false,
-      "reviewedAt": "2026-09-25T12:00:00Z",
-      "note": "7.1.0 release candidate: browser playground (WASM), monospace line preservation, structured-JSON word spaces, opt-in whisper model download, retired v3.0.14 differential harness. Exact candidate trunk workflows are recorded in release/admission.json. Autonomous release verification record; not an external human review.",
-      "hostRuntimeProofNote": "Candidate native build evidence run 36123107608: linux-x64-gnu, linux-arm64-gnu, and win32-x64-msvc proofs passed."
+      "reviewedAt": "2026-09-25T15:00:00Z",
+      "note": "7.1.1 release candidate: exact /mcp/health API-key exemption, npm trusted publishing (OIDC only), single-source product copy, AgentDocBench open benchmark, crates renamed to anymd-*. Exact candidate trunk workflows are recorded in release/admission.json. Autonomous release verification record; not an external human review.",
+      "hostRuntimeProofNote": "Native packages run 36144152136: linux-x64-gnu, linux-arm64-gnu, and win32-x64-msvc builds and runtime proofs passed."
     },
     "unfreezeAuthorized": true,
     "soleRuntimeAuthorized": true,

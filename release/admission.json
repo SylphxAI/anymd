@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "profile": "pdf_reader_whole_product_independent_review",
   "reviewer": "autonomous-release-verification",
-  "reviewedAt": "2026-09-25T12:00:00Z",
+  "reviewedAt": "2026-09-25T15:00:00Z",
   "candidate": {
     "repository": "SylphxAI/anymd",
-    "sha": "6eff968bc762069a09f6e0d1c010bb62c8a6f4a6",
-    "shortSha": "6eff968",
-    "version": "7.1.0",
+    "sha": "8b8ad782142cc0e022f18aae14b6e4708b59716a",
+    "shortSha": "8b8ad78",
+    "version": "7.1.1",
     "package": "@sylphx/anymd",
     "bin": "anymd",
     "published": false,
@@ -23,8 +23,8 @@
   "performanceClaimsAuthorized": true,
   "goalCompleteAuthorized": false,
   "notes": [
-    "7.1.0: WASM browser playground on the docs site; monospace text keeps line breaks; structured JSON text keeps word spaces; opt-in verified whisper model download; the v3.0.14 differential harness and TypeScript oracle are retired; CI checks Validate Code Quality and security:secrets are required on main.",
-    "Automated verification on this exact candidate: CI run 36123107590 success; Release run 36123107653 success; Deploy Docs run 36123107593 success; Code Quality run 36123107545 success; Native package scaffold run 36123107650 success; Candidate native build evidence run 36123107608 success.",
+    "7.1.1: only GET /mcp/health skips the HTTP API key; publishing uses npm trusted publishing (OIDC) with no stored token; README/site/npm/registry/GitHub copy comes from product.json; AgentDocBench (38 license-clean documents, 7 tools) replaces the 12-document benchmark; crates renamed to anymd-*; legacy JSON internals split by responsibility.",
+    "Automated verification on this exact candidate: CI run 36144152145 success; Release run 36144152115 success; Deploy Docs run 36144152330 success; Code Quality run 36144151378 success; Native packages run 36144152136 success.",
     "This is an autonomous release verification record backed by the recorded CI results above, not a claim of an external human review."
   ]
 }
