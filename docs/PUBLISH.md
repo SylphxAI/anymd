@@ -21,9 +21,10 @@ npx @sylphx/anymd
 ## Former names (aliases)
 
 `@sylphx/citra` and `@sylphx/pdf-reader-mcp` are live aliases of
-`@sylphx/anymd`, published at the same version by `publish-npm.yml`. OIDC authenticates only `npm publish`, so that workflow
-reports a lingering deprecation notice rather than clearing it; an owner clears
-it by hand:
+`@sylphx/anymd`, published at the same version by `publish-npm.yml`. Publishing
+uses npm trusted publishing (GitHub OIDC), which covers `npm publish` only.
+Deprecation is a one-off owner action, not part of the release; to clear a
+notice:
 
 ```bash
 npm deprecate "@sylphx/pdf-reader-mcp@*" ""
@@ -33,9 +34,7 @@ npm deprecate "@sylphx/citra@*" ""
 Trusted publisher, identical for all eight packages (`@sylphx/anymd`, the five
 `@sylphx/anymd-<platform>` natives, `@sylphx/citra`, `@sylphx/pdf-reader-mcp`):
 GitHub Actions, organization `SylphxAI`, repository `anymd`, workflow
-`publish-npm.yml`, no environment. The `use_token_fallback` input publishes with
-the `NPM_TOKEN` secret instead and exists only until every package trusts the
-workflow; afterwards the secret is deleted.
+`publish-npm.yml`, no environment. No npm token is stored in the repository.
 
 Publish authority: Changesets through `release.yml`, then the admission-gated
 `publish-npm.yml` artifact path: natives, then `@sylphx/anymd`, then the two
