@@ -1,41 +1,54 @@
 use pdf_reader_mcp_server::{
-    discover_compat, http_transport, source_access::SourceAccessPolicy, PdfReaderMcp,
+    cli, discover_compat, http_transport, source_access::SourceAccessPolicy, PdfReaderMcp,
     SERVER_VERSION,
 };
 use rmcp::transport::async_rw::AsyncRwTransport;
 use rmcp::{ServerHandler, ServiceExt};
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
-    if arguments
-        .iter()
-        .any(|argument| argument == "--help" || argument == "-h")
-    {
-        println!(
-            "citra-mcp-server {SERVER_VERSION}\n\n\
-Usage: citra-mcp-server [doctor] [--allow-dir=<path>]...\n\n\
-Filesystem access:\n  \
---allow-dir=<path>       Restrict local PDFs to this directory (repeatable)\n  \
-MCP_PDF_ALLOWED_DIRS     Platform path-list of allowed directories\n\n\
-Without an allowlist, local PDF access is unrestricted within OS permissions."
-        );
-        return Ok(());
+    match cli::mode(&arguments) {
+        cli::Mode::Doctor => {
+            doctor();
+            Ok(())
+        }
+        cli::Mode::Cli(arguments) => {
+            let policy = SourceAccessPolicy::from_process().map_err(anyhow::Error::msg)?;
+            std::process::exit(cli::run(arguments, &policy));
+        }
+        cli::Mode::Mcp => tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()?
+            .block_on(serve()),
     }
+}
 
-    if arguments.first().map(String::as_str) == Some("doctor") {
-        eprintln!(
-            "pdf-reader-mcp Rust MCP server {SERVER_VERSION} ({})",
-            pdf_reader_core::ENGINE_NAME
-        );
-        eprintln!("runtime: sole-Rust citra-mcp-server");
-        return Ok(());
+fn doctor() {
+    let tool = |name: &str| {
+        std::env::var_os("PATH")
+            .map(|path| std::env::split_paths(&path).any(|dir| dir.join(name).is_file()))
+            .unwrap_or(false)
+    };
+    println!("anymd {SERVER_VERSION} (native Rust)");
+    for (name, purpose) in [
+        ("tesseract", "OCR for images and scanned PDF pages"),
+        ("ffprobe", "audio/video metadata and chapters"),
+        ("ffmpeg", "embedded subtitles and transcript audio"),
+        (
+            "whisper-cli",
+            "local transcripts (with ANYMD_WHISPER_MODEL)",
+        ),
+    ] {
+        let state = if tool(name) { "found" } else { "not found" };
+        println!("  {name:<12} {state:<10} {purpose}");
     }
+}
 
+async fn serve() -> anyhow::Result<()> {
     let source_access = SourceAccessPolicy::from_process().map_err(anyhow::Error::msg)?;
     if source_access.is_restricted() {
         eprintln!(
-            "[citra] Filesystem allowlist enabled for {} root(s)",
+            "[anymd] Filesystem allowlist enabled for {} root(s)",
             source_access.allowed_dir_count()
         );
     }

@@ -11,7 +11,9 @@ use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 use rmcp::model::{CallToolResult, ContentBlock};
 
-use crate::document::{is_url, readable_extension, searchable_extension, OpenOptions, Opened, Unit};
+use crate::document::{
+    is_url, readable_extension, searchable_extension, OpenOptions, Opened, Unit,
+};
 use crate::page_selection::selected_pages;
 use crate::schema::{PageSpecifier, PdfSource, ReadArgs, ReadPdfArgs, SearchArgs, SearchPdfArgs};
 use crate::source_access::SourceAccessPolicy;
@@ -228,7 +230,10 @@ fn plural(noun: &str, count: u32) -> String {
 
 fn failed(label: &str, message: String) -> SourceRead {
     SourceRead {
-        header: vec![("source".into(), label.to_string()), ("error".into(), message.clone())],
+        header: vec![
+            ("source".into(), label.to_string()),
+            ("error".into(), message.clone()),
+        ],
         body: String::new(),
         next: None,
         error: Some(message),
@@ -245,7 +250,10 @@ fn read_opened(
 ) -> SourceRead {
     let total = opened.total;
     let mut wanted: Vec<u32> = match selection {
-        Some(pages) => pages.into_iter().filter(|page| *page >= 1 && *page <= total).collect(),
+        Some(pages) => pages
+            .into_iter()
+            .filter(|page| *page >= 1 && *page <= total)
+            .collect(),
         None => (1..=total).collect(),
     };
     if let Some(cursor) = cursor {
@@ -254,9 +262,17 @@ fn read_opened(
     let noun = opened.unit_noun;
     let mut header = vec![("source".to_string(), opened.label.clone())];
     if wanted.is_empty() {
-        let message = format!("No requested {} exist (the document has {total}).", plural(noun, 2));
+        let message = format!(
+            "No requested {} exist (the document has {total}).",
+            plural(noun, 2)
+        );
         header.push(("error".into(), message.clone()));
-        return SourceRead { header, body: String::new(), next: None, error: Some(message) };
+        return SourceRead {
+            header,
+            body: String::new(),
+            next: None,
+            error: Some(message),
+        };
     }
     // One-unit documents (a web page, a DOCX, an image) need no unit markers.
     let markers = total > 1 || opened.is_paged();
@@ -266,7 +282,11 @@ fn read_opened(
     let mut next = None;
     let mut used = 0usize;
     let mut visible = 0usize;
-    let chunk_size = if opened.is_paged() { PAGE_CHUNK } else { usize::MAX };
+    let chunk_size = if opened.is_paged() {
+        PAGE_CHUNK
+    } else {
+        usize::MAX
+    };
     'chunks: for chunk in wanted.chunks(chunk_size.min(wanted.len()).max(1)) {
         let units = match opened.units(chunk) {
             Ok(units) => units,
@@ -275,7 +295,9 @@ fn read_opened(
         opened.title_from_units(&units);
         for unit in units {
             let mut skip = match cursor {
-                Some(cursor) if cursor.page == unit.number => cursor.offset.min(unit.markdown.len()),
+                Some(cursor) if cursor.page == unit.number => {
+                    cursor.offset.min(unit.markdown.len())
+                }
                 _ => 0,
             };
             while !unit.markdown.is_char_boundary(skip) {
@@ -302,12 +324,21 @@ fn read_opened(
                     shown.push(unit.number);
                     let consumed = unit.markdown.len() - content.len() + cut;
                     if cut < content.len() {
-                        next = Some(Cursor { page: unit.number, offset: consumed });
+                        next = Some(Cursor {
+                            page: unit.number,
+                            offset: consumed,
+                        });
                     } else if let Some(following) = wanted.iter().find(|p| **p > unit.number) {
-                        next = Some(Cursor { page: *following, offset: 0 });
+                        next = Some(Cursor {
+                            page: *following,
+                            offset: 0,
+                        });
                     }
                 } else {
-                    next = Some(Cursor { page: unit.number, offset: skip });
+                    next = Some(Cursor {
+                        page: unit.number,
+                        offset: skip,
+                    });
                 }
                 break 'chunks;
             }
@@ -334,7 +365,10 @@ fn read_opened(
         header.push((plural(noun, 2), total.to_string()));
         let complete = shown.len() == total as usize && next.is_none();
         if !complete {
-            header.push(("showing".into(), format!("{} {}", plural(noun, 2), describe_pages(&shown))));
+            header.push((
+                "showing".into(),
+                format!("{} {}", plural(noun, 2), describe_pages(&shown)),
+            ));
         }
     }
     if opened.format == "pdf" && !shown.is_empty() && visible < shown.len() * 20 {
@@ -361,7 +395,12 @@ Install `tesseract` for automatic OCR, or pass ocr: true. -->\n\n",
             body = format!("<!-- outline -->\n{}\n\n{body}", entries.join("\n"));
         }
     }
-    SourceRead { header, body, next, error: None }
+    SourceRead {
+        header,
+        body,
+        next,
+        error: None,
+    }
 }
 
 fn budget_from(max_tokens: Option<u32>) -> usize {
@@ -372,6 +411,9 @@ fn budget_from(max_tokens: Option<u32>) -> usize {
 }
 
 fn continuation_note(budget: usize, next: Cursor) -> String {
+    if budget == usize::MAX {
+        return format!("<!-- Continue with cursor: \"{}\" -->\n\n", next.render());
+    }
     format!(
         "<!-- Stopped at the {budget}-token budget. Continue with cursor: \"{}\", or pick pages, or raise max_tokens. -->\n\n",
         next.render()
@@ -388,39 +430,87 @@ fn finish(out: String, all_failed: bool) -> CallToolResult {
 }
 
 /// `read`: any file, URL, or directory → Markdown.
-pub fn read(args: &ReadArgs, policy: &SourceAccessPolicy) -> Result<CallToolResult, rmcp::ErrorData> {
-    let budget = budget_from(args.max_tokens);
-    let cursor = args
-        .cursor
-        .as_deref()
-        .map(Cursor::parse)
-        .transpose()
+pub fn read(
+    args: &ReadArgs,
+    policy: &SourceAccessPolicy,
+) -> Result<CallToolResult, rmcp::ErrorData> {
+    let (text, failed) = read_text(args, policy, &ReadRender::default())
         .map_err(|message| rmcp::ErrorData::invalid_params(message, None))?;
-    let selection = match args.pages.as_deref().map(str::trim).filter(|p| !p.is_empty()) {
-        Some(spec) => selected_pages(&Some(PageSpecifier::Range(spec.to_string())))
-            .map_err(|message| rmcp::ErrorData::invalid_params(message, None))?,
+    Ok(finish(text, failed))
+}
+
+/// How a read is rendered: the MCP tool uses the defaults; the CLI prints
+/// whole documents and can drop the front matter.
+#[derive(Debug, Clone)]
+pub struct ReadRender {
+    pub front_matter: bool,
+    /// No token budget unless max_tokens is given.
+    pub unlimited: bool,
+}
+
+impl Default for ReadRender {
+    fn default() -> Self {
+        Self {
+            front_matter: true,
+            unlimited: false,
+        }
+    }
+}
+
+/// Read one source to Markdown text; returns (text, failed).
+pub fn read_text(
+    args: &ReadArgs,
+    policy: &SourceAccessPolicy,
+    render: &ReadRender,
+) -> Result<(String, bool), String> {
+    let budget = match (args.max_tokens, render.unlimited) {
+        (None, true) => usize::MAX,
+        (value, _) => budget_from(value),
+    };
+    let cursor = args.cursor.as_deref().map(Cursor::parse).transpose()?;
+    let selection = match args
+        .pages
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+    {
+        Some(spec) => selected_pages(&Some(PageSpecifier::Range(spec.to_string())))?,
         None => None,
     };
     let source = args.source.trim();
     if !is_url(source) {
-        let admitted = policy
-            .admit_path(source)
-            .map_err(|message| rmcp::ErrorData::invalid_params(message, None))?;
+        let admitted = policy.admit_path(source)?;
         if Path::new(&admitted).is_dir() {
-            return Ok(finish(list_directory(source, Path::new(&admitted)), false));
+            return Ok((list_directory(source, Path::new(&admitted)), false));
         }
     }
-    let options = OpenOptions { ocr: args.ocr, transcript: args.transcript.unwrap_or(false) };
+    let options = OpenOptions {
+        ocr: args.ocr,
+        transcript: args.transcript.unwrap_or(false),
+    };
     let read = match Opened::open(source, policy, &options) {
         Ok(mut opened) => read_opened(&mut opened, selection, cursor, budget, cursor.is_none()),
         Err(message) => failed(source, message),
     };
-    let mut out = front_matter(&read.header);
+    let mut out = if render.front_matter || read.error.is_some() {
+        front_matter(&read.header)
+    } else {
+        String::new()
+    };
     out.push_str(&read.body);
     if let Some(next) = read.next {
         out.push_str(&continuation_note(budget, next));
     }
-    Ok(finish(out, read.error.is_some()))
+    Ok((out.trim_end().to_string() + "\n", read.error.is_some()))
+}
+
+/// Plain text of a tool result (CLI output).
+pub fn result_text(result: &CallToolResult) -> String {
+    result
+        .content
+        .iter()
+        .filter_map(|block| block.as_text().map(|text| text.text.clone()))
+        .collect()
 }
 
 fn list_directory(label: &str, root: &Path) -> String {
@@ -434,7 +524,11 @@ fn list_directory(label: &str, root: &Path) -> String {
         if readable_extension(path) {
             if files.len() < 500 {
                 let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-                let shown = path.strip_prefix(root).unwrap_or(path).display().to_string();
+                let shown = path
+                    .strip_prefix(root)
+                    .unwrap_or(path)
+                    .display()
+                    .to_string();
                 files.push(format!("- {shown} ({})", human_size(size)));
             } else {
                 skipped += 1;
@@ -469,7 +563,10 @@ fn human_size(bytes: u64) -> String {
 }
 
 /// Legacy `read_pdf` default route: the same Markdown answer for PDF sources.
-pub fn read_pdf(args: &ReadPdfArgs, policy: &SourceAccessPolicy) -> Result<CallToolResult, rmcp::ErrorData> {
+pub fn read_pdf(
+    args: &ReadPdfArgs,
+    policy: &SourceAccessPolicy,
+) -> Result<CallToolResult, rmcp::ErrorData> {
     let budget = budget_from(args.max_tokens);
     let cursor = args
         .cursor
@@ -564,7 +661,13 @@ fn is_word_char(ch: Option<char>) -> bool {
 }
 
 /// A snippet of `text` around [start, end) with every `highlights` range in bold.
-fn snippet(text: &str, start: usize, end: usize, context: usize, highlights: &[(usize, usize)]) -> String {
+fn snippet(
+    text: &str,
+    start: usize,
+    end: usize,
+    context: usize,
+    highlights: &[(usize, usize)],
+) -> String {
     let mut from = start.saturating_sub(context);
     while !text.is_char_boundary(from) {
         from -= 1;
@@ -653,7 +756,9 @@ fn expand_sources(
         builder.follow_links(false);
         if let Some(glob) = glob {
             let mut overrides = OverrideBuilder::new(&root);
-            overrides.add(glob).map_err(|error| format!("invalid glob {glob:?}: {error}"))?;
+            overrides
+                .add(glob)
+                .map_err(|error| format!("invalid glob {glob:?}: {error}"))?;
             builder.overrides(overrides.build().map_err(|error| error.to_string())?);
         }
         let mut count = 0usize;
@@ -673,7 +778,9 @@ fn expand_sources(
             files.push((shown, path.display().to_string()));
         }
         if count > 0 {
-            notes.push(format!("{count} files under {spec} were not searched (limit {MAX_SEARCH_FILES})."));
+            notes.push(format!(
+                "{count} files under {spec} were not searched (limit {MAX_SEARCH_FILES})."
+            ));
         }
     }
     Ok(files)
@@ -689,8 +796,12 @@ fn load_search_docs(
         .unwrap_or(1)
         .clamp(1, 8)
         .min(files.len().max(1));
-    let options = OpenOptions { ocr: Some(false), transcript: false };
-    let mut results: Vec<Option<Result<SearchDoc, String>>> = (0..files.len()).map(|_| None).collect();
+    let options = OpenOptions {
+        ocr: Some(false),
+        transcript: false,
+    };
+    let mut results: Vec<Option<Result<SearchDoc, String>>> =
+        (0..files.len()).map(|_| None).collect();
     std::thread::scope(|scope| {
         let handles: Vec<_> = (0..workers)
             .map(|worker| {
@@ -790,7 +901,8 @@ fn literal_hits<'a>(
                 let end = start + needle.len();
                 from = end;
                 if whole_word
-                    && (is_word_char(hay[..start].chars().next_back()) || is_word_char(hay[end..].chars().next()))
+                    && (is_word_char(hay[..start].chars().next_back())
+                        || is_word_char(hay[end..].chars().next()))
                 {
                     continue;
                 }
@@ -802,7 +914,11 @@ fn literal_hits<'a>(
                     while !unit.markdown.is_char_boundary(e) {
                         e += 1;
                     }
-                    hits.push(Hit { doc, unit, snippet: snippet(&unit.markdown, s, e, context, &[(s, e)]) });
+                    hits.push(Hit {
+                        doc,
+                        unit,
+                        snippet: snippet(&unit.markdown, s, e, context, &[(s, e)]),
+                    });
                 }
             }
         }
@@ -814,7 +930,12 @@ fn literal_hits<'a>(
     (out, grand_total)
 }
 
-fn ranked_hits<'a>(docs: &'a [SearchDoc], query: &str, context: usize, limit: usize) -> Vec<(f64, Hit<'a>)> {
+fn ranked_hits<'a>(
+    docs: &'a [SearchDoc],
+    query: &str,
+    context: usize,
+    limit: usize,
+) -> Vec<(f64, Hit<'a>)> {
     let mut query_terms = terms_of(query);
     query_terms.sort();
     query_terms.dedup();
@@ -853,7 +974,8 @@ fn ranked_hits<'a>(docs: &'a [SearchDoc], query: &str, context: usize, limit: us
                 .iter()
                 .map(|(term, f)| {
                     let f = *f as f64;
-                    idf[term] * f * (k1 + 1.0) / (f + k1 * (1.0 - b + b * *len as f64 / avg.max(1.0)))
+                    idf[term] * f * (k1 + 1.0)
+                        / (f + k1 * (1.0 - b + b * *len as f64 / avg.max(1.0)))
                 })
                 .sum();
             (score > 0.0).then_some((score, index))
@@ -891,7 +1013,14 @@ fn ranked_hits<'a>(docs: &'a [SearchDoc], query: &str, context: usize, limit: us
                 }
             }
             let (start, end) = anchor.map(|(_, s, e)| (s, e)).unwrap_or((0, 0));
-            (score, Hit { doc, unit, snippet: snippet(&unit.markdown, start, end, context, &highlights) })
+            (
+                score,
+                Hit {
+                    doc,
+                    unit,
+                    snippet: snippet(&unit.markdown, start, end, context, &highlights),
+                },
+            )
         })
         .collect()
 }
@@ -905,7 +1034,10 @@ fn run_search(
 ) -> Result<CallToolResult, rmcp::ErrorData> {
     let query = query.trim();
     if query.is_empty() {
-        return Err(rmcp::ErrorData::invalid_params("query must not be empty.", None));
+        return Err(rmcp::ErrorData::invalid_params(
+            "query must not be empty.",
+            None,
+        ));
     }
     let mut notes = Vec::new();
     let files = expand_sources(specs, policy, options.glob.as_deref(), &mut notes)
@@ -977,9 +1109,16 @@ fn run_search(
         if ranked.is_empty() {
             out.push_str("No passages contain any of the query words.\n");
         } else {
-            out.push_str(&format!("Best matching passages (BM25, top {}):\n", ranked.len()));
+            out.push_str(&format!(
+                "Best matching passages (BM25, top {}):\n",
+                ranked.len()
+            ));
             for (rank, (score, hit)) in ranked.iter().enumerate() {
-                let file = if single { String::new() } else { format!("{} ", hit.doc.label) };
+                let file = if single {
+                    String::new()
+                } else {
+                    format!("{} ", hit.doc.label)
+                };
                 let loc = locator(hit.doc, hit.unit);
                 out.push_str(&format!(
                     "{}. {}{} (score {:.1}): {}\n",
@@ -1009,12 +1148,22 @@ struct SearchOptions {
 }
 
 /// `search`: literal or ranked search across files, directories, and URLs.
-pub fn search(args: &SearchArgs, policy: &SourceAccessPolicy) -> Result<CallToolResult, rmcp::ErrorData> {
+pub fn search(
+    args: &SearchArgs,
+    policy: &SourceAccessPolicy,
+) -> Result<CallToolResult, rmcp::ErrorData> {
     let mode = args.mode.as_deref().unwrap_or("auto").to_ascii_lowercase();
     if !matches!(mode.as_str(), "auto" | "literal" | "ranked") {
-        return Err(rmcp::ErrorData::invalid_params("mode must be auto, literal, or ranked.", None));
+        return Err(rmcp::ErrorData::invalid_params(
+            "mode must be auto, literal, or ranked.",
+            None,
+        ));
     }
-    let sources = if args.sources.is_empty() { vec![".".to_string()] } else { args.sources.clone() };
+    let sources = if args.sources.is_empty() {
+        vec![".".to_string()]
+    } else {
+        args.sources.clone()
+    };
     run_search(
         &sources,
         &args.query,
@@ -1031,7 +1180,10 @@ pub fn search(args: &SearchArgs, policy: &SourceAccessPolicy) -> Result<CallTool
 }
 
 /// Legacy `search_pdf` default route: literal search with page locators.
-pub fn search_pdf(args: &SearchPdfArgs, policy: &SourceAccessPolicy) -> Result<CallToolResult, rmcp::ErrorData> {
+pub fn search_pdf(
+    args: &SearchPdfArgs,
+    policy: &SourceAccessPolicy,
+) -> Result<CallToolResult, rmcp::ErrorData> {
     let specs: Vec<String> = args.sources.iter().map(PdfSource::label).collect();
     run_search(
         &specs,
@@ -1104,7 +1256,10 @@ mod tests {
 
     #[test]
     fn terms_split_words_and_cjk() {
-        assert_eq!(terms_of("Self-Attention 注意"), ["self", "attention", "注", "意"]);
+        assert_eq!(
+            terms_of("Self-Attention 注意"),
+            ["self", "attention", "注", "意"]
+        );
     }
 
     fn text_of(result: &CallToolResult) -> String {
@@ -1122,7 +1277,11 @@ mod tests {
             "# Notes\n\nThe transformer uses multi-head attention.\n",
         )
         .unwrap();
-        std::fs::write(dir.path().join("prices.csv"), "item,price\napple,1.20\npear,0.95\n").unwrap();
+        std::fs::write(
+            dir.path().join("prices.csv"),
+            "item,price\napple,1.20\npear,0.95\n",
+        )
+        .unwrap();
         std::fs::write(
             dir.path().join("page.html"),
             "<html><head><title>Guide</title></head><body><main><h1>Guide</h1><p>Attention heads attend to tokens.</p></main></body></html>",
@@ -1178,7 +1337,10 @@ mod tests {
         };
         let policy = SourceAccessPolicy::unrestricted();
         let text = text_of(&search(&args, &policy).unwrap());
-        assert!(text.starts_with("1 match for \"multi-head attention\" (3 files"), "{text}");
+        assert!(
+            text.starts_with("1 match for \"multi-head attention\" (3 files"),
+            "{text}"
+        );
         assert!(text.contains("**multi-head attention**"), "{text}");
 
         args.query = "attention tokens heads".into();

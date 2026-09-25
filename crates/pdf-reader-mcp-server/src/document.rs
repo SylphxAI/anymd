@@ -95,7 +95,13 @@ fn format_from_content_type(content_type: &str) -> Option<Format> {
 }
 
 fn noun_for(units: &[Unit], format: Format) -> &'static str {
-    let first_word = |unit: &Unit| unit.label.split_whitespace().next().unwrap_or("").to_string();
+    let first_word = |unit: &Unit| {
+        unit.label
+            .split_whitespace()
+            .next()
+            .unwrap_or("")
+            .to_string()
+    };
     let shared = units
         .first()
         .map(first_word)
@@ -152,7 +158,9 @@ fn cache_get(key: &CacheKey) -> Option<Arc<CachedDoc>> {
 }
 
 fn cache_put(key: CacheKey, doc: Arc<CachedDoc>) {
-    let Ok(mut cache) = cache().lock() else { return };
+    let Ok(mut cache) = cache().lock() else {
+        return;
+    };
     if doc.bytes > CACHE_MAX_BYTES / 4 {
         return;
     }
@@ -163,7 +171,9 @@ fn cache_put(key: CacheKey, doc: Arc<CachedDoc>) {
     cache.bytes += doc.bytes;
     cache.order.push_back(key);
     while cache.bytes > CACHE_MAX_BYTES {
-        let Some(oldest) = cache.order.pop_front() else { break };
+        let Some(oldest) = cache.order.pop_front() else {
+            break;
+        };
         if let Some(evicted) = cache.entries.remove(&oldest) {
             cache.bytes -= evicted.bytes;
         }
@@ -176,7 +186,11 @@ fn cache_put(key: CacheKey, doc: Arc<CachedDoc>) {
 
 impl Opened {
     /// Open a local path (admitted by `policy`) or an http(s) URL.
-    pub fn open(spec: &str, policy: &SourceAccessPolicy, options: &OpenOptions) -> Result<Self, String> {
+    pub fn open(
+        spec: &str,
+        policy: &SourceAccessPolicy,
+        options: &OpenOptions,
+    ) -> Result<Self, String> {
         let spec = spec.trim();
         if spec.is_empty() {
             return Err("source is empty".into());
@@ -262,7 +276,13 @@ impl Opened {
         if format == Format::Pdf {
             let doc = load_document_bytes(&fetched.bytes)
                 .map_err(|error| format!("{url}: {}", error.message))?;
-            return Ok(Self::from_pdf(url, doc, Some(Arc::new(fetched.bytes)), None, options));
+            return Ok(Self::from_pdf(
+                url,
+                doc,
+                Some(Arc::new(fetched.bytes)),
+                None,
+                options,
+            ));
         }
         let converted = convert_other(
             format,
@@ -364,7 +384,12 @@ impl Opened {
                 .iter()
                 .filter_map(|n| units.get(*n as usize - 1).cloned())
                 .collect()),
-            Body::Pdf { doc, bytes, path, title } => {
+            Body::Pdf {
+                doc,
+                bytes,
+                path,
+                title,
+            } => {
                 let converted = markdown_layout::pdf_to_markdown(doc, Some(numbers))
                     .map_err(|error| error.message)?;
                 let _ = title;
@@ -402,7 +427,8 @@ impl Opened {
         match &self.body {
             Body::Units(units) => Ok(units.clone()),
             Body::Pdf { path, .. } => {
-                let ocr_on = self.options.ocr != Some(false) && anymd_formats::image::ocr_available();
+                let ocr_on =
+                    self.options.ocr != Some(false) && anymd_formats::image::ocr_available();
                 let key = path.as_deref().and_then(|p| cache_key(p, ocr_on));
                 if let Some(cached) = key.as_ref().and_then(cache_get) {
                     return Ok(cached.units.clone());
@@ -560,8 +586,25 @@ pub fn searchable_extension(path: &Path) -> bool {
     };
     matches!(
         ext.to_ascii_lowercase().as_str(),
-        "pdf" | "docx" | "pptx" | "xlsx" | "xls" | "xlsm" | "ods" | "csv" | "tsv" | "epub"
-            | "html" | "htm" | "xhtml" | "md" | "markdown" | "txt" | "rst" | "srt" | "vtt"
+        "pdf"
+            | "docx"
+            | "pptx"
+            | "xlsx"
+            | "xls"
+            | "xlsm"
+            | "ods"
+            | "csv"
+            | "tsv"
+            | "epub"
+            | "html"
+            | "htm"
+            | "xhtml"
+            | "md"
+            | "markdown"
+            | "txt"
+            | "rst"
+            | "srt"
+            | "vtt"
     )
 }
 
@@ -574,8 +617,23 @@ pub fn readable_extension(path: &Path) -> bool {
             .is_some_and(|ext| {
                 matches!(
                     ext.to_ascii_lowercase().as_str(),
-                    "png" | "jpg" | "jpeg" | "gif" | "webp" | "tif" | "tiff" | "bmp" | "mp4"
-                        | "mov" | "mkv" | "webm" | "mp3" | "wav" | "m4a" | "flac" | "ogg"
+                    "png"
+                        | "jpg"
+                        | "jpeg"
+                        | "gif"
+                        | "webp"
+                        | "tif"
+                        | "tiff"
+                        | "bmp"
+                        | "mp4"
+                        | "mov"
+                        | "mkv"
+                        | "webm"
+                        | "mp3"
+                        | "wav"
+                        | "m4a"
+                        | "flac"
+                        | "ogg"
                 )
             })
 }
@@ -586,17 +644,33 @@ mod tests {
 
     #[test]
     fn content_types_map_to_formats() {
-        assert_eq!(format_from_content_type("application/pdf"), Some(Format::Pdf));
-        assert_eq!(format_from_content_type("text/html; charset=utf-8"), Some(Format::Html));
+        assert_eq!(
+            format_from_content_type("application/pdf"),
+            Some(Format::Pdf)
+        );
+        assert_eq!(
+            format_from_content_type("text/html; charset=utf-8"),
+            Some(Format::Html)
+        );
         assert_eq!(format_from_content_type("image/png"), Some(Format::Image));
         assert_eq!(format_from_content_type("application/octet-stream"), None);
     }
 
     #[test]
     fn nouns_follow_section_labels() {
-        let unit = |label: &str| Unit { number: 1, label: label.into(), markdown: String::new() };
-        assert_eq!(noun_for(&[unit("slide 1"), unit("slide 2")], Format::Pptx), "slide");
-        assert_eq!(noun_for(&[unit("sheet A"), unit("sheet B")], Format::Xlsx), "sheet");
+        let unit = |label: &str| Unit {
+            number: 1,
+            label: label.into(),
+            markdown: String::new(),
+        };
+        assert_eq!(
+            noun_for(&[unit("slide 1"), unit("slide 2")], Format::Pptx),
+            "slide"
+        );
+        assert_eq!(
+            noun_for(&[unit("sheet A"), unit("sheet B")], Format::Xlsx),
+            "sheet"
+        );
         assert_eq!(noun_for(&[unit("document")], Format::Docx), "section");
     }
 
@@ -613,6 +687,10 @@ mod tests {
         .unwrap();
         assert_eq!(opened.format, "csv");
         let units = opened.units(&[1]).unwrap();
-        assert!(units[0].markdown.contains("| a | b |"), "{}", units[0].markdown);
+        assert!(
+            units[0].markdown.contains("| a | b |"),
+            "{}",
+            units[0].markdown
+        );
     }
 }
