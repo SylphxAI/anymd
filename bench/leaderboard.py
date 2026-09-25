@@ -148,6 +148,16 @@ def render(corpus, tools):
         add(f"| {CATEGORY_NAMES.get(category, category)} | {len(docs)} | " + " | ".join(cells) + " |")
     add("")
 
+    if "anymd" in summary:
+        losses = []
+        for category in summary_categories(corpus):
+            leader = max(order, key=lambda n: summary[n]["per_category"][category])
+            ours, best = summary["anymd"]["per_category"][category], summary[leader]["per_category"][category]
+            if leader != "anymd" and best > ours:
+                losses.append(f"{CATEGORY_NAMES.get(category, category)} ({leader} {pct(best)} vs {pct(ours)})")
+        if losses:
+            add("**Where anymd loses:** " + "; ".join(losses) + ".\n")
+
     add(f"### Speed and tokens on the {len(common)} documents every tool converted\n")
     add("| Tool | Total time | Median per document | Output tokens |")
     add("|---|---|---|---|")
@@ -223,11 +233,23 @@ def headline(summary, order):
     return "\n".join(out) + "\n"
 
 
+def fast_bullet(corpus, summary):
+    """The README's speed claim, from the documents every tool converted."""
+    names = list(summary)
+    common = [d["id"] for d in corpus if all(summary[n]["rows"].get(d["id"], {}).get("status") == "ok" for n in names)]
+    total = {n: sum(summary[n]["rows"][d]["seconds"] for d in common) for n in names}
+    others = [n for n in ("docling", "markitdown", "marker") if n in total]
+    versus = ", ".join(f"{n} {secs(total[n])} ({total[n] / total['anymd']:,.0f}×)" for n in others)
+    return (f"- **Fast.** Native Rust converts in parallel, page by page. On the {len(common)} benchmark documents "
+            f"every tool converted, anymd takes **{secs(total['anymd'])}** in total; {versus}.\n")
+
+
 def splice(text, name, block):
     pattern = re.compile(rf"(<!-- {name}:start -->\n).*?(<!-- {name}:end -->)", re.S)
     if not pattern.search(text):
         raise SystemExit(f"missing <!-- {name}:start/end --> markers")
-    return pattern.sub(lambda m: m.group(1) + "\n" + block + "\n" + m.group(2), text)
+    inline = name == "fast"  # a list item: no blank lines around it
+    return pattern.sub(lambda m: m.group(1) + ("" if inline else "\n") + block + ("" if inline else "\n") + m.group(2), text)
 
 
 def main():
@@ -243,7 +265,7 @@ def main():
         return
     targets = {
         DOCS: [("leaderboard", board), ("corpus", corpus_table(corpus))],
-        README: [("headline", headline(summary, order))],
+        README: [("headline", headline(summary, order)), ("fast", fast_bullet(corpus, summary))],
     }
     stale = []
     for path, blocks in targets.items():
