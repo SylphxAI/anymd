@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "profile": "pdf_reader_whole_product_independent_review",
+  "reviewer": "claude-autonomous-release-verification",
+  "reviewedAt": "2026-09-25T07:30:00Z",
+  "candidate": {
+    "repository": "SylphxAI/anymd",
+    "sha": "5b98af57ed2390044e63cd9146a4f2741701e399",
+    "shortSha": "5b98af5",
+    "version": "7.0.0",
+    "package": "@sylphx/anymd",
+    "bin": "anymd",
+    "published": false,
+    "aliases": [
+      "@sylphx/citra",
+      "@sylphx/pdf-reader-mcp"
+    ],
+    "parentProductPin": "verification/pdf-reader-whole-product-independent-review-6.0.0-45c0c58.json"
+  },
+  "outcome": "review_pass_automated_release_ci_verified",
+  "unfreezeAuthorized": true,
+  "soleRuntimeAuthorized": true,
+  "tsRetirementAuthorized": true,
+  "performanceClaimsAuthorized": true,
+  "goalCompleteAuthorized": false,
+  "notes": [
+    "7.0.0 renames the product to anymd (npm @sylphx/anymd, bin anymd, MCP io.github.SylphxAI/anymd, repository SylphxAI/anymd). @sylphx/citra and @sylphx/pdf-reader-mcp are published as lockstep alias packages that run the anymd launcher.",
+    "Default read answers in compact Markdown with page markers from a new PDF layout engine (word spacing from glyph gaps, column-aware reading order, tables); read/search/inspect cover PDF, DOCX, PPTX, XLSX/XLS/ODS, CSV/TSV, EPUB, HTML/URLs, text, images, audio/video, and SRT/VTT; the binary is also a CLI. read_pdf/search_pdf/pdf_evidence/pdf_compare stay callable, unlisted.",
+    "Automated verification on this exact candidate: CI run 36106171720 success; Release run 36106171780 success; Deploy Docs run 36106171725 success; Code Quality run 36106171221 success; Native package scaffold run 36106171700 success; Candidate native build evidence run 36106171764 success (linux-x64-gnu, linux-arm64-gnu, win32-x64-msvc).",
+    "Benchmark workflow run 36101479409 (GitHub-hosted, 4 CPUs) on the release code: anymd 12/12 sentences intact, 26/26 table rows, 5/5 reading order, 0.39 s total for 12 documents; raw results in bench/results.",
+    "This is an autonomous release verification record backed by the recorded CI results above, not a claim of an external human review."
+  ]
+}
