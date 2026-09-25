@@ -14,6 +14,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import product from '../product.json' with { type: 'json' };
 
 export const MAIN_PACKAGE = '@sylphx/anymd';
 
@@ -32,7 +33,7 @@ export type AliasPackage = (typeof ALIAS_PACKAGES)[number];
 export const aliasManifest = (alias: AliasPackage, version: string): Record<string, unknown> => ({
   name: alias.npmName,
   version,
-  description: `${alias.formerly} is now ${MAIN_PACKAGE} (anymd). Compatibility alias: any file → clean Markdown for AI agents. Runs the anymd launcher as \`${alias.bin}\`.`,
+  description: `${alias.formerly} is now ${MAIN_PACKAGE}. ${product.tagline}. Compatibility alias that runs anymd as \`${alias.bin}\`.`,
   type: 'module',
   bin: { [alias.bin]: `./bin/${alias.bin}.js` },
   files: ['bin/', 'README.md'],

@@ -46,6 +46,9 @@ jobs:
       - name: Check Code Quality (Biome)
         run: bun run check
 
+      - name: Public copy matches product.json and benchmark results
+        run: bun run check:copy
+
       - name: Public repository runs on GitHub-hosted runners only
         run: bun run check:no-github-hosted-macos
 

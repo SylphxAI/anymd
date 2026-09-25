@@ -1,7 +1,7 @@
 {
   "name": "@sylphx/citra",
   "version": "7.1.0",
-  "description": "Citra is now @sylphx/anymd (anymd). Compatibility alias: any file → clean Markdown for AI agents. Runs the anymd launcher as `citra`.",
+  "description": "Citra is now @sylphx/anymd. Any file → clean Markdown for AI agents. Compatibility alias that runs anymd as `citra`.",
   "type": "module",
   "bin": {
     "citra": "./bin/citra.js"

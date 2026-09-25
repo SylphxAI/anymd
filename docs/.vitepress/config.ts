@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress';
+import product from '../../product.json';
 
 /**
  * anymd — documentation site.
@@ -10,8 +11,7 @@ export default defineConfig({
   base: '/anymd/',
   cleanUrls: true,
   title: 'anymd',
-  description:
-    'Any file → clean Markdown for AI agents. PDF, Office, EPUB, HTML, images, audio/video. Fast Rust MCP server + CLI. Local, no API key.',
+  description: product.description,
 
   // anymd's identity is ink + citrus; dark is the designed default and the
   // toggle still lets readers choose light.
@@ -39,25 +39,23 @@ export default defineConfig({
   head: [
     ['meta', { name: 'theme-color', content: '#c3f53c' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'anymd — any file → clean Markdown for AI agents' }],
+    ['meta', { property: 'og:title', content: `${product.name} — ${product.tagline}` }],
     [
       'meta',
       {
         property: 'og:description',
-        content:
-          'Any file → clean Markdown for AI agents. PDF, Office, EPUB, HTML, images, audio/video. Fast Rust MCP server + CLI. Local, no API key.',
+        content: product.description,
       },
     ],
     ['meta', { property: 'og:url', content: 'https://sylphxai.github.io/anymd/' }],
     ['meta', { property: 'og:site_name', content: 'anymd' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'anymd — any file → clean Markdown for AI agents' }],
+    ['meta', { name: 'twitter:title', content: `${product.name} — ${product.tagline}` }],
     [
       'meta',
       {
         name: 'twitter:description',
-        content:
-          'Any file → clean Markdown for AI agents. PDF, Office, EPUB, HTML, images, audio/video. Fast Rust MCP server + CLI. Local, no API key.',
+        content: product.description,
       },
     ],
     ['meta', { name: 'twitter:site', content: '@sylphxai' }],
@@ -67,8 +65,7 @@ export default defineConfig({
       'meta',
       {
         name: 'keywords',
-        content:
-          'anymd, markdown, mcp, model context protocol, pdf to markdown, docx to markdown, pptx, xlsx, epub, html to markdown, ocr, rag, ai agents, llm, claude, cursor, codex, rust, cli, markitdown alternative',
+        content: [product.name, ...product.keywords].join(', '),
       },
     ],
     ['meta', { name: 'author', content: 'Sylphx' }],

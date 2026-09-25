@@ -137,7 +137,3 @@ Diff two versions:
 ```json
 { "operation": "compare", "sources": [{ "path": "contract-v1.pdf" }, { "path": "contract-v2.pdf" }] }
 ```
-
-## Legacy tool names
-
-The pdf-reader-mcp tool names `read_pdf`, `search_pdf`, `pdf_evidence`, and `pdf_compare` still work for this major version. They no longer appear in `tools/list`. See [Migration](./migration).

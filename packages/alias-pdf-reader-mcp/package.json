@@ -1,7 +1,7 @@
 {
   "name": "@sylphx/pdf-reader-mcp",
   "version": "7.1.0",
-  "description": "pdf-reader-mcp is now @sylphx/anymd (anymd). Compatibility alias: any file → clean Markdown for AI agents. Runs the anymd launcher as `pdf-reader-mcp`.",
+  "description": "pdf-reader-mcp is now @sylphx/anymd. Any file → clean Markdown for AI agents. Compatibility alias that runs anymd as `pdf-reader-mcp`.",
   "type": "module",
   "bin": {
     "pdf-reader-mcp": "./bin/pdf-reader-mcp.js"
