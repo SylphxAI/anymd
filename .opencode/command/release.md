@@ -27,54 +27,34 @@ Prepare, publish, and monitor package release.
 
 ## Release Process
 
-### For TypeScript/JavaScript Projects
+anymd releases from `main` only: a version bump pull request is the release.
 
-1. **Create Changeset:**
+1. **Bump the version in every manifest:**
    ```bash
-   bunx changeset
+   bun scripts/set-version.ts X.Y.Z
+   cargo update -w
    ```
-   - Select package
-   - Choose version bump type
-   - Write clear summary
+   Add a `## X.Y.Z` section to `CHANGELOG.md`.
 
-2. **Version Bump:**
-   ```bash
-   bunx changeset version
-   ```
-   - Updates package.json
-   - Updates CHANGELOG.md
-   - Consumes changeset
+2. **Open one pull request** with the bump, the lockfile, and the changelog.
+   Merging it runs `release.yml`, which publishes `@sylphx/anymd`, the
+   platform binaries, and the `@sylphx/citra` and `@sylphx/pdf-reader-mcp`
+   aliases.
 
-3. **Commit & Push:**
+3. **Monitor CI:**
    ```bash
-   git add -A
-   git commit -m "chore(release): <package>@<version>"
-   git push
+   gh api 'repos/SylphxAI/anymd/actions/workflows/release.yml/runs?per_page=5'
    ```
 
-4. **Monitor CI:**
+4. **Verify Publication:**
    ```bash
-   gh run list --workflow=release --limit 5
-   gh run watch <run-id>
+   npx -y @sylphx/anymd@X.Y.Z version
    ```
-
-5. **Verify Publication:**
-   ```bash
-   npm view <package>@<version>
-   ```
-
-### For Other Projects
-
-1. Update version in manifest (package.json, setup.py, etc.)
-2. Update CHANGELOG
-3. Create git tag
-4. Push tag to trigger release
-5. Monitor CI/CD
 
 ## Post-Release
 
 - [ ] Verify package published
-- [ ] Test installation: `npm install <package>@latest`
+- [ ] Test installation: `npx -y @sylphx/anymd@latest version`
 - [ ] Create GitHub release with notes
 - [ ] Announce (if public package)
 - [ ] Close related issues/PRs
@@ -86,11 +66,11 @@ Prepare, publish, and monitor package release.
 - Commit and push
 
 **Tests fail in CI:**
-- Run tests locally: `npm test`
+- Run tests locally: `bun run test:rust`, then `bun run build` and `bun run test:cov`
 - Fix issues, commit, push
 
 **Build fails:**
-- Check build locally: `npm run build`
+- Check build locally: `bun run build`
 - Fix errors, commit, push
 
 ## Exit Criteria

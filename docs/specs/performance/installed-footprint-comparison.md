@@ -1,5 +1,7 @@
 # Installed product footprint comparison
 
+> Historical: a pdf-reader-mcp release record, kept as written. The `verification/` files it names are no longer in this repository; anymd releases are described in [PUBLISH.md](../../PUBLISH.md).
+
 Status: methodology + representative measurements for product messaging  
 Date: 2026-07-24
 

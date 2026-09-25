@@ -60,8 +60,10 @@ Maximize quality metrics: tests, coverage, performance, bundle size.
 ### 1. Test Coverage
 
 ```bash
-# Run tests with coverage
-npm run test:coverage
+# Rust tests, then the MCP tests against the built binary
+bun run test:rust
+bun run build
+bun run test:cov
 
 # Identify gaps
 # Add tests for uncovered code
@@ -78,8 +80,8 @@ npm run test:coverage
 ### 2. Benchmarking
 
 ```bash
-# Run benchmarks
-npm run bench
+# Run the conversion benchmark (see bench/README.md)
+# The Benchmark workflow reruns it on GitHub
 
 # Compare against baseline
 # Identify regressions
@@ -115,11 +117,11 @@ node --inspect ...
 ### 4. Bundle Analysis
 
 ```bash
-# Analyze bundle
-npm run build -- --analyze
+# Build the release binary
+bun run build
 
-# Check size
-ls -lh dist/
+# Check the installed npm footprint
+bun run perf:installed-footprint
 
 # Identify large dependencies
 # Remove unnecessary code
@@ -135,12 +137,12 @@ ls -lh dist/
 ### 5. Quality Metrics
 
 **Track:**
-- Test coverage: `npm run test:coverage`
-- Bundle size: `ls -lh dist/`
-- Performance: `npm run bench`
-- Security: `npm audit`
+- Test coverage: `bun run test:cov`
+- Installed size: `bun run perf:installed-footprint`
+- Performance: the Benchmark workflow
+- Security: `bash scripts/check-cargo-advisories.sh`
 - Type coverage: TypeScript strict mode
-- Lint score: `npm run lint`
+- Lint score: `bun run check`
 
 ## Targets
 

@@ -1,151 +1,100 @@
 # Examples
 
-Real-world workflows showing how AI agents use PDF Reader MCP to read, search,
-verify, and cite PDF documents with evidence.
+Requests an AI agent sends to anymd to read, search, check, and cite
+documents. anymd lists three MCP tools: `read`, `search`, and `inspect`.
 
-## Quick Examples
+## Requests
 
 | File | What it shows |
 | --- | --- |
-| [`read-pdf-basic.json`](./read-pdf-basic.json) | One-call smart read: `read_pdf` with only `sources` |
-| [`read-pdf-options.json`](./read-pdf-options.json) | Manual extraction with `include_*` flags |
-| [`search-then-verify.json`](./search-then-verify.json) | `search_pdf` → `pdf_evidence` workflow |
-| [`evidence-crop.json`](./evidence-crop.json) | Extract a region crop for citation |
-| [`ocr-scanned.json`](./ocr-scanned.json) | OCR path for scanned PDFs |
-| [`agent-document-twin.json`](./agent-document-twin.json) | Full Agent Document Twin output shape |
+| [`read-basic.json`](./read-basic.json) | `read` with only `source`: a document as Markdown |
+| [`read-pages.json`](./read-pages.json) | `read` with `pages`, `max_tokens`, and `cursor` |
+| [`search-then-verify.json`](./search-then-verify.json) | `search` → `inspect` (`render_page`) |
+| [`evidence-crop.json`](./evidence-crop.json) | `inspect` (`extract_regions`): a region crop for citation |
+| [`ocr-scanned.json`](./ocr-scanned.json) | `inspect` (`ocr_pages`): OCR for scanned PDFs |
+| [`inspect-structure.json`](./inspect-structure.json) | `inspect` (`structure`): structured JSON with geometry and reports |
 
-## MCP Client Snippets
+## MCP client setup
+
+`npx -y @sylphx/anymd setup` adds anymd to every MCP client on the machine.
+To add it by hand, every client runs the same command.
 
 ### Claude Code
 
 ```bash
-claude mcp add pdf-reader -- npx @sylphx/pdf-reader-mcp
+claude mcp add anymd -- npx -y @sylphx/anymd
 ```
 
-### Claude Desktop
+### Claude Desktop, Cursor, Windsurf, Cline
 
 ```json
 {
   "mcpServers": {
-    "pdf-reader": {
+    "anymd": {
       "command": "npx",
-      "args": ["@sylphx/pdf-reader-mcp"]
+      "args": ["-y", "@sylphx/anymd"]
     }
   }
 }
 ```
 
-### Cursor
-
-```json
-{
-  "mcpServers": {
-    "pdf-reader": {
-      "command": "npx",
-      "args": ["@sylphx/pdf-reader-mcp"]
-    }
-  }
-}
-```
-
-### VS Code (Copilot Chat MCP)
+### VS Code
 
 Add to `.vscode/mcp.json`:
 
 ```json
 {
   "servers": {
-    "pdf-reader": {
+    "anymd": {
+      "type": "stdio",
       "command": "npx",
-      "args": ["@sylphx/pdf-reader-mcp"]
+      "args": ["-y", "@sylphx/anymd"]
     }
   }
 }
 ```
 
-### Windsurf
-
-```json
-{
-  "mcpServers": {
-    "pdf-reader": {
-      "command": "npx",
-      "args": ["@sylphx/pdf-reader-mcp"]
-    }
-  }
-}
-```
-
-### Cline
-
-Add to `cline_mcp_settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "pdf-reader": {
-      "command": "npx",
-      "args": ["@sylphx/pdf-reader-mcp"]
-    }
-  }
-}
-```
-
-### Warp Terminal
-
-```toml
-[mcp.pdf-reader]
-command = "npx"
-args = ["@sylphx/pdf-reader-mcp"]
-```
-
-### HTTP Transport (Remote)
+### HTTP transport
 
 ```bash
-MCP_TRANSPORT=http MCP_API_KEY=your-secret npx @sylphx/pdf-reader-mcp
+MCP_TRANSPORT=http MCP_API_KEY=your-secret npx -y @sylphx/anymd
 ```
 
-Then connect any MCP client to `http://127.0.0.1:3000/mcp` with header
-`X-API-Key: your-secret`.
+Then connect an MCP client to `http://127.0.0.1:8080/mcp` with the header
+`X-API-Key: your-secret`. `MCP_HTTP_PORT` changes the port.
 
-## Agent Workflow Patterns
+## Agent workflows
 
-### Pattern 1: Read First, Ask Questions Later
-
-```
-Agent → read_pdf(sources) → gets Agent Document Twin (markdown, chunks, tables, trust report)
-Agent → uses the twin to answer the user's question
-Agent → cites page numbers and evidence IDs from the twin
-```
-
-This is the default V3 path. One call, full document intelligence.
-
-### Pattern 2: Search, Then Verify
+### Read first
 
 ```
-Agent → search_pdf(sources, query) → gets literal matches with page/box provenance
-Agent → pdf_evidence(operation: render_page, page) → visual proof of the match
-Agent → pdf_evidence(operation: extract_regions, regions) → crops the exact evidence
+Agent → read(source) → Markdown with <!-- page N --> markers
+Agent → answers the question and cites page numbers
+Agent → read(source, cursor) → the next part, when the answer ended with a cursor
 ```
 
-Cheap search first, spend context only on relevant evidence.
-
-### Pattern 3: Trust-Check Before Citing
+### Search, then check
 
 ```
-Agent → read_pdf(sources) → fast twin (markdown, tables, geometry). Trust is profile research or auto true.
+Agent → search(query, sources) → hits with file, page, and snippet
+Agent → inspect(operation: render_page, sources[].pages) → the page as an image
+Agent → inspect(operation: extract_regions, sources[].regions) → a crop of the exact evidence
+```
+
+Search first, and spend context only on the pages that matter.
+
+### Check trust before citing
+
+```
+Agent → inspect(operation: structure, profile: research) → JSON with trust and accessibility reports
 Agent → reviews trust warnings (hidden text, prompt-injection-like content)
-Agent → decides whether to cite or flag as untrusted
+Agent → cites the content or flags it as untrusted
 ```
 
-Prevents agents from citing manipulated or unsafe PDF content.
-
-### Pattern 4: Scanned Document Recovery
+### Scanned documents
 
 ```
-Agent → read_pdf(sources) → auto-routes scanned pages to OCR if provider is ready
-Agent → pdf_evidence(operation: ocr_pages, pages) → explicit OCR with word boxes
-Agent → pdf_evidence(operation: analyze_regions, regions) → table/formula/chart enrichment
+Agent → read(source, ocr: true) → Markdown from a local tesseract
+Agent → inspect(operation: ocr_pages) → OCR with word boxes from the configured provider
+Agent → inspect(operation: analyze_regions, sources[].regions) → table, formula, and chart details
 ```
-
-Scanned pages get OCR provenance linked back to source renders.

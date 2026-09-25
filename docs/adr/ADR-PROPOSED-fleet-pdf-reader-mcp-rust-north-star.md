@@ -1,5 +1,7 @@
 # ADR-PROPOSED — Fleet PDF Reader MCP Rust North Star architecture
 
+> Historical: decided for pdf-reader-mcp, now anymd, and kept as written. The package, crate, tool and file names it uses may no longer exist; anymd is one Rust binary in `crates/anymd`, and [AGENTS.md](../../AGENTS.md) has the current layout.
+
 > **Admission update (2026-07-22):** whole-product exact PDF.js/TS output parity is no longer the Rust release bar. See [ADR-0005](0005-capability-first-semantic-compatibility.md) for capability-first semantic compatibility. Frozen exact residual families remain regression assets.
 
 - **Status:** Proposed

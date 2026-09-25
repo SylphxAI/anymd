@@ -1,5 +1,7 @@
 # ADR-0006 — Sole-Rust production authority and distribution channels
 
+> Historical: decided for pdf-reader-mcp, now anymd, and kept as written. The package, crate, tool and file names it uses may no longer exist; anymd is one Rust binary in `crates/anymd`, and [AGENTS.md](../../AGENTS.md) has the current layout.
+
 - **Status:** Accepted
 - **Date:** 2026-07-24
 - **Relates to:** ADR-0005 capability-first admission, npm package contract, MCP Registry, crates.io

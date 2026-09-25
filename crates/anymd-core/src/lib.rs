@@ -1,4 +1,4 @@
-//! Rust hashing, SSRF-safe fetch, and text-index primitives for pdf-reader-mcp.
+//! Rust hashing, SSRF-safe fetch, and text-index primitives for anymd.
 
 mod accessibility;
 mod catalog_signals;

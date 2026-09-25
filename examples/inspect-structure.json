@@ -1,0 +1,9 @@
+{
+  "tool": "inspect",
+  "description": "Structured JSON read of a PDF: document map, elements, tables, geometry and citations. profile research adds safety, trust and accessibility reports.",
+  "arguments": {
+    "operation": "structure",
+    "sources": [{ "path": "/absolute/path/to/report.pdf" }],
+    "profile": "research"
+  }
+}

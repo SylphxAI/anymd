@@ -152,8 +152,9 @@ Default to minor. Major is reserved.
 
 ## TypeScript Release
 
-Use `changeset` for versioning. CI handles releases.
-Monitor: `gh run list --workflow=release`, `gh run watch`
+Bump every manifest with `bun scripts/set-version.ts X.Y.Z`, run `cargo update -w`, and add a
+`## X.Y.Z` section to `CHANGELOG.md` in one pull request. Merging it runs `release.yml`.
+Verify: `npx -y @sylphx/anymd@X.Y.Z version`
 
 Never manual `npm publish`.
 

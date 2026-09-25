@@ -1,5 +1,7 @@
 # ADR-0005 — Capability-first semantic compatibility replaces exact PDF.js output parity
 
+> Historical: decided for pdf-reader-mcp, now anymd, and kept as written. The package, crate, tool and file names it uses may no longer exist; anymd is one Rust binary in `crates/anymd`, and [AGENTS.md](../../AGENTS.md) has the current layout.
+
 - **Status:** Superseded in 8.0.0: the release admission gate, its capability matrix and its specs were retired; releases publish through the mcp-kit release workflow (`docs/PUBLISH.md`)
 - **Date:** 2026-07-22
 - **Relates to:** ADR-PROPOSED fleet Rust north star

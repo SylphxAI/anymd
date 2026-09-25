@@ -1,5 +1,7 @@
 # Release candidacy — 4.1.0 product performance
 
+> Historical: a pdf-reader-mcp release record, kept as written. The `verification/` files it names are no longer in this repository; anymd releases are described in [PUBLISH.md](../PUBLISH.md).
+
 Status: **candidate preparation** (not published)  
 Base: sole-Rust live `@sylphx/pdf-reader-mcp@4.0.2` remains production until 4.1.0 is admitted.
 

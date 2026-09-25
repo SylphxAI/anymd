@@ -1,5 +1,7 @@
 # Same-host TS 3.0.14 vs Rust candidate A/B contract
 
+> Historical: a pdf-reader-mcp release record, kept as written. The `verification/` files it names are no longer in this repository; anymd releases are described in [PUBLISH.md](../../PUBLISH.md).
+
 Status: rebuilt executable suite (formal marketing claims still require independent review)
 
 ## Purpose

@@ -1,5 +1,7 @@
 # 2027 SOTA Document Intelligence Operating Model
 
+> Historical: written for pdf-reader-mcp, now anymd, and kept as written. Its tools `read_pdf`, `search_pdf` and `pdf_evidence` became `read`, `search` and `inspect` (see [the tools guide](../guide/tools.md)); files and commands named here may no longer exist.
+
 Date: 2026-06-16
 Status: Implementation target
 Owner: pdf-reader-mcp
