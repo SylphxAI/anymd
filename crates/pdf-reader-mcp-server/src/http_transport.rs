@@ -208,8 +208,7 @@ async fn api_key_middleware(
         return Ok(next.run(request).await);
     };
 
-    let path = request.uri().path();
-    if request.method() == Method::GET && path.ends_with("/health") {
+    if is_health_request(request.method(), request.uri().path()) {
         return Ok(next.run(request).await);
     }
 
@@ -234,6 +233,13 @@ async fn api_key_middleware(
         .headers_mut()
         .insert("www-authenticate", HeaderValue::from_static("X-API-Key"));
     Err(response)
+}
+
+/// Only the health route itself skips the API key. The middleware runs inside
+/// the `/mcp` nest, so the path it sees is `/health` for `/mcp/health`; any
+/// other path (e.g. `/anything/health`) falls through to MCP and needs a key.
+fn is_health_request(method: &Method, path: &str) -> bool {
+    method == Method::GET && path == "/health"
 }
 
 async fn health_check() -> Json<serde_json::Value> {
@@ -302,6 +308,61 @@ pub async fn serve_http(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_the_exact_health_path_skips_the_api_key() {
+        assert!(is_health_request(&Method::GET, "/health"));
+        assert!(!is_health_request(&Method::POST, "/health"));
+        assert!(!is_health_request(&Method::GET, "/x/health"));
+        assert!(!is_health_request(&Method::GET, "/mcp/health/"));
+        assert!(!is_health_request(&Method::GET, "/sessions/health"));
+        assert!(!is_health_request(&Method::GET, "/"));
+    }
+
+    #[tokio::test]
+    async fn api_key_guards_every_path_except_health() {
+        use axum::body::to_bytes;
+        let config = Arc::new(HttpConfig {
+            host: DEFAULT_HOST.to_string(),
+            port: DEFAULT_PORT,
+            api_key: Some("secret-key".into()),
+            cors_origin: None,
+            allow_unauthenticated_remote: false,
+        });
+        let inner = Router::new()
+            .route("/health", get(health_check))
+            .fallback(|| async { "mcp" })
+            .layer(middleware::from_fn_with_state(config, api_key_middleware));
+        let app = Router::new().nest("/mcp", inner);
+        let call = |uri: &'static str, key: Option<&'static str>| {
+            let app = app.clone();
+            async move {
+                let mut request = Request::builder().method(Method::GET).uri(uri);
+                if let Some(key) = key {
+                    request = request.header("x-api-key", key);
+                }
+                let response =
+                    tower::ServiceExt::oneshot(app, request.body(Body::empty()).unwrap())
+                        .await
+                        .unwrap();
+                let status = response.status();
+                let body = to_bytes(response.into_body(), 1 << 16).await.unwrap();
+                (status, String::from_utf8_lossy(&body).into_owned())
+            }
+        };
+        assert_eq!(call("/mcp/health", None).await.0, StatusCode::OK);
+        assert_eq!(
+            call("/mcp/anything/health", None).await.0,
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            call("/mcp/sessions/health", None).await.0,
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(call("/mcp", None).await.0, StatusCode::UNAUTHORIZED);
+        let (status, body) = call("/mcp/anything/health", Some("secret-key")).await;
+        assert_eq!((status, body.as_str()), (StatusCode::OK, "mcp"));
+    }
 
     #[test]
     fn api_key_validation_matches_ts_sha256_digest_policy() {

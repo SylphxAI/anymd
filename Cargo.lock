@@ -1763,6 +1763,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-util",
+ "tower",
  "ureq",
  "url",
 ]
