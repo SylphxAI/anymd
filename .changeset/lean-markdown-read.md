@@ -1,5 +1,5 @@
 ---
-'@sylphx/citra': major
+'@sylphx/anymd': major
 ---
 
 read_pdf and search_pdf now answer in clean, compact Markdown by default.
