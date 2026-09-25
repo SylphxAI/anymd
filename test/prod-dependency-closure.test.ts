@@ -18,9 +18,9 @@ describe('production dependency closure (sole-Rust)', () => {
     for (const name of Object.keys(pkg.optionalDependencies ?? {})) {
       expect(name.startsWith('@sylphx/anymd-')).toBe(true);
     }
-    expect(pkg.scripts?.build ?? '').not.toContain('oracle-ts');
-    expect(pkg.scripts?.['build:oracle-ts']).toBeTruthy();
-    expect(pkg.scripts?.prepublishOnly ?? '').not.toContain('build:oracle-ts');
+    for (const command of Object.values(pkg.scripts ?? {})) {
+      expect(command).not.toContain('oracle-ts');
+    }
   });
 
   it('matrix no longer advertises production typescript fallback exports', () => {

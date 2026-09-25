@@ -13,7 +13,10 @@ import {
 
 const repoRoot = path.resolve(import.meta.dirname, '../..');
 const fixture = path.join(repoRoot, 'test/fixtures/differential/v3014-visual-v1.pdf');
-const provider = path.join(repoRoot, 'scripts/differential/reference-region-analysis-provider.ts');
+const provider = path.join(
+  repoRoot,
+  'test/fixtures/providers/reference-region-analysis-provider.ts'
+);
 const providerArgs = (mode?: string, marker?: string) =>
   JSON.stringify([
     provider,
@@ -37,7 +40,7 @@ describe('pure-Rust command region analysis provider integration', () => {
   const invocationMarker = path.join(workspace, 'aggregate-invocations.txt');
 
   beforeAll(async () => {
-    ensureProductionArtifacts('pure-rust');
+    ensureProductionArtifacts();
     proc = spawnProductionMcp({
       PDF_READER_ENGINE_MODE: 'pure-rust',
       MCP_PDF_REGION_ANALYSIS_COMMAND: process.execPath,

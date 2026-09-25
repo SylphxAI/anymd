@@ -64,16 +64,11 @@ for (const name of Object.keys(optional)) {
   }
 }
 
-// build must not default to oracle TS
-const build = pkg.scripts?.build ?? '';
-if (build.includes('build:oracle-ts') || build.includes('oracle-ts')) {
-  failures.push('scripts.build must not invoke build:oracle-ts (oracle is test-only)');
-}
-if (!pkg.scripts?.['build:oracle-ts']) {
-  failures.push('scripts.build:oracle-ts must remain available as explicit test-only command');
-}
-if ((pkg.scripts?.prepublishOnly ?? '').includes('build:oracle-ts')) {
-  failures.push('prepublishOnly must not build oracle TS');
+// the TypeScript oracle build is retired; no script may reintroduce it
+for (const [name, command] of Object.entries(pkg.scripts ?? {})) {
+  if (name.includes('oracle-ts') || command.includes('oracle-ts')) {
+    failures.push(`scripts.${name} must not build the retired TypeScript oracle`);
+  }
 }
 
 // files allowlist already covered by ts-production-absence; double-check here

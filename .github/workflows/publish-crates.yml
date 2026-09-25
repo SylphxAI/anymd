@@ -32,11 +32,6 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Install bun (for optional differential oracle tests)
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.0
-
       - name: Enforce crates non-product-channel gate
         run: |
           echo "crates.io is not an admitted product distribution channel for pdf-reader-mcp 3.2.x."
@@ -44,18 +39,13 @@ jobs:
           echo "Refuse crates publish until an explicit ADR admits crates and versions match npm."
           exit 1
 
-      - name: Cargo test crates (unit + golden; differential when bun present)
+      - name: Cargo test crates (unit + golden)
         run: |
           set -euo pipefail
           cargo test -p pdf-reader-core
           cargo test -p pdf-reader-cli
           cargo test -p pdf-reader-mcp-server --lib
           cargo test -p pdf-reader-mcp-server --test read_pdf_golden_parity
-          # Differential needs bun + TS oracle; skip hard-fail if bun path missing in env.
-          cargo test -p pdf-reader-mcp-server --test pdf_reader_mcp_differential || {
-            echo "differential oracle test failed — re-run with bun available"
-            exit 1
-          }
 
       - name: Publish pdf-reader-core
         env:

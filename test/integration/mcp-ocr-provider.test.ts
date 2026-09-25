@@ -13,7 +13,7 @@ import {
 
 const repoRoot = path.resolve(import.meta.dirname, '../..');
 const fixture = path.join(repoRoot, 'test/fixtures/differential/v3014-visual-v1.pdf');
-const provider = path.join(repoRoot, 'scripts/differential/reference-ocr-provider.ts');
+const provider = path.join(repoRoot, 'test/fixtures/providers/reference-ocr-provider.ts');
 
 describe('pure-Rust command OCR provider integration', () => {
   let proc: ChildProcess;
@@ -28,7 +28,7 @@ describe('pure-Rust command OCR provider integration', () => {
   const ordinalMarker = path.join(ordinalWorkspace, 'invocations.txt');
 
   beforeAll(async () => {
-    ensureProductionArtifacts('pure-rust');
+    ensureProductionArtifacts();
     proc = spawnProductionMcp({
       PDF_READER_ENGINE_MODE: 'pure-rust',
       MCP_PDF_OCR_COMMAND: process.execPath,

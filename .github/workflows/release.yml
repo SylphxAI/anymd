@@ -38,12 +38,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install provider certification tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng
-          tesseract --version
-
       - name: Check Code Quality (Biome)
         run: bun run check
 
@@ -54,7 +48,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build package
-        run: bun run build:test
+        run: bun run build:package
 
       - name: Build Rust MCP server
         run: bun run build:rust
@@ -67,33 +61,6 @@ jobs:
 
       - name: Build docs
         run: bun run docs:build
-
-      - name: Build release benchmark artifacts
-        id: release-benchmarks
-        continue-on-error: true
-        env:
-          MCP_PDF_BENCHMARK_OUTPUT_DIR: benchmark-artifacts
-          MCP_PDF_OCR_PRESET: tesseract-tsv
-          MCP_PDF_REGION_ANALYSIS_COMMAND: bun
-          MCP_PDF_REGION_ANALYSIS_ARGS_JSON: '["scripts/reference-region-analysis-provider.mjs","{input}","{page}","{region_id}","{languages}"]'
-        run: bun run benchmark:release-artifacts
-
-      - name: Run SOTA release gate
-        env:
-          MCP_PDF_BENCHMARK_OUTPUT_DIR: benchmark-artifacts
-        run: bun run benchmark:release-gate
-
-      - name: Fail on release benchmark command failure
-        if: ${{ steps.release-benchmarks.outcome == 'failure' }}
-        run: exit 1
-
-      - name: Upload benchmark artifacts
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-benchmark-artifacts
-          path: benchmark-artifacts/
-          if-no-files-found: ignore
 
       # Keep this as a standalone shell boundary. changesets/action executes
       # `publish` directly, so shell operators embedded in that input do not
@@ -126,6 +93,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          MCP_PDF_OCR_PRESET: tesseract-tsv
-          MCP_PDF_REGION_ANALYSIS_COMMAND: bun
-          MCP_PDF_REGION_ANALYSIS_ARGS_JSON: '["scripts/reference-region-analysis-provider.mjs","{input}","{page}","{region_id}","{languages}"]'

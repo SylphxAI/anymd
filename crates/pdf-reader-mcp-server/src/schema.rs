@@ -461,9 +461,9 @@ mod tests {
     fn oracle() -> Value {
         serde_json::from_str(include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../../test/fixtures/v3.0.14-input-schema-oracle.json"
+            "/../../test/fixtures/legacy-tool-input-cases.json"
         )))
-        .expect("parse immutable schema oracle lock")
+        .expect("parse legacy tool input cases")
     }
 
     fn accepts(tool: &str, args: Value) -> bool {

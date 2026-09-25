@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "generator": "scripts/differential/generate-v3014-citation-chunk-fixture.ts",
-  "fixture": {
-    "path": "test/fixtures/differential/v3014-citation-chunk-v1.pdf",
-    "bytes": 3201,
-    "sha256": "d4211c0d880def573441e77f7b59e5c3b06e1e324324d7ec3ec2e6c44d632cb4"
-  }
-}

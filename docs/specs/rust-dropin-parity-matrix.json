@@ -1,6 +1,0 @@
-{
-  "schemaVersion": 3,
-  "title": "SUPERSEDED — see pure-rust-capability-matrix.json",
-  "supersededBy": "docs/specs/pure-rust-capability-matrix.json",
-  "note": "3.1.x pure-Rust was withdrawn as npm latest. Published product is TypeScript 3.0.14. Pure-Rust is experimental opt-in only."
-}

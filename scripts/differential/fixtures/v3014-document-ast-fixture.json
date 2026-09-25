@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "generator": "scripts/differential/generate-v3014-document-ast-fixture.ts",
-  "fixture": {
-    "path": "test/fixtures/differential/v3014-document-ast-v1.pdf",
-    "bytes": 1946,
-    "sha256": "d2e9ab11051bd3a84d2a7905cdd7640fe697d47ec58466260debd57041e5a100"
-  }
-}

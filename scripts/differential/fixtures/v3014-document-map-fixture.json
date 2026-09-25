@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "generator": "scripts/differential/generate-v3014-document-map-fixture.ts",
-  "fixture": {
-    "path": "test/fixtures/differential/v3014-document-map-v1.pdf",
-    "bytes": 1935,
-    "sha256": "8e14711c0051c37e6d6bf321dfa83187b592a107f6896b613476ae5be52d0606"
-  }
-}

@@ -1,7 +1,6 @@
 /**
  * Shared helpers for production-path MCP contract tests.
  * Sole-Rust production path: dist/runtime-entry.js + platform native binary.
- * Historical TypeScript oracle remains buildable for tests, but is not the production entry.
  */
 import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -52,17 +51,7 @@ const resolveStagedRustBinary = (): string | null => {
   return null;
 };
 
-export const ensureProductionArtifacts = (
-  requestedMode?: 'pure-rust' | 'rust' | 'typescript-oracle'
-) => {
-  const mode = requestedMode ?? process.env.PDF_READER_ENGINE_MODE;
-  if (mode === 'typescript-oracle') {
-    execSync('bun run build:oracle-ts', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
-    if (!fs.existsSync(path.join(repoRoot, 'dist/index.js'))) {
-      throw new Error('missing dist/index.js — TypeScript oracle path not built');
-    }
-    return;
-  }
+export const ensureProductionArtifacts = () => {
   // Sole-Rust production path. Reuse existing release binary when present to avoid
   // multi-suite rebuild thrash in CI (test:cov runs many production suites).
   if (!fs.existsSync(path.join(repoRoot, 'dist/runtime-entry.js'))) {
@@ -158,15 +147,6 @@ export const readResponse = (proc: ChildProcess, timeoutMs = 45_000): Promise<Js
   });
 
 export const spawnProductionMcp = (envOverrides: NodeJS.ProcessEnv = {}): ChildProcess => {
-  const mode = envOverrides.PDF_READER_ENGINE_MODE ?? process.env.PDF_READER_ENGINE_MODE;
-  if (mode === 'typescript-oracle') {
-    return spawn(process.execPath, [path.join(repoRoot, 'dist/index.js')], {
-      cwd: repoRoot,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: productionEnv(envOverrides),
-    });
-  }
-  // Sole-Rust production entry.
   return spawn(process.execPath, [path.join(repoRoot, 'dist/runtime-entry.js')], {
     cwd: repoRoot,
     stdio: ['pipe', 'pipe', 'pipe'],
