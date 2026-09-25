@@ -19,7 +19,7 @@ permissions:
 jobs:
   map-and-stale:
     name: rust-parity-drift-pass/map-and-stale
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       stale_capabilities: ${{ steps.map.outputs.stale }}
@@ -67,7 +67,7 @@ jobs:
   differential:
     name: rust-parity-drift-pass/differential
     needs: map-and-stale
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       CANDIDATE_SHA: ${{ github.event.merge_group.head_sha || github.sha }}
@@ -2691,7 +2691,7 @@ jobs:
 
   rust-parity-drift-pass:
     name: rust-parity-drift-pass/pass
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
       - map-and-stale

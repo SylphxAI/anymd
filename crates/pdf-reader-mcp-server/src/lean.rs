@@ -4,6 +4,7 @@
 //! Evidence-heavy JSON (bounding boxes, hashes, document maps, audits) stays
 //! available behind explicit options on the legacy routes.
 
+<<<<<<< HEAD
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -17,6 +18,14 @@ use crate::schema::{PageSpecifier, PdfSource, ReadArgs, ReadPdfArgs, SearchArgs,
 use crate::source_access::SourceAccessPolicy;
 
 const MAX_SEARCH_FILES: usize = 2000;
+=======
+use pdf_reader_core::markdown_layout::{load_document, pdf_to_markdown};
+use rmcp::model::{CallToolResult, ContentBlock};
+
+use crate::page_selection::selected_pages;
+use crate::schema::{PdfSource, ReadPdfArgs, SearchPdfArgs};
+use crate::visual_evidence::materialize_read_source;
+>>>>>>> feat/lean-markdown-read
 
 /// Below common MCP client output caps (Claude Code rejects results over 25k tokens).
 pub const DEFAULT_MAX_TOKENS: usize = 20_000;
@@ -206,6 +215,7 @@ struct SourceRead {
     error: Option<String>,
 }
 
+<<<<<<< HEAD
 fn front_matter(header: &[(String, String)]) -> String {
     let mut out = String::from("---\n");
     for (key, value) in header {
@@ -239,18 +249,51 @@ fn failed(label: &str, message: String) -> SourceRead {
 fn read_opened(
     opened: &mut Opened,
     selection: Option<Vec<u32>>,
+=======
+fn read_one_pdf(
+    source: &PdfSource,
+    source_index: usize,
+>>>>>>> feat/lean-markdown-read
     cursor: Option<Cursor>,
     budget: usize,
     first_call: bool,
 ) -> SourceRead {
+<<<<<<< HEAD
     let total = opened.total;
     let mut wanted: Vec<u32> = match selection {
         Some(pages) => pages.into_iter().filter(|page| *page >= 1 && *page <= total).collect(),
         None => (1..=total).collect(),
+=======
+    let label = source.label();
+    let mut header = vec![("source".to_string(), label.clone())];
+    let fail = |mut header: Vec<(String, String)>, message: String| {
+        header.push(("error".into(), message.clone()));
+        SourceRead {
+            header,
+            body: String::new(),
+            next: None,
+            error: Some(message),
+        }
+    };
+    let owner = match materialize_read_source(source_index, source) {
+        Ok(owner) => owner,
+        Err(message) => return fail(header, message),
+    };
+    let doc = match load_document(owner.path()) {
+        Ok(doc) => doc,
+        Err(error) => return fail(header, error.message),
+    };
+    let total = pdf_reader_core::markdown_layout::page_count(&doc);
+    let mut wanted = match selected_pages(&source.pages) {
+        Ok(Some(pages)) => pages.into_iter().filter(|page| *page <= total).collect(),
+        Ok(None) => (1..=total).collect::<Vec<u32>>(),
+        Err(message) => return fail(header, message),
+>>>>>>> feat/lean-markdown-read
     };
     if let Some(cursor) = cursor {
         wanted.retain(|page| *page >= cursor.page);
     }
+<<<<<<< HEAD
     let noun = opened.unit_noun;
     let mut header = vec![("source".to_string(), opened.label.clone())];
     if wanted.is_empty() {
@@ -260,10 +303,20 @@ fn read_opened(
     }
     // One-unit documents (a web page, a DOCX, an image) need no unit markers.
     let markers = total > 1 || opened.is_paged();
+=======
+    if wanted.is_empty() {
+        header.push(("pages".into(), total.to_string()));
+        return fail(
+            header,
+            format!("No requested pages exist (document has {total} pages)."),
+        );
+    }
+>>>>>>> feat/lean-markdown-read
 
     let mut body = String::new();
     let mut shown: Vec<u32> = Vec::new();
     let mut next = None;
+<<<<<<< HEAD
     let mut used = 0usize;
     let mut visible = 0usize;
     let chunk_size = if opened.is_paged() { PAGE_CHUNK } else { usize::MAX };
@@ -288,17 +341,52 @@ fn read_opened(
                 (false, true) => "<!-- continued -->\n\n".to_string(),
                 (true, false) => format!("<!-- {} -->\n\n", unit.label),
                 (true, true) => format!("<!-- {} (continued) -->\n\n", unit.label),
+=======
+    let mut title = None;
+    let mut text_chars = 0usize;
+    let mut used = 0usize;
+    'chunks: for chunk in wanted.chunks(PAGE_CHUNK) {
+        let converted = match pdf_to_markdown(&doc, Some(chunk)) {
+            Ok(converted) => converted,
+            Err(error) => return fail(header, error.message),
+        };
+        if title.is_none() {
+            title = converted.title.clone();
+        }
+        for page in converted.pages {
+            let skip = match cursor {
+                Some(cursor) if cursor.page == page.number => {
+                    cursor.offset.min(page.markdown.len())
+                }
+                _ => 0,
+            };
+            let mut skip = skip;
+            while !page.markdown.is_char_boundary(skip) {
+                skip -= 1;
+            }
+            let content = page.markdown[skip..].trim_start();
+            text_chars += content.chars().filter(|c| !c.is_whitespace()).count();
+            let marker = if skip > 0 {
+                format!("<!-- page {} (continued) -->\n\n", page.number)
+            } else {
+                format!("<!-- page {} -->\n\n", page.number)
+>>>>>>> feat/lean-markdown-read
             };
             let piece_tokens = estimate_tokens(content) + 8;
             if used + piece_tokens > budget {
                 if shown.is_empty() {
+<<<<<<< HEAD
                     // A unit larger than the whole budget: cut inside it.
+=======
+                    // A single page larger than the whole budget: cut inside it.
+>>>>>>> feat/lean-markdown-read
                     let room_tokens = budget.saturating_sub(used + 8).max(250);
                     let room = content.len() * room_tokens / piece_tokens.max(1);
                     let cut = cut_point(content, room.max(512));
                     body.push_str(&marker);
                     body.push_str(content[..cut].trim_end());
                     body.push_str("\n\n");
+<<<<<<< HEAD
                     shown.push(unit.number);
                     let consumed = unit.markdown.len() - content.len() + cut;
                     if cut < content.len() {
@@ -308,17 +396,42 @@ fn read_opened(
                     }
                 } else {
                     next = Some(Cursor { page: unit.number, offset: skip });
+=======
+                    shown.push(page.number);
+                    let consumed = page.markdown.len() - content.len() + cut;
+                    if cut < content.len() {
+                        next = Some(Cursor {
+                            page: page.number,
+                            offset: consumed,
+                        });
+                    } else if let Some(following) = wanted.iter().find(|p| **p > page.number) {
+                        next = Some(Cursor {
+                            page: *following,
+                            offset: 0,
+                        });
+                    }
+                } else {
+                    next = Some(Cursor {
+                        page: page.number,
+                        offset: skip,
+                    });
+>>>>>>> feat/lean-markdown-read
                 }
                 break 'chunks;
             }
             body.push_str(&marker);
             body.push_str(content.trim_end());
             body.push_str("\n\n");
+<<<<<<< HEAD
             shown.push(unit.number);
+=======
+            shown.push(page.number);
+>>>>>>> feat/lean-markdown-read
             used += piece_tokens;
         }
     }
 
+<<<<<<< HEAD
     if opened.format != "pdf" {
         header.push(("format".into(), opened.format.to_string()));
     }
@@ -346,6 +459,28 @@ Install `tesseract` for automatic OCR, or pass ocr: true. -->\n\n",
     if next.is_some() && first_call {
         let entries: Vec<String> = opened
             .outline()
+=======
+    if let Some(title) = title {
+        header.push(("title".into(), title));
+    }
+    header.push(("pages".into(), total.to_string()));
+    let all_pages = shown.len() == total as usize && next.is_none();
+    if !all_pages {
+        header.push((
+            "showing".into(),
+            format!("pages {}", describe_pages(&shown)),
+        ));
+    }
+    if !shown.is_empty() && text_chars < shown.len() * 20 {
+        body.push_str(
+            "<!-- These pages have little or no selectable text (scanned or image-only). \
+For OCR, call read_pdf with include_ocr_text_layer: true, or pdf_evidence with operation \"ocr_pages\". -->\n\n",
+        );
+    }
+    if next.is_some() && first_call {
+        let outline = pdf_reader_core::markdown_layout::outline(&doc);
+        let entries: Vec<String> = outline
+>>>>>>> feat/lean-markdown-read
             .iter()
             .filter(|(depth, _, _)| *depth <= 1)
             .take(OUTLINE_LIMIT)
@@ -361,6 +496,7 @@ Install `tesseract` for automatic OCR, or pass ocr: true. -->\n\n",
             body = format!("<!-- outline -->\n{}\n\n{body}", entries.join("\n"));
         }
     }
+<<<<<<< HEAD
     SourceRead { header, body, next, error: None }
 }
 
@@ -471,6 +607,34 @@ fn human_size(bytes: u64) -> String {
 /// Legacy `read_pdf` default route: the same Markdown answer for PDF sources.
 pub fn read_pdf(args: &ReadPdfArgs, policy: &SourceAccessPolicy) -> Result<CallToolResult, rmcp::ErrorData> {
     let budget = budget_from(args.max_tokens);
+=======
+    SourceRead {
+        header,
+        body,
+        next,
+        error: None,
+    }
+}
+
+fn front_matter(header: &[(String, String)]) -> String {
+    let mut out = String::from("---\n");
+    for (key, value) in header {
+        out.push_str(key);
+        out.push_str(": ");
+        out.push_str(&yaml_value(value));
+        out.push('\n');
+    }
+    out.push_str("---\n\n");
+    out
+}
+
+pub fn read_pdf(args: &ReadPdfArgs) -> Result<CallToolResult, rmcp::ErrorData> {
+    let budget = args
+        .max_tokens
+        .map(|value| value as usize)
+        .unwrap_or(DEFAULT_MAX_TOKENS)
+        .clamp(MIN_MAX_TOKENS, MAX_MAX_TOKENS);
+>>>>>>> feat/lean-markdown-read
     let cursor = args
         .cursor
         .as_deref()
@@ -483,6 +647,10 @@ pub fn read_pdf(args: &ReadPdfArgs, policy: &SourceAccessPolicy) -> Result<CallT
             None,
         ));
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> feat/lean-markdown-read
     let mut out = String::new();
     let mut failures = 0usize;
     let mut skipped = Vec::new();
@@ -492,14 +660,31 @@ pub fn read_pdf(args: &ReadPdfArgs, policy: &SourceAccessPolicy) -> Result<CallT
             skipped.push(source.label());
             continue;
         }
+<<<<<<< HEAD
         let read = pdf_source_read(source, policy, cursor, remaining.max(500));
+=======
+        let read = read_one_pdf(
+            source,
+            index,
+            cursor,
+            remaining.max(500),
+            cursor.is_none(),
+        );
+>>>>>>> feat/lean-markdown-read
         if read.error.is_some() {
             failures += 1;
         }
         out.push_str(&front_matter(&read.header));
         out.push_str(&read.body);
         if let Some(next) = read.next {
+<<<<<<< HEAD
             out.push_str(&continuation_note(budget, next));
+=======
+            out.push_str(&format!(
+                "<!-- Stopped at the {budget}-token budget. Continue with cursor: \"{}\" (same source), or pick pages with sources[].pages, or raise max_tokens. -->\n\n",
+                next.render()
+            ));
+>>>>>>> feat/lean-markdown-read
         }
     }
     if !skipped.is_empty() {
@@ -508,6 +693,7 @@ pub fn read_pdf(args: &ReadPdfArgs, policy: &SourceAccessPolicy) -> Result<CallT
             skipped.join(", ")
         ));
     }
+<<<<<<< HEAD
     Ok(finish(out, failures == args.sources.len()))
 }
 
@@ -534,6 +720,17 @@ fn pdf_source_read(
 
 /// Case-folded, whitespace-collapsed text with a map back to source byte offsets.
 fn fold(text: &str, case_sensitive: bool) -> (String, Vec<usize>) {
+=======
+    let text = out.trim_end().to_string() + "\n";
+    if failures == args.sources.len() {
+        return Ok(CallToolResult::error(vec![ContentBlock::text(text)]));
+    }
+    Ok(CallToolResult::success(vec![ContentBlock::text(text)]))
+}
+
+fn collapse_whitespace(text: &str) -> (String, Vec<usize>) {
+    // Returns the collapsed text and, for each byte of it, the source byte offset.
+>>>>>>> feat/lean-markdown-read
     let mut out = String::with_capacity(text.len());
     let mut map = Vec::with_capacity(text.len());
     let mut last_space = true;
@@ -544,6 +741,7 @@ fn fold(text: &str, case_sensitive: bool) -> (String, Vec<usize>) {
                 map.push(offset);
                 last_space = true;
             }
+<<<<<<< HEAD
             continue;
         }
         last_space = false;
@@ -886,10 +1084,132 @@ fn ranked_hits<'a>(docs: &'a [SearchDoc], query: &str, context: usize, limit: us
                             if anchor.is_none_or(|(w, _, _)| weight > w) {
                                 anchor = Some((weight, start, end));
                             }
+=======
+        } else {
+            let start = out.len();
+            out.push(ch);
+            map.extend(std::iter::repeat_n(offset, out.len() - start));
+            last_space = false;
+        }
+    }
+    (out, map)
+}
+
+fn is_word_byte(text: &str, index: usize, before: bool) -> bool {
+    let ch = if before {
+        text[..index].chars().next_back()
+    } else {
+        text[index..].chars().next()
+    };
+    ch.is_some_and(|c| c.is_alphanumeric() || c == '_')
+}
+
+fn snippet(page_text: &str, start: usize, end: usize, context: usize) -> String {
+    let mut from = start.saturating_sub(context);
+    while !page_text.is_char_boundary(from) {
+        from -= 1;
+    }
+    let mut to = (end + context).min(page_text.len());
+    while !page_text.is_char_boundary(to) {
+        to += 1;
+    }
+    let clean = |s: &str| s.split_whitespace().collect::<Vec<_>>().join(" ");
+    format!(
+        "{}{}**{}**{}{}",
+        if from > 0 { "…" } else { "" },
+        clean(&page_text[from..start]).trim_start().to_string()
+            + if page_text[..start].ends_with(char::is_whitespace) {
+                " "
+            } else {
+                ""
+            },
+        clean(&page_text[start..end]),
+        if page_text[end..].starts_with(char::is_whitespace) {
+            " "
+        } else {
+            ""
+        }
+        .to_string()
+            + clean(&page_text[end..to]).trim_end(),
+        if to < page_text.len() { "…" } else { "" },
+    )
+}
+
+pub fn search_pdf(args: &SearchPdfArgs) -> Result<CallToolResult, rmcp::ErrorData> {
+    let case_sensitive = args.case_sensitive.unwrap_or(false);
+    let whole_word = args.whole_word.unwrap_or(false);
+    let max_matches = args.max_matches_per_source.unwrap_or(20) as usize;
+    let context = args.context_chars.unwrap_or(80) as usize;
+    let max_pages = args.max_pages.unwrap_or(1000) as usize;
+    let (query, _) = collapse_whitespace(args.query.trim());
+    let needle = if case_sensitive {
+        query.clone()
+    } else {
+        query.to_lowercase()
+    };
+    if needle.is_empty() {
+        return Err(rmcp::ErrorData::invalid_params(
+            "query must not be empty.",
+            None,
+        ));
+    }
+
+    let mut out = String::new();
+    let mut failures = 0;
+    for (index, source) in args.sources.iter().enumerate() {
+        let label = source.label();
+        let result = (|| -> Result<(Vec<(u32, String)>, usize, u32, usize), String> {
+            let owner = materialize_read_source(index, source)?;
+            let doc = load_document(owner.path()).map_err(|error| error.message)?;
+            let total = pdf_reader_core::markdown_layout::page_count(&doc);
+            let mut pages: Vec<u32> = match selected_pages(&source.pages)? {
+                Some(pages) => pages.into_iter().filter(|page| *page <= total).collect(),
+                None => (1..=total).collect(),
+            };
+            pages.truncate(max_pages);
+            let mut hits = Vec::new();
+            let mut count = 0usize;
+            for chunk in pages.chunks(PAGE_CHUNK) {
+                let converted =
+                    pdf_to_markdown(&doc, Some(chunk)).map_err(|error| error.message)?;
+                for page in converted.pages {
+                    let (text, _) = collapse_whitespace(&page.markdown);
+                    let haystack = if case_sensitive {
+                        text.clone()
+                    } else {
+                        text.to_lowercase()
+                    };
+                    if haystack.len() != text.len() {
+                        // Case folding changed byte lengths; fall back to exact positions only.
+                    }
+                    let mut from = 0;
+                    while let Some(found) = haystack[from..].find(&needle) {
+                        let start = from + found;
+                        let end = start + needle.len();
+                        from = end.max(start + 1);
+                        while from < haystack.len() && !haystack.is_char_boundary(from) {
+                            from += 1;
+                        }
+                        if whole_word
+                            && (is_word_byte(&haystack, start, true)
+                                || is_word_byte(&haystack, end, false))
+                        {
+                            continue;
+                        }
+                        count += 1;
+                        if hits.len() < max_matches && haystack.len() == text.len() {
+                            hits.push((page.number, snippet(&text, start, end, context)));
+                        } else if hits.len() < max_matches {
+                            hits.push((page.number, snippet(&haystack, start, end, context)));
+                        }
+                        if from >= haystack.len() {
+                            break;
+>>>>>>> feat/lean-markdown-read
                         }
                     }
                 }
             }
+<<<<<<< HEAD
             let (start, end) = anchor.map(|(_, s, e)| (s, e)).unwrap_or((0, 0));
             (score, Hit { doc, unit, snippet: snippet(&unit.markdown, start, end, context, &highlights) })
         })
@@ -1046,6 +1366,44 @@ pub fn search_pdf(args: &SearchPdfArgs, policy: &SourceAccessPolicy) -> Result<C
         },
         policy,
     )
+=======
+            Ok((hits, count, total, pages.len()))
+        })();
+        match result {
+            Ok((hits, count, total, searched)) => {
+                let scope = if searched < total as usize {
+                    format!(" (searched {searched} of {total} pages)")
+                } else {
+                    String::new()
+                };
+                out.push_str(&format!(
+                    "## {label}\n{count} match{} for \"{}\"{scope}\n",
+                    if count == 1 { "" } else { "es" },
+                    args.query
+                ));
+                for (page, text) in &hits {
+                    out.push_str(&format!("- p.{page}: {text}\n"));
+                }
+                if count > hits.len() {
+                    out.push_str(&format!(
+                        "- … {} more (raise max_matches_per_source or narrow pages)\n",
+                        count - hits.len()
+                    ));
+                }
+                out.push('\n');
+            }
+            Err(message) => {
+                failures += 1;
+                out.push_str(&format!("## {label}\nerror: {message}\n\n"));
+            }
+        }
+    }
+    let text = out.trim_end().to_string() + "\n";
+    if failures == args.sources.len() {
+        return Ok(CallToolResult::error(vec![ContentBlock::text(text)]));
+    }
+    Ok(CallToolResult::success(vec![ContentBlock::text(text)]))
+>>>>>>> feat/lean-markdown-read
 }
 
 #[cfg(test)]
@@ -1090,12 +1448,17 @@ mod tests {
     fn snippet_bolds_the_match() {
         let text = "The Transformer uses multi-head attention everywhere.";
         let start = text.find("multi-head").unwrap();
+<<<<<<< HEAD
         let end = start + "multi-head attention".len();
         let s = snippet(text, start, end, 10, &[(start, end)]);
+=======
+        let s = snippet(text, start, start + "multi-head attention".len(), 10);
+>>>>>>> feat/lean-markdown-read
         assert!(s.contains("**multi-head attention**"), "{s}");
     }
 
     #[test]
+<<<<<<< HEAD
     fn folding_maps_back_to_source_offsets() {
         let (folded, map) = fold("Multi-Head\n  Attention", false);
         assert_eq!(folded, "multi-head attention");
@@ -1193,6 +1556,8 @@ mod tests {
     }
 
     #[test]
+=======
+>>>>>>> feat/lean-markdown-read
     fn yaml_values_quote_when_needed() {
         assert_eq!(
             yaml_value("Attention Is All You Need"),

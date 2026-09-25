@@ -644,7 +644,7 @@ describe.skipIf(!pureRustEnabled)('sole-Rust production capability contract', ()
         proc,
         nextId(),
         'search_pdf',
-        { sources: [{ path: samplePdf }], ...args },
+        { sources: [{ path: samplePdf }], ...args, detail: true },
         60_000
       );
       const payload = parseToolPayload(response);

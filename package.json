@@ -249,7 +249,7 @@
     "check:sole-rust-core": "bun scripts/check-sole-rust-core-admission.ts",
     "build:test": "bun run build:package && bun run build:oracle-ts",
     "check:prod-dependency-closure": "bun scripts/check-prod-dependency-closure.ts",
-    "check:no-github-hosted-macos": "bun scripts/check-no-github-hosted-macos.ts",
+    "check:no-github-hosted-macos": "python3 scripts/check-public-runner-profiles.py .",
     "perf:installed-footprint": "bun scripts/perf/measure-installed-footprint.ts",
     "brand:pack-plan": "bun scripts/brand-pack-plan.ts",
     "benchmark:public-proof": "bun scripts/public-proof.ts"

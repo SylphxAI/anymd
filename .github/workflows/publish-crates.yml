@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   publish:
-    runs-on: sylphx-linux-standard
+    runs-on: ubuntu-latest
     if: ${{ github.event.inputs.confirm == 'I_UNDERSTAND_USER_IMPACT' }}
     steps:
       - uses: actions/checkout@v7

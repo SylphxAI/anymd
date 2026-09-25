@@ -22,9 +22,12 @@ use crate::text_index::TextIndexError;
 const MAX_GLYPHS_PER_PAGE: usize = 400_000;
 const MAX_WORKERS: usize = 8;
 
+<<<<<<< HEAD
 /// A parsed PDF (lopdf document).
 pub type PdfDocument = Document;
 
+=======
+>>>>>>> feat/lean-markdown-read
 /// One page of converted Markdown.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MarkdownPage {
@@ -57,6 +60,7 @@ pub fn load_document(path: &Path) -> Result<Document, TextIndexError> {
     Ok(doc)
 }
 
+<<<<<<< HEAD
 /// Open a PDF from memory (decrypting with the empty password when needed).
 pub fn load_document_bytes(bytes: &[u8]) -> Result<Document, TextIndexError> {
     let mut doc = Document::load_mem(bytes)
@@ -71,6 +75,8 @@ pub fn load_document_bytes(bytes: &[u8]) -> Result<Document, TextIndexError> {
     Ok(doc)
 }
 
+=======
+>>>>>>> feat/lean-markdown-read
 /// Page count without extracting text.
 pub fn page_count(doc: &Document) -> u32 {
     u32::try_from(doc.get_pages().len()).unwrap_or(u32::MAX)
@@ -1430,7 +1436,11 @@ fn resolve<'a>(doc: &'a Document, object: &'a Object) -> Option<&'a Object> {
     }
 }
 
+<<<<<<< HEAD
 pub fn info_title(doc: &Document) -> Option<String> {
+=======
+fn info_title(doc: &Document) -> Option<String> {
+>>>>>>> feat/lean-markdown-read
     let info = resolve(doc, doc.trailer.get(b"Info").ok()?)?
         .as_dict()
         .ok()?;

@@ -41,10 +41,16 @@ pub const SERVER_NAME: &str = "citra";
 pub const SERVER_VERSION: &str = "6.0.0";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
+<<<<<<< HEAD
     "Local document reader for agents. read turns any file, URL, or directory listing into clean \
 Markdown (PDF, Office, EPUB, HTML, CSV, images, media) with page/slide/sheet markers and a cursor \
 for long documents. search finds text across files and directories with page locators. inspect \
 renders, crops, OCRs, diffs, or returns structured JSON for PDFs. No cloud API key is required.";
+=======
+    "Reads PDFs locally and returns clean Markdown with page markers (read_pdf), finds text \
+with page locators (search_pdf), and renders, crops, or OCRs pages on request (pdf_evidence). \
+Long documents return a cursor to continue. No cloud API key is required.";
+>>>>>>> feat/lean-markdown-read
 
 fn omit_absent_optional_fields(value: Value) -> Value {
     match value {
@@ -169,7 +175,11 @@ fn uses_2026_envelope(context: &RequestContext<RoleServer>) -> bool {
 #[tool_router]
 impl PdfReaderMcp {
     #[tool(
+<<<<<<< HEAD
         description = "Read any document as clean Markdown: PDF, Word (DOCX), PowerPoint (PPTX), Excel (XLSX/XLS/ODS), CSV, EPUB, HTML or a web URL, Markdown/text, images (metadata + OCR), audio/video (metadata, chapters, subtitles). Pages/slides/sheets carry <!-- page N --> style markers for citation. Long documents stop at max_tokens (default 20000) and end with a cursor to continue; choose pages with pages: \"1-5,8\". A directory returns its readable files."
+=======
+        description = "Read PDFs (local path or URL) as clean Markdown: headings, paragraphs, lists, and tables, with <!-- page N --> markers for citation. Long documents stop at max_tokens (default 20000) and return a cursor to continue; pick pages with sources[].pages (e.g. \"1-5,8\"). Opt-in detail: profile fast|quality|research or any include_* flag returns the structured JSON (document map, elements, geometry, trust and accessibility reports); include_ocr_text_layer runs OCR."
+>>>>>>> feat/lean-markdown-read
     )]
     pub async fn read(
         &self,
@@ -221,8 +231,12 @@ impl PdfReaderMcp {
             .admit_pdf_sources(&mut args.sources)
             .map_err(|message| ErrorData::invalid_params(message, None))?;
         if !lean::read_wants_legacy(&args) {
+<<<<<<< HEAD
             let policy = self.source_access.clone();
             return tokio::task::spawn_blocking(move || lean::read_pdf(&args, &policy))
+=======
+            return tokio::task::spawn_blocking(move || lean::read_pdf(&args))
+>>>>>>> feat/lean-markdown-read
                 .await
                 .map_err(|error| {
                     ErrorData::internal_error(format!("read_pdf worker failed: {error}"), None)
@@ -258,6 +272,12 @@ impl PdfReaderMcp {
         pdf_compare::pdf_compare(value)
     }
 
+<<<<<<< HEAD
+=======
+    #[tool(
+        description = "Find text in PDFs: returns each match as page number plus a snippet with the hit in bold. Case-insensitive by default; whole_word for exact words. detail: true returns JSON with match geometry; include_ocr_text_layer searches OCR text."
+    )]
+>>>>>>> feat/lean-markdown-read
     pub async fn search_pdf(
         &self,
         Parameters(mut args): Parameters<SearchPdfArgs>,
@@ -268,8 +288,12 @@ impl PdfReaderMcp {
             .admit_pdf_sources(&mut args.sources)
             .map_err(|message| ErrorData::invalid_params(message, None))?;
         if !lean::search_wants_legacy(&args) {
+<<<<<<< HEAD
             let policy = self.source_access.clone();
             return tokio::task::spawn_blocking(move || lean::search_pdf(&args, &policy))
+=======
+            return tokio::task::spawn_blocking(move || lean::search_pdf(&args))
+>>>>>>> feat/lean-markdown-read
                 .await
                 .map_err(|error| {
                     ErrorData::internal_error(format!("search_pdf worker failed: {error}"), None)
