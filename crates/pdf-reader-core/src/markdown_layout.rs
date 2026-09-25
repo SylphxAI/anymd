@@ -835,16 +835,24 @@ fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -> Vec<Vec<S
             _ => groups.push((cut, band)),
         }
     }
-    let single = groups.len() == 1;
+    // Consecutive bands without columns form one region, so tables and
+    // paragraphs with generous row spacing stay together.
     let mut out = Vec::new();
+    let mut plain: Vec<Segment> = Vec::new();
     for (cut, group) in groups {
         // Re-check the gutter on the merged group (a band alone may be too small).
-        let cut = column_cut(&group, body).or(cut);
-        match cut {
-            Some(gutter) => out.extend(split_columns(group, gutter, body, depth)),
-            None if single => out.push(group),
-            None => out.extend(reading_regions(group, body, depth + 1)),
+        match column_cut(&group, body).or(cut) {
+            Some(gutter) => {
+                if !plain.is_empty() {
+                    out.push(std::mem::take(&mut plain));
+                }
+                out.extend(split_columns(group, gutter, body, depth));
+            }
+            None => plain.extend(group),
         }
+    }
+    if !plain.is_empty() {
+        out.push(plain);
     }
     out
 }
@@ -1224,6 +1232,8 @@ fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Block>) {
     let mut in_list = false;
     let mut prev: Option<(f64, f64, f64)> = None; // (bottom, x1, size) of previous line
     let mut continuation_x0 = f64::NAN;
+    let mut para_right = f64::NEG_INFINITY;
+    let mut prev_x0 = f64::NAN;
 
     let flush =
         |blocks: &mut Vec<Block>, paragraph: &mut String, size: f64, lines: usize, list: bool| {
@@ -1298,11 +1308,24 @@ fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Block>) {
                 let size_change = (size - prev_size).abs() > prev_size.max(size) * 0.12;
                 let heading_continues =
                     size >= body * 1.15 && !size_change && gap <= size * 0.6 && paragraph_lines < 3;
-                let prev_short = prev_x1 < right - prev_size * 2.5 && !heading_continues;
+                // Short against its own paragraph (or the next line), or a short
+                // stand-alone line in a wide region (key: value rows).
+                let prev_width = prev_x1 - prev_x0;
+                let prev_short = !heading_continues
+                    && (prev_x1 < para_right.max(x1) - prev_size * 2.5
+                        || (prev_x1 < right - prev_size * 2.5 && prev_width < (right - left) * 0.6));
                 let indented = x0 > continuation_x0 + size * 0.8 && !in_list;
                 let outdented = paragraph_lines >= 2 && x0 < continuation_x0 - size * 0.8;
-                let _ = left;
+                // Centered lines (title blocks, letterheads) stay separate.
+                let region_width = right - left;
+                let centered = !heading_continues
+                    && prev_width < region_width * 0.8
+                    && x1 - x0 < region_width * 0.8
+                    && ((prev_x0 + prev_x1) / 2.0 - (x0 + x1) / 2.0).abs() < size * 0.6
+                    && (prev_x0 - x0).abs() > size * 0.8
+                    && x0.min(prev_x0) > left + size;
                 gap > size.max(prev_size) * 0.55
+                    || centered
                     || outdented
                     || size_change
                     || prev_short
@@ -1337,8 +1360,13 @@ fn region_blocks(region: Vec<Segment>, body: f64, blocks: &mut Vec<Block>) {
             paragraph_size = size;
             in_list = false;
         }
+        if paragraph_lines == 0 {
+            para_right = f64::NEG_INFINITY;
+        }
         join_line(&mut paragraph, bullet.unwrap_or(&text));
         paragraph_lines += 1;
+        para_right = para_right.max(x1);
+        prev_x0 = x0;
         if paragraph_lines == 2 {
             continuation_x0 = x0;
         } else if paragraph_lines == 1 {
