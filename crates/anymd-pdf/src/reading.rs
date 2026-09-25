@@ -85,7 +85,15 @@ pub(crate) fn column_cut(segments: &[Segment], body: f64) -> Option<(f64, f64)> 
                 .collect();
             side_width >= width * 0.2 && median(&mut chars) >= 18.0 && median(&mut fill) >= 0.55
         };
-        if side_ok(&left) && side_ok(&right) {
+        // A side that is itself two or more text columns also counts (three-
+        // column layouts).
+        let columns_ok = |side: &[&Segment]| {
+            side_ok(side) || {
+                let owned: Vec<Segment> = side.iter().map(|s| (*s).clone()).collect();
+                owned.len() < segments.len() && column_cut(&owned, body).is_some()
+            }
+        };
+        if columns_ok(&left) && columns_ok(&right) {
             let score = end - start;
             if best.is_none_or(|(_, best_score)| score > best_score) {
                 best = Some(((start, end), score));

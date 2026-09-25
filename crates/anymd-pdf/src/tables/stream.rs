@@ -11,7 +11,7 @@
 
 use crate::extract::Rule;
 use crate::rows::{is_cjk, Segment};
-use crate::tables::{first_data_row, is_numeric, strip_leaders, Cell, Grid};
+use crate::tables::{first_data_row, is_numeric, join_cell_line, strip_leaders, Cell, Grid};
 
 /// What a run of aligned rows turned out to be.
 #[derive(Debug, Clone, PartialEq)]
@@ -134,14 +134,7 @@ fn starts_lower(text: &str) -> bool {
 }
 
 fn append(cell: &mut String, text: &str) {
-    if text.is_empty() {
-        return;
-    }
-    if cell.is_empty() {
-        cell.push_str(text);
-    } else {
-        crate::blocks::join_line(cell, text);
-    }
+    join_cell_line(cell, text);
 }
 
 /// Build a table (or recognise side-by-side prose) from rows that each have
@@ -251,13 +244,14 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule]) -> Stream {
             .any(|&y| y < upper.bottom + 1.0 && y > lower.top - 1.0)
     };
 
+    if std::env::var("ANYMD_DEBUG_STREAM").is_ok() { for l in &lines { eprintln!("top={:.1} bot={:.1} size={size:.1} {:?}", l.top, l.bottom, l.cells); } eprintln!("----"); }
     let texts: Vec<Vec<String>> = lines.iter().map(|l| l.cells.clone()).collect();
     let data = first_data_row(&texts);
     // Header rows: the first row, plus following rows that are tight below it
     // and fill columns other than the first, up to the first row of numbers.
     let mut header_rows = 1;
     let header_limit = data.unwrap_or(if lines[0].spans.is_empty() { 1 } else { 2 });
-    while header_rows < header_limit.min(4) && header_rows + 1 < lines.len() {
+    while header_rows < header_limit.min(8) && header_rows + 1 < lines.len() {
         let (upper, lower) = (&lines[header_rows - 1], &lines[header_rows]);
         let tight = upper.bottom - lower.top <= size * 0.8;
         let beyond_first = lower.cells.iter().skip(1).any(|c| !c.is_empty());

@@ -70,10 +70,7 @@ impl Grid {
                     if text.is_empty() || slot.ends_with(text.as_str()) {
                         continue;
                     }
-                    if !slot.is_empty() {
-                        slot.push(' ');
-                    }
-                    slot.push_str(text);
+                    join_cell_line(slot, text);
                 }
             }
             rows.splice(..header_rows, [header]);
@@ -86,16 +83,37 @@ impl Grid {
 /// a percent, parentheses for negatives, or a footnote mark.
 pub(crate) fn is_numeric(text: &str) -> bool {
     let core = strip_marks(text);
+    let core = core
+        .trim_start_matches(['(', '$', '€', '£', '¥', '*', ' '])
+        .trim_start_matches(['-', '−', '–', '+'])
+        .trim_start_matches(['$', '€', '£', '¥', ' '])
+        .trim_end_matches([')', '%', '*', ' ']);
     let mut digits = 0;
     for ch in core.chars() {
         match ch {
             '0'..='9' => digits += 1,
-            '.' | ',' | '%' | '$' | '€' | '£' | '¥' | '(' | ')' | '+' | '-' | '−' | '–' | ' ' | '*'
-            | '\'' => {}
+            '.' | ',' | ' ' | '\'' => {}
             _ => return false,
         }
     }
-    digits > 0
+    digits > 0 && core.starts_with(|c: char| c.is_ascii_digit() || c == '.')
+}
+
+/// Join a cell's next line: a line-end hyphen stays (table headings break at
+/// real hyphens: "House-" + "passed"), CJK text joins without a space.
+pub(crate) fn join_cell_line(cell: &mut String, line: &str) {
+    let line = line.trim();
+    if line.is_empty() {
+        return;
+    }
+    let glue = cell.is_empty()
+        || cell.ends_with('-')
+        || (cell.chars().last().is_some_and(crate::rows::is_cjk)
+            && line.chars().next().is_some_and(crate::rows::is_cjk));
+    if !glue {
+        cell.push(' ');
+    }
+    cell.push_str(line);
 }
 
 /// A year or year-like column label ("2025", "2026p", "FY2024"), which heads

@@ -7,10 +7,9 @@
 //! one spanning cell. Glyphs are placed in cells by their centre, and each
 //! cell's text is laid out on its own, so a cell may hold several lines.
 
-use crate::blocks::join_line;
 use crate::extract::{Glyph, Rule};
 use crate::rows::{row_text, rows_of, segments_of_row};
-use crate::tables::{strip_leaders, Cell, Grid};
+use crate::tables::{join_cell_line, strip_leaders, Cell, Grid};
 
 /// Distance within which two lines count as touching or as one line.
 const SNAP: f64 = 2.0;
@@ -340,7 +339,7 @@ fn cell_lines(glyphs: Vec<Glyph>) -> Vec<(f64, String)> {
 fn joined(lines: &[(f64, String)]) -> String {
     let mut text = String::new();
     for (_, line) in lines {
-        join_line(&mut text, line);
+        join_cell_line(&mut text, line);
     }
     strip_leaders(&text)
 }

@@ -269,6 +269,34 @@ pub(crate) fn layout_page(
     blocks
 }
 
+/// How far above a table's first aligned row its header starts: short
+/// lines just above it (the top lines of stacked column headings) that sit
+/// tight above the next line, within the table's width, and are still in the
+/// open paragraph.
+fn header_lines_above(rows: &[Vec<Segment>], index: usize, end: usize, marks: &[(usize, usize)]) -> usize {
+    let lo = rows[index..end].iter().flatten().map(|s| s.x0).fold(f64::INFINITY, f64::min);
+    let hi = rows[index..end].iter().flatten().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
+    let mut start = index;
+    for &(row_index, _) in marks.iter().rev() {
+        if row_index + 1 != start || index - row_index > 3 {
+            break;
+        }
+        let row = &rows[row_index];
+        let below = &rows[start];
+        let size = row.iter().map(|s| s.size).fold(0.0, f64::max);
+        let bottom = row.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min);
+        let top = below.iter().map(|s| s.top).fold(f64::NEG_INFINITY, f64::max);
+        let short = row.iter().all(|s| s.chars() <= 40);
+        let inside = row.iter().all(|s| s.x0 >= lo - size && s.x1 <= hi + size);
+        let text = row_text(row);
+        if !(short && inside && bottom - top <= size * 0.8) || bullet_body(&text).is_some() {
+            break;
+        }
+        start = row_index;
+    }
+    start
+}
+
 /// Blocks for side-by-side columns of running text: each column's lines
 /// joined into paragraphs, left column first.
 fn column_blocks(columns: Vec<Vec<String>>, blocks: &mut Vec<Block>) {
@@ -324,6 +352,9 @@ pub(crate) fn region_blocks(
     let mut para_right = f64::NEG_INFINITY;
     let mut prev_mono = false;
     let mut prev_x0 = f64::NAN;
+    // (row index, paragraph length before it) for the rows of the open
+    // paragraph, so a table can take back the header lines above it.
+    let mut marks: Vec<(usize, usize)> = Vec::new();
 
     let flush =
         |blocks: &mut Vec<Block>, paragraph: &mut String, size: f64, lines: usize, list: bool| {
@@ -416,19 +447,48 @@ pub(crate) fn region_blocks(
                     anchors.extend(rows[end].iter().flat_map(|s| [s.x0, s.x1]));
                     multi += 1;
                     end += 1;
-                } else if end + 1 < rows.len()
-                    && is_multi(&rows[end + 1])
-                    && multi > 0
-                    && rows[end][0].chars() <= 40
-                {
-                    end += 1;
+                } else if multi > 0 {
+                    // Short lines between aligned rows (wrapped labels) stay
+                    // in the table when an aligned row follows within a few
+                    // lines, or when they sit tight under the last one at
+                    // the table's left edge.
+                    let left = rows[index..end].iter().map(|r| r[0].x0).fold(f64::INFINITY, f64::min);
+                    let bottom_of = |row: &Vec<Segment>| row.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min);
+                    // A wrapped label: one short line at the table's left
+                    // edge, tight under the line above it.
+                    let label_line = |r: usize| {
+                        let row = &rows[r];
+                        let size = row[0].size;
+                        row.len() == 1
+                            && row[0].chars() <= 40
+                            && (row[0].x0 - left).abs() <= size * 1.5
+                            && bottom_of(&rows[r - 1]) - row[0].top <= size * 0.45
+                    };
+                    let ahead = (end..rows.len().min(end + 4))
+                        .take_while(|&r| !is_multi(&rows[r]) && label_line(r))
+                        .count();
+                    if ahead > 0 && end + ahead < rows.len() && is_multi(&rows[end + ahead]) {
+                        end += ahead;
+                        continue;
+                    }
+                    if ahead > 0 {
+                        end += ahead;
+                    }
+                    break;
                 } else {
                     break;
                 }
             }
             if multi >= 2 {
-                let found = stream_table(&rows[index..end], &tables.rules);
+                let start = header_lines_above(&rows, index, end, &marks);
+                let found = stream_table(&rows[start..end], &tables.rules);
                 if found != Stream::Nothing {
+                    if start < index {
+                        let (_, len) = marks[marks.len() - (index - start)];
+                        paragraph.truncate(len);
+                        paragraph_lines = paragraph_lines.saturating_sub(index - start);
+                    }
+                    marks.clear();
                     flush(
                         blocks,
                         &mut paragraph,
@@ -534,6 +594,10 @@ pub(crate) fn region_blocks(
         if paragraph_lines == 0 {
             para_right = f64::NEG_INFINITY;
         }
+        if paragraph.is_empty() {
+            marks.clear();
+        }
+        marks.push((index, paragraph.len()));
         if row_mono && prev_mono && !paragraph.is_empty() && !in_list {
             paragraph.push('\n');
             paragraph.push_str(&text);
