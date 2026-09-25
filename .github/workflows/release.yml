@@ -92,4 +92,3 @@ jobs:
           github-token: ${{ steps.release-token.outputs.token }}
         env:
           GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
