@@ -27,17 +27,20 @@ ego-tree = "0.11"
 url = "2.5"
 imagesize = "0.15"
 kamadak-exif = "0.6"
-tempfile = "3.20"
-wait-timeout = "0.2"
-# Whisper model downloader (feature `native`).
+tempfile = { version = "3.20", optional = true }
+wait-timeout = { version = "0.2", optional = true }
+# Whisper model downloader.
 ureq = { version = "2.12", default-features = true, features = ["tls"], optional = true }
 sha2 = { version = "0.10", optional = true }
 
 [features]
+# Local helper binaries (tesseract OCR, ffprobe/ffmpeg, whisper.cpp) and the
+# opt-in whisper model download. Off for WebAssembly: images then report
+# metadata only and media the sniffed container.
 default = ["native"]
-# Network downloads (the opt-in whisper model fetch).
-native = ["dep:ureq", "dep:sha2"]
+native = ["dep:tempfile", "dep:wait-timeout", "dep:ureq", "dep:sha2"]
 
 [dev-dependencies]
+tempfile = "3.20"
 rust_xlsxwriter = { version = "0.99", default-features = false }
 image = { version = "0.25", default-features = false, features = ["png"] }

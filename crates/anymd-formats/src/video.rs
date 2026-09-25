@@ -10,7 +10,9 @@ use std::time::Duration;
 
 use serde_json::Value;
 
-use crate::whisper::{self, ModelConfig};
+use crate::whisper;
+#[cfg(feature = "native")]
+use crate::whisper::ModelConfig;
 use crate::{tool, ConvertError, Converted, Options, Section};
 
 const PROBE_TIMEOUT: Duration = Duration::from_secs(60);
@@ -99,7 +101,11 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             name,
             bytes.len() as u64,
             given_path,
-            "_Install ffmpeg (`ffprobe`) to report duration, streams, chapters, and subtitles._",
+            if cfg!(feature = "native") {
+                "_Install ffmpeg (`ffprobe`) to report duration, streams, chapters, and subtitles._"
+            } else {
+                "_The browser build reports the container only; the anymd CLI with ffmpeg adds duration, streams, chapters, and subtitles._"
+            },
         ));
     };
 
@@ -488,6 +494,12 @@ fn sidecar_sections(path: Option<&Path>) -> Vec<Section> {
 // ---------------------------------------------------------------------------
 // Transcript (whisper.cpp)
 
+#[cfg(not(feature = "native"))]
+fn transcribe(_path: &Path, _download: bool) -> Result<String, String> {
+    Err("transcripts need the native anymd build".into())
+}
+
+#[cfg(feature = "native")]
 fn transcribe(path: &Path, download: bool) -> Result<String, String> {
     let binary = whisper::find_binary();
     let ffmpeg = tool::find("ffmpeg");

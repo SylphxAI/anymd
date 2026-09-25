@@ -83,8 +83,10 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     markdown.push_str("\n\n");
     if options.ocr {
         markdown.push_str(&ocr_section(bytes, &format));
-    } else {
+    } else if cfg!(feature = "native") {
         markdown.push_str("_Image text is not extracted by default; pass `ocr: true` to OCR it (needs a local `tesseract`)._");
+    } else {
+        markdown.push_str("_Image text is not extracted in the browser; the anymd CLI can OCR it with a local `tesseract` (`anymd --ocr`)._");
     }
 
     Ok(Converted {

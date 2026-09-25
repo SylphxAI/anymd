@@ -69,6 +69,14 @@ jobs:
           ANYMD_CORPUS_DIR: ${{ runner.temp }}/markdown-corpus
         run: bun run test:rust
 
+      # The docs playground runs anymd-pdf + anymd-formats in the browser; keep
+      # them free of native-only dependencies. (docs:build below degrades to a
+      # "not in this build" notice when the .wasm is absent.)
+      - name: Check WebAssembly build
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo check -p anymd-wasm --target wasm32-unknown-unknown
+
       - name: Build package
         run: bun run build:package
 

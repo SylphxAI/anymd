@@ -4,13 +4,53 @@
 //! A `Section` is the unit a reader paginates over and cites: a slide, a sheet,
 //! an EPUB chapter, or a whole document when the format has no natural pages.
 
+#![cfg_attr(not(feature = "native"), allow(dead_code))]
+
 pub mod csv;
 pub mod docx;
 pub mod epub;
 pub mod html;
 pub mod image;
 pub mod pptx;
+#[cfg(feature = "native")]
 mod tool;
+/// Without `native` (WebAssembly) no helper binary exists: every lookup misses,
+/// so OCR, ffprobe, and whisper paths fall back to their no-tool output.
+#[cfg(not(feature = "native"))]
+mod tool {
+    use std::path::{Path, PathBuf};
+    use std::time::Duration;
+
+    pub(crate) struct ToolOutput {
+        pub success: bool,
+        pub stdout: Vec<u8>,
+        pub stderr: Vec<u8>,
+    }
+
+    pub(crate) struct TempFile(PathBuf);
+
+    impl TempFile {
+        pub(crate) fn path(&self) -> &Path {
+            &self.0
+        }
+    }
+
+    pub(crate) fn find(_name: &str) -> Option<PathBuf> {
+        None
+    }
+
+    pub(crate) fn run<I, S>(_program: &Path, _args: I, _timeout: Duration) -> Result<ToolOutput, String>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<std::ffi::OsStr>,
+    {
+        Err("local tools are not available in this build".into())
+    }
+
+    pub(crate) fn temp_file(_bytes: &[u8], _suffix: &str) -> Result<TempFile, String> {
+        Err("temp files are not available in this build".into())
+    }
+}
 pub mod video;
 pub mod whisper;
 pub mod xlsx;

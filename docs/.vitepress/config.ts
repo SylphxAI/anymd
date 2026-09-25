@@ -74,7 +74,7 @@ export default defineConfig({
     ['meta', { name: 'author', content: 'Sylphx' }],
     ['meta', { name: 'robots', content: 'index, follow' }],
     ['link', { rel: 'canonical', href: 'https://sylphxai.github.io/anymd/' }],
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/anymd/logo.svg' }],
   ],
 
   themeConfig: {
@@ -84,6 +84,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/getting-started', activeMatch: '^/guide/(?!benchmarks)' },
       { text: 'Benchmarks', link: '/guide/benchmarks' },
+      { text: 'Playground', link: '/playground' },
       { text: 'GitHub', link: 'https://github.com/SylphxAI/anymd' },
       { text: 'npm', link: 'https://www.npmjs.com/package/@sylphx/anymd' },
     ],
@@ -100,6 +101,10 @@ export default defineConfig({
           { text: 'Migration', link: '/guide/migration' },
           { text: 'Security', link: '/guide/security' },
         ],
+      },
+      {
+        text: 'Try it',
+        items: [{ text: 'Playground', link: '/playground' }],
       },
     ],
 

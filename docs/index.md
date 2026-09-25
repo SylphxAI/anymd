@@ -13,6 +13,9 @@ hero:
       text: Get started
       link: /guide/getting-started
     - theme: alt
+      text: Try it in your browser
+      link: /playground
+    - theme: alt
       text: Benchmarks
       link: /guide/benchmarks
     - theme: alt

@@ -31,8 +31,31 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Set up Rust (wasm32 target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+
+      # Must match the `wasm-bindgen` crate pinned in crates/anymd-wasm/Cargo.toml.
+      - name: Install wasm-bindgen CLI
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen@0.2.126
+
+      - name: Install wasm-opt
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends binaryen
+
+      - name: Build playground WebAssembly
+        run: bash scripts/build-wasm.sh
+
       - name: Build docs
         run: bun run docs:build
+
+      - name: Verify playground assets
+        run: test -s docs/.vitepress/dist/wasm/anymd_wasm_bg.wasm && test -s docs/.vitepress/dist/wasm/anymd_wasm.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

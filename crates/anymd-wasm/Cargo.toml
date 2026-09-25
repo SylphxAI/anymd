@@ -1,0 +1,23 @@
+[package]
+name = "anymd-wasm"
+version.workspace = true
+edition.workspace = true
+rust-version = "1.92"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+description = "anymd in the browser: any file to clean Markdown via WebAssembly (docs playground)"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anymd-pdf = { path = "../anymd-pdf" }
+# No `native`: no helper binaries (tesseract, ffprobe, whisper) in a browser.
+anymd-formats = { path = "../anymd-formats", default-features = false }
+serde_json = "1.0"
+# Pinned to the wasm-bindgen CLI that generates the JS bindings (CI installs the same).
+wasm-bindgen = "=0.2.126"

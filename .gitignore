@@ -41,3 +41,6 @@ packages/**/bin/pdf-reader-mcp-server.exe
 # durable perf raw samples can be large; summaries live under verification/
 verification/perf/raw/
 *.tgz
+
+# Browser playground WebAssembly (scripts/build-wasm.sh output)
+docs/public/wasm/

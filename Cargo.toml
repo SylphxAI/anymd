@@ -5,6 +5,7 @@ members = [
     "crates/pdf-reader-mcp-server",
     "crates/anymd-formats",
     "crates/anymd-pdf",
+    "crates/anymd-wasm",
     "vendor/adobe-cmap-parser",
     "vendor/pdf-extract",
 ]
@@ -37,6 +38,14 @@ lto = "thin"
 codegen-units = 1
 strip = "symbols"
 panic = "unwind"
+
+# The browser build (crates/anymd-wasm): smallest download over peak speed.
+# `cargo build -p anymd-wasm --profile wasm-release --target wasm32-unknown-unknown`
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = "fat"
+panic = "abort"
 
 [profile.release-with-debug]
 inherits = "release"

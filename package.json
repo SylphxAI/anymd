@@ -129,9 +129,10 @@
     "@changesets/cli": "^3.0.2",
     "@types/node": "^26.1.1",
     "@types/pngjs": "^6.0.5",
+    "markdown-it": "^14.3.2",
+    "pngjs": "^7.0.0",
     "typescript": "^7.0.2",
-    "vitepress": "^1.6.4",
-    "pngjs": "^7.0.0"
+    "vitepress": "^1.6.4"
   },
   "packageManager": "bun@1.4.0",
   "optionalDependencies": {
