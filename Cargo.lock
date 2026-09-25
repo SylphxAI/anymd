@@ -146,6 +146,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "anymd-wasm"
+version = "3.1.1"
+dependencies = [
+ "anymd-formats",
+ "anymd-pdf",
+ "serde_json",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
