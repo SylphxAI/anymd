@@ -732,44 +732,76 @@ fn median(values: &mut [f64]) -> f64 {
     values[values.len() / 2]
 }
 
-/// A column gutter: a vertical whitespace gap with running text on both sides.
-fn column_cut(segments: &[Segment], body: f64) -> Option<f64> {
+/// A column gutter: a vertical strip with running text on both sides. A few
+/// segments may cross it (figure labels, a spanning caption); they are
+/// handled by the caller. Returns the gutter's (start, end).
+fn column_cut(segments: &[Segment], body: f64) -> Option<(f64, f64)> {
     if segments.len() < 6 {
         return None;
     }
-    let mut spans: Vec<(f64, f64)> = segments.iter().map(|s| (s.x0, s.x1)).collect();
     let left_edge = segments.iter().map(|s| s.x0).fold(f64::INFINITY, f64::min);
-    let right_edge = segments
-        .iter()
-        .map(|s| s.x1)
-        .fold(f64::NEG_INFINITY, f64::max);
+    let right_edge = segments.iter().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
     let width = right_edge - left_edge;
-    let mut best: Option<(f64, f64)> = None;
-    for (start, end) in gaps(&mut spans, body * 0.9) {
-        let left: Vec<&Segment> = segments.iter().filter(|s| s.x1 <= start + 0.01).collect();
-        let right: Vec<&Segment> = segments.iter().filter(|s| s.x0 >= end - 0.01).collect();
+    if width <= body * 4.0 {
+        return None;
+    }
+    // Sweep: x ranges covered by at most `allowed` segments.
+    let allowed = segments.len() / 12;
+    let mut events: Vec<(f64, i32)> = Vec::with_capacity(segments.len() * 2);
+    for segment in segments {
+        events.push((segment.x0, 1));
+        events.push((segment.x1, -1));
+    }
+    events.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.cmp(&b.1)));
+    let mut candidates = Vec::new();
+    let mut active = 0i32;
+    let mut open: Option<f64> = None;
+    for (x, delta) in events {
+        let before = active;
+        active += delta;
+        if before as usize > allowed && active as usize <= allowed {
+            open = Some(x);
+        } else if before as usize <= allowed && active as usize > allowed {
+            if let Some(start) = open.take() {
+                if x - start >= body * 0.9 {
+                    candidates.push((start, x));
+                }
+            }
+        }
+    }
+    let mut best: Option<((f64, f64), f64)> = None;
+    for (start, end) in candidates {
+        let mid = (start + end) / 2.0;
+        if mid < left_edge + width * 0.2 || mid > right_edge - width * 0.2 {
+            continue;
+        }
+        let left: Vec<&Segment> = segments.iter().filter(|s| s.x1 <= start + 0.5).collect();
+        let right: Vec<&Segment> = segments.iter().filter(|s| s.x0 >= end - 0.5).collect();
+        // A side is a text column when its real lines (ignoring short figure
+        // labels) are long and mostly fill the column width.
         let side_ok = |side: &[&Segment]| {
-            if side.len() < 3 {
+            let lines: Vec<&&Segment> = side.iter().filter(|s| s.chars() >= 10).collect();
+            if lines.len() < 3 || lines.len() * 3 < side.len() {
                 return false;
             }
-            let lo = side.iter().map(|s| s.x0).fold(f64::INFINITY, f64::min);
-            let hi = side.iter().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
+            let lo = lines.iter().map(|s| s.x0).fold(f64::INFINITY, f64::min);
+            let hi = lines.iter().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
             let side_width = hi - lo;
-            let mut chars: Vec<f64> = side.iter().map(|s| s.chars() as f64).collect();
-            let mut fill: Vec<f64> = side
+            let mut chars: Vec<f64> = lines.iter().map(|s| s.chars() as f64).collect();
+            let mut fill: Vec<f64> = lines
                 .iter()
                 .map(|s| (s.x1 - s.x0) / side_width.max(1.0))
                 .collect();
             side_width >= width * 0.2 && median(&mut chars) >= 18.0 && median(&mut fill) >= 0.55
         };
         if side_ok(&left) && side_ok(&right) {
-            let gap = end - start;
-            if best.is_none_or(|(_, best_gap)| gap > best_gap) {
-                best = Some(((start + end) / 2.0, gap));
+            let score = end - start;
+            if best.is_none_or(|(_, best_score)| score > best_score) {
+                best = Some(((start, end), score));
             }
         }
     }
-    best.map(|(x, _)| x)
+    best.map(|(gutter, _)| gutter)
 }
 
 /// Order segments into reading-order regions (each region is top-to-bottom).
@@ -791,11 +823,13 @@ fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -> Vec<Vec<S
     }
     bands.retain(|band| !band.is_empty());
     // Merge consecutive bands that share the same column gutter.
-    let mut groups: Vec<(Option<f64>, Vec<Segment>)> = Vec::new();
+    let mut groups: Vec<(Option<(f64, f64)>, Vec<Segment>)> = Vec::new();
     for band in bands {
         let cut = column_cut(&band, body);
         match (groups.last_mut(), cut) {
-            (Some((Some(prev), group)), Some(x)) if (*prev - x).abs() < body * 2.0 => {
+            (Some((Some(prev), group)), Some(gutter))
+                if (((prev.0 + prev.1) - (gutter.0 + gutter.1)) / 2.0).abs() < body * 2.0 =>
+            {
                 group.extend(band);
             }
             _ => groups.push((cut, band)),
@@ -807,18 +841,64 @@ fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -> Vec<Vec<S
         // Re-check the gutter on the merged group (a band alone may be too small).
         let cut = column_cut(&group, body).or(cut);
         match cut {
-            Some(x) => {
-                let (left, right): (Vec<Segment>, Vec<Segment>) =
-                    group.into_iter().partition(|s| (s.x0 + s.x1) / 2.0 < x);
-                if left.is_empty() || right.is_empty() {
-                    out.push(left.into_iter().chain(right).collect());
-                    continue;
-                }
-                out.extend(reading_regions(left, body, depth + 1));
-                out.extend(reading_regions(right, body, depth + 1));
-            }
+            Some(gutter) => out.extend(split_columns(group, gutter, body, depth)),
             None if single => out.push(group),
             None => out.extend(reading_regions(group, body, depth + 1)),
+        }
+    }
+    out
+}
+
+/// Split a group at a gutter. Wide segments that cross the gutter (a caption
+/// or table spanning both columns) divide the columns into vertical zones;
+/// narrow ones (figure labels) join the side of their midpoint.
+fn split_columns(group: Vec<Segment>, gutter: (f64, f64), body: f64, depth: usize) -> Vec<Vec<Segment>> {
+    let x = (gutter.0 + gutter.1) / 2.0;
+    let lo = group.iter().map(|s| s.x0).fold(f64::INFINITY, f64::min);
+    let hi = group.iter().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
+    let (mut barriers, rest): (Vec<Segment>, Vec<Segment>) = group.into_iter().partition(|s| {
+        s.x0 < gutter.0 - 0.5 && s.x1 > gutter.1 + 0.5 && s.x1 - s.x0 >= (hi - lo) * 0.5
+    });
+    barriers.sort_by(|a, b| b.top.total_cmp(&a.top));
+    // Merge vertically overlapping barriers into bands.
+    let mut barrier_bands: Vec<Vec<Segment>> = Vec::new();
+    for barrier in barriers {
+        match barrier_bands.last_mut() {
+            Some(band)
+                if band.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min)
+                    <= barrier.top + body * 0.3 =>
+            {
+                band.push(barrier)
+            }
+            _ => barrier_bands.push(vec![barrier]),
+        }
+    }
+    let bottoms: Vec<f64> = barrier_bands
+        .iter()
+        .map(|band| band.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min))
+        .collect();
+    let mut zones: Vec<(Vec<Segment>, Vec<Segment>)> =
+        (0..=barrier_bands.len()).map(|_| (Vec::new(), Vec::new())).collect();
+    for segment in rest {
+        let mid = (segment.top + segment.bottom) / 2.0;
+        let zone = bottoms.iter().take_while(|bottom| **bottom > mid).count();
+        if (segment.x0 + segment.x1) / 2.0 < x {
+            zones[zone].0.push(segment);
+        } else {
+            zones[zone].1.push(segment);
+        }
+    }
+    let mut out = Vec::new();
+    let mut barrier_bands = barrier_bands.into_iter();
+    for (left, right) in zones {
+        if !left.is_empty() {
+            out.extend(reading_regions(left, body, depth + 1));
+        }
+        if !right.is_empty() {
+            out.extend(reading_regions(right, body, depth + 1));
+        }
+        if let Some(band) = barrier_bands.next() {
+            out.push(band);
         }
     }
     out
@@ -994,11 +1074,14 @@ fn join_line(paragraph: &mut String, line: &str) {
         chars.next();
         let before = chars.next();
         let next_word = line.split_whitespace().next().unwrap_or("");
-        if before.is_some_and(char::is_alphabetic)
-            && next_first.is_some_and(char::is_lowercase)
-            && !next_word.contains('-')
-        {
-            paragraph.pop();
+        let prev_word = paragraph.split_whitespace().next_back().unwrap_or("");
+        let compound = prev_word[..prev_word.len() - 1].contains('-') || next_word.contains('-');
+        if before.is_some_and(char::is_alphabetic) && next_first.is_some_and(char::is_lowercase) {
+            if !compound {
+                // A word broken across lines: "transduc-" + "tion".
+                paragraph.pop();
+            }
+            // Compounds keep the hyphen: "left-to-" + "right".
             paragraph.push_str(line);
             return;
         }
@@ -1597,6 +1680,9 @@ mod tests {
         let mut keep = String::from("state-of-the-");
         join_line(&mut keep, "Art");
         assert_eq!(keep, "state-of-the- Art");
+        let mut compound = String::from("a left-to-");
+        join_line(&mut compound, "right model");
+        assert_eq!(compound, "a left-to-right model");
     }
 
     #[test]
