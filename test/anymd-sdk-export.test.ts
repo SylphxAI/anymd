@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Anymd, Citra } from '../src/sdk.ts';
 
@@ -31,15 +31,6 @@ describe('anymd SDK export', () => {
     expect(pkg.bin?.['pdf-reader-mcp']).toBeUndefined();
     expect(Object.keys(pkg.bin ?? {})).toEqual(['anymd']);
     expect(pkg.files ?? []).toContain('dist/sdk.js');
-  });
-
-  test('dist/sdk.js exists after package build', () => {
-    const sdkDist = join(root, 'dist/sdk.js');
-    // ensure source always available
-    expect(existsSync(join(root, 'src/sdk.ts'))).toBe(true);
-    if (existsSync(join(root, 'dist/pure-rust.js'))) {
-      expect(existsSync(sdkDist)).toBe(true);
-    }
   });
 });
 

@@ -207,7 +207,6 @@ if (!review.evidence || !existsSync(join(root, review.evidence))) {
           const allow = (rel: string) =>
             rel === 'docs/specs/pure-rust-capability-matrix.json' ||
             rel === 'src/pure-rust.ts' ||
-            rel === 'dist/pure-rust.js' ||
             rel === 'README.md' ||
             rel === 'CHANGELOG.md' ||
             // Repository governance prose: agent entry notes and project facts.
@@ -228,9 +227,10 @@ if (!review.evidence || !existsSync(join(root, review.evidence))) {
             // Fixing a release-blocking workflow would otherwise block the
             // release it unblocks.
             rel.startsWith('.github/workflows/') ||
-            rel.startsWith('verification/');
+            // The admission evidence record itself.
+            rel === 'release/admission.json';
           // empty changed => identical trees; [].every(allow) is true.
-          // Non-empty changed must be pin-path only (matrix/verification).
+          // Non-empty changed must be pin-path only (matrix/admission record).
           const onlyPinPaths = changed.every(allow);
           if (ancestor.status !== 0 || diff.status !== 0 || !onlyPinPaths) {
             failures.push(

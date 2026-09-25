@@ -89,49 +89,8 @@ jobs:
       - name: Build docs
         run: bun run docs:build
 
-      - name: Detect coverage reports
-        id: coverage
-        shell: bash
-        run: |
-          if [[ -d coverage ]]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if [[ -f coverage/lcov.info ]]; then
-            echo "lcov=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "lcov=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if compgen -G "coverage/*.xml" > /dev/null; then
-            echo "test_results=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "test_results=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Upload coverage to Codecov
-        if: ${{ !cancelled() && steps.coverage.outputs.lcov == 'true' }}
-        continue-on-error: true
-        uses: codecov/codecov-action@v7.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() && steps.coverage.outputs.test_results == 'true' }}
-        continue-on-error: true
-        uses: codecov/codecov-action@v7.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/*.xml
-          report_type: test_results
-          fail_ci_if_error: false
-
       - name: Upload coverage reports
-        if: ${{ !cancelled() && steps.coverage.outputs.available == 'true' }}
+        if: ${{ !cancelled() && hashFiles('coverage/**') != '' }}
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report

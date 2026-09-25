@@ -5,7 +5,7 @@
  * Exercises the native Rust server through the bin/anymd launcher.
  */
 
-import { type ChildProcess, execSync, spawn } from 'node:child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -163,8 +163,6 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
   let serverProc: ChildProcess;
 
   beforeAll(async () => {
-    execSync('bun run build:rust', { cwd: repoRoot, stdio: 'pipe', timeout: 300_000 });
-
     serverProc = spawn(binWrapper, [], {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {

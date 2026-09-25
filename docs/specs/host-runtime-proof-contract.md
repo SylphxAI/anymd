@@ -39,7 +39,7 @@ does not upgrade a row to runtime-proven.
 
 ## Workflows
 
-- Candidate build coverage: `.github/workflows/candidate-host-runtime-proof.yml`.
+- Candidate build coverage: `.github/workflows/native.yml`.
   Its green state means only its declared build scope passed. Read
   `runtimeParityPass`; it is false until all five matching hosts execute the
   installed launcher.

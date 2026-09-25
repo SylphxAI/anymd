@@ -71,20 +71,12 @@ jobs:
         # of an intentional release ref, not ordinary main pushes.
         run: bun scripts/check-verified-candidate-admission.ts
 
-      - name: Normalize tracked dist permissions before version PR
-        run: |
-          if [ -d dist ]; then
-            find dist -type f \( -name '*.js' -o -name '*.mjs' \) -exec chmod a-x {} +
-            ls -la dist || true
-          fi
-
       - name: Create release PR
         id: changesets
         uses: changesets/action@v1
         with:
           # Use node entrypoint (bun package-bin arg parsing is brittle here).
           # Sync native optional package manifests + server.json after version bump.
-          # Clear executable bits on tracked dist/*.js so github-api commitMode accepts them.
           version: bash scripts/release-version.sh
           title: 'chore(release): version packages'
           commit: 'chore(release): version packages'
