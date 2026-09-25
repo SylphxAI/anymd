@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/anymd-win32-x64-msvc",
-  "version": "7.1.0",
+  "version": "7.1.1",
   "description": "Optional pure-Rust MCP server binary for win32-x64-msvc. Installed as an optionalDependency of @sylphx/anymd. Sole-Rust; fail-closed if missing.",
   "license": "MIT",
   "os": [

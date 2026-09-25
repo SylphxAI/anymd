@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.1.1
+
+### Patch Changes
+
+- [#762](https://github.com/SylphxAI/anymd/pull/762) [`8e3d0e3`](https://github.com/SylphxAI/anymd/commit/8e3d0e3815bfd58b4ce61ca2ab72cc4ee9d86ed2) Thanks [@shtse8](https://github.com/shtse8)! - HTTP transport: only `GET /mcp/health` skips the API key. Before this fix, any GET path ending in `/health` did, and those requests fell through to the MCP route.
+
+- [#760](https://github.com/SylphxAI/anymd/pull/760) [`abf959d`](https://github.com/SylphxAI/anymd/commit/abf959d51b96ffe78bab97e645dc27612af92261) Thanks [@shtse8](https://github.com/shtse8)! - The browser playground shows the anymd release it runs (the npm version) instead of the internal crate version.
+
 ## 7.1.0
 
 ### Minor Changes

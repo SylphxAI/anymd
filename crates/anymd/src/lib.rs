@@ -39,7 +39,7 @@ use serde_json::Value;
 
 pub const SERVER_NAME: &str = "anymd";
 /// Pure-Rust MCP server version — tracks the published npm product line when default.
-pub const SERVER_VERSION: &str = "7.1.0";
+pub const SERVER_VERSION: &str = "7.1.1";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
     "Local document reader for agents. read turns any file, URL, or directory listing into clean \
