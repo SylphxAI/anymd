@@ -83,7 +83,16 @@ describe('MCP transport boundary (pure-Rust)', () => {
     });
 
     const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
-    expect(output).toContain('Rust MCP server');
-    expect(output).toContain('sole-Rust anymd');
+    expect(output).toContain('(native Rust)');
+    expect(output).toContain('tesseract');
+  });
+
+  it('converts a file to Markdown on stdout in CLI mode', () => {
+    const result = spawnSync(rustServerBin, [path.join(repoRoot, 'test/fixtures/sample.pdf')], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('<!-- page 1 -->');
   });
 });
