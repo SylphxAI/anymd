@@ -35,16 +35,16 @@ export const packageJson = JSON.parse(
 };
 
 const resolveStagedRustBinary = (): string | null => {
-  const forced = process.env.CITRA_RUST_BIN;
+  const forced = process.env.ANYMD_RUST_BIN;
   if (forced && fs.existsSync(forced)) return forced;
   const candidates = [
     resolveServerPath(),
-    path.join(repoRoot, 'bin/native/citra-mcp-server'),
-    path.join(repoRoot, 'bin/native/linux-x64-gnu/citra-mcp-server'),
-    path.join(repoRoot, 'bin/native/linux-arm64-gnu/citra-mcp-server'),
-    path.join(repoRoot, 'bin/native/darwin-arm64/citra-mcp-server'),
-    path.join(repoRoot, 'bin/native/darwin-x64/citra-mcp-server'),
-    path.join(repoRoot, 'bin/native/win32-x64-msvc/citra-mcp-server.exe'),
+    path.join(repoRoot, 'bin/native/anymd'),
+    path.join(repoRoot, 'bin/native/linux-x64-gnu/anymd'),
+    path.join(repoRoot, 'bin/native/linux-arm64-gnu/anymd'),
+    path.join(repoRoot, 'bin/native/darwin-arm64/anymd'),
+    path.join(repoRoot, 'bin/native/darwin-x64/anymd'),
+    path.join(repoRoot, 'bin/native/win32-x64-msvc/anymd.exe'),
   ];
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
@@ -84,8 +84,8 @@ export const productionEnv = (overrides: NodeJS.ProcessEnv = {}): NodeJS.Process
   env.NODE_ENV = env.NODE_ENV ?? 'test';
   env.MCP_TRANSPORT = env.MCP_TRANSPORT ?? 'stdio';
   const rustBin = resolveStagedRustBinary();
-  if (rustBin && !env.CITRA_RUST_BIN) {
-    env.CITRA_RUST_BIN = rustBin;
+  if (rustBin && !env.ANYMD_RUST_BIN) {
+    env.ANYMD_RUST_BIN = rustBin;
   }
   // Sole-Rust production does not use TS engine mode flags.
   if (!overrides.PDF_READER_ENGINE_MODE) {

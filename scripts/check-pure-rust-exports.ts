@@ -24,7 +24,7 @@ const matrix = JSON.parse(
   claimedForDifferential?: string[];
 };
 
-const defaultBin = pkg.bin?.citra;
+const defaultBin = pkg.bin?.anymd;
 const defaultExport = pkg.exports?.['.'];
 const sole = matrix.productTruth?.soleRustProduction === true;
 

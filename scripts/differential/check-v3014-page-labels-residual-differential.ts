@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-page-labels-residual-projection.ts
 const multiFixture = join(fixtureDir, 'v3014-page-labels-multi-v1.pdf');
 const prefixFixture = join(fixtureDir, 'v3014-page-labels-prefix-v1.pdf');
 const noneFixture = join(fixtureDir, 'v3014-page-labels-none-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

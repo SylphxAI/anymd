@@ -1,11 +1,11 @@
 /**
- * Thin pure-Rust process client for @sylphx/citra.
+ * Thin pure-Rust process client for @sylphx/anymd.
  *
  * Does not process PDFs in TypeScript. Spawns the platform native binary only.
  * Production package default is dist/runtime-entry.js (sole-Rust; ADR-0006).
  *
  * Import:
- *   import { createPureRustClient, resolvePureRustServerBinary } from '@sylphx/citra/pure-rust'
+ *   import { createPureRustClient, resolvePureRustServerBinary } from '@sylphx/anymd/pure-rust'
  */
 import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -61,9 +61,9 @@ const pushPlatformCandidates = (
 
 const pushFallbackCandidates = (candidates: string[], packageRoot: string) => {
   candidates.push(
-    ...cargoBinaryCandidates(packageRoot, 'citra-mcp-server'),
-    join(packageRoot, 'bin/native/citra-mcp-server'),
-    join(packageRoot, 'bin/native/citra-mcp-server.exe')
+    ...cargoBinaryCandidates(packageRoot, 'anymd'),
+    join(packageRoot, 'bin/native/anymd'),
+    join(packageRoot, 'bin/native/anymd.exe')
   );
 };
 
@@ -73,7 +73,7 @@ export const resolvePureRustServerBinary = (options?: {
   env?: NodeJS.ProcessEnv;
 }): string | null => {
   const env = options?.env ?? process.env;
-  const explicit = env['CITRA_RUST_BIN']?.trim();
+  const explicit = (env['ANYMD_RUST_BIN'] ?? env['CITRA_RUST_BIN'])?.trim();
   if (explicit && existsSync(explicit)) return explicit;
 
   const packageRoot = options?.packageRoot ?? packageRootFromThisModule();
@@ -173,7 +173,7 @@ export class PureRustClient {
     const binaryPath = options.binaryPath ?? resolvePureRustServerBinary(resolveOptions);
     if (!binaryPath) {
       throw new Error(
-        'Pure-Rust MCP server binary not found. Build/stage with `bun run build:rust` or set CITRA_RUST_BIN.'
+        'Pure-Rust MCP server binary not found. Build/stage with `bun run build:rust` or set ANYMD_RUST_BIN.'
       );
     }
     this.binaryPath = binaryPath;

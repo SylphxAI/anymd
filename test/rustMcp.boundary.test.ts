@@ -7,7 +7,7 @@ import { resolveCliPath, resolveServerPath } from './utils/cargoBinaries.js';
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const rustServerBin = resolveServerPath();
 const rustCliBin = resolveCliPath();
-const stagedRustBin = path.join(repoRoot, 'bin/native/citra-mcp-server');
+const stagedRustBin = path.join(repoRoot, 'bin/native/anymd');
 const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
 
 describe('MCP transport boundary (pure-Rust)', () => {
@@ -84,6 +84,6 @@ describe('MCP transport boundary (pure-Rust)', () => {
 
     const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
     expect(output).toContain('Rust MCP server');
-    expect(output).toContain('sole-Rust citra-mcp-server');
+    expect(output).toContain('sole-Rust anymd');
   });
 });

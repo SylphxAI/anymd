@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LEDGER="$ROOT/docs/specs/pdf-reader-mcp-migration-ledger.json"
-BIN="$ROOT/bin/citra"
+BIN="$ROOT/bin/anymd"
 
 require_ledger_state() {
 	local capability="$1"

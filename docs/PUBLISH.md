@@ -1,38 +1,43 @@
-# Publish status — Citra
+# Publish status — anymd
 
 | Field | Value |
 | --- | --- |
-| **Canonical npm** | `@sylphx/citra` |
-| **Canonical bin** | `citra` |
-| **MCP registry name** | `io.github.SylphxAI/citra` |
+| **Canonical npm** | `@sylphx/anymd` |
+| **Canonical bin** | `anymd` |
+| **MCP registry name** | `io.github.SylphxAI/anymd` |
 | Source tip version | `5.0.0` (this repository) |
-| Registry (live) | may lag tip — verify with `npm view @sylphx/citra version` |
-| Retired install CTA | `@sylphx/pdf-reader-mcp` (historical pins only) |
+| Registry (live) | may lag tip — verify with `npm view @sylphx/anymd version` |
+| Aliases (same version) | `@sylphx/citra` (bin `citra`), `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`) |
 | Auth | GitHub org `NPM_TOKEN` via protected release workflows |
 
 ## Install (canonical)
 
 ```bash
-npm i -g @sylphx/citra
+npm i -g @sylphx/anymd
 # or
-npx @sylphx/citra
+npx @sylphx/anymd
 ```
 
-## Deprecate transitional (operator, requires auth)
+## Former names (aliases)
+
+`@sylphx/citra` and `@sylphx/pdf-reader-mcp` are live aliases of
+`@sylphx/anymd`, published at the same version by `publish-npm.yml`. That
+workflow clears their old deprecation notice after publishing; by hand:
 
 ```bash
-npm deprecate @sylphx/pdf-reader-mcp@"*" \
-  "Retired install CTA. Use @sylphx/citra (bin: citra)."
+npm deprecate "@sylphx/pdf-reader-mcp@*" ""
+npm deprecate "@sylphx/citra@*" ""
 ```
 
 Publish authority: Changesets through `release.yml`, then the admission-gated
-`publish-npm.yml` artifact path. There is no alias, republish, or unpublish
-workflow.
+`publish-npm.yml` artifact path: natives, then `@sylphx/anymd`, then the two
+alias packages. There is no republish or unpublish workflow.
 
 A release is closed only after all five native packages and the umbrella package
-are read back at one exact version, the installed `citra` launcher initializes
+are read back at one exact version, the installed `anymd` launcher initializes
 with that version, the N-1 → N update and uninstall checks pass, and a GitHub
 release at the publishing source SHA triggers canonical MCP Registry publication.
-The registry workflow then reads back active `io.github.SylphxAI/citra` metadata
-and deprecates every version of the retired MCP Registry identity. Cross-build
+The registry workflow then reads back active `io.github.SylphxAI/anymd` metadata
+and deprecates every version of the retired MCP Registry identities
+(`io.github.SylphxAI/citra`, `io.github.SylphxAI/pdf-reader-mcp`). Cross-build
 success is artifact evidence, not host-runtime parity.

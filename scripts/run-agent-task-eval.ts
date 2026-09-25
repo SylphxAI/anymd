@@ -37,7 +37,7 @@ const baselinePath = join(
     ? 'baselines/typescript-v3.0.14.public-url.json'
     : 'baselines/typescript-v3.0.14.local.json'
 );
-const rustServerPath = join(resolveCargoReleaseDir(root), 'citra-mcp-server');
+const rustServerPath = join(resolveCargoReleaseDir(root), 'anymd');
 const tsServerPath = join(root, 'dist/index.js');
 
 const args = process.argv.slice(2);

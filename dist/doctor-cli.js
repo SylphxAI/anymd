@@ -32518,8 +32518,8 @@ var probeSamplePdf = async () => {
 };
 var probeRustMcpServer = () => {
   const candidates = [
-    ...cargoBinaryCandidates(packageRoot, "citra-mcp-server"),
-    path5.join(packageRoot, "bin/native/citra-mcp-server")
+    ...cargoBinaryCandidates(packageRoot, "anymd"),
+    path5.join(packageRoot, "bin/native/anymd")
   ];
   const native = candidates.find((candidate) => existsSync2(candidate));
   if (native) {

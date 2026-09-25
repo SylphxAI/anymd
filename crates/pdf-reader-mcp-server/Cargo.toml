@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Pure-Rust MCP server binary for @sylphx/citra"
+description = "anymd: any file to clean Markdown for AI agents. Pure-Rust MCP server + CLI binary for @sylphx/anymd"
 homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
@@ -15,7 +15,7 @@ categories = ["command-line-utilities"]
 path = "src/lib.rs"
 
 [[bin]]
-name = "citra-mcp-server"
+name = "anymd"
 path = "src/main.rs"
 
 [dependencies]

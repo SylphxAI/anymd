@@ -12,7 +12,7 @@ Rust MCP build, package smoke, coverage tests, docs, benchmarks, the SOTA
 release gate, and verified-candidate admission. The failure text:
 
 ```
-Error: Unexpected executable file at packages/citra-linux-x64-gnu/bin/citra-mcp-server,
+Error: Unexpected executable file at packages/anymd-linux-x64-gnu/bin/anymd,
 GitHub API only supports non-executable files and directories.
 You may need to add this file to .gitignore
 ```
@@ -30,8 +30,8 @@ intent. Its patterns named the **pre-rename** binary:
 packages/**/bin/pdf-reader-mcp-server
 ```
 
-When #626 renamed the binary to `citra-mcp-server`, `bin/native/**` stayed
-covered by a broader pattern, but `packages/**/bin/citra-mcp-server` did not.
+When #626 renamed the binary to `anymd`, `bin/native/**` stayed
+covered by a broader pattern, but `packages/**/bin/anymd` did not.
 That left the one path the scaffold workflow actually stages unignored, so it
 was committed.
 

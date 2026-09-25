@@ -1,6 +1,6 @@
 name: Registry install proof
 
-# Host-runtime proof for a published @sylphx/citra version.
+# Host-runtime proof for a published @sylphx/anymd version.
 # Each job requires a matching native host (PROOF_REQUIRE_PLATFORM_ID).
 # There is currently no owned linux-arm64 or Windows self-hosted pool for
 # runtime proof (see candidate-host-runtime-proof.yml). Do not fake those
@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "::error::linux-arm64-gnu host runtime proof is unavailable: no owned arm64 runner pool."
-          echo "Natives may still be published (@sylphx/citra-linux-arm64-gnu) via cross-build."
+          echo "Natives may still be published (@sylphx/anymd-linux-arm64-gnu) via cross-build."
           echo "Do not run registry install proof on x64 and claim arm64."
           exit 1
 
@@ -104,6 +104,6 @@ jobs:
         run: |
           set -euo pipefail
           echo "::error::win32-x64-msvc host runtime proof is unavailable: no owned Windows runner pool."
-          echo "Natives may still be published (@sylphx/citra-win32-x64-msvc) via cross-build."
+          echo "Natives may still be published (@sylphx/anymd-win32-x64-msvc) via cross-build."
           echo "Removed [self-hosted, Windows, X64] queue sink that never started."
           exit 1

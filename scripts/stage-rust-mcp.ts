@@ -12,8 +12,8 @@ const binaryName =
   platformIdEarly != null
     ? path.basename(nativeBinaryRelativePath(platformIdEarly))
     : process.platform === 'win32'
-      ? 'citra-mcp-server.exe'
-      : 'citra-mcp-server';
+      ? 'anymd.exe'
+      : 'anymd';
 const source = path.join(resolveCargoReleaseDir(), binaryName);
 const legacyTargetDir = path.join(repoRoot, 'bin/native');
 const legacyTarget = path.join(legacyTargetDir, binaryName);
@@ -55,7 +55,7 @@ if (platformId) {
   // Also stage into the optional package bin/ for local packaging smoke.
   const packageBinary = path.join(
     repoRoot,
-    `packages/citra-${platformId}/bin`,
+    `packages/anymd-${platformId}/bin`,
     path.basename(platformTarget)
   );
   stageCopy(packageBinary);

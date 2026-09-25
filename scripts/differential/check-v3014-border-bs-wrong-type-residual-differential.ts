@@ -22,7 +22,7 @@ const projectionPath = join(scriptDir, 'v3014-border-bs-wrong-type-residual-proj
 const polylineBorderBsWrongTypeFixture = join(fixtureDir, 'v3014-annotation-polyline-border-bs-wrong-type-v1.pdf');
 const lineBorderBsWrongTypeFixture = join(fixtureDir, 'v3014-annotation-line-border-bs-wrong-type-v1.pdf');
 const inkBorderBsWrongTypeFixture = join(fixtureDir, 'v3014-annotation-ink-border-bs-wrong-type-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

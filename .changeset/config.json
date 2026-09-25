@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "SylphxAI/citra"
+      "repo": "SylphxAI/anymd"
     }
   ],
   "commit": false,

@@ -2597,11 +2597,11 @@ if (!matrix.productTruth.dropInFor3014) {
   // progress package that still defaults to TypeScript (e.g. 3.1.2 Stage B).
   const okStable =
     publishedStable.includes('3.0.14') ||
-    publishedStable.includes('@sylphx/citra@3.1.') ||
+    publishedStable.includes('@sylphx/anymd@3.1.') ||
     /@sylphx\/pdf-reader-mcp@\d+\.\d+\.\d+/.test(publishedStable);
   if (!okStable) {
     failures.push(
-      'publishedStable must identify a published @sylphx/citra version while Rust is not drop-in'
+      'publishedStable must identify a published @sylphx/anymd version while Rust is not drop-in'
     );
   }
   if (!publishedImplementation.toLowerCase().includes('typescript')) {
@@ -12579,13 +12579,13 @@ const nativeWorkflow = readFileSync(join(root, '.github/workflows/native-package
 const publishNpmWorkflow = readFileSync(join(root, '.github/workflows/publish-npm.yml'), 'utf8');
 const platformMap = readFileSync(join(root, 'src/native/platform-package-map.ts'), 'utf8');
 const packageDirs = [
-  'packages/citra-darwin-arm64',
-  'packages/citra-darwin-x64',
-  'packages/citra-linux-arm64-gnu',
-  'packages/citra-linux-x64-gnu',
-  'packages/citra-win32-x64-msvc',
+  'packages/anymd-darwin-arm64',
+  'packages/anymd-darwin-x64',
+  'packages/anymd-linux-arm64-gnu',
+  'packages/anymd-linux-x64-gnu',
+  'packages/anymd-win32-x64-msvc',
 ];
-if (!nativeWorkflow.includes('citra-mcp-server-${{ matrix.platformId }}')) {
+if (!nativeWorkflow.includes('anymd-native-${{ matrix.platformId }}')) {
   failures.push('native package scaffold workflow must upload platform-scoped binary artifacts');
 }
 for (const platform of ['darwin-arm64', 'darwin-x64', 'linux-arm64-gnu', 'linux-x64-gnu', 'win32-x64-msvc']) {
@@ -12602,14 +12602,14 @@ for (const dir of packageDirs) {
     private?: boolean;
     name?: string;
     version?: string;
-    citraNativeBinary?: string;
+    anymdNativeBinary?: string;
     scripts?: { prepublishOnly?: string };
   };
   if (manifest.private === true) {
     failures.push(`${dir} must be publishable in Stage B (private:true no longer allowed)`);
   }
-  if (!manifest.citraNativeBinary) {
-    failures.push(`${dir} must declare citraNativeBinary`);
+  if (!manifest.anymdNativeBinary) {
+    failures.push(`${dir} must declare anymdNativeBinary`);
   }
   if (!manifest.scripts?.prepublishOnly?.includes('REFUSE PUBLISH')) {
     failures.push(`${dir} must refuse publish when native binary is missing/empty`);

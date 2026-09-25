@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BIN="${ROOT}/bin/citra"
+BIN="${ROOT}/bin/anymd"
 HTTP_TRANSPORT="${ROOT}/crates/pdf-reader-mcp-server/src/http_transport.rs"
 GATE_TEST="${ROOT}/test/check-no-ts-http-backend.test.ts"
 TS_ADAPTER_GATE="${ROOT}/scripts/check-ts-adapter-deletion-ready.sh"
@@ -19,7 +19,7 @@ report_violation() {
 
 echo "=== check-no-ts-http-backend $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
 
-[[ -f "${BIN}" ]] || report_violation "missing bin/citra"
+[[ -f "${BIN}" ]] || report_violation "missing bin/anymd"
 [[ -f "${HTTP_TRANSPORT}" ]] || report_violation "missing crates/pdf-reader-mcp-server/src/http_transport.rs"
 [[ -f "${GATE_TEST}" ]] || report_violation "missing test/check-no-ts-http-backend.test.ts"
 [[ -f "${TS_ADAPTER_GATE}" ]] || report_violation "missing scripts/check-ts-adapter-deletion-ready.sh"
@@ -44,12 +44,12 @@ NODE
 fi
 
 if [[ -f "${BIN}" ]]; then
-	grep -q 'resolve_rust_bin' "${BIN}" || report_violation "bin/citra must resolve Rust rmcp server via resolve_rust_bin"
-	grep -q 'MCP_TRANSPORT=http' "${BIN}" || report_violation "bin/citra must route MCP_TRANSPORT=http to Rust"
-	grep -q 'transport="$(resolve_transport)"' "${BIN}" || report_violation "bin/citra must resolve transport"
-	grep -q '\[\[ "$transport" == "http" \]\]' "${BIN}" || report_violation "bin/citra must branch on http transport"
+	grep -q 'resolve_rust_bin' "${BIN}" || report_violation "bin/anymd must resolve Rust rmcp server via resolve_rust_bin"
+	grep -q 'MCP_TRANSPORT=http' "${BIN}" || report_violation "bin/anymd must route MCP_TRANSPORT=http to Rust"
+	grep -q 'transport="$(resolve_transport)"' "${BIN}" || report_violation "bin/anymd must resolve transport"
+	grep -q '\[\[ "$transport" == "http" \]\]' "${BIN}" || report_violation "bin/anymd must branch on http transport"
 	if grep -qE 'use_ts_transport|exec node' "${BIN}"; then
-		report_violation "bin/citra must not retain TS transport opt-in"
+		report_violation "bin/anymd must not retain TS transport opt-in"
 	fi
 fi
 
@@ -61,7 +61,7 @@ fi
 if [[ "${violations}" -gt 0 ]]; then
 	echo ""
 	echo "FAIL: ${violations} Web MCP HTTP TS authority violation(s)."
-	echo "Authority: crates/pdf-reader-mcp-server/src/http_transport.rs via bin/citra."
+	echo "Authority: crates/pdf-reader-mcp-server/src/http_transport.rs via bin/anymd."
 	exit 1
 fi
 

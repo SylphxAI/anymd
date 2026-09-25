@@ -37,8 +37,8 @@ number.
 - **Result:** every required class `fixture_pass`; min warm median speedup
   **10.37×**, median of class speedups **15.38×**
 
-Evidence: [`verification/pdf-reader-same-host-ab-suite-4.1.0-registry.json`](https://github.com/SylphxAI/citra/blob/main/verification/pdf-reader-same-host-ab-suite-4.1.0-registry.json) ·
-report: [4.1.0 same-host performance report](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
+Evidence: [`verification/pdf-reader-same-host-ab-suite-4.1.0-registry.json`](https://github.com/SylphxAI/anymd/blob/main/verification/pdf-reader-same-host-ab-suite-4.1.0-registry.json) ·
+report: [4.1.0 same-host performance report](https://github.com/SylphxAI/anymd/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
 
 ## Install footprint
 
@@ -57,7 +57,7 @@ expected — and still a cleaner install than shipping PDF.js and a large JS tre
 
 ## What we do not claim
 
-The [4.1.0 claims policy](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
+The [4.1.0 claims policy](https://github.com/SylphxAI/anymd/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
 forbids:
 
 - collapsing modes into one unqualified "Nx faster"
@@ -66,7 +66,7 @@ forbids:
 - memory/RSS marketing without raw samples
 - OCR or external provider I/O speed
 
-If you see those claims attributed to Citra, they are not ours.
+If you see those claims attributed to anymd, they are not ours.
 
 ## Why it is fast
 

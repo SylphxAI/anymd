@@ -17,7 +17,7 @@ const manifestPath = join(scriptDir, 'fixtures/v3014-visual-candidate-fixtures.j
 const runnerPath = join(scriptDir, 'v3014-visual-candidate-baseline-runner.ts');
 const projectionPath = join(scriptDir, 'v3014-visual-candidate-projection.ts');
 const generatorPath = join(scriptDir, 'generate-v3014-visual-candidate-fixtures.ts');
-const rustServerPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const rustServerPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');

@@ -3,14 +3,14 @@
 One line. No Docker, no API key, no global install.
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
 That starts a **stdio MCP server** your agent can use immediately. Prefer `npx`
 in host configuration so nothing is installed globally and upgrades are just a
 cache refresh.
 
-The package was formerly `@sylphx/pdf-reader-mcp`. New installs use `@sylphx/citra`.
+The package was formerly `@sylphx/pdf-reader-mcp`. New installs use `@sylphx/anymd`.
 
 ## Requirements
 
@@ -26,20 +26,20 @@ The package was formerly `@sylphx/pdf-reader-mcp`. New installs use `@sylphx/cit
 ```json [Claude Desktop / Cursor / VS Code / Codex]
 {
   "mcpServers": {
-    "citra": {
+    "anymd": {
       "command": "npx",
-      "args": ["-y", "@sylphx/citra"]
+      "args": ["-y", "@sylphx/anymd"]
     }
   }
 }
 ```
 
 ```bash [Claude Code]
-claude mcp add citra -- npx -y @sylphx/citra
+claude mcp add anymd -- npx -y @sylphx/anymd
 ```
 
 ```bash [Any agent or CLI]
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 :::
 
@@ -56,15 +56,15 @@ npx -y @sylphx/citra
 <summary><strong>Dual-era clients</strong> (send <code>server/discover</code> before <code>initialize</code>)</summary>
 
 Hosts such as the Gemini Antigravity CLI probe with SEP-2575 `server/discover`
-before the legacy handshake. Citra answers both, on stdio and over HTTP.
+before the legacy handshake. anymd answers both, on stdio and over HTTP.
 
 </details>
 
 ## Global CLI
 
 ```bash
-npm install -g @sylphx/citra
-citra --help
+npm install -g @sylphx/anymd
+anymd --help
 ```
 
 ## Pin a version
@@ -72,20 +72,20 @@ citra --help
 Any released version can be pinned by its exact number:
 
 ```bash
-npx -y @sylphx/citra@<version>
+npx -y @sylphx/anymd@<version>
 ```
 
 ## SDK
 
 ```ts
-import { Citra } from '@sylphx/citra/sdk';
+import { Anymd } from '@sylphx/anymd/sdk';
 
-const citra = new Citra();
-const read = await citra.read({ sources: [{ path: '/absolute/path/report.pdf' }] });
+const anymd = new Anymd();
+const read = await anymd.read({ sources: [{ path: '/absolute/path/report.pdf' }] });
 ```
 
-`@sylphx/citra/sdk` exposes `read` / `search` / `evidence` — the same three
-surfaces as the MCP tools. `@sylphx/citra/pure-rust` exposes the low-level
+`@sylphx/anymd/sdk` exposes `read` / `search` / `evidence` — the same three
+surfaces as the MCP tools. `@sylphx/anymd/pure-rust` exposes the low-level
 client helpers. Both require the platform native package, exactly like MCP.
 
 ## What gets installed
@@ -95,11 +95,11 @@ exactly **one** platform native package for your host:
 
 | Platform | Optional native package |
 | --- | --- |
-| macOS arm64 | `@sylphx/citra-darwin-arm64` |
-| macOS x64 | `@sylphx/citra-darwin-x64` |
-| Linux x64 | `@sylphx/citra-linux-x64-gnu` |
-| Linux arm64 | `@sylphx/citra-linux-arm64-gnu` |
-| Windows x64 | `@sylphx/citra-win32-x64-msvc` |
+| macOS arm64 | `@sylphx/anymd-darwin-arm64` |
+| macOS x64 | `@sylphx/anymd-darwin-x64` |
+| Linux x64 | `@sylphx/anymd-linux-x64-gnu` |
+| Linux arm64 | `@sylphx/anymd-linux-arm64-gnu` |
+| Windows x64 | `@sylphx/anymd-win32-x64-msvc` |
 
 Measured clean install (linux-x64): **20 files**, ~**24.4 MiB** of `node_modules`
 — versus 4,101 files and ~82.3 MiB for the historical TypeScript engine. The
@@ -115,7 +115,7 @@ downgrade to a different engine.
 ## Verify
 
 ```bash
-npx -y @sylphx/citra --help
+npx -y @sylphx/anymd --help
 ```
 
 Then, in your agent, ask:
@@ -124,7 +124,7 @@ Then, in your agent, ask:
 > behind your answer.
 
 If the reply carries `page`, `bounding_box`, and `provenance`, you are on the
-evidence path. If it quotes text with no locators, you are not talking to Citra.
+evidence path. If it quotes text with no locators, you are not talking to anymd.
 
 ## Optional providers
 

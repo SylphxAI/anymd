@@ -10,17 +10,17 @@ describe('MCP stdio transport routing', () => {
       bin?: Record<string, string>;
       exports?: Record<string, string>;
     };
-    expect(pkg.bin?.citra).toBe('./dist/runtime-entry.js');
+    expect(pkg.bin?.anymd).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['.']).toBe('./dist/runtime-entry.js');
     expect(pkg.exports?.['./typescript']).toBeUndefined();
   });
 
   it('optional bin wrapper is sole-Rust and does not invoke TypeScript', () => {
-    const bin = readFileSync(path.join(repoRoot, 'bin/citra'), 'utf8');
+    const bin = readFileSync(path.join(repoRoot, 'bin/anymd'), 'utf8');
     expect(bin).toContain('dist/runtime-entry.js');
     expect(bin).not.toContain('dist/index.js');
-    expect(bin).toContain('citra-mcp-server');
-    expect(bin).toContain('CITRA_RUST_BIN');
+    expect(bin).toContain('anymd');
+    expect(bin).toContain('ANYMD_RUST_BIN');
     expect(bin).not.toContain('PDF_READER_MCP_RUST_BIN');
     expect(bin).not.toContain('pdf-reader-mcp-server');
     expect(bin).not.toContain('legacy-engine-runtime');

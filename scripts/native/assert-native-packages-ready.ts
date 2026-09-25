@@ -51,7 +51,7 @@ for (const platformId of platformIds) {
     name?: string;
     version?: string;
     private?: boolean;
-    citraNativeBinary?: string;
+    anymdNativeBinary?: string;
     scripts?: { prepublishOnly?: string };
   };
   if (pkg.name !== meta.npmName) failures.push(`${platformId}: name mismatch ${pkg.name}`);
@@ -59,7 +59,7 @@ for (const platformId of platformIds) {
     failures.push(`${platformId}: version ${pkg.version} != root ${rootPkg.version}`);
   }
   if (pkg.private === true) failures.push(`${platformId}: still private; Stage B requires publishable package`);
-  if (!pkg.citraNativeBinary) failures.push(`${platformId}: missing citraNativeBinary`);
+  if (!pkg.anymdNativeBinary) failures.push(`${platformId}: missing anymdNativeBinary`);
   if (!pkg.scripts?.prepublishOnly?.includes('REFUSE PUBLISH')) {
     failures.push(`${platformId}: prepublishOnly must refuse publish without binary`);
   }
@@ -67,7 +67,7 @@ for (const platformId of platformIds) {
     failures.push(`${platformId}: root optionalDependencies missing ${meta.npmName}@${rootPkg.version}`);
   }
   if (!manifestsOnly) {
-    const binPath = join(root, meta.packageDir, pkg.citraNativeBinary ?? `bin/${meta.binaryName}`);
+    const binPath = join(root, meta.packageDir, pkg.anymdNativeBinary ?? `bin/${meta.binaryName}`);
     if (!existsSync(binPath)) {
       failures.push(`${platformId}: binary missing at ${binPath}`);
     } else {

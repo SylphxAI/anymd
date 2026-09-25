@@ -13,8 +13,8 @@ async fn main() -> anyhow::Result<()> {
         .any(|argument| argument == "--help" || argument == "-h")
     {
         println!(
-            "citra-mcp-server {SERVER_VERSION}\n\n\
-Usage: citra-mcp-server [doctor] [--allow-dir=<path>]...\n\n\
+            "anymd {SERVER_VERSION}\n\n\
+Usage: anymd [doctor] [--allow-dir=<path>]...\n\n\
 Filesystem access:\n  \
 --allow-dir=<path>       Restrict local PDFs to this directory (repeatable)\n  \
 MCP_PDF_ALLOWED_DIRS     Platform path-list of allowed directories\n\n\
@@ -25,17 +25,17 @@ Without an allowlist, local PDF access is unrestricted within OS permissions."
 
     if arguments.first().map(String::as_str) == Some("doctor") {
         eprintln!(
-            "pdf-reader-mcp Rust MCP server {SERVER_VERSION} ({})",
+            "anymd Rust MCP server {SERVER_VERSION} ({})",
             pdf_reader_core::ENGINE_NAME
         );
-        eprintln!("runtime: sole-Rust citra-mcp-server");
+        eprintln!("runtime: sole-Rust anymd");
         return Ok(());
     }
 
     let source_access = SourceAccessPolicy::from_process().map_err(anyhow::Error::msg)?;
     if source_access.is_restricted() {
         eprintln!(
-            "[citra] Filesystem allowlist enabled for {} root(s)",
+            "[anymd] Filesystem allowlist enabled for {} root(s)",
             source_access.allowed_dir_count()
         );
     }

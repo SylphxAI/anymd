@@ -117,7 +117,7 @@ fn rmcp_read_pdf_structured_content_matches_core_payload() {
     );
     assert_eq!(
         structured.get("product").and_then(Value::as_str),
-        Some("citra")
+        Some("anymd")
     );
     assert_eq!(
         structured

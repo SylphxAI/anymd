@@ -48,7 +48,7 @@
     "historicalTypescriptLkg": "@sylphx/pdf-reader-mcp@3.0.14",
     "semverTarget": "5.0.0",
     "cratesAuthority": "docs/adr/0006-sole-rust-production-and-channel-authority.md",
-    "transitionalNote": "Brand-sole hard cut: @sylphx/citra is canonical. Transitional @sylphx/pdf-reader-mcp is deprecated install CTA. Live registry may still show older transitional latest until 5.0.0 publish.",
+    "transitionalNote": "Renamed to anymd: @sylphx/anymd is canonical. @sylphx/citra and @sylphx/pdf-reader-mcp are thin aliases published at the same version.",
     "candidateHostRuntimeProof": {
       "status": "five-distinct-host-triples-proven-for-4.0.2-candidate",
       "candidateSha": "afb1aa3387dc3b4e10b9415d31dfea8844b3a89a",
@@ -107,7 +107,7 @@
     "performanceClaimsAuthorizedBounded": true,
     "sameHostAbStatus": "admissible_pass",
     "wholeProductPerformanceReview": "verification/pdf-reader-whole-product-independent-review-4.0.2-perf-16fc2eb.json",
-    "brandSolePackage": "@sylphx/citra",
+    "brandSolePackage": "@sylphx/anymd",
     "mcpRegistryTarget": {
       "name": "io.github.SylphxAI/citra",
       "package": "@sylphx/citra",

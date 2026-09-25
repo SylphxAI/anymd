@@ -31,9 +31,9 @@ for (const [cmd, args] of steps) {
     stdio: 'inherit',
     env: {
       ...process.env,
-      CITRA_RUST_BIN:
-        process.env.CITRA_RUST_BIN ||
-        join(resolveCargoReleaseDir(root), 'citra-mcp-server'),
+      ANYMD_RUST_BIN:
+        process.env.ANYMD_RUST_BIN ||
+        join(resolveCargoReleaseDir(root), 'anymd'),
     },
   });
   const ok = r.status === 0;

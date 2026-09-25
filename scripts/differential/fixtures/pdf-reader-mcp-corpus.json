@@ -116,7 +116,7 @@
       "id": "stdio-initialize",
       "kind": "initialize",
       "expect": {
-        "serverName": "citra"
+        "serverName": "anymd"
       }
     },
     {
@@ -170,7 +170,7 @@
     }
   ],
   "serverContract": {
-    "name": "citra",
+    "name": "anymd",
     "tools": [
       "read_pdf",
       "search_pdf",

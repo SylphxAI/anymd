@@ -1,10 +1,10 @@
-# Evidence contract — Citra
+# Evidence contract — anymd
 
 **Evidence First** means results carry citeable structure. There is **no** MCP tool named `evidence_first`.
 
 Family wire law: `SylphxAI/skills` `schemas/product-evidence-envelope.schema.json` (envelope_version `"1"`).
 
-## Locators and honesty (Citra)
+## Locators and honesty (anymd)
 
 - page number
 - table/cell indices when extracted

@@ -1,22 +1,22 @@
 <div align="center">
 
-<img src="docs/public/logo.svg" alt="Citra" width="108" height="108" />
+<img src="docs/public/logo.svg" alt="anymd" width="108" height="108" />
 
-# Citra
+# anymd
 
 ### Give your AI agent eyes for PDFs — with proof.
 
 **Local-first PDF answers with page-level proof.** One call returns markdown, tables, and citations. OCR stays off until you ask for it.
 
-[![npm](https://img.shields.io/npm/v/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
-[![downloads](https://img.shields.io/npm/dm/@sylphx/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/citra)
-[![stars](https://img.shields.io/github/stars/SylphxAI/citra?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://github.com/SylphxAI/citra/stargazers)
+[![npm](https://img.shields.io/npm/v/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
+[![downloads](https://img.shields.io/npm/dm/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
+[![stars](https://img.shields.io/github/stars/SylphxAI/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://github.com/SylphxAI/anymd/stargazers)
 [![license](https://img.shields.io/badge/license-MIT-c3f53c?style=flat-square&labelColor=0a0d07)](LICENSE)
-[![MCP registry](https://img.shields.io/badge/MCP%20registry-io.github.SylphxAI%2Fcitra-c3f53c?style=flat-square&labelColor=0a0d07)](https://registry.modelcontextprotocol.io/servers/io.github.SylphxAI%2Fcitra)
+[![MCP registry](https://img.shields.io/badge/MCP%20registry-io.github.SylphxAI%2Fanymd-c3f53c?style=flat-square&labelColor=0a0d07)](https://registry.modelcontextprotocol.io/servers/io.github.SylphxAI%2Fanymd)
 
-**npm** [`@sylphx/citra`](https://www.npmjs.com/package/@sylphx/citra) · **bin** `citra` · **MCP** `io.github.SylphxAI/citra`
+**npm** [`@sylphx/anymd`](https://www.npmjs.com/package/@sylphx/anymd) · **bin** `anymd` · **MCP** `io.github.SylphxAI/anymd`
 
-Formerly [`@sylphx/pdf-reader-mcp`](https://www.npmjs.com/package/@sylphx/pdf-reader-mcp). Install `@sylphx/citra`.
+**Any file → clean Markdown for AI agents.** Formerly pdf-reader-mcp / Citra: [`@sylphx/pdf-reader-mcp`](https://www.npmjs.com/package/@sylphx/pdf-reader-mcp) and [`@sylphx/citra`](https://www.npmjs.com/package/@sylphx/citra) still install and run anymd. New installs: `npx -y @sylphx/anymd`.
 
 </div>
 
@@ -31,7 +31,7 @@ answer costs more than *"I can't tell."*
 ## The difference
 
 <table>
-<tr><td width="50%">A text dump says</td><td width="50%"><strong>Citra returns</strong></td></tr>
+<tr><td width="50%">A text dump says</td><td width="50%"><strong>anymd returns</strong></td></tr>
 <tr>
 <td valign="top">
 
@@ -89,7 +89,7 @@ Locators in, citations out. A human can check the claim.
 
 <sub>Excerpt of a **real** `read_pdf` response against `test/fixtures/differential/v3014-selectable-table-v1.pdf`
 (paths shortened). The table is detected **and** linked to its continuation on page 2 — and when
-Citra cannot prove something, it says so in `gaps` instead of guessing.</sub>
+anymd cannot prove something, it says so in `gaps` instead of guessing.</sub>
 
 ## Predictable defaults
 
@@ -112,7 +112,7 @@ page count. You do not get a trust audit, and you do not get OCR.
 ## Install in 30 seconds
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
 No Docker. No API key. No global install. That starts a **stdio MCP server** your agent
@@ -120,10 +120,10 @@ can use immediately.
 
 | Your client | Setup |
 | --- | --- |
-| **Any agent / CLI** | `npx -y @sylphx/citra` |
-| **Claude Code** | `claude mcp add citra -- npx -y @sylphx/citra` |
-| **Claude Desktop / Cursor / VS Code / Codex** | `"command": "npx", "args": ["-y", "@sylphx/citra"]` |
-| **Global CLI** | `npm i -g @sylphx/citra` → `citra` |
+| **Any agent / CLI** | `npx -y @sylphx/anymd` |
+| **Claude Code** | `claude mcp add anymd -- npx -y @sylphx/anymd` |
+| **Claude Desktop / Cursor / VS Code / Codex** | `"command": "npx", "args": ["-y", "@sylphx/anymd"]` |
+| **Global CLI** | `npm i -g @sylphx/anymd` → `anymd` |
 
 <details>
 <summary><strong>Claude Desktop / Cursor / VS Code — full <code>mcpServers</code> snippet</strong></summary>
@@ -131,9 +131,9 @@ can use immediately.
 ```json
 {
   "mcpServers": {
-    "citra": {
+    "anymd": {
       "command": "npx",
-      "args": ["-y", "@sylphx/citra"]
+      "args": ["-y", "@sylphx/anymd"]
     }
   }
 }
@@ -141,7 +141,7 @@ can use immediately.
 
 </details>
 
-## Why teams pick Citra
+## Why teams pick anymd
 
 - **Zero-config.** A real `npx` MCP server — not a 20-step bootstrap.
 - **Evidence, not vibes.** Page, geometry, table cells, provenance. Citations a human can check.
@@ -160,7 +160,7 @@ Four tools. One surface. Few, powerful, obvious.
 | `pdf_compare` | Compare two local PDFs at page and term level |
 | `pdf_evidence` | Focused verification: `inspect`, `render_page`, `extract_regions`, `ocr_pages`, `analyze_regions` |
 
-Full option and result reference: **[docs/api](https://sylphxai.github.io/citra/api/)**
+Full option and result reference: **[docs/api](https://sylphxai.github.io/anymd/api/)**
 
 ## Proof, method-bounded
 
@@ -174,7 +174,7 @@ Full option and result reference: **[docs/api](https://sylphxai.github.io/citra/
 <sub>Warm-cache figure is **method-bounded**: long-lived MCP server, repeated *identical* local
 `read_pdf` after warm-up, Rust 4.1.0 against the TypeScript engine 3.0.14, one linux-x64 host.
 The first request in a process pays full parse cost. No multi-host extrapolation.
-See [Performance](https://sylphxai.github.io/citra/performance/).</sub>
+See [Performance](https://sylphxai.github.io/anymd/performance/).</sub>
 
 ## Platforms
 
@@ -182,19 +182,19 @@ One **optional** native package is selected for **your** host only:
 
 | Platform | Native package |
 | --- | --- |
-| macOS arm64 | `@sylphx/citra-darwin-arm64` |
-| macOS x64 | `@sylphx/citra-darwin-x64` |
-| Linux x64 | `@sylphx/citra-linux-x64-gnu` |
-| Linux arm64 | `@sylphx/citra-linux-arm64-gnu` |
-| Windows x64 | `@sylphx/citra-win32-x64-msvc` |
+| macOS arm64 | `@sylphx/anymd-darwin-arm64` |
+| macOS x64 | `@sylphx/anymd-darwin-x64` |
+| Linux x64 | `@sylphx/anymd-linux-x64-gnu` |
+| Linux arm64 | `@sylphx/anymd-linux-arm64-gnu` |
+| Windows x64 | `@sylphx/anymd-win32-x64-msvc` |
 
 ## Security & trust
 
 - **Local-first** — no required cloud provider; the PDF is not uploaded.
 - **Fail closed** — a missing native binary stops the process; there is no silent TypeScript fallback.
-- **Panic-unwind** — a malformed document (e.g. a broken ToUnicode CMap) fails the request, never the process ([#608](https://github.com/SylphxAI/citra/issues/608)).
+- **Panic-unwind** — a malformed document (e.g. a broken ToUnicode CMap) fails the request, never the process ([#608](https://github.com/SylphxAI/anymd/issues/608)).
 - **Remote URL policy** — a `url` source is a pinned, redirect-revalidated http(s) fetch, not a browser; private addresses are rejected unless `MCP_PDF_ALLOW_PRIVATE_IPS=true` is explicitly set ([policy](docs/security/remote-url-policy.md)).
-- **HTTP transport is opt-in and hardened** — loopback by default, `MCP_API_KEY` enforced before binding elsewhere, and `--allow-dir` restricts filesystem reach. Details: [security docs](https://sylphxai.github.io/citra/security/maintainer-process) · report privately per [SECURITY.md](SECURITY.md).
+- **HTTP transport is opt-in and hardened** — loopback by default, `MCP_API_KEY` enforced before binding elsewhere, and `--allow-dir` restricts filesystem reach. Details: [security docs](https://sylphxai.github.io/anymd/security/maintainer-process) · report privately per [SECURITY.md](SECURITY.md).
 
 ## Companion MCP tools
 
@@ -212,12 +212,12 @@ Each product is independent. Install only the tools your agent needs.
 
 | | |
 | --- | --- |
-| 🌐 **Website** | [sylphxai.github.io/citra](https://sylphxai.github.io/citra/) |
-| ⚡ **Quickstart** | [Getting started](https://sylphxai.github.io/citra/guide/getting-started) |
-| 📐 **API reference** | [docs/api](https://sylphxai.github.io/citra/api/) |
+| 🌐 **Website** | [sylphxai.github.io/anymd](https://sylphxai.github.io/anymd/) |
+| ⚡ **Quickstart** | [Getting started](https://sylphxai.github.io/anymd/guide/getting-started) |
+| 📐 **API reference** | [docs/api](https://sylphxai.github.io/anymd/api/) |
 | 📐 **Evidence contract** | [What "proof" means](docs/EVIDENCE_CONTRACT.md) |
-| 📊 **Performance** | [Method & results](https://sylphxai.github.io/citra/performance/) |
-| ⚖️ **Comparison** | [Why not the alternatives](https://sylphxai.github.io/citra/comparison/) |
+| 📊 **Performance** | [Method & results](https://sylphxai.github.io/anymd/performance/) |
+| ⚖️ **Comparison** | [Why not the alternatives](https://sylphxai.github.io/anymd/comparison/) |
 
 ---
 
@@ -226,9 +226,9 @@ Each product is independent. Install only the tools your agent needs.
 **Stop PDF hallucinations. Give agents proof.**
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
-[⭐ **Star this repo**](https://github.com/SylphxAI/citra/stargazers) if Citra made your agent tell the truth.
+[⭐ **Star this repo**](https://github.com/SylphxAI/anymd/stargazers) if anymd made your agent tell the truth.
 
 </div>

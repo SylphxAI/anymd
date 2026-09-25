@@ -1,14 +1,14 @@
 /**
- * Citra SDK — programmatic PDF evidence API (Sylphx).
+ * anymd SDK — programmatic document-to-Markdown API (Sylphx).
  *
  * Today this is a typed façade over the pure-Rust MCP server client.
  * Semantics match MCP tools: read_pdf, search_pdf, pdf_evidence.
  *
  * @example
  * ```ts
- * import { Citra } from '@sylphx/citra/sdk'
- * const citra = Citra.create()
- * const { payload, isError } = await citra.read({ sources: [{ path: '/abs/doc.pdf' }] })
+ * import { Anymd } from '@sylphx/anymd/sdk'
+ * const anymd = Anymd.create()
+ * const { payload, isError } = await anymd.read({ sources: [{ path: '/abs/doc.pdf' }] })
  * ```
  */
 import {
@@ -28,50 +28,50 @@ export type PdfSource = {
   pages?: number[] | string;
 };
 
-export type CitraReadInput = {
+export type AnymdReadInput = {
   sources: PdfSource[];
   auto?: boolean;
   auto_detail?: 'fast' | 'balanced' | 'full';
   [key: string]: unknown;
 };
 
-export type CitraSearchInput = {
+export type AnymdSearchInput = {
   sources: PdfSource[];
   query?: string;
   queries?: string[];
   [key: string]: unknown;
 };
 
-export type CitraEvidenceInput = {
+export type AnymdEvidenceInput = {
   sources: PdfSource[];
   operation: string;
   [key: string]: unknown;
 };
 
-/** Citra — PDF instrument client */
-export class Citra {
+/** anymd — document instrument client */
+export class Anymd {
   private readonly client: PureRustClient;
 
   constructor(options: PureRustClientOptions = {}) {
     this.client = createPureRustClient(options);
   }
 
-  static create(options?: PureRustClientOptions): Citra {
-    return new Citra(options);
+  static create(options?: PureRustClientOptions): Anymd {
+    return new Anymd(options);
   }
 
   /** Agent Document Twin extraction (MCP: read_pdf). */
-  read(input: CitraReadInput): Promise<PureRustCallResult> {
+  read(input: AnymdReadInput): Promise<PureRustCallResult> {
     return this.client.readPdf(input as Record<string, unknown>);
   }
 
   /** Cheap literal search with evidence (MCP: search_pdf). */
-  search(input: CitraSearchInput): Promise<PureRustCallResult> {
+  search(input: AnymdSearchInput): Promise<PureRustCallResult> {
     return this.client.searchPdf(input as Record<string, unknown>);
   }
 
   /** Focused evidence ops: inspect/render/crop/ocr/... (MCP: pdf_evidence). */
-  evidence(input: CitraEvidenceInput): Promise<PureRustCallResult> {
+  evidence(input: AnymdEvidenceInput): Promise<PureRustCallResult> {
     return this.client.pdfEvidence(input as Record<string, unknown>);
   }
 
@@ -84,4 +84,15 @@ export class Citra {
   }
 }
 
-export default Citra;
+/** @deprecated Renamed to {@link Anymd}. Kept so `@sylphx/citra` era imports keep working. */
+export const Citra = Anymd;
+/** @deprecated Renamed to {@link Anymd}. */
+export type Citra = Anymd;
+/** @deprecated Renamed to {@link AnymdReadInput}. */
+export type CitraReadInput = AnymdReadInput;
+/** @deprecated Renamed to {@link AnymdSearchInput}. */
+export type CitraSearchInput = AnymdSearchInput;
+/** @deprecated Renamed to {@link AnymdEvidenceInput}. */
+export type CitraEvidenceInput = AnymdEvidenceInput;
+
+export default Anymd;

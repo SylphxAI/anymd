@@ -19,7 +19,7 @@ const projectionPath = join(scriptDir, 'v3014-form-radio-as-no-override-residual
 const radioNoOverrideFixture = join(fixtureDir, 'v3014-form-radio-as-does-not-override-v-v1.pdf');
 const radioInvalidKeepsFixture = join(fixtureDir, 'v3014-form-radio-as-invalid-keeps-v-v1.pdf');
 const checkboxRegressionFixture = join(fixtureDir, 'v3014-form-radio-checkbox-as-regression-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

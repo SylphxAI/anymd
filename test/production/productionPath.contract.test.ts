@@ -71,7 +71,7 @@ describe('production-path public contract (sole-Rust production entry)', () => {
   });
 
   test('package public entry is sole-Rust runtime-entry without typescript export', () => {
-    expect(packageJson.bin?.citra).toBe('./dist/runtime-entry.js');
+    expect(packageJson.bin?.anymd).toBe('./dist/runtime-entry.js');
     expect(packageJson.exports?.['.']).toBe('./dist/runtime-entry.js');
     expect(packageJson.exports?.['./typescript']).toBeUndefined();
     expect(packageJson.files).toContain('dist/runtime-entry.js');
@@ -81,9 +81,9 @@ describe('production-path public contract (sole-Rust production entry)', () => {
     expect(fs.existsSync(path.join(repoRoot, 'dist/runtime-entry.js'))).toBe(true);
   });
 
-  test('initialize advertises citra and package version', async () => {
+  test('initialize advertises anymd and package version', async () => {
     const init = await initializeSession(proc, 'production-contract-suite');
-    expect(init.result?.serverInfo?.name).toBe('citra');
+    expect(init.result?.serverInfo?.name).toBe('anymd');
     expect(init.result?.serverInfo?.version).toBe(packageJson.version);
   }, 60_000);
 

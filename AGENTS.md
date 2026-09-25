@@ -1,4 +1,9 @@
-# pdf-reader-mcp — local agent notes only
+# anymd — local agent notes only
+
+anymd (formerly Citra / pdf-reader-mcp): canonical npm `@sylphx/anymd`,
+repository `SylphxAI/anymd` (old slugs `SylphxAI/citra` and
+`SylphxAI/pdf-reader-mcp` redirect). `@sylphx/citra` and
+`@sylphx/pdf-reader-mcp` are thin aliases published at the same version.
 
 Doctrine, Mission Control, and GroundAtlas package dogfood are retired
 historical lineage and must not be loaded as current instruction or live-state

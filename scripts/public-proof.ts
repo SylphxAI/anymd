@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Citra public proof — local PDF read with citeable structure on sample.pdf.
+ * anymd public proof — local PDF read with citeable structure on sample.pdf.
  */
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -24,12 +24,12 @@ let hasText = false;
 try {
   // Prefer built SDK if present
   const mod = await import('../dist/sdk.js').catch(() => import('../src/sdk.ts'));
-  const Citra = (mod as { Citra?: { create: () => { read: (i: Record<string, unknown>) => Promise<unknown> } } }).Citra
+  const anymd = (mod as { Anymd?: { create: () => { read: (i: Record<string, unknown>) => Promise<unknown> } } }).Anymd
     ?? (mod as { default?: { create: () => { read: (i: Record<string, unknown>) => Promise<unknown> } } }).default;
-  if (!Citra?.create) {
-    throw new Error('Citra SDK export not found');
+  if (!anymd?.create) {
+    throw new Error('anymd SDK export not found');
   }
-  const result = await Citra.create().read({ sources: [{ path: sample, pages: [1] }] }) as {
+  const result = await anymd.create().read({ sources: [{ path: sample, pages: [1] }] }) as {
     isError?: boolean;
     payload?: unknown;
   };
@@ -47,14 +47,14 @@ try {
 }
 const ms = performance.now() - started;
 const report = {
-  product: 'Citra',
+  product: 'anymd',
   sample,
   ms,
   ok,
   error,
   hasText,
   pages,
-  hasSkill: existsSync(join(root, 'skills/citra/SKILL.md')),
+  hasSkill: existsSync(join(root, 'skills/anymd/SKILL.md')),
   brandPublishDoc: existsSync(join(root, 'docs/BRAND_PUBLISH.md')),
   generatedAt: new Date().toISOString(),
 };

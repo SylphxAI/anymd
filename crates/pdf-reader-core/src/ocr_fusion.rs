@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 
 use crate::read_pdf::{rebuild_structured_outputs, ReadPdfResponse};
 
-pub const OCR_STUB_WARNING: &str = "include_ocr_text_layer: provider execution is owned by citra-mcp-server; pdf-reader-core omits ocr_text_layer until a normalized provider outcome is fused.";
+pub const OCR_STUB_WARNING: &str = "include_ocr_text_layer: provider execution is owned by anymd; pdf-reader-core omits ocr_text_layer until a normalized provider outcome is fused.";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct OcrWord {

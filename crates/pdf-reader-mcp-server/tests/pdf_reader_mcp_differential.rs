@@ -112,7 +112,7 @@ fn resolve_transport(env: &Value) -> String {
 
 fn surface_file(surface: &str) -> PathBuf {
     match surface {
-        "bin" => repo_root().join("bin/citra"),
+        "bin" => repo_root().join("bin/anymd"),
         "stdio" => repo_root().join("crates/pdf-reader-mcp-server/src/main.rs"),
         other => panic!("unknown surface {other}"),
     }
@@ -180,16 +180,16 @@ fn parse_rmcp_structured(result: &rmcp::model::CallToolResult) -> Value {
 
 fn resolve_mcp_binary() -> PathBuf {
     for relative in [
-        "bin/native/citra-mcp-server",
-        "target/release/citra-mcp-server",
-        "target/debug/citra-mcp-server",
+        "bin/native/anymd",
+        "target/release/anymd",
+        "target/debug/anymd",
     ] {
         let candidate = repo_root().join(relative);
         if candidate.is_file() {
             return candidate;
         }
     }
-    panic!("citra-mcp-server is not built; run `bun run build:rust`");
+    panic!("anymd is not built; run `bun run build:rust`");
 }
 
 struct StdioMcpClient {
@@ -299,7 +299,7 @@ impl StdioMcpClient {
             .unwrap_or_default();
         assert_eq!(
             server_name, SERVER_NAME,
-            "initialize must identify citra rmcp server"
+            "initialize must identify anymd rmcp server"
         );
 
         self.send_notification("notifications/initialized", json!({}));

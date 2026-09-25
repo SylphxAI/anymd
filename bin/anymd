@@ -28,18 +28,18 @@ map_platform_id() {
   esac
 }
 
-# Brand env override: CITRA_RUST_BIN only.
-if [[ -n "${CITRA_RUST_BIN:-}" && -x "${CITRA_RUST_BIN}" ]]; then
-  exec "${CITRA_RUST_BIN}" "$@"
+# Brand env override: ANYMD_RUST_BIN only.
+if [[ -n "${ANYMD_RUST_BIN:-}" && -x "${ANYMD_RUST_BIN}" ]]; then
+  exec "${ANYMD_RUST_BIN}" "$@"
 fi
 
 PLATFORM_ID="$(map_platform_id || true)"
 if [[ -n "${PLATFORM_ID}" ]]; then
   for CANDIDATE in \
-    "$ROOT/bin/native/${PLATFORM_ID}/citra-mcp-server" \
-    "$ROOT/bin/native/${PLATFORM_ID}/citra-mcp-server.exe" \
-    "$ROOT/packages/citra-${PLATFORM_ID}/bin/citra-mcp-server" \
-    "$ROOT/packages/citra-${PLATFORM_ID}/bin/citra-mcp-server.exe"
+    "$ROOT/bin/native/${PLATFORM_ID}/anymd" \
+    "$ROOT/bin/native/${PLATFORM_ID}/anymd.exe" \
+    "$ROOT/packages/anymd-${PLATFORM_ID}/bin/anymd" \
+    "$ROOT/packages/anymd-${PLATFORM_ID}/bin/anymd.exe"
   do
     if [[ -x "${CANDIDATE}" ]]; then
       exec "${CANDIDATE}" "$@"
@@ -48,18 +48,18 @@ if [[ -n "${PLATFORM_ID}" ]]; then
 fi
 
 for CANDIDATE in \
-  "$ROOT/bin/native/citra-mcp-server" \
-  "$ROOT/bin/native/citra-mcp-server.exe" \
-  "$ROOT/target/release/citra-mcp-server" \
-  "$ROOT/target/release/citra-mcp-server.exe" \
-  "$ROOT/target/debug/citra-mcp-server" \
-  "$ROOT/target/debug/citra-mcp-server.exe"
+  "$ROOT/bin/native/anymd" \
+  "$ROOT/bin/native/anymd.exe" \
+  "$ROOT/target/release/anymd" \
+  "$ROOT/target/release/anymd.exe" \
+  "$ROOT/target/debug/anymd" \
+  "$ROOT/target/debug/anymd.exe"
 do
   if [[ -x "${CANDIDATE}" ]]; then
     exec "${CANDIDATE}" "$@"
   fi
 done
 
-echo "[citra] sole-Rust binary not found. Build with: bun run build:rust" >&2
-echo "[citra] Or install the matching optional native package (@sylphx/citra-<platform>)." >&2
+echo "[anymd] sole-Rust binary not found. Build with: bun run build:rust" >&2
+echo "[anymd] Or install the matching optional native package (@sylphx/anymd-<platform>)." >&2
 exit 1

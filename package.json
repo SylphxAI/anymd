@@ -1,11 +1,11 @@
 {
-  "name": "@sylphx/citra",
+  "name": "@sylphx/anymd",
   "version": "6.0.0",
-  "mcpName": "io.github.SylphxAI/citra",
-  "description": "Citra — PDF answers with page-level proof. Local-first structured text, tables, OCR, visual evidence, and citations via MCP, CLI, and SDK.",
+  "mcpName": "io.github.SylphxAI/anymd",
+  "description": "Any file → clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML, images. Fast Rust MCP server + CLI. Local, no API key.",
   "type": "module",
   "bin": {
-    "citra": "./dist/runtime-entry.js"
+    "anymd": "./dist/runtime-entry.js"
   },
   "files": [
     "dist/runtime-entry.js",
@@ -29,42 +29,38 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SylphxAI/citra.git"
+    "url": "git+https://github.com/SylphxAI/anymd.git"
   },
   "bugs": {
-    "url": "https://github.com/SylphxAI/citra/issues"
+    "url": "https://github.com/SylphxAI/anymd/issues"
   },
-  "homepage": "https://sylphxai.github.io/citra/",
+  "homepage": "https://sylphxai.github.io/anymd/",
   "author": "Sylphx <contact@sylphx.com> (https://sylphx.com)",
   "license": "MIT",
   "keywords": [
+    "markdown",
     "mcp",
+    "pdf-to-markdown",
+    "docx",
+    "pptx",
+    "xlsx",
+    "epub",
+    "html-to-markdown",
+    "ocr",
+    "rag",
+    "ai-agents",
+    "llm",
+    "markitdown-alternative",
+    "rust",
+    "local",
     "model-context-protocol",
     "pdf",
-    "reader",
-    "parser",
-    "node",
-    "ai",
-    "agent",
-    "tool",
-    "rag",
-    "citations",
-    "agent-document-twin",
-    "pdf-intelligence",
-    "ocr",
-    "visual-evidence",
-    "trust-report",
-    "accessibility-report",
-    "pdf-inspection",
-    "layout-analysis",
-    "reading-order",
-    "pdf-to-markdown",
+    "docx-to-markdown",
+    "document-conversion",
     "document-processing",
-    "rust",
-    "local-first",
-    "pdf-mcp",
-    "document-intelligence",
-    "citra"
+    "citations",
+    "agent",
+    "anymd"
   ],
   "scripts": {
     "build": "bun run build:package",
@@ -241,6 +237,7 @@
     "native:stage-from-artifacts": "bun scripts/native/stage-native-artifacts.ts",
     "release:publish-with-natives": "bun scripts/release-publish-with-natives.ts",
     "sync:server-json": "bun scripts/sync-server-json.ts",
+    "sync:alias-packages": "bun scripts/sync-alias-packages.ts",
     "build:package": "bun build src/runtime-entry.ts --outdir dist --target node && bun build src/pure-rust.ts --outdir dist --target node && bun build src/sdk.ts --outdir dist --target node",
     "build:oracle-ts": "bun build src/index.ts --outdir dist --target node && bun build src/doctor-cli.ts --outdir dist --target node && bun build src/pure-rust.ts --outdir dist --target node && bun build src/runtime-entry.ts --outdir dist --target node && bun scripts/stage-pdfjs-worker.ts",
     "check:ts-production-absence": "bun scripts/check-ts-production-absence.ts",
@@ -280,10 +277,10 @@
   },
   "packageManager": "bun@1.4.0",
   "optionalDependencies": {
-    "@sylphx/citra-darwin-arm64": "6.0.0",
-    "@sylphx/citra-darwin-x64": "6.0.0",
-    "@sylphx/citra-linux-arm64-gnu": "6.0.0",
-    "@sylphx/citra-linux-x64-gnu": "6.0.0",
-    "@sylphx/citra-win32-x64-msvc": "6.0.0"
+    "@sylphx/anymd-darwin-arm64": "6.0.0",
+    "@sylphx/anymd-darwin-x64": "6.0.0",
+    "@sylphx/anymd-linux-arm64-gnu": "6.0.0",
+    "@sylphx/anymd-linux-x64-gnu": "6.0.0",
+    "@sylphx/anymd-win32-x64-msvc": "6.0.0"
   }
 }

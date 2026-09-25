@@ -19,7 +19,7 @@ const projectionPath = join(scriptDir, 'v3014-form-checkbox-export-normalize-res
 const invalidExportFixture = join(fixtureDir, 'v3014-form-checkbox-as-invalid-export-off-v1.pdf');
 const onlyOffYesFixture = join(fixtureDir, 'v3014-form-checkbox-as-only-off-yes-v1.pdf');
 const offExportOkFixture = join(fixtureDir, 'v3014-form-checkbox-as-off-export-ok-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

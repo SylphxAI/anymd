@@ -155,7 +155,7 @@ mod tests {
     fn sample_info() -> ServerInfo {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(
-                Implementation::new("citra", "5.0.0")
+                Implementation::new("anymd", "5.0.0")
                     .with_description("test description")
                     .with_website_url("https://example.test/"),
             )
@@ -174,7 +174,7 @@ mod tests {
         assert!(value["capabilities"]["tools"].is_object());
         assert_eq!(value["cacheScope"], "private");
         assert_eq!(value["ttlMs"], 3_600_000);
-        assert_eq!(value["_meta"][SERVER_INFO_META_KEY]["name"], "citra");
+        assert_eq!(value["_meta"][SERVER_INFO_META_KEY]["name"], "anymd");
         assert_eq!(value["_meta"][SERVER_INFO_META_KEY]["version"], "5.0.0");
         assert_eq!(value["instructions"], "test instructions");
     }

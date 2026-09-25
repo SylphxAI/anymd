@@ -1,7 +1,7 @@
 # Why Agents Need Evidence-First PDF Reading
 
 
-> Product: `@sylphx/citra` — sole-Rust MCP server for evidence-first PDF intelligence.
+> Product: `@sylphx/anymd` — sole-Rust MCP server for evidence-first PDF intelligence.
 
 AI agents that read PDFs face a fundamental problem: text extraction alone is
 not enough. An agent that extracts text and answers questions is working blind.

@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Publish five optional native packages (when binaries are staged), then the main package.
+ * Publish five optional native packages (when binaries are staged), then the main package,
+ * then the compatibility alias packages (@sylphx/citra, @sylphx/pdf-reader-mcp) that
+ * depend on the main package at the exact same version.
  *
  * Guards:
  * - verified-candidate admission must pass
@@ -12,17 +14,20 @@
  *   bun scripts/release-publish-with-natives.ts --dry-run
  *   bun scripts/release-publish-with-natives.ts --skip-main
  *   bun scripts/release-publish-with-natives.ts --main-only
+ *   bun scripts/release-publish-with-natives.ts --skip-aliases
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NATIVE_PLATFORM_PACKAGES } from '../src/native/platform-package-map.ts';
+import { ALIAS_PACKAGES, MAIN_PACKAGE } from './sync-alias-packages.ts';
 
 const root = join(import.meta.dirname, '..');
 const dryRun = process.argv.includes('--dry-run');
 const skipMain = process.argv.includes('--skip-main');
 const mainOnly = process.argv.includes('--main-only');
+const skipAliases = process.argv.includes('--skip-aliases');
 
 const run = (cmd: string, args: string[], cwd = root, options?: { allowDryRunSkip?: boolean }) => {
   console.log(`[release-publish-with-natives] $ ${cmd} ${args.join(' ')}`);
@@ -48,7 +53,7 @@ const packageIdentity = (cwd: string): { name: string; version: string } => {
 };
 
 const localTarballIntegrity = (cwd: string): string => {
-  const destination = mkdtempSync(join(tmpdir(), 'citra-publish-integrity-'));
+  const destination = mkdtempSync(join(tmpdir(), 'anymd-publish-integrity-'));
   try {
     const packed = spawnSync('npm', ['pack', '--json', '--pack-destination', destination], {
       cwd,
@@ -76,7 +81,7 @@ const localTarballIntegrity = (cwd: string): string => {
  * bundle and record the absent attestation instead of claiming one.
  */
 const provenanceArgs = (): string[] => {
-  const override = process.env['CITRA_NPM_PROVENANCE']?.trim().toLowerCase();
+  const override = process.env['ANYMD_NPM_PROVENANCE']?.trim().toLowerCase();
   if (override === '1' || override === 'true') return ['--provenance'];
   if (override === '0' || override === 'false') return [];
   const runnerEnv = process.env['RUNNER_ENVIRONMENT']?.trim().toLowerCase();
@@ -144,6 +149,8 @@ if (matrix.productTruth?.dropInFor3014 === true) {
 }
 
 run('bun', ['scripts/native/sync-native-package-manifests.ts']);
+// Aliases must already be in lockstep in the reviewed commit (release-version.sh syncs them).
+run('bun', ['scripts/sync-alias-packages.ts', '--check']);
 
 if (!mainOnly) {
   // Require all five binaries for a full native publish.
@@ -165,7 +172,14 @@ if (!mainOnly) {
 
 if (!skipMain) {
   publishOrVerify(root);
-  run('npm', ['view', '@sylphx/citra', 'version']);
+  run('npm', ['view', MAIN_PACKAGE, 'version']);
+}
+
+// Aliases depend on the main package at the exact version, so they go last.
+if (!skipMain && !skipAliases) {
+  for (const alias of ALIAS_PACKAGES) {
+    publishOrVerify(join(root, alias.packageDir));
+  }
 }
 
 console.log(
@@ -176,6 +190,8 @@ console.log(
       dryRun,
       skipMain,
       mainOnly,
+      skipAliases,
+      aliases: skipMain || skipAliases ? [] : ALIAS_PACKAGES.map((alias) => alias.npmName),
       publishFreeze: matrix.productTruth?.publishFreeze ?? null,
       dropInFor3014: matrix.productTruth?.dropInFor3014 ?? null,
     },

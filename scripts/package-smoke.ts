@@ -439,11 +439,11 @@ export const validateExtractedPackage = async (
   addCheck(
     checks,
     'runtime:default-bin-contract',
-    bin?.citra === './dist/runtime-entry.js' &&
+    bin?.anymd === './dist/runtime-entry.js' &&
       exportsField?.['.'] === './dist/runtime-entry.js' &&
       (await fileExists(runtimeEntryPath)),
     'package bin/exports are sole-Rust runtime-entry.js only',
-    { bin: bin?.citra, exports: exportsField?.['.'] }
+    { bin: bin?.anymd, exports: exportsField?.['.'] }
   );
   addCheck(
     checks,

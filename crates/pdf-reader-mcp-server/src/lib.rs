@@ -32,7 +32,7 @@ use crate::schema::{ComparePdfArgs, PdfEvidenceArgs, PdfEvidenceOperation, ReadP
 use crate::source_access::SourceAccessPolicy;
 use serde_json::Value;
 
-pub const SERVER_NAME: &str = "citra";
+pub const SERVER_NAME: &str = "anymd";
 /// Pure-Rust MCP server version — tracks the published npm product line when default.
 pub const SERVER_VERSION: &str = "6.0.0";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
@@ -298,9 +298,9 @@ impl ServerHandler for PdfReaderMcp {
             .with_server_info(
                 Implementation::new(SERVER_NAME, SERVER_VERSION)
                     .with_description(
-                        "@sylphx/citra sole-Rust MCP server (native binary; no TypeScript PDF runtime)",
+                        "@sylphx/anymd sole-Rust MCP server (native binary; no TypeScript PDF runtime)",
                     )
-                    .with_website_url("https://sylphxai.github.io/citra/"),
+                    .with_website_url("https://sylphxai.github.io/anymd/"),
             )
             .with_instructions(SERVER_INSTRUCTIONS)
     }

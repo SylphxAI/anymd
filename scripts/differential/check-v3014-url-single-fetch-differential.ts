@@ -26,7 +26,7 @@ const projectionPath = join(scriptDir, 'v3014-url-single-fetch-projection.ts');
 const providerPath = join(scriptDir, 'reference-ocr-provider.ts');
 const serverScriptPath = join(scriptDir, 'url-single-fetch-fixture-server.ts');
 const fixturePath = join(fixtureDir, 'v3014-visual-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

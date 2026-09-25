@@ -10,37 +10,37 @@ import { fileURLToPath } from "node:url";
 // src/native/platform-package-map.ts
 var NATIVE_PLATFORM_PACKAGES = {
   "darwin-arm64": {
-    npmName: "@sylphx/citra-darwin-arm64",
-    packageDir: "packages/citra-darwin-arm64",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-darwin-arm64",
+    packageDir: "packages/anymd-darwin-arm64",
+    binaryName: "anymd",
     os: "darwin",
     cpu: "arm64"
   },
   "darwin-x64": {
-    npmName: "@sylphx/citra-darwin-x64",
-    packageDir: "packages/citra-darwin-x64",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-darwin-x64",
+    packageDir: "packages/anymd-darwin-x64",
+    binaryName: "anymd",
     os: "darwin",
     cpu: "x64"
   },
   "linux-arm64-gnu": {
-    npmName: "@sylphx/citra-linux-arm64-gnu",
-    packageDir: "packages/citra-linux-arm64-gnu",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-linux-arm64-gnu",
+    packageDir: "packages/anymd-linux-arm64-gnu",
+    binaryName: "anymd",
     os: "linux",
     cpu: "arm64"
   },
   "linux-x64-gnu": {
-    npmName: "@sylphx/citra-linux-x64-gnu",
-    packageDir: "packages/citra-linux-x64-gnu",
-    binaryName: "citra-mcp-server",
+    npmName: "@sylphx/anymd-linux-x64-gnu",
+    packageDir: "packages/anymd-linux-x64-gnu",
+    binaryName: "anymd",
     os: "linux",
     cpu: "x64"
   },
   "win32-x64-msvc": {
-    npmName: "@sylphx/citra-win32-x64-msvc",
-    packageDir: "packages/citra-win32-x64-msvc",
-    binaryName: "citra-mcp-server.exe",
+    npmName: "@sylphx/anymd-win32-x64-msvc",
+    packageDir: "packages/anymd-win32-x64-msvc",
+    binaryName: "anymd.exe",
     os: "win32",
     cpu: "x64"
   }
@@ -72,7 +72,7 @@ var versionedPackageBinary = (nativePackageRoot, binaryName) => {
   try {
     const nativeVersion = String(JSON.parse(readFileSync(join(nativePackageRoot, "package.json"), "utf8")).version ?? "");
     if (nativeVersion !== packageVersion) {
-      console.error(`[citra] refusing native package version ${nativeVersion || "unknown"}; wrapper version is ${packageVersion || "unknown"}.`);
+      console.error(`[anymd] refusing native package version ${nativeVersion || "unknown"}; wrapper version is ${packageVersion || "unknown"}.`);
       return null;
     }
   } catch {
@@ -109,7 +109,7 @@ var resolveNativeBinary = () => {
 };
 if (process.env["PDF_READER_FORCE_TYPESCRIPT"] === "1" || process.env["PDF_READER_ENGINE_MODE"] === "typescript" || process.env["PDF_READER_ENGINE_MODE"] === "ts") {
   console.error([
-    "[citra] TypeScript production runtime has been removed from this package.",
+    "[anymd] TypeScript production runtime has been removed from this package.",
     "Use the immutable historical LKG @sylphx/pdf-reader-mcp@3.0.14 for TypeScript rollback,",
     "or install/run the pure-Rust native binary for this package version."
   ].join(`
@@ -121,9 +121,9 @@ if (!nativeBinary) {
   const platformId = resolveNativePlatformId();
   const platformLabel = platformId ?? `${process.platform}/${process.arch}`;
   console.error([
-    `[citra] pure-Rust native binary not found for ${platformLabel}.`,
-    "Citra is sole-Rust: there is no bundled TypeScript PDF runtime.",
-    "Install the matching optional native package at the same Citra version.",
+    `[anymd] pure-Rust native binary not found for ${platformLabel}.`,
+    "anymd is sole-Rust: there is no bundled TypeScript PDF runtime.",
+    "Install the matching optional native package at the same anymd version.",
     "Historical TypeScript LKG remains available only as @sylphx/pdf-reader-mcp@3.0.14 (external pin)."
   ].join(`
 `));
@@ -138,7 +138,7 @@ var child = spawn(nativeBinary, process.argv.slice(2), {
   }
 });
 child.once("error", (error) => {
-  console.error(`[citra] failed to start native server: ${error.message}`);
+  console.error(`[anymd] failed to start native server: ${error.message}`);
   process.exit(1);
 });
 for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {

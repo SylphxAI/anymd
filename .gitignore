@@ -19,11 +19,14 @@ test-report.junit.xml
 **/.pdf-reader-mcp/
 dist/pdf.worker*.mjs
 
-# Staged native packaging outputs — never commit host binaries. The rename to
-# citra-mcp-server (#626) left these patterns naming the old binary, so
-# packages/citra-linux-x64-gnu/bin/citra-mcp-server was tracked anyway; that
-# made every Release run fail at "Create release PR" because changesets/action
-# commitMode=github-api refuses executable files.
+# Staged native packaging outputs — never commit host binaries. A stale
+# pattern once let packages/*/bin/<binary> be tracked, which made every Release
+# run fail at "Create release PR" because changesets/action commitMode=github-api
+# refuses executable files. Keep one pattern per binary name ever shipped.
+bin/native/**/anymd
+bin/native/**/anymd.exe
+packages/**/bin/anymd
+packages/**/bin/anymd.exe
 bin/native/**/citra-mcp-server
 bin/native/**/citra-mcp-server.exe
 packages/**/bin/citra-mcp-server

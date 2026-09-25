@@ -11,11 +11,11 @@ explains why a text dump makes agents wrong in a way that sounds confident.
 ## 1. Install
 
 ```bash
-npx -y @sylphx/citra
+npx -y @sylphx/anymd
 ```
 
 Add it to your host as shown in [Installation](/guide/installation). Verify
-with `npx -y @sylphx/citra --help`.
+with `npx -y @sylphx/anymd --help`.
 
 ## 2. Your first read
 
@@ -89,7 +89,7 @@ Three things worth noticing:
 1. **`page` + `bounding_box`** — the claim has a place in the document.
 2. **`continuation`** — the table continues onto page 2 with matching columns.
    An agent that cites "the table" now knows to read the next page too.
-3. **`gaps`** — when Citra cannot prove something, it names the gap instead of
+3. **`gaps`** — when anymd cannot prove something, it names the gap instead of
    filling it. That is the whole difference.
 
 ## 4. Search first, read second
@@ -165,7 +165,7 @@ These are off by default: you pay for them when you need them.
 
 ## A prompt you can paste into your agent
 
-> Read `/absolute/path/to/report.pdf` with Citra. Then answer my question and
+> Read `/absolute/path/to/report.pdf` with anymd. Then answer my question and
 > cite the page and — for numbers — the table and cell you took them from. If
 > the document does not prove an answer, say so instead of guessing.
 

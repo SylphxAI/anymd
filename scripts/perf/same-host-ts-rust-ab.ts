@@ -110,7 +110,7 @@ const normalizeText = (s: string): string =>
     .trim();
 
 const resolveRustBinary = (): string | null => {
-  const forced = process.env['CITRA_RUST_BIN'];
+  const forced = process.env['ANYMD_RUST_BIN'];
   if (forced && existsSync(forced)) return forced;
 
   if (useRegistryRust) {
@@ -131,7 +131,7 @@ const resolveRustBinary = (): string | null => {
         'npm',
         [
           'install',
-          `@sylphx/citra@${process.env['MCP_PDF_PERF_RUST_VERSION'] || JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version || '4.1.0'}`,
+          `@sylphx/anymd@${process.env['MCP_PDF_PERF_RUST_VERSION'] || JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version || '4.1.0'}`,
           '--prefix',
           installRoot,
           '--no-save',
@@ -152,7 +152,7 @@ const resolveRustBinary = (): string | null => {
   if (!platformId) return null;
   const meta = NATIVE_PLATFORM_PACKAGES[platformId];
   const candidates = [
-    join(resolveCargoReleaseDir(root), 'citra-mcp-server'),
+    join(resolveCargoReleaseDir(root), 'anymd'),
     join(root, 'bin/native', platformId, meta.binaryName),
     join(root, meta.packageDir, 'bin', meta.binaryName),
     join(root, 'node_modules', meta.npmName, 'bin', meta.binaryName),

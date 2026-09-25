@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Security fixes land on the latest published `@sylphx/citra` release. We
+Security fixes land on the latest published `@sylphx/anymd` release. We
 fix forward — please upgrade to the newest version before reporting.
 
 ## Reporting a vulnerability

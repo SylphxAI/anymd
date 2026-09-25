@@ -11,8 +11,8 @@ One local MCP server returns structured text, tables, OCR paths, visual evidence
 ## Install now
 
 ```bash
-npm install -g @sylphx/citra
-claude mcp add pdf-reader -- npx @sylphx/citra
+npm install -g @sylphx/anymd
+claude mcp add pdf-reader -- npx @sylphx/anymd
 ```
 
 ## Three flagship workflows
@@ -54,7 +54,7 @@ claude mcp add pdf-reader -- npx @sylphx/citra
 
 **Outcome:** OCR kept separate from selectable text, with page evidence for verification.
 
-More copy-ready examples: [examples/demo](https://github.com/SylphxAI/citra/tree/main/examples/demo).
+More copy-ready examples: [examples/demo](https://github.com/SylphxAI/anymd/tree/main/examples/demo).
 
 ## Why agents need more than text
 
@@ -92,8 +92,8 @@ Controlled **same-host linux-x64** dual-mode A/B vs `@sylphx/pdf-reader-mcp@3.0.
 
 Details:
 
-- [4.1.0 same-host performance report](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
-- [4.1.0 claims policy](https://github.com/SylphxAI/citra/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
+- [4.1.0 same-host performance report](https://github.com/SylphxAI/anymd/blob/main/docs/specs/performance/4.1.0-same-host-performance-report.md)
+- [4.1.0 claims policy](https://github.com/SylphxAI/anymd/blob/main/docs/specs/performance/4.1.0-performance-claims-policy.md)
 
 ## Engine
 

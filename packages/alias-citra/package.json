@@ -1,0 +1,40 @@
+{
+  "name": "@sylphx/citra",
+  "version": "6.0.0",
+  "description": "Citra is now @sylphx/anymd (anymd). Compatibility alias: any file → clean Markdown for AI agents. Runs the anymd launcher as `citra`.",
+  "type": "module",
+  "bin": {
+    "citra": "./bin/citra.js"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "dependencies": {
+    "@sylphx/anymd": "6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SylphxAI/anymd.git",
+    "directory": "packages/alias-citra"
+  },
+  "bugs": {
+    "url": "https://github.com/SylphxAI/anymd/issues"
+  },
+  "homepage": "https://sylphxai.github.io/anymd/",
+  "author": "Sylphx <contact@sylphx.com> (https://sylphx.com)",
+  "license": "MIT",
+  "keywords": [
+    "anymd",
+    "markdown",
+    "mcp",
+    "pdf-to-markdown",
+    "citra"
+  ]
+}

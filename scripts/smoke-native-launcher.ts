@@ -72,7 +72,7 @@ child.stdout.on('data', (chunk: Buffer) => {
     if (response.id !== 1) continue;
     const result = response.result as Record<string, unknown> | undefined;
     const serverInfo = result?.serverInfo as Record<string, unknown> | undefined;
-    if (serverInfo?.name !== 'citra') {
+    if (serverInfo?.name !== 'anymd') {
       fail(`unexpected serverInfo: ${JSON.stringify(serverInfo)}`);
     }
     clearTimeout(timer);

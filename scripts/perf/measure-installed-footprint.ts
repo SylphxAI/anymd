@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const version = (process.argv.find((a) => a.startsWith('--version=')) || '--version=4.0.2').split('=')[1]!;
-const pkg = `@sylphx/citra@${version}`;
+const pkg = `@sylphx/anymd@${version}`;
 const root = mkdtempSync(join(tmpdir(), `pdf-footprint-${version}-`));
 
 function run(cmd: string, args: string[], cwd = root) {
@@ -60,7 +60,7 @@ const footprint = {
   productionDependencies: JSON.parse(
     run('node', ['-e', "console.log(JSON.stringify(require('./node_modules/@sylphx/pdf-reader-mcp/package.json').dependencies||{}))"])
   ),
-  nativePackages: readdirSync(join(nm, '@sylphx')).filter((n) => n.startsWith('citra-')),
+  nativePackages: readdirSync(join(nm, '@sylphx')).filter((n) => n.startsWith('anymd-')),
 };
 
 const out = join(process.cwd(), 'benchmark-artifacts', 'installed-footprint', `${version}-${process.platform}-${process.arch}.json`);

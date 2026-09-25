@@ -21,9 +21,9 @@ import { resolveCargoReleaseDir } from './native/cargo-target-dir.ts';
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const samplePdf = path.join(repoRoot, 'test/fixtures/sample.pdf');
 const rustBinCandidates = [
-  process.env.CITRA_RUST_BIN,
-  path.join(repoRoot, 'bin/native/citra-mcp-server'),
-  path.join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server'),
+  process.env.ANYMD_RUST_BIN,
+  path.join(repoRoot, 'bin/native/anymd'),
+  path.join(resolveCargoReleaseDir(repoRoot), 'anymd'),
 ].filter(Boolean) as string[];
 
 const args = process.argv.slice(2);

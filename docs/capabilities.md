@@ -1,12 +1,12 @@
-# Capabilities — Citra
+# Capabilities — anymd
 
 ## Surfaces
 
 | Surface | Identity |
 | --- | --- |
-| MCP | `io.github.SylphxAI/citra` over stdio, `npx -y @sylphx/citra` |
-| CLI | `citra` |
-| SDK | `@sylphx/citra/sdk` |
+| MCP | `io.github.SylphxAI/anymd` over stdio, `npx -y @sylphx/anymd` |
+| CLI | `anymd` |
+| SDK | `@sylphx/anymd/sdk` |
 
 ## Owned capabilities
 

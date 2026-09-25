@@ -20,7 +20,7 @@ const oraclePath = join(scriptDir, 'fixtures/v3014-visual-oracle.json');
 const fixtureManifestPath = join(scriptDir, 'fixtures/v3014-visual-fixtures.json');
 const providerPath = join(scriptDir, 'reference-ocr-provider.ts');
 const regionProviderPath = join(scriptDir, 'reference-region-analysis-provider.ts');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputFlag = process.argv.indexOf('--output');
 const outputPath = outputFlag >= 0 ? process.argv[outputFlag + 1] : undefined;
 

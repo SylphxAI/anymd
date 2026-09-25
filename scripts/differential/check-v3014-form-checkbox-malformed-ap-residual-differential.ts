@@ -19,7 +19,7 @@ const projectionPath = join(scriptDir, 'v3014-form-checkbox-malformed-ap-residua
 const apStreamFixture = join(fixtureDir, 'v3014-form-checkbox-ap-stream-keeps-v-v1.pdf');
 const apnStreamFixture = join(fixtureDir, 'v3014-form-checkbox-apn-stream-keeps-v-v1.pdf');
 const apNamedFixture = join(fixtureDir, 'v3014-form-checkbox-ap-named-as-off-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>

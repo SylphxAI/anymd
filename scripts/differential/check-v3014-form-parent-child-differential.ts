@@ -21,7 +21,7 @@ const runnerPath = join(scriptDir, 'v3014-form-parent-child-baseline-runner.ts')
 const projectionPath = join(scriptDir, 'v3014-form-parent-child-projection.ts');
 const childFixture = join(fixtureDir, 'v3014-form-parent-child-v1.pdf');
 const readonlyFixture = join(fixtureDir, 'v3014-form-parent-readonly-v1.pdf');
-const serverPath = join(resolveCargoReleaseDir(repoRoot), 'citra-mcp-server');
+const serverPath = join(resolveCargoReleaseDir(repoRoot), 'anymd');
 const outputIndex = process.argv.indexOf('--output');
 const outputPath = outputIndex >= 0 ? process.argv[outputIndex + 1] : undefined;
 const sha256 = (value: Uint8Array | string): string =>
