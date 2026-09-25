@@ -137,7 +137,7 @@ const invoke = async (entry: Case, root: string): Promise<Json> => {
     const sources = input.sources as Array<Record<string, unknown>>;
     for (const source of sources) source.path = join(root, entry.fixture);
     return canonicalSearchMultiwordGeometryResult(
-      await request(2, 'tools/call', { name: 'search_pdf', arguments: input })
+      await request(2, 'tools/call', { name: 'search_pdf', arguments: { ...input, detail: true } })
     );
   } finally {
     child.kill('SIGTERM');

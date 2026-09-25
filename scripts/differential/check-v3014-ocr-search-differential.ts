@@ -64,7 +64,7 @@ const invoke = async (entry: Case): Promise<Json> => {
     }
     const input = structuredClone(entry.input); const sources = input.sources as Array<Record<string, unknown>>;
     for (const source of sources) source.path = join(fixtureDir, entry.fixture);
-    return canonicalOcrSearchMcpResult(await request(2, 'tools/call', { name: 'search_pdf', arguments: input }));
+    return canonicalOcrSearchMcpResult(await request(2, 'tools/call', { name: 'search_pdf', arguments: { ...input, detail: true } }));
   } finally { child.kill('SIGTERM'); }
 };
 
