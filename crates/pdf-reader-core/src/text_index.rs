@@ -282,9 +282,69 @@ fn validate_pdf_path(path: &Path, max_file_bytes: u64) -> Result<(), TextIndexEr
     Ok(())
 }
 
+/// A glyph's extent along the text direction and its font size, kept beside
+/// each character so word spaces can be inferred from real glyph gaps.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct GlyphExtent {
+    x0: f64,
+    x1: f64,
+    size: f64,
+}
+
+impl GlyphExtent {
+    /// Same projection as the anymd-pdf layout engine: start along the text
+    /// direction, advance including character spacing (Tc) but not word
+    /// spacing, and a half-em fallback for fonts without widths.
+    fn from_character(
+        trm: &Transform,
+        width: f64,
+        spacing: f64,
+        font_size: f64,
+        character: &str,
+    ) -> Option<Self> {
+        let values = [
+            trm.m11, trm.m12, trm.m21, trm.m22, trm.m31, trm.m32, width, spacing, font_size,
+        ];
+        if !values.into_iter().all(f64::is_finite) {
+            return None;
+        }
+        let size = (trm.m21.hypot(trm.m22) * font_size).abs();
+        let scale = trm.m11.hypot(trm.m12);
+        if size <= 0.1 || scale <= 0.0 {
+            return None;
+        }
+        let (dx, dy) = (trm.m11 / scale, trm.m12 / scale);
+        let tracking = if character.chars().all(char::is_whitespace) {
+            0.0
+        } else {
+            spacing
+        };
+        let mut advance = ((width * font_size + tracking) * scale).abs();
+        if advance < size * 0.05 {
+            advance = size * 0.5;
+        }
+        let along = if dx > 0.9 && dy.abs() < 0.2 {
+            trm.m31
+        } else {
+            trm.m31 * dx + trm.m32 * dy
+        };
+        let extent = Self {
+            x0: along,
+            x1: along + advance,
+            size,
+        };
+        [extent.x0, extent.x1]
+            .into_iter()
+            .all(f64::is_finite)
+            .then_some(extent)
+    }
+}
+
 #[derive(Debug)]
 struct RawTextPart {
     item: PositionedTextItem,
+    /// One entry per `item.chars` entry.
+    glyphs: Vec<Option<GlyphExtent>>,
     x: Option<f64>,
     y: Option<f64>,
     right: Option<f64>,
@@ -299,6 +359,7 @@ impl RawTextPart {
                 chars: Vec::new(),
                 runs: Vec::new(),
             },
+            glyphs: Vec::new(),
             x: None,
             y: None,
             right: None,
@@ -469,6 +530,9 @@ impl OutputDev for TextItemOutput {
                 is_whitespace: character.chars().all(char::is_whitespace),
                 bounding_box,
             });
+            part.glyphs.push(GlyphExtent::from_character(
+                trm, width, spacing, font_size, character,
+            ));
         }
         Ok(())
     }
@@ -528,40 +592,86 @@ fn normalized_row_key(y: f64) -> Result<i64, TextIndexError> {
     Ok(rounded as i64)
 }
 
+fn offset_overflow() -> TextIndexError {
+    TextIndexError::extraction_failed("selectable text offset overflow")
+}
+
+/// For the characters of one segment in reading order, whether a synthetic
+/// word space belongs before each one.
+///
+/// pdf-extract reports each show-text string as its own part and never emits
+/// the word spaces that TeX and similar producers express only as glyph
+/// positioning, so the text would read "Thedominantsequence...". The gaps
+/// between glyphs decide instead, with the same rules as the anymd-pdf
+/// layout engine behind the Markdown path.
+fn segment_word_spaces(parts: &[RawTextPart]) -> Vec<bool> {
+    let glyphs = parts
+        .iter()
+        .flat_map(|part| {
+            part.item
+                .chars
+                .iter()
+                .enumerate()
+                .map(|(index, character)| {
+                    let extent = part.glyphs.get(index).copied().flatten();
+                    anymd_pdf::SpacingGlyph {
+                        x0: extent.map_or(f64::NAN, |extent| extent.x0),
+                        x1: extent.map_or(f64::NAN, |extent| extent.x1),
+                        size: extent.map_or(f64::NAN, |extent| extent.size),
+                        text: character.text.as_str(),
+                    }
+                })
+        })
+        .collect::<Vec<_>>();
+    anymd_pdf::infer_word_spaces(&glyphs)
+}
+
 fn merge_raw_text_segment(parts: Vec<RawTextPart>) -> Result<PositionedTextItem, TextIndexError> {
+    let spaces_before = segment_word_spaces(&parts);
+    let mut spaces_before = spaces_before.into_iter();
     let mut text = String::new();
     let mut chars = Vec::new();
-    let mut runs = Vec::with_capacity(parts.len());
+    let mut runs: Vec<PositionedTextRun> = Vec::with_capacity(parts.len());
     let mut bounding_box = None;
     let mut offset = 0u32;
 
     for part in parts {
-        let run_start = offset;
-        let run_len = part
-            .item
-            .text
-            .encode_utf16()
-            .count()
-            .try_into()
-            .map_err(|_| TextIndexError::extraction_failed("selectable text offset overflow"))?;
-        offset = offset
-            .checked_add(run_len)
-            .ok_or_else(|| TextIndexError::extraction_failed("selectable text offset overflow"))?;
-        text.push_str(&part.item.text);
-        for mut character in part.item.chars {
-            character.item_char_start = run_start
-                .checked_add(character.item_char_start)
+        let mut run_start = offset;
+        let mut run_text = String::with_capacity(part.item.text.len());
+        for (index, mut character) in part.item.chars.into_iter().enumerate() {
+            if spaces_before.next().unwrap_or(false) {
+                // A space before a part's first glyph ends the previous run,
+                // so runs stay contiguous and each keeps its own source text.
+                let space_start = offset;
+                offset = offset.checked_add(1).ok_or_else(offset_overflow)?;
+                text.push(' ');
+                chars.push(TextCharacterGeometry {
+                    text: " ".to_string(),
+                    item_char_start: space_start,
+                    item_char_end: offset,
+                    is_whitespace: true,
+                    bounding_box: None,
+                });
+                match runs.last_mut() {
+                    Some(previous) if index == 0 => {
+                        previous.text.push(' ');
+                        previous.item_char_end = offset;
+                        run_start = offset;
+                    }
+                    _ => run_text.push(' '),
+                }
+            }
+            let len = character
+                .item_char_end
+                .checked_sub(character.item_char_start)
                 .ok_or_else(|| {
                     TextIndexError::extraction_failed("selectable text character offset overflow")
                 })?;
-            character.item_char_end =
-                run_start
-                    .checked_add(character.item_char_end)
-                    .ok_or_else(|| {
-                        TextIndexError::extraction_failed(
-                            "selectable text character offset overflow",
-                        )
-                    })?;
+            character.item_char_start = offset;
+            offset = offset.checked_add(len).ok_or_else(offset_overflow)?;
+            character.item_char_end = offset;
+            text.push_str(&character.text);
+            run_text.push_str(&character.text);
             chars.push(character);
         }
         if let Some(box_) = part.item.bounding_box {
@@ -573,7 +683,7 @@ fn merge_raw_text_segment(parts: Vec<RawTextPart>) -> Result<PositionedTextItem,
             };
         }
         runs.push(PositionedTextRun {
-            text: part.item.text,
+            text: run_text,
             item_char_start: run_start,
             item_char_end: offset,
             bounding_box: part.item.bounding_box,
@@ -942,8 +1052,10 @@ fn extract_output_bounded(
                     .iter()
                     .map(|item| item.text.clone())
                     .collect::<Vec<_>>();
+                // One line per positioned item, like the document text layer;
+                // concatenating them glued words across line ends.
                 Ok(ExtractedPageText {
-                    text: items.concat(),
+                    text: items.join("\n"),
                     items,
                     positioned_items,
                 })
@@ -1719,6 +1831,16 @@ mod tests {
                 }
             })
             .collect();
+        let count = text.chars().count().max(1) as f64;
+        let glyphs = (0..text.chars().count())
+            .map(|index| {
+                Some(GlyphExtent {
+                    x0: x + width * index as f64 / count,
+                    x1: x + width * (index + 1) as f64 / count,
+                    size: 10.0,
+                })
+            })
+            .collect();
         RawTextPart {
             item: PositionedTextItem {
                 text: text.to_string(),
@@ -1726,6 +1848,7 @@ mod tests {
                 chars,
                 runs: Vec::new(),
             },
+            glyphs,
             x: Some(x),
             y: Some(y),
             right: Some(x + width),
@@ -1751,7 +1874,8 @@ mod tests {
                 .iter()
                 .map(|item| item.text.as_str())
                 .collect::<Vec<_>>(),
-            vec!["D", "AB", "C"]
+            // The 48-point gap joins the segment and is a word space.
+            vec!["D", "A B", "C"]
         );
         assert_eq!(items[1].runs.len(), 2);
         assert_eq!(items[1].bounding_box.unwrap().left, 2.0);
@@ -1773,13 +1897,174 @@ mod tests {
         .expect("normalize overlapping parts");
 
         assert_eq!(items.len(), 1, "48-point gap from running max-right joins");
-        assert_eq!(items[0].text, "A😀BC");
+        assert_eq!(items[0].text, "A😀B C");
         assert_eq!(items[0].runs[0].item_char_end, 3);
         assert_eq!(items[0].runs[1].item_char_start, 3);
-        assert_eq!(items[0].runs[2].item_char_start, 4);
+        assert_eq!(items[0].runs[1].text, "B ");
+        assert_eq!(items[0].runs[2].item_char_start, 5);
         assert_eq!(items[0].chars[1].item_char_end, 3);
         assert_eq!(items[0].chars[2].item_char_start, 3);
         assert_eq!(items[0].chars[3].item_char_start, 4);
+        assert!(items[0].chars[3].is_whitespace);
+        assert_eq!(items[0].chars[4].item_char_start, 5);
+    }
+
+    /// A part whose glyphs sit at explicit starts with a fixed advance, like
+    /// one pdf-extract show-text string.
+    fn glyph_part(text: &str, starts: &[f64], advance: f64, size: f64, y: f64) -> RawTextPart {
+        assert_eq!(text.chars().count(), starts.len());
+        let mut part = raw_part(
+            text,
+            starts[0],
+            y,
+            starts.last().unwrap() + advance - starts[0],
+        );
+        part.glyphs = starts
+            .iter()
+            .map(|x0| {
+                Some(GlyphExtent {
+                    x0: *x0,
+                    x1: x0 + advance,
+                    size,
+                })
+            })
+            .collect();
+        part
+    }
+
+    /// Glyph starts for `text` set solid (no tracking) from `x`.
+    fn solid(text: &str, x: f64, advance: f64) -> Vec<f64> {
+        (0..text.chars().count())
+            .map(|index| x + advance * index as f64)
+            .collect()
+    }
+
+    fn merged(parts: Vec<RawTextPart>) -> PositionedTextItem {
+        let mut request_segments = 0;
+        let mut items =
+            normalize_page_text_parts(parts, &mut request_segments).expect("normalize parts");
+        assert_eq!(items.len(), 1);
+        items.remove(0)
+    }
+
+    #[test]
+    fn tex_kerned_words_get_inferred_spaces_with_consistent_offsets() {
+        // [(The)-333(dominan)28(t)-334(sequence)]TJ at 10pt: 3.33pt word gaps,
+        // a 0.28pt kern inside "dominant".
+        let adv = 5.0;
+        let the = solid("The", 0.0, adv);
+        let dominan = solid("dominan", 15.0 + 3.33, adv);
+        let t_x = 18.33 + 35.0 - 0.28;
+        let sequence = solid("sequence", t_x + adv + 3.34, adv);
+        let item = merged(vec![
+            glyph_part("The", &the, adv, 10.0, 700.0),
+            glyph_part("dominan", &dominan, adv, 10.0, 700.0),
+            glyph_part("t", &[t_x], adv, 10.0, 700.0),
+            glyph_part("sequence", &sequence, adv, 10.0, 700.0),
+        ]);
+        assert_eq!(item.text, "The dominant sequence");
+        assert_eq!(
+            item.runs
+                .iter()
+                .map(|run| run.text.as_str())
+                .collect::<Vec<_>>(),
+            vec!["The ", "dominan", "t ", "sequence"]
+        );
+        let mut expected_start = 0;
+        for run in &item.runs {
+            assert_eq!(run.item_char_start, expected_start);
+            assert_eq!(run.item_char_end - run.item_char_start, utf16(&run.text));
+            expected_start = run.item_char_end;
+        }
+        assert_eq!(expected_start, utf16(&item.text));
+        for character in &item.chars {
+            let slice: String = item
+                .text
+                .encode_utf16()
+                .skip(character.item_char_start as usize)
+                .take((character.item_char_end - character.item_char_start) as usize)
+                .map(|unit| char::from_u32(u32::from(unit)).unwrap())
+                .collect();
+            assert_eq!(slice, character.text);
+        }
+        let synthetic = &item.chars[3];
+        assert!(synthetic.is_whitespace && synthetic.bounding_box.is_none());
+
+        // The match box of a word after an inferred space is that word's box.
+        let start = item.text.find("sequence").unwrap() as u32;
+        let (box_, level) = match_bounding_box(&item, start, start + 8);
+        let box_ = box_.expect("sequence box");
+        assert_eq!(level.as_deref(), Some("char_estimated"));
+        assert!((box_.left - sequence[0]).abs() < 1e-6);
+        assert!((box_.right - (sequence[7] + adv)).abs() < 1e-6);
+    }
+
+    fn utf16(text: &str) -> u32 {
+        text.encode_utf16().count() as u32
+    }
+
+    #[test]
+    fn inferred_spaces_split_words_inside_one_show_text_part() {
+        // One TJ string whose glyph positions carry the word gap.
+        let mut starts = solid("ab", 0.0, 5.0);
+        starts.extend(solid("cd", 12.0, 5.0));
+        let item = merged(vec![glyph_part("abcd", &starts, 5.0, 10.0, 300.0)]);
+        assert_eq!(item.text, "ab cd");
+        assert_eq!(item.runs.len(), 1);
+        assert_eq!(item.runs[0].text, "ab cd");
+        assert_eq!(item.runs[0].item_char_end, 5);
+    }
+
+    #[test]
+    fn explicit_spaces_are_not_doubled_and_tight_kerns_are_not_spaces() {
+        let item = merged(vec![
+            glyph_part("to ", &solid("to ", 0.0, 5.0), 5.0, 10.0, 300.0),
+            glyph_part("be", &solid("be", 17.0, 5.0), 5.0, 10.0, 300.0),
+            glyph_part("x", &[27.5], 5.0, 10.0, 300.0),
+        ]);
+        assert_eq!(item.text, "to bex");
+    }
+
+    #[test]
+    fn cjk_glyphs_stay_unspaced_unless_the_gap_is_wide() {
+        let starts = [0.0, 10.5, 21.0, 31.5, 60.0];
+        let item = merged(vec![glyph_part("中文排版字", &starts, 10.0, 10.0, 300.0)]);
+        assert_eq!(item.text, "中文排版 字");
+    }
+
+    #[test]
+    fn letter_spaced_headings_keep_words_whole() {
+        // "ABSTRACT NOW" tracked by 3pt per letter, 12pt word gap.
+        let mut starts = Vec::new();
+        let mut x = 0.0;
+        for _ in 0..8 {
+            starts.push(x);
+            x += 7.0 + 3.0;
+        }
+        x += 9.0;
+        for _ in 0..3 {
+            starts.push(x);
+            x += 7.0 + 3.0;
+        }
+        let item = merged(vec![glyph_part("ABSTRACTNOW", &starts, 7.0, 10.0, 300.0)]);
+        assert_eq!(item.text, "ABSTRACT NOW");
+    }
+
+    #[test]
+    fn small_superscript_after_a_word_is_not_spaced() {
+        // "x" at 10pt followed by a 7pt "2" set tight in the same row.
+        let item = merged(vec![
+            glyph_part("x", &[0.0], 5.0, 10.0, 300.0),
+            glyph_part("2", &[5.3], 3.5, 7.0, 300.2),
+        ]);
+        assert_eq!(item.text, "x2");
+    }
+
+    #[test]
+    fn unknown_glyph_geometry_never_guesses_a_space() {
+        let mut part = glyph_part("ab", &[0.0, 40.0], 5.0, 10.0, 300.0);
+        part.glyphs[1] = None;
+        assert_eq!(merged(vec![part]).text, "ab");
     }
 
     #[test]
