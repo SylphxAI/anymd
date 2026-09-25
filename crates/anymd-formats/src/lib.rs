@@ -10,6 +10,7 @@ pub mod epub;
 pub mod html;
 pub mod image;
 pub mod pptx;
+mod tool;
 pub mod video;
 pub mod xlsx;
 
