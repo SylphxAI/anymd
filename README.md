@@ -220,6 +220,10 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
+## Also from Sylphx
+
+[**repomap**](https://github.com/SylphxAI/repomap) gives your AI agent a map of your codebase: a code graph, search, call paths, change impact, and a graph UI. Like anymd, it runs locally, needs no API key, and is MIT licensed.
+
 ## Star history
 
 [![Star History Chart](https://api.star-history.com/svg?repos=SylphxAI/anymd&type=Date)](https://star-history.com/#SylphxAI/anymd&Date)
