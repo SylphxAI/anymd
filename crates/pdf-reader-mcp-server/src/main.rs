@@ -34,13 +34,13 @@ fn doctor() {
         ("tesseract", "OCR for images and scanned PDF pages"),
         ("ffprobe", "audio/video metadata and chapters"),
         ("ffmpeg", "embedded subtitles and transcript audio"),
-        (
-            "whisper-cli",
-            "local transcripts (with ANYMD_WHISPER_MODEL)",
-        ),
     ] {
         let state = if tool(name) { "found" } else { "not found" };
         println!("  {name:<12} {state:<10} {purpose}");
+    }
+    println!("Transcripts (--transcript):");
+    for (name, state) in anymd_formats::whisper::status_lines() {
+        println!("  {name:<14} {state}");
     }
 }
 

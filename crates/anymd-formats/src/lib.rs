@@ -12,6 +12,7 @@ pub mod image;
 pub mod pptx;
 mod tool;
 pub mod video;
+pub mod whisper;
 pub mod xlsx;
 
 mod ooxml;
@@ -45,6 +46,9 @@ pub struct Options {
     pub ocr: bool,
     /// Opt-in transcript for audio/video (runs a local whisper.cpp binary when present).
     pub transcript: bool,
+    /// With `transcript`: download the configured ggml whisper model into the
+    /// anymd cache when none is installed (see [`whisper`]).
+    pub download_whisper_model: bool,
     /// Source path when the input came from disk (video/ffprobe needs a path).
     pub path: Option<std::path::PathBuf>,
 }

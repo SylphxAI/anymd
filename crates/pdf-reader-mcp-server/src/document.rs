@@ -25,6 +25,8 @@ pub struct OpenOptions {
     /// None = OCR image-only pages and images when `tesseract` is installed.
     pub ocr: Option<bool>,
     pub transcript: bool,
+    /// With `transcript`: fetch the whisper model when none is installed.
+    pub download_whisper_model: bool,
 }
 
 /// One citable unit of a document.
@@ -214,6 +216,7 @@ impl Opened {
                 &anymd_formats::Options {
                     path: Some(path.clone()),
                     transcript: options.transcript,
+                    download_whisper_model: options.download_whisper_model,
                     ..Default::default()
                 },
             )
@@ -574,6 +577,7 @@ fn convert_other(
             base_url,
             ocr,
             transcript: options.transcript,
+            download_whisper_model: options.download_whisper_model,
             path,
         },
     )

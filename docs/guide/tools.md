@@ -19,7 +19,8 @@ Any file, URL, or directory → Markdown.
 | `max_tokens` | number ≥ 500 | `20000` | Token budget. Longer documents stop at a page/slide/chapter boundary and end with a cursor. |
 | `cursor` | string | – | Continue a previous read with the cursor from its last line |
 | `ocr` | boolean | automatic | OCR images and image-only PDF pages with a local `tesseract`. Automatic when tesseract is installed; `false` disables. |
-| `transcript` | boolean | `false` | Transcribe audio/video with a local whisper.cpp (needs `ANYMD_WHISPER_MODEL`) |
+| `transcript` | boolean | `false` | Transcribe audio/video with a local whisper.cpp |
+| `download_whisper_model` | boolean | `false` | Implies `transcript`; downloads the ggml model (base.en, 148 MB, SHA-256 verified) into the anymd cache when none is installed |
 
 ```json
 { "source": "papers/attention.pdf" }

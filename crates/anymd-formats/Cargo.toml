@@ -29,6 +29,14 @@ imagesize = "0.15"
 kamadak-exif = "0.6"
 tempfile = "3.20"
 wait-timeout = "0.2"
+# Whisper model downloader (feature `native`).
+ureq = { version = "2.12", default-features = true, features = ["tls"], optional = true }
+sha2 = { version = "0.10", optional = true }
+
+[features]
+default = ["native"]
+# Network downloads (the opt-in whisper model fetch).
+native = ["dep:ureq", "dep:sha2"]
 
 [dev-dependencies]
 rust_xlsxwriter = { version = "0.99", default-features = false }

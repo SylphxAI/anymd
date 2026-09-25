@@ -134,7 +134,7 @@ anymd exposes three tools.
 
 | Tool | Use it to | Key arguments |
 |---|---|---|
-| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `transcript` |
+| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `transcript`, `download_whisper_model` |
 | **`search`** | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto` · `literal` · `ranked`), `glob`, `max_results` |
 | **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect` |
 
@@ -205,7 +205,7 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 | **HTML** and **URLs** | The main article only: navigation, cookie banners, and sidebars are dropped. Relative links are resolved, and code keeps its language. |
 | **Markdown, text, JSON** | Returned unchanged, with pagination |
 | **Images** | Dimensions and EXIF (camera, date, GPS), plus OCR text when `tesseract` is installed |
-| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local whisper.cpp transcript with `transcript: true`. |
+| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local whisper.cpp transcript with `transcript: true`; `download_whisper_model: true` fetches a verified model on first use. |
 
 ## How it works
 

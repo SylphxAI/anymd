@@ -25,7 +25,10 @@ Read options:
       --max-tokens <n>     Stop at a token budget and print a cursor
       --cursor <cursor>    Continue from a cursor
       --ocr / --no-ocr     Force or disable OCR (default: automatic when tesseract is installed)
-      --transcript         Transcribe audio/video with whisper.cpp (needs ANYMD_WHISPER_MODEL)
+      --transcript         Transcribe audio/video with a local whisper.cpp
+      --download-whisper-model
+                           With --transcript (implied): download the ggml model on first use
+                           (base.en, ~148 MB; ANYMD_WHISPER_MODEL_SIZE=tiny|base|small[.en])
       --front-matter       Print the source/title/pages header (always on for several inputs)
 
 Search options:
@@ -73,6 +76,7 @@ struct Parsed {
     cursor: Option<String>,
     ocr: Option<bool>,
     transcript: bool,
+    download_whisper_model: bool,
     front_matter: bool,
     mode: Option<String>,
     glob: Option<String>,
@@ -90,6 +94,7 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
         cursor: None,
         ocr: None,
         transcript: false,
+        download_whisper_model: false,
         front_matter: false,
         mode: None,
         glob: None,
@@ -123,6 +128,7 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
             "--ocr" => parsed.ocr = Some(true),
             "--no-ocr" => parsed.ocr = Some(false),
             "--transcript" => parsed.transcript = true,
+            "--download-whisper-model" => parsed.download_whisper_model = true,
             "--front-matter" => parsed.front_matter = true,
             "--mode" => parsed.mode = Some(value(flag)?),
             "--glob" => parsed.glob = Some(value(flag)?),
@@ -252,6 +258,7 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
                 cursor: parsed.cursor.clone(),
                 ocr: parsed.ocr,
                 transcript: Some(parsed.transcript),
+                download_whisper_model: Some(parsed.download_whisper_model),
             };
             let render = ReadRender {
                 front_matter: parsed.front_matter || several,
@@ -335,6 +342,9 @@ mod tests {
         assert_eq!(parsed.mode.as_deref(), Some("ranked"));
         assert!(parsed.whole_word);
         assert!(parse(&args(&["--bogus"])).is_err());
+        let parsed = parse(&args(&["talk.mp4", "--download-whisper-model"])).unwrap();
+        assert!(parsed.download_whisper_model);
+        assert_eq!(parsed.inputs, ["talk.mp4"]);
     }
 
     #[test]
@@ -350,6 +360,7 @@ mod tests {
                 cursor: None,
                 ocr: None,
                 transcript: None,
+                download_whisper_model: None,
             },
             &SourceAccessPolicy::unrestricted(),
             &ReadRender {
