@@ -442,15 +442,11 @@ describe('MCP Server Integration', () => {
       expect(response.error?.message || response.result?.content?.[0]?.text).toContain('PDF');
     } else {
       const textContent = response.result?.content?.[0]?.text ?? '';
-      const parsed = JSON.parse(textContent) as {
-        profile: string;
-        results: Array<{ success: boolean; matches?: unknown[] }>;
-      };
 
+      // Default search answers in compact Markdown: a header and one line per hit.
       expect(response.result?.content?.[0]?.type).toBe('text');
-      expect(parsed.profile).toBe('pdf_search_results');
-      expect(parsed.results[0]?.success).toBe(true);
-      expect(Array.isArray(parsed.results[0]?.matches)).toBe(true);
+      expect(textContent).toContain(`## ${testPdfPath}`);
+      expect(textContent).toMatch(/\d+ match(es)? for "PDF"/);
     }
   });
 

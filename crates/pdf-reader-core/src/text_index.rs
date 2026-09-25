@@ -249,7 +249,7 @@ impl TextIndexError {
         }
     }
 
-    fn extraction_failed(message: impl Into<String>) -> Self {
+    pub(crate) fn extraction_failed(message: impl Into<String>) -> Self {
         Self {
             code: TextIndexErrorCode::ExtractionFailed,
             message: message.into(),

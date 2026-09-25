@@ -105,6 +105,15 @@ pub enum TrustReportRedaction {
 pub struct ReadPdfArgs {
     pub sources: Vec<PdfSource>,
     #[schemars(
+        range(min = 500),
+        description = "Token budget for the Markdown answer (default 20000). Longer documents stop at a page boundary and end with a cursor to continue."
+    )]
+    pub max_tokens: Option<u32>,
+    #[schemars(
+        description = "Continue a previous read: pass the cursor from its last line (\"<page>\" or \"<page>:<offset>\"). Single source only."
+    )]
+    pub cursor: Option<String>,
+    #[schemars(
         description = "Legacy preset switch. true selects balanced (fast plus safety, trust, and accessibility) when profile and auto_detail are omitted. Omit it to use fast. false keeps manual control. auto_detail wins over profile. Never enables OCR."
     )]
     pub auto: Option<bool>,
@@ -156,6 +165,7 @@ impl ReadPdfArgs {
             source.validate()?;
         }
         validate_u32_range("sample_pages", self.sample_pages, 1, 20)?;
+        validate_u32_min("max_tokens", self.max_tokens, 500)?;
         validate_u32_min("max_visual_enrichments", self.max_visual_enrichments, 1)
     }
 }
@@ -211,6 +221,11 @@ pub struct SearchPdfArgs {
         schema_with = "option_bool_schema"
     )]
     pub prefer_speed: Option<bool>,
+    #[schemars(
+        description = "Return the detailed JSON result with match geometry and provenance instead of the compact Markdown list.",
+        schema_with = "option_bool_schema"
+    )]
+    pub detail: Option<bool>,
 }
 
 impl SearchPdfArgs {
