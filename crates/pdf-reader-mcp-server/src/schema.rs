@@ -543,3 +543,124 @@ mod provider_schema_compat_tests {
         .is_err());
     }
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct ReadArgs {
+    #[schemars(
+        length(min = 1),
+        description = "File path, http(s) URL, or directory. PDF, DOCX, PPTX, XLSX/XLS/ODS, CSV/TSV, EPUB, HTML, Markdown/text, images, audio/video, SRT/VTT. A directory returns the list of readable files."
+    )]
+    pub source: String,
+    #[schemars(
+        description = "Pages (PDF), slides, sheets, or chapters to read, e.g. \"1-5,8\". Default: all."
+    )]
+    pub pages: Option<String>,
+    #[schemars(
+        range(min = 500),
+        description = "Token budget (default 20000). Longer documents stop at a unit boundary and end with a cursor."
+    )]
+    pub max_tokens: Option<u32>,
+    #[schemars(description = "Continue a previous read with the cursor from its last line.")]
+    pub cursor: Option<String>,
+    #[schemars(
+        description = "OCR images and image-only PDF pages with a local tesseract. Default: automatic when tesseract is installed; false disables.",
+        schema_with = "option_bool_schema"
+    )]
+    pub ocr: Option<bool>,
+    #[schemars(
+        description = "Transcribe audio/video with a local whisper.cpp (needs ANYMD_WHISPER_MODEL). Default false.",
+        schema_with = "option_bool_schema"
+    )]
+    pub transcript: Option<bool>,
+}
+
+impl ReadArgs {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.source.trim().is_empty() {
+            return Err("source must not be empty.".into());
+        }
+        validate_u32_min("max_tokens", self.max_tokens, 500)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct SearchArgs {
+    #[schemars(length(min = 1), description = "Text to find.")]
+    pub query: String,
+    #[schemars(
+        description = "Files, directories (searched recursively, .gitignore respected), or URLs. Default: the current directory."
+    )]
+    #[serde(default)]
+    pub sources: Vec<String>,
+    #[schemars(
+        description = "auto (default): exact phrase, falling back to ranked passages when nothing matches. literal: exact phrase only. ranked: BM25 over the query words."
+    )]
+    pub mode: Option<String>,
+    #[schemars(description = "Only search files matching this glob inside directories, e.g. \"*.pdf\" or \"reports/**\".")]
+    pub glob: Option<String>,
+    #[schemars(schema_with = "option_bool_schema")]
+    pub case_sensitive: Option<bool>,
+    #[schemars(schema_with = "option_bool_schema")]
+    pub whole_word: Option<bool>,
+    #[schemars(range(min = 1, max = 500), description = "Maximum hits to return (default 20).")]
+    pub max_results: Option<u32>,
+    #[schemars(range(min = 0, max = 1000), description = "Snippet context characters on each side (default 80).")]
+    pub context_chars: Option<u32>,
+}
+
+impl SearchArgs {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.query.trim().is_empty() {
+            return Err("query must not be empty.".into());
+        }
+        if self.sources.len() > 256 {
+            return Err("sources accepts at most 256 entries.".into());
+        }
+        validate_u32_range("max_results", self.max_results, 1, 500)?;
+        validate_u32_range("context_chars", self.context_chars, 0, 1000)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum InspectOperation {
+    /// Page count, metadata, and per-page facts.
+    Inspect,
+    /// Render pages to PNG images.
+    RenderPage,
+    /// Crop regions (bounding boxes) out of rendered pages.
+    ExtractRegions,
+    /// OCR pages with the configured provider.
+    OcrPages,
+    /// Send regions to a configured vision/region provider.
+    AnalyzeRegions,
+    /// Structured JSON read: document map, elements, geometry, trust and accessibility reports.
+    Structure,
+    /// Page-level text diff between two PDFs (sources[0] = before, sources[1] = after).
+    Compare,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct InspectArgs {
+    pub operation: InspectOperation,
+    pub sources: Vec<PdfEvidenceSource>,
+    #[schemars(description = "structure only: fast (default), quality, or research (adds safety, trust, accessibility).")]
+    pub profile: Option<String>,
+    #[schemars(range(min = 1, max = 20))]
+    pub sample_pages: Option<u32>,
+    pub include_metadata: Option<bool>,
+    #[schemars(range(min = 0.25, max = 4.0))]
+    pub scale: Option<f64>,
+    #[schemars(range(min = 1, max = 20))]
+    pub max_pages: Option<u32>,
+    #[schemars(range(min = 1, max = 100))]
+    pub max_regions: Option<u32>,
+    #[schemars(range(min = 10_000, max = 64_000_000))]
+    pub max_pixels_per_page: Option<u64>,
+    pub include_image: Option<bool>,
+    #[schemars(range(min = 1_000, max = 300_000))]
+    pub timeout_ms: Option<u32>,
+    #[schemars(range(min = 1_000, max = 1_000_000))]
+    pub max_output_chars: Option<u32>,
+    pub languages: Option<Vec<String>>,
+}

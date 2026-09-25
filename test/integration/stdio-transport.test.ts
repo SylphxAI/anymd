@@ -231,9 +231,11 @@ describe('MCP Server stdio Transport Integration (Rust rmcp)', () => {
     expect(response.result?.tools?.length).toBeGreaterThan(0);
 
     const toolNames = response.result?.tools?.map((tool) => tool.name);
-    expect(toolNames).toContain('read_pdf');
-    expect(toolNames).toContain('search_pdf');
-    expect(toolNames).toContain('pdf_evidence');
+    expect(toolNames).toContain('read');
+    expect(toolNames).toContain('search');
+    expect(toolNames).toContain('inspect');
+    // Legacy names stay callable but are no longer listed.
+    expect(toolNames).not.toContain('read_pdf');
     expect(toolNames).not.toContain('inspect_pdf');
     expect(toolNames).not.toContain('render_page');
     expect(toolNames).not.toContain('extract_regions');

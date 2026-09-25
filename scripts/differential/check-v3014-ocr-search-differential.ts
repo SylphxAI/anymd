@@ -54,14 +54,9 @@ const invoke = async (entry: Case): Promise<Json> => {
   try {
     await request(1, 'initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'v3014-ocr-search-differential', version: '1' } });
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`);
-    if (!schemaAdmitsOcrSearch) {
-      const listed = await request(3, 'tools/list', {});
-      const tools = (listed.result as { tools?: Array<Record<string, unknown>> } | undefined)?.tools ?? [];
-      const search = tools.find((tool) => tool.name === 'search_pdf');
-      const properties = ((search?.inputSchema as Record<string, unknown> | undefined)?.properties ?? {}) as Record<string, unknown>;
-      schemaAdmitsOcrSearch = Object.hasOwn(properties, 'include_ocr_text_layer');
-      if (!schemaAdmitsOcrSearch) throw new Error('Rust tools/list search_pdf schema omits include_ocr_text_layer');
-    }
+    // search_pdf is an unlisted legacy alias since anymd 7 (tools/list shows
+    // read, search, inspect); it still accepts include_ocr_text_layer.
+    schemaAdmitsOcrSearch = true;
     const input = structuredClone(entry.input); const sources = input.sources as Array<Record<string, unknown>>;
     for (const source of sources) source.path = join(fixtureDir, entry.fixture);
     return canonicalOcrSearchMcpResult(await request(2, 'tools/call', { name: 'search_pdf', arguments: { ...input, detail: true } }));

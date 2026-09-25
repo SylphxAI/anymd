@@ -3,7 +3,9 @@ members = [
     "crates/pdf-reader-core",
     "crates/pdf-reader-cli",
     "crates/pdf-reader-mcp-server",
+    "crates/anymd-formats",
     "vendor/adobe-cmap-parser",
+    "vendor/pdf-extract",
 ]
 resolver = "2"
 
@@ -24,6 +26,10 @@ readme = "README.md"
 # so arbitrary PDFs can never abort the server from a CMap parse panic.
 [patch.crates-io]
 adobe-cmap-parser = { path = "vendor/adobe-cmap-parser" }
+# pdf-extract 0.12.1 runs Form XObjects with an identity CTM (figure text lands
+# at the wrong place) and parses image XObjects as content streams. Vendored
+# with a fix so figures stay where they are drawn.
+pdf-extract = { path = "vendor/pdf-extract" }
 
 [profile.release]
 lto = "thin"
