@@ -1,0 +1,26 @@
+{
+ "id": "epub-gutenberg-jekyll",
+ "derived_from": "Unzipped the EPUB; spine order read from OEBPS/content.opf (chapter files 43-h-1 .. 43-h-10); text taken from the chapter XHTML <p> elements. Chapter headings (e.g. 'STORY OF THE DOOR') occur 4 times (book contents list, toc.xhtml, toc.ncx, heading), so order uses the first words of each chapter's opening paragraph instead; each order string checked to occur exactly once in the normalized text of all XHTML/NCX files.",
+ "sentences": [
+  "Mr. Utterson the lawyer was a man of a rugged countenance that was never lighted by a smile; cold, scanty and embarrassed in discourse; backward in sentiment; lean, long, dusty, dreary and yet somehow lovable.",
+  "That evening Mr. Utterson came home to his bachelor house in sombre spirits and sat down to dinner without relish.",
+  "The details were few and startling.",
+  "It chanced on Sunday, when Mr. Utterson was on his usual walk with Mr. Enfield, that their way lay once again through the by-street; and that when they came in front of the door, both stopped to gaze on it.",
+  "These observations, though they have taken so great a space to be set down in, were yet the work of a few seconds.",
+  "My visitor was, indeed, on fire with sombre excitement.",
+  "Small indeed was my appetite."
+ ],
+ "order": [
+  "Mr. Utterson the lawyer was a man",
+  "That evening Mr. Utterson came home",
+  "A fortnight later, by excellent good fortune",
+  "Nearly a year later, in the month of October",
+  "It was late in the afternoon, when Mr. Utterson",
+  "Time ran on; thousands of pounds",
+  "It chanced on Sunday, when Mr. Utterson",
+  "Mr. Utterson was sitting by his fireside",
+  "On the ninth of January, now four days ago",
+  "I was born in the year 18"
+ ],
+ "tables": []
+}

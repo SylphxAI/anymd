@@ -1,0 +1,2 @@
+# Scoring harness (bench/run.py).
+tiktoken==0.14.0

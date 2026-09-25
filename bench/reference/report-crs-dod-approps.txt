@@ -1,0 +1,737 @@
+FY2026 Department of Defense
+Appropriations: In Brief
+April 2, 2026
+
+Congressional Research Service
+https://crsreports.congress.gov
+R48891
+
+FY2026 Department of Defense Appropriations: In Brief
+
+Contents
+Summary ......................................................................................................................................... 1
+FY2026 Budget Cycle: Sequence of Events.................................................................................... 2
+FY2026 President’s Budget Request: May 2, 2025, to June 26, 2025 ...................................... 2
+H.R. 4016: Department of Defense Appropriations Act, 2026 ................................................. 3
+S. 2572: Department of Defense Appropriations Act, 2026 ...................................................... 4
+Lapse in Appropriations: October 1, 2025, to November 12, 2025 .......................................... 4
+Continuing Resolution: November 12, 2025, to January 30, 2026 ........................................... 5
+January 23, 2026: Full-year Appropriations for Atomic Energy Defense Activities................. 5
+Lapse in Appropriations: January 31, 2026, to February 3, 2026 ............................................. 6
+H.R. 7148: Full-year Appropriations Enacted February 3, 2026 .............................................. 6
+
+Figures
+Figure 1. FY2026 Budget Cycle Department of Defense ............................................................... 1
+
+Tables
+Table 1. FY2026 Department of Defense Appropriations Contained in Division A of the
+Consolidated Appropriations Act, 2026 (P.L. 119-75) ................................................................. 8
+
+Contacts
+Author Information.......................................................................................................................... 9
+
+FY2026 Department of Defense Appropriations: In Brief
+
+Summary
+Congress provided FY2026 appropriations totaling $839.2 billion for certain national defense
+activities of the Department of Defense (DOD) through the Department of Defense
+Appropriations Act, 2026 (Division A of P.L. 119-75). Funding provided in the act is $8.4 billion
+more than DOD’s FY2026 request for such activities. (DOD is “using a secondary Department of
+War designation” under Executive Order 14347 dated September 5, 2025.) This report
+summarizes the legislative process and funding provisions related to these appropriations, along
+with an overview of the budgetary resources that were available to the department during two
+lapses in appropriations and one continuing resolution (CR) prior to enactment of full-year
+appropriations. See Figure 1. The report also covers relevant aspects of funding for DOD
+provided by the FY2025 reconciliation law (Title II of P.L. 119-21). For an overview of DOD
+FY2026 Military Construction funding, see CRS Insight IN12622, FY2026 Military Construction
+Appropriations: A Summary, by Andrew Tilghman.
+Figure 1. FY2026 Budget Cycle
+Department of Defense
+Sequence of Events
+
+Source: CRS analysis of DOD budget request documents; P.L. 119-21; H.Rept. 119-162; S.Rept. 119-52; P.L.
+119-37; P.L. 119-75.
+
+Congressional Research Service
+
+1
+
+FY2026 Department of Defense Appropriations: In Brief
+
+FY2026 Budget Cycle: Sequence of Events
+FY2026 President’s Budget Request: May 2, 2025, to June 26, 2025
+Title 31, Section 1105 of the U.S. Code (31 U.S.C. §1105) requires the President to submit a
+budget request to Congress “not later than the first Monday in February of each year” for
+activities of the United States Government in the following fiscal year.1 Title 10, Section 221 of
+the U.S. Code (10 U.S.C. §221) requires the Secretary of Defense [who is using “Secretary of
+War” as a “secondary title” under Executive Order 14347 dated September 5, 2025] to submit a
+Future-Years Defense Program (FYDP) to Congress “not later than five days after the date on
+which the President’s budget is submitted.”2 The timing of the President’s budget submission has
+been delayed in some presidential transition years.3
+DOD’s FY2026 budget request was released publicly in several stages:
+•
+•
+•
+•
+•
+
+May 2, 2025: “Skinny” Budget Overview4
+May 30, 2025: Technical Supplement5
+June 6, 2025: DOD Budget Appendix6
+June 20, 2025: Historical Tables (omitting FY2025-FY2030)7
+June 26, 2025: Expanded set of DOD budget justification documents (omitting
+FYDP out-year values for FY2027-FY2030)8
+
+In July 2025, the Office of Management and Budget (OMB) Director reportedly stated that one
+reason for the delayed budget release was to avoid confusion related to congressional deliberation
+on budget reconciliation legislation (H.R. 1),9 Title II of which provided $156.2 billion in FY2025
+
+1 31 U.S.C. §1105. For a summary of the statutory federal budget timeline, see CRS Report R47235, The
+
+Congressional Budget Process Timeline, by Drew C. Aherne; CQ, “Infographic: the federal budget timeline
+explained,” July 2, 2025, at https://info.cq.com/resources/infographic-the-federal-budget-timeline-explained/.
+2 10 U.S.C. §221. For more information on the FYDP, see CRS In Focus IF10831, Defense Primer: Future Years
+Defense Program (FYDP), by Cameron M. Keys and Alexandra G. Neenan.
+3 For a comparison of budget submission dates in presidential transition years since 2008, see Center for Strategic &
+International Studies, “Long wait for FY2026 budget could hinder congressional consideration,” April 23, 2025, at
+https://www.csis.org/analysis/long-wait-fy-2026-budget-could-hinder-congressional-consideration.
+4 Office of Management and Budget (OMB), The President’s FY2026 Discretionary Budget Request at
+https://www.govinfo.gov/app/collection/budget/2026/BUDGET-2026-BUD.
+5 OMB, Budget FY2026 - Technical Supplement to the 2026 Budget: Appendix, Budget of the United States
+Government, Fiscal Year 2026, May 30, 2025, at https://www.govinfo.gov/app/details/BUDGET-2026-APP.
+6 OMB, Budget FY2026 - Department of Defense Appendix, Budget of the United States Government, Fiscal Year
+2026, June 6, 2025, at https://www.govinfo.gov/app/details/BUDGET-2026-DOD.
+7 OMB, Budget FY2026 - Historical Tables, Budget of the United States Government, Fiscal Year 2026, June 20, 2025,
+at https://www.govinfo.gov/app/details/BUDGET-2026-TAB.
+8 See DOD, Background Briefing on FY2025 Defense Budget, June 26, 2025, at https://www.war.gov/News/
+Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/. See also Under Secretary of
+War (Comptroller), Defense Budget Materials – FY2026, June 2026 at https://comptroller.war.gov/Budget-Materials/
+Budget2026/.
+9 See Jeff Stein, “White House aide on skipping full budget: It ‘wasn’t in our interest’,” Washington Post, updated July
+17, 2025, at https://www.washingtonpost.com/business/2025/07/17/white-house-budget-vought/. For context, see also
+Cameron Joseph, “As Congress codifies government cuts, Russell Vought promises more to come,” Christian Science
+Monitor, updated July 17, 2025, at https://www.csmonitor.com/USA/Politics/monitor_breakfast/2025/0717/russellvought-trump-congress-budget.
+
+Congressional Research Service
+
+2
+
+FY2026 Department of Defense Appropriations: In Brief
+
+defense appropriations when enacted on July 4, 2025, as P.L. 119-21.10 For an overview of
+defense provisions in the FY2025 budget reconciliation law, see CRS Insight IN12580, Defense
+Funding in the 2025 Reconciliation Law (H.R. 1; P.L. 119-21, Title II), by Cameron M. Keys and
+Daniel M. Gettinger.
+Funds provided to DOD in Title II of P.L. 119-21 are FY2025 mandatory appropriations with a
+five-year period of availability (i.e., Congress made DOD’s FY2025 budget reconciliation funds
+available for obligation through FY2029).11 In its July 2025 Defense Budget Overview, DOD
+included $113.3 billion of its FY2025 reconciliation funding as part of the grand total for its
+FY2026 budget request, referring to these funds as requested “FY2026 Mandatory”
+appropriations.12 However, in December 2025, DOD specified in its FY2025 Agency Financial
+Report that P.L. 119-21 provided FY2025 “multi-year, mandatory appropriations” (i.e., FY2025
+appropriations that are available for multiple fiscal years), not FY2026 mandatory
+appropriations.13 In reference to these FY2025 funds, DOD stated: “This funding will be
+apportioned to DoD over multiple fiscal years in accordance with Congressionally approved
+spend plans.”14 In other words, the $113.3 billion in P.L. 119-21 funding DOD included as part of
+its FY2026 budget request was a planned apportionment of FY2025 funds from OMB to DOD
+during FY2026.15 On February 23, 2026, DOD reportedly provided an updated FY2026
+Mandatory Funding Allocation Plan to distribute all of its remaining reconciliation funds.16
+
+H.R. 4016: Department of Defense Appropriations Act, 2026
+On June 16, 2025, the House Committee on Appropriations (HAC) reported an original measure,
+H.R. 4016—A bill making appropriations for the Department of Defense for the fiscal year
+ending September 30, 2026, and for other purposes—and an accompanying House Report,
+10 P.L. 119-21 has been referred to as the One Big Beautiful Bill Act. For a preliminary estimate of budgetary effects of
+
+defense provisions in Title II of this bill, including sequestration, see Congressional Budget Office (CBO), Estimated
+budgetary effects of a bill to provide for reconciliation pursuant to Title II of H.Con.Res. 14, the One Big Beautiful Bill
+Act, May 20, 2025, at https://www.cbo.gov/publication/61420.
+11 For FY2026, OMB apportioned FY2025 budget reconciliation funds using Excel-formatted apportionment
+documents labeled “2025-2029”; see OMB, “Approved Apportionments,” Fiscal Year 2026, Department of War, at
+https://apportionment-public.max.gov/. OMB apportionments for FY2026 refer to reconciliation funds via Treasury
+Appropriation Fund Symbols (TAFSs) containing a four-digit Beginning Period of Availability (BPOA) of “2025,” in
+reference to FY2025 enacted appropriations. For Department of the Treasury policy on TAFS creation, see Department
+of the Treasury, “Warrants & Net Transactions,” Section 2025.10, https://tfx.treasury.gov/warrants-net-transactions,
+which states: “Proper format (for new TAFS accounts) will include the three-digit agency identifier (AID), four-digit
+Beginning Period of Availability (BPOA), four-digit Ending Period of Availability (EPOA), four-digit main account,
+and when applicable a three-digit point account.” For additional perspective, see FY2025 budget reconciliation
+apportionments in OMB MAX, which used Standard Form (SF) 133 Reports labeled “Department of Defense-Military”
+containing 1) “25/29” in the TAFS code and 2) budgetary resources labeled “BA: Mand: Appropriation,” referencing
+FY2025 mandatory appropriations in P.L. 119-21. OMB, “FY2025 – SF 133 Reports on Budget Execution and
+Budgetary Resources: Department of Defense-Military,” website at https://portal.max.gov/portal/document/SF133/
+Budget/FY%202025%20%20SF%20133%20Reports%20on%20Budget%20Execution%20and%20Budgetary%20Resources.html. [Note that
+discretionary appropriations from the FY2025 full-year CR with five-year period of availability, such as Military
+Construction accounts, will also contain “2025-2029” in their TAFS account.]
+12 DOD, Defense Budget Overview: United States Department of Defense Fiscal Year 2026 Budget Request, July 2025,
+pp. 1-2, A-2.
+13 DOD, Agency Financial Report: Fiscal Year 2025, December 18, 2025, p. 14.
+14 DOD Agency Financial Report, December 18, 2025, p. 14.
+15 For more information on the apportionment of budgetary resources, see CRS Insight IN12538, Office of Management
+and Budget (OMB) Reporting on Apportionments, by Dominick A. Fiorentino and Taylor N. Riccard.
+16 Tony Bertuca, “Pentagon reveals budget reconciliation spending plans,” Inside Defense, February 23, 2026.
+
+Congressional Research Service
+
+3
+
+FY2026 Department of Defense Appropriations: In Brief
+
+H.Rept. 119-162. This bill would have provided $831.5 billion in FY2026 appropriations for
+discretionary national defense functions under jurisdiction of the HAC Subcommittee on Defense
+(HAC-D). See Table 1. HAC-D “held six oversight hearings and seven classified sessions during
+the period of February to June 2026” in preparation of its legislation.17 The motion to report the
+bill to the House, as amended, was adopted 36-27 on June 12, 2025.18
+Funding tables in the House Report did not include an “FY2026 Requested” column. The report
+compares its line-item funding recommendations for FY2026 against “FY2025 Enacted” amounts
+associated with the full-year continuing resolution for FY2025 (Division A of P.L. 119-4).
+Specifically, the report showed “FY2025 Enacted” amounts contained in funding tables provided
+to DOD by the defense committees “as part of consultations prescribed in section 1422” of the
+full-year CR.19
+On July 18, 2025, the House passed H.R. 4016 by a vote of 221-209. The bill was considered
+pursuant to H.Res. 580, a Special Rule reported by the House Committee on Rules and adopted
+by the House on July 16, 2025. The rule provided for one hour of general debate on the bill and
+consideration of various amendments under the five-minute rule.
+
+S. 2572: Department of Defense Appropriations Act, 2026
+On July 31, 2025, the Senate Committee on Appropriations (SAC) reported an original measure,
+S. 2572—A bill making appropriations for the Department of Defense for the fiscal year ending
+September 30, 2026, and for other purposes—and an accompanying Senate Report, S.Rept. 11952. This bill would have provided $852.5 billion in FY2026 appropriations for discretionary
+national defense functions under jurisdiction of the SAC Subcommittee on Defense (SAC-D). See
+Table 1. According to the Senate Report, the committee recommendation was $21.7 billion above
+DOD’s FY2026 budget request for accounts under SAC-D jurisdiction.20
+SAC-D held six hearings from May 22, 2025, to June 26, 2025, to receive testimony from
+representatives of DOD and the Intelligence Community.21 On July 31, 2025, the committee
+voted 26-3 to report the bill “as a Committee amendment in the nature of a substitute to the House
+companion measure” (H.R. 4016).22 The Senate took no further action on S. 2572.
+
+Lapse in Appropriations: October 1, 2025, to November 12, 2025
+DOD began FY2026 under a lapse in appropriations (a “funding gap”) that required the
+department to cease certain operations (a “government shutdown”). The funding gap occurred
+because Congress had not enacted legislation to provide the department with FY2026 funding by
+October 1, 2025, when the fiscal year began.
+17 H.Rept. 119-162, June 16, 2025, p. 3.
+18 H.Rept. 119-162, p. 275.
+19 H.Rept. 119-162, p. 5. Section 1422 of Division A of P.L. 119-4 required DOD to submit line-item funding
+
+allocations within 45 days of enactment after “consultation” with defense appropriations subcommittees. Thus,
+amounts in the “FY2025 Enacted” column of the House Report may differ from the FY2025 funding allocations
+contained in DOD’s DD 1414 Base for Reprogramming for FY2025. See DOD, Base for Reprogramming Actions:
+Division A of Public Law 119-4, Full-Year Continuing Appropriations Act, 2025, Approved March 15, 2025. DD 1414s
+establish a baseline amount for each budgetary line-item against which DOD can transfer or reprogram funds in
+accordance with certain dollar thresholds established by Congress.
+20
+S.Rept. 119-52, p. 5.
+21 S.Rept. 119-52, p. 18.
+22 S.Rept. 119-52, p. 232.
+
+Congressional Research Service
+
+4
+
+FY2026 Department of Defense Appropriations: In Brief
+
+During this initial lapse in appropriations, which lasted 42 days from October 1 to November 12,
+DOD relied on budgetary resources carried over from the prior fiscal year. According to DOD’s
+Agency Financial Report for FY2025, the department began FY2026 with $382.4 billion in
+unexpired, unobligated appropriations from prior acts of Congress.23 These account balances were
+available to the department during the lapse in appropriations for purposes specified in those prior
+acts of Congress, including research and development, procurement, shipbuilding, military
+construction, and the activities of defense working capital funds.24 In addition, the department
+may have incurred obligations during this period for certain “excepted” activities in advance of
+appropriations.25
+
+Continuing Resolution: November 12, 2025, to January 30, 2026
+The 42-day lapse in appropriations ended on November 12, 2025, when the President signed into
+law the Continuing Appropriations, Agriculture, Legislative Branch, Military Construction and
+Veterans Affairs, and Extensions Act, 2026 (H.R. 5371; P.L. 119-37). Division A of the act—the
+Continuing Appropriations Act, 2026—provided continuing appropriations for most functions of
+the Department of Defense through January 30, 2026. The CR generally provided DOD funding
+to continue operating based on the funding levels, authorities, and conditions provided for in the
+Full-Year Continuing Appropriations Act, 2025 (Division A of P.L. 119-4), with certain
+limitations, deviations, and exceptions.26 Under the terms of this CR, DOD was prohibited from
+expending FY2026 funds on 1) new research and development programs (so-called “new starts”)
+or 2) production rate increases for previously established procurement programs.27
+Congress provided full-year FY2026 appropriations for DOD Military Construction (MILCON)
+and Family Housing activities through Division D, Title I of P.L. 119-37. For an overview of
+these appropriations, see CRS Insight IN12622, FY2026 Military Construction Appropriations: A
+Summary, by Andrew Tilghman.
+
+January 23, 2026: Full-year Appropriations for Atomic Energy
+Defense Activities
+On January 23, 2026, Congress enacted full-year appropriations for certain Atomic Energy
+Defense Activities of the National Nuclear Security Administration (NNSA) in the Energy and
+Water Development and Related Agencies Appropriations Act, 2026 (Division B, Title III of the
+Commerce, Justice, Science; Energy and Water Development; and Interior and Environment
+Appropriations Act, 2026 (P.L. 119-74)). Though these NNSA activities are not DOD budget
+activities, the Office of Management and Budget reports these activities as part of the broader
+
+23 DOD, Agency Financial Report: Fiscal Year 2025, December 18, 2025, p. 108.
+24 See DOD, Contingency Plan Guidance for Continuation of Operations in the Absence of Available Appropriations,
+
+October 2025, at https://media.defense.gov/2025/Oct/16/2003815760/-1/-1/0/GUIDANCE-FOR-CONTINUATIONOF-OPERATIONS-DURING-A-LAPSE-IN-APPROPRIATIONS-OCT-2025.PDF. “Appropriation accounts or funds
+with unobligated balances that carry over from prior year appropriations generally are not directly impacted by a lapse
+in annual appropriations.” For more information on defense working capital funds, see CRS In Focus IF11233, Defense
+Primer: Defense Working Capital Funds, by Cameron M. Keys and Brendan W. McGarry.
+25 See “Anti-deficiency Act Compliance” in DOD Contingency Plan Guidance, October 2025, p. 3.
+26 For more information on continuing resolutions, see CRS Report R48765, Overview of Continuing Appropriations
+for FY2026 (Division A of P.L. 119-37), coordinated by Drew C. Aherne; CRS Report R48731, Full-Year Continuing
+Resolutions: Frequently Asked Questions, by Drew C. Aherne, Dominick A. Fiorentino, and Taylor N. Riccard.
+27 P.L. 119-37, Section 102(a).
+
+Congressional Research Service
+
+5
+
+FY2026 Department of Defense Appropriations: In Brief
+
+national defense budget function of the U.S. government.28 For more information on the DODNNSA relationship, see CRS Report R48194, The U.S. Nuclear Security Enterprise: Background
+and Possible Issues for Congress, by Anya L. Fink, p. 23.
+
+Lapse in Appropriations: January 31, 2026, to February 3, 2026
+Apart from DOD MILCON and Family Housing activities, which received full-year
+appropriations on November 12, 2025, Congress had not enacted full-year appropriations for
+FY2026 DOD activities upon expiration of the continuing appropriations provided by P.L. 11937. Therefore, from January 31, 2026, until passage of full-year appropriations on February 3,
+2026, most functions of the department were affected by a second lapse in appropriations. This
+second lapse occurred partly over a weekend.
+
+H.R. 7148: Full-year Appropriations Enacted February 3, 2026
+Congress enacted full-year appropriations for most FY2026 DOD activities through the
+Department of Defense Appropriations Act, 2026 (Division A of the Consolidated Appropriations
+Act, 2026; H.R. 7148; P.L. 119-75). The act provided $839.2 billion in FY2026 appropriations for
+discretionary activities of the department, $8.4 billion more than DOD’s FY2026 request for
+activities covered by the act. See Table 1 for summaries of funding provisions in the major bill
+titles. For summaries of FY2026 defense funding for selected weapons systems, see CRS Report
+R48860, FY2026 Defense Budget: Funding for Selected Weapon Systems, by Daniel M. Gettinger.
+On January 19, 2026, the House Appropriations Committee released a press release containing
+links to draft text of a four-bill consolidated appropriations act, including a version of a
+Department of Defense Appropriations Act, 2026, as Division A.29 The Senate Appropriations
+Committee issued a similar press release on January 20, 2026, containing draft text and an
+explanatory statement containing funding tables for DOD appropriations in Division A.30
+On January 20, 2026, Chair of the House Committee on Appropriations Representative Tom Cole
+introduced H.R. 7148, the Consolidated Appropriations Act, 2026. Division A of the introduced
+bill contained a version of an FY2026 Department of Defense Appropriations Act. On January 22,
+2026, the House Committee on Rules reported H.Res. 1014, a special rule providing for
+consideration of H.R. 7148. The rule provided for one hour of debate and the consideration of a
+number of amendments.31 At the conclusion of debate on January 22, the House passed the bill as
+amended by a vote of 341-88 (Roll no. 45).32
+
+28 For more information on budget functions, see CRS Report R41726, Discretionary Budget Authority by Subfunction:
+
+An Overview, by D. Andrew Austin. For information on utilizing budget functions to analyze federal budget data, see
+CRS Insight IN12460, Downloadable Federal Budget Data: Spending by Function, Subfunction, and Agency, by D.
+Andrew Austin.
+29 House Committee on Appropriations, “Completing FY26: committee releases conferenced defense, homeland,
+LHHS, and THUD bills,” press release, January 19, 2026, https://appropriations.house.gov/news/press-releases/
+completing-fy26-committee-releases-conferenced-defense-homeland-lhhs-and-thud.
+30 Senate Committee on Appropriations, “Committee releases conferenced defense, homeland security, labor, health
+and human services, education, and related agencies, and transportation, housing and urban development, and related
+agencies bills,” press release, January 20, 2026, https://www.appropriations.senate.gov/news/majority/committeereleases-conferenced-defense-homeland-security-labor-health-and-human-services-education-and-related-agenciesand-transportation-housing-and-urban-development-and-related-agencies-bills.
+31 See House Debate, Congressional Record, Vol. 172, No. 15 (January 22, 2026), pp. 1185-1299.
+32 House of Representatives Roll Call vote number 45: https://clerk.house.gov/Votes/202645.
+
+Congressional Research Service
+
+6
+
+FY2026 Department of Defense Appropriations: In Brief
+
+An explanatory statement containing funding tables matching the version in the Senate’s press
+release for line-items in Division A was published in Book II of the January 22, 2026, edition of
+the Congressional Record.33
+On January 30, 2026, the Senate passed an amended version of H.R. 7148 by a vote of 71-29
+(Record Vote No. 20).34 Because both chambers had not passed an identical version of the bill by
+January 30, 2026, DOD experienced a lapse in appropriations.
+On February 3, 2026, pursuant to special rule H. Res. 1032, the House considered H.R. 7148, as
+amended by the Senate. The House proceeded with one hour of floor debate and subsequently
+agreed to the Senate amendments to H.R. 7148 by a vote of 217-214 (Roll no. 53).35 The bill was
+presented to the President and signed into law on February 3, 2026, becoming Public Law 119-75
+(P.L. 119-75).
+
+33 House of Representatives, Congressional Record, Vol. 172, No. 15-Book II (January 22, 2026),
+
+https://www.congress.gov/119/crec/2026/01/22/172/15/CREC-2026-01-22-bk2.pdf.
+34 Senate Roll Call vote number 20: https://www.senate.gov/legislative/LIS/roll_call_votes/vote1192/
+vote_119_2_00020.htm.
+35 House of Representatives Roll Call vote number 53: https://www.congress.gov/votes/house/119-2/53.
+
+Congressional Research Service
+
+7
+
+FY2026 Department of Defense Appropriations: In Brief
+
+Table 1. FY2026 Department of Defense Appropriations Contained in Division A of
+the Consolidated Appropriations Act, 2026 (P.L. 119-75)
+(in billions of nominal dollars of budget authority, by title)
+
+Appropriations
+Bill Title
+
+FY2025
+Enacted
+(P.L. 119-4
+Title IV; P.L.
+118-158
+Division A-B)
+
+FY2025
+Budget
+Reconciliation
+(P.L. 119-21)a
+
+Military Personneld
+
+$182.4
+
+TRICARE for Life
+
+FY2026
+Requestb
+
+FY2026
+Housepassed
+(H.R.
+4016)c
+
+FY2026
+Senatereported
+(S. 2572)
+
+FY2026
+Enacted
+(Div. A,
+P.L. 11975)
+
+-
+
+$194.7
+
+$189.0
+
+$193.2
+
+$193.3
+
+$11.0
+
+-
+
+$12.9
+
+$12.9
+
+$12.9
+
+$12.9
+
+Operation and
+Maintenance (O&M)e
+
+$290.3
+
+-
+
+$295.7
+
+$283.3
+
+$302.8
+
+$294.4
+
+Procurement
+
+$167.5
+
+-
+
+$153.1
+
+$174.0
+
+$171.3
+
+$167.5
+
+RDT&E
+
+$141.2
+
+-
+
+$142.0
+
+$147.7
+
+$140.5
+
+$145.9
+
+Revolving and
+Management Fundsf
+
+$1.8
+
+-
+
+$2.0
+
+$1.7
+
+$2.2
+
+$2.1
+
+Other DOD
+Programs [including
+O&M Defense Health
+Program]g
+
+$42.8
+
+-
+
+$42.1
+
+$42.8
+
+$43.2
+
+$43.6
+
+Related Agenciesh
+
+$1.1
+
+-
+
+$1.2
+
+$1.2
+
+$1.1
+
+$1.1
+
+IC Mgmt. Account
+
+$0.6
+
+-
+
+$0.6
+
+$0.6
+
+$0.6
+
+$0.6
+
+(Mandatory) CIA
+Retirement Fundi
+
+$0.5
+
+-
+
+$0.5
+
+$0.5
+
+$0.5
+
+$0.5
+
+General Provisions
+
+$4.8
+
+-
+
+-
+
+-$7.7
+
+-$1.9
+
+-$8.8
+
+Rescissions
+
+-$1.4
+
+-
+
+-
+
+-
+
+-$3.2
+
+-$5.7
+
+Total discretionary,
+DOD Appropriations
+Act
+
+$831.5
+
+-
+
+$830.7
+
+$831.5
+
+$851.9
+
+$838.6
+
+Emergency-designated
+discretionary
+
+$10.0j
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Total, Mandatory
+
+$0.5
+
+$152.3
+
+$0.5
+
+$0.5
+
+$0.5
+
+$0.5
+
+$842.0
+
+$152.3k
+
+$831.2
+
+$832.0
+
+$852.5
+
+$839.2
+
+Grand Total
+(including
+scorekeeping
+adjustments)
+
+Sources: CRS analysis of P.L. 118-158; H.Rept. 119-162; S.Rept. 119-52; P.L. 119-37; and P.L. 119-75.
+Notes: Totals may not sum due to rounding. Values in italics are a subset of values not in italics. Note that
+“(mandatory) CIA Retirement Fund” is not included in the “Total discretionary” row. “RDT&E” means research,
+development, test, and evaluation; “IC” means intelligence community; “Misc.” means miscellaneous. Grand
+Totals for FY2025 Enacted and FY2026 Enacted include CBO scorekeeping adjustments.
+a. Of the $156.2 billion appropriated in Title II of P.L. 119-21, $152.3 billion was for DOD and $3.9 billion was
+for national defense activities of the Department of Energy’s National Nuclear Security Administration.
+Values in this column will be updated if account-level allocations are provided in FY2027 budget request
+documentation. DOD categorized $113 billion from this column as “FY2026 Mandatory Requested” in its
+
+Congressional Research Service
+
+8
+
+FY2026 Department of Defense Appropriations: In Brief
+
+b.
+c.
+d.
+
+e.
+
+f.
+g.
+
+h.
+
+i.
+j.
+
+k.
+
+FY2026 budget request. As noted in FY2025 apportionment documents and in DOD’s Agency Financial
+Report for Fiscal Year 2025, these are FY2025 dollars with a five-year period of availability.
+Values in this column are taken from funding tables in the explanatory statement accompanying P.L. 119-75
+as published in the January 22, 2026, Congressional Record.
+Values in this column are based on CRS analysis of the House Report (H.Rept. 119-162) accompanying the
+reported bill, and thus may not account for certain floor amendments adopted prior to House passage.
+“TRICARE for Life” here refers to Medicare-Eligible Retiree Health Care Fund accrual payments, scored as
+discretionary spending but appropriated (or transferred from the Treasury General Fund) pursuant to
+standing law (10 U.S.C. Chapter 56).
+O&M funding has been presented in certain DOD budget request documents as including Defense Health
+Program funding. By contrast, funding tables in congressional appropriations measures typically have
+presented the Defense Health Program in a separate title of the bill from the O&M title. As a result,
+different primary sources may appear to display contradictory values for O&M requested or enacted
+amounts. This table presents FY2026 requested amounts in a manner consistent with legislative titles in
+regularly enacted congressional appropriations measures.
+“Revolving and Management Funds” include Defense Working Capital Fund and National Defense Stockpile
+Transaction Fund.
+“Other DOD Programs” includes the Defense Health Program; Chemical Agents and Munitions
+Destruction, Defense; Drug Interdiction and Counter-Drug Activities, Defense; and Office of the Inspector
+General activities.
+H.Rept. 119-162 (p. 244) indicates that Title VII of the bill (“Related Agencies”) includes account
+adjustments for “National and Military Intelligence Programs” located “in a separate, detailed, and
+comprehensive classified annex.” Funding amounts for classified programs detailed in the annex are
+incorporated into budget displays within the unclassified bill text (and thus into the other rows of this
+table.) The report further indicates that this classified annex details funding for “the Central Intelligence
+Agency (CIA), Defense Intelligence Agency, National Reconnaissance Office, National Security Agency,
+National Geospatial-Intelligence Agency, the intelligence services of the Departments of the Army, Navy,
+and Air Force, and the CIA Retirement and Disability Fund.” As noted, funds appropriated to the CIA
+Retirement and Disability Fund are mandatory spending.
+CIA Retirement and Disability Fund appropriations are pursuant to the terms of 50 U.S.C. Chapter 38.
+The second FY2025 CR (Division A, P.L. 118-158) included emergency-designated funding for Shipbuilding
+and Conversion, Navy ($5.7 billion in Section 157) and defense-wide O&M ($913.0 million in Section 158)
+accounts, for a total of $6.6 billion. Division B, Title III of P.L. 118-158, the Disaster Relief Supplemental
+Appropriations Act, 2025 included $3.4 billion in emergency-coded appropriations for certain discretionary
+DOD accounts: $3.0 billion for O&M; $292.8 million for Procurement; $110.7 million for RDT&E; and
+$17.4 million for the Defense Health Program (i.e., Other DOD Programs).
+DOD’s FY2026 budget request documents (published in June 2025) categorized $113 billion of its FY2025
+Reconciliation funding (Title II, P.L. 119-21) as “FY2026 Reconciliation Request” or “FY2026 Mandatory.”
+Because P.L. 119-21 was enacted during FY2025 (on July 4, 2025), the values labeled “FY2026 Reconciliation
+Request” and “FY2026 Mandatory” are planned FY2026 allotments and allocations of FY2025 Enacted
+budgetary resources. For definitions of “apportionment,” “allotment,” and “allocation,” see DOD,
+“Glossary,” DOD 7000.14-R, Financial Management Regulation, January 2024, pp. G-5, G-6,
+https://comptroller.war.gov/Portals/45/Documents/fmr/current/glossary.pdf.
+
+Author Information
+Cameron M. Keys
+Analyst in Defense Logistics and Resource
+Management Policy
+
+Congressional Research Service
+
+9
+
+FY2026 Department of Defense Appropriations: In Brief
+
+Disclaimer
+This document was prepared by the Congressional Research Service (CRS). CRS serves as nonpartisan
+shared staff to congressional committees and Members of Congress. It operates solely at the behest of and
+under the direction of Congress. Information in a CRS Report should not be relied upon for purposes other
+than public understanding of information that has been provided by CRS to Members of Congress in
+connection with CRS’s institutional role. CRS Reports, as a work of the United States Government, are not
+subject to copyright protection in the United States. Any CRS Report may be reproduced and distributed in
+its entirety without permission from CRS. However, as a CRS Report may include copyrighted images or
+material from a third party, you may need to obtain the permission of the copyright holder if you wish to
+copy or otherwise use copyrighted material.
+
+Congressional Research Service
+
+R48891 · VERSION 4 · NEW
+
+10

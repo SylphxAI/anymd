@@ -1,0 +1,2026 @@
+Household Income in States and Metropolitan
+Areas: 2024
+American Community Survey Briefs
+By Gloria G. Guzman
+ACSBR-025
+September 2025
+
+INTRODUCTION
+This brief presents statistics on median household
+income and the Gini index of income inequality based
+on the data collected from the 2024 (and earlier)
+American Community Survey (ACS) and the Puerto
+Rico Community Survey (PRCS).* This brief examines
+a historical time series of median household income
+back to 2005 and analyzes changes in median household income between 2023 and 2024 for the nation,
+states, the District of Columbia, Puerto Rico, and the
+25 most populous metropolitan areas. It also includes
+median household income by selected demographic
+characteristics of the householder. Changes in the Gini
+index between 2023 and 2024 are presented for the
+nation, states, the District of Columbia, and Puerto
+Rico.
+The ACS provides detailed estimates of demographic,
+social, economic, and housing characteristics for
+states, congressional districts, counties, places, and
+other localities every year.1 The ACS is described in
+more detail in the text box “What Is the American
+Community Survey?”
+References to 2024 income estimates in this brief are
+based on data collected throughout the 2024 calendar
+* The U.S. Census Bureau has reviewed this data product to
+ensure appropriate access, use, and disclosure avoidance protection
+of the confidential source data used to produce this product (Data
+Management System [DMS] number: P-7533841, Disclosure Review
+Board [DRB] approval number: CBDRB‑FY25‑0160). All comparative
+statements have undergone statistical testing and are statistically
+significant at the 90 percent confidence level, unless otherwise noted.
+
+year. The ACS is conducted monthly, and income data
+are collected for the 12 months preceding each interview. As a result, the 2024 ACS includes responses
+with some reported income from 2023. Therefore,
+comparisons between the 2023 ACS and 2024 ACS do
+not represent a direct comparison of economic conditions in calendar years 2023 and 2024, and comparisons should be interpreted with this context.2
+
+HIGHLIGHTS
+• Median household income increased in 29 states
+from 2023, after adjusting for inflation. Twenty-one
+states, the District of Columbia, and Puerto Rico
+showed no statistically significant differences.
+• Maryland, Massachusetts, and New Jersey had the
+highest median household incomes of all states and
+were not statistically different from each other. The
+District of Columbia’s median household income
+($109,707) was the highest in the nation. Arkansas,
+Louisiana, Mississippi, and West Virginia had the
+lowest median household income.
+• Income inequality measured by the Gini index
+increased in North Carolina and decreased in nine
+states (Georgia, Iowa, Massachusetts, Nebraska,
+New Jersey, Ohio, Oregon, South Dakota, and
+Wisconsin) between the 2023 and the 2024 ACS.
+
+MEDIAN HOUSEHOLD
+INCOME: 2023 AND 2024
+NATIONAL AND STATE
+COMPARISONS
+
+Household income: Includes income of the householder and all
+other people 15 years and older in the household, whether or not
+they are related to the householder.
+
+Real median household income
+in the United States increased 2.0
+percent between the 2023 ACS
+and the 2024 ACS, from $80,002 in
+2023 to $81,604 in 2024 (Appendix
+Table 1).3 Figure 1 shows a historical
+series of median household income
+back to 2005.4
+Massachusetts, New Jersey,
+and Maryland had the highest
+median household incomes of
+all states ($104,828, $104,294
+and $102,905, respectively) and
+were not statistically different
+from each other. The District of
+
+Median: The point that divides the household income distribution
+into halves, one half with income above the median and the other
+with income below the median. The median is based on the income
+distribution of all households, including those with no income.
+Gini index: A summary measure of income inequality. The Gini index
+varies from 0.0 to 1.0, with 0.0 indicating perfect equality, where
+there is an equal distribution of income. A Gini index of 1.0 indicates
+perfect inequality, where one household has all the income.
+
+Columbia’s median household
+income ($109,707) was the highest
+in the nation. Arkansas, Louisiana,
+Mississippi, and West Virginia had
+the lowest median household
+
+income. Puerto Rico’s median
+household income in 2024 was
+$27,213 (Figure 2 and Appendix
+Table 1). Median household income
+
+Figure 1.
+
+Median Household Income in the Past 12 Months in the United States: 2005–2024
+(In thousands of 2024 inflation-adjusted dollars)
+
+Recession
+90
+85
+80
+75
+70
+65
+60
+55
+0
+2005 ‘06
+
+‘07
+
+‘08
+
+‘09
+
+‘10
+
+‘11
+
+‘12
+
+‘13
+
+‘14
+
+‘15
+
+‘16
+
+‘17
+
+‘18
+
+‘19
+
+‘20
+
+‘21
+
+‘22
+
+‘23 2024
+
+Note: The data points are placed at the midpoints of the respective years. Income is in 2024 dollars; estimates are adjusted for inflation using
+the Consumer Price Index retroactive series (R-CPI-U-RS). Estimates for 2020 experimental data not shown. For more information on the
+2020 experimental data products, refer to <www.census.gov/programs-surveys/acs/technical-documentation/user-notes/2021-02.html>.
+Information on confidentiality protection, sampling error, nonsampling error, and definitions is available at <www.census.gov/acs>.
+Source: U.S. Census Bureau, 2005–2024 American Community Survey 1-year estimates (Data Management System [DMS] number:
+P-7533841, Disclosure Review Board [DRB] approval number: CBDRB-FY25-0160).
+
+2
+
+U.S. Census Bureau
+
+was lower than the U.S. median in
+28 states and Puerto Rico. It was
+higher than the U.S. median in 17
+states and the District of Columbia.
+The medians for Arizona, Idaho,
+Nevada, Rhode Island, and Vermont
+were not statistically different from
+the U.S. median.
+
+According to the 2024 ACS, the
+San Francisco metro area had the
+highest median household income
+($135,590). The Detroit ($76,403),
+San Antonio ($78,112), and Tampa
+($78,275) metro areas had the
+lowest median household income
+and were not statistically different
+from one another. Median income
+increased in 12 of the most populous metropolitan areas between
+2023 and 2024. The remaining
+13 metro areas did not have a
+
+not statistically different from
+2023 for the District of Columbia,
+Puerto Rico, and the remaining 21
+states. There were no states with
+a significant decrease (Appendix
+Table 1).
+
+MEDIAN HOUSEHOLD
+INCOME: 25 MOST POPULOUS
+METROPOLITAN AREAS
+
+Between the 2023 ACS and
+the 2024 ACS, 29 states had a
+significant increase in real median
+household income. The median
+household income in 2024 was
+
+Figure 3 shows median household
+income for the 25 most populous
+metropolitan areas.5
+
+Figure 2.
+
+Median Household Income in the Past 12 Months
+for the United States and Puerto Rico: 2024
+
+AK
+
+0
+
+500 Miles
+
+WA
+MT
+
+ME
+
+ND
+VT
+
+MN
+
+OR
+
+NH
+
+ID
+
+SD
+
+WI
+
+MI
+
+WY
+
+PA
+OH
+
+UT
+
+IN
+
+IL
+
+CA
+
+CT
+
+IA
+
+NE
+
+NV
+
+AZ
+
+NM
+
+VA
+
+MO
+
+OK
+
+KY
+
+DC
+NC
+
+TN
+AR
+
+SC
+AL
+
+MS
+TX
+
+GA
+
+LA
+
+0
+
+100 Miles
+
+0
+
+100 Miles
+
+Income by state
+
+(2024 inflation-adjusted
+dollars)
+$90,000 or more
+$75,000 to $89,999
+$65,000 to $74,999
+Less than $65,000
+
+FL
+
+HI
+
+RI
+NJ
+DE
+MD
+
+WV
+
+CO
+KS
+
+MA
+
+NY
+
+U.S. median household
+income is $81,604.
+U.S. median household income
+does not include Puerto Rico.
+PR
+0
+
+50 Miles
+
+Note: A state abbreviation surrounded by the " " symbol denotes the value for the state is not statistically different from the U.S. median
+household income. For more information about sample design, methodology, and accuracy of the data, visit
+<https://www.census.gov/programs-surveys/acs/technical-documentation/code-lists.html>.
+Source: U.S. Census Bureau, 2024 American Community Survey 1-year estimates (Data Management System [DMS] number: P-7533841,
+Disclosure Review Board [DRB] approval number: CBDRB-FY25-0160).
+
+U.S. Census Bureau
+
+3
+
+statistically significant change
+between 2023 and 2024. None
+of these 25 metropolitan areas
+experienced a significant decrease
+in median household income
+(Appendix Table 2).
+
+be different from those of the
+householder. Appendix Table 3
+shows median household income
+by race and Hispanic origin of the
+householder.7
+Among all the race and Hispanic
+origin groups, Asian households
+had the highest median income
+($117,289) in 2024. Non-Hispanic
+White households had a median
+household income of $87,572, and
+Hispanic households had a median
+household income of $72,574 in
+
+MEDIAN HOUSEHOLD
+INCOME: RACE AND HISPANIC
+ORIGIN OF HOUSEHOLDER
+This brief uses the characteristics
+of the householder to describe
+the household.6 Characteristics of
+other household members may
+
+2024. Black households had the
+lowest median income ($56,706).
+Households across all race and
+Hispanic origin groups examined in
+this brief experienced increases in
+median household income between
+2023 and 2024.
+
+MEDIAN HOUSEHOLD
+INCOME: AGE OF
+HOUSEHOLDER
+Median household income
+increased for most householder
+age groups. The age groups with
+
+Figure 3.
+
+Median Household Income in the Past 12 Months by the 25 Most Populous Metro Areas:
+2023 and 2024
+2023
+
+(In thousands of 2024 inflation-adjusted dollars)
+
+2024
+
+*San Francisco
+Washington, DC
+*Boston
+Seattle
+*San Diego
+Denver
+Austin
+*New York
+Baltimore
+Minneapolis
+*Los Angeles
+*Dallas
+*Atlanta
+Riverside
+Philadelphia
+Chicago
+*Phoenix
+*Charlotte
+St. Louis
+Houston
+Orlando
+*Miami
+*Tampa
+San Antonio
+*Detroit
+50
+
+55
+
+60
+
+65
+
+70
+
+75
+
+80
+
+85
+
+90
+
+95
+
+100 105 110 115 120 125 130 135
+
+* Denotes a statistically significant change at the 90 percent confidence level.
+Note: Income is in 2024 dollars; estimates are adjusted for inflation using the Consumer Price Index retroactive series (R-CPI-U-RS).
+Information on confidentiality protection, sampling error, nonsampling error, and definitions is available at <www.census.gov/acs>.
+Source: U.S. Census Bureau, 2023 and 2024 American Community Survey 1-year estimates (Data Management System [DMS] number:
+P-7533841, Disclosure Review Board [DRB] approval number: CBDRB-FY25-0160).
+
+4
+
+U.S. Census Bureau
+
+the largest increases between
+2023 and 2024 were those with
+householders aged 45 to 64 (2.7
+percent) and 65 years and older
+(3.4 percent).8 Households with a
+householder aged 25 to 44 experienced an increase of 2.0 percent.
+There was no statistically significant change in median household
+income between 2023 and 2024
+for householders under the age of
+25. Households with a householder
+aged 45 to 64 had the highest
+median household income in 2024
+($100,055), followed by those
+with householders aged 25 to 44
+
+($92,084), and then those with
+householders 65 years and older
+($59,648). Households maintained
+by householders under the age of
+25 had the lowest median household income ($46,651).
+
+INCOME INEQUALITY
+The Gini index is a statistical measure of income inequality ranging from 0.0 to 1.0, with higher
+values indicating greater inequality (a full definition is available in
+the text box on page 2). The Gini
+index for the United States in 2024
+
+(0.481) was slightly lower than
+in 2023 (0.483; refer to Figure 4
+and Appendix Table 1). This indicates that overall income inequality in the United States decreased
+between 2023 and 2024. Puerto
+Rico and nine states—Georgia,
+Iowa, Massachusetts, Nebraska,
+New Jersey, Ohio, Oregon, South
+Dakota, and Wisconsin—had lower
+Gini index values than in 2023.
+North Carolina had a higher Gini
+index value than in 2023. Changes
+from 2023 were not statistically
+significant for the other 40 states
+and the District of Columbia.
+
+Figure 4.
+
+Gini Index of Income Inequality in the Past 12 Months
+for the United States and Puerto Rico: 2024
+
+AK
+
+0
+
+500 Miles
+
+WA
+MT
+
+ME
+
+ND
+VT
+
+MN
+
+OR
+
+NH
+
+ID
+
+SD
+
+WI
+
+MI
+
+WY
+
+NV
+
+PA
+OH
+
+UT
+
+IN
+
+IL
+
+CA
+
+CT
+
+IA
+
+NE
+
+AZ
+
+VA
+
+MO
+
+OK
+NM
+
+KY
+
+DC
+NC
+
+TN
+AR
+
+SC
+AL
+
+MS
+TX
+
+RI
+NJ
+DE
+MD
+
+WV
+
+CO
+KS
+
+MA
+
+NY
+
+GA
+
+Gini index by state
+0.485 or more
+0.470 to 0.484
+0.450 to 0.469
+Less than 0.450
+
+LA
+FL
+
+U.S. Gini index is 0.481.
+
+HI
+0
+
+100 Miles
+
+0
+
+100 Miles
+
+U.S. Gini index does not
+include data for Puerto Rico.
+PR
+0
+
+50 Miles
+
+Note: A state abbreviation surrounded by the " " symbol denotes the value for the state is not statistically different from the U.S. Gini
+index. For more information about sample design, methodology, and accuracy of the data, visit
+<https://www.census.gov/programs-surveys/acs/technical-documentation/code-lists.html>.
+Source: U.S. Census Bureau, 2024 American Community Survey 1-year estimates (Data Management System [DMS] number: P-7533841,
+Disclosure Review Board [DRB] approval number: CBDRB-FY25-0160).
+
+U.S. Census Bureau
+
+5
+
+Among the 50 states, New
+York had the highest Gini index.
+However, the Gini index for New
+York was not statistically different
+from the Gini index for the District
+of Columbia. Puerto Rico had a
+higher Gini index than all 50 states
+and the District of Columbia. Utah
+had the lowest Gini index. Four
+states had higher Gini index values
+and 39 states had lower Gini index
+values than the U.S. index. Seven
+states had Gini index values that
+were not statistically different
+from the U.S. index (Figure 4 and
+Appendix Table 1).
+
+SUMMARY
+The U.S. median household income
+increased 2.0 percent between
+2023 and 2024. More than one-half
+of the states showed an increase
+in median household income.
+Median household income for the
+remaining states, the District of
+Columbia, and Puerto Rico was not
+statistically different from 2023.
+Median income increased in 12 of
+the 25 most populous metropolitan
+areas between 2023 and 2024,
+while the remaining 13 metro areas
+did not have a significant change.
+For most demographic subgroups
+analyzed, median household
+income in 2024 was higher than
+in 2023. The Gini index showed
+a decrease nationally and in nine
+states, and an increase in one state
+between 2023 and 2024. Changes
+in inequality from 2023 were not
+statistically significant in 40 states,
+as measured by the Gini index.
+
+SOURCE AND ACCURACY
+The data presented in this
+report are based on the ACS
+and PRCS samples interviewed
+
+6
+
+WHAT IS THE AMERICAN COMMUNITY SURVEY?
+The American Community Survey (ACS) is a nationwide survey
+designed to provide reliable and timely demographic, social,
+economic, and housing data for the nation, states, congressional
+districts, counties, places, and other localities every year. It has an
+annual sample size of about 3.5 million addresses across the United
+States and Puerto Rico and includes both housing units and group
+quarters (e.g., nursing homes and prisons). The ACS is conducted in
+every county throughout the nation and in every municipio in Puerto
+Rico, where it is called the Puerto Rico Community Survey. Beginning
+in 2006, ACS data have been released annually for geographic areas
+with populations of 65,000 or more. For information on the ACS,
+visit <www.census.gov/programs-surveys/acs>.
+
+from January 1, 2023, through
+December 31, 2023 (2023 ACS
+and 2023 PRCS), and January 1,
+2024, through December 31, 2024
+(2024 ACS and 2024 PRCS). The
+estimates based on these samples
+describe the person, household,
+and housing unit characteristics
+over this period of collection.
+Due to the implementation of
+the Vintage 2024 population
+estimates, comparisons of the
+estimated change in number of
+people between 2023 and 2024
+reflect both demographic change
+and updates to the methodology.
+Statistically significant differences
+shown in this report may be
+the result of methodological
+differences and thus might not
+necessarily reflect changes to
+the social, economic, housing, or
+demographic characteristics being
+compared. For more information,
+refer to “Comparing ACS Data”
+at <www.census.gov/programssurveys/acs/guidance/comparingacs-data.html>.
+
+a sample and the corresponding
+value that would be obtained if the
+estimate were based on the entire
+population (as from a census).
+Measures of sampling error are
+provided in the form of margins
+of error for all estimates included
+in this report. All comparative
+statements in this report have
+undergone statistical testing, and
+comparisons are significant at the
+90 percent confidence level unless
+otherwise noted.
+In addition to sampling error,
+nonsampling error may be
+introduced during any of the
+operations used to collect and
+process survey data such as
+editing, reviewing, or keying data
+from questionnaires. For more
+information on sampling and
+estimation methods, confidentiality
+protection, and sampling and
+nonsampling errors, refer to the
+2024 ACS “Accuracy of the Data”
+document at <www.census.gov/
+programs-surveys/acs/technicaldocumentation/code-lists.html>.
+
+Sampling error is the uncertainty
+between an estimate based on
+
+U.S. Census Bureau
+
+NOTES
+
+ENDNOTES
+
+The Census Bureau also reports
+income estimates based on data
+from the Current Population
+Survey (CPS). The CPS is the
+Census Bureau’s longest-running
+household survey. The CPS Annual
+Social and Economic Supplement
+(ASEC) asks detailed questions
+categorizing income into over
+50 sources. The key purpose
+of the CPS ASEC is to provide
+timely and detailed estimates of
+income and to measure changes
+in national-level estimates. The
+CPS ASEC is the official source
+of national poverty estimates.
+For more information from the
+CPS ASEC about national income
+estimates, refer to the report
+“Income in the United States:
+2024” at <www.census.gov/library/
+publications/2025/demo/p60-286.
+html>.
+
+1
+The text of this report discusses
+statistics for the United States, including
+the 50 states and the District of Columbia.
+Statistics for the Commonwealth of Puerto
+Rico, collected with the Puerto Rico
+Community Survey, are included in Figure 2,
+Figure 4, and Appendix Table 1.
+2
+For a discussion of this and related
+issues, refer to Howard Hogan’s “Measuring
+Population Change Using the American
+Community Survey,” Applied Demography
+in the 21st Century, Steven H. Murdock
+and David A. Swanson (eds.), Springer,
+Netherlands, 2008.
+3
+“Real” refers to income after adjusting
+for inflation. All income estimates in this
+report are inflation-adjusted to 2024 dollars.
+Inflation adjustments are computed using
+the Consumer Price Index retroactive series
+(R-CPI-U-RS).
+4
+Due to data collection challenges
+related to the COVID-19 pandemic, the 2020
+ACS data were not released and are not
+used in this report. For more information on
+the 2020 experimental data, refer to <www.
+census.gov/programs-surveys/acs/technicaldocumentation/user-notes/2021-02.html>.
+5
+Metropolitan statistical areas (MSAs,
+also referred to as “metro areas”) are
+geographic entities delineated by the Office
+of Management and Budget for use by
+federal statistical agencies in collecting,
+tabulating, and publishing federal statistics.
+A metro area contains a core urban area with
+a population of 50,000 or more individuals.
+For more information, refer to <www.census.
+gov/programs-surveys/metro-micro/about/
+omb-standards.html>. The 25 most populous
+metropolitan areas in 2024 had a slightly
+different composition compared to 2023.
+In 2024, Austin-Round Rock-San Marcus,
+TX, became one of the top 25 of metro area
+populations, replacing Portland-VancouverHillsboro, OR-WA.
+
+For information on income
+estimates from the ACS and how
+they differ from those based on the
+CPS ASEC, refer to “Fact Sheet:
+Differences Between the American
+Community Survey and the Annual
+Social and Economic Supplement
+to the Current Population Survey”
+at <www.census.gov/topics/
+income-poverty/poverty/guidance/
+data-sources/acs-vs-cps.html>.
+
+U.S. Census Bureau
+
+6
+The householder refers to the person
+(or one of the people) in whose name the
+housing unit is owned or rented or, if there
+is no such person, any adult household
+member. If the house is owned or rented
+jointly by a married couple, the householder
+may be either spouse. The number of
+householders is equal to the number of
+households.
+7
+Federal surveys give respondents the
+option of reporting more than one race.
+Therefore, two basic ways of defining a race
+group are possible. A group, such as Asian,
+may be defined as those who reported
+Asian and no other race (the race-alone
+or single-race concept) or as those who
+reported Asian regardless of whether they
+also reported another race (the race-alone-orin-combination concept). This report shows
+data using the race alone approach. Use of
+the single-race population does not imply
+that it is the preferred method of presenting
+or analyzing data. The Census Bureau uses
+a variety of approaches. In this report, the
+terms “White, not Hispanic” and “non-Hispanic
+White” are used interchangeably and refer
+to people who are not Hispanic and who
+reported White and no other race. Since
+Hispanic people may be any race, data in this
+report for Hispanic people overlap with data
+for race groups. Household income by race
+and Hispanic origin refers to the race and
+Hispanic origin of the householder. Race and
+Hispanic origin of household members may be
+different from those of the householder.
+8
+The percent change in median
+household income for householders aged
+45 to 64 was not significantly different from
+householders 65 years and older.
+
+7
+
+Appendix Table 1.
+
+Median Household Income and Gini Index in the Past 12 Months by State and Puerto Rico:
+2023 and 2024
+(In 2024 inflation-adjusted dollars)
+
+Median household income
+State
+
+United States . . . . . . . . . .
+Alabama .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Alaska  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Arizona  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Arkansas .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+California .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Colorado .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Connecticut .  .  .  .  .  .  .  .  .  .  .  .  .
+Delaware .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+District of Columbia .  .  .  .  .  .
+Florida .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Georgia .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Hawaii  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Idaho .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Illinois .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Indiana .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Iowa .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Kansas .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Kentucky .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Louisiana .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Maine .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Maryland .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Massachusetts .  .  .  .  .  .  .  .  .  .  .
+Michigan .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Minnesota .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Mississippi .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Missouri .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Montana  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Nebraska .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Nevada  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+New Hampshire .  .  .  .  .  .  .  .  .  .
+New Jersey .  .  .  .  .  .  .  .  .  .  .  .  .  .
+New Mexico  .  .  .  .  .  .  .  .  .  .  .  .  .
+New York .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+North Carolina .  .  .  .  .  .  .  .  .  .  .
+North Dakota .  .  .  .  .  .  .  .  .  .  .  .
+Ohio .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Oklahoma .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Oregon  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Pennsylvania  .  .  .  .  .  .  .  .  .  .  .  .
+Rhode Island  .  .  .  .  .  .  .  .  .  .  .  .
+South Carolina .  .  .  .  .  .  .  .  .  .  .
+South Dakota .  .  .  .  .  .  .  .  .  .  .  .
+Tennessee .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Texas  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Utah .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Vermont  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Virginia  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Washington  .  .  .  .  .  .  .  .  .  .  .  .  .
+West Virginia .  .  .  .  .  .  .  .  .  .  .  .
+Wisconsin .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Wyoming  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+Puerto Rico .  .  .  .  .  .  .  .  .  .  .  .  .  .
+
+2023 American
+Community Survey
+
+2024 American
+Community Survey
+
+Gini index
+Percent change
+(2024 less 2023)
+
+2023 American
+Community Survey
+
+2024 American
+Community Survey
+
+Percent change
+(2024 less 2023)
+
+Estimate
+
+Margin of
+error (±)¹
+
+Estimate
+
+Margin of
+error (±)¹
+
+Estimate
+
+Margin of
+error (±)¹
+
+Estimate
+
+Margin of
+error (±)¹
+
+Estimate
+
+Margin of
+error (±)¹
+
+Estimate
+
+Margin of
+error (±)¹
+
+80,002
+64,040
+89,176
+79,587
+60,425
+98,328
+95,641
+94,358
+83,751
+111,389
+75,465
+76,825
+98,123
+77,144
+82,666
+71,519
+73,532
+72,400
+62,914
+59,940
+75,899
+101,577
+102,792
+71,216
+87,586
+55,796
+70,558
+72,885
+76,781
+78,608
+99,683
+102,713
+64,097
+84,507
+72,884
+78,773
+69,761
+63,963
+82,515
+75,993
+87,469
+69,796
+73,920
+69,618
+78,006
+96,166
+83,597
+92,573
+97,384
+57,591
+76,823
+74,542
+26,374
+
+192
+732
+2,651
+958
+1,188
+629
+1,089
+1,516
+1,717
+7,048
+594
+857
+2,550
+1,159
+654
+831
+1,168
+1,216
+672
+1,177
+1,748
+1,330
+1,395
+715
+790
+1,297
+926
+1,519
+1,380
+1,493
+2,309
+1,092
+1,319
+515
+563
+1,898
+751
+493
+1,076
+526
+2,641
+1,080
+2,194
+890
+486
+1,424
+2,685
+998
+1,257
+1,083
+797
+2,426
+619
+
+81,604
+66,659
+95,665
+81,486
+62,106
+100,149
+97,113
+96,049
+87,534
+109,707
+77,735
+79,991
+100,745
+81,166
+83,211
+71,959
+75,501
+75,514
+64,526
+60,986
+76,442
+102,905
+104,828
+72,389
+87,117
+59,127
+71,589
+75,340
+76,376
+81,134
+99,782
+104,294
+67,816
+85,820
+73,958
+77,871
+72,212
+66,148
+85,220
+77,545
+83,504
+72,350
+76,881
+71,997
+79,721
+96,658
+82,730
+92,090
+99,389
+60,798
+77,488
+75,532
+27,213
+
+128
+780
+3,278
+684
+831
+381
+1,081
+1,824
+2,747
+4,149
+564
+633
+1,760
+1,340
+898
+630
+1,016
+996
+1,165
+803
+1,354
+1,404
+1,650
+567
+961
+1,560
+703
+1,635
+1,384
+1,112
+2,489
+997
+1,867
+653
+863
+2,755
+538
+663
+1,399
+816
+3,548
+959
+1,990
+638
+564
+1,179
+1,846
+831
+1,322
+1,120
+902
+2,468
+751
+
+*2.0
+*4.1
+*7.3
+*2.4
+*2.8
+*1.9
+1.5
+1.8
+*4.5
+–1.5
+*3.0
+*4.1
+2.7
+*5.2
+0.7
+0.6
+*2.7
+*4.3
+*2.6
+1.7
+0.7
+1.3
+2.0
+*1.6
+–0.5
+*6.0
+1.5
+*3.4
+–0.5
+*3.2
+0.1
+*1.5
+*5.8
+*1.6
+*1.5
+–1.1
+*3.5
+*3.4
+*3.3
+*2.0
+–4.5
+*3.7
+4.0
+*3.4
+*2.2
+0.5
+–1.0
+–0.5
+*2.1
+*5.6
+0.9
+1.3
+3.2
+
+0.3
+1.7
+4.9
+1.5
+2.4
+0.8
+1.6
+2.5
+3.9
+7.3
+1.1
+1.4
+3.2
+2.3
+1.3
+1.5
+2.1
+2.2
+2.2
+2.4
+2.9
+1.9
+2.1
+1.3
+1.4
+3.7
+1.7
+3.1
+2.5
+2.4
+3.4
+1.5
+3.6
+1.0
+1.4
+4.2
+1.4
+1.3
+2.2
+1.3
+5.0
+2.1
+4.1
+1.6
+1.0
+1.9
+3.9
+1.4
+1.9
+2.8
+1.6
+4.7
+3.7
+
+0.483
+0.477
+0.449
+0.465
+0.474
+0.487
+0.458
+0.495
+0.456
+0.516
+0.483
+0.479
+0.451
+0.440
+0.481
+0.454
+0.446
+0.452
+0.476
+0.497
+0.451
+0.456
+0.488
+0.466
+0.454
+0.484
+0.461
+0.460
+0.463
+0.463
+0.445
+0.479
+0.477
+0.516
+0.473
+0.445
+0.470
+0.474
+0.464
+0.477
+0.466
+0.472
+0.462
+0.476
+0.479
+0.423
+0.455
+0.472
+0.470
+0.468
+0.448
+0.446
+0.548
+
+0.001
+0.006
+0.012
+0.005
+0.006
+0.002
+0.005
+0.006
+0.010
+0.013
+0.003
+0.003
+0.008
+0.008
+0.003
+0.004
+0.006
+0.007
+0.006
+0.005
+0.008
+0.004
+0.004
+0.003
+0.005
+0.008
+0.005
+0.009
+0.009
+0.007
+0.008
+0.004
+0.007
+0.003
+0.003
+0.010
+0.003
+0.005
+0.005
+0.003
+0.012
+0.006
+0.015
+0.006
+0.003
+0.005
+0.009
+0.003
+0.004
+0.009
+0.005
+0.018
+0.009
+
+0.481
+0.475
+0.440
+0.462
+0.472
+0.485
+0.461
+0.499
+0.448
+0.524
+0.480
+0.473
+0.454
+0.435
+0.480
+0.452
+0.436
+0.456
+0.471
+0.492
+0.457
+0.456
+0.482
+0.468
+0.452
+0.477
+0.463
+0.458
+0.446
+0.465
+0.448
+0.471
+0.472
+0.519
+0.478
+0.457
+0.463
+0.470
+0.456
+0.475
+0.472
+0.466
+0.443
+0.475
+0.479
+0.422
+0.455
+0.469
+0.473
+0.467
+0.442
+0.461
+0.534
+
+0.001
+0.005
+0.014
+0.005
+0.007
+0.002
+0.005
+0.006
+0.010
+0.011
+0.003
+0.004
+0.008
+0.007
+0.004
+0.004
+0.006
+0.006
+0.005
+0.005
+0.009
+0.004
+0.004
+0.003
+0.004
+0.007
+0.004
+0.011
+0.007
+0.007
+0.008
+0.003
+0.008
+0.003
+0.004
+0.012
+0.003
+0.005
+0.005
+0.003
+0.011
+0.005
+0.011
+0.005
+0.003
+0.006
+0.012
+0.003
+0.004
+0.007
+0.003
+0.018
+0.009
+
+*–0.4
+–0.5
+–2.2
+–0.6
+–0.4
+–0.4
+0.8
+0.7
+–1.7
+1.6
+–0.6
+*–1.2
+0.7
+–1.3
+–0.2
+–0.3
+*–2.4
+0.9
+–1.0
+–0.9
+1.3
+Z
+*–1.2
+0.5
+–0.4
+–1.6
+0.6
+–0.4
+*–3.8
+0.5
+0.7
+*–1.7
+–1.0
+0.6
+*1.1
+2.7
+*–1.4
+–0.9
+*–1.7
+–0.6
+1.2
+–1.1
+*–4.0
+–0.3
+Z
+–0.1
+Z
+–0.7
+0.5
+–0.2
+*–1.3
+3.5
+*–2.6
+
+0.2
+1.6
+4.0
+1.5
+1.9
+0.5
+1.5
+1.7
+3.1
+3.3
+0.8
+1.1
+2.5
+2.4
+1.0
+1.2
+1.8
+2.1
+1.5
+1.4
+2.8
+1.2
+1.1
+0.9
+1.3
+2.2
+1.3
+3.1
+2.3
+2.1
+2.6
+1.0
+2.3
+0.8
+1.0
+3.6
+0.9
+1.6
+1.6
+0.9
+3.6
+1.5
+3.9
+1.5
+0.8
+1.9
+3.3
+1.0
+1.2
+2.4
+1.2
+5.8
+2.4
+
+* Statistically different from zero at the 90 percent confidence level.
+Z Represents or rounds to zero.
+¹ Data are based on a sample and are subject to sampling variability. A margin of error is a measure of an estimate’s variability. The larger the margin of error in
+relation to the size of the estimate, the less reliable the estimate. This number when added to and subtracted from the estimate forms the 90 percent confidence interval.
+Note: Data are limited to the household population and exclude the population living in institutions, college dormitories, and other group quarters. For information on
+confidentiality protection, sampling error, nonsampling error, and defintions, refer to <www.census.gov/acs>.
+Source: U.S. Census Bureau, 2023 and 2024 American Community Survey 1-year estimates (Data Management System [DMS] number: P-7533841, Disclosure Review
+Board [DRB] approval number: CBDRB-FY25-0160).
+
+8
+
+U.S. Census Bureau
+
+Appendix Table 2.
+
+Median Household Income in the Past 12 Months by the 25 Most Populous Metropolitan Areas
+(In 2024 inflation-adjusted dollars)
+
+Metropolitan area
+Atlanta-Sandy Springs-Roswell, GA . . . . . . . . . . . . . . . . . . . .
+Austin-Round Rock-San Marcos, TX  . . . . . . . . . . . . . . . . . . .
+Baltimore-Columbia-Towson, MD . . . . . . . . . . . . . . . . . . . . . .
+Boston-Cambridge-Newton, MA-NH . . . . . . . . . . . . . . . . . . .
+Charlotte-Concord-Gastonia, NC-SC . . . . . . . . . . . . . . . . . . .
+Chicago-Naperville-Elgin, IL-IN . . . . . . . . . . . . . . . . . . . . . . . .
+Dallas-Fort Worth-Arlington, TX . . . . . . . . . . . . . . . . . . . . . . .
+Denver-Aurora-Centennial, CO . . . . . . . . . . . . . . . . . . . . . . . .
+Detroit-Warren-Dearborn, MI . . . . . . . . . . . . . . . . . . . . . . . . . .
+Houston-Pasadena-The Woodlands, TX . . . . . . . . . . . . . . . .
+Los Angeles-Long Beach-Anaheim, CA  . . . . . . . . . . . . . . . .
+Miami-Fort Lauderdale-West Palm Beach, FL . . . . . . . . . . .
+Minneapolis-St. Paul-Bloomington, MN-WI  . . . . . . . . . . . . .
+New York-Newark-Jersey City, NY-NJ . . . . . . . . . . . . . . . . . .
+Orlando-Kissimmee-Sanford, FL  . . . . . . . . . . . . . . . . . . . . . .
+Philadelphia-Camden-Wilmington, PA-NJ-DE-MD  . . . . . .
+Phoenix-Mesa-Chandler, AZ  . . . . . . . . . . . . . . . . . . . . . . . . . .
+Riverside-San Bernardino-Ontario, CA . . . . . . . . . . . . . . . . .
+San Antonio-New Braunfels, TX . . . . . . . . . . . . . . . . . . . . . . .
+San Diego-Chula Vista-Carlsbad, CA  . . . . . . . . . . . . . . . . . .
+San Francisco-Oakland-Fremont, CA  . . . . . . . . . . . . . . . . . .
+Seattle-Tacoma-Bellevue, WA . . . . . . . . . . . . . . . . . . . . . . . . .
+St. Louis, MO-IL . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Tampa-St. Petersburg-Clearwater, FL . . . . . . . . . . . . . . . . . .
+Washington-Arlington-Alexandria, DC-VA-MD-WV . . . . . .
+
+2023 American
+Community Survey
+
+2024 American
+Community Survey
+
+Percent Change
+(2024 less 2023)
+
+Estimate
+
+Margin of
+error (±)¹
+
+Estimate
+
+Margin of
+error (±)¹
+
+Estimate
+
+Margin of
+error (±)¹
+
+89,047
+101,402
+97,059
+113,950
+83,649
+89,629
+89,411
+106,083
+74,706
+81,797
+94,662
+78,512
+97,896
+98,018
+79,652
+89,419
+88,218
+90,424
+75,345
+106,720
+131,547
+113,997
+80,522
+74,880
+125,038
+
+887
+2,452
+1,795
+1,965
+1,386
+969
+1,172
+1,550
+892
+1,150
+802
+998
+1,318
+800
+1,880
+1,033
+1,422
+1,408
+1,866
+1,400
+2,835
+1,890
+1,513
+1,375
+1,370
+
+92,344
+99,897
+98,666
+117,825
+85,938
+90,770
+92,733
+108,046
+76,403
+81,417
+96,405
+80,625
+97,928
+99,852
+81,044
+90,850
+90,133
+91,013
+78,112
+109,132
+135,590
+112,388
+81,679
+78,275
+126,244
+
+963
+2,027
+2,168
+2,297
+1,325
+879
+1,281
+2,110
+998
+936
+980
+777
+1,589
+781
+1,436
+1,092
+1,235
+1,028
+2,023
+1,813
+2,210
+2,026
+1,475
+1,790
+1,374
+
+*3.7
+–1.5
+1.7
+*3.4
+*2.7
+1.3
+*3.7
+1.9
+*2.3
+–0.5
+*1.8
+*2.7
+Z
+*1.9
+1.7
+1.6
+*2.2
+0.7
+3.7
+*2.3
+*3.1
+–1.4
+1.4
+*4.5
+1.0
+
+1.5
+3.1
+2.9
+2.7
+2.3
+1.5
+2.0
+2.5
+1.8
+1.8
+1.3
+1.6
+2.1
+1.2
+3.0
+1.7
+2.2
+1.9
+3.7
+2.2
+2.8
+2.4
+2.6
+3.1
+1.6
+
+* Statistically different from zero at the 90 percent confidence level.
+Z Represents or rounds to zero.
+¹ Data are based on a sample and are subject to sampling variability. A margin of error is a measure of an estimate’s variability. The larger the
+margin of error in relation to the size of the estimate, the less reliable the estimate. This number when added to and subtracted from the estimate
+forms the 90 percent confidence interval.
+Note: Data are limited to the household population and exclude the population living in institutions, college dormitories, and other group
+quarters. For information on confidentiality protection, sampling error, nonsampling error, and defintions, refer to <www.census.gov/acs>.
+Source: U.S. Census Bureau, 2023 and 2024 American Community Survey 1-year estimates (Data Management System [DMS] number:
+P-7533841, Disclosure Review Board [DRB] approval number: CBDRB-FY25-0160).
+
+U.S. Census Bureau
+
+9
+
+Appendix Table 3.
+
+Median Household Income by Selected Characteristics: 2023 and 2024
+(In 2024 inflation-adjusted dollars)
+
+Characteristic
+
+2023 American
+Community Survey
+
+2024 American
+Community Survey
+
+Percent change
+(2024 less 2023)
+
+Estimate
+
+Margin of
+error¹ (±)
+
+Estimate
+
+Margin of
+error¹ (±)
+
+Estimate
+
+Margin of
+error¹ (±)
+
+All households .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+
+80,002
+
+192
+
+81,604
+
+128
+
+*2.0
+
+0.3
+
+Race and Hispanic Origin of Householder
+White . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+White, not Hispanic  . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Black  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Asian  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Hispanic (any race) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+84,955
+85,563
+55,511
+115,102
+71,508
+
+210
+220
+441
+825
+434
+
+87,015
+87,572
+56,706
+117,289
+72,574
+
+174
+224
+323
+827
+451
+
+*2.4
+*2.3
+*2.2
+*1.9
+*1.5
+
+0.3
+0.4
+1.0
+1.0
+0.9
+
+Age of Householder
+Under 25 years  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+25 to 44 years  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+45 to 64 years . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+65 years and older  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+46,164
+90,249
+97,391
+57,684
+
+538
+319
+382
+193
+
+46,651
+92,084
+100,055
+59,648
+
+451
+224
+242
+207
+
+1.1
+*2.0
+*2.7
+*3.4
+
+1.5
+0.4
+0.5
+0.5
+
+HOUSEHOLDS
+
+* Statistically different from zero at the 90 percent confidence level.
+¹ Data are based on a sample and are subject to sampling variability. A margin of error is a measure of an estimate’s
+variability. The larger the margin of error in relation to the size of the estimate, the less reliable the estimate. This number when added to and
+subtracted from the estimate forms the 90 percent confidence interval.
+Note: Data are limited to the household population and exclude the population living in institutions, college dormitories, and other group
+quarters. For information on confidentiality protection, sampling error, nonsampling error, and defintions, refer to <www.census.gov/acs>.
+Source: U.S. Census Bureau, 2023 and 2024 American Community Survey 1-year estimates (Data Management System [DMS] number:
+P-7533841, Disclosure Review Board [DRB] approval number: CBDRB-FY25-0160).
+
+10
+
+U.S. Census Bureau

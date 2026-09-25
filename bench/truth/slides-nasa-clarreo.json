@@ -1,0 +1,49 @@
+{
+ "id": "slides-nasa-clarreo",
+ "derived_from": "PDF text layer (pdftotext raw + -layout) cross-checked against page images: all 15 pages at 60 dpi (montage), pages 3, 4 and 10 at 110 dpi for the tables. Order = slide titles in deck order. Slide 10 third column (2025-2030??) is empty on the rendered page, but the text layer holds hidden text for it; the truth follows the rendered page and lists only the two visible columns.",
+ "sentences": [
+  "Conduct on-orbit calibration to achieve reflectance uncertainty a factor of 5-10 times better than the best operational sensors on orbit.",
+  "But wait there will hopefully be more!",
+  "On ISS schedule through end of ISS life (2030)!",
+  "Earth reflectance will be obtained using a band-ratioing approach",
+  "High accuracy, information-packed measurements are critical for both detecting climate change and identifying what is driving Earth’s changing climate (Shea et al., 2022 [In Press]).",
+  "Contact me if you’d like to be added to the participant list",
+  "CLARREO Pathfinder Science Team Solicitation anticipated in ROSES-24"
+ ],
+ "order": [
+  "CLARREO Pathfinder: Mission Summary",
+  "CPF Science Objectives",
+  "CPRS Payload: LASP Leadership",
+  "Calibration & Measurement Approach",
+  "HySICS Instrument: Light Path",
+  "Versatility in CPF Observations",
+  "Nadir CPF Hyperspectral Measurements",
+  "Leveraging the CPF Spectrum",
+  "CPF Intercalibration Benefits",
+  "Conclusions/Closing"
+ ],
+ "tables": [
+  {"caption": "CPF Science Objectives (slide 3)", "page": 3, "complete": true, "rows": [
+   ["", "Objective #1", "Objective #2"],
+   ["Uncertainty", "Spectrally-resolved & broadband reflectance: ≤0.3% (1σ)", "Intercalibration Methodology Uncertainty: ≤0.3% (1σ)"],
+   ["Data Product", "Level 1A: Highest accuracy, best for inter-cal, lunar obs Level 1B: Approx. consistent spectral & spatial sampling, best for science studies using nadir spectra", "Level 4: One each for CPF-VIIRS & CPF-CERES inter-cal. Merged data products including all required info for inter-cal analysis"]
+  ]},
+  {"caption": "HYSICS: Hyperspectral Imager for Climate Science (slide 4)", "page": 4, "complete": true, "rows": [
+   ["Radiometric Uncertainty", "0.3% (1-sigma)"],
+   ["Spectral Range", "350 nm – 2300 nm"],
+   ["Spectral Resolution", "6 nm"],
+   ["Swath Width", "10° (70 km nadir)"],
+   ["Spatial Resolution", "0.5 km"],
+   ["Sampling Rate", "15 Hz"]
+  ]},
+  {"caption": "Versatility in CPF Observations (slide 10); columns Observation Type and 1-Year Prime Mission only (the third column renders empty)", "page": 10, "complete": false, "rows": [
+   ["Observation Type", "1-Year Prime Mission"],
+   ["On-orbit Instrument Calibration", "Confirm success of calibration approach over 1 year"],
+   ["Earth Reflectance and Radiance Nadir Spectra", "Will be used to confirm achieved calibration, geolocation, etc requirements"],
+   ["LEO On-orbit Inter-calibration", "Measurements and data analysis for CERES and VIIRS Only"],
+   ["GEO On-orbit Inter-Calibration", "Demonstration measurements with 1 GEO"],
+   ["Enhanced Land/DCC Pseudo-Invariant Calibration Site (PICS) Characterization", "Measurements over high priority PICS"],
+   ["Improved characterization of the Moon", "Leveraging existing ops mode to cover libration and phase angles available"]
+  ]}
+ ]
+}

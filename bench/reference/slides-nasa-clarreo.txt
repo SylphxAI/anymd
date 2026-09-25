@@ -1,0 +1,398 @@
+National Aeronautics and
+Space Administration
+
+CLARREO Pathfinder
+Mission Overview and Status
+Yolanda L. Shea1, Rajendra Bhatt1
+And CPF Project Team1,2,3
+1
+2
+
+NASA Langley Research Center
+
+Laboratory for Atmospheric and Space Physics
+3
+
+NASA Goddard Space Flight Center
+
+1
+
+CLARREO Pathfinder: Mission Summary
+Climate Absolute Radiance and Refractivity Observatory
+• Core Mission Objectives: Take climate-critical high
+accuracy measurements of Earth reflectance and intercalibrate with CERES (broadband) & VIIRS (multi-spectral)
+• LASP-Led Payload & Reflected Solar Spectrometer (350 –
+2300 nm)
+• Hosted on International Space Station
+• Nominal 1-year mission operations + 1-year science data
+analysis
+
+Spectrally-Resolved Earth
+Reflectance
+
+• But wait there will hopefully be more! On ISS schedule through end
+of ISS life (2030)!
+
+• Launch: December 2023
+
+https://clarreo-pathfinder.larc.nasa.gov/
+
+2
+
+CPF Science Objectives
+Objective #1: High Accuracy SI-Traceable
+Reflectance Measurements
+
+Objective #2: Inter-Calibration Capabilities
+Transfer
+calibration
+accuracy to other
+key RS satellite
+sensors by intercalibrating with
+CERES & VIIRS.
+
+Conduct on-orbit
+calibration to achieve
+reflectance
+uncertainty a factor of
+5-10 times better
+than the best
+operational sensors
+on orbit.
+Objective #1
+
+Objective #2
+
+Uncertainty
+
+Spectrally-resolved & broadband reflectance: ≤0.3% (1σ)
+
+Data Product
+
+Level 1A: Highest accuracy, best for inter-cal, lunar obs
+Level 1B: Approx. consistent spectral & spatial sampling, best
+for science studies using nadir spectra
+
+Intercalibration Methodology Uncertainty: ≤0.3% (1σ)
+Level 4: One each for CPF-VIIRS & CPF-CERES inter-cal.
+Merged data products including all required info for intercal analysis
+
+https://clarreo-pathfinder.larc.nasa.gov/ 3
+
+CPRS Payload: LASP Leadership
+HYSICS: Hyperspectral Imager for Climate Science
+
+Radiometric Uncertainty
+Spectral Range
+Spectral Resolution
+Swath Width
+
+0.3% (1-sigma)
+350 nm – 2300 nm
+6 nm
+10° (70 km nadir)
+
+Spatial Resolution
+
+0.5 km
+
+Sampling Rate
+
+15 Hz
+
+4
+
+Calibration & Measurement Approach
+Earth Viewing
+
+Solar Viewing
+
+ Earth reflectance will be obtained using a
+band-ratioing approach
+
+ CPF will view both Sun & Earth with similar
+optical paths using
+
+ Aperture attenuation
+ Over 3 orders of magnitude (20 mm to 0.5 mm)
+ Integration time attenuation
+ Over 2 orders of magnitude (66 ms to 1.17 ms)
+
+ Solar measurements & on-orbit calibration
+ Cross-slit scan
+ Flat fielding for both apertures – along-slit scan
+ Pen-ray lamp measurement
+
+Input Aperture
+
+Hyperspectral
+Imager
+Exposure time
+
+Integration
+Time
+
+FPA
+time
+
+P. Smith (LASP)
+
+Hyperspectral
+Imager
+FPA
+
+Exposure time
+
+time
+5
+
+5
+
+Instrument Cradle
+
+Yoke Assembly
+Pedestal Assembly
+
+Star Tracker
+
+Main Baseplate
+
+HPS Controller
+
+Launch Locks (x3)
+Kinematic Flexures (x4)
+
+HySICS Pointing System (HPS) – the primary structure and two-axis pointing system of the CLARREO Pathfinder payload.
+The HySICS instrument and associated electronics reside within the tan-colored instrument cradle. The kinematic flexures
+serve as the payload attachment to the ISS-provided ExPRESS Pallet Adapter (ExPA) (ExPA not pictured).
+6
+
+4MA Telescope
+Aperture Wheel
+Offner Mirrors (with GSE covers)
+Spectrometer Grating
+(with GSE cover)
+
+Spectrometer Section
+
+Detector Port
+
+Internal view of the HyperSpectral Imager for Climate Science (HySICS) Instrument – the heart of the CLARREO
+Pathfinder Payload. Visible are the Aperture Wheel; 4-Mirror Anastigmat (4MA) Telescope; and spectrometer section
+with Offner mirrors and spectroscopic grating (with protective GSE covers installed); detector port.
+7
+
+HySICS Instrument: Light Path
+Input Light
+
+Aperture
+
+Of
+fn
+
+1
+Off
+
+4MA
+
+er
+
+ner
+
+Slit
+Fol
+d
+M ir
+ror
+
+2
+
+n
+la
+lP
+ca
+Fo rray
+A
+e
+
+Zero-Order Trap
+and Order Sorting
+Filter
+
+Laboratory for Atmospheric and Space Physics
+University of Colorado, Boulder
+
+8
+
+9
+
+Versatility in CPF Observations
+Launch-Ready: Late 2023
+
+Prime Mission Ops
+
+Observation Type
+On-orbit Instrument Calibration
+
+Extended Mission Ops (TBD)
+
+1-Year Prime Mission
+Confirm success of calibration approach
+over 1 year
+
+2025—2030??
+Confirm success of calibration approach
+over longer period
+•
+
+Earth Reflectance and Radiance Nadir
+Spectra
+
+Will be used to confirm achieved
+calibration, geolocation, etc requirements
+
+LEO On-orbit Inter-calibration
+
+Measurements and data analysis for
+CERES and VIIRS Only
+
+GEO On-orbit Inter-Calibration
+
+Demonstration measurements with 1 GEO
+
+Enhanced Land/DCC Pseudo-Invariant
+Calibration Site (PICS) Characterization
+
+Measurements over high priority PICS
+
+Improved characterization of the Moon
+
+Leveraging existing ops mode to cover
+libration and phase angles available
+
+Core Mission Objectives
+
+Addl Capabilities
+
+•
+•
+
+Develop partial (nearly-global) climate
+benchmark prototype
+Potential for overlap with TRUTHS
+Additional opportunities for use in
+science studies
+
+•
+
+Additional flexibility to inter-calibrate
+other on-orbit LEO sensors (e.g.
+PACE, Sentinel, Landsat, etc)
+
+•
+
+Expand GEO inter-calibration
+measurements (e.g. TEMPO, GOES,
+GERB, Himawari series, GeoCarb)
+
+•
+
+Additional PICS added with additional
+viewing opportunities
+
+•
+
+Additional sampling within libration
+and phase angles to further make
+lunar models more robust
+
+10
+
+Nadir CPF Hyperspectral Measurements
+High accuracy, information-packed measurements are critical for both detecting climate change and
+identifying what is driving Earth’s changing climate (Shea et al., 2022 [In Press]).
+
+B. Kindel
+
+11
+
+Leveraging the CPF Spectrum
+Predecessor &
+Complement to Several
+Missions
+
+Decadal Survey Missions
+PACE
+TRUTHS/Libra
+
+Cloud, aerosol, water vapor, and surface remote
+sensing studies and hyperspectral retrieval
+algorithm development
+Developing a Climate
+Benchmark Prototype
+
+Critical for monitoring
+geophysical variable
+changes to provide climate
+model constraints
+
+Development of Climate Change Attribution
+Techniques
+Evaluating temporal
+variability of spectral
+radiation
+
+e.g. How has spectral
+reflectance changed in past
+20 years?
+
+CPF Intercalibration Benefits
+Core Mission Direct Targets (CERES
+& VIIRS)
+
+Earth Energy Imbalance
+Spectral Response
+Calibration evaluation across dynamic range
+
+Independent Verification of Radiometric Consistency between multiple flight
+models (e.g. CERES, VIIRS)
+Climate Data Record Continued
+Development, Improved Quality
+
+MODIS-VIIRS Dark Target & Deep Blue Aerosol,
+Cloud Continuity Products (20+ year records!)
+Landsat/Land Imagers
+
+Lunar Reflectance Characterization
+
+Complement to ARCSTONE & airLUSI
+Supplementing inputs to GIRO, ROLO, etc lunar
+char. models
+
+Pseudo-Invariant Earth Targets
+
+Deep Convective Clouds
+Hyperspectral, multi-angle land targets reflectance
+Improved PICS uncertainty characterization
+
+Augmenting Existing Intercalibration
+Approaches
+
+GSICS Standard?
+e.g. All-sky tropical ray matching, Surface PICS,
+DCCs, etc
+
+Conclusions/Closing
+
+• Science Education Opportunities Abound!
+• CPF NPP Opportunity – please share
+• CPF Internship Opportunities too
+
+• Next CPF Science Workshop: ~Spring 2023
+• Contact me if you’d like to be added to the participant list
+
+• CLARREO Pathfinder scheduled to Launch on SpaceX Launch 29 –
+December 2023
+• CLARREO Pathfinder Science Team Solicitation anticipated in ROSES-24
+
+https://clarreo-pathfinder.larc.nasa.gov/

@@ -1,0 +1,3 @@
+files/** binary
+# Verbatim third-party text used as scoring data, not prose: no line diffs.
+reference/*.txt -diff

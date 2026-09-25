@@ -1,0 +1,25 @@
+{
+ "id": "paper-rankone",
+ "derived_from": "PDF text layer (pdftotext and pdftotext -layout, NFKC-normalised) for sentences and order; section headings read from the -layout text on pages 1-3, 7-8, 20-21, 24; no tables in this document",
+ "sentences": [
+  "Representation of data sets in compact and simple formats is an important problem of data science with numerous applications.",
+  "Vectors, matrices and, more generally, tensors are used to naturally model data points.",
+  "In this section we state and recall some auxiliary results and facts, as well as define our probabilistic models.",
+  "The following theorem is the main tool for our estimates.",
+  "Our new lower bounds rely on the integral representation of the Bombieri-Weyl norm.",
+  "The latter is needed in the proof of Theorem 3.6.",
+  "We give a more detailed proof than the one given in [6, Proposition 4.24]."
+ ],
+ "order": [
+  "We provide new upper and lower bounds",
+  "Representation of data sets in compact",
+  "Symmetric tensors and homogeneous polynomials",
+  "Subgaussian estimates for the projection of a Gaussian vector",
+  "Estimates for a random Lipschitz map on a product of spheres",
+  "Upper bounds for partially symmetric tensors",
+  "Lower bounds for (partially) symmetric tensors",
+  "Estimates for large d",
+  "For the sake of completeness we include a proof"
+ ],
+ "tables": []
+}

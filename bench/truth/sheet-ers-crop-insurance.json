@@ -1,0 +1,173 @@
+{
+ "id": "sheet-ers-crop-insurance",
+ "derived_from": "openpyxl cell values formatted with each cell's number format (the value columns use '0.0000', so the raw 2.540163689 displays as 2.5402; years are stored as text). One sheet, all 30 used rows included, from the title row down to the Note and Source rows. The title, note and source lines are one-cell rows padded with empty strings.",
+ "sentences": [
+  "Note: Subsidy does not include state subsidies, additional subsidies, Emergency Financial Assistance Premium Discount."
+ ],
+ "order": [
+  "Premiums and subsidies",
+  "Federal crop insurance premiums and subsidies, 2000–25",
+  "Commodity year",
+  "Note: Subsidy does not include state subsidies",
+  "Source: USDA, Economic Research Service"
+ ],
+ "tables": [
+  {
+   "caption": "Sheet Premiums and subsidies",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Federal crop insurance premiums and subsidies, 2000–25",
+     "",
+     ""
+    ],
+    [
+     "Commodity year",
+     "Total premium (billions of dollars)",
+     "Subsidy (billions of dollars)"
+    ],
+    [
+     "2000",
+     "2.5402",
+     "0.9512"
+    ],
+    [
+     "2001",
+     "2.9618",
+     "1.7713"
+    ],
+    [
+     "2002",
+     "2.9159",
+     "1.7410"
+    ],
+    [
+     "2003",
+     "3.4326",
+     "2.0418"
+    ],
+    [
+     "2004",
+     "4.1955",
+     "2.4731"
+    ],
+    [
+     "2005",
+     "3.9543",
+     "2.3374"
+    ],
+    [
+     "2006",
+     "4.5845",
+     "2.6823"
+    ],
+    [
+     "2007",
+     "6.5653",
+     "3.8235"
+    ],
+    [
+     "2008",
+     "9.8589",
+     "5.6916"
+    ],
+    [
+     "2009",
+     "8.9556",
+     "5.4278"
+    ],
+    [
+     "2010",
+     "7.6015",
+     "4.7125"
+    ],
+    [
+     "2011",
+     "12.0064",
+     "7.4752"
+    ],
+    [
+     "2012",
+     "11.1468",
+     "6.9895"
+    ],
+    [
+     "2013",
+     "11.8317",
+     "7.3056"
+    ],
+    [
+     "2014",
+     "10.0959",
+     "6.2218"
+    ],
+    [
+     "2015",
+     "9.8015",
+     "6.1012"
+    ],
+    [
+     "2016",
+     "9.3446",
+     "5.8706"
+    ],
+    [
+     "2017",
+     "10.0896",
+     "6.3596"
+    ],
+    [
+     "2018",
+     "9.9091",
+     "6.2696"
+    ],
+    [
+     "2019",
+     "10.2295",
+     "6.4132"
+    ],
+    [
+     "2020",
+     "10.3716",
+     "6.4518"
+    ],
+    [
+     "2021",
+     "14.2906",
+     "8.8491"
+    ],
+    [
+     "2022",
+     "19.2393",
+     "11.9821"
+    ],
+    [
+     "2023",
+     "19.1930",
+     "11.7485"
+    ],
+    [
+     "2024",
+     "17.3048",
+     "10.4273"
+    ],
+    [
+     "2025",
+     "18.5577",
+     "11.2485"
+    ],
+    [
+     "Note: Subsidy does not include state subsidies, additional subsidies, Emergency Financial Assistance Premium Discount.",
+     "",
+     ""
+    ],
+    [
+     "Source: USDA, Economic Research Service using data from USDA, Risk Management Agency, Summary of Business App, as of February 26, 2026.",
+     "",
+     ""
+    ]
+   ]
+  }
+ ]
+}

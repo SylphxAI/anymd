@@ -1,0 +1,3980 @@
+arXiv:2201.02191v2 [math.FA] 23 Sep 2022
+
+Probabilistic bounds on best rank-one approximation ratio
+Khazhgali Kozhasov
+Institut für Mathematik
+Universität Osnabrück
+Osnabrück, GERMANY
+
+Josué Tonelli-Cueto∗
+Inria Paris & IMJ-PRG
+Sorbonne Université
+Paris, FRANCE
+
+khazhgali.kozhasov@uni-osnabrueck.de
+
+josue.tonelli.cueto@bizkaia.eu
+
+Abstract
+We provide new upper and lower bounds on the minimum possible ratio of the
+spectral and Frobenius norms of a (partially) symmetric tensor. In the particular case
+of general tensors our result recovers a known upper bound. For symmetric tensors our
+upper bound unveils that the ratio of norms has the same order of magnitude as the
+d−1
+trivial lower bound 1/n 2 , when the order of a tensor d is fixed and the dimension of
+the underlying vector space n tends to infinity. However, when n is fixed and d tends
+d−1
+to infinity, our lower bound is better than 1/n 2 .
+
+Keywords: Frobenius norm, symmetric tensors, spectral norm, rank-one approximation,
+random tensors
+MSC Codes: 15A69, 26C05, 41A50
+
+1
+
+Introduction
+
+Representation of data sets in compact and simple formats is an important problem of data
+science with numerous applications. Vectors, matrices and, more generally, tensors are used
+to naturally model data points. It is often necessary to retain only some key properties of a
+data set, that corresponds to an approximation of a tensor by another one with a simpler
+structure. There are several different models, based on tensor decompositions, that are
+used for this purpose, see [14, 9] and references therein. An important special case is an
+approximation of a given “data”-tensor with a rank-one tensor, see [8].
+For K = R or K = C let Kn = Kn1 ⊗ · · · ⊗ Knd denote the K-vector space of n-tensors
+with n = (n1 , . . . , nd ). A natural way to measure distance between tensors is given by
+the norm associated to the Frobenius (also known as Hilbert-Schmidt) product, which is
+defined by the formula
+′
+
+hT, T i :=
+
+nj
+X
+
+ti1 ...id t′i1 ...id ,
+
+T = (ti1 ...id ), T ′ = (t′i1 ...id ).
+
+(1.1)
+
+ij =1
+
+A tensor T = (ti1 ...id ) is said to be of rank one, if there exist unit vectors xj ∈ S(Knj ) and
+a scalar λ ∈ K such that ti1 ...id = λx1i1 . . . xdid . In this case we write T = λx1 ⊗ · · · ⊗ xd . The
+Supported by a postdoctoral fellowship of the 2020 “Interaction” program of the Fondation Sciences
+Mathématiques de Paris. Partially supported by the ANR JCJC GALOP (ANR-17-CE40-0009), the PGMO
+grant ALMA, and the PHC GRAPE.
+∗
+
+1
+
+problem of best rank-one approximation of a tensor T consists in finding a closest rank-one
+tensor to T , i.e.,
+min
+
+λ∈K, xj ∈S(Knj )
+
+kT − λx1 ⊗ · · · ⊗ xd k,
+
+(1.2)
+
+p
+where k · k := h·, ·i is the Frobenius norm of a tensor. This problem is essentially equivalent (see (1.4)) to computing the spectral norm of T ,
+kT k∞ :=
+
+max
+
+xj ∈S(Knj )
+
+|hT, x1 ⊗ · · · ⊗ xd i|,
+
+(1.3)
+
+and is known to be NP-hard [11, Thm. 1.13]. If λx1 ⊗ · · · ⊗ xd is a best rank-one approximation of T , then (the square of) the relative best rank-one approximation error equals
+(see, e.g., [20, Thm. 2.19])
+kT − λx1 ⊗ · · · ⊗ xd k2
+kT k2∞
+=
+1
+−
+.
+kT k2
+kT k2
+
+(1.4)
+
+The smallest possible ratio of the spectral and the Frobenius norms
+kT k∞
+kT k
+
+A(Kn ) := minn
+T ∈K
+
+(1.5)
+
+is known as the best rank-one approximation ratio of the space Kn (see [19] and also
+[16]). Computing A(K n ) is equivalent to finding the largest (worst) relative best rankone approximation error (1.4). Note also that 0 < A(Kn ) ≤ 1 and A(Kn ) is just the
+largest constant c > 0 so that kT k∞ ≥ ckT k holds for all T ∈ Kn . The number (1.5)
+is an attribute of a tensor space and thus depends only on the underground field K and
+dimensions n1 , . . . , nd . On the application side, the best rank-one approximation ratio
+governs the convergence rate of greedy rank-one update algorithms, see [19, 24].
+A tensor T = (ti1 ...id ) of format (n, . . . , n) is called symmetric, if tiσ1 ...iσd = ti1 ...id holds
+for any permutation on d elements σ. A best rank-one approximation to a symmetric
+tensor T can be chosen among symmetric rank-one tensors λx ⊗ · · · ⊗ x, see [2]. The best
+rank-one approximation ratio of the space Symd (Kn ) of symmetric tensors is defined as
+A(Symd (Kn )) :=
+
+min
+T ∈Sym
+
+d
+
+(Kn )
+
+kT k∞
+.
+kT k
+
+(1.6)
+
+Computing A(Symd (Kn )) is equivalent to finding the largest (worst) relative best rank-one
+approximation error (1.4) among symmetric tensors in Symd (Kn ). Also, by definition, one
+has 1 ≥ A(Symd (Kn )) ≥ A(Kn ) ≥ 0 for n = (n, . . . , n).
+Finding explicit values for (1.5) and (1.6) is a beautiful mathematical problem with
+interesting connections to composition algebras [17] and Chebyshev polynomials [1].
+
+1.1
+
+General tensors
+
+The exact value of A(K n ) and of A(Symd (Kn )) remains unknown for most n = (n1 , . . . , nd ),
+d and n. One has a general lower bound (see, e.g., [17])
+A(Kn ) ≥ q
+
+1
+minj=1,...,d
+2
+
+Q
+
+.
+i6=j ni
+
+(1.7)
+
+The equality holds only if so called orthogonal ( K = R) or, respectively, unitary ( K = C)
+tensors exist in the tensor space Kn (see [17]). For example, if K = R and for n = (n, . . . , n)
+this happens only if n = 1, 2, 4 or 8, which are dimensions of the four composition Ralgebras. It is known that (at least for K = R) the bound (1.7) gives the correct order of
+magnitude when d is fixed. Specifically, using probabilistic estimates of the uniform norm
+of random tensors from [23], the authors of [17] prove that the right inequality in
+√
+C d ln d
+kT k∞
+1
+n
+q
+≤ q
+≤ A(R ) ≤
+Q
+Q
+kT k
+min
+ni
+min
+ni
+j=1,...,d
+
+j=1,...,d
+
+i6=j
+
+i6=j
+
+holds with positive probability in T , where C is some constant and the entries of T are
+independent standard Gaussians. With similar techniques it was proven earlier [5] that
+√
+1
+3 π
+n
+n
+n
+≤ A(C ⊗ C ⊗ C ) ≤
+.
+n
+n
+
+In this work, we reprove these probabilistic upper bounds giving explicit values for the
+constant C for tensors of arbitrary order d.
+Theorem 1.1. For any d ≥ 3 and n = (n1 , . . . , nd ) with n1 , . . . , nd ≥ 2 we have
+√
+1
+10 d ln d
+n
+q
+≤ A(K ) ≤ q
+.
+Q
+Q
+mini j6=i nj
+mini j6=i nj
+
+1.2
+
+(1.8)
+
+Symmetric tensors
+
+However, our biggest contribution regards symmetric tensors. Unlike the general case,
+the problem of estimating A(Symd (Rn )) is largely open. The best known upper bound,
+obtained by Li and Zhao in [18, Thm. 5.3], concerns real symmetric tensors of order d = 3:
+A(Sym3 (Rn )) ≤
+
+1.5
+n
+
+ln 1.5
+ln 2
+
+
+≤ O n−0.584 .
+
+Our main result (see Theorem 1.2) stated for d = 3 improves this bound to the optimal
+A(Sym3 (Rn )) = O (1/n). For an arbitrary fixed d ≥ 3, our main theorem shows that the
+lower bound for general tensors is also optimal (up to a constant) for symmetric tensors
+of order d. Quite surprisingly, Theorem 1.2 shows that when n is fixed and d grows, the
+behaviour of A(Symd (Rn )) significantly differs from that of A(Kn ), n = (n, . . . , n). For
+example, for a fixed n ≥ 3, it follows from our result that
+A(Kn )
+A(Symd (Rn ))
+=
+lim
+= 0.
+d→∞ A(Symd (Rn ))
+d→∞ A(Symd (Cn ))
+lim
+
+d−1
+
+In [1, Cor. 1.8] it was shown that the inequality A(Symd (Rn )) > 1/n 2 , d > 2, is strict
+d−1
+even when n = 4 or n = 8, that is, when A(Rn ) = 1/n 2 , n = (n, . . . , n). To our
+knowledge, no general lower bounds on A(Symd (Kn )) that are different from the trivial
+bound (1.7) were known. In Theorem 1.2 we discover a new lower bound on A(Symd (Rn ))
+that, when d is large compared to n, is much better than (1.7).
+We now state our main theorem. To our knowledge, all the bounds here are novel.
+3
+
+Theorem 1.2. For any d ≥ 3 and n ≥ 2 we have
+( 
+)
+√
+
+ 1
+ 1
+1 d + n − 1 −2
+6 n ln d d + n2 − 1 − 2
+1
+d
+n
+max
+≤ A(Sym (R )) ≤
+, d−1
+,
+d
+d
+d
+d
+22
+22
+n 2
+(
+)
+ 1
+
+− 1 (1.9)
+√
+2
+d + n − 1 −2
+d
++
+n
+−
+1
+1
+max
+≤ A(Symd (Cn )) ≤ 10 n ln d
+, d−1
+.
+d
+d
+n 2
+In particular, we have that
+
+n
+
+
+
+1
+≤ A(Sym (K )) ≤ 6 1 +
+ln d
+
+1
+
+d
+
+d−1
+2
+
+n
+
+
+
+√
+
+d! ln d
+
+1
+n
+
+d−1
+2
+
+,
+
+(1.10)
+
+and, for d ≥ n2 /4, we have
+r
+r
+where
+
+n
+2
+
+
+
+(n − 1)!
+2d dn−1
+
+
+
+(n − 1)!
+dn−1
+
+
+
+! := Γ
+
+n2
+1−
+4d
+1−
+
+n
+2 +1
+
+
+
+n2
+4d
+
+s
+
+
+
+≤ A(Sym (R )) ≤ 9
+
+
+
+≤ A(Symd (Cn )) ≤ 10
+
+d
+
+n
+
+
+
+n
+1
+2 ! ln d
+1+
+n
+4d
+2d d 2 −1
+
+r
+
+
+
+,
+
+(1.11)
+
+n! ln d
+dn−1
+
+allows for a better and easier comparison of the bounds.
+
+Remark 1.3. We require that d ≥ 3. When d = 2, we deal with matrices, in which case
+1
+A(Sym2 (Rn )) = A(Sym2 (Cn )) = √ ,
+n
+and the bound for the ratio of norms is reached, for example, for the identity matrix.
+Theorem 1.2 in particular implies that A(Kn ) and A(Symd (Kn )) have the same order
+d−1
+of magnitude n− 2 when n is large and d is bounded. Recently, Cao et al. gave an
+alternative derivation of this fact using partitioned block tensors, see [4, Thm. 4.6].
+
+1.3
+
+Partially symmetric tensors
+
+In Subsection 2.1 we recall the definition of a partially symmetric
+tensor as well
+N
+ as of the
+m
+dj
+n
+j
+best rank-one approximation ratio (2.6) of the space A
+j=1 Sym (R ) of all such
+tensors. Our methods can be also applied to this case as the following theorem shows.
+Theorem 1.4. For m ≥ 1, d1 , . . . , dm ≥ 2 with maxj dj ≥ 3 and n1 , . . . , nm ≥ 2 we have
+
+
+
+
+
+
+ 1 s
+m
+m 
+O
+Y
+maxj nj 
+dj + nj − 1 − 2
+P
+max
+Symdj (Rnj )
+,
+Qm dj  ≤ A 
+ 2 12 m
+dj
+j=1 dj
+j=1
+j=1
+j=1 nj
+r
+
+Pm
+− 1
+6
+m 
+n
+j=1 nj ln (m maxj dj ) Y
+dj + 2j − 1 2
+≤
+(1.12)
+1 Pm
+dj
+2 2 j=1 dj
+j=1
+1
+
+4
+
+and
+
+
+
+
+− 1 s
+m
+m 
+Y
+
+O
+2
+maxj nj
+dj + nj − 1
+max
+Symdj (Cnj )
+,
+Qm dj  ≤ A 
+
+dj
+j=1
+j=1
+j=1 nj
+v
+
+u
+
+Y
+ 1
+m
+m 
+u X
+dj + nj − 1 − 2
+u
+
+t
+≤ 10
+. (1.13)
+nj ln m max dj
+j
+dj
+j=1
+
+j=1
+
+We can see that the bounds for the partially symmetric case are as good as the ones
+for the symmetric and general cases. More concretely, when d1 = · · · = dm = 1 (that
+is, in the case of general tensors of format (n1 , . . . , nm )) this bound agrees with that of
+Theorem 1.1 (up to a constant), while when m = 1 (that is, in the case of symmetric
+tensors) we recover those of Theorem 1.2.
+
+Organization
+Our main objective is to prove Theorems 1.1 and 1.2, with emphasis on the latter. After
+introducing the preliminaries in Section 2, we prove the upper bounds in Section 3 and the
+lower bounds in Section 4. Finally, in Section 5, we prove the estimates of Theorem 1.2
+for large d.
+Acknowledgments. We thank Erik Lundberg for pointing out a reference for (4.4).
+The second author is grateful to Evgenia Lagoda for moral support and Gato Suchen for
+suggestions regarding the proof of Theorem 3.6.
+
+2
+
+Preliminaries
+
+In this section we state and recall some auxiliary results and facts, as well as define our
+probabilistic models.
+
+2.1
+
+Symmetric tensors and homogeneous polynomials
+
+The space Symd (Kn ) of symmetric tensors is identified with the space Pd,n ≃ KN , where
+
+, of n-variate homogeneous polynomials (or forms) of degree d:
+N := d+n−1
+d
+d
+
+n
+
+T ∈ Sym (K ) ←→ f ∈ Pd,n ,
+
+f (x) = hT, x ⊗ · · · ⊗ xi =
+
+n
+X
+
+ti1 ...id xi1 . . . xid . (2.1)
+
+ij =1
+
+P
+It is convenient to write the form f in the basis of monomials, f (x) = |α|=d fα xα , where,
+
+by symmetry, fα = αd ti1 ...id and αi is the number of j = 1, . . . , d with ij = i. Under the
+identification (2.1), the Frobenius product (1.1) is the Bombieri-Weyl product of forms,
+′
+
+′
+
+hT, T i = hf, f i :=
+
+X  d −1
+
+|α|=d
+
+α
+
+fα fα′ ,
+
+T ∼ f, T ∼ f ′ .
+
+(2.2)
+
+By a result of Banach [2], a best rank-one approximation to a symmetric tensor T can
+be chosen among symmetric rank-one tensors λx ⊗ · · · ⊗ x. In particular, the spectral
+5
+
+norm (1.3) of T equals the uniform norm kf k∞ of the restriction of f to the unit sphere
+S(Kn ) = {x ∈ Kn : kxk22 = |x1 |2 + · · · + |xn |2 = 1},
+kT k∞ =
+
+max |hT, x1 ⊗ · · · ⊗ xd i| =
+
+xj ∈S(Kn )
+
+max |hT, x ⊗ · · · ⊗ xi| =: kf k∞ .
+
+x∈S(Kn )
+
+(2.3)
+
+The best rank-one approximation ratio of the space Symd (Kn ) is then defined by
+A(Symd (Kn )) :=
+
+kT k∞
+= min
+f ∈Pd,n
+kT k
+
+min
+
+T ∈Symd (Kn )
+
+kf k∞
+,
+kf k
+
+p
+where kf k := hf, f i is the Bombieri-Weyl norm of f ∈ Pd,n .
+Nm
+dj
+nj
+A common generalization of spaces Kn and Symd (Kn ) is the space
+Nm j=1 Sym (K )
+of partially symmetric tensors or, equivalently, the space Pd,n ≃
+j=1 Pdj ,nj of multihomogeneous polynomials. An element F of Pd,n can be written as
+F (x1 , . . . , xm ) =
+
+X
+
+|α(j)|=dj
+
+Fα (x1 )α(1) · · · (xm )α(m) ,
+
+where Fα ∈ K, α = (α(1), . . . , α(m)), |α(j)| = dj , are the coefficients of F in the basis of
+multi-homogeneous monomials. Then the Bombieri-Weyl product and the uniform norm
+can be defined via
+
+′
+
+hF, F i :=
+kF k∞ :=
+
+X
+
+|α(j)|=dj
+
+max
+
+ −1
+d
+Fα Fα′ ,
+α
+
+xj ∈S(Knj )
+
+  
+ 
+
+d
+d1
+dm
+=
+···
+α
+α(1)
+α(m)
+
+|F (x1 , . . . , xm )|,
+
+and the best rank-one approximation of the space
+
+
+m
+O
+A
+Symdj (Knj ) :=
+j=1
+
+(2.4)
+(2.5)
+
+Nm
+
+dj
+nj
+j=1 Sym (K ) is defined by (see [7])
+
+min
+
+F ∈Pd,n
+
+kF k∞
+,
+kF k
+
+(2.6)
+
+p
+where kF k := hF, F i is given by (2.4). Moreover, it is important to keep in mind that
+the action via changes of variables of the product of unitary groups U (n1 )×· · · ×U (nm ) on
+Pd,n preserves both the inner product (2.4) and the norm (2.5). In the real case (K = R)
+the invariance holds with respect to orthogonal changes of variables.
+
+2.2
+
+Harmonic polynomials
+
+A form h ∈ Pd,n is called harmonic, if it is annihilated by the Laplace operator, that is,
+∂2h
+∂2h
++
+·
+·
+·
++
+= 0.
+∂x2n
+∂x21
+We denote by Hd,n ⊆ Pd,n the subspace consisting of real harmonic n-variate forms of
+degree d. This space is an irreducible representation of the group O(n) of orthogonal
+
+6
+
+matrices, which acts on Hd,n via change of variables. By [15, Sect. 4.5] any O(n)-invariant
+scalar product on Hd,n is a positive multiple of the L2 (Sn−1 )-product defined as
+Z
+′
+h(x)h′ (x) dSn−1 , h, h′ ∈ Hd,n ,
+(2.7)
+hh, h iL2 (Sn−1 ) :=
+Sn−1
+
+where dSn−1 is the Riemannian volume measure on the unit sphere Sn−1 = S(Rn ) obtained
+from its standard embedding in Rn . In particular, this is true for the Bombieri product
+(2.2) restricted to Hd,n . We now relate these two scalar products to each other.
+Lemma 2.1. For any h, h′ ∈ Hd,n we have
+
+2d−1 Γ d + n2
+hh, h i = √ n
+hh, h′ iL2 (Sn−1 ) .
+π Γ (d + 1)
+′
+
+Proof. It is convenient to write the L2 (Sn−1 )-product as
+Z
+kxk2
+1
+′
+− 22
+′
+dx,
+h(x)h
+(x)e
+hh, h iL2 (Sn−1 ) = √ 2d+n−2
+
+2
+Γ d + n2 Rn
+
+h, h′ ∈ Hd,n .
+
+(2.8)
+
+Since orthogonally invariant scalar products on Hd,n are all proportional, we can recover
+the constant of proportionality by looking at h = h′ ∈ Hd,2 ⊆ Hd,n defined by
+h(x1 , x2 ) :=
+
+(x1 + ix2 )d + (x1 − ix2 )d
+= r d cos(dθ),
+2
+
+x1 = r cos θ, x2 = r sin θ.
+
+By [1, Thm. 1.1] we have khk2 = hh, hi = 2d−1 . Since h depends just on x1 and x2 , the
+representation (2.8) implies that the L2 (Sn−1 )-norm of h satisfies
+khk2L2 (Sn−1 )
+
+√
+
+2π
+
+n−2
+
+2
+x2
+1 +x2
+
+Z
+
+2 − 2
+dx1 dx2
+= √ 2d+n−2
+ 2 h(x1 , x2 ) e
+n
+2
+Γ d+ 2 R
+√ n−2 √ 2d
+√ n
+Z
+2π
+2 Γ (d + 1) 2π
+π Γ (d + 1)
+2
+2
+
+= √ 2d+n−2
+cos(dθ) dθ = d−1
+
+n khk ,
+n
+2
+Γ
+d
++
+0
+2
+Γ d+ 2
+2
+
+which completes the proof.
+
+The self-duality of (Hd,n , h·, ·iL2 (Sn−1 ) ) implies that for any x ∈ Sn−1 there is a unique
+harmonic form Zx ∈ Hd,n with
+h(x) = hh, Zx iL2 (Sn−1 )
+
+for all
+
+h ∈ Hd,n .
+
+(2.9)
+
+The function Zx ∈ Hd,n is called the zonal harmonic with pole x. By [22, Cor. 2.9] the
+L2 (Sn−1 )-norm of Zx satisfies
+kZx k2L2 (Sn−1 ) = Zx (x) =
+√ n
+where Dd,n = dim Hd,n and |Sn−1 | = 2 π /Γ
+
+7
+
+n
+2
+
+
+
+Dd,n
+,
+|Sn−1 |
+
+is the volume of the unit sphere.
+
+(2.10)
+
+2.3
+
+Probabilistic models
+
+We consider real and complex random polynomials and tensors. Recall first that a complex
+random variable t is called standard complex Gaussian, if its real and imaginary parts are
+independent centered Gaussians with variance 1/2. Let V be a (complex) inner
+Pproduct
+N
+space. Then the Gaussian distribution on V is modelled via the vector v =
+i=1 ti v i ,
+where t1 , . . . , tN are independent standard (complex) Gaussians and v 1 , . . . , v N form an
+orthonormal (respectively, unitary) basis of V . A remarkable property of the Gaussian
+distribution on V is its orthogonal (respectively, unitary) invariance. This means that the
+random vector U v has Gaussian distribution for any orthogonal (unitary) transformation
+U on V .
+As spaces Kn , Pd,n , Pd,n and Hd,n are endowed with inner products (1.1), (2.2), (2.4)
+and (2.8) respectively, the Gaussian distribution is naturally defined for each of them. For
+example, a real (respectively, complex) tensor T = (ti1 ...id ) is Gaussian, if its entries ti1 ...id
+are independent standard (complex) Gaussians. Under the standard action of the product
+of unitary groups U (n) := U (n1 ) × · · · × U (nd ) on Cn the inner product (1.1) and hence
+the Gaussian distribution on Cn are invariant. In particular, the inner product space
+Rn of real tensors and the Gaussian distribution on it are invariant under the product
+O(n) := O(n1 ) × · · · × O(nd ) ⊂ U (n) of orthogonal groups.
+The Gaussian distribution on Pd,n is also known as Kostlan distribution.
+P Specifically,
+an n-variate real (respectively, complex) homogeneous polynomial f(x) = |α|=d fα xα of
+q 
+degree d is called Kostlan, if its normalized coefficients fα / αd are independent standard (complex) Gaussians. Similarly, a multi-homogeneous polynomial F(x1 , . . . , xm ) =
+P
+1 α(1) · · · (xm )α(m) of multi-degree d = (d , . . . , d ) is Kostlan (that is,
+1
+m
+|α(j)|=dj Fα (x )
+q 
+d
+Gaussian), if its normalized coefficients Fα / α
+are independent standard (complex)
+Gaussians. The notion of Kostlan (partially) symmetric
+unambiguously deNmtensor disj then
+nj ) ≃ P
+fined through isomorphisms Symd (Kn ) ≃ Pd,n and
+Sym
+(K
+d,n . Since the
+j=1
+inner products on spaces Pd,n , Pd,n and Hd,n are invariant with respect to orthogonal
+(unitary) changes of variables, so are Gaussian distributions on each of them.
+
+3
+
+Upper bounds
+
+In this section we prove upper bounds stated in main Theorems 1.1 and 1.2. These are
+obtained by combining Propositions 3.9, 3.11 and 3.12, which in turn follow from combining
+Proposition 3.1 with Theorem 3.6. We also prove the bounds of Theorem 1.4 by proving
+Propositions 3.13 and 3.14. In the sequel we assume that d ≥ 3 and n, n1 , . . . , nd ≥ 2.
+
+3.1
+
+Subgaussian estimates for the projection of a Gaussian vector
+
+The main result of this subsection is the following estimate of the tail probability of the
+ratio of norms of two vectors, one of which is the image of the other under an orthogonal
+projection. In technical terms, we are just proving that kP xk2 /kxk2 is a subgaussian random
+variable, see [25] for more details.
+Proposition 3.1. Let P : RN → V be an orthogonal projection onto a k-dimensional
+subspace V ⊆ RN and let x ∈ RN be a standard Gaussian vector. Then the random
+
+8
+
+xk2
+variable kP
+kxk2 satisfies
+
+Px
+
+
+
+kP xk2
+≥t
+kxk2
+
+
+
+
+
+N
+≤ 3 exp − k−1 t2
+3e
+
+
+
+for all t ≥ 0.
+
+(3.1)
+
+Remark 3.2. The bound Proposition 3.1 is meaningful only if t ≤ 1, as for t > 1 we have
+Px (kP xk2 /kxk2 ≥ t) = 0.
+
+Remark 3.3. Let P : CN → V be a unitary projection onto a k-dimensional (complex)
+subspace V ⊆ CN (that is, hP (z), z − P (z)i2 = 0 for all z ∈ CN ). Then it corresponds to
+an orthogonal projection between real vector spaces,
+P R : R2N → V R ,
+
+(x, y) 7→ (ℜ(P (x + iy)), ℑ(P (x + iy))) ,
+
+where the 2k-dimensional real subspace V R ⊆ R2N is the realification√of V ⊆ CN . Moreover, if z = x + iy ∈ CN is a standard complex Gaussian vector, then 2 (x, y) ∈ R2N is a
+standard real Gaussian vector and, by Proposition 3.1, we obtain for t ≥ 0 that
+
+
+
+
+
+
+kP zk2
+kP R (x, y)k2
+2N 2
+Pz
+≥ t = Px,y
+≥ t ≤ 3 exp − 2k−1 t .
+kzk2
+k(x, y)k2
+3e
+We need this “complex” version of (3.1) to obtain bounds on the ratio of norms in case
+of complex tensors and forms.
+To prove Proposition 3.1, we will need the following proposition. This proposition is
+a variation of [6, Proposition 4.24], which in turn is [25, Proposition 2.5.2] with explicit
+constants. We include its proof in the appendix for the sake of completeness.
+Proposition 3.4. Let t ∈ R be a random variable, C ≥ 1 and K ≥ 0.
+
+√
+1
+t2
+1. If for all even integers ℓ > 0, Et |t|ℓ ℓ ≤ K ℓ, then for all t > 0, P(|t| ≥ t) ≤ 3e− 6K 2 .
+t2
+
+2. If for all t > 0, P(|t| ≥ t) ≤ Ce− K 2 , then for all ℓ ≥ 1,
+r
+
+1
+
+√
+π √
+ℓ ℓ
+Et |t|
++ 2 ln C
+≤ K
+ℓ.
+2
+Moreover,
+
+√
+
+
+
+1
+Et |t| ≤ K 2 ln C 1 +
+ln C
+
+
+
+.
+
+(3.2)
+
+(3.3)
+
+Remark 3.5. Let k · ka and k · kb be two norms on Rn . For a Gaussian random vector
+x ∈ RN we have that
+kxka
+kxka
+≤ Ex
+.
+x6=0 kxkb
+kxkb
+
+min
+2
+
+2
+
+Now, if P(kxka /kxkb ≥ t) ≤ Ce−t /K , we obtain, by Proposition 3.4, that
+
+
+√
+kxka
+1
+min
+≤ K 2 ln C 1 +
+.
+x6=0 kxkb
+ln C
+9
+
+(3.4)
+
+However, we can give a better bound on the minimum of the norm ratio by noticing that
+(
+)
+
+
+kxka
+kxka
+min
+= inf t > 0 P
+≥t <1 .
+x6=0 kxkb
+kxkb
+2
+
+2
+
+Since P(kxka /kxkb ≥ t) ≤ e ln C−t /K , we obtain
+
+√
+kxka
+≤ K ln C,
+x6=0 kxkb
+
+(3.5)
+
+min
+
+which improves the constants in the estimate (3.4).
+Proof of Proposition 3.1. Recall that if y and z are independent random variables with
+y
+χ2 -distribution with, respectively, k and N − k degrees of freedom, then y+z
+has a βdistribution with parameters k/2 and (N − k)/2. In this way,
+with parameters k/2 and (N − k)/2, and so its density reads
+1
+
+β
+
+N−k
+
+k
+
+k N −k
+2, 2
+
+ s 2 −1 (1 − s) 2 −1 ,
+
+kP xk22
+kxk22
+
+has a β-distribution
+
+s ∈ [0, 1].
+
+Doing a change of variables s = t2 , we obtain that
+2
+β
+
+N−k
+
+k N −k
+2, 2
+
+ tk−1 (1 − t2 ) 2 −1 ,
+
+t ∈ [0, 1],
+
+is the density of kP xk2 /kxk2 . Then a straightforward computation implies that for all ℓ > 0
+
+ ! 1ℓ
+
+1
+N
+Γ k+ℓ
+Γ
+kP xkℓ2 ℓ
+2
+2
+
+
+=
+.
+(3.6)
+E
+x kxkℓ2
+Γ k2 Γ N2+ℓ
+We fix ℓ to be a positive even integer. To bound (3.6) we treat each fraction separately.
+For the first fraction,
+ℓ
+
+k+ℓ
+2
+
+Γ k2
+
+Γ
+
+
+
+=
+
+2 
+Y
+k+ℓ
+
+i=1
+
+2
+
+
+−i
+
+(Γ(x) = (x − 1)Γ(x − 1))
+
+ℓ
+
+(AM-GM inequality)
+
+≤
+
+
+
+k−1 ℓ
++
+2
+4
+
+=
+
+
+
+2(k − 1)
+1+
+ℓ
+
+2
+
+ ℓ
+ℓ  ℓ
+2
+ℓ 2
+ℓ 2
+k−1
+≤e
+.
+4
+4
+
+And for the second fraction,
+Γ
+Γ
+
+N
+2
+
+N +ℓ
+2
+
+
+
+ℓ
+−1
+2
+
+1
+≤
+=
+N
++i
+i=0 2
+Y
+
+
+
+2
+N
+
+ℓ
+
+2
+
+(Γ(x) = (x − 1)Γ(x − 1))
+
+We observe that in both bounds it is essential that ℓ/2 is an integer. Putting the obtained
+bounds together, we have that for all even integers ℓ > 0
+r
+r r
+
+1
+k−1
+ℓ
+2
+ek−1 √
+kP xkℓ2 ℓ
+ℓ
+ℓ.
+≤
+e
+≤
+E
+4 N
+2N
+x kxkℓ2
+Hence by Proposition 3.4 the desired claim follows.
+10
+
+3.2
+
+Estimates for a random Lipschitz map on a product of spheres
+
+We consider the sum-geodesic distance on
+d
+X
+
+distS (x, y) :=
+
+Qd
+
+k=1 S
+
+nk −1 , given by
+d
+X
+
+distS (xk , y k ) =
+
+k=1
+
+for x, y ∈
+
+Qd
+
+k=1 S
+
+k=1
+
+arccoshxk , y k i2
+
+nk −1 . The following theorem is the main tool for our estimates.
+
+Q
+Theorem 3.6. Let n1 , . . . , nd ≥ 2 and F : dk=1 Snk −1 → [0, ∞) be a random Lipschitz
+function whose Lipschitz constant, Lip(F), satisfies for some L ≥ 1,
+Lip(F) ≤ L
+
+F(x).
+Qmax
+x∈ dk=1 Snk −1
+
+(3.7)
+
+Then for all t > 0,
+PF
+
+F(x) ≥ t
+Qmax
+x∈ dk=1 Snk −1
+
+!
+
+≤ C(L, d; n1 , . . . , nd )
+
+PF
+Qmax
+x∈ dk=1 Snk −1
+
+
+
+t
+F(x) ≥
+2
+
+
+
+(3.8)
+
+where C(L, d; n1 , . . . , nd ) satisfies
+ln C(L, d; n1 , . . . , nd ) = (2 + ln(dL))
+
+d
+X
+k=1
+
+nk
+
+!
+
+d
+
+−
+
+1X
+ln(nk − 1) − d ln(dL).
+2
+k=1
+
+If F is invariant
+under orthogonal changes of variablesQon Sn1 −1 , . . . , Snd −1 , the probability
+
+PF F(x) ≥ 2t does not depend on the point x ∈ dk=1 Snk −1 and hence we can omit
+maximum in (3.8).
+Remark 3.7. Constant ln C(L, d; n1 , . . . , nd ) satisfies the following bounds. First,
+d
+d
+X
+X
+nk ,
+(nk − 1) ≥ d +
+ln C(L, d; n1 , . . . , nd ) ≥ 3d + (1 + ln(dL))
+k=1
+
+k=1
+
+since n − 12 ln(n − 1) ≥ 2 for n ≥ 2 and 1 + ln(dL) ≥ 1. On the other hand,
+!
+
+
+d
+X
+2
+ln C(L, d; n1 , . . . , nd ) ≤ 1 +
+ln(dL)
+nk − ln(dL),
+ln(dL)
+k=1
+
+after estimating negative terms.
+Proof of Theorem 3.6. If maxx∈Qd Snk −1 F(x) ≥ t, then, by the Lipschitz property and
+k=1
+our assumption (3.7) on the Lipschitz constant, we have that
+)
+(
+d
+Y
+
+t
+⊇ BS x∗ , (2L)−1 ,
+x∈
+Snk −1 F(x) ≥
+2
+k=1
+
+Qd
+
+where x∗ ∈ k=1 Snk −1 is the maximizer of F and BS is the ball with respect to the sumQ
+geodesic distance on dk=1 Snk −1 that is centered at x∗ and has radius (2L)−1 . In this way,
+Q
+maxx∈Qd Snk −1 F(x) ≥ t implies that for a uniformly sampled x ∈ dk=1 Snk −1 we obtain
+k=1
+
+
+
+
+vol BS e1 , (2L)−1
+vol BS x∗ , (2L)−1
+t
+=
+,
+Px∈Qd Snk −1 F(x) ≥
+≥
+Qd
+Qd
+nk −1
+nk −1
+k=1
+2
+vol
+S
+vol
+S
+k=1
+k=1
+11
+
+Q
+where e1 := (e1 , . . . , e1 ) ∈ dk=1 Snk −1 . The last equality follows from the fact that the
+Q
+volume of BS (x, r) is independent of x ∈ dk=1 Snk −1 . Therefore, we have
+!
+PF
+
+F(x) ≥ t
+Qmax
+x∈ dk=1 Snk −1
+
+!
+
+
+vol BS e1 , (2L)−1
+t
+≤ PF Px∈Qd Snk −1 F(x) ≥
+(Implication bound)
+≥ Qd
+nk −1
+k=1
+2
+k=1 vol S
+Qd
+
+
+
+nk −1
+t
+k=1 vol S
+Q
+≤
+F(x) ≥
+(Markov’s inequality)
+d
+n −1
+E P
+vol BS (e1 , (2L)−1 ) F x∈ k=1 S k
+2
+Qd
+
+ 
+nk −1
+t
+k=1 vol S
+=
+(Tonelli’s theorem)
+PF F(x) ≥
+E
+vol BS (e1 , (2L)−1 ) x∈Qd Snk −1
+2
+k=1
+Qd
+
+
+nk −1
+t
+k=1 vol S
+max
+PF F(x) ≥
+.
+≤
+vol BS (e1 , (2L)−1 ) x∈Qdk=1 Snk −1
+2
+Qd
+
+vol Snk −1
+
+It remains to bound vol k=1
+. Consider the map
+BS (e1 ,(2L)−1 )
+:
+
+d
+Y
+
+k=1
+
+d
+Y
+
+Rnk −1 →
+
+Snk −1
+
+k=1
+
+ 
+1
+1
+√
+ 1+kz 1 k22 z 1 
+z1
+
+
+ .. 
+
+
+..
+.
+→
+7
+
+.
+.  
+
+
+
+1 
+zd
+√ 1 2
+1+kz d k2 z d
+
+
+
+
+
+
+Then, by the result in the appendix A.2, we have that
+|det Dz | =
+
+d
+Y
+
+k=1
+
+1 + kz k k22
+
+− nk
+2
+
+,
+
+z = (z 1 , . . . , z d ) ∈
+
+d
+Y
+
+Rnk −1 .
+
+k=1
+
+Now, we do a sequence of changes of variables as follows:
+vol BS (e1 , R)
+=
+Pd
+
+Z
+
+k=1 arctan kz k k≤R
+
+=
+
+d
+Y
+
+vol S
+
+d
+Y
+
+k=1
+
+1 + kz k k22
+
+Z
+
+d
+Y
+
+k=1
+
+nk −2
+
+k=1
+
+=
+
+d
+Y
+
+Pd
+
+k=1
+
+ρ1 ,...,ρd ≥0,
+
+k=1 arctan ρk ≤R
+
+vol Snk −2
+
+d
+Y
+
+Z
+
+dz 1 · · · dz d
+
+ρnk k −2 1 + ρ2k
+
+− n2k
+
+(sin φk )nk −2 dφ1 · · · dφd
+
+φ ,...,φd ≥0, k=1
+P1d
+k=1 φk ≤R
+
+12
+
+− n2k
+
+dρ1 · · · dρd
+
+(3.9)
+
+ Pdk=1 nk −d Y
+d
+R
+vol Snk −2
+=
+η
+
+d
+Y
+
+Z
+
+k=1
+
+Pd
+
+k=1
+
+t1 ,...,td ≥0,
+
+k=1 arcsin(Rη
+
+−1 t )≤R
+k
+
+tnk k −2
+q
+
+1 − R2 η −2 t2k
+
+dt1 · · · dtd ,
+
+where we use x = (z) in the first line, zk = ρk θk with ρk ≥ 0 and θk ∈ Snk −2 in the
+second line, ρk = tan φk in the third line, and sin φk = Rη −1 tk in the fourth line.
+Observe that the domain of integration of the last integral
+is contained in [0, η]d . In
+√
+this way, we have for each k, arcsin(Rη −1 tk ) ≤ Rη −1q
+tk / 1 − R2 , and so the domain of
+√
+
+Pd
+2
+1 − R2 η −2 t2k ≥ 1, we obtain the
+integration contains
+k=1 tk ≤ η 1 − R . Since 1
+following lower bound:
+d
+Pdk=1 nk −d Y
+ p
+vol Snk −2
+vol BS (e1 , R) ≥ R 1 − R2
+k=1
+
+where we took η −1 =
+
+√
+
+Z
+
+d
+Y
+tnk k −2 dt1 · · · dtd
+
+t1 ,...,td ≥0, k=1
+P
+d
+k=1 tk ≤1
+
+1
+1 − R2 . Therefore, taking R = 2L
+, we only have to show that
+q 2L
+1− 1 2
+4L
+
+C(L, d; n1 , . . . , nd ) ≥
+
+R
+
+!Pdk=1 nk −d
+
+t1 ,...,td ≥0,
+P
+d
+k=1 tk ≤1
+
+vol Snk −1
+k=1 vol Snk −2
+
+Qd
+
+nk −2
+dt1 · · · dtd
+k=1 tk
+
+Qd
+
+(3.10)
+
+for the chosen value of C(L, d; n1 , . . . , nd ). We prove this bound, by bounding the three
+parts of the logarithm of the right-hand side separately.
+First, we have that ln q 1 1 ≤ 6L1 2 since L ≥ 1. Thus
+1−
+
+
+
+ln  q
+
+2L
+1 − 4L1 2
+
+4L2
+
+Pdk=1 nk −d
+
+
+≤
+
+d
+X
+k=1
+
+!
+
+
+1
++ ln L .
+ln 2 +
+6L2
+
+nk − d
+
+(3.11)
+
+Second, for n1 , . . . , nd ≥ 2, Lemma 2.25 from [3] gives
+√
+√
+2 π
+vol Snk −1
+2πnk
+√
+≤
+≤
+vol Snk −2
+nk − 1
+nk − 1
+and hence
+ln
+
+d
+Y
+vol Snk −1
+
+k=1
+
+Third, we have that
+
+
+
+
+ln 
+
+
+
+Z
+
+t1 ,...,td ≥0,
+P
+d
+k=1 tk ≤1
+
+vol Snk −2
+
+d
+√
+1X
+ln(nk − 1).
+≤ d ln(2 π) −
+2
+
+(3.12)
+
+
+
+
+
+k=1
+
+
+
+
+
+d
+Y
+
+
+nk −2
+
+dt1 · · · dtd  = − ln d! + ln 
+tk
+d!
+
+
+k=1
+
+Z
+
+t1 ,...,td ≥0,
+P
+d
+k=1 tk ≤1
+
+13
+
+
+d
+Y
+
+nk −2
+dt1 · · · dtd 
+tk
+
+
+k=1
+
+≥ − ln d! +
+
+= − ln d! +
+
+d
+X
+
+d!(nk − 2)
+
+d
+X
+
+d(nk − 2)
+
+k=1
+
+k=1
+
+= − ln d! −
+= − ln d! −
+= − ln d! −
+= − ln d! −
+
+d
+
+Z
+
+ln tk dt1 · · · dtd
+
+(Jensen’s inequality)
+
+t1 ,...,td ≥0,
+P
+d
+k=1 tk ≤1
+
+Z 1X
+∞
+0
+
+Z 1
+0
+
+(1 − tk )d−1 ln tk dtk
+
+(1 − t)d+l−1
+l
+
+l=1
+
+dt
+
+∞
+XZ 1
+
+!
+!
+
+d
+X
+k=1
+d
+X
+
+(Integrate over
+
+i6=k
+
+!
+
+nk − 2d
+
+!
+
+(1 − t)d+l−1
+nk − 2d
+dt
+l
+l=1 0
+k=1
+! d
+!
+∞
+X
+X
+d
+nk − 2d
+l(d + l)
+k=1
+l=1
+! d
+!
+d
+X
+X
+1
+nk − 2d .
+k
+d
+
+k=1
+
+X
+
+ln t = −
+
+∞
+X
+(1 − t)l
+l=1
+
+l
+
+!
+
+(Monotone convergence)
+
+
+
+k=1
+
+ti ≤ 1 − tk )
+
+d
+1
+1
+= −
+l(d + l)
+l
+d+l
+
+
+
+.
+
+Now, Stirling’s bound [3, Eq. 2.14] gives
+ln d! ≤
+
+1
+1
+1
+ln(2π) + d ln d + ln d − d +
+.
+2
+2
+12d
+
+Formula (3) in [13, 1.2.7], whose proof is contained in [13, 1.2.11.2], yields
+d
+X
+1
+k=1
+
+where γ := limn→∞ (− ln n +
+stant. Thus, we have that
+
+
+
+− ln 
+
+
+
+Z
+
+t1 ,...,td ≥0,
+P
+d
+k=1 tk ≤1
+
+k
+
+≤ ln d + γ +
+
+1
+,
+2d
+
+Pn
+
+k=1 1/k) = 0.57721566 . . . is the Euler–Mascheroni con-
+
+
+
+
+d
+Y
+
+nk −2
+dt1 · · · dtd 
+tk
+ ≤
+
+k=1
+
+d
+X
+k=1
+
+nk
+
+!
+
+1
+ln d + γ +
+2d
+
+
+
+− d ln d − d, (3.13)
+
+1
+− 2γd < 0.
+since 12 ln(2π) − 1 < 0 and 21 ln d + 12d
+Finally, applying the logarithm to (3.10) and using the inequalities (3.11), (3.12) and
+1
++ ln 2 + 6L1 2 ≤ 2.
+(3.13), we obtain the desired bound after noticing that γ + 2d
+
+Remark 3.8. The above theorem can be also proven by means of nets, see [25, Section 5.1].
+In both proofs, we wound have to bound the quantity
+Qd
+nk −1
+k=1 vol S
+.
+vol BS (e1 , (2L)−1 )
+Q
+However, no net will achieve the above bound exactly, since we cannot cover dk=1 Snk −1
+with balls of radius (2L)−1 without overlapping them. Our argument avoids, on the one
+hand, dealing with the construction of the net, and, on the other hand, gives better bounds.
+14
+
+3.3
+
+Upper bound for general tensors
+
+We now apply Theorem 3.6 to give bounds on (1.5).
+Proposition 3.9. Let T ∈ Kn be a Gaussian tensor. Then
+!
+√
+kT k∞
+1
+2
+d ln d
+P
+q
+ET
+≤ 9 1+
++
+.
+Q
+kT k
+ln d d + j nj
+mini j6=i nj
+
+(3.14)
+
+Moreover,
+
+q
+
+mini
+
+1
+Q
+
+r
+√
+√
+d ln d
+2
+q
+≤ A (K ) ≤ 2 3e 1 +
+.
+ln d mini Q nj
+j6=i
+n
+
+j6=i nj
+
+Proof. Let us consider a random Lipschitz function
+
+F : S(Kn1 ) × · · · × S(Knd ) → [0, ∞),
+x = (x1 , . . . , xd ) 7→
+
+|hT , x1 ⊗ · · · ⊗ xd i|
+.
+kT k
+
+(3.15)
+
+k∞
+Its Lipschitz constant satisfies Lip(F) ≤ maxxj ∈S(Knj ) F(x) = kT
+kT k , since
+
+|F(x) − F(y)| ≤
+
+|hT , x1 ⊗ · · · ⊗ xd − y 1 ⊗ · · · ⊗ y d i|
+kT k
+
+≤
+
+d
+X
+|hT , x1 ⊗ · · · ⊗ xj−1 ⊗ (xj − y j ) ⊗ y j+1 ⊗ · · · ⊗ y d i|
+
+≤
+
+
+
+kT k
+
+j=1
+
+max
+
+z j ∈S(Knj )
+
+
+
+X
+d
+j
+j
+kx − y k2 ≤
+maxn F(z) distS (x, y)
+F(z)
+zj ∈S(K j )
+
+j=1
+
+(3.16)
+holds for any x, y ∈ S(Kn1 ) × · · · × S(Knd ). By Theorem 3.6, we have for all t > 0,
+
+
+
+
+t
+kT k∞
+≥ t ≤ C(d, n) PT F(e1 , . . . , e1 ) ≥
+,
+(3.17)
+PT
+kT k
+2
+P
+
+d
+1 Pd
+where ln C(d, n) = (2 + ln d)
+kn
+j −2
+j=1 ln(knj − 1) − d ln d with k being either
+j=1
+1 (K = R) or 2 (K = C). Since F(e1 , . . . , e1 ) = khT , e1 ⊗ · · · ⊗ e1 i e1 ⊗ · · · ⊗ e1 k/kT k,
+Proposition 3.1 and Remark 3.3 applied to the orthogonal (unitary, if K = C) projection
+T 7→ hT, e1 ⊗ · · · ⊗ e1 i e1 ⊗ · · · ⊗ e1 yield
+
+
+
+
+t
+kn1 · · · nd t2
+PT F(e1 , . . . , e1 ) ≥
+≤ 3 exp −
+,
+2
+3ek−1 4
+which combined with (3.17) gives
+
+
+
+
+kn1 · · · nd 2
+kT k∞
+≥ t ≤ 3C(d, n) exp −
+t .
+PT
+kT k
+12ek−1
+
+15
+
+(3.18)
+
+By Proposition 3.4 we finally have
+√ k−1
+
+
+kT k∞
+2 6e 2 p
+1
+ET
+≤ √
+ln 3C(d, n) 1 +
+kT k
+ln 3C(d, n)
+kn1 · · · nd
+qP
+!
+r
+d
+√ k−1 √
+2
+1
+j=1 nj
+P
+≤ 2 6e 2 ln d qQ
+1+
+1+
+d
+ln d
+d + j knj
+n
+j=1 j
+!
+√
+√ k−1
+2
+1
+d ln d
+2
+P
+q
++
+≤ 2 6e
+,
+1+
+Q
+ln d d + j knj
+mini
+nj
+j6=i
+
+where in the second line we use the estimates of Remark 3.7. The bound for (1.5) follows
+by applying the trick in Remark 3.5 to (3.18).
+Remark 3.10. When all dimensions n1 = · · · = nd = n are equal, one has
+
+√
+1
+2
+d ln d
+kT k∞
+1
+n
+≤ 9 1+
++
+≤ A (K ) ≤ ET
+d−1
+d−1 .
+kT
+k
+ln
+d
+d(1
++
+n)
+n 2
+n 2
+
+3.4
+
+Upper bounds for symmetric tensors
+
+We now apply Theorem 3.6 to give bounds on (1.6). We formulate everything in the
+equivalent terms of homogeneous polynomials, see Section 2.1. First, we consider random
+Kostlan forms and then random harmonic forms, which deliver better bounds for (1.6) in
+the real case.
+Proposition 3.11. Let f ∈ Pd,n be a Kostlan form. Then
+
+ 1
+
+
+√
+d + n − 1 −2
+kfk∞
+1
+1
+n ln d
+.
+Ef
+≤ 9 1+
++
+d
+kfk
+ln d 1 + n
+
+(3.19)
+
+Moreover,
+√
+A(Sym (K )) ≤ 2 3e
+d
+
+n
+
+r
+
+
+ 1
+2 √
+d + n − 1 −2
+1+
+n ln d
+.
+ln d
+d
+
+Proposition 3.12. Let h ∈ Hd,n be a Gaussian harmonic form. Then
+
+√
+
+
+ 1
+√
+1
+khk∞
+n ln d d + n2 − 1 − 2
+1
+≤ 2 6 1+
++
+Eh
+.
+d
+khk
+ln d n + 1
+d
+22
+
+Moreover,
+√
+A(Sym (R )) ≤ 2 3
+d
+
+n
+
+r
+
+2
+1+
+ln d
+
+√
+
+ 1
+n ln d d + n2 − 1 − 2
+.
+d
+d
+22
+
+Proof of Proposition 3.11. Let us consider a random Lipschitz function
+F : S(Kn ) → [0, ∞),
+|f(x)|
+.
+x 7→
+kfk
+16
+
+(3.20)
+
+(3.21)
+
+Note that it is the restriction of the function (3.15) to the diagonally embedded sphere
+S(Kn ) ֒→ S(Kn ) × · · · × S(Kn ). By (3.16) and (2.3) the Lipschitz constant of F satisfies
+Lip(F) ≤ d max F(x) = d
+x∈S(Kn )
+
+kfk∞
+.
+kfk
+
+(3.22)
+
+By Theorem 3.6 we have for all t > 0,
+
+Pf
+
+
+
+kfk∞
+≥t
+kfk
+
+
+
+
+
+
+
+|f(d,0,...,0) |
+t
+t
+≤ C(d, n) Pf F(e1 ) ≥
+≥
+= C(d, n) Pf
+,
+2
+kfk
+2
+
+(3.23)
+
+where ln C(d, n) = (2 + ln d)kn − 12 ln(kn − 1) − ln d with k being either 1 (K = R)
+q 
+d
+or 2 (K = C). Since f is a Kostlan form, that is, fα =
+α f̃α , where variables f̃α are
+independent standard (complex) Gaussians, its Bombieri-Weyl norm satisfies
+2
+
+kfk
+
+=
+
+X  d −1
+
+|α|=d
+
+α
+
+|fα |2 =
+
+X
+
+|α|=d
+
+|f̃α |2 .
+
+We apply Proposition 3.1 and Remark 3.3 to the projection π1 onto the first coordinate
+axis in KN and, using kπ1 (f)k2 = |f̃(d,0,...,0) | = |f(d,0,...,0) |, obtain that
+Pf
+
+
+
+|f(d,0,...,0) |
+t
+≥
+kfk
+2
+
+
+
+kN t2
+≤ 3 exp − k−1
+3e
+4
+
+
+
+
+,
+
+which combined with (3.23) gives
+
+
+
+
+kfk∞
+kN 2
+Pf
+≥ t ≤ 3C(d, n) exp −
+t .
+kfk
+12ek−1
+
+(3.24)
+
+This, together with inequality (3.23) and Proposition 3.4, finally implies that
+√ k−1
+
+
+2 6e 2 p
+kfk∞
+1
+ln 3C(d, n) 1 +
+≤ √
+Ef
+kfk
+ln 3C(d, n)
+kN
+
+
+
+
+ 1
+√
+√ k−1
+1
+n + d − 1 −2
+1
+n ln d
+≤ 2 6e 2
+1+
+1+
+ln d
+2(1 + n)
+d
+
+
+
+− 1
+√
+√ k−1
+1
+1
+n+d−1 2
+n ln d
+≤ 2 6e 2
++
+1+
+ln d 1 + n
+d
+√
+
+√ k−1
+1
+d! ln d
+1
+≤ 2 6e 2
++
+,
+1+
+d−1
+ln d 1 + n
+n 2
+where in the second line we use bounds from Remark 3.7 with d ≥ 3. The bound for (1.6)
+follows by applying the trick in Remark 3.5 to (3.24).
+Proof of Proposition 3.12. Given a Gaussian harmonic form h ∈ Hd,n , we consider a random Lipschitz function
+F : Sn−1 → [0, ∞)],
+|h(x)|
+x 7→
+.
+khk
+17
+
+The bound (3.22) implies that the Lipschitz constant of F satisfies
+Lip(F) ≤ d max F(x) = d
+x∈Sn−1
+
+khk∞
+.
+khk
+
+By Theorem 3.6 we have for all t > 0 that
+
+
+
+
+khk∞
+t
+Ph
+≥ t ≤ C(d, n) max Ph F(x) ≥
+khk
+2
+x∈Sn−1
+
+(3.25)
+
+with ln C(d, n) = (2 + ln d)n − 12 ln(n − 1) − ln d. Since the inner product (2.7) of two
+harmonic forms is invariant under orthogonal changes of variables and since, by Lemma 2.1,
+it is proportional to (2.2), the random variables F(x) and F(x′ ) have the same distribution
+for any x, x′ ∈ Sn−1 . In particular, in the right-hand side of (3.25) we can drop the
+maximum and consider any point x ∈ Sn−1 .
+The evaluation of h ∈ Hd,n at a point x ∈ Sn−1 does not anymore correspond to an
+orthogonal projection in (Hd,n , h·, ·iL2 (Sn−1 ) ), as it was in the case of Kostlan polynomials.
+However, the formula (2.9) implies that it is given by taking inner product with Zx . So,
+P : Hd,n → RZx ,
+h(x)
+Zx
+h 7→
+,
+kZx kL2 (Sn−1 ) kZx kL2 (Sn−1 )
+is an orthogonal projection on the line through Zx and Proposition 3.1 gives
+!
+
+
+Dd,n 2
+|h(x)|
+t , t ≥ 0.
+≥ t ≤ 3 exp −
+Ph
+kZx kL2 (Sn−1 ) khkL2 (Sn−1 )
+3
+This and Lemma 2.1 imply that for all t ≥ 0,
+q
+
+
+ d−1
+
+
+n
+2
+Γ
+d
++
+2
+t
+t
+|h(x)|
+2
+
+p
+Ph F(x) ≥
+≥
+= Ph 
+n
+2
+kZx kL2 (Sn−1 ) khkL2 (Sn−1 )
+2kZx kL2 (Sn−1 ) Γ(d + 1)π 4
+!
+
+Dd,n Γ d + n2 2 d−1
+t2
+≤ 3 exp −
+.
+n
+kZx k2L2 (Sn−1 ) Γ(d + 1)π 2 12
+Now, combining this with (3.25), applying Proposition 3.4 and proceeding as in the proof
+of Proposition 3.11, we derive
+
+
+√ p
+khk∞
+1
+≤ 2K ln 3C(d, n) 1 +
+Eh
+khk
+ln 3C(d, n)
+
+
+(3.26)
+√
+√
+1
+1
+n ln d K,
+≤ 2 1+
++
+ln d n + 1
+where
+K =
+
+√
+
+p
+n
+3kZx kL2 (Sn−1 ) Γ(d + 1)π 4
+q
+.
+ d−3
+p
+Dd,n Γ d + n2 2 2
+18
+
+n
+
+n
+2
+
+By (2.10) and the formula |Sn−1 | = 2π 2 /Γ
+K =
+
+s
+
+
+
+for the volume of the sphere, we simplify:
+
+
+√ 
+ 1
+12d!Γ n2
+2 3 d + n2 − 1 − 2
+ =
+.
+d
+d
+2d Γ d + n2
+22
+
+We combine this expression for K with (3.26) and finally obtain
+
+√
+
+
+ 1
+√
+1
+n ln d d + n2 − 1 − 2
+khk∞
+1
+≤ 2 6 1+
++
+Eh
+d
+khk
+ln d n + 1
+d
+2
+
+ 2
+√
+√
+1
+1
+1
+d! ln d d−1 ,
++
+≤ 2 6 1+
+ln d n + 1
+n 2
+as desired. The bound for (1.6) is obtained by applying the trick in Remark 3.5.
+
+3.5
+
+Upper bounds for partially symmetric tensors
+
+The following propositions provide upper bounds for (2.6). We state them in the equivalent
+terms of multi-homogeneous polynomials. As our proof strategies are similar to those in
+Propositions 3.11 and 3.12 respectively, we leave out some details.
+Proposition 3.13. Let
+N m ≥ 1, d1 , . . . ,dm ≥ 2 with maxj dj ≥ 3 and n1 , . . . , nm ≥ 2.
+m
+dj
+nj
+Then the quantity A
+j=1 Sym (K ) is upper bounded by
+√
+2 3e
+
+s
+
+v
+
+u
+
+Y
+ 1
+u m
+m 
+2
+dj + nj − 1 − 2
+u X 
+t
+1+
+.
+nj ln m max dj
+j
+ln (m maxj dj )
+dj
+j=1
+
+j=1
+
+Proposition 3.14. Let
+N m ≥ 1, d1 , . . . ,dm ≥ 2 with maxj dj ≥ 3 and n1 , . . . , nm ≥ 2.
+m
+dj
+nj
+Then the quantity A
+j=1 Sym (R ) is upper bounded by
+√
+2 3
+
+s
+
+2
+1+
+ln (m maxj dj )
+
+r
+P
+
+m
+j=1 nj
+
+
+
+ln (m maxj dj ) Y
+m 
+
+1 Pm
+j=1 dj
+
+22
+
+j=1
+
+n
+
+dj + 2j − 1
+dj
+
+− 21
+
+.
+
+Proof of Proposition 3.13. Let F ∈ Pd,n be a Kostlan multi-homogeneous polynomial,
+where d = (d1 , . . . , dm ) and n = (n1 , . . . , nm ). Then, by (3.16), the Lipschitz constant of
+F : S(Kn1 ) × · · · × S(Knm ) → R,
+x = (x1 , . . . , xm ) 7→
+
+|F(x1 , . . . , xm )|
+,
+kFk
+
+nj |F(x)|. Applying Theorem 3.6 and
+is bounded from above by (maxj dj ) maxx∈Qm
+)
+j=1 S(K
+using the fact that the Kostlan distribution on Pd,n is invariant under the action of the
+product of orthogonal (respectively, unitary) groups, we obtain
+!
+
+
+t
+|F(e1 , . . . , e1 )|
+≥
+,
+(3.27)
+≤ C(d, n) PF
+PF
+Q max nj F(x) ≥ t
+kFk
+2
+)
+x∈ m
+j=1 S(K
+
+19
+
+where
+m
+m
+X
+1X
+knj ) −
+ln C(d, n) = (2 + ln(m max dj ))(
+ln(knj − 1) − m ln(m max dj ). (3.28)
+j
+j
+2
+j=1
+
+j=1
+
+dm is an orthogonal (respectively, unitary) projecSince F 7→ F (e1 , . . . , e1 )(x11 )d1 · · · (xm
+1 )
+tion, Proposition 3.1 applied to the last term in the above inequality yields
+
+
+
+
+N
+kFk∞
+2
+≥ t ≤ 3C(d, n) exp −
+t
+(3.29)
+PF
+kFk
+12ek−1
+
+Q
+dj +nj −1
+being the dimension of Pd,n . Finally, applying (3.5) to the
+with N = m
+j=1 k
+dj
+obtained tail estimate for the norm ratio yields the claim.
+Proof of Proposition 3.14. Consider the subspace Hd,n := ⊗m
+j=1 Hdj ,nj ⊆ Pd,n of multi2 (Sn−1 )-product defined for (dehomogeneous harmonic forms. We endow
+it
+with
+the
+L
+Q
+Qm ′ j
+j
+′ 1
+m
+composable) elements H(x1 , . . . , xm ) = m
+j=1 hj (x ), H (x , . . . , x ) =
+j=1 hj (x ) via
+hH, H ′ iL2 (Sn−1 ) =
+
+m
+Y
+
+hhj , h′j iL2 (Snj −1 )
+
+(3.30)
+
+j=1
+
+and then extended to the whole space Hd,n by multi-linearity. Lemma 2.1 directly implies
+that the Bombieri-Weyl product (2.4) and the L2 (Sn−1 )-product are proportional,
+n 
+m
+Y
+2 dj −1 Γ dj + 2j
+′
+hH, H i =
+√ nj
+hH, H ′ iL2 (Sn−1 ) , H, H ′ ∈ Hd,n .
+(3.31)
+Γ (dj + 1)
+π
+j=1
+
+1
+m
+n−1
+By (2.9) and (3.30), the evaluation of H ∈ Hd,n at any point x = (x
+Qm, . . . , x )j ∈ S
+is given by taking inner product with Zx ∈ Hd,n defined by Zx (y) := j=1 Zxj (y ). So,
+
+P : Hd,n → RZx ,
+Zx
+H(x)
+H 7→
+,
+kZx kL2 (Sn−1 ) kZx kL2 (Sn−1 )
+
+(3.32)
+(3.33)
+
+is an orthogonal projection on the line through Zx . Let H ∈ Hd,n be a Gaussian multihomogeneous harmonic. Proceeding as in the proof of Proposition 3.12, we obtain that
+
+
+
+
+n 
+m
+3
+Y
+Ddj ,nj Γ dj + 2j 2 dj −1
+kHk∞
+t
+ , (3.34)
+≥ t ≤ 3C(d, n) exp −
+PH
+nj
+kHk
+Γ (d + 1) π 2 12
+kZ j k2
+j=1
+
+x
+
+L2 (Snj −1 )
+
+j
+
+where ln C(d, n) is given by (3.28) with k = 1. This estimate combined with (3.5) yields
+the claimed bound after some elementary simplifications.
+
+4
+
+Lower bounds for (partially) symmetric tensors
+
+In this section we prove lower bounds stated in Theorem 1.2 and in Theorem 1.4. Our new
+lower bounds rely on the integral representation of the Bombieri-Weyl norm.
+
+20
+
+Proposition 4.1. For any d ≥ 1 and n ≥ 2
+(
+A(Symd (Cn )) ≥ max
+
+)
+ 1
+d + n − 1 −2
+1
+, d−1 .
+d
+n 2
+
+(4.1)
+
+Proposition 4.2. For any d ≥ 1 and n ≥ 2,
+( 
+)
+− 1
+2
+1
+d
++
+n
+−
+1
+1
+, d−1 .
+A(Symd (Rn )) ≥ max
+d
+d
+22
+n 2
+
+(4.2)
+
+Proof of Proposition 4.1. The inner product (2.2) admits an integral representation
+
+
+d+n−1
+′
+′
+hf, f i =
+E f (z)f (z),
+n
+d
+z∈S(C )
+where z is a random vector uniformly distributed in the sphere S(Cn ). It implies that
+
+
+
+
+d+n−1
+d+n−1
+2
+2
+kf k2∞ .
+(4.3)
+kf k =
+E |f (z)| ≤
+d
+d
+z∈S(Cn )
+and hence the lower bound follows.
+Proof of Proposition 4.2. A result from [21] (see also [12, (17.5)]) asserts that the complex
+and the real uniform norms of f ∈ Pd,n are linked by
+√ d
+√ d
+(4.4)
+kf k∞,C = max |f (z)| ≤ 2 max |f (x)| = 2 kf k∞,R ,
+x∈S(Rn )
+
+z∈S(Cn )
+
+which combined with (4.3) yields the desired bound.
+We can also provide similar lower bounds for the case of partially symmetric tensors.
+Proposition 4.3. For any m ≥ 1, d1 , . . . , dm ≥ 1 and n1 , . . . , nm ≥ 2
+
+
+
+
+− 1 s
+m
+m 
+Y
+O
+2
+maxj nj 
+dj + nj − 1
+,
+A
+Symdj (Cnj ) ≥ max
+.
+Q
+d
+m
+
+dj
+n j
+j=1
+
+j=1
+
+j=1
+
+(4.5)
+
+j
+
+Proposition 4.4. For any m ≥ 1, d1 , . . . , dm ≥ 1 and n1 , . . . , nm ≥ 2
+
+
+
+
+− 1 s
+m 
+m
+
+
+Y
+O
+2
+d
++
+n
+−
+1
+max
+n
+1
+j
+j
+j j
+P
+,
+Symdj (Rnj ) ≥ max
+A
+Qm dj  . (4.6)
+ 2 12 m
+dj
+j=1 dj
+j=1
+j=1
+j=1 nj
+
+Proof of Proposition 4.3. The Bombieri-Weyl norm for multi-homogeneous polynomials
+that is given by (2.4) admits an integral representation
+
+m 
+Y
+dj + nj − 1
+′
+F (z1 , . . . , zm )F ′ (z1 , . . . , zm ),
+hF, F i =
+E n ···
+E
+m
+n
+1
+m
+dj
+1
+)
+z ∈S(C
+z ∈S(C )
+j=1
+
+where vectors zj ∈ S(Cnj ) are indedpendent and uniformly distributed. Hence
+kF k
+
+2
+
+=
+
+
+m 
+Y
+dj + nj − 1
+
+j=1
+
+dj
+
+E
+z1 ∈S(Cn1 )
+
+···
+
+1
+
+E
+zm ∈S(Cnm )
+
+m
+
+|F (z , . . . , z )|
+
+2
+
+
+m 
+Y
+dj + nj − 1
+kF k2∞ .
+≤
+d
+j
+j=1
+
+The other lower bound is essentially (1.7), since partially symmetric tensors are general
+tensors of format (n1 , . . . , n1 , . . . , nm , . . . , nm ).
+21
+
+Proof of Proposition 4.4. Subsequent applications of (4.4) give
+kF k∞,C =
+=
+≤
+
+max
+
+|F (z 1 , . . . , z m )|
+
+max
+
+...
+
+√ dm
+2
+
+max
+
+z j ∈S(Cnj )
+z 1 ∈S(Cn1 )
+
+max
+
+max
+
+z m−1 ∈S(Cnm−1 ) z m ∈S(Cnm )
+
+z 1 ∈S(Cn1 )
+
+...
+
+√ Pm
+dj
+≤ . . . ≤ 2 j=1
+
+max
+
+|F (z 1 , . . . , z m−1 , z m )|
+
+max
+
+z m−1 ∈S(Cnm−1 ) xm ∈S(Rnm )
+
+max
+
+1
+
+xj ∈S(Rnj )
+
+|F (x , . . . , x
+
+|F (z 1 , . . . , z m−1 , xm )|
+
+m−1
+
+√ Pm
+dj
+, x )| = 2 j=1 kF k∞,R ,
+m
+
+which combined with the proof of Proposition 4.3 implies the claim.
+
+5
+
+Estimates for large d
+
+In this section we prove the estimates of Theorem 1.2 when d is large.
+Proposition 5.1. Let d, n ≥ 2 be integers. If d ≥ n2 /4, then
+r
+
+(n − 1)!
+dn−1
+
+
+
+n2
+1−
+4d
+
+
+
+
+
+≤
+
+d+n−1
+d
+
+− 1
+
+2
+
+≤
+
+r
+
+(n − 1)!
+.
+dn−1
+
+(5.1)
+
+Moreover, the upper bound holds for arbitrary d and n.
+Proposition 5.2. Let d, n ≥ 2 be integers. If d ≥ n2 /16, then
+s
+s
+
+
+− 1
+
+
+
+n 
+n
+2
+2
+Γ 2
+Γ n2
+d+ 2 −1
+n
+1
+≤
+≤
+.
+1−
+1+
+n
+n
+d
+16d
+4d
+d 2 −1
+d 2 −1
+Moreover, the upper bound holds for arbitrary d and n.
+Remark 5.3. For arbitrary d and n, we can easily see that
+
+
+d+n−1
+d
+
+− 1
+
+2
+
+≤
+
+√
+
+d!
+d
+
+n2
+
+
+
+and
+
+ 1
+d√
+2 2 d!
+d + n2 − 1 − 2
+≤
+.
+d
+d
+n2
+
+Thus, the case when n is large is covered.
+Proof of Proposition 5.1. We have that
+
+
+d+n−1
+d
+
+
+
+n−1
+
+=
+
+Y
+dn−1
+1
+.
+(d + k) ≥
+(n − 1)!
+(n − 1)!
+k=1
+
+On the other hand, by the AM-GM inquality,
+
+n−1
+Y
+(d + k) ≤ d +
+k=1
+
+ n−1
+n
+1
+n−1 2
+ n−1
+
+n
+1
+n−1
+= d
+1+
+d(n − 1) 2
+22
+
+(AM-GM inquality)
+
+(5.2)
+
+
+
+x
+(1 + )N ≤ ex
+N
+
+
+1
+x
+for x ∈ [0, 2)
+e ≤
+(1 − x2 )2
+
+1 n
+
+≤ dn−1 e d ( 2 )
+≤
+
+Hence
+
+dn−1
+
+1 n 2
+1 − 2d
+2
+
+≤ 
+
+dn−1
+
+2
+1 − n4d
+
+2 .
+
+
+
+d+n−1
+dn−1
+1
+≤
+.
+d
+(n − 1)! (1 − n2 )2
+4d
+
+Now, the estimates follow.
+Proof of Proposition 5.2. If n is even, then the estimates follow from the previous proposition. So, we can assume that n is odd. Then
+
+
+d + n2 − 1
+d
+
+
+
+ n−1 −1 
+
+Γ d + 12 2Y
+1
+
+d+k+
+=
+.
+2
+Γ n2 Γ(d + 1) k=0
+1
+
+Arguing as in the previous proposition, we have
+
+
+
+
+n−1
+n−1
+1
+d + n2 − 1
+d 2 Γ d + 21
+d 2 Γ d + 21
+
+
+≤
+ .
+
+n Γ(d + 1) ≤
+n
+d
+Γ 2
+Γ 2 Γ(d + 1) 1 − 1 n 2 2
+d
+
+4
+
+Now, the claimed estimated follow by Gautschi’s inequality [10, (7)],
+
+Γ d + 21
+1
+1
+1
+1
+≤
+≤ 1.
+1
+1
+1 ≤
+Γ(d + 1)
+d 2 1 + 2d
+(1 + d) 2
+d2
+
+References
+[1] A. Agrachev, Kh. Kozhasov, and A. Uschmajew. Chebyshev polynomials and best rank-one
+approximation ratio. SIAM J. Matrix Anal. Appl., 41(1):308–331, 2020.
+[2] S. Banach. Über homogene Polynome in (L2 ). Studia Math., 7:36–44, 1938.
+[3] P. Bürgisser and F. Cucker. Condition, volume 349 of Grundlehren der Mathematischen
+Wissenschaften [Fundamental Principles of Mathematical Sciences]. Springer, Heidelberg,
+2013. The geometry of numerical algorithms.
+[4] S. Cao, S. He, Z. Li, and Z. Wang. Extreme ratio between spectral and Frobenius norms of
+nonnegative tensors. arXiv:2206.07879 [math.NA].
+[5] F. Cobos, T. Kühn, and J. Peetre. On Gp -classes of trilinear forms. Journal of the London
+Mathematical Society, 59(3):1003–1022, 1999.
+[6] F. Cucker, A. A. Ergür, and J. Tonelli-Cueto. Functional norms, condition numbers and
+numerical algorithms in algebraic geometry, 2021. arXiv:2102.11727.
+[7] S. Friedland. Best rank one approximation of real symmetric tensors can be chosen symmetric.
+Frontiers of Mathematics in China, 8, 10 2011.
+
+23
+
+[8] S. Friedland, V. Mehrmann, R. Pajarola, and S. K. Suter. On best rank one approximation
+of tensors. Numer. Linear Algebra Appl., 20:942–955, 2013.
+[9] S. Friedland and V. Tammali. Low-rank approximation of tensors. In P. Benner, M. Bollhöfer,
+D. Kressner, C. Mehl, and T. Stykel, editors, Numerical Algebra, Matrix Theory, DifferentialAlgebraic Equations and Control Theory. Springer, Cham., 2015.
+[10] W. Gautschi. Some elementary inequalities relating to the Gamma and incomplete Gamma
+function. J. Math. and Phys., 38:77–81, 1959/60.
+[11] C. J. Hillar and L.-H. Lim. Most tensor problems are NP-hard. J. ACM, 60(6), 2013.
+[12] D. Khavinson and E. Lundberg. Linear Holomorphic Partial Differential Equations and Classical Potential Theory. Mathematical surveys and monographs. American Mathematical Society, 2018.
+[13] D. E. Knuth. The art of computer programming. Vol. 1. Addison-Wesley, Reading, MA, 1997.
+Fundamental algorithms, Third edition [of MR0286317].
+[14] T. G. Kolda and B. W. Bader. Tensor decompositions and applications. SIAM Review,
+51(3):455–500, 2009.
+[15] E. Kostlan. On the expected number of real roots of a system of random polynomial equations.
+Foundations of Computational Mathematics, pages 149–188, 2000.
+[16] T. Kühn and J. Peetre. Embedding constants of trilinear Schatten-von Neumann classes.
+Proc. Est. Acad. Sci. Phys. Math., 55(3):174–181, 2006.
+[17] Z. Li, Y. Nakatsukasa, T. Soma, and A. Uschmajew. On orthogonal tensors and best rank-one
+approximation ratio. SIAM J. Matrix Anal. Appl., 39(1):400–425, 2018.
+[18] Z. Li and Y. B. Zhao. On norm compression inequalities for partitioned block tensors. Calcolo,
+57(11), 2020.
+[19] L. Qi. The best rank-one approximation ratio of a tensor space. SIAM J. Matrix Anal. Appl.,
+32(2):430–442, 2011.
+[20] L. Qi and Z. Luo. Tensor Analysis: Spectral Theory and Special Tensors. Society for Industrial
+and Applied Mathematics, Philadelphia, PA, 2017.
+[21] J. Siciak. Holomorphic continuation of harmonic functions. Ann. Polon. Math., 29:67–73,
+1974. Collection of articles dedicated to the memory of Tadeusz Waźewski.
+[22] E.M. Stein and G. Weiss. Introduction to Fourier Analysis on Euclidean Spaces. Mathematical
+Series. Princeton University Press, 1971.
+[23] R. Tomioka and T. Suzuki. Spectral norm of random tensors, 2014. arXiv:1407.1870.
+[24] A. Uschmajew. Some results concerning rank-one truncated steepest descent directions in
+tensor spaces. 2015 International Conference on Sampling Theory and Applications, pages
+415–419, 07 2015.
+[25] R. Vershynin. High-dimensional probability: An introduction with applications in data science, volume 47 of Cambridge Series in Statistical and Probabilistic Mathematics. Cambridge
+University Press, Cambridge, 2018.
+
+A
+
+Appendix
+
+For the sake of completeness we include a proof of Proposition 3.4 and of the formula
+(3.9). The latter is needed in the proof of Theorem 3.6.
+
+24
+
+A.1
+
+Proof of Proposition 3.4
+
+The proof follows the lines of [25, Proposition 2.5.2]. We give a more detailed proof than
+the one given in [6, Proposition 4.24].
+We begin with the first statement. Fix λ > 0. Then Markov’s inequality implies that
+
+ 22
+2 2
+2 2
+2 2
+≤ e−λ t E eλ t .
+P(|t| ≥ t) = P eλ t ≥ eλ t
+
+Now, the Taylor expansion of the exponential function, standard facts from calculus and
+our assumptions yield
+2 2
+
+λ t
+Ee
+
+∞
+X
+λ2p E t 2p
+
+=
+
+≤
+
+p!
+
+p=0
+
+∞
+X
+(λ2 2pK 2 )p
+
+p!
+
+p=0
+
+.
+
+1
+we obtain that
+With λ = √6K
+t2
+
+P(|t| ≥ t) ≤ e− 6K 2
+P∞
+
+(p/3)p
+
+∞
+X
+(p/3)p
+p=0
+
+p!
+
+.
+
+Now, by direct computation, p=0 p! ≃ 2.62509 . . ., which proves the first assertion.
+For the second statement, by [25, Lemma 1.2.1] we write
+Z ∞
+Z ∞
+ℓ
+ℓ
+ℓtℓ−1 P(|t| ≥ t) dt.
+P(|t| ≥ u) du =
+E |t| =
+0
+
+0
+
+√
+
+The assumptions imply that for t ≥ K 2 ln C we have
+t2
+
+t2
+
+P(|t| ≥ t) ≤ eln C− K 2 ≤ e− 2K 2 .
+
+(A.1)
+
+Therefore,
+ℓ
+
+Z K √2 ln C
+
+Z ∞
+
+ℓ−1
+
+P(|t| ≥ t) dt + √
+ℓtℓ−1 P(|t| ≥ t) dt
+K 2 ln C
+0
+Z ∞
+t2
+ℓ
+ℓtℓ−1 e− 2K 2 dt
+≤ K ℓ (2 ln C) 2 +
+0
+ 
+ℓ
+ℓ
+ℓ
+≤ K ℓ (2 ln C) 2 + ℓK ℓ 2 2 −1 Γ
+,
+2
+
+E |t| =
+
+ℓt
+
+where in the first integral we estimate P(|t| ≥ t) by 1 and to bound the second integral we
+apply (A.1) and then extend the domain of the integration.
+ℓ
+ℓ
+Using induction on ℓ we bound ℓ2 2 −1 Γ(ℓ/2) by (πℓ/2) 2 , which gives
+ ℓ !
+
+π  ℓ  ℓ
+ℓ
+ℓ
+πℓ 2
+2
+ℓ
+ℓ
+ℓ
+2
+2
+ℓ2 .
+≤ K (2 ln C) +
+E |t| ≤ K (2 ln C) +
+2
+2
+Now the claim follows from the inequality comparing the ℓ-norm and the 1-norm.
+For the last claim, by the same argument as above, we obtain
+Z ∞
+√
+t2
+|t|
+≤
+K
+2
+ln
+C
++
+e− 2K 2 dt.
+E
+√
+K 2 ln C
+
+√
+√
+Finally, for t ≥ K 2 ln C we have that t2 ≥ K 2 ln C t and the claim (3.3) follows from
+√
+Z ∞
+Z ∞ √
+2
+2K
+− √ln C t
+− t 2
+e 2K dt ≤
+.
+e 2K dt = √
+√
+ln C
+K 2 ln C
+0
+25
+
+A.2
+
+Proof of (3.9)
+
+Because of the “product”-like structure of  it is enough to consider the case d = 1,
+ : Rn−1 → Sn−1
+
+ 
+1
+x 7→ p
+,
+2
+x
+1 + kxk
+1
+
+2
+
+and to prove
+| det Dx | =
+
+1 + kxk22
+
+− n
+2
+
+x ∈ Rn−1 ,
+
+,
+
+(A.2)
+
+where Dx  is written in some orthonormal bases of Tx Rn−1 and T(x) Sn−1 .
+We fix x 6= 0, as for x = 0 the claim follows by continuity. Let us consider an
+orthonormal basis of Tx Rn−1 given by
+x
+, v 1 , . . . , v n−2 ,
+kxk2
+where v 1 , . . . , v n−2 form a basis of the orthogonal complement of the line Rx ⊂ Rn−1 .
+Then vectors
+
+  
+
+
+1
+−kxk2
+0
+0
+p
+,
+,...,
+v1
+v n−2
+1 + kxk22 x/kxk2
+form an orthogonal basis of T(x) Sn−1 . A direct computation shows that
+Dx 
+
+
+
+x
+kxk2
+
+
+
+=
+=
+=
+
+Dx  (v i ) =
+=
+
+
+
+x
+d
+ x+t
+dt t=0
+kxk2
+"
+
+#
+1
+1
+d
+p
+x
+dt t=0
+1 + kxk22 + 2tkxk2 + t2 x + t kxk2
+
+
+1
+1
+−kxk2
+p
+,
+1 + kxk22 1 + kxk22 x/kxk2
+"
+
+#
+d
+d
+1
+1
+p
+(x + tv i ) =
+dt t=0
+dt t=0
+1 + kxk22 + t2 x + tv i
+ 
+1
+0
+p
+, i = 1, . . . , n − 2.
+2
+1 + kxk v i
+2
+
+Finally, the desired formula (A.2) follows from the fact that in the chosen orthonormal
+bases of Tx Rn−1 and T(x) Sn−1 the differential Dx  is given by the matrix
+
+
+
+
+
+
+
+
+1
+1+kxk22
+
+0
+√
+
+1
+1+kxk22
+
+0
+
+..
+
+.
+√
+
+26
+
+1
+1+kxk22
+
+
+
+
+
+
+.
+
+
+
+This figure "postcard_formula.jpg" is available in "jpg" format from:
+http://arxiv.org/ps/2201.02191v2

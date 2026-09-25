@@ -1,0 +1,125 @@
+{
+ "id": "epub-gutenberg-relativity",
+ "derived_from": "Unzipped the EPUB; spine (content.opf): cover wrapper, 5001-h-0 (front matter + Parts I-III), 5001-h-1 (Appendices I-IV + PG colophon), 5001-h-2 (license). Sentences/order from <p> elements in 5001-h-0/-1, avoiding paragraphs with inline math images, <i>, <sup>/<sub>. Chapter headings are duplicated in the in-book Table of Contents (a <table>), toc.xhtml and toc.ncx, so order uses the opening words of each chapter's first paragraph. Tables from the XHTML source: star-deflection table in Appendix III (b) (two-level spanning header, body rows only) and the PG 'Corrections' table in the colophon (single header row, complete). Every string checked (count 1 for order strings) against the normalized text of all XHTML/NCX files.",
+ "sentences": [
+  "The purpose of mechanics is to describe how bodies change their position in space with \"time.\"",
+  "To what extent is the special theory of relativity supported by experience?",
+  "And yet there is no more common-place statement than that the world in which we live is a four-dimensional space-time continuum.",
+  "The surface of a marble table is spread out in front of me.",
+  "If the reader has followed all our previous considerations, he will have no further difficulty in understanding the methods leading to the solution of the problem of gravitation.",
+  "From a systematic theoretical point of view, we may imagine the process of evolution of an empirical science to be a continuous process of induction."
+ ],
+ "order": [
+  "The present book is intended, as far as possible",
+  "In your schooldays most of you who read this book",
+  "The purpose of mechanics is to describe",
+  "Up to now our considerations have been referred",
+  "The non-mathematician is seized by a mysterious shuddering",
+  "If we pick up a stone and then let it go",
+  "The surface of a marble table is spread out",
+  "Apart from the difficulty discussed in Section XXI",
+  "From a systematic theoretical point of view",
+  "Since the publication of the first edition of this little book"
+ ],
+ "tables": [
+  {
+   "caption": "Appendix III (b): observed vs calculated star displacements (Number of the Star / First Co-ordinate Observed, Calculated / Second Co-ordinate Observed, Calculated) - two-level spanning header, body rows only",
+   "page": null,
+   "complete": false,
+   "rows": [
+    [
+     "11",
+     "-0.19",
+     "-0.22",
+     "+0.16",
+     "+0.02"
+    ],
+    [
+     "5",
+     "+0.29",
+     "+0.31",
+     "-0.46",
+     "-0.43"
+    ],
+    [
+     "4",
+     "+0.11",
+     "+0.10",
+     "+0.83",
+     "+0.73"
+    ],
+    [
+     "3",
+     "+0.22",
+     "+0.12",
+     "+1.00",
+     "+0.87"
+    ],
+    [
+     "6",
+     "+0.10",
+     "+0.04",
+     "+0.57",
+     "+0.40"
+    ],
+    [
+     "10",
+     "-0.08",
+     "+0.09",
+     "+0.35",
+     "+0.32"
+    ],
+    [
+     "2",
+     "+0.95",
+     "+0.85",
+     "-0.27",
+     "-0.09"
+    ]
+   ]
+  },
+  {
+   "caption": "Corrections (Project Gutenberg colophon): corrections applied to the text",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Page",
+     "Source",
+     "Correction",
+     "Edit distance"
+    ],
+    [
+     "N.A.",
+     "[Not in source]",
+     "[in vacuum]",
+     "12"
+    ],
+    [
+     "N.A.",
+     "[Not in source]",
+     "”",
+     "1"
+    ],
+    [
+     "N.A.",
+     "[Not in source]",
+     "[British]",
+     "10"
+    ],
+    [
+     "N.A.",
+     "[Not in source]",
+     "[first world]",
+     "14"
+    ],
+    [
+     "N.A.",
+     "[Not in source]",
+     "[1920]",
+     "7"
+    ]
+   ]
+  }
+ ]
+}

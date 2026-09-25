@@ -1,0 +1,35 @@
+{
+ "id": "twocol-smile",
+ "derived_from": "PDF text layer (pdftotext, NFKC-normalised) for sentences/order/cells; page images checked at 110 dpi for page 6 (two-column layout, Table 1); page 12 Table 6 checked via pdftotext -layout",
+ "sentences": [
+  "Knowledge graph (KG), as a well-structured representation of knowledge, stores a vast number of human knowledge in the format of triples-(head, relation, tail).",
+  "Furthermore, not much attention is paid to the diversity of entity representations in different contexts, which may often result in false predictions.",
+  "More precisely, FB15k and JF17k are subsets of Freebase, and FB15k-237 is a pruned version of FB15k.",
+  "The results of all baselines are obtained with their original implementations.",
+  "For all baselines, we set the embedding dimension to 128.",
+  "It is evident that there exist some semantic connections about \"America\" between them, hence distance among these clusters is closer.",
+  "We propose an approach to automatically extract the complete schema from a KG."
+ ],
+ "order": [
+  "Link prediction is the task of inferring missing links",
+  "In real world, KGs always suffer from the incompleteness problem",
+  "The training objective in fine-tune phase is as",
+  "Theoretically, the major difference between SMiLE",
+  "number of nodes in any context subgraph.",
+  "Datasets. We evaluate our model on four synthetic",
+  "Baselines. We compare the proposed SMiLE",
+  "More concretely, we list more details of related",
+  "We would like to thank all the anonymous reviewers"
+ ],
+ "tables": [
+  {"caption": "Table 1: Statistics of datasets used in this paper.", "page": 6, "complete": true,
+   "rows": [["Dataset", "FB15k-237", "FB15k", "JF17k", "HumanWiki"],
+            ["#Entities", "14,541", "14,579", "9,233", "38,949"],
+            ["#Types", "583", "588", "511", "388"],
+            ["#Relations", "237", "1,208", "326", "221"],
+            ["#Edges", "248,611", "117,580", "18,049", "105,688"],
+            ["#Triples", "310,116", "154,916", "19,342", "108,199"]]},
+  {"caption": "Table 6: Details of hyperparameters.", "page": 12, "complete": false,
+   "rows": [["Learning rate", "{0.0001, 0.001, 0.03, 0.1}"], ["Embedding dimension", "{64, 128, 256, 512}"], ["Batch size(Fine-tune)", "{64, 128, 256, 512}"], ["epoch(Pre-train)", "{10, 15, 20}"]]}
+ ]
+}

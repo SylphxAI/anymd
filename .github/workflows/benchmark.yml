@@ -1,13 +1,20 @@
 name: Benchmark
 
-# Head-to-head benchmark against markitdown, docling, kreuzberg, and pdftotext.
-# Runs on demand and whenever the harness changes; results land in the job
-# summary and the bench-results artifact.
+# AgentDocBench: every tool in bench/adapters/ converts the corpus on a
+# GitHub-hosted runner (one job per tool, heavy tools sharded). Each job
+# uploads its results JSON and Markdown outputs; the report job merges them
+# and prints the leaderboard to the job summary. See bench/README.md.
 on:
   workflow_dispatch:
+    inputs:
+      tools:
+        description: 'Comma-separated tools to run (empty = all)'
+        required: false
+        default: ''
   pull_request:
     paths:
       - 'bench/**'
+      - '!bench/results/**'
       - '.github/workflows/benchmark.yml'
 
 permissions:
@@ -18,43 +25,171 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  bench:
+  prepare:
+    name: Corpus and anymd
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+
+      - name: Cache corpus
+        uses: actions/cache@v6
+        with:
+          path: corpus
+          key: agentdocbench-corpus-${{ hashFiles('bench/corpus.json') }}
+
+      - name: Fetch and verify corpus
+        run: python3 bench/fetch.py corpus
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Build anymd
         run: cargo build --release -p pdf-reader-mcp-server
 
-      - name: Install poppler (pdftotext)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
-
-      - name: Install competitors
-        run: |
-          python3 -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/pip" install --quiet --extra-index-url https://download.pytorch.org/whl/cpu -r bench/requirements.txt
-          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
-
-      - name: Fetch corpus
-        run: bash bench/fetch.sh "$RUNNER_TEMP/bench-corpus"
-
-      - name: Warm up docling models
-        run: docling "$RUNNER_TEMP/bench-corpus/SPARSE-2024-INV-1234_borderless_table.pdf" --to md --output "$RUNNER_TEMP/warmup" > /dev/null
-
-      - name: Run benchmark
-        run: |
-          python bench/run.py --corpus "$RUNNER_TEMP/bench-corpus" --anymd target/release/anymd \
-            --tools anymd,markitdown,kreuzberg,docling,pdftotext --runs 3 \
-            --out bench-results.json --save-outputs bench-outputs
-          python bench/report.py bench-results.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: corpus
+          path: corpus/
+          retention-days: 7
 
       - uses: actions/upload-artifact@v7
         with:
-          name: bench-results
+          name: anymd-binary
+          path: target/release/anymd
+          retention-days: 7
+
+  bench:
+    name: ${{ matrix.tool }} ${{ matrix.shard }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { tool: anymd, shard: 1/1 }
+          - { tool: pdftotext, shard: 1/1 }
+          - { tool: markitdown, shard: 1/1 }
+          - { tool: kreuzberg, shard: 1/1 }
+          - { tool: docling, shard: 1/4 }
+          - { tool: docling, shard: 2/4 }
+          - { tool: docling, shard: 3/4 }
+          - { tool: docling, shard: 4/4 }
+          - { tool: marker, shard: 1/4 }
+          - { tool: marker, shard: 2/4 }
+          - { tool: marker, shard: 3/4 }
+          - { tool: marker, shard: 4/4 }
+          - { tool: unstructured, shard: 1/2 }
+          - { tool: unstructured, shard: 2/2 }
+    env:
+      TOOL: ${{ matrix.tool }}
+      SHARD: ${{ matrix.shard }}
+      TOOLS: ${{ github.event.inputs.tools }}
+      HF_HOME: ${{ github.workspace }}/../model-cache/huggingface
+      MODEL_CACHE_DIR: ${{ github.workspace }}/../model-cache/datalab
+      TORCH_DEVICE: cpu
+    steps:
+      - name: Selected
+        id: selected
+        run: |
+          if [ -z "$TOOLS" ] || [[ ",$TOOLS," == *",$TOOL,"* ]]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/checkout@v7
+        if: steps.selected.outputs.run == 'true'
+
+      - uses: actions/download-artifact@v8
+        if: steps.selected.outputs.run == 'true'
+        with:
+          name: corpus
+          path: corpus
+
+      - uses: actions/download-artifact@v8
+        if: steps.selected.outputs.run == 'true'
+        with:
+          name: anymd-binary
+          path: anymd-bin
+
+      - name: System tools (poppler, tesseract with CJK, pandoc)
+        if: steps.selected.outputs.run == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-chi-tra tesseract-ocr-chi-sim tesseract-ocr-jpn pandoc
+          chmod +x anymd-bin/anymd
+          echo "ANYMD_BIN=$PWD/anymd-bin/anymd" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-python@v7
+        if: steps.selected.outputs.run == 'true'
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: bench/requirements/*.txt
+
+      - name: Model cache
+        if: steps.selected.outputs.run == 'true' && contains('docling marker unstructured', matrix.tool)
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/../model-cache
+          key: agentdocbench-models-${{ matrix.tool }}-${{ hashFiles(format('bench/requirements/{0}.txt', matrix.tool)) }}
+
+      - name: llama.cpp server for marker's OCR model
+        if: steps.selected.outputs.run == 'true' && matrix.tool == 'marker'
+        run: |
+          curl --fail --location --retry 3 --silent --show-error -o llama.tgz \
+            https://github.com/ggml-org/llama.cpp/releases/download/b11177/llama-b11177-bin-ubuntu-x64.tar.gz
+          echo "9e088583293c4c104953ead0dd8957f4e00dca318c7f241c039198e5eb2e2e54  llama.tgz" | sha256sum --check
+          tar -xzf llama.tgz -C "$RUNNER_TEMP"
+          echo "LLAMA_CPP_BINARY=$RUNNER_TEMP/llama-b11177/llama-server" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/llama-b11177" >> "$GITHUB_ENV"
+
+      - name: Install ${{ matrix.tool }}
+        if: steps.selected.outputs.run == 'true'
+        run: |
+          pip install --quiet -r bench/requirements/harness.txt
+          if [ -f "bench/requirements/$TOOL.txt" ]; then pip install --quiet -r "bench/requirements/$TOOL.txt"; fi
+
+      - name: Run ${{ matrix.tool }} ${{ matrix.shard }}
+        if: steps.selected.outputs.run == 'true'
+        run: |
+          name="$TOOL-${SHARD/\//of}"
+          echo "NAME=$name" >> "$GITHUB_ENV"
+          python bench/run.py --tool "$TOOL" --shard "$SHARD" --corpus corpus \
+            --out "out/$name.json" --save-outputs "out/outputs/$TOOL"
+
+      - uses: actions/upload-artifact@v7
+        if: steps.selected.outputs.run == 'true' && always()
+        with:
+          name: results-${{ env.NAME }}
+          path: out/
+          if-no-files-found: ignore
+
+  report:
+    name: Leaderboard
+    needs: bench
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: results-*
+          path: parts
+          merge-multiple: true
+
+      - name: Merge shards and render
+        run: |
+          for tool in $(ls parts/*.json | xargs -n1 basename | sed -E 's/-[0-9]+of[0-9]+\.json$//' | sort -u); do
+            python3 bench/merge.py "bench/results/$tool.json" parts/"$tool"-*.json
+          done
+          python3 bench/leaderboard.py --print | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: agentdocbench-results
           path: |
-            bench-results.json
-            bench-outputs/
+            bench/results/
+            parts/outputs/

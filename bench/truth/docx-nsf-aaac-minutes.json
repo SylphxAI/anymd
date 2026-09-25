@@ -1,0 +1,144 @@
+{
+ "id": "docx-nsf-aaac-minutes",
+ "derived_from": "DOCX XML (word/document.xml): paragraphs with pStyle and numPr, the table cells, the table-of-contents content control (w:sdt) and the title text box (mc:AlternateContent, where the Choice and Fallback branches both hold the same title). Section headings (Heading2) also appear in the TOC, and 'Q&A Session' is used 4 times, so order uses the openings of body passages instead of headings. The attendee table is a 3-column layout grid with label rows and blank spacer rows; all rows are kept.",
+ "sentences": [
+  "Carrie Black (NSF) welcomes everyone to the meeting.",
+  "He asks the committee to think about what information they will need to write the report and any further questions they will have for the agencies.",
+  "Dr. Murayama ends the presentation.",
+  "Rubin – the camera will be shipped to Chile in March, and system first light is planned for January 2025.",
+  "Smith asks the committee a final question: in a funding-constrained environment, what criteria/considerations would you use to prioritize the recommendations of Astro2020 across the different areas?",
+  "Darcy Barron suggests a presentation regarding the Radio Conference.",
+  "Elizabeth Pentecost gives a short farewell message to the committee.",
+  "Chris Smith says that they will get back to the committee on that topic."
+ ],
+ "order": [
+  "MEETING CONVENED AT 12PM ON 15 DECEMBER 2023",
+  "Dr. Hitoshi Murayama presents the findings",
+  "Dr. Mark Clampin presents on the current state",
+  "Kathy Turner presents on the High-Energy Physics",
+  "Interim Director Chris Smith provides an update",
+  "Lucy Ziurys reports on the status",
+  "Further discussion centered around the logistics",
+  "4:36 PM Meeting Concludes",
+  "END OF MEETING"
+ ],
+ "tables": [
+  {
+   "caption": "Attendees",
+   "page": null,
+   "complete": true,
+   "rows": [
+    [
+     "Committee Members:",
+     "",
+     ""
+    ],
+    [
+     "Britt Lundgren",
+     "Wenda Cao",
+     "Sarah Horst"
+    ],
+    [
+     "Ann Zabludoff",
+     "Michael McCarthy (chair)",
+     "Nikole Lewis"
+    ],
+    [
+     "Darcy Barron",
+     "Alyson Brooks",
+     "Abigail Vieregg"
+    ],
+    [
+     "Lucy Ziurys",
+     "",
+     ""
+    ],
+    [
+     "",
+     "",
+     ""
+    ],
+    [
+     "Agency Personnel:",
+     "",
+     ""
+    ],
+    [
+     "Carrie Black (NSF)",
+     "Zoran Ninkov (NSF)",
+     "Harshal Gupta (NSF)"
+    ],
+    [
+     "Chris Smith (NSF)",
+     "Martin Still (NSF)",
+     "Donna O’Malley (NSF)"
+    ],
+    [
+     "Dan Fabrycky (NSF)",
+     "James Neff (NSF)",
+     "Valerie Maizel (NSF)"
+    ],
+    [
+     "Jean Cottam Allen (NSF)",
+     "Elizabeth Pentecost (NSF)",
+     "Carrie Kolar (NSF – Assoc.)"
+    ],
+    [
+     "Allison Farrow (NSF)",
+     "Andreas Berlind (NSF)",
+     "Christopher Davis (NSF)"
+    ],
+    [
+     "Hashima Hassan (NASA)",
+     "Mark Clampin (NASA)",
+     ""
+    ],
+    [
+     "Bryan Field (DOE)",
+     "Ted Levine (DOE)",
+     "Kathy Turner (DOE)"
+    ],
+    [
+     "",
+     "",
+     ""
+    ],
+    [
+     "Others:",
+     "",
+     ""
+    ],
+    [
+     "Terri Green",
+     "Nail Gaffney",
+     "Murdoch Gilchriese"
+    ],
+    [
+     "Amy Bender",
+     "Ashlee Wilkins",
+     "Chris Davis"
+    ],
+    [
+     "Nigel Sharp",
+     "Linnea Avallone",
+     "Karsten Heeger"
+    ],
+    [
+     "John Carlstrom",
+     "Alison Peck",
+     "David Morris"
+    ],
+    [
+     "James Strait",
+     "James Lochner",
+     "Hitoshi Murayama"
+    ],
+    [
+     "Solomon Morgan",
+     "Vladimir Papitashvili",
+     ""
+    ]
+   ]
+  }
+ ]
+}

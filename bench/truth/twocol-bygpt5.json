@@ -1,0 +1,30 @@
+{
+ "id": "twocol-bygpt5",
+ "derived_from": "PDF text layer (pdftotext, NFKC-normalised) for sentences/order/cells; page images checked at 110 dpi for pages 3 and 15 (two-column layout, Table 1 and Table 5)",
+ "sentences": [
+  "Such forms of human supervision lead to ramifications that an end-to-end solution would not face.",
+  "We do not experiment with models with more than 400 million parameters since they exceed the capacity of our available GPU resources.",
+  "We also explore how token-free models perform on higher-level styles which are not character- or subword-level phenomena.",
+  "Especially ByGPT5 fares well against GPT-2, suggesting that token-free models are also competitive on higher-level tasks.",
+  "Unlike ByGPT5, GPT-2 does not put any visible emphasis on input style tokens, which suggests that it does not understand how to handle them very well.",
+  "Our verdict is that ChatGPT is a viable approach for poetry generation but not style-conditioned poetry generation.",
+  "Our human annotators are fluent in English at a C1 or higher level according to the Common European Framework of Reference for Languages (CEFR)."
+ ],
+ "order": [
+  "State-of-the-art poetry generation systems are",
+  "End-to-end fine-tuning of pre-trained language models",
+  "We induce a range of end-to-end poetry generation",
+  "An overview of all models we use can be seen in Table 1.",
+  "For pre-training our own token-free decoder-only",
+  "To introspect the decision-making processes of our",
+  "into a sum of vectors and define a new measure",
+  "The poetry corpora we collect are English Project",
+  "The eight emotions in Po-Emo we train our"
+ ],
+ "tables": [
+  {"caption": "Table 5: F1-Score on classifying rhyme and meter.", "page": 15, "complete": true,
+   "rows": [["Model", "Rhyme", "Meter"], ["Canine-C", "98.05", "58.49"], ["XLM-R", "97.22", "54.65"], ["mBERT", "97.17", "49.01"]]},
+  {"caption": "Table 1: Pre-trained models we fine-tune.", "page": 3, "complete": false,
+   "rows": [["ByGPT5", "base", "139.2m", "Decoder", "✓"], ["ByT5", "small", "300m", "Enc-Dec", "✓"], ["mT5", "small", "300m", "Enc-Dec", "✗"]]}
+ ]
+}

@@ -28,9 +28,9 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 
 ## Why anymd
 
-<!-- generated:bench-fast -->
-- **Fast.** Native Rust converts in parallel, page by page. On the 15-page *Attention Is All You Need* paper, anymd takes **0.13 s**: 23× faster than MarkItDown and 571× faster than docling, with every table intact.
-  <!-- /generated:bench-fast -->
+<!-- fast:start -->
+- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **12.1 s** in total; docling 1,723.3 s (142×), markitdown 45.4 s (4×), marker 5,256.3 s (434×).
+<!-- fast:end -->
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
 - **Every format, one call.** One tool reads every format listed below. It also accepts web URLs and whole directories, and `search` looks across all of them.
@@ -116,25 +116,21 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 
 ## Benchmarks
 
-<!-- generated:bench-summary -->
-12 real documents (7 PDFs, plus DOCX, PPTX, XLSX, EPUB, and HTML), on 4 CPUs (x86_64), 2026-09-25:
+[AgentDocBench](docs/guide/benchmarks.md) is an open benchmark for document → Markdown conversion for agents: license-clean documents in 12 categories (math papers, two-column papers, financial tables, forms, scans, CJK, slides, spreadsheets, Word, EPUB, HTML), scored on verbatim sentences, text F1, reading order, and table cells, with time and output tokens. Every tool runs on the same kind of GitHub-hosted runner (4 CPUs):
 
-| | **anymd** | docling | MarkItDown | kreuzberg | pdftotext |
-|---|---|---|---|---|---|
-| Total time, 12 documents | **0.40 s** | 964 s | 22.5 s | 2.8 s | 0.36 s ¹ |
-| Sentences intact (12) | **12** | 11 | 5 | 12 | 12 |
-| Table rows recovered (26) | **26** | 25 | 15 | 0 | 0 |
-| Reading order correct (5) | **5** | 3 | 3 | 5 | 5 |
-| Output tokens (o200k) | **98.6k** | 126.4k | 144.7k | 125.0k | 74.1k ¹ |
+<!-- headline:start -->
 
-<sub>¹ pdftotext reads PDFs only and outputs plain text without tables.</sub>
+| | docling | **anymd** | kreuzberg | unstructured | markitdown | marker | pdftotext |
+|---|---|---|---|---|---|---|---|
+| Overall score | 93.0 | 90.4 | 81.7 | 81.2 | 76.8 | 71.0 | 42.2 |
+| Table cells F1 | 89.9 | 75.5 | 38.4 | 38.4 | 57.2 | 60.9 | 0.0 |
+| Reading order | 94.4 | 96.2 | 96.8 | 93.9 | 85.5 | 76.8 | 52.0 |
+| Docs converted | 38/38 | 38/38 | 38/38 | 38/38 | 38/38 | 30/38 | 23/38 |
+| Time, all docs | 2,432.4 s | 30.0 s | 16.0 s | 346.5 s | 75.6 s | 7,104.5 s | 0.90 s |
 
-On the 15-page *Attention Is All You Need* paper, anymd takes **0.13 s**, docling 75.9 s, and MarkItDown 3.0 s; MarkItDown keeps 0 of 4 reference sentences intact. On the Wikipedia article, anymd's main-content extraction uses **21.7k tokens**; docling 37.6k, kreuzberg 51.7k, MarkItDown 54.6k.
-<!-- /generated:bench-summary -->
+<!-- headline:end -->
 
-Each tool runs as a fresh process, and every number is the median of 3 runs (docling runs once, after its models are warmed up). Tokens are counted with `o200k_base`. **Sentences intact** counts reference sentences that come out verbatim; glued words or split columns fail the check. **Table rows** counts ground-truth rows that come out as one Markdown table row with the cells in order. The method, corpus, ground truth, raw results, and scripts are in [`bench/`](bench/), and the [Benchmark workflow](.github/workflows/benchmark.yml) re-runs everything on GitHub-hosted runners.
-
-The official `@modelcontextprotocol/server-pdf` is left out of the table because it has no headless text path. It renders PDFs in an interactive viewer, and its `read_pdf_bytes` tool returns base64-encoded bytes.
+The generated leaderboard, per-category scores (including where anymd loses), and method are in the [benchmark guide](docs/guide/benchmarks.md). The corpus, ground truth, adapters, and raw results are in [`bench/`](bench/), and the [Benchmark workflow](.github/workflows/benchmark.yml) reruns everything; new tools can join with a single adapter file.
 
 ## MCP tools
 

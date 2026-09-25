@@ -1,0 +1,713 @@
+arXiv:2403.02276v1 [math.CO] 4 Mar 2024
+
+Diametric problem for permutations with the Ulam
+metric (optimal anticodes)
+Pat Devlin∗
+
+Leo Douhovnikoff†
+
+February 29, 2024
+
+Abstract
+We study the diametric problem (i.e., optimal anticodes) in the space of permutations under the Ulam distance. That is, let Sn denote the set of permutations on n
+symbols, and for each σ, τ ∈ Sn , define their Ulam distance as the number of distinct
+symbols that must be deleted from each until they are equal. We obtain a near-optimal
+upper bound on the size of the intersection of two balls in this space, and as a corol2/3
+lary, we prove that a set of diameter at most k has size at most 2k+Ck n!/(n − k)!,
+compared to the best known construction of size n!/(n − k)!. We also prove that sets
+of diameter 1 have at most n elements.
+
+1
+
+Introduction
+
+One of the most active branches of research within extremal combinatorics and theoretical computer science amounts to the study of finite metric spaces and subsets whose
+elements satisfy some distance condition. Most notably, motivated by applications to
+error-correction, one very popular theme has been to study codes—i.e., sets whose elements are all far apart. For traditional codes, where each point is a binary string,
+the literature is particularly vast [26], but since the introduction of rank modulation
+schemes [23] a good amount of recent attention has also been given to codes whose
+elements are permutations [3, 8, 20, 30]. In that setting, information is stored as permutations, and various notions of distance are used to model different types of errors
+that can occur during storage or retrieval.
+Dual to the notion of codes are anticodes—i.e., sets where any two elements must
+be close—which in the language of geometry are sets of small diameter. In addition
+to having deep connections to coding theory [9], anticodes are natural objects of study
+in their own right. In fact, many celebrated results of extremal combinatorics can be
+viewed as statements about sets of bounded diameter including the Erdős–Ko–Rado
+∗
+
+Swarthmore College, Swarthmore PA, USA
+pdevlin2@swarthmore.edu
+Swarthmore College, Swarthmore PA, USA
+ldouhov1@swarthmore.edu
+AMS 2020 subject classification: 05D05, 05A05, 05C35, 05C69
+Key words and phrases: permutations, isodiametric problem, anticodes, Ulam distance, deletion
+distance, longest common subsequence, rank modulation, translocations
+†
+
+1
+
+theorem [13] and—more obviously—Kleitman’s theorem [24, 1]. As a more recent example, the question of anticodes of permutations under the Hamming distance, first
+raised in 1977 by Deza and Frankl [16], was fully resolved in 2010 by an elegant argument of Ellis, Friedgut, and Pilpel [11]. See [12, 17] for yet more examples as well as
+discussions of related results.
+This paper addresses the metric space of permutations under the Ulam distance.
+Codes in this space have received a lot of recent attention [15, 21, 14, 19, 18] and
+they are related to other combinatorial problems as well [4, 6, 7]. Our paper addresses
+anticodes in this space.
+
+Ulam distance and our main question
+Let Sn denote the set of permutations on n symbols viewed in one-line notation as
+strings σ(1)σ(2) . . . σ(n). For a permutation σ ∈ Sn and A ⊆ {1, 2, . . . , n}, we let σ − A
+denote the string resulting from deleting all the symbols of A from σ (and contracting
+the string to have fewer characters). For example, we have
+45231 − {1, 2} = 453
+
+and
+
+15243 − {5} = 1243.
+
+In this notation, the Ulam distance between strings α, β ∈ Sn , can be defined as
+dU (α, β) = min{|A| : α − A = β − A}. Said slightly differently, it is the least number
+of distinct symbols that need to be deleted from α and β until they are equal. This
+distance, also called the deletion distance, amounts to finding the length of the longest
+common subsequence, and in fact it satisfies the properties of a metric. See [10] for a
+general discussion of this and other permutation metrics.
+The question of determining the expected distance between two uniformly chosen
+permutations was first raised in 1961 by Ulam [29], and this has since garnered a
+great deal of attention over the years (see, e.g., the textbook [27] written on this exact
+subject). Said geometrically, such results essentially discuss the size of various balls in
+√
+this metric, with radii approximately n − 2 n being particularly interesting [as this is
+the radius required for a ball to occupy a constant proportion of the space].
+Instead of studying sets of given radius, we ask how large a set of given diameter
+can be in this space.
+Main question: What are the largest possible sets F ⊆ Sn such that every
+α, β ∈ F satisfies dU (α, β) ≤ k? Let fk (n) denote the maximum size of such a set.
+One particularly natural candidate for a large set with small diameter is:
+Example 1. For A ⊆ {1, . . . , n} and α ∈ Sn , consider F = {γ ∈ Sn : γ −A = α−A}.
+Then F has size n!/(n − |A|)! and diameter |A|.
+By the analogy that γ 7→ γ − A can be viewed as a type of projection, a set as
+in Example 1 might reasonably be called a cylinder in this space. This example—as
+n!
+≤ fk (n), and [25] computed that when k is
+implicitly given in [15]—shows
+(n − k)!
+even, this set is larger than a ball of radius k/2. This leads us to the conjecture that
+this construction is in fact best possible.
+
+2
+
+n!
+. Moreover, if
+(n − k)!
+k < n − 2, the sets attaining this bound must be of the form described in Example 1.
+Conjecture 1. For each 0 ≤ k ≤ n, we conjecture fk (n) =
+
+Although the main question above has been recently studied for different metrics on
+permutations [28, 2], to the authors’ knowledge nothing else is known on this question.
+
+Our results
+The first—and most obvious—upper bound on fk (n) is that it must be less than the
+size of a ball of radius k (it should also be at least the size of a ball of radius k/2, but
+as computed in [25] this is in fact less than n!/(n − k)!). Since a ball of radius k has
+2
+size at most k! nk , this gives the bound
+ 
+n
+n!
+n!
+≤ fk (n) ≤
+.
+(n − k)!
+(n − k)! k
+When k is small relative to n, this implies that fk (n) is between roughly nk and
+n2k /k!. Our main result closes this gap considerably—eliminating its dependence on
+n—thereby providing strong asymptotic evidence that Conjecture 1 is true.
+Theorem 1. There is a constant C ≥ 0 such that for all integers n and k we have
+n!
+2/3
+n!
+≤ fk (n) ≤
+· 2k+Ck .
+(n − k)!
+(n − k)!
+This is obtained as an immediate corollary of the following, which bounds the size
+of the intersection of two balls in this space and may be of independent interest.
+Theorem 2. There is a constant C ≥ 0 for which the following is true for all integers
+n and k. If α and β are permutations in Sn with dU (α, β) = k, then we have
+{γ ∈ Sn : dU (α, γ) ≤ k and dU (β, γ) ≤ k} ≤ 2k+Ck
+
+2/3
+
+n!
+.
+(n − k)!
+
+Despite the exponential gap of roughly 2k in Theorem 1, it is worth noting that the
+upper bound via Theorem 2 does not allow for much room for improvement. Consider
+for instance α = 1, 2, 3, . . . , n and β a product of k disjoint transpositions such as
+β = 2, 1, 4, 3, 6, 5, . . . , 2k, 2k − 1, 2k + 1, 2k + 2, 2k + 3, . . . , n.
+In this case, dU (α, β) = k and the corresponding intersection of balls as in Theorem
+′ 2
+2 has size at least 2k−C k /n n!/(n − k)! (thus when k = o(n), a bound of the form
+2k+o(k) n!/(n − k)! is best possible in Theorem 2).
+If desired, Theorem 2 can be generalized to the setting where dU (α, β) = τ is an
+additional parameter (instead of insisting τ = k), and in fact our proof essentially as
+written already allows for this. But we omit this since the details of the argument and
+result statement become slightly more complicated, and—importantly—doing so did
+not provide any improved upper bound for Theorem 1. We also note that we made no
+2/3
+particular effort to push down the error term 2Ck since the gap due to the dominant
+term—namely 2k —is unavoidable with this approach.
+Turning our attention to other aspects of fk (n), we first note the following basic
+properties—included mostly for completeness.
+
+3
+
+Proposition 1. For each 0 ≤ k ≤ n, we have
+(i) fk (n) ≤ fk+1 (n),
+
+(ii) fk (n) ≤ fk (n + 1), and
+
+(iii) (n + 1)fk (n) ≤ fk+1 (n + 1).
+Here, properties (i) and (ii) are immediate from the definition. Property (iii) follows
+by a standard sort of ‘tensoring’ trick where given a set F ⊆ Sn of diameter k, we can
+construct the set
+G = {γ ∈ Sn+1 : γ − {n + 1} ∈ F} ⊆ Sn+1 .
+Then |G| = (n + 1)|F| and G has diameter k + 1. Property (iii) could be particularly
+useful in the setting that n − k = L is fixed, in which case we see that fn−L (n)/n! is
+an increasing (and bounded) sequence in n, and Conjecture 1 would be equivalent to
+lim fn−L (n)/n! ≤ 1/L!. Although the authors do not see how to further leverage this
+n→∞
+observation, we are able to resolve the conjecture in a few special cases:
+Proposition 2. For each integer n, we have
+(i) fn (n) = fn−1 (n) = n! and f0 (n) = 1,
+(ii) fn−2 (n) = n!/2,
+(iii) f1 (n) = n.
+A complete proof of Proposition 2 is given later, but to build some intuition on
+the problem, let us partially discuss it now. As before, item (i) follows immediately
+from the definitions. Item (ii) is from the simple observation that such a family cannot include both a permutation and its reverse (since those are at distance n − 1).
+Although we were able to come up with several different proofs that f1 (n) ≤ n, none
+seemed particularly well-suited for generalization (even to the case f2 (n)). In fact, we
+believe that any human-readable argument resolving f5 (n) (for example) would likely
+generalize considerably. On the other end, we feel that determining fn−3 (n) would also
+be particularly enlightening.
+Prior to discovering Theorem 1, we were able to obtain a number of other (strictly
+worse) results. Of these, we feel it worth mentioning the following, primarily because
+its proof is short, and it may perhaps be helpful in generating new approaches.
+Proposition 3. For all 0 ≤ k ≤ n we have,
+
+
+n−1 2
+4n2k−1
+.
+≤
+fk (n) ≤ 4n(k − 1)!
+(k − 1)!
+k−1
+Our main arguments require the following two results, each of which feels too natural
+(and frankly too easy to prove) to suspect that we are the first to use them. After a
+literature search, we were in fact able to find a statement and proof of Lemma 1 (see
+e.g., [5]). We were unable to find a reference for Lemma 2, but we do not suspect it is
+new. Relevant definitions (and a proof of Lemma 2) are given in Section 2.
+Lemma 1. For each σ, γ ∈ Sn , let G(σ, γ) denote the graph on {1, 2, . . . , n} where
+x ∼ y iff (σ(x) − σ(y))(γ(x) − γ(y)) < 0. Then σ − C = γ − C iff C is a vertex cover
+of G(σ, γ). In particular, dU (σ, γ) is the vertex cover number of G(σ, γ).
+
+4
+
+The graph G(σ, τ ) can also be thought of in terms of inversion graphs. Namely,
+for each γ ∈ Sn , let Iγ denote the graph on {1, 2, . . . , n} where x ∼ y iff x < y and
+γ(x) > γ(y). Then we have G(σ, τ ) = Iσ ⊕ Iτ , where ⊕ denotes the graph symmetric
+difference [i.e., e ∈ Iσ ⊕ Iτ iff e is present in exactly one of those inversion graphs].
+Lemma 2. Suppose G is a graph on V withvertex cover
+number τ . The number of
+
+|V
+|
+−
+τ
+vertex covers having m vertices is at most 2τ
+.
+m−τ
+
+Outline of the paper
+We begin in Section 2 where we introduce some common notation and prove Lemma
+2. We then prove the previously stated Propositions in Section 3. We prove our main
+results in Section 4, and finally, we conclude in Section 5 with a discussion of open
+problems.
+
+2
+
+Notation and proof of Lemma 2
+
+Throughout, we focus on the Ulam distance, and we write dU as d. Recall that a vertex
+cover of a graph is a set C such that every edge of G has at least one endpoint in C,
+and the vertex cover number is the size of the smallest vertex cover. We also use the
+notation N (x) = {y : y ∼ x} to denote the neighborhood of a vertex x.
+We now turn our attention to a proof of Lemma 2.
+Proof. Let S be a fixed vertex cover of size τ . Framing our proof algorithmically, for
+each vertex cover C of size m, we ask the following questions:
+(i) We first ask: what is the set U := C ∩ S?
+[
+N (x).
+• We then define T = U ∪
+x∈S−C
+
+(ii) We then ask: what is C − T ?
+
+Having answered questions (i) and (ii), we claim that this determines C [and in fact
+that C = (C − T ) ∪ T ]. To see this, we need only show that T ⊂ C, which is to say: if
+x ∈ S − C then N (x) ⊆ C. In fact, if y ∈ N (x) but x ∈
+/ C, then C must meet the edge
+x ∼ y (since C is a vertex cover), so we would need y ∈ C. Therefore, T ⊆ C.
+Now we claim that T is a vertex cover. For this, suppose u ∼ v is an edge of G.
+Since S is a vertex cover, we must have at least one of these vertices in S—without
+loss of generality, say u ∈ S. If u ∈ C, then u ∈ T since u ∈ C ∩ S ⊆ T . On the other
+hand, if u ∈
+/ C, then u ∈ S − C, so N (u) ⊆ T , which means y ∈ T .
+Finally, we just need to estimate the number of ways that questions (i) and (ii) can
+be answered. Question (i) can be answered in at most 2|S| = 2τ ways. After this, the
+set T is determined, and since T is avertex cover,
+ ithas sizeat least τ . Thus, question
+|V | − |T |
+|V | − τ
+(ii) can be be answered in at most
+≤
+ways.
+|C| − |T |
+m−τ
+
+3
+
+Proofs of Propositions 2 and 3
+
+Throughout this section, as a slight abuse of notation, when σ ∈ Sn and a ∈ {1, . . . , n},
+we write σ − a to mean σ − {a}.
+
+5
+
+Proof of Proposition 2
+As noted before, the claims in item (i) follow immediately from the definitions, and the
+fact that fn−2 (n) ≤ n!/2 is because a family of diameter at most n − 2 cannot have a
+permutation as well as its reverse (since those are at distance n − 1). Thus, we restrict
+our attention to the claim in item (iii).
+Proof. We need only prove f1 (n) ≤ n. We first outline our argument for clarity’s sake.
+
+• Suppose F ⊆ Sn is a set of diameter 1. For each 1 ≤ t ≤ n, let Ft ⊆ F denote
+the set of permutations where the symbol 1 appears in the tth position.
+
+• Claim 1: If |F1 | ≥ 2, then F = F1 ∪ F2 .
+
+• Claim 2: It is not possible to have |F1 | ≥ 2 and |F2 | ≥ 2.
+
+• Claim 3: We have |F| ≤ n.
+
+Claim 1: Suppose to the contrary that x, y ∈ F1 and that we have some γ ∈ Ft
+where t > 2. Since d(x, γ) ≤ 1, we know there is some a such that x − a = γ − a. But in
+fact we would need a = 1 since otherwise x − a would start with the symbol 1 whereas
+γ − a would not. Thus we would need x − 1 = γ − 1 and similarly y − 1 = γ − 1, but
+this is impossible since x − 1 6= y − 1 (as x 6= y and both permutations begin with 1).
+Claim 2: Now suppose for contradiction x, y ∈ F1 and p, q ∈ F2 . Say p = p1 , 1, . . .
+and q = q1 , 1, . . .. Since d(x, p) ≤ 1, there is some a where x − a = p − a. If a = 1, then
+x = 1, p1 , . . ., which would mean that x − p1 = p − p1 . On the other hand, if a 6= 1,
+then we would need a = p1 since otherwise x − a and p − a would begin with different
+characters. Thus, in either case, we must have x − p1 = p − p1 .
+Similarly, x − p1 = p − p1 = y − p1 and x − q1 = q − q1 = y − q1 .
+If p1 = q1 , then we would know p − p1 = x − p1 = x − q1 = q − q1 , but this would
+be impossible since p 6= q, but in this scenario p and q would both start with the same
+symbol [the deletion of which would result in equal strings].
+Thus, we can assume that p and q have different initial symbols, but we claim this
+too is impossible. To see this, if p − a = q − a, then we would need a ∈ {p1 , q1 }
+otherwise they would start with different symbols. But in that case, one of p − a or
+q − a would begin with a 1, and the other would have a 1 in its second entry.
+Claim 3: Finally, suppose |F| > n. Then we would know that two permutations
+in F would begin with the same symbol—without loss of generality, say this is the
+symbol 1. By claims 1 and 2, we would then need that at most one permutation of F
+begins with a symbol other than 1. And by induction on n, we’d have |F1 | ≤ n − 1,
+which would mean |F| ≤ n as desired.
+
+Proof of Proposition 3
+Proof. Let α, β ∈ F be arbitrary and let {u, v} be an edge in the graph G(α, β)
+of Lemma 1 (i.e., say α places u before v, but β doesn’t). Now suppose γ ∈ F is
+arbitrary. Then we claim that one of the following must hold:
+d(γ − u, α − u) ≤ k − 1,
+d(γ − u, β − u) ≤ k − 1,
+
+d(γ − v, α − v) ≤ k − 1,
+or
+
+6
+
+d(γ − v, β − v) ≤ k − 1.
+
+This is because there must be sets A, B of size k where α−A = γ −A and β−B = γ −B.
+Thus α − (A ∪ B) = β − (A ∪ B), so A ∪ B contains at least one endpoint of the edge
+{u, v}. This means that either u ∈ A or v ∈ A or u ∈ B or v ∈ B (giving rise to the
+four cases above). Moreover, for any σ ∈ Sn and any w ∈ {1, 2, . . . , n} we have
+
+
+n−1 2
+,
+{γ ∈ Sn : d(γ − w, σ − w) ≤ k − 1} ≤ n · |Bk−1 (n − 1)| ≤ n · (k − 1)!
+k−1
+where Br (m) ⊆ Sm denotes a ball of radius r.
+
+4
+
+Proof of Theorem 2
+
+Say α and β are in Sn and d(α, β) = k. Let F = {γ : d(α, γ) ≤ k and d(β, γ) ≤ k}.
+We’ll bound |F| by analyzing an algorithm whose outputs include all of F.
+
+Process for selecting γ
+Consider the following process, which—given α and β—we claim is a way to describe
+each γ ∈ F (as well as sets A and B of size k for which γ−A = α−A and γ−B = β−B).
+(0) Decide |A ∪ B| = λ.
+(1) Decide A ∪ B.
+
+(2) Decide A and B.
+(3) For all x ∈ A \ B and y ∈ B \ A, decide which comes first in γ.
+(4) For each z ∈ A ∩ B, decide the exact placement of z in γ.
+
+Before further analyzing each of the above steps, let us first prove that going through
+this process will enable us to uniquely determine γ ∈ F—implying that the number of
+possible outputs of the above is an upper bound on |F|.
+To determine a permutation γ, note that for all x, y ∈ {1, 2, . . . , n} we need only
+decide which symbol appears first. Having concluded steps (0), (1), and (2), we will
+have determined both γ − A and γ − B (since γ − A = α − A and γ − B = β − B),
+which means for each x, y ∈
+/ A ∩ B, we will know the relative order of x and y unless
+one symbol is in A \ B and the other is in B \ A. And thus, after step (3), will will
+know the relative orders for all x, y ∈
+/ A ∩ B. Finally, step (4) determines the exact
+placement of each z ∈ A ∩ B within γ, which uniquely defines γ. This is summarized
+in the following table.
+
+y∈
+/ A∪B
+y ∈A\B
+y ∈B\A
+y ∈A∩B
+
+x∈
+/ A∪B
+γ − A, γ − B
+γ−B
+γ−A
+(Step 4)
+
+x∈ A\B
+γ−B
+γ−B
+(Step 3)
+(Step 4)
+
+x∈B\A
+γ−A
+(Step 3)
+γ−A
+(Step 4)
+
+x∈A∩B
+(Step 4)
+(Step 4)
+(Step 4)
+(Step 4)
+
+Table 1: How the relative order of each x, y is determined
+
+7
+
+Analyzing this selection process
+To obtain our upper bound on |F|, we bound how many ways each step can be done.
+Step (0): First note that k ≤ λ ≤ 2k since k = |A| ≤ λ = |A ∪ B| ≤ |A| + |B| = 2k.
+Step (1): Since γ − A = α − A and γ − B = β − B, we know that α − (A ∪ B) =
+β − (A ∪ B). Thus, if G(α, β) is the graph as in Lemma 1, we know
+A ∪ B is a vertex
+
+cover of G(α, β). And so by Lemma 2, there are at most 2k n−k
+choices
+in step (1).
+λ−k
+Step (2): Having selected A ∪ B, the number of ways to select subsets A and B
+ k 
+ |A| 
+= λk 2k−λ
+.
+each of size k is exactly |A∪B|
+|A∩B|
+|A|
+Step (3): Having already completed steps (0), (1), and (2), we know A and B and
+we also know γ − A = α − A and γ − B = β − B. For each x ∈ B \ A and y ∈ A \ B
+we need decide their relative order in γ. But since we already know the relative order
+of all the symbols within A \ B and also the relative order within B \ A, we need only
+decide how these two ordered lists of symbols interleave.1 Thus, step (3) can be done
+
+
+= 2(λ−k)
+ways.
+in exactly |A\B|+|B\A|
+λ−k
+|A\B|
+n!
+n!
+=
+ways, since this
+Step (4): This can be done in
+(n − |A ∩ B|)!
+(n − (2k − λ))!
+amounts to inserting |A ∩ B| symbols into an otherwise sorted list of length n − |A ∩ B|.
+Thus, combining these estimates, we obtain
+2k
+X
+
+
+
+  
+ 
+
+n−k
+λ
+k
+2(λ − k)
+n!
+2
+|F| ≤
+·
+·
+·
+λ−k
+(n − (2k − λ))!
+k
+2k − λ
+λ−k
+λ=k
+  
+
+
+k 
+X
+n!
+k+j
+k
+2j
+n−k
+(n − k)!
+= 2k
+j
+j
+(n − k)!
+j (n − k + j)!
+j
+k
+
+j=0
+
+≤ 2k
+
+j
+k    
+k 
+X
+X
+2k
+C0 k 2
+k
+n!
+2j 1
+n!
+,
+≤ 2k
+j
+(n − k)!
+(n − k)!
+j3
+j
+j j!
+j=0
+
+j=1
+
+for some constant
+C0 > 1, where the last inequality was obtained using the well-known
+M
+estimates L ≤ (eM/L)L and M ! ≥ (M/e)M .
+
+j
+3
+
+C0 k 2
+F (k, j + 1)
+jj
+2
+Finally, we see that if F (k, j) =
+,
+then
+=
+C
+k
+0
+j3
+F (k, j)
+(j + 1)j+1
+2/3
+is decreasing, and F (k, j) is maximized when a ≤ j/k
+≤ b for some fixed 0 < a <
+1 < b. Therefore, we obtain
+k
+
+X
+n!
+|F| ≤ 2
+(n − k)!
+k
+
+j=1
+
+
+
+C0 k 2
+j3
+
+j
+
+k
+
+X
+n!
+≤2
+(n − k)!
+k
+
+j=1
+
+
+
+C0
+a3
+
+bk2/3
+
+≤ 2k+Ck
+
+2/3
+
+n!
+,
+(n − k)!
+
+as desired.
+
+5
+
+Concluding remarks
+
+The most natural direction for future work would be the resolution of Conjecture 1.
+This conjecture holds for every value of fk (n) that we were able to directly compute,
+1
+
+This is precisely the same phenomenon as in the well-known “merge sort” algorithm.
+
+8
+
+although naturally the space of permutations quickly becomes prohibitively large. A
+purely combinatorial argument would be particularly pleasing, especially one that relied
+on techniques such as shifting to directly compare any small diameter set to one of the
+conjecturally best examples.
+As a note of caution, one tempting idea might be to strengthen the main conjecture
+in the spirit of the Hilton-Milner theorem [22]. Namely, one might hope that maximal
+sets which are not of the conjectured type are noticeably
+ smaller. That said, when k
+n 2
+is even, a ball of radius k/2 has size roughly (k/2)! k/2
+, which is annoyingly close to
+n!/(n − k)!, so such an approach—if viable—would need to be done with care.
+Another direction for further research might be to determine the best possible
+bound in Theorem 2. Although the example provided following the theorem statement
+shows that there is limited room for possible improvement, we do not believe that the
+2/3
+error term is correct. In fact, we conjecture that the example discussed yields
+2Ck
+the maximum possible set size.
+Finally, we note a different approach for improving our bound in Theorem 1 might
+be to argue that any suitably large family must have two permutations for which the
+bound given in Theorem 2 is noticeably smaller than the most general case. For this,
+we suspect an unavoidable task would be finding permutations α, β ∈ F for which the
+graph in Lemma 1 has appreciably fewer vertex covers than implied by Lemma 2.
+
+References
+[1] Rudolf Ahlswede and Levon H. Khachatrian. The diametric theorem in Hamming spaces—optimal anticodes. Advances in Applied Mathematics, 20(4):429–
+449, 1998.
+[2] Daniella Bar-Lev, Tuvi Etzion, and Eitan Yaakobi. On the size of balls and
+anticodes of small diameter under the fixed-length Levenshtein metric. IEEE
+Transactions on Information Theory, 69(4):2324–2340, 2023.
+[3] János Barta and Roberto Montemanni. Hamming graphs and permutation codes.
+In 2017 Fourth International Conference on Mathematics and Computers in Sciences and in Industry (MCSI), pages 154–158, 2017.
+[4] Paul Beame, Eric Blais, and Dang-Trinh Huynh-Ngoc. Longest common subsequences in sets of permutations. arXiv preprint arXiv:0904.1615, 2009.
+[5] Christian Blum, Marko Djukanovic, Alberto Santini, Hua Jiang, Chu-Min Li, Felip
+Manyà, and Günter R. Raidl. Solving longest common subsequence problems
+via a transformation to the maximum clique problem. Computers & Operations
+Research, 125:105089, 2021.
+[6] Boris Bukh and Jie Ma. Longest common subsequences in sets of words. SIAM
+Journal on Discrete Mathematics, 28(4):2042–2049, 2014.
+[7] Boris Bukh and Lidong Zhou. Twins in words and long common subsequences in
+permutations. Israel Journal of Mathematics, 213:183–209, 2016.
+[8] Sarit Buzaglo and Tuvi Etzion. Bounds on the size of permutation codes with the
+Kendall τ -metric. IEEE Transactions on Information Theory, 61:1–1, 06 2015.
+[9] Philippe Delsarte. Bilinear forms over a finite field, with applications to coding
+theory. Journal of Combinatorial Theory, Series A, 25(3):226–241, 1978.
+
+9
+
+[10] Michel Deza and Tayuan Huang. Metrics on permutations, a survey. 2004.
+[11] David Ellis, Ehud Friedgut, and Haran Pilpel. Intersecting families of permutations. Journal of the American Mathematical Society, 24(3):649–682, 2011.
+[12] David Ellis and Noam Lifshitz. Approximation by juntas in the symmetric group,
+and forbidden intersection problems. Duke Mathematical Journal, 171(7):1417 –
+1467, May 2022.
+[13] Paul Erdős, Chao Ko, and R. Rado. Intersection theorems for systems of finite
+sets. Quart. J. Math. Oxford Ser.(2), 12:313–320, 1961.
+[14] Farzad Farnoud and Olgica Milenkovic. Multipermutation codes in the Ulam
+metric. In 2014 IEEE International Symposium on Information Theory, pages
+2754–2758. IEEE, 2014.
+[15] Farzad Farnoud, Vitaly Skachek, and Olgica Milenkovic. Error-correction in flash
+memories via codes in the Ulam metric. IEEE Transactions on Information Theory, 59(5):3003–3020, 2013.
+[16] Peter Frankl and Mikhail Deza. On the maximum number of permutations with
+given maximal or minimal distance. Journal of Combinatorial Theory, Series A,
+22(3):352–360, 1977.
+[17] Zoltán Füredi, Dániel Gerbner, and Máté Vizer. A discrete isodiametric result:
+The Erdős–Ko–Rado theorem for multisets. European Journal of Combinatorics,
+48:224–233, 2015. Selected Papers of EuroComb’13.
+[18] Ryan Gabrys, Eitan Yaakobi, Farzad Farnoud, Frederic Sala, Jehoshua Bruck,
+and Lara Dolecek. Codes correcting erasures and deletions for rank modulation.
+IEEE Transactions on Information Theory, 62(1):136–150, 2016.
+[19] Faruk Göloğlu, Jüri Lember, Ago-Erik Riet, and Vitaly Skachek. New bounds for
+permutation codes in Ulam metric. In 2015 IEEE International Symposium on
+Information Theory (ISIT), pages 1726–1730. IEEE, 2015.
+[20] Hui Han, Jianjun Mu, Yu-Cheng He, and Xiaopeng Jiao. Coset partitioning
+construction of systematic permutation codes under the Chebyshev metric. IEEE
+Transactions on Communications, 67(6):3842–3851, 2019.
+[21] Farzad Farnoud Hassanzadeh and Olgica Milenkovic. Multipermutation codes in
+the Ulam metric for nonvolatile memories. IEEE Journal on Selected Areas in
+Communications, 32(5):919–932, 2014.
+[22] Anthony JW Hilton and Eric C Milner. Some intersection theorems for systems
+of finite sets. The Quarterly Journal of Mathematics, 18(1):369–384, 1967.
+[23] Anxiao Jiang, Robert Mateescu, Moshe Schwartz, and Jehoshua Bruck. Rank
+modulation for flash memories. In 2008 IEEE International Symposium on Information Theory, pages 1731–1735, 2008.
+[24] Daniel J Kleitman. On a combinatorial conjecture of Erdős. Journal of Combinatorial Theory, 1(2):209–214, 1966.
+[25] Justin Kong and Manabu Hagiwara. Nonexistence of perfect permutation codes
+in the Ulam metric. In 2016 International Symposium on Information Theory and
+Its Applications (ISITA), pages 691–695, 2016.
+
+10
+
+[26] Florence Jessie MacWilliams and Neil James Alexander Sloane. The theory of
+error-correcting codes, volume 16. Elsevier, 1977.
+[27] Dan Romik. The surprising mathematics of longest increasing subsequences. Number 4. Cambridge University Press, 2015.
+[28] Moshe Schwartz and Itzhak Tamo. Optimal permutation anticodes with the infinity norm via permanents of (0,1)-matrices. Journal of Combinatorial Theory,
+Series A, 118(6):1761–1774, 2011.
+[29] Stanislaw M Ulam. Monte Carlo calculations in problems of mathematical physics.
+Modern Mathematics for the Engineers, pages 261–281, 1961.
+[30] Xin Wang, Yiwei Zhang, Yiting Yang, and Gennian Ge. New bounds of permutation codes under Hamming metric and Kendall’s τ -metric. Designs, Codes and
+Cryptography, 85(3):533–545, 2017.
+
+11

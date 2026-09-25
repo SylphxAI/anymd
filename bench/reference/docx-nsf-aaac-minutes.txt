@@ -1,0 +1,199 @@
+Minutes of the Meeting of the
+Astronomy and Astrophysics Advisory Committee (AAAC)
+15 December 2023
+Minutes of the Meeting of the
+Astronomy and Astrophysics Advisory Committee (AAAC)
+15 December 2023
+
+Attendees:
+Committee Members:
+Britt Lundgren
+Wenda Cao
+Sarah Horst
+Ann Zabludoff
+Michael McCarthy (chair)
+Nikole Lewis
+Darcy Barron
+Alyson Brooks
+Abigail Vieregg
+Lucy Ziurys
+Agency Personnel:
+Carrie Black (NSF)
+Zoran Ninkov (NSF)
+Harshal Gupta (NSF)
+Chris Smith (NSF)
+Martin Still (NSF)
+Donna O’Malley (NSF)
+Dan Fabrycky (NSF)
+James Neff (NSF)
+Valerie Maizel (NSF)
+Jean Cottam Allen (NSF)
+Elizabeth Pentecost (NSF)
+Carrie Kolar (NSF – Assoc.)
+Allison Farrow (NSF)
+Andreas Berlind (NSF)
+Christopher Davis (NSF)
+Hashima Hassan (NASA)
+Mark Clampin (NASA)
+Bryan Field (DOE)
+Ted Levine (DOE)
+Kathy Turner (DOE)
+Others:
+Terri Green
+Nail Gaffney
+Murdoch Gilchriese
+Amy Bender
+Ashlee Wilkins
+Chris Davis
+Nigel Sharp
+Linnea Avallone
+Karsten Heeger
+John Carlstrom
+Alison Peck
+David Morris
+James Strait
+James Lochner
+Hitoshi Murayama
+Solomon Morgan
+Vladimir Papitashvili
+
+Contents
+12:00 PM Welcome and Opening Remarks2
+12:30 PM P5 Report – Hitoshi Murayama, University of California, Berkeley/Karsten Heeger, Yale University3
+Q&A Session4
+1:45PM NASA Update – Mark Clampin, Director, Astrophysics Division, Science Mission Directorate, NASA Headquarters4
+Q&A Session5
+2:15 PM DOE Update – Kathy Turner, DOE High-Energy Physics5
+Q&A Session6
+2:45 PM NSF Update – Chris Smith, NSF Astronomy Division Director (Interim)6
+Q&A Session7
+3:30 PM Task Force on Laboratory Astrophysics – Lucy Ziurys, LATF Chair/Harshal Gupta, NSF Astronomy7
+4:00 PM Public Comment period8
+4:02 PM Committee Discussion8
+
+MEETING CONVENED AT 12PM ON 15 DECEMBER 2023
+
+12:00 PM Welcome and Opening Remarks
+Carrie Black (NSF) welcomes everyone to the meeting. She reviews Conflicts of Interest for committee members, the role of the AAAC, FACA, and advisory committees in general. Black states that the purpose of the meeting is to hear presentations on current programming by the three agencies and other invited speakers, and to formulate recommendations for further cooperation. She introduces the committee chair, Mike McCarthy.
+Mike McCarthy suggests a round of introductions, then reminds the committee of the timeline for the AAAC, stating that there is this meeting, the January meeting, and then writing the committee’s report. He asks the committee to think about what information they will need to write the report and any further questions they will have for the agencies.
+Carrie Black tells the committee members attending that the minutes from the two previous meetings will be emailed to the committee, who must return them with edits or approval by close of business on Tuesday, December 19th. She reviews the plans for future meetings, and notes that while the January meeting has a date, she needs to send a Doodle poll for dates for the June & September meetings. The poll will be sent next week.
+12:30 PM P5 Report – Hitoshi Murayama, University of California, Berkeley/Karsten Heeger, Yale University
+Dr. Hitoshi Murayama presents the findings of the P5 report, “Exploring the Quantum Universe: Pathways to Innovation and Discovery in Quantum Physics” which was approved the previous Friday. His presentation includes:
+The P5 charge, timeline, and process
+Different budget scenarios and findings
+The goals and makeup of the US particle physics program
+The three themes of the report: Decipher the Quantum Realm, Illuminate the Hidden Universe, and Explore New Paradigms in Physics
+The six science drivers of the P5 report and how they overlap with Astrophysics
+Example: Cosmic Frontier addresses 4-5 of the science drivers, and the DESI project, South Pole telescope, AMS at the ISS, and LuSEE-Night all overlap in various ways with P5 particle physics drivers
+The major recommendations of the report:
+For major existing projects that should continue to take priorty, the report highlighted including HL-LHC, the first phase of DUNE and PIP-II, and the Vera C. Rubin Observatory
+For medium-scale existing projects that should continue, the report cited IceCube, SBN, T2K, NOVA; DarkSide – 20k; and DESI
+New major initiative recommendations: CMB-S4, a re-envisioned second phase of DUNE, an off-shore Higgs factory, an ultimate Generation 3 (G3) dark matter direct detection experiment, and IceCube Gen 2
+The CMB-S4 science and what it would achieve, as well as project cost estimates and profiles
+GB Dark Matter experiments potential science and achievements
+IceCube Gen 2 and how it intersects with the TDAMM goals of the Decadal
+The Dear Colleague letter from this past summer regarding the South Pole infrastructure, and that Master Planning for the future of the South Pole Station has begun, so they’re optimistic
+How to create an improved balance between small-, medium-, and large-scale projects
+Recommends continuing the small-project portfolio at DEO (ASTAE), continuing the MSRI and MRI programs at NSF, and supporting DESI-II for cosmic evolution and other specific projects
+Interests of the scientific community and how most of those were included in the report recommendations
+The media attention to the report, highlighting a Nature article, a NY Times article, etc.
+Dr. Murayama ends the presentation.
+Q&A Session
+The committee members ask questions on the following topics:
+The situation at the South Pole
+What P5 would request from the MREFC budget
+Any recommendations or findings the P5 report had on interagency cooperation
+If satellite interference was considered in the P5
+Community and workforce development recommendation in the P5 report
+1:30 PM 15-minute break
+1:45PM NASA Update – Mark Clampin, Director, Astrophysics Division, Science Mission Directorate, NASA Headquarters
+Dr. Mark Clampin presents on the current state of NASA’s astrophysics program and the state of their progress on the goals of the Decadal. Specific topics include:
+The current astrophysics fleet, both active mission and those in the planning stage
+Two exciting findings this year:
+James Webb telescope discovered methane and carbon dioxide in the atmosphere of K2-18b
+IXPE found that the Milky Way’s central black hole woke up 200 years ago
+Astrophysics division launches:
+Euclid (studying dark skies and dark matter)
+XRISM
+GUSTO (terahertz observatory, balloon mission)
+Progress update on the Nancy Grace Roman Telescope: it is on pace for launch by May 2027, progress is being made on assembly, and preliminary cold qualification test results show excellent instrument performance
+Updates on SPHEREx mission, GUSTO, and James Webb Space Telescope
+SPHEREx will provide the first all-sky spectral survey, and has a planned launch in 2025
+GUSTO launch is planned by the end of the year (within the next two weeks)
+James Webb is 18 months into its 5-year mission, and as of Dec. 2023, over 400 articles have been published in peer-reviewed journals with JWST in the title or abstract
+Update on the Decadal habitable planets goal:
+Decadal 2021 required a search of nearby stars for habitable planets, and NASA has started the process of creating the HWO (Habitable Worlds Observatory). Progress includes:
+Putting together a START team (Science, Technology, and Architecture Review), with a supporting Technical Assessment Group (TAG).
+End presentation
+Q&A Session
+The Q&A session after Dr. Clampin’s presentation covers the following topics:
+NASA’s budgetary challenges and how they’re dealing with fiscal constraints, including in their response to the requirements of the Decadal
+Satellite conjunctions in low-earth orbit, and how NASA is following up on the satellite issues
+Financial planning for the next Decadal
+2:15 PM DOE Update – Kathy Turner, Department of Energy, Office of High-Energy Physics
+Kathy Turner presents on the High-Energy Physics Division projects, particularly focusing on recently released reports, the DOE HEP budget, and history and updates on Cosmic Frontier. Specifics include:
+The history and guidance that was used to develop the Cosmic Frontier Program
+Updates to the Committee on two new HEPAP subpanels that are being set up:
+Committee of Visitors for the HEP Facilities Division
+Office of Science-wide Facilities Construction Project Subpanel Study
+The two HEPAP study reports that were recently released: the P5 report and the HEPAP International Benchmarking Study
+Findings and recommendations from the Benchmarking Study, as well as specific recommendations to implement the study’s recommendations
+Turner notes that it will take a while for DOE to create plans based on the P5 report, with a likely presentation in May 2024
+Program Update on Cosmic Frontier:
+DESI – 74 papers have been published based on this project from January 2021 to November 2023. Collaboration is planning the proposed DESI-II
+Rubin – the camera will be shipped to Chile in March, and system first light is planned for January 2025. LSST will start 4-7 months after first light.
+Gives update difficulties with the program: commissioning the camera and the US Data Facilities at SLAC. She notes that there will be a Rubin Science Platform on Google Cloud.
+SPT-3G – has been operating successfully since 2018, and results have recently been published with the 2018 data
+CMB-S4 – In December 2022, the Project reported on an alternative design that would solve the logistics and infrastructure issue, so there is a potential path forward.
+HEP budget history - in summary, the program is continuing on the 2014 P5 plan until they’ve had time to digest the 2023 P5.
+End of presentation
+Q&A Session
+Topics of discussion include:
+The alternative design plan for CMB-S4, the current state of the design and its timeline
+The likely costs, build duration, and operational divisions for CMB-S4
+2:45 PM NSF Update – Chris Smith, NSF Astronomy Division Director (Interim)
+Interim Director Chris Smith provides an update on the NSF Astronomy programs, focusing on the National Artificial Intelligence Research Institutes, Workforce Development programs, and Major Facilities. Specifics topics include:
+The upcoming retirement of Liz Pentecost (on the call). Interim Director Smith thanks her for her contributions to the AAAC and US astronomy.
+That the Windows on the Universe meeting report is coming out soon regarding the multi-messenger ecosystem. Smith requests that committee members read the report and be ready to discuss it by the January meeting.
+ A program update on the National Artificial Intelligence Research Institutes
+Full proposals due Feb. 16, 2024, awards handed out in FY 2024
+A Workforce Development program update, focusing on the PAARE and LEAPS programs
+The Spectrum Group attendance of the World Radio Conference in Dubai and the relevant results of the conference, which include:
+Instructions for improved coordination between satellite operators and astronomers
+Establishment of a database of radio quiet zones
+Space weather was put on the meeting agenda for the next meeting
+An update on NSF AST Major Facilities, including US-ELT, ngVLA, and CMB-S4
+Today’s release of the MPSAC Facilities Subcommittee 2nd Report. Smith encourages all AAAC members to read the report.
+NSF Budget considerations
+Smith asks the committee a final question: in a funding-constrained environment, what criteria/considerations would you use to prioritize the recommendations of Astro2020 across the different areas?
+End presentation
+Q&A Session
+Topics of discussion include:
+The prioritization process for the MPSAC Facilities, and the lessons learned through the process
+The purpose of the Facilities prioritization project
+3:15 PM 15-Minute Break
+3:30 PM Task Force on Laboratory Astrophysics – Lucy Ziurys, LATF Chair/Harshal Gupta, NSF Astronomy
+Lucy Ziurys reports on the status of the task force, concentrating on how to present their findings and the timeline for doing so. Specific topics include:
+Writing reports from the three subcommittees, then how to combine them into one report for the AAAC
+The final report layout and how to make it most useful for the agencies
+Recurring theme of the data collected - not enough interaction between the users and providers
+Writing timeline and timeline/presentation format of conclusions to the AAAC. Final decision: each subcommittee will develop a slide with their conclusions, and Ziurys will collate them and present the conclusions at the January meeting.
+The likely AST budget
+End of presentation
+4:00 PM Public Comment period
+No questions/comments
+4:02 PM Committee Discussion
+The committee discussion centers around workforce development and demographics, the need for more information around satellite conjunctions, radio impacts, and the criteria for degradation of mitigation factors that make satellites darker.
+Specific suggestions include:
+Interim AST Director Chris Smith emphasized to the committee that the AAAC’s advice will be more powerful if it takes current funding challenges into account. He suggests that the committee’s final advice and recommendations highlight both astronomy needs and the understanding that the budget issues are bigger than just astronomy.
+Britt Lundgren notes that the Mauna Kea Stewardship Oversight Authority is meeting now, and it would be helpful if they could invite a member of the board to present. Chris Smith says that he’ll think about it and talk to the people involved, as that is sensitive.
+Ann Zabludoff expresses concerns about satellite conjunctions and whether the sky is cluttered enough to impact planetary defense. Chris Smith suggests that the committee invite a speaker to address the issue, and the committee agrees.
+Darcy Barron suggests a presentation regarding the Radio Conference.
+Committee chair Mike McCarthy asks if the committee could have a presentation from someone at OSTP about demographics, noting that it’s been an ongoing frustration. Carrie Black suggests inviting someone from OECR. Discussion about coordination with other agencies on this issue between Dan Fabrycky, Carrie Black, and Chris Smith, with Black and Smith agreeing to a follow-up meeting next week.
+Further discussion centered around the logistics and topics of the upcoming January meeting. The committee concluded that agency presentations during the meeting will be approximately 15 minutes, and that members will write pieces of the report during the meeting to allow for discussion and immediate feedback.
+Carrie Black asks the committee to read the minutes from the September AAAC meeting and return edits or approval by COB the following Tuesday. She will also get the Doodle pools for scheduling meetings later in the year out next week.
+Elizabeth Pentecost gives a short farewell message to the committee.
+There is a question about when committee membership rolls over, given the changes in the timing of meetings. Chris Smith says that they will get back to the committee on that topic.
+4:36 PM Meeting Concludes
+
+END OF MEETING

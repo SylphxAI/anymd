@@ -1,0 +1,101 @@
+{
+ "id": "irs-w9",
+ "derived_from": "PDF text layer (pdftotext, raw and -layout) for all 6 pages; tables and column layout checked visually at 100 dpi on pages 3, 4, 5.",
+ "sentences": [
+  "Real estate transactions are not subject to backup withholding.",
+  "This is the case even if the foreign person has a U.S. TIN.",
+  "If you have a business name, trade name, DBA name, or disregarded entity name, enter it on line 2.",
+  "The 60-day rule does not apply to other types of payments.",
+  "Caution: A disregarded U.S. entity that has a foreign owner must use the appropriate Form W-8.",
+  "The IRS does not initiate contacts with taxpayers via emails."
+ ],
+ "order": [
+  "Request for Taxpayer",
+  "Under penalties of perjury, I certify",
+  "General Instructions",
+  "Definition of a U.S. person",
+  "Nonresident alien who becomes",
+  "Updating Your Information",
+  "Disregarded entity. In general",
+  "example, if a foreign LLC",
+  "Line 4 Exemptions",
+  "Part II. Certification",
+  "Secure Your Tax Records From Identity Theft",
+  "Privacy Act Notice"
+ ],
+ "tables": [
+  {
+   "caption": "Line 3a: IF the entity/individual on line 1 is a(n) . . . THEN check the box for . . .",
+   "page": 3,
+   "complete": true,
+   "rows": [
+    [
+     "IF the entity/individual on line 1 is a(n) . . .",
+     "THEN check the box for . . ."
+    ],
+    [
+     "• Corporation",
+     "Corporation."
+    ],
+    [
+     "• Individual or • Sole proprietorship",
+     "Individual/sole proprietor."
+    ],
+    [
+     "• LLC classified as a partnership for U.S. federal tax purposes or • LLC that has filed Form 8832 or 2553 electing to be taxed as a corporation",
+     "Limited liability company and enter the appropriate tax classification: P = Partnership, C = C corporation, or S = S corporation."
+    ],
+    [
+     "• Partnership",
+     "Partnership."
+    ],
+    [
+     "• Trust/estate",
+     "Trust/estate."
+    ]
+   ]
+  },
+  {
+   "caption": "Chart of payments exempt from backup withholding (IF the payment is for . . . THEN the payment is exempt for . . .)",
+   "page": 4,
+   "complete": false,
+   "rows": [
+    [
+     "• Interest and dividend payments",
+     "All exempt payees except for 7."
+    ],
+    [
+     "• Barter exchange transactions and patronage dividends",
+     "Exempt payees 1 through 4."
+    ],
+    [
+     "• Payments made in settlement of payment card or third-party network transactions",
+     "Exempt payees 1 through 4."
+    ]
+   ]
+  },
+  {
+   "caption": "What Name and Number To Give the Requester (Give name and EIN of:)",
+   "page": 5,
+   "complete": false,
+   "rows": [
+    [
+     "8. Disregarded entity not owned by an individual",
+     "The owner"
+    ],
+    [
+     "10. Corporation or LLC electing corporate status on Form 8832 or Form 2553",
+     "The corporation"
+    ],
+    [
+     "12. Partnership or multi-member LLC",
+     "The partnership"
+    ],
+    [
+     "13. A broker or registered nominee",
+     "The broker or nominee"
+    ]
+   ]
+  }
+ ]
+}

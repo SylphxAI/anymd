@@ -43,3 +43,4 @@ packages/**/bin/pdf-reader-mcp-server.exe
 # Browser playground WebAssembly (scripts/build-wasm.sh output)
 docs/public/wasm/
 benchmark-artifacts/
+__pycache__/
