@@ -38,10 +38,10 @@ CATEGORY_NAMES = {
 }
 
 
-def load():
+def load(results_dir):
     corpus = json.loads((HERE / "corpus.json").read_text("utf-8"))["docs"]
     tools = []
-    for path in sorted((HERE / "results").glob("*.json")):
+    for path in sorted(Path(results_dir).glob("*.json")):
         data = json.loads(path.read_text("utf-8"))
         tools.append(data)
     return corpus, tools
@@ -234,8 +234,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--print", action="store_true")
+    parser.add_argument("--results", default=str(HERE / "results"), help="directory of results JSON")
     args = parser.parse_args()
-    corpus, tools = load()
+    corpus, tools = load(args.results)
     board, summary, order = render(corpus, tools)
     if args.print:
         sys.stdout.write(board)

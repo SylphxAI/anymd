@@ -1,5 +1,7 @@
 """Datalab Marker (https://github.com/datalab-to/marker): `marker_single`, Markdown output,
-CPU (its default `fast` mode on CPU), no LLM. Model weights download on the warm-up run."""
+CPU (its default `fast` mode on CPU), no hosted LLM. Marker 2 runs its surya OCR model through a
+local llama.cpp server (the workflow installs a pinned llama-server build); the model weights
+download on the warm-up run."""
 
 import shutil
 from importlib.metadata import version as _version
@@ -7,7 +9,7 @@ from pathlib import Path
 
 NAME = "marker"
 URL = "https://github.com/datalab-to/marker"
-FORMATS = None  # marker-pdf[full] also reads Office, EPUB and HTML
+FORMATS = {"pdf", "docx", "pptx", "xlsx", "epub", "html"}  # marker-pdf[full]; no CSV
 RUNS = 1
 
 

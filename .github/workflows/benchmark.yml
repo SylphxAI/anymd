@@ -14,6 +14,7 @@ on:
   pull_request:
     paths:
       - 'bench/**'
+      - '!bench/results/**'
       - '.github/workflows/benchmark.yml'
 
 permissions:
@@ -132,6 +133,16 @@ jobs:
         with:
           path: ${{ github.workspace }}/../model-cache
           key: agentdocbench-models-${{ matrix.tool }}-${{ hashFiles(format('bench/requirements/{0}.txt', matrix.tool)) }}
+
+      - name: llama.cpp server for marker's OCR model
+        if: steps.selected.outputs.run == 'true' && matrix.tool == 'marker'
+        run: |
+          curl --fail --location --retry 3 --silent --show-error -o llama.tgz \
+            https://github.com/ggml-org/llama.cpp/releases/download/b11177/llama-b11177-bin-ubuntu-x64.tar.gz
+          echo "9e088583293c4c104953ead0dd8957f4e00dca318c7f241c039198e5eb2e2e54  llama.tgz" | sha256sum --check
+          tar -xzf llama.tgz -C "$RUNNER_TEMP"
+          echo "LLAMA_CPP_BINARY=$RUNNER_TEMP/llama-b11177/llama-server" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/llama-b11177" >> "$GITHUB_ENV"
 
       - name: Install ${{ matrix.tool }}
         if: steps.selected.outputs.run == 'true'
