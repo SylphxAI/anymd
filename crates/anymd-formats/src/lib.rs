@@ -13,6 +13,8 @@ pub mod pptx;
 pub mod video;
 pub mod xlsx;
 
+mod ooxml;
+
 use std::path::Path;
 
 /// One citable unit of a converted document.
