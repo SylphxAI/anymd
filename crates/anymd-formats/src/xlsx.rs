@@ -57,6 +57,17 @@ fn sheets(bytes: &[u8]) -> Result<Vec<Section>, ConvertError> {
         } else {
             markdown
         };
+        // A named sheet's name heads its table: it is the table's title on
+        // the sheet tab, and often the only one. "Sheet1" says nothing.
+        let default_name = name
+            .to_ascii_lowercase()
+            .strip_prefix("sheet")
+            .is_some_and(|rest| rest.trim().chars().all(|c| c.is_ascii_digit()));
+        let markdown = if default_name {
+            markdown
+        } else {
+            format!("## {name}\n\n{markdown}")
+        };
         sections.push(Section {
             label: format!("sheet {name}"),
             markdown,
@@ -162,9 +173,9 @@ mod tests {
         assert_eq!(labels, ["sheet Revenue", "sheet Empty", "sheet Big"]);
         assert_eq!(
             out.sections[0].markdown,
-            "|Region|Amount|Day|\n|-|-|-|\n|EU\\|West|1200|2024-03-09|\n|US|0.3|TRUE|\n"
+            "## Revenue\n\n|Region|Amount|Day|\n|-|-|-|\n|EU\\|West|1200|2024-03-09|\n|US|0.3|TRUE|\n"
         );
-        assert_eq!(out.sections[1].markdown, "(empty sheet)\n");
+        assert_eq!(out.sections[1].markdown, "## Empty\n\n(empty sheet)\n");
         let big = &out.sections[2].markdown;
         assert!(big.ends_with("|2000|\n\n… 100 more rows\n"), "{big}");
     }

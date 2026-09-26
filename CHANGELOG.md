@@ -13,6 +13,7 @@
 - Text a reader cannot see is left out: invisible text (rendering mode 3) and text painted in the colour of the box behind it.
 - Text shown with the `'` and `"` operators is no longer dropped, and pages whose text is turned (a landscape table on a portrait page) are laid out in their own direction.
 - Numbered paragraphs whose first line wraps are no longer read as headings.
+- A spreadsheet sheet with a name of its own (not "Sheet1") gets its name as a heading above its table.
 - `crates/anymd-pdf` is split into modules (extraction, rows, reading order, blocks, tables, OCR layout, rendering), each under 1,500 lines.
 
 ## 8.0.0
