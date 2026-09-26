@@ -49,6 +49,61 @@ pub(crate) struct Collector {
     pub(crate) glyphs: Vec<Glyph>,
     pub(crate) rotated: Vec<Glyph>,
     pub(crate) rules: Vec<Rule>,
+    /// Paint of the text being shown: its colour (when known) and whether
+    /// its rendering mode draws nothing.
+    paint: (Option<[f64; 3]>, bool),
+    /// For each upright glyph: its paint colour, whether it is invisible,
+    /// and when it was drawn.
+    glyph_paint: Vec<(Option<[f64; 3]>, bool, usize)>,
+    /// Filled boxes: extent (x0, y0, x1, y1), colour, and when drawn.
+    boxes: Vec<([f64; 4], [f64; 3], usize)>,
+    drawn: usize,
+}
+
+/// A colour as RGB, when its colour space is a device one.
+fn rgb(colorspace: &ColorSpace, color: &[f64]) -> Option<[f64; 3]> {
+    match (colorspace, color) {
+        (ColorSpace::DeviceGray | ColorSpace::CalGray(_), [g, ..]) => Some([*g, *g, *g]),
+        (ColorSpace::DeviceRGB | ColorSpace::CalRGB(_), [r, g, b, ..]) => Some([*r, *g, *b]),
+        (ColorSpace::ICCBased(_), [r, g, b]) => Some([*r, *g, *b]),
+        (ColorSpace::ICCBased(_), [g]) => Some([*g, *g, *g]),
+        (ColorSpace::DeviceCMYK, [c, m, y, k, ..]) => {
+            Some([(1.0 - c) * (1.0 - k), (1.0 - m) * (1.0 - k), (1.0 - y) * (1.0 - k)])
+        }
+        _ => None,
+    }
+}
+
+impl Collector {
+    /// Glyphs a reader cannot see: drawn in an invisible rendering mode, or in
+    /// the same colour as the box they sit on (text hidden in a table cell or
+    /// on a coloured panel). They are dropped, as a reader never sees them.
+    pub(crate) fn visible_glyphs(&mut self) -> Vec<Glyph> {
+        let glyphs = std::mem::take(&mut self.glyphs);
+        if self.glyph_paint.len() != glyphs.len() {
+            return glyphs;
+        }
+        glyphs
+            .into_iter()
+            .zip(&self.glyph_paint)
+            .filter(|(glyph, (color, invisible, when))| {
+                if *invisible {
+                    return false;
+                }
+                let Some(color) = color else { return true };
+                let (cx, cy) = ((glyph.x0 + glyph.x1) / 2.0, glyph.base + glyph.size * 0.3);
+                let under = self
+                    .boxes
+                    .iter()
+                    .rev()
+                    .find(|(b, _, at)| at < when && cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]);
+                !under.is_some_and(|(_, fill, _)| {
+                    fill.iter().zip(color).all(|(a, b)| (a - b).abs() < 0.06)
+                })
+            })
+            .map(|(glyph, _)| glyph)
+            .collect()
+    }
 }
 
 /// Rules beyond this many on one page are ignored (charts, hatching).
@@ -271,9 +326,40 @@ impl OutputDev for Collector {
         };
         if upright {
             self.glyphs.push(glyph);
+            self.drawn += 1;
+            self.glyph_paint.push((self.paint.0, self.paint.1, self.drawn));
         } else {
             self.rotated.push(glyph);
         }
+        Ok(())
+    }
+
+    fn image(&mut self, ctm: &Transform) -> Result<(), OutputError> {
+        // An image can sit behind text of any colour: it counts as a box of
+        // no colour, which hides nothing.
+        let corners = [apply(ctm, 0.0, 0.0), apply(ctm, 1.0, 0.0), apply(ctm, 0.0, 1.0), apply(ctm, 1.0, 1.0)];
+        let xs = corners.map(|c| c.0);
+        let ys = corners.map(|c| c.1);
+        let extent = [
+            xs.iter().cloned().fold(f64::INFINITY, f64::min),
+            ys.iter().cloned().fold(f64::INFINITY, f64::min),
+            xs.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+            ys.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
+        ];
+        self.drawn += 1;
+        if self.boxes.len() < MAX_RULES_PER_PAGE {
+            self.boxes.push((extent, [f64::NAN; 3], self.drawn));
+        }
+        Ok(())
+    }
+
+    fn text_paint(
+        &mut self,
+        colorspace: &ColorSpace,
+        color: &[f64],
+        render_mode: i64,
+    ) -> Result<(), OutputError> {
+        self.paint = (rgb(colorspace, color), render_mode == 3 || render_mode == 7);
         Ok(())
     }
 
@@ -316,10 +402,18 @@ impl OutputDev for Collector {
         color: &[f64],
         path: &PdfPath,
     ) -> Result<(), OutputError> {
-        if is_white(colorspace, color) {
-            return Ok(());
-        }
+        let white = is_white(colorspace, color);
         for subpath in Self::subpaths(ctm, path) {
+            if white {
+                // Draws no line, but hides text of its own colour.
+                if let (Some(extent), Some(fill)) = (subpath.as_box(), rgb(colorspace, color)) {
+                    self.drawn += 1;
+                    if self.boxes.len() < MAX_RULES_PER_PAGE {
+                        self.boxes.push((extent, fill, self.drawn));
+                    }
+                }
+                continue;
+            }
             match subpath.as_box() {
                 // A thin bar is one rule along its middle.
                 Some([x0, y0, x1, y1]) if y1 - y0 <= BAR_THICKNESS && x1 - x0 > y1 - y0 => {
@@ -330,7 +424,13 @@ impl OutputDev for Collector {
                 }
                 // A shaded box (a header band, a cell background): its edges
                 // separate what is inside from what is outside.
-                Some(_) => {
+                Some(extent) => {
+                    if let Some(fill) = rgb(colorspace, color) {
+                        self.drawn += 1;
+                        if self.boxes.len() < MAX_RULES_PER_PAGE {
+                            self.boxes.push((extent, fill, self.drawn));
+                        }
+                    }
                     for (from, to) in subpath.edges {
                         self.push_rule(from, to, true);
                     }
@@ -373,7 +473,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
             output_doc_page(doc, &mut collector, number)
         }));
         let glyphs = match outcome {
-            Ok(Ok(())) => Ok(std::mem::take(&mut collector.glyphs)),
+            Ok(Ok(())) => Ok(collector.visible_glyphs()),
             Ok(Err(err)) => Err(format!("page {number}: text extraction failed ({err})")),
             Err(_) => Err(format!(
                 "page {number}: text extraction failed (malformed font or content)"

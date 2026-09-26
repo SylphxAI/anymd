@@ -1251,6 +1251,8 @@ struct TextState<'a>
     leading: f64,
     rise: f64,
     tm: Transform,
+    /// Text rendering mode (`Tr`): 3 draws nothing, 7 only clips.
+    render_mode: i64,
 }
 
 // XXX: We'd ideally implement this without having to copy the uncompressed data
@@ -1279,6 +1281,7 @@ fn show_text(gs: &mut GraphicsState, s: &[u8],
              _tlm: &Transform,
              _flip_ctm: &Transform,
              output: &mut dyn OutputDev) -> Result<(), OutputError> {
+    output.text_paint(&gs.fill_colorspace, &gs.fill_color, gs.ts.render_mode)?;
     let ts = &mut gs.ts;
     let font = ts.font.as_ref().unwrap();
     //let encoding = font.encoding.as_ref().map(|x| &x[..]).unwrap_or(&PDFDocEncoding);
@@ -1599,6 +1602,7 @@ impl<'a> Processor<'a> {
                 leading: 0.,
                 rise: 0.,
                 tm: Transform2D::identity(),
+                render_mode: 0,
             },
             fill_color: Vec::new(),
             fill_colorspace: ColorSpace::DeviceGray,
@@ -1659,8 +1663,24 @@ impl<'a> Processor<'a> {
                         _ => { operation.operands.iter().map(|x| as_num(x)).collect() }
                     };
                 }
-                "G" | "g" | "RG" | "rg" | "K" | "k" => {
-                    dlog!("unhandled color operation {:?}", operation);
+                "G" | "RG" | "K" => {
+                    gs.stroke_colorspace = match operation.operator.as_str() {
+                        "G" => ColorSpace::DeviceGray,
+                        "RG" => ColorSpace::DeviceRGB,
+                        _ => ColorSpace::DeviceCMYK,
+                    };
+                    gs.stroke_color = operation.operands.iter().map(|x| as_num(x)).collect();
+                }
+                "g" | "rg" | "k" => {
+                    gs.fill_colorspace = match operation.operator.as_str() {
+                        "g" => ColorSpace::DeviceGray,
+                        "rg" => ColorSpace::DeviceRGB,
+                        _ => ColorSpace::DeviceCMYK,
+                    };
+                    gs.fill_color = operation.operands.iter().map(|x| as_num(x)).collect();
+                }
+                "Tr" => {
+                    gs.ts.render_mode = as_num(&operation.operands[0]) as i64;
                 }
                 "TJ" => {
                     match operation.operands[0] {
@@ -1887,6 +1907,8 @@ impl<'a> Processor<'a> {
                         let form_ctm = gs.ctm.pre_transform(&matrix);
                         let contents = get_contents(xf);
                         self.process_stream_with_ctm(&doc, contents, resources, &media_box, output, page_num, form_ctm, depth + 1)?;
+                    } else if xf.dict.get(b"Subtype").ok().and_then(|s| s.as_name().ok()) == Some(&b"Image"[..]) {
+                        output.image(&gs.ctm)?;
                     }
                 }
                 _ => { dlog!("unknown operation {:?}", operation); }
@@ -1902,6 +1924,10 @@ pub trait OutputDev {
     fn begin_page(&mut self, page_num: u32, media_box: &MediaBox, art_box: Option<(f64, f64, f64, f64)>)-> Result<(), OutputError>;
     fn end_page(&mut self)-> Result<(), OutputError>;
     fn output_character(&mut self, trm: &Transform, width: f64, spacing: f64, font_size: f64, char: &str) -> Result<(), OutputError>;
+    /// An image drawn in the unit square under `ctm`.
+    fn image(&mut self, _ctm: &Transform) -> Result<(), OutputError> { Ok(()) }
+    /// The fill colour and text rendering mode of the text shown next.
+    fn text_paint(&mut self, _colorspace: &ColorSpace, _color: &[f64], _render_mode: i64) -> Result<(), OutputError> { Ok(()) }
     fn begin_word(&mut self)-> Result<(), OutputError>;
     fn end_word(&mut self)-> Result<(), OutputError>;
     fn end_line(&mut self)-> Result<(), OutputError>;

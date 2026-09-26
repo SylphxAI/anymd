@@ -26,7 +26,7 @@ pub(crate) fn median(values: &mut [f64]) -> f64 {
 /// A column gutter: a vertical strip with running text on both sides. A few
 /// segments may cross it (figure labels, a spanning caption); they are
 /// handled by the caller. Returns the gutter's (start, end).
-pub(crate) fn column_cut(segments: &[Segment], body: f64) -> Option<(f64, f64)> {
+pub(crate) fn column_cut(segments: &[Segment], body: f64, depth: usize) -> Option<(f64, f64)> {
     if segments.len() < 6 {
         return None;
     }
@@ -83,14 +83,17 @@ pub(crate) fn column_cut(segments: &[Segment], body: f64) -> Option<(f64, f64)> 
                 .iter()
                 .map(|s| (s.x1 - s.x0) / side_width.max(1.0))
                 .collect();
-            side_width >= width * 0.2 && median(&mut chars) >= 18.0 && median(&mut fill) >= 0.55
+            // Inside a column, a further split needs lines of running text,
+            // not the short cells of a two-column table.
+            let min_chars = if depth == 0 { 18.0 } else { 30.0 };
+            side_width >= width * 0.2 && median(&mut chars) >= min_chars && median(&mut fill) >= 0.55
         };
         // A side that is itself two or more text columns also counts (three-
         // column layouts).
         let columns_ok = |side: &[&Segment]| {
             side_ok(side) || {
                 let owned: Vec<Segment> = side.iter().map(|s| (*s).clone()).collect();
-                owned.len() < segments.len() && column_cut(&owned, body).is_some()
+                owned.len() < segments.len() && column_cut(&owned, body, depth + 1).is_some()
             }
         };
         if columns_ok(&left) && columns_ok(&right) {
@@ -121,10 +124,42 @@ pub(crate) fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -
         bands[index].push(segment);
     }
     bands.retain(|band| !band.is_empty());
+    // A band too small or too table-like to show its columns takes the
+    // page's column gutter when no line crosses it and running text sits
+    // beside it (a table or figure inside one column of a two-column page).
+    let cuts: Vec<Option<(f64, f64)>> = bands.iter().map(|band| column_cut(band, body, depth)).collect();
+    let template = cuts
+        .iter()
+        .zip(&bands)
+        .filter_map(|(cut, band)| cut.map(|gutter| (gutter, band.len())))
+        .max_by_key(|(_, count)| *count)
+        .map(|(gutter, _)| gutter)
+        .filter(|_| depth == 0);
+    let fits = |band: &[Segment], (start, end): (f64, f64)| {
+        let crosses = band.iter().any(|s| s.x0 < start - 0.5 && s.x1 > end + 0.5);
+        let left = band.iter().filter(|s| s.x1 <= start + 0.5).collect::<Vec<_>>();
+        let right = band.iter().filter(|s| s.x0 >= end - 0.5).collect::<Vec<_>>();
+        let prose = |side: &[&Segment]| side.iter().any(|s| s.chars() >= 25);
+        !crosses && !left.is_empty() && !right.is_empty() && (prose(&left) || prose(&right))
+    };
+    let mut cuts: Vec<Option<(f64, f64)>> = cuts
+        .into_iter()
+        .zip(&bands)
+        .map(|(cut, band)| cut.or_else(|| template.filter(|gutter| fits(band, *gutter))))
+        .collect();
+    // A band between two bands split at the page's gutter, with nothing
+    // crossing it, is split there too (a table row beside a chart).
+    if let Some((start, end)) = template {
+        for index in 1..cuts.len().saturating_sub(1) {
+            let clear = !bands[index].iter().any(|s| s.x0 < start - 0.5 && s.x1 > end + 0.5);
+            if cuts[index].is_none() && clear && cuts[index - 1].is_some() && cuts[index + 1].is_some() {
+                cuts[index] = template;
+            }
+        }
+    }
     // Merge consecutive bands that share the same column gutter.
     let mut groups: Vec<(Option<(f64, f64)>, Vec<Segment>)> = Vec::new();
-    for band in bands {
-        let cut = column_cut(&band, body);
+    for (band, cut) in bands.into_iter().zip(cuts) {
         match (groups.last_mut(), cut) {
             (Some((Some(prev), group)), Some(gutter))
                 if (((prev.0 + prev.1) - (gutter.0 + gutter.1)) / 2.0).abs() < body * 2.0 =>
@@ -140,7 +175,7 @@ pub(crate) fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -
     let mut plain: Vec<Segment> = Vec::new();
     for (cut, group) in groups {
         // Re-check the gutter on the merged group (a band alone may be too small).
-        match column_cut(&group, body).or(cut) {
+        match column_cut(&group, body, depth).or(cut) {
             Some(gutter) => {
                 if !plain.is_empty() {
                     out.push(std::mem::take(&mut plain));
