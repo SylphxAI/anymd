@@ -145,6 +145,15 @@ impl Collector {
         if self.glyph_paint.len() != glyphs.len() {
             return glyphs;
         }
+        let same = |a: &[f64; 3], b: &[f64; 3]| a.iter().zip(b).all(|(x, y)| (x - y).abs() < 0.06);
+        // Only a glyph painted in some box's colour can be hidden by one, so
+        // the boxes are searched for those glyphs alone.
+        let mut fills: Vec<[f64; 3]> = Vec::new();
+        for (_, fill, _) in &self.boxes {
+            if fill.iter().all(|v| v.is_finite()) && !fills.iter().any(|f| same(f, fill)) {
+                fills.push(*fill);
+            }
+        }
         glyphs
             .into_iter()
             .zip(&self.glyph_paint)
@@ -153,13 +162,14 @@ impl Collector {
                     return false;
                 }
                 let Some(color) = color else { return true };
+                if !fills.iter().any(|fill| same(fill, color)) {
+                    return true;
+                }
                 let (cx, cy) = ((glyph.x0 + glyph.x1) / 2.0, glyph.base + glyph.size * 0.3);
                 let under = self.boxes.iter().rev().find(|(b, _, at)| {
                     at < when && cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]
                 });
-                !under.is_some_and(|(_, fill, _)| {
-                    fill.iter().zip(color).all(|(a, b)| (a - b).abs() < 0.06)
-                })
+                !under.is_some_and(|(_, fill, _)| same(fill, color))
             })
             .map(|(glyph, _)| glyph)
             .collect()
