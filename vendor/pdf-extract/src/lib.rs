@@ -1723,6 +1723,25 @@ impl<'a> Processor<'a> {
                         _ => { panic!("unexpected Tj operand {:?}", operation) }
                     }
                 }
+                // `'` and `"`: move to the next line and show text (with new
+                // word and character spacing for `"`).
+                "'" | "\"" => {
+                    let text = if operation.operator == "\"" {
+                        if operation.operands.len() >= 3 {
+                            gs.ts.word_spacing = as_num(&operation.operands[0]);
+                            gs.ts.character_spacing = as_num(&operation.operands[1]);
+                        }
+                        operation.operands.get(2)
+                    } else {
+                        operation.operands.first()
+                    };
+                    tlm = tlm.pre_transform(&Transform2D::create_translation(0.0, -gs.ts.leading));
+                    gs.ts.tm = tlm;
+                    output.end_line()?;
+                    if let Some(Object::String(s, _)) = text {
+                        show_text(&mut gs, s, &tlm, &flip_ctm, output)?;
+                    }
+                }
                 "Tc" => {
                     gs.ts.character_spacing = as_num(&operation.operands[0]);
                 }

@@ -61,6 +61,9 @@ pub(crate) struct Collector {
     /// Filled boxes: extent (x0, y0, x1, y1), colour, and when drawn.
     boxes: Vec<([f64; 4], [f64; 3], usize)>,
     drawn: usize,
+    /// For each rotated glyph: its text direction, in quarter turns
+    /// counter-clockwise (1, 2 or 3), or 0 for any other angle.
+    turns: Vec<u8>,
 }
 
 /// A colour as RGB, when its colour space is a device one.
@@ -80,6 +83,60 @@ fn rgb(colorspace: &ColorSpace, color: &[f64]) -> Option<[f64; 3]> {
 }
 
 impl Collector {
+    /// A page whose text mostly runs in one turned direction (a landscape
+    /// table on a portrait page): lay that text out as the page, in its own
+    /// frame, with the rules turned to match. Upright glyphs become the
+    /// page's side text instead.
+    fn turn_page(&mut self, glyphs: &mut Vec<Glyph>, bottom: &mut f64, top: &mut f64) {
+        let mut counts = [0usize; 4];
+        for turn in &self.turns {
+            counts[*turn as usize] += 1;
+        }
+        let Some((turn, &count)) = counts.iter().enumerate().skip(1).max_by_key(|(_, c)| **c) else {
+            return;
+        };
+        if count < 50 || count * 10 < (glyphs.len() + self.rotated.len()) * 6 {
+            return;
+        }
+        let (dx, dy) = match turn {
+            1 => (0.0, 1.0),
+            2 => (-1.0, 0.0),
+            _ => (0.0, -1.0),
+        };
+        let frame = |x: f64, y: f64| (x * dx + y * dy, -x * dy + y * dx);
+        let mut turned = Vec::with_capacity(count);
+        let mut rest = std::mem::take(glyphs);
+        for (glyph, t) in std::mem::take(&mut self.rotated).into_iter().zip(&self.turns) {
+            if *t as usize == turn {
+                turned.push(glyph);
+            } else {
+                rest.push(glyph);
+            }
+        }
+        let rules = std::mem::take(&mut self.rules);
+        for rule in rules {
+            let (a, b) = if rule.horizontal {
+                ((rule.from, rule.at), (rule.to, rule.at))
+            } else {
+                ((rule.at, rule.from), (rule.at, rule.to))
+            };
+            self.push_rule(frame(a.0, a.1), frame(b.0, b.1), rule.soft);
+        }
+        if let Some(media) = self.media {
+            let corners = [
+                frame(media.llx, media.lly),
+                frame(media.urx, media.lly),
+                frame(media.llx, media.ury),
+                frame(media.urx, media.ury),
+            ];
+            *bottom = corners.iter().map(|c| c.1).fold(f64::INFINITY, f64::min);
+            *top = corners.iter().map(|c| c.1).fold(f64::NEG_INFINITY, f64::max);
+        }
+        *glyphs = turned;
+        self.rotated = rest;
+        self.turns.clear();
+    }
+
     /// Glyphs a reader cannot see: drawn in an invisible rendering mode, or in
     /// the same colour as the box they sit on (text hidden in a table cell or
     /// on a coloured panel). They are dropped, as a reader never sees them.
@@ -333,7 +390,17 @@ impl OutputDev for Collector {
             self.glyph_paint
                 .push((self.paint.0, self.paint.1, self.drawn));
         } else {
+            let turn = if dy > 0.9 && dx.abs() < 0.2 {
+                1
+            } else if dx < -0.9 && dy.abs() < 0.2 {
+                2
+            } else if dy < -0.9 && dx.abs() < 0.2 {
+                3
+            } else {
+                0
+            };
             self.rotated.push(glyph);
+            self.turns.push(turn);
         }
         Ok(())
     }
@@ -488,10 +555,14 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
                 "page {number}: text extraction failed (malformed font or content)"
             )),
         };
-        let (bottom, top) = collector
+        let (mut bottom, mut top) = collector
             .media
             .map(|media| (media.lly.min(media.ury), media.lly.max(media.ury)))
             .unwrap_or((0.0, 792.0));
+        let glyphs = glyphs.map(|mut glyphs| {
+            collector.turn_page(&mut glyphs, &mut bottom, &mut top);
+            glyphs
+        });
         RawPage {
             number,
             bottom,
