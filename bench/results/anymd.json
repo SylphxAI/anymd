@@ -3,16 +3,16 @@
   "benchmark": "AgentDocBench",
   "benchmark_version": "1",
   "tool": "anymd",
-  "tool_version": "anymd 7.0.0",
+  "tool_version": "anymd 8.1.0",
   "tool_url": "https://github.com/SylphxAI/anymd",
-  "date": "2026-09-25",
+  "date": "2026-09-26",
   "runs": 3,
   "timeout": 900,
   "shard": "1/1",
   "machine": "Linux x86_64, 4 CPUs",
   "runner": "github-hosted",
-  "run_url": "https://github.com/SylphxAI/anymd/actions/runs/36119654329",
-  "commit": "5c5cf1fcd8b7a4952592d55f7fa0d586dc981890",
+  "run_url": "https://github.com/SylphxAI/anymd/actions/runs/36208170417",
+  "commit": "a3627875bb79a91f8356d1edfab2215e3b8dfab5",
   "python": "3.12.14"
  },
  "results": [
@@ -21,18 +21,18 @@
    "category": "paper",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.11,
-   "tokens": 14252,
-   "bytes": 56886,
+   "seconds": 0.115,
+   "tokens": 14258,
+   "bytes": 56839,
    "metrics": {
     "sentences": [
      7,
      7
     ],
     "text": {
-     "precision": 0.9839,
-     "recall": 0.9953,
-     "f1": 0.9896
+     "precision": 0.9841,
+     "recall": 0.9954,
+     "f1": 0.9897
     },
     "order": 1.0,
     "tables": {
@@ -52,21 +52,21 @@
    "category": "paper",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.087,
-   "tokens": 25510,
-   "bytes": 61486,
+   "seconds": 0.096,
+   "tokens": 25440,
+   "bytes": 61252,
    "metrics": {
     "sentences": [
      7,
      7
     ],
     "text": {
-     "precision": 0.8191,
-     "recall": 0.875,
-     "f1": 0.8461
+     "precision": 0.8135,
+     "recall": 0.8752,
+     "f1": 0.8432
     },
     "order": 1.0,
-    "score": 0.9487
+    "score": 0.9477
    }
   },
   {
@@ -74,30 +74,30 @@
    "category": "paper",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.03,
-   "tokens": 8726,
-   "bytes": 29274,
+   "seconds": 0.032,
+   "tokens": 8716,
+   "bytes": 29255,
    "metrics": {
     "sentences": [
      7,
      7
     ],
     "text": {
-     "precision": 0.944,
-     "recall": 0.9687,
-     "f1": 0.9562
+     "precision": 0.945,
+     "recall": 0.9696,
+     "f1": 0.9571
     },
     "order": 1.0,
     "tables": {
      "rows_found": 3,
      "rows_total": 5,
-     "cells_hit": 19,
+     "cells_hit": 22,
      "cells_total": 24,
-     "cell_recall": 0.7917,
-     "cell_precision": 0.8636,
-     "cell_f1": 0.8261
+     "cell_recall": 0.9167,
+     "cell_precision": 0.9167,
+     "cell_f1": 0.9167
     },
-    "score": 0.9456
+    "score": 0.9685
    }
   },
   {
@@ -105,30 +105,30 @@
    "category": "two-column",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.139,
-   "tokens": 16494,
-   "bytes": 67182,
+   "seconds": 0.142,
+   "tokens": 16303,
+   "bytes": 66998,
    "metrics": {
     "sentences": [
      7,
      7
     ],
     "text": {
-     "precision": 0.9796,
-     "recall": 0.9699,
-     "f1": 0.9747
+     "precision": 0.9853,
+     "recall": 0.9719,
+     "f1": 0.9785
     },
-    "order": 0.7778,
+    "order": 0.8889,
     "tables": {
-     "rows_found": 1,
+     "rows_found": 7,
      "rows_total": 7,
-     "cells_hit": 14,
+     "cells_hit": 27,
      "cells_total": 27,
-     "cell_recall": 0.5185,
-     "cell_precision": 0.2941,
-     "cell_f1": 0.3753
+     "cell_recall": 1.0,
+     "cell_precision": 1.0,
+     "cell_f1": 1.0
     },
-    "score": 0.7819
+    "score": 0.9669
    }
   },
   {
@@ -136,30 +136,30 @@
    "category": "two-column",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.113,
-   "tokens": 14891,
-   "bytes": 56164,
+   "seconds": 0.119,
+   "tokens": 14655,
+   "bytes": 56008,
    "metrics": {
     "sentences": [
-     5,
+     7,
      7
     ],
     "text": {
-     "precision": 0.938,
-     "recall": 0.97,
-     "f1": 0.9537
+     "precision": 0.9537,
+     "recall": 0.9779,
+     "f1": 0.9657
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 4,
+     "rows_found": 10,
      "rows_total": 10,
-     "cells_hit": 23,
+     "cells_hit": 38,
      "cells_total": 38,
-     "cell_recall": 0.6053,
-     "cell_precision": 0.1496,
-     "cell_f1": 0.2399
+     "cell_recall": 1.0,
+     "cell_precision": 1.0,
+     "cell_f1": 1.0
     },
-    "score": 0.727
+    "score": 0.9914
    }
   },
   {
@@ -167,18 +167,18 @@
    "category": "two-column",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.113,
-   "tokens": 19321,
-   "bytes": 70861,
+   "seconds": 0.121,
+   "tokens": 19195,
+   "bytes": 70676,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9721,
-     "recall": 0.9711,
-     "f1": 0.9716
+     "precision": 0.9748,
+     "recall": 0.9726,
+     "f1": 0.9737
     },
     "order": 1.0,
     "tables": {
@@ -190,7 +190,7 @@
      "cell_precision": 1.0,
      "cell_f1": 0.9697
     },
-    "score": 0.9853
+    "score": 0.9858
    }
   },
   {
@@ -198,9 +198,9 @@
    "category": "report",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.048,
-   "tokens": 8176,
-   "bytes": 32333,
+   "seconds": 0.051,
+   "tokens": 8150,
+   "bytes": 32299,
    "metrics": {
     "sentences": [
      7,
@@ -215,13 +215,13 @@
     "tables": {
      "rows_found": 7,
      "rows_total": 17,
-     "cells_hit": 101,
+     "cells_hit": 102,
      "cells_total": 119,
-     "cell_recall": 0.8487,
-     "cell_precision": 0.7113,
-     "cell_f1": 0.7739
+     "cell_recall": 0.8571,
+     "cell_precision": 0.7786,
+     "cell_f1": 0.816
     },
-    "score": 0.9372
+    "score": 0.9477
    }
   },
   {
@@ -251,30 +251,30 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.082,
-   "tokens": 35211,
-   "bytes": 69286,
+   "seconds": 0.091,
+   "tokens": 34952,
+   "bytes": 68041,
    "metrics": {
     "sentences": [
      7,
      7
     ],
     "text": {
-     "precision": 0.9745,
-     "recall": 0.9883,
-     "f1": 0.9814
+     "precision": 0.9735,
+     "recall": 0.9884,
+     "f1": 0.9809
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 22,
+     "rows_found": 24,
      "rows_total": 35,
-     "cells_hit": 493,
+     "cells_hit": 495,
      "cells_total": 515,
-     "cell_recall": 0.9573,
-     "cell_precision": 0.8794,
-     "cell_f1": 0.9167
+     "cell_recall": 0.9612,
+     "cell_precision": 0.9199,
+     "cell_f1": 0.9401
     },
-    "score": 0.9745
+    "score": 0.9802
    }
   },
   {
@@ -282,9 +282,9 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.029,
-   "tokens": 2979,
-   "bytes": 12668,
+   "seconds": 0.028,
+   "tokens": 2887,
+   "bytes": 10641,
    "metrics": {
     "sentences": [
      6,
@@ -297,15 +297,15 @@
     },
     "order": 0.8182,
     "tables": {
-     "rows_found": 4,
+     "rows_found": 28,
      "rows_total": 42,
-     "cells_hit": 148,
+     "cells_hit": 176,
      "cells_total": 192,
-     "cell_recall": 0.7708,
-     "cell_precision": 0.4675,
-     "cell_f1": 0.582
+     "cell_recall": 0.9167,
+     "cell_precision": 0.6111,
+     "cell_f1": 0.7333
     },
-    "score": 0.8455
+    "score": 0.8833
    }
   },
   {
@@ -313,30 +313,30 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.058,
-   "tokens": 11458,
-   "bytes": 35208,
+   "seconds": 0.066,
+   "tokens": 10034,
+   "bytes": 32680,
    "metrics": {
     "sentences": [
-     4,
+     7,
      7
     ],
     "text": {
-     "precision": 0.9881,
-     "recall": 0.9691,
-     "f1": 0.9785
+     "precision": 0.9791,
+     "recall": 0.9851,
+     "f1": 0.9821
     },
-    "order": 0.3333,
+    "order": 1.0,
     "tables": {
-     "rows_found": 3,
+     "rows_found": 91,
      "rows_total": 91,
-     "cells_hit": 844,
+     "cells_hit": 937,
      "cells_total": 937,
-     "cell_recall": 0.9007,
+     "cell_recall": 1.0,
      "cell_precision": null,
-     "cell_f1": 0.9007
+     "cell_f1": 1.0
     },
-    "score": 0.696
+    "score": 0.9955
    }
   },
   {
@@ -344,7 +344,7 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.004,
+   "seconds": 0.005,
    "tokens": 623,
    "bytes": 1907,
    "metrics": {
@@ -375,30 +375,30 @@
    "category": "form",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.057,
-   "tokens": 12053,
-   "bytes": 48206,
+   "seconds": 0.066,
+   "tokens": 11848,
+   "bytes": 48027,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9855,
-     "recall": 0.9871,
-     "f1": 0.9863
+     "precision": 0.9795,
+     "recall": 0.9894,
+     "f1": 0.9844
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 0,
+     "rows_found": 6,
      "rows_total": 10,
-     "cells_hit": 13,
+     "cells_hit": 37,
      "cells_total": 44,
-     "cell_recall": 0.2955,
-     "cell_precision": 0.0156,
-     "cell_f1": 0.0297
+     "cell_recall": 0.8409,
+     "cell_precision": 1.0,
+     "cell_f1": 0.9136
     },
-    "score": 0.754
+    "score": 0.9745
    }
   },
   {
@@ -406,18 +406,18 @@
    "category": "form",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.044,
-   "tokens": 6971,
-   "bytes": 21256,
+   "seconds": 0.048,
+   "tokens": 6843,
+   "bytes": 20938,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9981,
-     "recall": 0.9964,
-     "f1": 0.9973
+     "precision": 0.999,
+     "recall": 0.9969,
+     "f1": 0.998
     },
     "order": 0.9091,
     "tables": {
@@ -429,7 +429,7 @@
      "cell_precision": null,
      "cell_f1": 1.0
     },
-    "score": 0.9766
+    "score": 0.9768
    }
   },
   {
@@ -437,30 +437,30 @@
    "category": "form",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.032,
-   "tokens": 8779,
-   "bytes": 38438,
+   "seconds": 0.038,
+   "tokens": 8710,
+   "bytes": 38395,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9978,
-     "recall": 0.9936,
-     "f1": 0.9957
+     "precision": 0.998,
+     "recall": 0.9937,
+     "f1": 0.9958
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 4,
+     "rows_found": 11,
      "rows_total": 13,
-     "cells_hit": 11,
+     "cells_hit": 24,
      "cells_total": 26,
-     "cell_recall": 0.4231,
+     "cell_recall": 0.9231,
      "cell_precision": 1.0,
-     "cell_f1": 0.5946
+     "cell_f1": 0.96
     },
-    "score": 0.8976
+    "score": 0.989
    }
   },
   {
@@ -468,25 +468,25 @@
    "category": "scanned",
    "format": "pdf",
    "status": "ok",
-   "seconds": 5.048,
-   "tokens": 1243,
-   "bytes": 5335,
+   "seconds": 3.574,
+   "tokens": 1237,
+   "bytes": 5412,
    "metrics": {
     "sentences": [
-     1,
+     4,
      5
     ],
     "order": 1.0,
     "tables": {
-     "rows_found": 0,
+     "rows_found": 2,
      "rows_total": 10,
-     "cells_hit": 0,
+     "cells_hit": 16,
      "cells_total": 37,
-     "cell_recall": 0.0,
-     "cell_precision": 0.0,
-     "cell_f1": 0.0
+     "cell_recall": 0.4324,
+     "cell_precision": 0.2927,
+     "cell_f1": 0.3491
     },
-    "score": 0.4
+    "score": 0.7164
    }
   },
   {
@@ -494,25 +494,25 @@
    "category": "scanned",
    "format": "pdf",
    "status": "ok",
-   "seconds": 4.184,
-   "tokens": 1156,
-   "bytes": 4830,
+   "seconds": 2.778,
+   "tokens": 1159,
+   "bytes": 4892,
    "metrics": {
     "sentences": [
-     5,
+     4,
      6
     ],
     "order": 0.9091,
     "tables": {
-     "rows_found": 0,
+     "rows_found": 1,
      "rows_total": 5,
-     "cells_hit": 0,
+     "cells_hit": 4,
      "cells_total": 14,
-     "cell_recall": 0.0,
+     "cell_recall": 0.2857,
      "cell_precision": null,
-     "cell_f1": 0.0
+     "cell_f1": 0.2857
     },
-    "score": 0.5808
+    "score": 0.6205
    }
   },
   {
@@ -520,16 +520,16 @@
    "category": "scanned",
    "format": "pdf",
    "status": "ok",
-   "seconds": 17.547,
-   "tokens": 4098,
-   "bytes": 19171,
+   "seconds": 10.435,
+   "tokens": 3887,
+   "bytes": 19232,
    "metrics": {
     "sentences": [
-     3,
+     6,
      6
     ],
     "order": 1.0,
-    "score": 0.75
+    "score": 1.0
    }
   },
   {
@@ -537,30 +537,30 @@
    "category": "cjk",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.032,
-   "tokens": 4105,
-   "bytes": 10019,
+   "seconds": 0.036,
+   "tokens": 4170,
+   "bytes": 10362,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9923,
+     "precision": 0.9477,
      "recall": 0.9837,
-     "f1": 0.988
+     "f1": 0.9654
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 35,
+     "rows_found": 36,
      "rows_total": 38,
-     "cells_hit": 330,
+     "cells_hit": 333,
      "cells_total": 335,
-     "cell_recall": 0.9851,
-     "cell_precision": 0.8621,
-     "cell_f1": 0.9195
+     "cell_recall": 0.994,
+     "cell_precision": 1.0,
+     "cell_f1": 0.997
     },
-    "score": 0.9769
+    "score": 0.9906
    }
   },
   {
@@ -568,9 +568,9 @@
    "category": "cjk",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.021,
-   "tokens": 2515,
-   "bytes": 8056,
+   "seconds": 0.022,
+   "tokens": 2532,
+   "bytes": 8054,
    "metrics": {
     "sentences": [
      5,
@@ -583,15 +583,15 @@
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 3,
+     "rows_found": 11,
      "rows_total": 12,
-     "cells_hit": 9,
+     "cells_hit": 23,
      "cells_total": 24,
-     "cell_recall": 0.375,
-     "cell_precision": 0.4737,
-     "cell_f1": 0.4186
+     "cell_recall": 0.9583,
+     "cell_precision": 0.92,
+     "cell_f1": 0.9388
     },
-    "score": 0.8544
+    "score": 0.9844
    }
   },
   {
@@ -599,30 +599,30 @@
    "category": "cjk",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.049,
-   "tokens": 5848,
-   "bytes": 13628,
+   "seconds": 0.051,
+   "tokens": 5818,
+   "bytes": 13626,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9879,
-     "recall": 0.9948,
-     "f1": 0.9914
+     "precision": 0.9895,
+     "recall": 0.9982,
+     "f1": 0.9938
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 1,
+     "rows_found": 17,
      "rows_total": 17,
-     "cells_hit": 33,
+     "cells_hit": 177,
      "cells_total": 177,
-     "cell_recall": 0.1864,
+     "cell_recall": 1.0,
      "cell_precision": null,
-     "cell_f1": 0.1864
+     "cell_f1": 1.0
     },
-    "score": 0.7944
+    "score": 0.9985
    }
   },
   {
@@ -692,30 +692,30 @@
    "category": "slides",
    "format": "pdf",
    "status": "ok",
-   "seconds": 2.048,
-   "tokens": 1967,
-   "bytes": 7905,
+   "seconds": 4.846,
+   "tokens": 1780,
+   "bytes": 7242,
    "metrics": {
     "sentences": [
      6,
      7
     ],
     "text": {
-     "precision": 0.9383,
-     "recall": 0.9687,
-     "f1": 0.9533
+     "precision": 0.9416,
+     "recall": 0.9001,
+     "f1": 0.9204
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 10,
+     "rows_found": 16,
      "rows_total": 16,
-     "cells_hit": 25,
+     "cells_hit": 34,
      "cells_total": 34,
-     "cell_recall": 0.7353,
+     "cell_recall": 1.0,
      "cell_precision": 1.0,
-     "cell_f1": 0.8475
+     "cell_f1": 1.0
     },
-    "score": 0.9145
+    "score": 0.9444
    }
   },
   {
@@ -723,30 +723,30 @@
    "category": "slides",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.032,
-   "tokens": 2194,
-   "bytes": 7016,
+   "seconds": 0.033,
+   "tokens": 2156,
+   "bytes": 6949,
    "metrics": {
     "sentences": [
      8,
      8
     ],
     "text": {
-     "precision": 0.9415,
-     "recall": 0.9852,
-     "f1": 0.9629
+     "precision": 0.9514,
+     "recall": 0.9916,
+     "f1": 0.9711
     },
     "order": 1.0,
     "tables": {
-     "rows_found": 11,
+     "rows_found": 14,
      "rows_total": 14,
-     "cells_hit": 24,
+     "cells_hit": 30,
      "cells_total": 30,
-     "cell_recall": 0.8,
-     "cell_precision": 0.6875,
-     "cell_f1": 0.7395
+     "cell_recall": 1.0,
+     "cell_precision": 1.0,
+     "cell_f1": 1.0
     },
-    "score": 0.9256
+    "score": 0.9928
    }
   },
   {
@@ -798,15 +798,15 @@
    "category": "spreadsheet",
    "format": "xlsx",
    "status": "ok",
-   "seconds": 0.003,
-   "tokens": 513,
-   "bytes": 1234,
+   "seconds": 0.002,
+   "tokens": 519,
+   "bytes": 1261,
    "metrics": {
     "sentences": [
      1,
      1
     ],
-    "order": 0.8,
+    "order": 1.0,
     "tables": {
      "rows_found": 30,
      "rows_total": 30,
@@ -816,7 +816,7 @@
      "cell_precision": 1.0,
      "cell_f1": 1.0
     },
-    "score": 0.9333
+    "score": 1.0
    }
   },
   {
@@ -825,8 +825,8 @@
    "format": "xlsx",
    "status": "ok",
    "seconds": 0.002,
-   "tokens": 351,
-   "bytes": 571,
+   "tokens": 373,
+   "bytes": 607,
    "metrics": {
     "order": 1.0,
     "tables": {
@@ -908,7 +908,7 @@
    "category": "docx",
    "format": "docx",
    "status": "ok",
-   "seconds": 0.006,
+   "seconds": 0.005,
    "tokens": 3396,
    "bytes": 15341,
    "metrics": {
@@ -961,7 +961,7 @@
    "category": "epub",
    "format": "epub",
    "status": "ok",
-   "seconds": 0.015,
+   "seconds": 0.014,
    "tokens": 42215,
    "bytes": 205367,
    "metrics": {
