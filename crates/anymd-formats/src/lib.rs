@@ -47,6 +47,19 @@ mod tool {
         Err("local tools are not available in this build".into())
     }
 
+    pub(crate) fn run_with_env<I, S>(
+        program: &Path,
+        args: I,
+        _env: &[(&str, &str)],
+        timeout: Duration,
+    ) -> Result<ToolOutput, String>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<std::ffi::OsStr>,
+    {
+        run(program, args, timeout)
+    }
+
     pub(crate) fn temp_file(_bytes: &[u8], _suffix: &str) -> Result<TempFile, String> {
         Err("temp files are not available in this build".into())
     }

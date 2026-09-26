@@ -55,12 +55,27 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
+    run_with_env(program, args, &[], timeout)
+}
+
+/// [`run`] with extra environment variables for the child.
+pub(crate) fn run_with_env<I, S>(
+    program: &Path,
+    args: I,
+    env: &[(&str, &str)],
+    timeout: Duration,
+) -> Result<ToolOutput, String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     let name = program
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default();
     let mut child = Command::new(program)
         .args(args)
+        .envs(env.iter().copied())
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

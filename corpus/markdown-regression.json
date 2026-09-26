@@ -77,6 +77,36 @@
       "archetype": "government fillable form",
       "contains": ["Taxpayer Identification Number", "Before you begin. For guidance related to the purpose of Form W-9, see Purpose of Form, below."],
       "absent": []
+    },
+    {
+      "id": "g19",
+      "file": "g19.pdf",
+      "url": "https://www.federalreserve.gov/releases/g19/20250908/g19.pdf",
+      "sha256": "62a0949d0812eda956b1020c5520d5fb18ca31b11ffd685f79c3f76f7b482b48",
+      "archetype": "landscape statistical release whose rows are set with the ' text operator (held out from AgentDocBench)",
+      "contains": [
+        "|Nonrevolving3|3.5|5.4|5.4|0.6|1.2|0.5|2.1|2.1|0.6|3.0|3.1|2.8|1.8|",
+        "|Total outstanding|4,149.0|4,512.7|4,858.5|"
+      ],
+      "absent": []
+    },
+    {
+      "id": "p60",
+      "file": "p60-282.pdf",
+      "url": "https://www2.census.gov/library/publications/2024/demo/p60-282.pdf",
+      "sha256": "e6cf145cb10b5d037f5e77fa199d2e558bfe24f76273f385e9767c2eabba1cbf",
+      "archetype": "Census report with a two-panel ruled table beside running text (held out from AgentDocBench)",
+      "contains": ["|1947|15.1|X|1986|68.0|1.6|", "|1985|66.9|3.4||||"],
+      "absent": []
+    },
+    {
+      "id": "llama2",
+      "file": "llama2.pdf",
+      "url": "https://arxiv.org/pdf/2307.09288v2",
+      "sha256": "1df284ce95f783002074bfe8f21d47c646b396ceb1736ea3ec0ea212fc070d91",
+      "archetype": "long single-column paper with booktabs tables (held out from AgentDocBench)",
+      "contains": ["|MMLU (5-shot)|70.0|86.4|69.3|78.3|68.9|", "|GSM8K (8-shot)|57.1|92.0|56.5|80.7|56.8|"],
+      "absent": []
     }
   ]
 }

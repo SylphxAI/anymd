@@ -1,5 +1,22 @@
 # Changelog
 
+## 8.1.0
+
+### Minor Changes
+
+- PDF tables are rebuilt from the page's drawn lines and aligned whitespace. A missing line between two cells makes a merged cell; wrapped cell text stays in its cell; stacked header lines become one header row, and a short header over several columns is repeated over each of them; rows banded between two lines split into one row per line; charts and boxes around whole passages are no longer mistaken for tables. Columns closer than a word gap apart are still split.
+- Scanned pages are read at 300 dpi, several at a time, and the words tesseract finds are laid out like a text page: paragraphs join across line breaks, hyphenated words rejoin, and tables come out as tables. A paragraph-final comma, a common misreading of a typewritten full stop, becomes a full stop.
+- Reading order handles three-column pages, and a table or figure inside one column of a two-column page no longer pulls in the other column.
+
+### Patch Changes
+
+- Text a reader cannot see is left out: invisible text (rendering mode 3) and text painted in the colour of the box behind it.
+- Text shown with the `'` and `"` operators is no longer dropped, and pages whose text is turned (a landscape table on a portrait page) are laid out in their own direction.
+- Numbered paragraphs whose first line wraps are no longer read as headings.
+- A spreadsheet sheet with a name of its own (not "Sheet1") gets its name as a heading above its table.
+- The GitHub release carries an MCP Bundle (`.mcpb`) for one-click install in Claude Desktop.
+- `crates/anymd-pdf` is split into modules (extraction, rows, reading order, blocks, tables, OCR layout, rendering), each under 1,500 lines.
+
 ## 8.0.0
 
 ### Major Changes

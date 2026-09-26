@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/citra",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "description": "Citra is now @sylphx/anymd. Any file → clean Markdown for AI agents. Compatibility alias that runs anymd as `citra`.",
   "bin": {
     "citra": "bin/citra.js"
@@ -10,7 +10,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@sylphx/anymd": "8.0.0"
+    "@sylphx/anymd": "8.1.0"
   },
   "publishConfig": {
     "access": "public"

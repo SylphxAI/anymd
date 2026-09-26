@@ -29,7 +29,7 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 ## Why anymd
 
 <!-- fast:start -->
-- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **12.1 s** in total; docling 1,723.3 s (142×), markitdown 45.4 s (4×), marker 5,256.3 s (434×).
+- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **12.1 s** in total; docling 1,723.3 s (143×), markitdown 45.4 s (4×), marker 5,256.3 s (435×).
 <!-- fast:end -->
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
@@ -128,13 +128,13 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 
 <!-- headline:start -->
 
-| | docling | **anymd** | kreuzberg | unstructured | markitdown | marker | pdftotext |
+| | **anymd** | docling | kreuzberg | unstructured | markitdown | marker | pdftotext |
 |---|---|---|---|---|---|---|---|
-| Overall score | 93.0 | 90.4 | 81.7 | 81.2 | 76.8 | 71.0 | 42.2 |
-| Table cells F1 | 89.9 | 75.5 | 38.4 | 38.4 | 57.2 | 60.9 | 0.0 |
-| Reading order | 94.4 | 96.2 | 96.8 | 93.9 | 85.5 | 76.8 | 52.0 |
+| Overall score | 96.3 | 93.0 | 81.7 | 81.2 | 76.8 | 71.0 | 42.2 |
+| Table cells F1 | 92.2 | 89.9 | 38.4 | 38.4 | 57.2 | 60.9 | 0.0 |
+| Reading order | 98.8 | 94.4 | 96.8 | 93.9 | 85.5 | 76.8 | 52.0 |
 | Docs converted | 38/38 | 38/38 | 38/38 | 38/38 | 38/38 | 30/38 | 23/38 |
-| Time, all docs | 2,432.4 s | 30.0 s | 16.0 s | 346.5 s | 75.6 s | 7,104.5 s | 0.90 s |
+| Time, all docs | 22.9 s | 2,432.4 s | 16.0 s | 346.5 s | 75.6 s | 7,104.5 s | 0.90 s |
 
 <!-- headline:end -->
 
@@ -219,7 +219,7 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 
 ## How it works
 
-For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped into lines by baseline, which tolerates super- and subscripts. Word spaces come from the gaps between glyphs, measured against the font size and adjusted for letter tracking. A column-aware XY cut finds gutters between running text. Rows whose cells line up become pipe tables. Pages are processed in parallel and isolated from each other, so one malformed page never fails the whole document. The other formats are parsed natively in Rust (zip/XML, calamine, html5ever); no Python, LibreOffice, or cloud service is involved.
+For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped into lines by baseline, which tolerates super- and subscripts. Word spaces come from the gaps between glyphs, measured against the font size and adjusted for letter tracking. A column-aware XY cut finds gutters between running text. Tables come from drawn lines where a table has them (a missing line between two cells makes a merged cell) and from aligned columns of whitespace where it does not. Wrapped cell text stays in its cell, stacked header lines become one header, and a header over several columns is kept with each of them. Text a reader cannot see (invisible text, or text in the colour of the box behind it) is left out. Pages are processed in parallel and isolated from each other, so one malformed page never fails the whole document. The other formats are parsed natively in Rust (zip/XML, calamine, html5ever); no Python, LibreOffice, or cloud service is involved.
 
 ## Security
 

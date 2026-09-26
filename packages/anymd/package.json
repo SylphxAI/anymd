@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/anymd",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "mcpName": "io.github.SylphxAI/anymd",
   "description": "Any file → clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.",
   "bin": {
@@ -15,11 +15,11 @@
     "node": ">=18"
   },
   "optionalDependencies": {
-    "@sylphx/anymd-darwin-arm64": "8.0.0",
-    "@sylphx/anymd-darwin-x64": "8.0.0",
-    "@sylphx/anymd-linux-x64-gnu": "8.0.0",
-    "@sylphx/anymd-linux-arm64-gnu": "8.0.0",
-    "@sylphx/anymd-win32-x64-msvc": "8.0.0"
+    "@sylphx/anymd-darwin-arm64": "8.1.0",
+    "@sylphx/anymd-darwin-x64": "8.1.0",
+    "@sylphx/anymd-linux-x64-gnu": "8.1.0",
+    "@sylphx/anymd-linux-arm64-gnu": "8.1.0",
+    "@sylphx/anymd-win32-x64-msvc": "8.1.0"
   },
   "keywords": [
     "anymd",
