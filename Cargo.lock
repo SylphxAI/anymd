@@ -117,7 +117,7 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "anymd"
-version = "8.0.0"
+version = "8.1.0"
 dependencies = [
  "anyhow",
  "anymd-core",
@@ -144,7 +144,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-core"
-version = "8.0.0"
+version = "8.1.0"
 dependencies = [
  "anymd-pdf",
  "base64 0.22.1",
@@ -164,7 +164,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-formats"
-version = "8.0.0"
+version = "8.1.0"
 dependencies = [
  "calamine",
  "csv",
@@ -187,14 +187,14 @@ dependencies = [
 
 [[package]]
 name = "anymd-pdf"
-version = "8.0.0"
+version = "8.1.0"
 dependencies = [
  "pdf-extract",
 ]
 
 [[package]]
 name = "anymd-wasm"
-version = "8.0.0"
+version = "8.1.0"
 dependencies = [
  "anymd-formats",
  "anymd-pdf",

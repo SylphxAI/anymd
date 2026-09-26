@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/anymd-darwin-arm64",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "description": "anymd native binary for darwin-arm64. Installed as an optional dependency of @sylphx/anymd.",
   "os": [
     "darwin"

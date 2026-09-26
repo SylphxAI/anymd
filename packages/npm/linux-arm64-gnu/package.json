@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/anymd-linux-arm64-gnu",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "description": "anymd native binary for linux-arm64-gnu. Installed as an optional dependency of @sylphx/anymd.",
   "os": [
     "linux"
