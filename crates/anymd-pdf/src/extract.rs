@@ -38,6 +38,9 @@ pub(crate) struct RawPage {
     pub(crate) glyphs: Result<Vec<Glyph>, String>,
     pub(crate) rotated: Vec<Glyph>,
     pub(crate) rules: Vec<Rule>,
+    /// Glyphs made from OCR word boxes: even widths inside a word say nothing
+    /// about the font being monospace.
+    pub(crate) ocr: bool,
 }
 
 #[derive(Default)]
@@ -387,6 +390,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
             glyphs,
             rotated: collector.rotated,
             rules: collector.rules,
+            ocr: false,
         }
     };
     if workers <= 1 {
@@ -427,6 +431,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
                 glyphs: Err(format!("page {number}: text extraction failed")),
                 rotated: Vec::new(),
                 rules: Vec::new(),
+                ocr: false,
             })
         })
         .collect()

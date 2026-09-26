@@ -139,14 +139,19 @@ fn append(cell: &mut String, text: &str) {
 
 /// Build a table (or recognise side-by-side prose) from rows that each have
 /// several aligned segments. `rules` are the page's ruling lines.
-pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule]) -> Stream {
+pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f64) -> Stream {
     let size = median(rows.iter().flatten().map(|s| s.size).collect()).unwrap_or(10.0);
-    // A column gap is clearly wider than a word space (about a quarter of
-    // the font size, up to a half in justified text). Monospace text has
-    // wide spaces of its own, so there a gap of two spaces is needed.
+    // A column gap is clearly wider than a word space: half the font size,
+    // or more where the page's own word spaces are wide (typewriter text).
+    // Monospace text has wide spaces of its own, so there a gap of two
+    // spaces is needed.
     let mono = rows.iter().flatten().filter(|s| s.mono == Some(true)).count() * 2
         > rows.iter().flatten().count();
-    let min_gap = if mono { size * 1.2 } else { size * 0.5 };
+    let min_gap = if mono {
+        size * 1.2
+    } else {
+        size * 0.5_f64.max(word_space * 1.6)
+    };
     let row_phrases: Vec<Vec<Phrase>> = rows.iter().map(|row| phrases(row, min_gap)).collect();
     let structure: Vec<&Phrase> = row_phrases
         .iter()

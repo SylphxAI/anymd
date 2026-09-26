@@ -14,7 +14,8 @@ use crate::source_access::SourceAccessPolicy;
 
 /// Local files larger than this are refused (video is probed by path instead).
 const MAX_FILE_BYTES: u64 = 512 * 1024 * 1024;
-const OCR_SCALE: f32 = 2.5;
+/// Render scale for OCR: 300 dpi, the resolution tesseract is trained for.
+const OCR_SCALE: f32 = 300.0 / 72.0;
 const OCR_MAX_PIXELS: u64 = 40_000_000;
 /// Pages with fewer visible characters than this count as image-only.
 const SPARSE_PAGE_CHARS: usize = 24;
@@ -491,12 +492,42 @@ impl Opened {
         let Ok(renderer) = anymd_core::render::RenderDocument::new(pdf_bytes) else {
             return;
         };
-        for index in sparse {
-            let page = units[index].number as usize;
-            let text = renderer
-                .render_page(page, OCR_SCALE, OCR_MAX_PIXELS, 256 * 1024 * 1024)
-                .map_err(|error| error.message)
-                .and_then(|rendered| anymd_formats::image::ocr_text(&rendered.png, ".png"));
+        // Render one page at a time, then OCR the pages side by side (one
+        // tesseract thread each).
+        let rendered: Vec<(usize, Result<anymd_core::render::RenderedPage, String>)> = sparse
+            .iter()
+            .map(|&index| {
+                let page = units[index].number as usize;
+                let image = renderer
+                    .render_page(page, OCR_SCALE, OCR_MAX_PIXELS, 256 * 1024 * 1024)
+                    .map_err(|error| error.message);
+                (index, image)
+            })
+            .collect();
+        let workers = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(1)
+            .clamp(1, 8);
+        let mut results: Vec<(usize, Result<String, String>)> = Vec::with_capacity(rendered.len());
+        for chunk in rendered.chunks(workers) {
+            std::thread::scope(|scope| {
+                let handles: Vec<_> = chunk
+                    .iter()
+                    .map(|(index, image)| {
+                        scope.spawn(move || {
+                            let text = image.clone().and_then(|image| ocr_page(&image));
+                            (*index, text)
+                        })
+                    })
+                    .collect();
+                for handle in handles {
+                    if let Ok(result) = handle.join() {
+                        results.push(result);
+                    }
+                }
+            });
+        }
+        for (index, text) in results {
             match text {
                 Ok(text) if !text.trim().is_empty() => {
                     let existing = units[index].markdown.trim().to_string();
@@ -515,6 +546,28 @@ impl Opened {
             }
         }
     }
+}
+
+/// OCR one rendered page and lay its words out like a text page.
+fn ocr_page(image: &anymd_core::render::RenderedPage) -> Result<String, String> {
+    let words = anymd_formats::image::ocr_words(&image.png, ".png")?;
+    let placed: Vec<markdown_layout::PlacedWord> = words
+        .into_iter()
+        .map(|word| markdown_layout::PlacedWord {
+            x0: f64::from(word.left),
+            top: f64::from(word.top),
+            x1: f64::from(word.left + word.width),
+            bottom: f64::from(word.top + word.height),
+            line: (u64::from(word.line.0) << 40) | (u64::from(word.line.1) << 20) | u64::from(word.line.2),
+            text: word.text,
+        })
+        .collect();
+    let points_per_pixel = 1.0 / f64::from(image.scale.max(0.01));
+    Ok(markdown_layout::words_to_markdown(
+        &placed,
+        f64::from(image.height),
+        points_per_pixel,
+    ))
 }
 
 fn anymd_formats_format(name: &str) -> Format {

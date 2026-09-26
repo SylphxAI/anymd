@@ -200,6 +200,8 @@ pub(crate) fn join_line(paragraph: &mut String, line: &str) {
 pub(crate) struct PageTables {
     pub(crate) found: Vec<Option<RuledTable>>,
     pub(crate) rules: Vec<Rule>,
+    /// The page's typical word space, in font sizes.
+    pub(crate) word_space: f64,
 }
 
 impl PageTables {
@@ -208,6 +210,7 @@ impl PageTables {
         Self {
             found: Vec::new(),
             rules: Vec::new(),
+            word_space: 0.25,
         }
     }
 }
@@ -222,6 +225,11 @@ pub(crate) fn layout_page(
     let mut segments = Vec::new();
     for row in rows_of(glyphs) {
         segments.extend(segments_of_row(row));
+    }
+    if page.ocr {
+        for segment in &mut segments {
+            segment.mono = None;
+        }
     }
     segments.retain(|segment| {
         !(in_margin(segment, page)
@@ -242,9 +250,20 @@ pub(crate) fn layout_page(
             table: Some(index),
         });
     }
+    let mut spaces: Vec<f64> = segments
+        .iter()
+        .flat_map(|s| {
+            s.words
+                .windows(2)
+                .map(move |pair| (pair[1].x0 - pair[0].x1) / s.size.max(0.1))
+        })
+        .filter(|gap| *gap > 0.0 && *gap < 1.2)
+        .collect();
+    spaces.sort_by(f64::total_cmp);
     let mut tables = PageTables {
         found: ruled.into_iter().map(Some).collect(),
         rules: page.rules.clone(),
+        word_space: spaces.get(spaces.len() / 2).copied().unwrap_or(0.25),
     };
     let mut blocks = Vec::new();
     for region in reading_regions(segments, body, 0) {
@@ -405,6 +424,7 @@ pub(crate) fn region_blocks(
                             let mut inner = PageTables {
                                 found: Vec::new(),
                                 rules: tables.rules.clone(),
+                                word_space: tables.word_space,
                             };
                             for region in reading_regions(segments, body, 0) {
                                 region_blocks(region, body, &mut inner, blocks);
@@ -486,7 +506,7 @@ pub(crate) fn region_blocks(
             }
             if multi >= 2 {
                 let start = header_lines_above(&rows, index, end, &marks);
-                let found = stream_table(&rows[start..end], &tables.rules);
+                let found = stream_table(&rows[start..end], &tables.rules, tables.word_space);
                 if found != Stream::Nothing {
                     if start < index {
                         let (_, len) = marks[marks.len() - (index - start)];
@@ -528,7 +548,15 @@ pub(crate) fn region_blocks(
         let x1 = row.last().map_or(x0, |s| s.x1);
         let bullet = bullet_body(&text);
         let enumerated = starts_enumerated(&text);
-        let heading_like = numbered_heading_level(&text).is_some() || named_heading(&text);
+        // A numbered line that fills the region and runs on into a lowercase
+        // next line is the first line of a numbered paragraph, not a heading.
+        let runs_on = x1 - x0 >= (right - left) * 0.85
+            && rows.get(index + 1).is_some_and(|next| {
+                next.iter().all(|s| s.table.is_none())
+                    && row_text(next).chars().next().is_some_and(char::is_lowercase)
+            });
+        let heading_like =
+            (numbered_heading_level(&text).is_some() || named_heading(&text)) && !runs_on;
         // Monospace text (receipts, code, terminal output) keeps its line breaks.
         let determined = row.iter().any(|s| s.mono.is_some());
         let row_mono = if determined {

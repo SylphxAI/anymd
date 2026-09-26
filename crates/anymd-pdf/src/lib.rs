@@ -12,6 +12,7 @@ mod blocks;
 mod extract;
 mod margins;
 mod metadata;
+mod ocr;
 mod reading;
 mod render;
 mod rows;
@@ -29,6 +30,7 @@ use crate::margins::repeated_margin_lines;
 use crate::render::{heading_levels, is_size_heading, render_blocks};
 use crate::rows::body_font_size;
 pub use crate::metadata::{info_title, outline};
+pub use crate::ocr::{words_to_markdown, PlacedWord};
 pub use crate::rows::{infer_word_spaces, SpacingGlyph};
 
 /// A PDF that could not be opened or converted.
