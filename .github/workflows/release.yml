@@ -31,6 +31,8 @@ jobs:
     with:
       name: anymd
       cargo-package: anymd
+      # MCP Bundle (.mcpb) for Claude Desktop, attached to the GitHub release.
+      mcpb: true
       npm-package: '@sylphx/anymd'
       mcp-name: io.github.SylphxAI/anymd
       alias-dirs: packages/aliases/citra packages/aliases/pdf-reader-mcp

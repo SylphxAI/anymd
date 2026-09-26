@@ -14,6 +14,7 @@
 - Text shown with the `'` and `"` operators is no longer dropped, and pages whose text is turned (a landscape table on a portrait page) are laid out in their own direction.
 - Numbered paragraphs whose first line wraps are no longer read as headings.
 - A spreadsheet sheet with a name of its own (not "Sheet1") gets its name as a heading above its table.
+- The GitHub release carries an MCP Bundle (`.mcpb`) for one-click install in Claude Desktop.
 - `crates/anymd-pdf` is split into modules (extraction, rows, reading order, blocks, tables, OCR layout, rendering), each under 1,500 lines.
 
 ## 8.0.0
