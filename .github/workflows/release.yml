@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   release:
-    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@ci/own-runners
+    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@v0
     # packages: write is only used by the kit's optional GHCR image job, which
     # anymd skips; GitHub still checks every called job's permissions.
     permissions:
