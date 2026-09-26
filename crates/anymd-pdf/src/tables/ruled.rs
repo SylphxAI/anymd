@@ -321,7 +321,6 @@ fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -
         grid.header_rows = ruled_header_rows(&grid);
         Ruled::Table { caption, grid }
     };
-    if std::env::var("ANYMD_DEBUG_RULED").is_ok() { eprintln!("RULED bbox=({x0:.0},{bottom:.0},{x1:.0},{top:.0}) grid={}x{} kind={}", rows, cols, match &content { Ruled::Table{grid,..} => format!("table h={} first={:?}", grid.header_rows, grid.cells.first()), Ruled::Frame(b) => format!("frame {}", b.len()) }); }
     Some(RuledTable { x0, bottom, x1, top, content })
 }
 

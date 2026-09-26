@@ -126,6 +126,11 @@ pub(crate) fn numbered_heading_level(text: &str) -> Option<usize> {
     if rest.ends_with('.') || rest.ends_with(',') || rest.ends_with(':') && words > 6 {
         return None;
     }
+    // A heading does not stop on a word that needs another after it.
+    let last = rest.rsplit(' ').next().unwrap_or("").to_lowercase();
+    if words > 3 && ["the", "of", "and", "to", "a", "an", "in", "for", "with", "by", "on", "or"].contains(&last.as_str()) {
+        return None;
+    }
     // Headings are mostly letters, not numbers or math.
     let letters = rest.chars().filter(|c| c.is_alphabetic()).count();
     if letters * 10 < rest.chars().filter(|c| !c.is_whitespace()).count() * 7 {
@@ -305,7 +310,7 @@ fn header_lines_above(rows: &[Vec<Segment>], index: usize, end: usize, marks: &[
         let size = row.iter().map(|s| s.size).fold(0.0, f64::max);
         let bottom = row.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min);
         let top = below.iter().map(|s| s.top).fold(f64::NEG_INFINITY, f64::max);
-        let short = row.iter().all(|s| s.chars() <= 40);
+        let short = row.iter().all(|s| s.chars() <= 60);
         let inside = row.iter().all(|s| s.x0 >= lo - size && s.x1 <= hi + size);
         let text = row_text(row);
         if !(short && inside && bottom - top <= size * 0.8) || bullet_body(&text).is_some() {
@@ -481,13 +486,18 @@ pub(crate) fn region_blocks(
                     let bottom_of = |row: &Vec<Segment>| row.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min);
                     // A wrapped label: one short line at the table's left
                     // edge, tight under the line above it.
+                    // (Or tight above the next aligned row, when rows are
+                    // set apart by blank lines.)
                     let label_line = |r: usize| {
                         let row = &rows[r];
                         let size = row[0].size;
+                        let tight_below = rows.get(r + 1).is_some_and(|next| {
+                            is_multi(next) && bottom_of(row) - next[0].top <= size * 0.45
+                        });
                         row.len() == 1
                             && row[0].chars() <= 40
                             && (row[0].x0 - left).abs() <= size * 1.5
-                            && bottom_of(&rows[r - 1]) - row[0].top <= size * 0.45
+                            && (bottom_of(&rows[r - 1]) - row[0].top <= size * 0.45 || tight_below)
                     };
                     let ahead = (end..rows.len().min(end + 4))
                         .take_while(|&r| !is_multi(&rows[r]) && label_line(r))
@@ -550,7 +560,7 @@ pub(crate) fn region_blocks(
         let enumerated = starts_enumerated(&text);
         // A numbered line that fills the region and runs on into a lowercase
         // next line is the first line of a numbered paragraph, not a heading.
-        let runs_on = x1 - x0 >= (right - left) * 0.85
+        let runs_on = x1 - x0 >= (right - left) * 0.6
             && rows.get(index + 1).is_some_and(|next| {
                 next.iter().all(|s| s.table.is_none())
                     && row_text(next).chars().next().is_some_and(char::is_lowercase)

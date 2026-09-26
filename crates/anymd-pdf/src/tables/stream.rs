@@ -243,7 +243,6 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
             .any(|&y| y < upper.bottom + 1.0 && y > lower.top - 1.0)
     };
 
-    if std::env::var("ANYMD_DEBUG_STREAM").is_ok() { for l in &lines { eprintln!("top={:.1} bot={:.1} size={size:.1} {:?}", l.top, l.bottom, l.cells); } eprintln!("----"); }
     let texts: Vec<Vec<String>> = lines.iter().map(|l| l.cells.clone()).collect();
     let data = first_data_row(&texts);
     // Header rows: the first row, plus following rows that are tight below it
@@ -305,6 +304,15 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
             && !prev_number
             && !first.is_empty()
             && (starts_lower(first) || ends_open(&prev.cells[0]));
+        // A wrapped item label: the item's first line has its marker and the
+        // start of the label, the next line has no marker, the rest of the
+        // label and the values.
+        let first_value = (0..width).find(|&c| is_numeric(&line.cells[c]));
+        let item_head = !prev_filled.iter().any(|&c| c > 0 && is_numeric(&prev.cells[c]))
+            && !prev.cells[0].is_empty()
+            && first.is_empty()
+            && !prev_filled.iter().any(|&c| prev.cells[c].ends_with(':'))
+            && first_value.is_some_and(|v| prev_filled.iter().all(|&c| c < v));
         // The rest of a wrapped label, below the line with the values.
         let label_tail = filled == [0]
             && !prev.cells[0].is_empty()
@@ -315,7 +323,7 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
         let same_band = separated_rows >= 2
             && !any_number
             && (filled.iter().filter(|&&c| c > 0).count() < prev_values || reads_on);
-        if continues_cells || centred_label || label_head || label_tail || same_band {
+        if continues_cells || centred_label || label_head || item_head || label_tail || same_band {
             for (c, text) in line.cells.iter().enumerate() {
                 append(&mut prev.cells[c], text);
             }
