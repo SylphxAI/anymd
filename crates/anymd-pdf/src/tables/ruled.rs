@@ -436,33 +436,59 @@ fn build_cells(
             .map(|(root, _)| lines.get(root).unwrap_or(&empty))
             .filter(|l| !l.is_empty())
             .collect();
-        let k = texts.first().map_or(0, |l| l.len());
+        // Baselines shared by the lines of the row's cells, top to bottom.
+        let mut bases: Vec<f64> = texts.iter().flat_map(|l| l.iter().map(|(b, _)| *b)).collect();
+        bases.sort_by(|a, b| b.total_cmp(a));
+        let mut clusters: Vec<f64> = Vec::new();
+        for base in bases {
+            if clusters.last().is_none_or(|last| last - base > 2.0) {
+                clusters.push(base);
+            }
+        }
+        let cluster_of = |base: f64| {
+            clusters
+                .iter()
+                .enumerate()
+                .min_by(|a, b| (a.1 - base).abs().total_cmp(&(b.1 - base).abs()))
+                .map_or(0, |(i, _)| i)
+        };
+        let shared = clusters
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| {
+                texts
+                    .iter()
+                    .filter(|l| l.iter().any(|(b, _)| cluster_of(*b) == *i))
+                    .count()
+                    >= 2
+            })
+            .count();
         let numbers = texts
             .iter()
             .flat_map(|l| l.iter())
             .filter(|(_, t)| crate::tables::is_numeric(t))
             .count();
         let total: usize = texts.iter().map(|l| l.len()).sum();
-        let aligned = texts.iter().all(|l| {
-            l.len() == k && l.iter().zip(texts[0].iter()).all(|(a, b)| (a.0 - b.0).abs() <= 2.0)
-        });
-        let split = k >= 2
+        let split = shared >= 2
             && texts.len() >= 2
-            && aligned
             && numbers * 2 >= total
             && !crossing[r]
             && starts.iter().all(|(_, e)| e.2 == e.0);
-        let height = if split { k } else { 1 };
+        let height = if split { clusters.len() } else { 1 };
         let base = cells.len();
         cells.extend((0..height).map(|_| vec![None; ncols]));
         for (root, e) in starts {
             let cell_lines = lines.get(root).unwrap_or(&empty);
-            for part in 0..height {
-                let text = if split {
-                    cell_lines.get(part).map(|(_, t)| strip_leaders(t)).unwrap_or_default()
-                } else {
-                    joined(cell_lines)
-                };
+            let mut parts = vec![String::new(); height];
+            if split {
+                for (line_base, text) in cell_lines {
+                    join_cell_line(&mut parts[cluster_of(*line_base)], text);
+                }
+            } else {
+                parts[0] = joined(cell_lines);
+            }
+            for (part, text) in parts.into_iter().enumerate() {
+                let text = strip_leaders(&text);
                 count(&text);
                 cells[base + part][e.1] = Some(Cell {
                     text,

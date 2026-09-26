@@ -43,9 +43,16 @@ impl Grid {
             for (c, cell) in row.iter().enumerate() {
                 let Some(cell) = cell else { continue };
                 if r < self.header_rows {
+                    // A short heading over several columns belongs to each of
+                    // them; a long one is written once, to keep tables small.
+                    let cols = if cell.text.chars().count() <= 32 {
+                        cell.cols.max(1)
+                    } else {
+                        1
+                    };
                     let rows = cell.rows.max(1).min(self.header_rows - r);
                     for target in out.iter_mut().skip(r).take(rows) {
-                        for slot in target.iter_mut().skip(c).take(cell.cols.max(1)) {
+                        for slot in target.iter_mut().skip(c).take(cols) {
                             *slot = cell.text.clone();
                         }
                     }
