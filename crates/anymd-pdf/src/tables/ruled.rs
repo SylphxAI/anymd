@@ -113,9 +113,9 @@ fn cluster_positions(mut values: Vec<f64>) -> Vec<f64> {
 /// Whether some line at `at` covers most of `from..to`.
 fn covered(lines: &[&Line], at: f64, from: f64, to: f64) -> bool {
     let need = (to - from) * 0.6;
-    lines.iter().any(|line| {
-        (line.at - at).abs() <= SNAP && line.to.min(to) - line.from.max(from) >= need
-    })
+    lines
+        .iter()
+        .any(|line| (line.at - at).abs() <= SNAP && line.to.min(to) - line.from.max(from) >= need)
 }
 
 /// Find ruled tables. Returns the tables and the glyphs that are not inside
@@ -125,14 +125,24 @@ pub(crate) fn ruled_tables(rules: &[Rule], glyphs: Vec<Glyph>) -> (Vec<RuledTabl
         rules
             .iter()
             .filter(|r| r.horizontal)
-            .map(|r| Line { at: r.at, from: r.from, to: r.to, soft: r.soft })
+            .map(|r| Line {
+                at: r.at,
+                from: r.from,
+                to: r.to,
+                soft: r.soft,
+            })
             .collect(),
     );
     let vertical = merge(
         rules
             .iter()
             .filter(|r| !r.horizontal)
-            .map(|r| Line { at: r.at, from: r.from, to: r.to, soft: r.soft })
+            .map(|r| Line {
+                at: r.at,
+                from: r.from,
+                to: r.to,
+                soft: r.soft,
+            })
             .collect(),
     );
     if horizontal.len() < 2
@@ -186,7 +196,12 @@ pub(crate) fn ruled_tables(rules: &[Rule], glyphs: Vec<Glyph>) -> (Vec<RuledTabl
     (tables, rest)
 }
 
-fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -> Option<RuledTable> {
+fn grid_of(
+    hs: &[&Line],
+    vs: &[&Line],
+    glyphs: &[Glyph],
+    claimed: &mut [bool],
+) -> Option<RuledTable> {
     // Column edges: the verticals, plus the ends of the horizontals for
     // tables without outer side lines. Row edges likewise.
     let mut xs: Vec<f64> = vs.iter().map(|v| v.at).collect();
@@ -230,7 +245,8 @@ fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -
         }
     }
     // Place glyphs by their centre.
-    let mut members: std::collections::HashMap<usize, Vec<usize>> = std::collections::HashMap::new();
+    let mut members: std::collections::HashMap<usize, Vec<usize>> =
+        std::collections::HashMap::new();
     for (index, glyph) in glyphs.iter().enumerate() {
         if claimed[index] || glyph.space {
             continue;
@@ -240,15 +256,27 @@ fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -
         if cx <= x0 || cx >= x1 || cy >= top || cy <= bottom {
             continue;
         }
-        let c = xs.partition_point(|&x| x < cx).saturating_sub(1).min(ncols - 1);
-        let r = ys.partition_point(|&y| y > cy).saturating_sub(1).min(nrows - 1);
-        members.entry(find(&mut parent, id(r, c))).or_default().push(index);
+        let c = xs
+            .partition_point(|&x| x < cx)
+            .saturating_sub(1)
+            .min(ncols - 1);
+        let r = ys
+            .partition_point(|&y| y > cy)
+            .saturating_sub(1)
+            .min(nrows - 1);
+        members
+            .entry(find(&mut parent, id(r, c)))
+            .or_default()
+            .push(index);
     }
     // Each cell's lines: (baseline, text).
     let mut lines: std::collections::HashMap<usize, Vec<(f64, String)>> =
         std::collections::HashMap::new();
     for (root, indexes) in &members {
-        lines.insert(*root, cell_lines(indexes.iter().map(|&i| glyphs[i].clone()).collect()));
+        lines.insert(
+            *root,
+            cell_lines(indexes.iter().map(|&i| glyphs[i].clone()).collect()),
+        );
     }
     let (cells, filled, chars, longest) = build_cells(nrows, ncols, &extent, &lines);
     // Text never runs across a table's column line; it does across a
@@ -256,7 +284,10 @@ fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -
     if crosses_lines(&xs, &ys, vs, glyphs, claimed, (x0, bottom, x1, top)) {
         return None;
     }
-    let mut grid = Grid { cells, header_rows: 0 };
+    let mut grid = Grid {
+        cells,
+        header_rows: 0,
+    };
     drop_empty(&mut grid);
     let (rows, cols) = (grid.cells.len(), grid.width());
     // A grid is a table when it has real rows and columns of short text, not
@@ -321,7 +352,13 @@ fn grid_of(hs: &[&Line], vs: &[&Line], glyphs: &[Glyph], claimed: &mut [bool]) -
         grid.header_rows = ruled_header_rows(&grid);
         Ruled::Table { caption, grid }
     };
-    Some(RuledTable { x0, bottom, x1, top, content })
+    Some(RuledTable {
+        x0,
+        bottom,
+        x1,
+        top,
+        content,
+    })
 }
 
 /// Whether words run across the grid's inner vertical lines: two glyphs of
@@ -436,7 +473,10 @@ fn build_cells(
             .filter(|l| !l.is_empty())
             .collect();
         // Baselines shared by the lines of the row's cells, top to bottom.
-        let mut bases: Vec<f64> = texts.iter().flat_map(|l| l.iter().map(|(b, _)| *b)).collect();
+        let mut bases: Vec<f64> = texts
+            .iter()
+            .flat_map(|l| l.iter().map(|(b, _)| *b))
+            .collect();
         bases.sort_by(|a, b| b.total_cmp(a));
         let mut clusters: Vec<f64> = Vec::new();
         for base in bases {
@@ -505,7 +545,11 @@ fn build_cells(
 fn drop_empty(grid: &mut Grid) {
     let mut r = 0;
     while r < grid.cells.len() {
-        if grid.cells[r].iter().flatten().any(|cell| !cell.text.is_empty()) {
+        if grid.cells[r]
+            .iter()
+            .flatten()
+            .any(|cell| !cell.text.is_empty())
+        {
             r += 1;
             continue;
         }

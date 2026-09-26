@@ -3,7 +3,10 @@
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use crate::{MAX_GLYPHS_PER_PAGE, MAX_WORKERS};
-use pdf_extract::{output_doc_page, ColorSpace, Document, MediaBox, OutputDev, OutputError, Path as PdfPath, PathOp, Transform};
+use pdf_extract::{
+    output_doc_page, ColorSpace, Document, MediaBox, OutputDev, OutputError, Path as PdfPath,
+    PathOp, Transform,
+};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Glyph {
@@ -67,9 +70,11 @@ fn rgb(colorspace: &ColorSpace, color: &[f64]) -> Option<[f64; 3]> {
         (ColorSpace::DeviceRGB | ColorSpace::CalRGB(_), [r, g, b, ..]) => Some([*r, *g, *b]),
         (ColorSpace::ICCBased(_), [r, g, b]) => Some([*r, *g, *b]),
         (ColorSpace::ICCBased(_), [g]) => Some([*g, *g, *g]),
-        (ColorSpace::DeviceCMYK, [c, m, y, k, ..]) => {
-            Some([(1.0 - c) * (1.0 - k), (1.0 - m) * (1.0 - k), (1.0 - y) * (1.0 - k)])
-        }
+        (ColorSpace::DeviceCMYK, [c, m, y, k, ..]) => Some([
+            (1.0 - c) * (1.0 - k),
+            (1.0 - m) * (1.0 - k),
+            (1.0 - y) * (1.0 - k),
+        ]),
         _ => None,
     }
 }
@@ -92,11 +97,9 @@ impl Collector {
                 }
                 let Some(color) = color else { return true };
                 let (cx, cy) = ((glyph.x0 + glyph.x1) / 2.0, glyph.base + glyph.size * 0.3);
-                let under = self
-                    .boxes
-                    .iter()
-                    .rev()
-                    .find(|(b, _, at)| at < when && cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]);
+                let under = self.boxes.iter().rev().find(|(b, _, at)| {
+                    at < when && cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]
+                });
                 !under.is_some_and(|(_, fill, _)| {
                     fill.iter().zip(color).all(|(a, b)| (a - b).abs() < 0.06)
                 })
@@ -133,8 +136,7 @@ fn is_white(colorspace: &ColorSpace, color: &[f64]) -> bool {
 
 impl Collector {
     fn push_rule(&mut self, (x0, y0): (f64, f64), (x1, y1): (f64, f64), soft: bool) {
-        if self.rules.len() >= MAX_RULES_PER_PAGE
-            || ![x0, y0, x1, y1].iter().all(|v| v.is_finite())
+        if self.rules.len() >= MAX_RULES_PER_PAGE || ![x0, y0, x1, y1].iter().all(|v| v.is_finite())
         {
             return;
         }
@@ -239,7 +241,8 @@ impl Subpath {
             .all(|(a, b)| (a.0 - b.0).abs() < 0.5 || (a.1 - b.1).abs() < 0.5);
         let first = self.edges.first()?.0;
         let last = self.edges.last()?.1;
-        let closes = self.closed || ((first.0 - last.0).abs() < 0.5 && (first.1 - last.1).abs() < 0.5);
+        let closes =
+            self.closed || ((first.0 - last.0).abs() < 0.5 && (first.1 - last.1).abs() < 0.5);
         if !(straight && closes) {
             return None;
         }
@@ -327,7 +330,8 @@ impl OutputDev for Collector {
         if upright {
             self.glyphs.push(glyph);
             self.drawn += 1;
-            self.glyph_paint.push((self.paint.0, self.paint.1, self.drawn));
+            self.glyph_paint
+                .push((self.paint.0, self.paint.1, self.drawn));
         } else {
             self.rotated.push(glyph);
         }
@@ -337,7 +341,12 @@ impl OutputDev for Collector {
     fn image(&mut self, ctm: &Transform) -> Result<(), OutputError> {
         // An image can sit behind text of any colour: it counts as a box of
         // no colour, which hides nothing.
-        let corners = [apply(ctm, 0.0, 0.0), apply(ctm, 1.0, 0.0), apply(ctm, 0.0, 1.0), apply(ctm, 1.0, 1.0)];
+        let corners = [
+            apply(ctm, 0.0, 0.0),
+            apply(ctm, 1.0, 0.0),
+            apply(ctm, 0.0, 1.0),
+            apply(ctm, 1.0, 1.0),
+        ];
         let xs = corners.map(|c| c.0);
         let ys = corners.map(|c| c.1);
         let extent = [

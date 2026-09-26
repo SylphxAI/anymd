@@ -119,7 +119,8 @@ fn gutters(phrases: &[&Phrase], allowed: usize, min_width: f64) -> Vec<(f64, f64
 
 fn ends_open(text: &str) -> bool {
     const LINKS: &[&str] = &[
-        "and", "or", "of", "the", "for", "to", "in", "with", "by", "on", "at", "from", "a", "an", "&",
+        "and", "or", "of", "the", "for", "to", "in", "with", "by", "on", "at", "from", "a", "an",
+        "&",
     ];
     let text = text.trim_end();
     if text.ends_with('-') || text.ends_with(',') || text.ends_with('&') {
@@ -130,7 +131,10 @@ fn ends_open(text: &str) -> bool {
 }
 
 fn starts_lower(text: &str) -> bool {
-    text.trim_start().chars().next().is_some_and(char::is_lowercase)
+    text.trim_start()
+        .chars()
+        .next()
+        .is_some_and(char::is_lowercase)
 }
 
 fn append(cell: &mut String, text: &str) {
@@ -145,7 +149,12 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
     // or more where the page's own word spaces are wide (typewriter text).
     // Monospace text has wide spaces of its own, so there a gap of two
     // spaces is needed.
-    let mono = rows.iter().flatten().filter(|s| s.mono == Some(true)).count() * 2
+    let mono = rows
+        .iter()
+        .flatten()
+        .filter(|s| s.mono == Some(true))
+        .count()
+        * 2
         > rows.iter().flatten().count();
     let min_gap = if mono {
         size * 1.2
@@ -221,7 +230,11 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
             .filter_map(|(cell, u)| u.then(|| strip_leaders(cell)))
             .collect();
         for span in &mut line.spans {
-            *span = (remap[span.0].min(width - 1), remap[span.1].min(width - 1), remap[span.2].min(width - 1));
+            *span = (
+                remap[span.0].min(width - 1),
+                remap[span.1].min(width - 1),
+                remap[span.2].min(width - 1),
+            );
         }
         line.spans.retain(|(a, b, _)| b > a);
     }
@@ -230,8 +243,16 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
         return Stream::Columns(columns);
     }
 
-    let x0 = rows.iter().flatten().map(|s| s.x0).fold(f64::INFINITY, f64::min);
-    let x1 = rows.iter().flatten().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
+    let x0 = rows
+        .iter()
+        .flatten()
+        .map(|s| s.x0)
+        .fold(f64::INFINITY, f64::min);
+    let x1 = rows
+        .iter()
+        .flatten()
+        .map(|s| s.x1)
+        .fold(f64::NEG_INFINITY, f64::max);
     let row_rules: Vec<f64> = rules
         .iter()
         .filter(|r| r.horizontal && r.to.min(x1) - r.from.max(x0) >= (x1 - x0) * 0.5)
@@ -308,7 +329,9 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
         // start of the label, the next line has no marker, the rest of the
         // label and the values.
         let first_value = (0..width).find(|&c| is_numeric(&line.cells[c]));
-        let item_head = !prev_filled.iter().any(|&c| c > 0 && is_numeric(&prev.cells[c]))
+        let item_head = !prev_filled
+            .iter()
+            .any(|&c| c > 0 && is_numeric(&prev.cells[c]))
             && !prev.cells[0].is_empty()
             && first.is_empty()
             && !prev_filled.iter().any(|&c| prev.cells[c].ends_with(':'))
@@ -342,15 +365,28 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
             let mut row: Vec<Option<Cell>> = line
                 .cells
                 .iter()
-                .map(|text| Some(Cell { text: text.clone(), cols: 1, rows: 1 }))
+                .map(|text| {
+                    Some(Cell {
+                        text: text.clone(),
+                        cols: 1,
+                        rows: 1,
+                    })
+                })
                 .collect();
             if r < header_rows {
                 // A header phrase over several columns covers each of them.
                 for &(first, last, placed) in &line.spans {
-                    let text = row[placed].as_ref().map(|c| c.text.clone()).unwrap_or_default();
+                    let text = row[placed]
+                        .as_ref()
+                        .map(|c| c.text.clone())
+                        .unwrap_or_default();
                     if (first..=last).all(|c| c == placed || line.cells[c].is_empty()) {
                         row[placed] = Some(Cell::default());
-                        row[first] = Some(Cell { text, cols: last - first + 1, rows: 1 });
+                        row[first] = Some(Cell {
+                            text,
+                            cols: last - first + 1,
+                            rows: 1,
+                        });
                         for slot in row.iter_mut().take(last + 1).skip(first + 1) {
                             *slot = None;
                         }
@@ -370,7 +406,11 @@ fn prose_columns(lines: &[Line]) -> Option<Vec<Vec<String>>> {
     if lines.len() < 3 || width > 4 {
         return None;
     }
-    let cells: Vec<&String> = lines.iter().flat_map(|l| &l.cells).filter(|c| !c.is_empty()).collect();
+    let cells: Vec<&String> = lines
+        .iter()
+        .flat_map(|l| &l.cells)
+        .filter(|c| !c.is_empty())
+        .collect();
     let numeric = cells.iter().filter(|c| is_numeric(c)).count();
     if cells.is_empty() || numeric * 10 > cells.len() {
         return None;

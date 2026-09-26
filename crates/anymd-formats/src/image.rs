@@ -145,7 +145,11 @@ pub fn ocr_text(bytes: &[u8], suffix: &str) -> Result<String, String> {
         .ok_or_else(|| "OCR needs `tesseract` installed (e.g. `apt install tesseract-ocr` or `brew install tesseract`).".to_string())?;
     let file = tool::temp_file(bytes, suffix)?;
     let path = file.path().as_os_str().to_owned();
-    let output = tool::run(&tesseract, [path.as_os_str(), "stdout".as_ref()], OCR_TIMEOUT)?;
+    let output = tool::run(
+        &tesseract,
+        [path.as_os_str(), "stdout".as_ref()],
+        OCR_TIMEOUT,
+    )?;
     if output.success {
         Ok(tidy_ocr(&String::from_utf8_lossy(&output.stdout)))
     } else {
@@ -403,6 +407,22 @@ fn capitalize(key: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn tesseract_tsv_words_keep_boxes_and_lines() {
+        let tsv = "level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext\n\
+4\t1\t1\t1\t1\t0\t10\t20\t300\t40\t-1\t\n\
+5\t1\t1\t1\t1\t1\t10\t20\t90\t40\t96.5\tNASA\n\
+5\t1\t1\t1\t1\t2\t110\t20\t120\t40\t91\tProgram\n\
+5\t1\t1\t1\t1\t3\t240\t20\t10\t40\t-1\t \n";
+        let words = super::parse_tsv(tsv);
+        assert_eq!(words.len(), 2);
+        assert_eq!(words[1].text, "Program");
+        assert_eq!(
+            (words[1].left, words[1].width, words[1].line),
+            (110, 120, (1, 1, 1))
+        );
+    }
+
     use super::*;
     use exif::experimental::Writer;
     use exif::{Field, Rational};
@@ -506,7 +526,10 @@ mod tests {
         let converted = convert(&png(64, 32), &Options::default()).unwrap();
         assert_eq!(converted.format, "image");
         let md = &converted.sections[0].markdown;
-        assert!(md.starts_with("|Property|Value|\n|-|-|\n|Format|PNG|\n|Dimensions|64 × 32 px|"), "{md}");
+        assert!(
+            md.starts_with("|Property|Value|\n|-|-|\n|Format|PNG|\n|Dimensions|64 × 32 px|"),
+            "{md}"
+        );
         assert!(md.contains("`ocr: true`"));
     }
 

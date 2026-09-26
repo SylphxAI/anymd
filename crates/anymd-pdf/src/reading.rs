@@ -31,7 +31,10 @@ pub(crate) fn column_cut(segments: &[Segment], body: f64, depth: usize) -> Optio
         return None;
     }
     let left_edge = segments.iter().map(|s| s.x0).fold(f64::INFINITY, f64::min);
-    let right_edge = segments.iter().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
+    let right_edge = segments
+        .iter()
+        .map(|s| s.x1)
+        .fold(f64::NEG_INFINITY, f64::max);
     let width = right_edge - left_edge;
     if width <= body * 4.0 {
         return None;
@@ -86,7 +89,9 @@ pub(crate) fn column_cut(segments: &[Segment], body: f64, depth: usize) -> Optio
             // Inside a column, a further split needs lines of running text,
             // not the short cells of a two-column table.
             let min_chars = if depth == 0 { 18.0 } else { 30.0 };
-            side_width >= width * 0.2 && median(&mut chars) >= min_chars && median(&mut fill) >= 0.55
+            side_width >= width * 0.2
+                && median(&mut chars) >= min_chars
+                && median(&mut fill) >= 0.55
         };
         // A side that is itself two or more text columns also counts (three-
         // column layouts).
@@ -107,7 +112,11 @@ pub(crate) fn column_cut(segments: &[Segment], body: f64, depth: usize) -> Optio
 }
 
 /// Order segments into reading-order regions (each region is top-to-bottom).
-pub(crate) fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -> Vec<Vec<Segment>> {
+pub(crate) fn reading_regions(
+    segments: Vec<Segment>,
+    body: f64,
+    depth: usize,
+) -> Vec<Vec<Segment>> {
     if segments.len() <= 1 || depth > 8 {
         return vec![segments];
     }
@@ -127,7 +136,10 @@ pub(crate) fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -
     // A band too small or too table-like to show its columns takes the
     // page's column gutter when no line crosses it and running text sits
     // beside it (a table or figure inside one column of a two-column page).
-    let cuts: Vec<Option<(f64, f64)>> = bands.iter().map(|band| column_cut(band, body, depth)).collect();
+    let cuts: Vec<Option<(f64, f64)>> = bands
+        .iter()
+        .map(|band| column_cut(band, body, depth))
+        .collect();
     let template = cuts
         .iter()
         .zip(&bands)
@@ -137,8 +149,14 @@ pub(crate) fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -
         .filter(|_| depth == 0);
     let fits = |band: &[Segment], (start, end): (f64, f64)| {
         let crosses = band.iter().any(|s| s.x0 < start - 0.5 && s.x1 > end + 0.5);
-        let left = band.iter().filter(|s| s.x1 <= start + 0.5).collect::<Vec<_>>();
-        let right = band.iter().filter(|s| s.x0 >= end - 0.5).collect::<Vec<_>>();
+        let left = band
+            .iter()
+            .filter(|s| s.x1 <= start + 0.5)
+            .collect::<Vec<_>>();
+        let right = band
+            .iter()
+            .filter(|s| s.x0 >= end - 0.5)
+            .collect::<Vec<_>>();
         let prose = |side: &[&Segment]| side.iter().any(|s| s.chars() >= 25);
         !crosses && !left.is_empty() && !right.is_empty() && (prose(&left) || prose(&right))
     };
@@ -151,8 +169,14 @@ pub(crate) fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -
     // crossing it, is split there too (a table row beside a chart).
     if let Some((start, end)) = template {
         for index in 1..cuts.len().saturating_sub(1) {
-            let clear = !bands[index].iter().any(|s| s.x0 < start - 0.5 && s.x1 > end + 0.5);
-            if cuts[index].is_none() && clear && cuts[index - 1].is_some() && cuts[index + 1].is_some() {
+            let clear = !bands[index]
+                .iter()
+                .any(|s| s.x0 < start - 0.5 && s.x1 > end + 0.5);
+            if cuts[index].is_none()
+                && clear
+                && cuts[index - 1].is_some()
+                && cuts[index + 1].is_some()
+            {
                 cuts[index] = template;
             }
         }
@@ -194,7 +218,12 @@ pub(crate) fn reading_regions(segments: Vec<Segment>, body: f64, depth: usize) -
 /// Split a group at a gutter. Wide segments that cross the gutter (a caption
 /// or table spanning both columns) divide the columns into vertical zones;
 /// narrow ones (figure labels) join the side of their midpoint.
-pub(crate) fn split_columns(group: Vec<Segment>, gutter: (f64, f64), body: f64, depth: usize) -> Vec<Vec<Segment>> {
+pub(crate) fn split_columns(
+    group: Vec<Segment>,
+    gutter: (f64, f64),
+    body: f64,
+    depth: usize,
+) -> Vec<Vec<Segment>> {
     let x = (gutter.0 + gutter.1) / 2.0;
     let lo = group.iter().map(|s| s.x0).fold(f64::INFINITY, f64::min);
     let hi = group.iter().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
@@ -219,8 +248,9 @@ pub(crate) fn split_columns(group: Vec<Segment>, gutter: (f64, f64), body: f64, 
         .iter()
         .map(|band| band.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min))
         .collect();
-    let mut zones: Vec<(Vec<Segment>, Vec<Segment>)> =
-        (0..=barrier_bands.len()).map(|_| (Vec::new(), Vec::new())).collect();
+    let mut zones: Vec<(Vec<Segment>, Vec<Segment>)> = (0..=barrier_bands.len())
+        .map(|_| (Vec::new(), Vec::new()))
+        .collect();
     for segment in rest {
         let mid = (segment.top + segment.bottom) / 2.0;
         let zone = bottoms.iter().take_while(|bottom| **bottom > mid).count();

@@ -168,7 +168,10 @@ pub(crate) fn strip_leaders(text: &str) -> String {
             // A run of dots, possibly spaced (". . . .").
             let mut end = index;
             let mut dots = 0;
-            while end < chars.len() && (is_dot(chars[end]) || (chars[end] == ' ' && end + 1 < chars.len() && is_dot(chars[end + 1]))) {
+            while end < chars.len()
+                && (is_dot(chars[end])
+                    || (chars[end] == ' ' && end + 1 < chars.len() && is_dot(chars[end + 1])))
+            {
                 if is_dot(chars[end]) {
                     dots += if chars[end] == '…' { 3 } else { 1 };
                 }

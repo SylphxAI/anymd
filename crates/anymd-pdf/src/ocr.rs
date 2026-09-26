@@ -38,7 +38,11 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
         entry.0 = entry.0.min(word.top);
         entry.1 = entry.1.max(word.bottom);
     }
-    let mut heights: Vec<f64> = lines.values().map(|(t, b)| (b - t) * scale).filter(|h| *h > 0.0).collect();
+    let mut heights: Vec<f64> = lines
+        .values()
+        .map(|(t, b)| (b - t) * scale)
+        .filter(|h| *h > 0.0)
+        .collect();
     heights.sort_by(f64::total_cmp);
     let Some(&body) = heights.get(heights.len() / 2) else {
         return String::new();
@@ -103,7 +107,9 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
     let sizes: Vec<f64> = blocks
         .iter()
         .filter_map(|block| match block {
-            Block::Paragraph { size, text, .. } if is_size_heading(*size, body, text) => Some(*size),
+            Block::Paragraph { size, text, .. } if is_size_heading(*size, body, text) => {
+                Some(*size)
+            }
             _ => None,
         })
         .collect();

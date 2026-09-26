@@ -6,9 +6,9 @@ use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use anymd_formats::{ConvertError, Format};
 use anymd_core::markdown_layout::{self, load_document, load_document_bytes};
 use anymd_core::url_fetch::fetch_url;
+use anymd_formats::{ConvertError, Format};
 
 use crate::source_access::SourceAccessPolicy;
 
@@ -558,7 +558,9 @@ fn ocr_page(image: &anymd_core::render::RenderedPage) -> Result<String, String> 
             top: f64::from(word.top),
             x1: f64::from(word.left + word.width),
             bottom: f64::from(word.top + word.height),
-            line: (u64::from(word.line.0) << 40) | (u64::from(word.line.1) << 20) | u64::from(word.line.2),
+            line: (u64::from(word.line.0) << 40)
+                | (u64::from(word.line.1) << 20)
+                | u64::from(word.line.2),
             text: word.text,
         })
         .collect();
@@ -744,10 +746,6 @@ mod tests {
         .unwrap();
         assert_eq!(opened.format, "csv");
         let units = opened.units(&[1]).unwrap();
-        assert!(
-            units[0].markdown.contains("|a|b|"),
-            "{}",
-            units[0].markdown
-        );
+        assert!(units[0].markdown.contains("|a|b|"), "{}", units[0].markdown);
     }
 }

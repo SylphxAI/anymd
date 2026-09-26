@@ -28,7 +28,8 @@ pub(crate) fn group_rows(mut segments: Vec<Segment>) -> Vec<Vec<Segment>> {
         if let Some(row) = rows.last_mut() {
             let anchor = &row[0];
             let table = anchor.table.is_some() || segment.table.is_some();
-            if !table && (anchor.base - segment.base).abs() <= 0.45 * anchor.size.max(segment.size) {
+            if !table && (anchor.base - segment.base).abs() <= 0.45 * anchor.size.max(segment.size)
+            {
                 row.push(segment);
                 continue;
             }
@@ -128,7 +129,12 @@ pub(crate) fn numbered_heading_level(text: &str) -> Option<usize> {
     }
     // A heading does not stop on a word that needs another after it.
     let last = rest.rsplit(' ').next().unwrap_or("").to_lowercase();
-    if words > 3 && ["the", "of", "and", "to", "a", "an", "in", "for", "with", "by", "on", "or"].contains(&last.as_str()) {
+    if words > 3
+        && [
+            "the", "of", "and", "to", "a", "an", "in", "for", "with", "by", "on", "or",
+        ]
+        .contains(&last.as_str())
+    {
         return None;
     }
     // Headings are mostly letters, not numbers or math.
@@ -297,9 +303,22 @@ pub(crate) fn layout_page(
 /// lines just above it (the top lines of stacked column headings) that sit
 /// tight above the next line, within the table's width, and are still in the
 /// open paragraph.
-fn header_lines_above(rows: &[Vec<Segment>], index: usize, end: usize, marks: &[(usize, usize)]) -> usize {
-    let lo = rows[index..end].iter().flatten().map(|s| s.x0).fold(f64::INFINITY, f64::min);
-    let hi = rows[index..end].iter().flatten().map(|s| s.x1).fold(f64::NEG_INFINITY, f64::max);
+fn header_lines_above(
+    rows: &[Vec<Segment>],
+    index: usize,
+    end: usize,
+    marks: &[(usize, usize)],
+) -> usize {
+    let lo = rows[index..end]
+        .iter()
+        .flatten()
+        .map(|s| s.x0)
+        .fold(f64::INFINITY, f64::min);
+    let hi = rows[index..end]
+        .iter()
+        .flatten()
+        .map(|s| s.x1)
+        .fold(f64::NEG_INFINITY, f64::max);
     let mut start = index;
     for &(row_index, _) in marks.iter().rev() {
         if row_index + 1 != start || index - row_index > 3 {
@@ -309,7 +328,10 @@ fn header_lines_above(rows: &[Vec<Segment>], index: usize, end: usize, marks: &[
         let below = &rows[start];
         let size = row.iter().map(|s| s.size).fold(0.0, f64::max);
         let bottom = row.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min);
-        let top = below.iter().map(|s| s.top).fold(f64::NEG_INFINITY, f64::max);
+        let top = below
+            .iter()
+            .map(|s| s.top)
+            .fold(f64::NEG_INFINITY, f64::max);
         let short = row.iter().all(|s| s.chars() <= 60);
         let inside = row.iter().all(|s| s.x0 >= lo - size && s.x1 <= hi + size);
         let text = row_text(row);
@@ -424,8 +446,10 @@ pub(crate) fn region_blocks(
                     }
                     Ruled::Frame(boxes) => {
                         for glyphs in boxes {
-                            let segments: Vec<Segment> =
-                                rows_of(glyphs).into_iter().flat_map(segments_of_row).collect();
+                            let segments: Vec<Segment> = rows_of(glyphs)
+                                .into_iter()
+                                .flat_map(segments_of_row)
+                                .collect();
                             let mut inner = PageTables {
                                 found: Vec::new(),
                                 rules: tables.rules.clone(),
@@ -439,7 +463,11 @@ pub(crate) fn region_blocks(
                 }
             }
             // Text beside the table on its first line stays as its own row.
-            let rest: Vec<Segment> = rows[index].iter().filter(|s| s.table.is_none()).cloned().collect();
+            let rest: Vec<Segment> = rows[index]
+                .iter()
+                .filter(|s| s.table.is_none())
+                .cloned()
+                .collect();
             prev = None;
             if rest.is_empty() {
                 index += 1;
@@ -482,8 +510,13 @@ pub(crate) fn region_blocks(
                     // in the table when an aligned row follows within a few
                     // lines, or when they sit tight under the last one at
                     // the table's left edge.
-                    let left = rows[index..end].iter().map(|r| r[0].x0).fold(f64::INFINITY, f64::min);
-                    let bottom_of = |row: &Vec<Segment>| row.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min);
+                    let left = rows[index..end]
+                        .iter()
+                        .map(|r| r[0].x0)
+                        .fold(f64::INFINITY, f64::min);
+                    let bottom_of = |row: &Vec<Segment>| {
+                        row.iter().map(|s| s.bottom).fold(f64::INFINITY, f64::min)
+                    };
                     // A wrapped label: one short line at the table's left
                     // edge, tight under the line above it.
                     // (Or tight above the next aligned row, when rows are
@@ -563,7 +596,10 @@ pub(crate) fn region_blocks(
         let runs_on = x1 - x0 >= (right - left) * 0.6
             && rows.get(index + 1).is_some_and(|next| {
                 next.iter().all(|s| s.table.is_none())
-                    && row_text(next).chars().next().is_some_and(char::is_lowercase)
+                    && row_text(next)
+                        .chars()
+                        .next()
+                        .is_some_and(char::is_lowercase)
             });
         let heading_like =
             (numbered_heading_level(&text).is_some() || named_heading(&text)) && !runs_on;
@@ -587,7 +623,8 @@ pub(crate) fn region_blocks(
                 let prev_width = prev_x1 - prev_x0;
                 let prev_short = !heading_continues
                     && (prev_x1 < para_right.max(x1) - prev_size * 2.5
-                        || (prev_x1 < right - prev_size * 2.5 && prev_width < (right - left) * 0.6));
+                        || (prev_x1 < right - prev_size * 2.5
+                            && prev_width < (right - left) * 0.6));
                 let indented = x0 > continuation_x0 + size * 0.8 && !in_list;
                 let outdented = paragraph_lines >= 2 && x0 < continuation_x0 - size * 0.8;
                 // Centered lines (title blocks, letterheads) stay separate.

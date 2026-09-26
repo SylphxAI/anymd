@@ -27,10 +27,10 @@ use pdf_extract::Document;
 use crate::blocks::{layout_page, Block};
 use crate::extract::extract_pages;
 use crate::margins::repeated_margin_lines;
-use crate::render::{heading_levels, is_size_heading, render_blocks};
-use crate::rows::body_font_size;
 pub use crate::metadata::{info_title, outline};
 pub use crate::ocr::{words_to_markdown, PlacedWord};
+use crate::render::{heading_levels, is_size_heading, render_blocks};
+use crate::rows::body_font_size;
 pub use crate::rows::{infer_word_spaces, SpacingGlyph};
 
 /// A PDF that could not be opened or converted.
@@ -41,7 +41,9 @@ pub struct LayoutError {
 
 impl LayoutError {
     fn new(message: impl Into<String>) -> Self {
-        Self { message: message.into() }
+        Self {
+            message: message.into(),
+        }
     }
 }
 
@@ -83,9 +85,7 @@ pub fn load_document(path: &Path) -> Result<Document, LayoutError> {
         .map_err(|err| LayoutError::new(format!("Failed to open PDF: {err}")))?;
     if doc.is_encrypted() {
         doc.decrypt("").map_err(|err| {
-            LayoutError::new(format!(
-                "PDF is encrypted and needs a password: {err}"
-            ))
+            LayoutError::new(format!("PDF is encrypted and needs a password: {err}"))
         })?;
     }
     Ok(doc)
@@ -97,9 +97,7 @@ pub fn load_document_bytes(bytes: &[u8]) -> Result<Document, LayoutError> {
         .map_err(|err| LayoutError::new(format!("Failed to open PDF: {err}")))?;
     if doc.is_encrypted() {
         doc.decrypt("").map_err(|err| {
-            LayoutError::new(format!(
-                "PDF is encrypted and needs a password: {err}"
-            ))
+            LayoutError::new(format!("PDF is encrypted and needs a password: {err}"))
         })?;
     }
     Ok(doc)
