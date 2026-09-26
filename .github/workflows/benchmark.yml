@@ -142,7 +142,8 @@ jobs:
           echo "9e088583293c4c104953ead0dd8957f4e00dca318c7f241c039198e5eb2e2e54  llama.tgz" | sha256sum --check
           tar -xzf llama.tgz -C "$RUNNER_TEMP"
           echo "LLAMA_CPP_BINARY=$RUNNER_TEMP/llama-b11177/llama-server" >> "$GITHUB_ENV"
-          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/llama-b11177" >> "$GITHUB_ENV"
+          # Append: setup-python on our runners points LD_LIBRARY_PATH at libpython.
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/llama-b11177${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
       - name: Install ${{ matrix.tool }}
         if: steps.selected.outputs.run == 'true'
