@@ -7,14 +7,23 @@ updates:
     schedule:
       interval: 'weekly'
     open-pull-requests-limit: 10
+    ignore:
+      # ureq 3 replaced the 2.x `tls` feature with `rustls`, so a major bump
+      # cannot resolve while crates/anymd, crates/anymd-core and
+      # crates/anymd-formats ask for `tls`; that unresolved dependency fails the
+      # whole cargo update job. Migrate those three manifests to ureq 3, then
+      # drop this rule.
+      - dependency-name: 'ureq'
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: 'chore(rust)'
       include: 'scope'
     rebase-strategy: 'auto'
 
-  # Dependency updates for npm
-  - package-ecosystem: 'npm'
-    directory: '/' # Location of package manifests
+  # Dependency updates for the root package.json, locked by bun.lock. The
+  # `npm_and_yarn` updater cannot read bun.lock, so these are the `bun` updater's.
+  - package-ecosystem: 'bun'
+    directory: '/'
     schedule:
       interval: 'weekly'
     open-pull-requests-limit: 10
