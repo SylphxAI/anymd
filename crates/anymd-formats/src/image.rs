@@ -18,7 +18,7 @@ pub fn sniff(head: &[u8]) -> bool {
 }
 
 /// Short image kind from magic bytes.
-fn kind(head: &[u8]) -> Option<&'static str> {
+pub(crate) fn kind(head: &[u8]) -> Option<&'static str> {
     if head.starts_with(b"\x89PNG\r\n\x1a\n") {
         Some("PNG")
     } else if head.starts_with(&[0xFF, 0xD8, 0xFF]) {

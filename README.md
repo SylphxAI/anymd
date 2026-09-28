@@ -159,7 +159,7 @@ anymd exposes three tools.
 
 | Tool | Use it to | Key arguments |
 |---|---|---|
-| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `transcript`, `download_whisper_model` |
+| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `transcript`, `download_whisper_model` |
 | **`search`** | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto` · `literal` · `ranked`), `glob`, `max_results` |
 | **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect` |
 
@@ -220,11 +220,11 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 
 | Input | What you get |
 |---|---|
-| **PDF** | Reading-order Markdown: headings, paragraphs, lists, tables, sub/superscripts, `<!-- page N -->` markers, bookmarks as an outline. Running headers and page numbers are removed. Image-only pages are OCR'd when `tesseract` is installed. |
-| **Word** `.docx` | Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, equations as LaTeX |
-| **PowerPoint** `.pptx` | One section per slide in deck order, titles, bullets, tables, chart data, speaker notes |
+| **PDF** | Reading-order Markdown: headings, paragraphs, lists, tables, sub/superscripts, `<!-- page N -->` markers, bookmarks as an outline. Running headers and page numbers are removed. Image-only pages are OCR'd when `tesseract` is installed. Embedded figures are saved to the anymd cache and marked in place with their caption (`images: "refs"`, the default). |
+| **Word** `.docx` | Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, equations as LaTeX, embedded pictures as image files |
+| **PowerPoint** `.pptx` | One section per slide in deck order, titles, bullets, tables, chart data, speaker notes, pictures as image files |
 | **Excel** `.xlsx .xls .ods` · **CSV/TSV** | One table per sheet, dates as ISO strings, capped at 2,000 rows per sheet |
-| **EPUB** | One section per chapter in spine order, plus title and author |
+| **EPUB** | One section per chapter in spine order, plus title and author; pictures as image files |
 | **HTML** and **URLs** | The main article only: navigation, cookie banners, and sidebars are dropped. Relative links are resolved, and code keeps its language. |
 | **Markdown, text, JSON** | Returned unchanged, with pagination |
 | **Images** | Dimensions and EXIF (camera, date, GPS), plus OCR text when `tesseract` is installed |
@@ -239,6 +239,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 - Local-first: documents never leave your machine unless you pass a URL, and even then only that URL is fetched.
 - URL fetches block private and loopback addresses, and every redirect hop is checked again, pinned to its resolved address.
 - `--allow-dir=<path>` (repeatable) or `MCP_PDF_ALLOWED_DIRS` confines the server to the directories you list.
+- Embedded images are written only to anymd's own cache directory (`ANYMD_CACHE_DIR`, else the platform cache), never next to the source document, and refused over 50 megapixels.
 - External tools (tesseract, ffprobe, whisper.cpp) are optional. anymd runs them without a shell, with a timeout and an output cap.
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.

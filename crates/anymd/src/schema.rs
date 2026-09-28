@@ -17,6 +17,14 @@ fn option_bool_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
     .expect("option bool schema")
 }
 
+fn option_images_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    serde_json::from_value(serde_json::json!({
+        "type": ["string", "null"],
+        "enum": ["refs", "none", null]
+    }))
+    .expect("option images schema")
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct PageNumber(#[schemars(range(min = 1))] pub u32);
@@ -577,12 +585,27 @@ pub struct ReadArgs {
         schema_with = "option_bool_schema"
     )]
     pub download_whisper_model: Option<bool>,
+    #[schemars(
+        description = "Images embedded inside PDFs, DOCX, PPTX and EPUB files. \"refs\" (default) saves each meaningful raster image once to the anymd cache and marks its place in the Markdown as ![caption](absolute path) plus an <!-- image: WxH, page N --> comment, so you can open the file yourself; logos, icons and repeated headers are skipped. \"none\" leaves images out. Standalone image files are not affected.",
+        schema_with = "option_images_schema"
+    )]
+    pub images: Option<String>,
 }
 
 impl ReadArgs {
+    /// Whether embedded images are exported (the default) or left out.
+    pub fn wants_images(&self) -> bool {
+        self.images.as_deref() != Some("none")
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         if self.source.trim().is_empty() {
             return Err("source must not be empty.".into());
+        }
+        if let Some(mode) = self.images.as_deref() {
+            if mode != "refs" && mode != "none" {
+                return Err("images must be \"refs\" or \"none\".".into());
+            }
         }
         validate_u32_min("max_tokens", self.max_tokens, 500)
     }

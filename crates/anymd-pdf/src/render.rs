@@ -85,6 +85,7 @@ pub(crate) fn render_blocks(
                 table.trim_end().to_string()
             }
             Block::Comment(message) => format!("<!-- {message} -->"),
+            Block::Image(markdown) => markdown.clone(),
         };
         if piece.is_empty() {
             continue;

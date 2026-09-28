@@ -35,6 +35,8 @@ pub(crate) enum Ruled {
     /// tables drawn inside boxes): each box's glyphs, in reading order, to
     /// be laid out on their own.
     Frame(Vec<Vec<Glyph>>),
+    /// An embedded image, as the Markdown that points at it.
+    Image(String),
 }
 
 #[derive(Debug, Clone, Copy)]

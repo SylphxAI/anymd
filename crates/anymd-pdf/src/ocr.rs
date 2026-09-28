@@ -88,6 +88,9 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
         rotated: Vec::new(),
         rules: Vec::new(),
         ocr: true,
+        images: Vec::new(),
+        area: 0.0,
+        figures: Vec::new(),
     };
     let mut blocks = layout_page(&glyphs, &page, body, &HashSet::new());
     for block in &mut blocks {

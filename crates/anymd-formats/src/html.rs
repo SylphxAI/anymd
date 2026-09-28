@@ -9,6 +9,7 @@ use ego_tree::NodeRef;
 use scraper::{Html, Node};
 use url::Url;
 
+use crate::images::Embed;
 use crate::{ConvertError, Converted, Options, Section};
 
 /// Deeper trees than this are flattened to text so recursion stays bounded.
@@ -25,6 +26,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             base,
             keep_relative_links: true,
             select_main: true,
+            images: None,
         },
     );
     let mut metadata = Vec::new();
@@ -49,17 +51,20 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
 }
 
 /// Rendering knobs shared with the EPUB converter.
-pub(crate) struct RenderOptions {
+pub(crate) struct RenderOptions<'a> {
     pub base: Option<Url>,
     /// Keep links whose target is relative and cannot be resolved (EPUB drops them:
     /// they point into the archive and only cost tokens).
     pub keep_relative_links: bool,
     /// Narrow to `<main>`/`<article>` when the page has one.
     pub select_main: bool,
+    /// Decides what an `<img>` becomes, given its `src` and alt text: an
+    /// exported file, nothing, or the default alt-text form (EPUB).
+    pub images: Option<&'a dyn Fn(&str, &str) -> Embed>,
 }
 
 /// Markdown for an already-decoded HTML/XHTML document.
-pub(crate) fn render_html(text: &str, options: &RenderOptions) -> String {
+pub(crate) fn render_html(text: &str, options: &RenderOptions<'_>) -> String {
     render_document(&Html::parse_document(&expand_self_closing(text)), options)
 }
 
@@ -189,7 +194,7 @@ fn resolve_base(base_url: Option<&str>, base_href: Option<&str>) -> Option<Url> 
     }
 }
 
-fn render_document(doc: &Html, options: &RenderOptions) -> String {
+fn render_document(doc: &Html, options: &RenderOptions<'_>) -> String {
     let root = doc.tree.root();
     let body = root
         .descendants()
@@ -268,7 +273,7 @@ fn select_main(body: NodeRef<'_, Node>) -> NodeRef<'_, Node> {
 // Rendering
 
 struct Ctx<'a> {
-    options: &'a RenderOptions,
+    options: &'a RenderOptions<'a>,
     root_text: usize,
     root: ego_tree::NodeId,
 }
@@ -688,11 +693,8 @@ fn render_link(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, buf: &mut String, depth: 
 
 fn render_image(el: &scraper::node::Element, ctx: &Ctx<'_>) -> Option<String> {
     let alt = collapse(el.attr("alt").unwrap_or(""));
-    if alt.is_empty() {
-        return None;
-    }
     let class = el.attr("class").unwrap_or("");
-    if class.contains("mwe-math-fallback") {
+    if !alt.is_empty() && class.contains("mwe-math-fallback") {
         // MediaWiki renders formulas as images whose alt text is the TeX source.
         return Some(format!("${}$", clean_tex(&alt)));
     }
@@ -714,6 +716,16 @@ fn render_image(el: &scraper::node::Element, ctx: &Ctx<'_>) -> Option<String> {
     .flatten()
     .map(str::trim)
     .find(|s| !s.is_empty() && !s.starts_with("data:"));
+    if let (Some(decide), Some(src)) = (ctx.options.images, src) {
+        match decide(src, &alt) {
+            Embed::Markdown(markdown) => return Some(markdown),
+            Embed::Skip => return None,
+            Embed::Fallback => {}
+        }
+    }
+    if alt.is_empty() {
+        return None;
+    }
     let alt = bracket_safe(&alt);
     // Unresolvable image paths stay as written (EPUB images live in the archive).
     Some(

@@ -1,12 +1,13 @@
 //! PPTX → Markdown: one section per slide in presentation order, with titles,
 //! bullet levels, tables, chart data, image alt text, and speaker notes.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use crate::ooxml::{self, Blocks, Element, Inline, ListIndent, Package, Rels};
+use crate::images::{self, ImageStore};
+use crate::ooxml::{self, Blocks, Element, Inline, ListIndent, Media, Package, Rels};
 use crate::{markdown_table, ConvertError, Converted, Options, Section};
 
-pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertError> {
+pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
     let mut package = Package::open(bytes, "PPTX")?;
     let main = package.main_part("ppt/presentation.xml")?;
     let presentation = package
@@ -35,11 +36,23 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
     }
 
     let (title, metadata) = ooxml::core_properties(&mut package);
+    let store = options.images.as_ref();
+    let repeated = match store {
+        Some(_) => repeated_pictures(&mut package, &slides),
+        None => HashSet::new(),
+    };
     let mut sections = Vec::with_capacity(slides.len());
     let mut layouts: HashMap<String, Positions> = HashMap::new();
     for (index, path) in slides.iter().enumerate() {
         let markdown = match package.xml(path)? {
-            Some(slide) => render_slide(&mut package, path, &slide, &mut layouts)?,
+            Some(slide) => {
+                let images = SlideImages {
+                    store,
+                    repeated: &repeated,
+                    number: index + 1,
+                };
+                render_slide(&mut package, path, &slide, &mut layouts, &images)?
+            }
             None => String::new(),
         };
         sections.push(Section {
@@ -53,6 +66,55 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
         sections,
         metadata,
     })
+}
+
+/// The picture export settings for one slide.
+struct SlideImages<'a> {
+    store: Option<&'a ImageStore>,
+    repeated: &'a HashSet<u64>,
+    number: usize,
+}
+
+/// Pictures that sit on three or more slides: logos and running ornaments.
+fn repeated_pictures(package: &mut Package<'_>, slides: &[String]) -> HashSet<u64> {
+    let mut keys: HashMap<String, Option<u64>> = HashMap::new();
+    let mut counts: HashMap<u64, usize> = HashMap::new();
+    for path in slides {
+        let Some(slide) = package.xml(path).ok().flatten() else {
+            continue;
+        };
+        let Ok(rels) = package.rels(path) else {
+            continue;
+        };
+        let mut blips = Vec::new();
+        slide.find_all("blip", &mut blips);
+        let mut on_slide = HashSet::new();
+        for blip in blips {
+            let Some(target) = blip
+                .rel_attr("embed")
+                .and_then(|id| rels.get(id))
+                .filter(|rel| !rel.external)
+                .map(|rel| rel.target.clone())
+            else {
+                continue;
+            };
+            let key = *keys.entry(target.clone()).or_insert_with(|| {
+                let bytes = package.read(&target).ok().flatten()?;
+                Some(images::content_key(&bytes))
+            });
+            if let Some(key) = key {
+                on_slide.insert(key);
+            }
+        }
+        for key in on_slide {
+            *counts.entry(key).or_default() += 1;
+        }
+    }
+    counts
+        .into_iter()
+        .filter(|(_, slides)| *slides >= images::REPEAT_UNITS)
+        .map(|(key, _)| key)
+        .collect()
 }
 
 /// Placeholder positions inherited from the slide layout and master.
@@ -124,6 +186,7 @@ fn render_slide(
     path: &str,
     slide: &Element,
     layouts: &mut HashMap<String, Positions>,
+    images: &SlideImages<'_>,
 ) -> Result<String, ConvertError> {
     let rels = package.rels(path)?;
     let layout_key = rels
@@ -152,10 +215,13 @@ fn render_slide(
         }
     }
 
+    let media = Media::load(package, &rels, images.store, images.repeated);
     let context = Context {
         rels: &rels,
         positions: &positions,
         charts: &charts,
+        media: &media,
+        slide: images.number,
     };
     let mut blocks = Blocks::new();
     if let Some(tree) = slide.path(&["cSld", "spTree"]) {
@@ -182,6 +248,8 @@ struct Context<'a> {
     rels: &'a Rels,
     positions: &'a Positions,
     charts: &'a HashMap<String, Element>,
+    media: &'a Media,
+    slide: usize,
 }
 
 /// A shape to render, with its reading position when known.
@@ -291,7 +359,8 @@ impl Context<'_> {
                     .and_then(|b| b.rel_attr("embed"))
                     .and_then(|id| self.rels.get(id))
                     .map(|r| r.target.as_str());
-                if let Some(image) = ooxml::image_markdown(alt, target) {
+                let place = format!("slide {}", self.slide);
+                if let Some(image) = self.media.markdown(alt, target, Some(&place)) {
                     blocks.push(&image, false);
                 }
             }
@@ -422,6 +491,8 @@ fn notes_text(notes: &Element, rels: &Rels) -> String {
         rels,
         positions: &Positions::default(),
         charts: &HashMap::new(),
+        media: &Media::default(),
+        slide: 0,
     };
     let mut lines = Vec::new();
     let mut shapes = Vec::new();

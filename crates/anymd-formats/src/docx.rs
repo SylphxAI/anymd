@@ -2,10 +2,10 @@
 
 use std::collections::HashMap;
 
-use crate::ooxml::{self, Blocks, Element, Inline, ListIndent, Package, Rels};
+use crate::ooxml::{self, Blocks, Element, Inline, ListIndent, Media, Package, Rels};
 use crate::{markdown_table, ConvertError, Converted, Options, Section};
 
-pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertError> {
+pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
     let mut package = Package::open(bytes, "DOCX")?;
     let main = package.main_part("word/document.xml")?;
     let document = package
@@ -46,8 +46,15 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
     }
     let (title, metadata) = ooxml::core_properties(&mut package);
 
+    let media = Media::load(
+        &mut package,
+        &rels,
+        options.images.as_ref(),
+        &std::collections::HashSet::new(),
+    );
     let mut writer = Writer {
         rels: &rels,
+        media,
         styles,
         numbering,
         counters: HashMap::new(),
@@ -317,6 +324,7 @@ struct Field {
 
 struct Writer<'a> {
     rels: &'a Rels,
+    media: Media,
     styles: Styles,
     numbering: Numbering,
     /// abstractNumId → running counter per level (None = not started).
@@ -610,7 +618,7 @@ impl Writer<'_> {
                 .and_then(|b| b.rel_attr("embed").or_else(|| b.rel_attr("link")))
                 .and_then(|id| self.rels.get(id))
                 .map(|r| r.target.clone());
-            if let Some(image) = ooxml::image_markdown(alt, target.as_deref()) {
+            if let Some(image) = self.media.markdown(alt, target.as_deref(), None) {
                 out.push(&image, false, false, None);
             }
         }

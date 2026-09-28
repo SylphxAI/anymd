@@ -1,6 +1,7 @@
 //! EPUB → Markdown: container.xml → OPF → spine order, one section per chapter.
 
-use std::collections::HashMap;
+use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
 use std::io::{Cursor, Read};
 
 use quick_xml::events::Event;
@@ -8,13 +9,14 @@ use quick_xml::Reader;
 use zip::ZipArchive;
 
 use crate::html::{render_html, RenderOptions};
+use crate::images::{self, Embed, ImageStore};
 use crate::{ConvertError, Converted, Options, Section};
 
 const MAX_ENTRIES: usize = 10_000;
 const MAX_TOTAL_UNCOMPRESSED: u64 = 200 * 1024 * 1024;
 const MAX_ENTRY_BYTES: u64 = 50 * 1024 * 1024;
 
-pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertError> {
+pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
     let mut archive = ZipArchive::new(Cursor::new(bytes))
         .map_err(|e| ConvertError::Invalid(format!("not a valid EPUB zip: {e}")))?;
     if archive.len() > MAX_ENTRIES {
@@ -51,12 +53,8 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
     let package = parse_opf(&opf)?;
     let opf_dir = opf_path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
 
-    let render = RenderOptions {
-        base: None,
-        keep_relative_links: false,
-        select_main: false,
-    };
-    let mut sections = Vec::new();
+    // Chapters in reading order: the archive path of each and its XHTML.
+    let mut chapters: Vec<(String, String)> = Vec::new();
     for idref in &package.spine {
         let Some(item) = package.manifest.get(idref) else {
             continue;
@@ -73,11 +71,36 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
         let Ok(xhtml) = read_entry(&mut archive, &path) else {
             continue;
         };
-        let markdown = render_html(&xhtml, &render);
-        if !has_text(&markdown) {
+        chapters.push((path, xhtml));
+    }
+
+    let store = options.images.as_ref();
+    let archive = RefCell::new(archive);
+    // Pictures on three or more chapters (ornaments, publisher marks) are left out.
+    let repeated = match store {
+        Some(_) => repeated_pictures(&archive, &chapters),
+        None => HashSet::new(),
+    };
+    let mut sections = Vec::new();
+    for (path, xhtml) in &chapters {
+        let number = sections.len() + 1;
+        let place = format!("chapter {number}");
+        let dir = path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
+        let decide = |src: &str, alt: &str| match store {
+            Some(store) => chapter_image(store, &archive, dir, src, alt, Some(&place), &repeated),
+            None => Embed::Fallback,
+        };
+        let decide: &dyn Fn(&str, &str) -> Embed = &decide;
+        let render = RenderOptions {
+            base: None,
+            keep_relative_links: false,
+            select_main: false,
+            images: store.map(|_| decide),
+        };
+        let markdown = render_html(xhtml, &render);
+        if !has_text(&markdown) && !markdown.contains("<!-- image:") {
             continue;
         }
-        let number = sections.len() + 1;
         let label = match first_heading(&markdown) {
             Some(heading) => format!("chapter {number}: {heading}"),
             None => format!("chapter {number}"),
@@ -111,6 +134,15 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
 }
 
 fn read_entry(archive: &mut ZipArchive<Cursor<&[u8]>>, name: &str) -> Result<String, ConvertError> {
+    let buf = read_entry_bytes(archive, name)?;
+    let buf = buf.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(&buf);
+    Ok(String::from_utf8_lossy(buf).into_owned())
+}
+
+fn read_entry_bytes(
+    archive: &mut ZipArchive<Cursor<&[u8]>>,
+    name: &str,
+) -> Result<Vec<u8>, ConvertError> {
     let resolved = if archive.index_for_name(name).is_some() {
         name.to_string()
     } else {
@@ -134,8 +166,65 @@ fn read_entry(archive: &mut ZipArchive<Cursor<&[u8]>>, name: &str) -> Result<Str
             "EPUB entry {name} is too large"
         )));
     }
-    let buf = buf.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(&buf);
-    Ok(String::from_utf8_lossy(buf).into_owned())
+    Ok(buf)
+}
+
+type SharedArchive<'a> = RefCell<ZipArchive<Cursor<&'a [u8]>>>;
+
+/// The bytes of the image an `<img src>` in a chapter in `dir` names.
+fn chapter_bytes(archive: &SharedArchive<'_>, dir: &str, src: &str) -> Option<Vec<u8>> {
+    if src.contains("://") || src.starts_with("data:") {
+        return None;
+    }
+    let target = src.split(['#', '?']).next().unwrap_or("");
+    let path = join_path(dir, &percent_decode(target));
+    read_entry_bytes(&mut archive.borrow_mut(), &path).ok()
+}
+
+fn chapter_image(
+    store: &ImageStore,
+    archive: &SharedArchive<'_>,
+    dir: &str,
+    src: &str,
+    alt: &str,
+    place: Option<&str>,
+    repeated: &HashSet<u64>,
+) -> Embed {
+    match chapter_bytes(archive, dir, src) {
+        Some(bytes) => images::embed(store, &bytes, alt, place, repeated),
+        None => Embed::Fallback,
+    }
+}
+
+/// Pictures that appear in three or more chapters: ornaments and publisher marks.
+fn repeated_pictures(archive: &SharedArchive<'_>, chapters: &[(String, String)]) -> HashSet<u64> {
+    let mut counts: HashMap<u64, usize> = HashMap::new();
+    for (path, xhtml) in chapters {
+        let dir = path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
+        let found = RefCell::new(HashSet::new());
+        let collect = |src: &str, _alt: &str| {
+            if let Some(bytes) = chapter_bytes(archive, dir, src) {
+                found.borrow_mut().insert(images::content_key(&bytes));
+            }
+            Embed::Skip
+        };
+        let collect: &dyn Fn(&str, &str) -> Embed = &collect;
+        let render = RenderOptions {
+            base: None,
+            keep_relative_links: false,
+            select_main: false,
+            images: Some(collect),
+        };
+        render_html(xhtml, &render);
+        for key in found.into_inner() {
+            *counts.entry(key).or_default() += 1;
+        }
+    }
+    counts
+        .into_iter()
+        .filter(|(_, chapters)| *chapters >= images::REPEAT_UNITS)
+        .map(|(key, _)| key)
+        .collect()
 }
 
 fn rootfile_path(container: &str) -> Option<String> {

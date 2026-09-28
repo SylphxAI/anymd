@@ -1927,7 +1927,8 @@ impl<'a> Processor<'a> {
                         let contents = get_contents(xf);
                         self.process_stream_with_ctm(&doc, contents, resources, &media_box, output, page_num, form_ctm, depth + 1)?;
                     } else if xf.dict.get(b"Subtype").ok().and_then(|s| s.as_name().ok()) == Some(&b"Image"[..]) {
-                        output.image(&gs.ctm)?;
+                        let object = xobject.get(name).ok().and_then(|o| o.as_reference().ok());
+                        output.image(&gs.ctm, object)?;
                     }
                 }
                 _ => { dlog!("unknown operation {:?}", operation); }
@@ -1943,8 +1944,9 @@ pub trait OutputDev {
     fn begin_page(&mut self, page_num: u32, media_box: &MediaBox, art_box: Option<(f64, f64, f64, f64)>)-> Result<(), OutputError>;
     fn end_page(&mut self)-> Result<(), OutputError>;
     fn output_character(&mut self, trm: &Transform, width: f64, spacing: f64, font_size: f64, char: &str) -> Result<(), OutputError>;
-    /// An image drawn in the unit square under `ctm`.
-    fn image(&mut self, _ctm: &Transform) -> Result<(), OutputError> { Ok(()) }
+    /// An image drawn in the unit square under `ctm`; `object` is its XObject
+    /// when the page's resources name it by reference.
+    fn image(&mut self, _ctm: &Transform, _object: Option<ObjectId>) -> Result<(), OutputError> { Ok(()) }
     /// The fill colour and text rendering mode of the text shown next.
     fn text_paint(&mut self, _colorspace: &ColorSpace, _color: &[f64], _render_mode: i64) -> Result<(), OutputError> { Ok(()) }
     fn begin_word(&mut self)-> Result<(), OutputError>;

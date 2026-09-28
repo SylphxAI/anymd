@@ -20,4 +20,6 @@ def version():
 
 
 def command(src, out_dir):
-    return [binary(), str(src)]
+    # The corpus references are text only: leave embedded images out, so the
+    # score measures the text and not the `![caption](path)` reference lines.
+    return [binary(), str(src), "--images", "none"]

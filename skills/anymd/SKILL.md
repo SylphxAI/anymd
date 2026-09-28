@@ -11,7 +11,7 @@ anymd turns files, folders and URLs into Markdown, locally, with no API key.
 
 | Tool | Use it to | Key arguments |
 | --- | --- | --- |
-| `read` | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `transcript` |
+| `read` | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` default: figures inside PDF/DOCX/PPTX/EPUB are saved as files you can open, marked `![caption](path)`; `none` to skip), `transcript` |
 | `search` | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto`, `literal`, `ranked`), `glob`, `max_results` |
 | `inspect` | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure`, `compare`, `inspect` |
 
