@@ -10,6 +10,11 @@ on:
         description: 'Score only the first N pages by file name (0 = all 1651 pages; use a small N for a smoke test)'
         required: false
         default: '0'
+  # A workflow that is not on main yet cannot be dispatched, so a change to the benchmark itself runs it.
+  pull_request:
+    paths:
+      - '.github/workflows/omnidocbench.yml'
+      - 'bench/omnidocbench/**'
 
 permissions:
   contents: read
@@ -21,7 +26,7 @@ concurrency:
 env:
   # opendatalab/OmniDocBench, "Codebase Update to v1.6" era: README updated to v1.6 (2026-04-10)
   EVALUATOR_COMMIT: 147cd5ac9472002f5751221d390bf00abdbc0d2f
-  LIMIT: ${{ github.event.inputs.limit || '0' }}
+  LIMIT: ${{ github.event.inputs.limit || '40' }}
 
 jobs:
   build:
