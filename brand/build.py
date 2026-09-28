@@ -60,7 +60,13 @@ def render(svg_rel, w, h=None):
     from PIL import Image
     h = h or w
     png = resvg_py.svg_to_bytes(svg_path=p(svg_rel), width=w, height=h)
-    return Image.open(io.BytesIO(bytes(png))).convert('RGBA')
+    img = Image.open(io.BytesIO(bytes(png))).convert('RGBA')
+    if img.size != (w, h):   # a non-square master keeps its aspect ratio: centre it on the canvas
+        img.thumbnail((w, h), Image.LANCZOS)
+        canvas = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        canvas.paste(img, ((w - img.width) // 2, (h - img.height) // 2))
+        img = canvas
+    return img
 
 
 def save_png(img, rel):

@@ -105,4 +105,4 @@ Every file's SHA-256 is in `provenance.json`.
 
 Not registered. Owner decision owner#781: no trademark filings before the product earns money. Use ™ at most, never ®.
 
-<!-- similarity: filled in by review -->
+Checked 2026-09-28. **Same name, same category, several times over:** muthuishere/anymd (Go document-to-Markdown library and CLI), Ljf857/anymd (Python MCP server converting files to Markdown), digitopvn/anymd (anymd.cc, web-to-Markdown service with API, CLI and MCP). All are open-source converters doing the job ours does. Search results and MCP directories will mix them. Noted once, not blocking; the scoped package names (@sylphx/anymd) and the SylphxAI org carry the distinction. Mark (a document on a lime tile): no close match found.
