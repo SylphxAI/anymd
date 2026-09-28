@@ -34,7 +34,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 subtle = "2"
-sylphx-mcp-kit = { git = "https://github.com/SylphxAI/mcp-kit", tag = "v0.1.1" }
+sylphx-mcp-kit = { git = "https://github.com/SylphxAI/mcp-kit", tag = "v0.2.0" }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }
