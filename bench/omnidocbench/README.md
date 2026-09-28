@@ -55,6 +55,8 @@ JSON files, the config it ran with, and per-page anymd timings). The job summary
 
 ## Licence
 
+The dataset is downloaded at run time and never redistributed; see its licence below.
+
 - Evaluator code: Apache-2.0.
 - Dataset: the OmniDocBench copyright statement says the PDFs are collected from public online channels and
   community contributions, and that "the dataset is for research purposes only and not for commercial use".
