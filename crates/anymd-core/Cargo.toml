@@ -28,5 +28,14 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10"
 tempfile = "3.20.0"
-ureq = { version = "2.12", default-features = true, features = ["tls"] }
+# The same two features ureq 2 was built with here: `tls` (rustls with
+# Mozilla's roots, `webpki-roots`) and `gzip`. ureq 3 names the backend
+# `rustls`; listing both keeps a future ureq default from changing the
+# request on its own.
+ureq = { version = "3.4", default-features = false, features = ["rustls", "gzip"] }
 url = "2"
+
+[dev-dependencies]
+# The url_fetch tests run a real TLS server on a local port.
+rcgen = { version = "0.14", default-features = false, features = ["ring"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }

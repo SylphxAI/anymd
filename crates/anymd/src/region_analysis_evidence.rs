@@ -354,26 +354,29 @@ fn run_http_provider(
         Ok(body) => body,
         Err(message) => return Err(CommandRunError::new(message, 0)),
     };
-    let agent = ureq::AgentBuilder::new()
-        .timeout(Duration::from_millis(timeout_ms.max(1)))
-        .build();
-    let mut request = agent.post(url).set("Content-Type", "application/json");
+    // Statuses come back as responses, not errors, so a failed call keeps its
+    // body for the byte count below.
+    let agent: ureq::Agent = ureq::config::Config::builder()
+        .timeout_global(Some(Duration::from_millis(timeout_ms.max(1))))
+        .max_redirects(5)
+        // No proxy, as on 2.x: `proxy-from-env` is not a default feature there,
+        // while 3.x's `Config` default does read the environment.
+        .proxy(None)
+        .http_status_as_error(false)
+        .build()
+        .into();
+    let mut request = agent.post(url).header("Content-Type", "application/json");
     for (key, value) in headers {
-        request = request.set(key, value);
+        request = request.header(key, value);
     }
     let response = match request.send_json(body) {
         Ok(response) => response,
-        Err(ureq::Error::Status(code, response)) => {
-            let body = response.into_string().unwrap_or_default();
-            return Err(CommandRunError::new(
-                format!("Region analysis HTTP provider failed with status {code}."),
-                body.len(),
-            ));
-        }
-        Err(ureq::Error::Transport(error)) => {
-            let message = error.to_string();
-            let timed_out = message.to_ascii_lowercase().contains("timed out")
-                || message.to_ascii_lowercase().contains("timeout");
+        Err(error) => {
+            let timed_out = matches!(&error, ureq::Error::Timeout(_))
+                || error
+                    .to_string()
+                    .to_ascii_lowercase()
+                    .contains("timed out");
             return Err(CommandRunError::new(
                 if timed_out {
                     format!(
@@ -388,8 +391,8 @@ fn run_http_provider(
             ));
         }
     };
-    let status = response.status();
-    let stdout = response.into_string().map_err(|_| {
+    let status = response.status().as_u16();
+    let stdout = response.into_body().read_to_string().map_err(|_| {
         CommandRunError::new(
             format!("Region analysis HTTP provider failed for page {page} region {region_id}."),
             0,

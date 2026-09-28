@@ -29,8 +29,9 @@ imagesize = "0.15"
 kamadak-exif = "0.6"
 tempfile = { version = "3.20", optional = true }
 wait-timeout = { version = "0.2", optional = true }
-# Whisper model downloader.
-ureq = { version = "2.12", default-features = true, features = ["tls"], optional = true }
+# Whisper model downloader. `rustls` and `gzip`, the features ureq 2 was
+# built with here (see anymd-core).
+ureq = { version = "3.4", default-features = false, features = ["rustls", "gzip"], optional = true }
 sha2 = { version = "0.10", optional = true }
 
 [features]
