@@ -250,7 +250,7 @@ pub fn download_model(spec: &ModelSpec, dir: &Path, base_url: &str) -> Result<Pa
     use std::io::{Read, Write};
     use std::time::Instant;
     const CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
-    // Longest silence between two reads before the download is abandoned.
+    // Longest wait for the response headers before the download is abandoned.
     const READ_TIMEOUT: Duration = Duration::from_secs(60);
     // Whole-download ceiling (500 MB at ~300 kB/s).
     const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(30 * 60);
@@ -264,17 +264,30 @@ pub fn download_model(spec: &ModelSpec, dir: &Path, base_url: &str) -> Result<Pa
         spec.size_label(),
         dir.display()
     );
-    let agent = ureq::AgentBuilder::new()
-        .timeout_connect(CONNECT_TIMEOUT)
-        .timeout_read(READ_TIMEOUT)
+    // ureq 3 has no per-read timeout: `timeout_recv_response` bounds the wait
+    // for the headers, and `timeout_recv_body` is a budget for the whole body,
+    // not per read, so it carries the same 30-minute ceiling the loop below
+    // enforces.
+    let agent: ureq::Agent = ureq::config::Config::builder()
+        .timeout_connect(Some(CONNECT_TIMEOUT))
+        .timeout_recv_response(Some(READ_TIMEOUT))
+        .timeout_recv_body(Some(DOWNLOAD_TIMEOUT))
+        .max_redirects(5)
+        // 2.x read no proxy here: `proxy-from-env` is not one of ureq 2's
+        // default features (nor ureq 3's), and 3.x still checks the environment
+        // in `Config`'s own default. Off, as before.
+        .proxy(None)
         .user_agent(concat!("anymd/", env!("CARGO_PKG_VERSION")))
-        .build();
+        .build()
+        .into();
     let response = agent
         .get(&url)
         .call()
         .map_err(|e| format!("model download failed ({url}): {e}"))?;
     if let Some(length) = response
-        .header("content-length")
+        .headers()
+        .get("content-length")
+        .and_then(|v| v.to_str().ok())
         .and_then(|v| v.trim().parse::<u64>().ok())
     {
         if length != spec.bytes {
@@ -289,7 +302,7 @@ pub fn download_model(spec: &ModelSpec, dir: &Path, base_url: &str) -> Result<Pa
         .suffix(".part")
         .tempfile_in(dir)
         .map_err(|e| format!("could not create a temp file in {}: {e}", dir.display()))?;
-    let mut reader = response.into_reader().take(spec.bytes + 1);
+    let mut reader = response.into_body().into_reader().take(spec.bytes + 1);
     let mut hasher = Sha256::new();
     let mut buffer = vec![0u8; 256 * 1024];
     let mut total: u64 = 0;

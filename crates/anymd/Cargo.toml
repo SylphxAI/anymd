@@ -38,7 +38,9 @@ sylphx-mcp-kit = { git = "https://github.com/SylphxAI/mcp-kit", tag = "v0.1.1" }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }
-ureq = { version = "2.12", default-features = true, features = ["tls", "json"] }
+# `json` for the region-analysis HTTP provider; `rustls` and `gzip` as before
+# (see anymd-core).
+ureq = { version = "3.4", default-features = false, features = ["rustls", "gzip", "json"] }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
