@@ -1,0 +1,20 @@
+{
+  "name": "anymd",
+  "icon": {
+    "master": "svg/anymd-app-icon.svg",
+    "small": "svg/anymd-app-icon.svg",
+    "apple_touch": "svg/anymd-app-icon-square.svg",
+    "maskable": "svg/anymd-maskable.svg",
+    "palette": ["#C3F53C", "#0A0D0A", "#2B3A05"],
+    "snap_threshold": 0.5,
+    "sizes": [180, 192, 512, 1024],
+    "maskable_sizes": [192, 512]
+  },
+  "outputs": {
+    "docs/public/logo.svg": "svg/anymd-app-icon.svg",
+    "docs/public/favicon.svg": "favicon/favicon.svg",
+    "docs/public/favicon.ico": "favicon/favicon.ico",
+    "docs/public/og-image.png": "og/anymd-og.png",
+    "docs/public/og-image.svg": "og/anymd-og-vector.svg"
+  }
+}

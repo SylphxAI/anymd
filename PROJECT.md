@@ -19,6 +19,9 @@ evidence without becoming a hosted Sylphx Platform BaaS service.
   in `packages/aliases/`. `scripts/set-version.ts` keeps every manifest at one version.
 - Repository: `SylphxAI/anymd`, formerly `SylphxAI/citra` and
   `SylphxAI/pdf-reader-mcp` (the old slugs redirect here).
+- Brand home: `brand/` holds the SVG masters, the colours (`tokens.json`,
+  generated to `tokens.css`) and the usage sheet (`brand/README.md`); every
+  surface copies from there.
 
 ## Lifecycle
 

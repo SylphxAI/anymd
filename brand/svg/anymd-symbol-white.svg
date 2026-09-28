@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="29 22 59 89" role="img" aria-label="anymd">
+  <!-- One-colour symbol. The evidence lines are holes in the page (they are the
+       ground colour in the colour files), so the silhouette keeps them. -->
+  <path fill="#FFFFFF" fill-rule="evenodd" d="M38 22h33a9 9 0 0 1 9 9v71a9 9 0 0 1-9 9H38a9 9 0 0 1-9-9V31a9 9 0 0 1 9-9Z M44.5 50h39a3.5 3.5 0 0 1 0 7h-39a3.5 3.5 0 0 1 0-7Z M44.5 65h29a3.5 3.5 0 0 1 0 7h-29a3.5 3.5 0 0 1 0-7Z M44.5 80h34a3.5 3.5 0 0 1 0 7h-34a3.5 3.5 0 0 1 0-7Z"/>
+  <path fill="#FFFFFF" d="M71 22 88 39H80a9 9 0 0 1-9-9V22Z"/>
+</svg>

@@ -1,23 +1,26 @@
+@import '../../../brand/tokens.css';
+
 /* ==========================================================================
    anymd design system — "citrus lab"
    Ink surfaces + one citrus accent. Offline by design: no external fonts,
-   no external images, no third-party scripts.
+   no external images, no third-party scripts. The colours come from the brand
+   home (brand/tokens.css, described in brand/README.md); change them there.
    ========================================================================== */
 
 :root {
   /* citrus */
-  --cit: #c3f53c;
-  --cit-deep: #9fd21c;
-  --cit-ink: #243503;
+  --cit: var(--brand-color-citrus);
+  --cit-deep: var(--brand-color-citrus-deep);
+  --cit-ink: var(--brand-color-citrus-ink);
   --cit-soft: rgba(195, 245, 60, 0.14);
 
   /* brand wiring for VitePress (light) */
-  --vp-c-brand-1: #5c8a00;
-  --vp-c-brand-2: #6fa000;
-  --vp-c-brand-3: #82b800;
+  --vp-c-brand-1: var(--brand-color-brand-text);
+  --vp-c-brand-2: var(--brand-color-brand-text-hover);
+  --vp-c-brand-3: var(--brand-color-brand-solid);
   --vp-c-brand-soft: rgba(122, 176, 8, 0.14);
 
-  --vp-c-bg: #fbfcf8;
+  --vp-c-bg: var(--brand-color-paper);
   --vp-c-bg-alt: #f3f6ee;
   --vp-c-bg-elv: #ffffff;
   --vp-c-bg-soft: #f1f5e9;
@@ -31,7 +34,7 @@
 
   --vp-code-block-bg: #0d1206;
   --vp-code-block-color: #e8f0dc;
-  --vp-custom-block-tip-border: #9fd21c;
+  --vp-custom-block-tip-border: var(--brand-color-citrus-deep);
   --vp-custom-block-tip-bg: rgba(195, 245, 60, 0.12);
 
   --cit-radius: 14px;
@@ -48,10 +51,10 @@
 .dark {
   --vp-c-brand-1: var(--cit);
   --vp-c-brand-2: var(--cit-deep);
-  --vp-c-brand-3: #86b321;
+  --vp-c-brand-3: var(--brand-color-brand-solid-dark);
   --vp-c-brand-soft: var(--cit-soft);
 
-  --vp-c-bg: #0a0d07;
+  --vp-c-bg: var(--brand-color-ink);
   --vp-c-bg-alt: #0e120a;
   --vp-c-bg-elv: #12170d;
   --vp-c-bg-soft: #151c0f;
