@@ -41,6 +41,9 @@ jobs:
       - name: Validate GitHub Actions workflows
         run: bash scripts/check-github-actions.sh
 
+      - name: Brand home matches its masters
+        run: python3 brand/build.py --check
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:

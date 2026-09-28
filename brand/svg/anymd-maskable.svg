@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="anymd">
+  <!-- Maskable app icon: the same artwork on a full-bleed citrus tile, scaled to
+       0.7 about the centre so the whole mark (document and citation pip) stays
+       inside the 40% safe circle of any launcher mask. -->
+  <rect width="128" height="128" fill="#c3f53c"/>
+  <g transform="translate(64 64) scale(0.7) translate(-64 -64)">
+    <path d="M38 22h33a9 9 0 0 1 9 9v71a9 9 0 0 1-9 9H38a9 9 0 0 1-9-9V31a9 9 0 0 1 9-9Z" fill="#0a0d0a"/>
+    <path d="M71 22 88 39H80a9 9 0 0 1-9-9V22Z" fill="#2b3a05"/>
+    <rect x="41" y="50" width="46" height="7" rx="3.5" fill="#c3f53c"/>
+    <rect x="41" y="65" width="36" height="7" rx="3.5" fill="#c3f53c" opacity="0.75"/>
+    <rect x="41" y="80" width="41" height="7" rx="3.5" fill="#c3f53c" opacity="0.55"/>
+    <circle cx="97" cy="97" r="18" fill="#0a0d0a"/>
+    <path d="M97 86.5l2.6 7.9 7.9 2.6-7.9 2.6-2.6 7.9-2.6-7.9-7.9-2.6 7.9-2.6Z" fill="#c3f53c"/>
+  </g>
+</svg>

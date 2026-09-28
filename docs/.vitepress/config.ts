@@ -55,7 +55,8 @@ export default defineConfig({
     ],
     ['meta', { name: 'author', content: 'Sylphx' }],
     ['meta', { name: 'robots', content: 'index, follow' }],
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/anymd/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/anymd/favicon.svg' }],
+    ['link', { rel: 'icon', href: '/anymd/favicon.ico', sizes: '16x16 32x32 48x48' }],
   ],
 
   // Each page names its own URL, so search engines index every page, not just the home page.
