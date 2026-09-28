@@ -77,10 +77,11 @@ Terminal delivery is **npm package release** (main package + platform optional
 native packages) with registry readback — not a hosted app deploy.
 
 Pull requests run `CI` on GitHub-hosted runners; `Validate Code Quality`,
-`security:secrets` and `Plain language` are the required checks. Merging a
-version bump to `main` publishes through `release.yml`: 5 native builds, npm
-with trusted publishing, an `npx` smoke test, the GitHub release and the MCP
-Registry entry.
+`security:secrets` and `Plain language` are the required checks. `Identifiers`
+flags a non-v7 id generator, or a non-UUIDv7 primary key, on the lines a change
+adds (owner `standards/identifiers.md`). Merging a version bump to `main`
+publishes through `release.yml`: 5 native builds, npm with trusted publishing,
+an `npx` smoke test, the GitHub release and the MCP Registry entry.
 
 A past Control Plane decision retired in-repository GroundAtlas package dogfood.
 Doctrine adapters and Mission Control are retired historical lineage and must
