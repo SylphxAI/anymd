@@ -8,6 +8,8 @@ npx -y @sylphx/anymd
 
 Node 18+ is the only requirement; npm installs the native binary for your platform. No API key, no account.
 
+Prefer Cargo? `cargo install anymd` builds the same binary from [crates.io](https://crates.io/crates/anymd). It needs a Rust 1.92+ toolchain, and OCR and transcripts still use `tesseract`/`ffmpeg` when installed.
+
 To add anymd to every MCP client on your machine at once (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI):
 
 ```bash
