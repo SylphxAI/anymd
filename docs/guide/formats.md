@@ -56,7 +56,7 @@ An agent can open a standalone image file itself, but not one inside a container
 <!-- image: 240x150, page 1 -->
 ```
 
-- **Files.** Each image is written once to `<cache>/images/<first 16 hex of its SHA-256>.<ext>`, where `<cache>` is `$ANYMD_CACHE_DIR`, else `~/.cache/anymd`, `~/Library/Caches/anymd` or `%LOCALAPPDATA%\anymd\cache`. The same picture is one file however often it is read. Nothing is written beside the source document, and an image over 50 megapixels is refused.
+- **Files.** Each image is written once to `<cache>/images/<first 16 hex of its SHA-256>.<ext>`, where `<cache>` is `$ANYMD_CACHE_DIR`, else `~/.cache/anymd`, `~/Library/Caches/anymd` or `%LOCALAPPDATA%\anymd\cache`. The same picture is one file however often it is read. Files unused for 30 days are deleted (reading a document touches the files it uses), and the folder is kept under 2 GiB, oldest first; this runs at most once a day, at CLI and server start. Nothing is written beside the source document, and an image over 50 megapixels is refused.
 - **Captions.** In a PDF, the nearest line directly below or above the image (within about half an inch) that starts with `Figure`, `Fig.`, `Table`, `圖`, `图` or `表` and a number. Otherwise the alt text (DOCX and PPTX `descr`, EPUB `alt`), otherwise `image`.
 - **Decoration is skipped.** Images smaller than 48 x 48 px, PDF images under 2% of the page, and a picture that appears on three or more pages, slides or chapters (logos, running headers, ornaments).
 - **Which images.** PDF image XObjects (JPEG as is; 8-bit gray, RGB and palette rasters as PNG), DOCX `word/media`, PPTX slide pictures in slide order, and EPUB `<img>` files. The comment says `page N` for a PDF, `slide N` for a deck and `chapter N` for a book.
