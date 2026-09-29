@@ -60,6 +60,8 @@ or in `.vscode/mcp.json`:
 
 ## Claude Desktop
 
+One click: download `anymd-<version>.mcpb` from the [latest release](https://github.com/SylphxAI/anymd/releases/latest) and open it in Claude Desktop. `anymd-<version>-<platform>.mcpb` carries one platform's binary and is smaller. Or by hand:
+
 Add to `claude_desktop_config.json` (Settings → Developer → Edit Config):
 
 ```json

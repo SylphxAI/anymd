@@ -6,6 +6,7 @@
 
 - `cargo install anymd` works. Each release now also publishes the Rust crates to [crates.io](https://crates.io/crates/anymd): `anymd`, `anymd-core`, `anymd-formats`, `anymd-pdf`, and two forks of upstream crates that carry our fixes, `anymd-pdf-extract` (from `pdf-extract`) and `anymd-adobe-cmap-parser` (from `adobe-cmap-parser`). The forks keep the upstream MIT licence and credit. npm stays the primary install.
 - `sylphx-mcp-kit` now comes from crates.io (0.2.3) instead of a git tag.
+- The Claude Desktop MCP Bundles (`.mcpb`) on each release now carry the anymd icon and a long description, and the install docs point at them.
 
 ## 8.1.0
 
