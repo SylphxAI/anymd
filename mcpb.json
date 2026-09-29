@@ -1,0 +1,4 @@
+{
+  "author": { "name": "Sylphx", "url": "https://github.com/SylphxAI" },
+  "long_description": "anymd turns any file into clean Markdown for your AI agent: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), and audio and video (metadata, subtitles, transcripts). It runs on your machine, sends no documents anywhere, and needs no API key."
+}
