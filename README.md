@@ -122,7 +122,7 @@ Any client that speaks MCP over stdio: command `npx`, args `["-y", "@sylphx/anym
 npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
 ```
 
-Or build it from [crates.io](https://crates.io/crates/anymd) (Rust 1.92+):
+Or build it from [crates.io](https://crates.io/crates/anymd) (needs a Rust 1.92+ toolchain; OCR and transcripts still use `tesseract`/`ffmpeg` when installed):
 
 ```bash
 cargo install anymd

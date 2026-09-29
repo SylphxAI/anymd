@@ -3,6 +3,7 @@
 > Historical: decided for pdf-reader-mcp, now anymd, and kept as written. The package, crate, tool and file names it uses may no longer exist; anymd is one Rust binary in `crates/anymd`, and [AGENTS.md](../../AGENTS.md) has the current layout.
 
 - **Status:** Accepted
+- **Update 2026-09-29:** the yanked-crates state described under Outcome is superseded by anymd 8.1.0 publishing to crates.io (`cargo install anymd`, #798).
 - **Date:** 2026-07-24
 - **Relates to:** ADR-0005 capability-first admission, npm package contract, MCP Registry, crates.io
 - **Change class:** `required-now` for the showhand sole-Rust release (SemVer major; target `4.0.0`)
