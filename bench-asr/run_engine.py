@@ -151,9 +151,10 @@ def run(engine: str, args, wavs: list[Path], lang: str, work: Path):
             out[Path(row["file"])] = (row.get("text", "").strip(), "segment" if segs else "none", [])
     else:
         # sherpa-onnx prints every input path first, then one JSON object per input, in order.
-        paths = [Path(l.strip()) for l in proc.stdout.splitlines() if l.strip().endswith(".wav")]
+        lines = (proc.stdout + "\n" + proc.stderr).splitlines()  # sherpa-onnx logs to stderr
+        paths = [Path(l.strip()) for l in lines if l.strip().endswith(".wav")]
         rows = []
-        for line in proc.stdout.splitlines():
+        for line in lines:
             line = line.strip()
             if line.startswith("{"):
                 try:

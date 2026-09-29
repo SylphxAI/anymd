@@ -213,6 +213,46 @@ jobs:
             ${{ runner.temp }}/out/results.jsonl
           retention-days: 30
 
+  # Does each runtime's Rust crate build into a binary on every anymd release target,
+  # and what does it add to a minimal binary? (The CLI sizes above are the C++ tools.)
+  probe:
+    name: crate ${{ matrix.crate }} (${{ matrix.target }})
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        crate: [baseline, transcribe-cpp, crispasr, sherpa-onnx]
+        include:
+          - { runner: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          - { runner: macos-latest, target: aarch64-apple-darwin }
+          - { runner: windows-latest, target: x86_64-pc-windows-msvc }
+        exclude:
+          # Only the two candidate crates need every target; baseline anywhere is a size reference.
+          - { runner: ubuntu-24.04-arm, crate: baseline }
+          - { runner: windows-latest, crate: baseline }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build the probe
+        shell: bash
+        run: |
+          cargo build --release --manifest-path "bench-asr/probe/${{ matrix.crate }}/Cargo.toml" --target-dir "$RUNNER_TEMP/probe-target" --target "${{ matrix.target }}"
+          exe=$(find "$RUNNER_TEMP/probe-target/${{ matrix.target }}/release" -maxdepth 1 -type f \( -name 'probe-*' -o -name 'probe-*.exe' \) ! -name '*.d' | head -1)
+          bytes=$(wc -c < "$exe")
+          echo "probe ${{ matrix.crate }} ${{ matrix.target }} bytes=$bytes"
+          {
+            echo "### ${{ matrix.crate }} on ${{ matrix.target }}"
+            echo "Built. Stripped binary: $(( bytes / 1024 )) KiB"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   report:
     name: Report
     needs: bench
