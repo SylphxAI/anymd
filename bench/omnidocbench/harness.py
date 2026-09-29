@@ -37,6 +37,7 @@ def sha256(path):
 
 
 def download(url, path):
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     for attempt in range(5):
         try:
             with urllib.request.urlopen(url, timeout=120) as response, open(path, "wb") as out:
