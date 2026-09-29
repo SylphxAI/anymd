@@ -1,0 +1,9 @@
+{
+  "name": "anymd",
+  "description": "Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML, images (OCR), audio and video. A fast local MCP server, no API key.",
+  "author": { "name": "Sylphx", "url": "https://github.com/SylphxAI" },
+  "homepage": "https://sylphxai.github.io/anymd/",
+  "repository": "https://github.com/SylphxAI/anymd",
+  "license": "MIT",
+  "keywords": ["mcp", "markdown", "pdf", "docx", "ocr", "documents"]
+}
