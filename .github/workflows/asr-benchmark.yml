@@ -80,6 +80,9 @@ jobs:
 
       - run: pip install pyarrow
 
+      - name: ffmpeg (resamples every clip to 16 kHz mono)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       - name: Fetch the pinned sample
         run: python3 bench-asr/fetch_data.py "${{ matrix.dataset }}" "$RUNNER_TEMP/data" --utts "${{ needs.plan.outputs.utts }}"
 
