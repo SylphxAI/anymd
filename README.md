@@ -242,9 +242,12 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 ## Also from Sylphx
 
 <!-- generated:also-from -->
-- [**repomap**](https://github.com/SylphxAI/repomap): A map of your codebase for AI agents: code graph, search, call paths and change impact — with an interactive graph UI. Rust MCP server + CLI. Local, no API key, MIT.
-- [**lockdocs**](https://github.com/SylphxAI/lockdocs): Exact-version library docs from your lockfile — local, offline, no rate limits.
-- [**readme-mark**](https://github.com/SylphxAI/readme-mark): Beautiful README images from one URL — animated banners, shields-compatible badges, typing text, 3000+ tech icons, GitHub stats cards. Free, no token, drop-in for shields / capsule-render / skill-icons / readme-typing-svg / github-readme-stats.
+- [**repomap**](https://github.com/SylphxAI/repomap): A map of your codebase for AI agents: code graph, search, call paths and change impact.
+- [**lockdocs**](https://github.com/SylphxAI/lockdocs): Exact-version library docs from your lockfile. Local, offline, no rate limits.
+- [**skills**](https://github.com/SylphxAI/skills): Battle-tested agent skills for Claude Code and Codex, installed in one command.
+- [**readme-mark**](https://github.com/SylphxAI/readme-mark): Beautiful README images from one URL: banners, badges, icons and stats cards.
+
+More from Sylphx: https://sylphx.com/open-source
 <!-- /generated:also-from -->
 
 ## Star history
