@@ -118,8 +118,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ghostscript imagemagick texlive-latex-base texlive-latex-extra \
-            texlive-fonts-recommended texlive-science latex-cjk-common latex-cjk-chinese latex-cjk-chinese-arphic-gkai \
-            latex-cjk-chinese-arphic-gbsn
+            texlive-fonts-recommended texlive-science latex-cjk-common latex-cjk-chinese texlive-lang-chinese fonts-arphic-gkai00mp
           # The evaluator calls `magick` (ImageMagick 7); Ubuntu ships ImageMagick 6, whose `convert` takes the same arguments.
           printf '#!/bin/sh\nexec convert "$@"\n' | sudo tee /usr/local/bin/magick >/dev/null
           sudo chmod +x /usr/local/bin/magick
@@ -128,7 +127,7 @@ jobs:
           pdflatex --version | head -1
           convert --version | head -1
           gs --version
-          kpsewhich CJK.sty c70gkai.fd
+          kpsewhich CJK.sty c70gkai.fd || echo 'warning: CJK LaTeX files missing; Chinese formulas will not render in CDM'
 
       - name: Install the evaluator
         working-directory: evaluator
