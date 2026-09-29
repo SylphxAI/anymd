@@ -36,7 +36,7 @@ version = "0.2.0"
 version = "0.8.34"
 
 [dependencies.euclid]
-version = "0.20.5"
+version = "0.22.14"
 
 [dependencies.log]
 version = "0.4.22"
