@@ -150,18 +150,18 @@ def run(engine: str, args, wavs: list[Path], lang: str, work: Path):
             segs = row.get("segments") or []
             out[Path(row["file"])] = (row.get("text", "").strip(), "segment" if segs else "none", [])
     else:
-        previous = None
+        # sherpa-onnx prints every input path first, then one JSON object per input, in order.
+        paths = [Path(l.strip()) for l in proc.stdout.splitlines() if l.strip().endswith(".wav")]
+        rows = []
         for line in proc.stdout.splitlines():
             line = line.strip()
-            if line.endswith(".wav"):
-                previous = Path(line)
-            elif line.startswith("{") and previous is not None:
+            if line.startswith("{"):
                 try:
-                    row = json.loads(line)
+                    rows.append(json.loads(line))
                 except json.JSONDecodeError:
-                    continue
-                out[previous] = (row.get("text", "").strip(), "word" if row.get("timestamps") else "none", [])
-                previous = None
+                    pass
+        for path, row in zip(paths, rows):
+            out[path] = (row.get("text", "").strip(), "word" if row.get("timestamps") else "none", [])
     return out, load_ms, seconds, tail
 
 

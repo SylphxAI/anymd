@@ -178,6 +178,10 @@ jobs:
           mkdir -p "$RUNNER_TEMP/tool"
           tar -C "$RUNNER_TEMP/tool" -xzf "$RUNNER_TEMP/tool-archive/tool.tgz"
 
+      - name: OpenBLAS runtime (transcribe.cpp links it on Linux)
+        if: matrix.osk == 'linux' && matrix.engine == 'transcribe-cpp'
+        run: sudo apt-get update && sudo apt-get install -y libopenblas0
+
       - name: Fetch the prebuilt tool
         if: ${{ !startsWith(matrix.tool, 'build:') }}
         run: python3 bench-asr/fetch_asset.py tools "${{ matrix.tool }}-${{ matrix.osk }}" "$RUNNER_TEMP/tool"
