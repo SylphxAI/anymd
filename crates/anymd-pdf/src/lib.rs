@@ -27,10 +27,11 @@ use pdf_extract::Document;
 
 use crate::blocks::{layout_page, Block};
 use crate::extract::extract_pages;
-use crate::margins::repeated_margin_lines;
 pub use crate::images::{
     repeated_images, EncodedImage, ImageOptions, PageImage, Placed, MAX_PIXELS, MIN_SIDE_PX,
+    SPARSE_PAGE_CHARS,
 };
+use crate::margins::repeated_margin_lines;
 pub use crate::metadata::{info_title, outline};
 pub use crate::ocr::{words_to_markdown, PlacedWord};
 use crate::render::{heading_levels, is_size_heading, render_blocks};

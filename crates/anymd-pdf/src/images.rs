@@ -27,9 +27,9 @@ const MIN_PAGE_FRACTION: f64 = 0.02;
 /// An image covering at least this much of a page with no usable text layer is
 /// the page itself (a scan), not a figure: the page goes to OCR instead.
 const SCAN_PAGE_FRACTION: f64 = 0.8;
-/// Fewer letters and digits than this is no usable text layer; the same
-/// threshold as `SPARSE_PAGE_CHARS` in the anymd crate, which sends such a page to OCR.
-const SPARSE_PAGE_CHARS: usize = 24;
+/// A page with fewer letters and digits than this has no usable text layer:
+/// it is sent to OCR, and an image over it is a scan, not a figure.
+pub const SPARSE_PAGE_CHARS: usize = 24;
 /// The same picture on this many pages is a logo or header.
 const REPEAT_PAGES: usize = 3;
 /// The largest encoded image stream read.

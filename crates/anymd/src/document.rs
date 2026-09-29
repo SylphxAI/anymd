@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use anymd_core::markdown_layout::{self, load_document, load_document_bytes};
+use anymd_core::markdown_layout::{self, load_document, load_document_bytes, SPARSE_PAGE_CHARS};
 use anymd_core::url_fetch::fetch_url;
 use anymd_formats::images::{self, ImageStore};
 use anymd_formats::{ConvertError, Format};
@@ -18,8 +18,6 @@ const MAX_FILE_BYTES: u64 = 512 * 1024 * 1024;
 /// Render scale for OCR: 300 dpi, the resolution tesseract is trained for.
 const OCR_SCALE: f32 = 300.0 / 72.0;
 const OCR_MAX_PIXELS: u64 = 40_000_000;
-/// Pages with fewer visible characters than this count as image-only.
-const SPARSE_PAGE_CHARS: usize = 24;
 const CACHE_MAX_BYTES: usize = 256 * 1024 * 1024;
 
 #[derive(Debug, Clone, Default)]
@@ -161,7 +159,13 @@ fn cache_key(path: &Path, ocr: bool, images: Option<&ImageStore>) -> Option<Cach
         .duration_since(std::time::UNIX_EPOCH)
         .ok()?
         .as_nanos();
-    Some((path.to_path_buf(), meta.len(), modified, ocr, images.map(|s| s.dir().to_path_buf())))
+    Some((
+        path.to_path_buf(),
+        meta.len(),
+        modified,
+        ocr,
+        images.map(|s| s.dir().to_path_buf()),
+    ))
 }
 
 fn cache_get(key: &CacheKey) -> Option<Arc<CachedDoc>> {
@@ -172,7 +176,9 @@ fn cache_get(key: &CacheKey) -> Option<Arc<CachedDoc>> {
     if doc.images.iter().any(|path| !path.is_file()) {
         return None;
     }
-    doc.images.iter().for_each(|path| anymd_formats::cache::touch(path));
+    doc.images
+        .iter()
+        .for_each(|path| anymd_formats::cache::touch(path));
     Some(doc)
 }
 
@@ -436,15 +442,22 @@ impl Opened {
             } => {
                 let converted = match &self.options.images {
                     Some(store) => {
-                        let repeated = repeated.get_or_init(|| markdown_layout::repeated_images(doc));
+                        let repeated =
+                            repeated.get_or_init(|| markdown_layout::repeated_images(doc));
                         let place = |image: &markdown_layout::EncodedImage,
                                      caption: Option<&str>,
-                                     page: u32| place_image(store, image, caption, page);
+                                     page: u32| {
+                            place_image(store, image, caption, page)
+                        };
                         let options = markdown_layout::ImageOptions {
                             repeated,
                             place: &place,
                         };
-                        markdown_layout::pdf_to_markdown_with_images(doc, Some(numbers), Some(&options))
+                        markdown_layout::pdf_to_markdown_with_images(
+                            doc,
+                            Some(numbers),
+                            Some(&options),
+                        )
                     }
                     None => markdown_layout::pdf_to_markdown(doc, Some(numbers)),
                 }
