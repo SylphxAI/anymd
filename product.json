@@ -45,17 +45,22 @@
     {
       "name": "repomap",
       "url": "https://github.com/SylphxAI/repomap",
-      "description": "A map of your codebase for AI agents: code graph, search, call paths and change impact — with an interactive graph UI. Rust MCP server + CLI. Local, no API key, MIT."
+      "description": "A map of your codebase for AI agents: code graph, search, call paths and change impact."
     },
     {
       "name": "lockdocs",
       "url": "https://github.com/SylphxAI/lockdocs",
-      "description": "Exact-version library docs from your lockfile — local, offline, no rate limits."
+      "description": "Exact-version library docs from your lockfile. Local, offline, no rate limits."
+    },
+    {
+      "name": "skills",
+      "url": "https://github.com/SylphxAI/skills",
+      "description": "Battle-tested agent skills for Claude Code and Codex, installed in one command."
     },
     {
       "name": "readme-mark",
       "url": "https://github.com/SylphxAI/readme-mark",
-      "description": "Beautiful README images from one URL — animated banners, shields-compatible badges, typing text, 3000+ tech icons, GitHub stats cards. Free, no token, drop-in for shields / capsule-render / skill-icons / readme-typing-svg / github-readme-stats."
+      "description": "Beautiful README images from one URL: banners, badges, icons and stats cards."
     }
   ]
 }
