@@ -142,8 +142,8 @@ fn rootfile_path(container: &str) -> Option<String> {
     let mut reader = Reader::from_str(container);
     loop {
         match reader.read_event() {
-            Ok(Event::Start(e) | Event::Empty(e)) if e.local_name().as_ref() == b"rootfile" => {
-                if let Some(path) = attr(&e, b"full-path") {
+            Ok(Event::Start(e) | Event::Empty(e)) if e.local_name().as_ref() == "rootfile" => {
+                if let Some(path) = attr(&e, "full-path") {
                     return Some(path);
                 }
             }
@@ -182,27 +182,27 @@ fn parse_opf(opf: &str) -> Result<Package, ConvertError> {
         match event {
             Event::Start(e) => {
                 capture = match e.local_name().as_ref() {
-                    b"title" => Some("title"),
-                    b"creator" => Some("creator"),
-                    b"publisher" => Some("publisher"),
-                    b"date" => Some("date"),
-                    b"language" => Some("language"),
+                    "title" => Some("title"),
+                    "creator" => Some("creator"),
+                    "publisher" => Some("publisher"),
+                    "date" => Some("date"),
+                    "language" => Some("language"),
                     _ => None,
                 };
                 text.clear();
                 opf_element(&e, &mut package);
             }
             Event::Empty(e) => opf_element(&e, &mut package),
-            Event::Text(t) if capture.is_some() => text.push_str(&t.decode().unwrap_or_default()),
-            Event::CData(t) if capture.is_some() => text.push_str(&t.decode().unwrap_or_default()),
+            Event::Text(t) if capture.is_some() => {
+                text.push_str(&t.xml_content(quick_xml::XmlVersion::Implicit1_0))
+            }
+            Event::CData(t) if capture.is_some() => {
+                text.push_str(&t.xml_content(quick_xml::XmlVersion::Implicit1_0))
+            }
             Event::GeneralRef(r) if capture.is_some() => {
                 if let Ok(Some(c)) = r.resolve_char_ref() {
                     text.push(c);
-                } else if let Some(s) = r
-                    .decode()
-                    .ok()
-                    .and_then(|name| quick_xml::escape::resolve_predefined_entity(&name))
-                {
+                } else if let Some(s) = quick_xml::escape::resolve_predefined_entity(&r) {
                     text.push_str(s);
                 }
             }
@@ -231,20 +231,20 @@ fn parse_opf(opf: &str) -> Result<Package, ConvertError> {
 
 fn opf_element(e: &quick_xml::events::BytesStart<'_>, package: &mut Package) {
     match e.local_name().as_ref() {
-        b"item" => {
-            if let (Some(id), Some(href)) = (attr(e, b"id"), attr(e, b"href")) {
+        "item" => {
+            if let (Some(id), Some(href)) = (attr(e, "id"), attr(e, "href")) {
                 package.manifest.insert(
                     id,
                     ManifestItem {
                         href,
-                        media_type: attr(e, b"media-type").unwrap_or_default(),
-                        properties: attr(e, b"properties").unwrap_or_default(),
+                        media_type: attr(e, "media-type").unwrap_or_default(),
+                        properties: attr(e, "properties").unwrap_or_default(),
                     },
                 );
             }
         }
-        b"itemref" => {
-            if let Some(idref) = attr(e, b"idref") {
+        "itemref" => {
+            if let Some(idref) = attr(e, "idref") {
                 package.spine.push(idref);
             }
         }
@@ -252,12 +252,12 @@ fn opf_element(e: &quick_xml::events::BytesStart<'_>, package: &mut Package) {
     }
 }
 
-fn attr(e: &quick_xml::events::BytesStart<'_>, name: &[u8]) -> Option<String> {
+fn attr(e: &quick_xml::events::BytesStart<'_>, name: &str) -> Option<String> {
     e.attributes()
         .flatten()
         .find(|a| a.key.local_name().as_ref() == name)
         .and_then(|a| {
-            a.decoded_and_normalized_value(quick_xml::XmlVersion::Implicit1_0, e.decoder())
+            a.normalized_value(quick_xml::XmlVersion::Implicit1_0)
                 .ok()
                 .map(|v| v.into_owned())
         })

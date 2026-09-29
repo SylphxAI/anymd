@@ -367,19 +367,19 @@ pub(crate) fn parse_xml(bytes: &[u8]) -> Result<Element, String> {
                 push_child(&mut stack, Node::Element(element));
             }
             Event::Text(t) => {
-                let s = t.decode().map_err(|e| e.to_string())?;
+                let s = t.xml_content(quick_xml::XmlVersion::Implicit1_0);
                 push_text(&mut stack, &s);
             }
             Event::CData(t) => {
-                let s = t.decode().map_err(|e| e.to_string())?;
+                let s = t.xml_content(quick_xml::XmlVersion::Implicit1_0);
                 push_text(&mut stack, &s);
             }
             Event::GeneralRef(r) => {
                 let resolved = match r.resolve_char_ref() {
                     Ok(Some(c)) => c.to_string(),
                     _ => {
-                        let name = r.decode().map_err(|e| e.to_string())?;
-                        match name.as_ref() {
+                        let name: &str = &r;
+                        match name {
                             "amp" => "&".into(),
                             "lt" => "<".into(),
                             "gt" => ">".into(),
@@ -434,14 +434,14 @@ fn decode(bytes: &[u8]) -> String {
 }
 
 fn element_from(start: &quick_xml::events::BytesStart<'_>) -> Result<Element, String> {
-    let name = String::from_utf8_lossy(start.name().as_ref()).into_owned();
+    let name = start.name().as_ref().to_string();
     let mut attrs = Vec::new();
     for attr in start.attributes().with_checks(false) {
         let attr = attr.map_err(|e| e.to_string())?;
-        let key = String::from_utf8_lossy(attr.key.as_ref()).into_owned();
+        let key = attr.key.as_ref().to_string();
         let value = match attr.normalized_value(quick_xml::XmlVersion::Implicit1_0) {
             Ok(v) => v.into_owned(),
-            Err(_) => String::from_utf8_lossy(&attr.value).into_owned(),
+            Err(_) => attr.value.to_string(),
         };
         attrs.push((key, value));
     }
