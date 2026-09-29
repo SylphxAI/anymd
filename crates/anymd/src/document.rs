@@ -128,7 +128,8 @@ fn noun_for(units: &[Unit], format: Format) -> &'static str {
 // Converted-document cache (repeat searches and cursor reads are instant)
 // ---------------------------------------------------------------------------
 
-type CacheKey = (PathBuf, u64, u128, bool);
+/// Path, size, mtime, OCR on, and the image store (its Markdown points there).
+type CacheKey = (PathBuf, u64, u128, bool, Option<PathBuf>);
 
 struct CachedDoc {
     format: &'static str,
@@ -136,6 +137,8 @@ struct CachedDoc {
     metadata: Vec<(String, String)>,
     units: Arc<Vec<Unit>>,
     bytes: usize,
+    /// Exported image files the Markdown points at.
+    images: Vec<PathBuf>,
 }
 
 #[derive(Default)]
@@ -150,7 +153,7 @@ fn cache() -> &'static Mutex<Cache> {
     CACHE.get_or_init(Mutex::default)
 }
 
-fn cache_key(path: &Path, ocr: bool) -> Option<CacheKey> {
+fn cache_key(path: &Path, ocr: bool, images: Option<&ImageStore>) -> Option<CacheKey> {
     let meta = std::fs::metadata(path).ok()?;
     let modified = meta
         .modified()
@@ -158,12 +161,40 @@ fn cache_key(path: &Path, ocr: bool) -> Option<CacheKey> {
         .duration_since(std::time::UNIX_EPOCH)
         .ok()?
         .as_nanos();
-    Some((path.to_path_buf(), meta.len(), modified, ocr))
+    Some((path.to_path_buf(), meta.len(), modified, ocr, images.map(|s| s.dir().to_path_buf())))
 }
 
 fn cache_get(key: &CacheKey) -> Option<Arc<CachedDoc>> {
-    let cache = cache().lock().ok()?;
-    cache.entries.get(key).cloned()
+    let doc = cache().lock().ok()?.entries.get(key).cloned()?;
+    // The Markdown points at files in the image cache, which may have been
+    // pruned or deleted since: a missing file makes this a miss, and the
+    // rebuild re-exports it. Files still there are marked as in use.
+    if doc.images.iter().any(|path| !path.is_file()) {
+        return None;
+    }
+    doc.images.iter().for_each(|path| anymd_formats::cache::touch(path));
+    Some(doc)
+}
+
+/// The exported image files the units' Markdown points at.
+fn referenced_images(units: &[Unit], store: Option<&ImageStore>) -> Vec<PathBuf> {
+    let Some(store) = store else {
+        return Vec::new();
+    };
+    let mut found = Vec::new();
+    for unit in units {
+        for line in unit.markdown.lines().filter(|l| l.starts_with("![")) {
+            let Some((_, rest)) = line.rsplit_once("](") else {
+                continue;
+            };
+            let path = rest.strip_suffix(')').unwrap_or(rest);
+            let path = PathBuf::from(path.trim_start_matches('<').trim_end_matches('>'));
+            if path.starts_with(store.dir()) && !found.contains(&path) {
+                found.push(path);
+            }
+        }
+    }
+    found
 }
 
 fn cache_put(key: CacheKey, doc: Arc<CachedDoc>) {
@@ -238,9 +269,7 @@ impl Opened {
             ));
         }
         let ocr_on = options.ocr != Some(false) && anymd_formats::image::ocr_available();
-        // Documents with exported images are not kept: their Markdown points
-        // at cache files that may be cleaned up between reads.
-        let key = cache_key(&path, ocr_on).filter(|_| options.images.is_none());
+        let key = cache_key(&path, ocr_on, options.images.as_ref());
         if format != Format::Pdf {
             if let Some(cached) = key.as_ref().and_then(cache_get) {
                 return Ok(Self::from_cached(spec, &cached, options));
@@ -263,6 +292,7 @@ impl Opened {
                     metadata: opened.metadata.clone(),
                     units: units.clone(),
                     bytes: units.iter().map(|u| u.markdown.len()).sum(),
+                    images: referenced_images(units, options.images.as_ref()),
                 }),
             );
         }
@@ -458,8 +488,7 @@ impl Opened {
                     self.options.ocr != Some(false) && anymd_formats::image::ocr_available();
                 let key = path
                     .as_deref()
-                    .and_then(|p| cache_key(p, ocr_on))
-                    .filter(|_| self.options.images.is_none());
+                    .and_then(|p| cache_key(p, ocr_on, self.options.images.as_ref()));
                 if let Some(cached) = key.as_ref().and_then(cache_get) {
                     return Ok(cached.units.clone());
                 }
@@ -474,6 +503,7 @@ impl Opened {
                             metadata: Vec::new(),
                             units: units.clone(),
                             bytes: units.iter().map(|u| u.markdown.len()).sum(),
+                            images: referenced_images(&units, self.options.images.as_ref()),
                         }),
                     );
                 }

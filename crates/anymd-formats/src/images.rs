@@ -64,7 +64,10 @@ impl ImageStore {
             .map(|byte| format!("{byte:02x}"))
             .collect();
         let path = self.dir.join(format!("{hash}.{ext}"));
-        if !path.is_file() {
+        if path.is_file() {
+            // In use: keep it out of the age-based pruning.
+            crate::cache::touch(&path);
+        } else {
             std::fs::create_dir_all(&self.dir)
                 .map_err(|error| format!("cannot create {}: {error}", self.dir.display()))?;
             let mut file = tempfile::NamedTempFile::new_in(&self.dir)

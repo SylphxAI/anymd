@@ -102,14 +102,23 @@ fn reading_again_reuses_the_cached_file() {
     let first = read("figure-report.pdf", Some(cache.path()));
     let written = files(cache.path());
     assert_eq!(written.len(), 1);
-    let modified = std::fs::metadata(&written[0]).unwrap().modified().unwrap();
     let second = read("figure-report.pdf", Some(cache.path()));
     assert_eq!(first, second);
     assert_eq!(files(cache.path()), written);
-    assert_eq!(
-        std::fs::metadata(&written[0]).unwrap().modified().unwrap(),
-        modified
-    );
+}
+
+#[test]
+fn a_deleted_cached_image_is_exported_again_on_reread() {
+    let cache = tempfile::tempdir().unwrap();
+    // A DOCX is kept in the in-process document cache, so this re-read is a
+    // cache hit whose image file is gone.
+    let first = read("alt-text.docx", Some(cache.path()));
+    let written = files(cache.path());
+    assert_eq!(written.len(), 2);
+    std::fs::remove_file(&written[0]).unwrap();
+    let second = read("alt-text.docx", Some(cache.path()));
+    assert_eq!(first, second);
+    assert!(written.iter().all(|path| path.is_file()));
 }
 
 #[test]
