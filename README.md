@@ -246,9 +246,9 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 - [**lockdocs**](https://github.com/SylphxAI/lockdocs): Exact-version library docs from your lockfile. Local, offline, no rate limits.
 - [**skills**](https://github.com/SylphxAI/skills): Battle-tested agent skills for Claude Code and Codex, installed in one command.
 - [**readme-mark**](https://github.com/SylphxAI/readme-mark): Beautiful README images from one URL: banners, badges, icons and stats cards.
+<!-- /generated:also-from -->
 
 More from Sylphx: https://sylphx.com/open-source
-<!-- /generated:also-from -->
 
 ## Star history
 
