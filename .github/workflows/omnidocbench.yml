@@ -26,7 +26,7 @@ concurrency:
 env:
   # opendatalab/OmniDocBench, "Codebase Update to v1.6" era: README updated to v1.6 (2026-04-10)
   EVALUATOR_COMMIT: 147cd5ac9472002f5751221d390bf00abdbc0d2f
-  LIMIT: ${{ github.event.inputs.limit || '40' }}
+  LIMIT: ${{ github.event.inputs.limit || '0' }}
 
 jobs:
   build:
