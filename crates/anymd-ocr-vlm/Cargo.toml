@@ -1,0 +1,42 @@
+[package]
+name = "anymd-ocr-vlm"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+license = "MIT"
+publish = false
+description = "Spike: local doc-VLM OCR (PaddleOCR-VL-1.6 + PP-DocLayoutV3) behind one trait, two runtimes"
+
+# Standalone on purpose: the spike must not touch the main workspace lockfile.
+[workspace]
+
+[features]
+default = []
+# Option A: llama.cpp (mtmd) for the VLM, ONNX Runtime for layout.
+llama = ["dep:llama-cpp-2", "dep:ort", "dep:encoding_rs"]
+llama-metal = ["llama", "llama-cpp-2/metal"]
+# Option B: pure Rust candle (oar-ocr-vl: layout + VLM).
+candle = ["dep:oar-ocr-vl"]
+candle-metal = ["candle", "oar-ocr-vl/metal"]
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+libc = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+llama-cpp-2 = { version = "=0.1.157", features = ["mtmd"], optional = true }
+encoding_rs = { version = "0.8", optional = true }
+ort = { version = "=2.0.0-rc.13", optional = true }
+oar-ocr-vl = { version = "=0.9.2", optional = true }
+
+[[bin]]
+name = "docvlm-bench"
+path = "src/bin/bench.rs"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "unwind"

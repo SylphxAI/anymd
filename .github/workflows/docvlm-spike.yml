@@ -1,0 +1,185 @@
+name: Doc-VLM spike
+
+# Manual measurement of the two doc-VLM runtimes (llama.cpp + ONNX Runtime vs
+# candle) on free GitHub-hosted standard runners only. Results are uploaded as
+# artifacts and printed in the job summary.
+on:
+  # The push trigger only exists while the spike branch is open: workflow_dispatch
+  # needs the file on the default branch. A push always compiles; it measures
+  # only when the commit message contains [bench].
+  push:
+    branches: [spike/docvlm]
+    paths: [crates/anymd-ocr-vlm/**, .github/workflows/docvlm-spike.yml]
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: Pages per job (of 50)
+        default: "50"
+      budget_minutes:
+        description: Stop starting new pages after this many minutes
+        default: "90"
+
+permissions:
+  contents: read
+
+env:
+  MANIFEST: crates/anymd-ocr-vlm/Cargo.toml
+  # Pinned Hugging Face revisions (sha of each repository at 2026-09-29).
+  REV_GGUF: 39d08d7cb9b08a36ae88735b9a8801d3d18a76fd
+  REV_MMPROJ: 6a772c793f22e0a9e7d8fabd3229431be024569d
+  REV_ONNX: 7952bce3e684c7aa90aa7bf47798e8efae3c0921
+  REV_VLM: c5630abae1d940eafe0697512a0325494b02ab42
+  REV_LAYOUT: 97d101e6db2642e162a1d05392d1b0231c91033e
+
+jobs:
+  compile:
+    name: Compile both runtimes
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates/anymd-ocr-vlm
+      - name: Test and check
+        run: |
+          set -euxo pipefail
+          cargo test --manifest-path "$MANIFEST"
+          cargo check --release --manifest-path "$MANIFEST" --features candle
+          cargo check --release --manifest-path "$MANIFEST" --features llama
+
+  pages:
+    name: Build page set
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[bench]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Fonts and Python libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk fonts-liberation
+          python3 -m pip install --quiet pillow numpy
+      - name: Render pages
+        run: python3 crates/anymd-ocr-vlm/bench/make_pages.py "$RUNNER_TEMP/set"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docvlm-pages
+          path: ${{ runner.temp }}/set
+          retention-days: 14
+
+  bench:
+    name: ${{ matrix.backend }} on ${{ matrix.name }}
+    needs: pages
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64-cpu, os: ubuntu-latest, backend: llama, features: llama, device: cpu }
+          - { name: linux-x64-cpu, os: ubuntu-latest, backend: candle, features: candle, device: cpu }
+          - { name: macos-arm64-cpu, os: macos-latest, backend: llama, features: llama, device: cpu }
+          - { name: macos-arm64-cpu, os: macos-latest, backend: candle, features: candle, device: cpu }
+          - { name: macos-arm64-metal, os: macos-latest, backend: llama, features: llama-metal, device: metal }
+          - { name: macos-arm64-metal, os: macos-latest, backend: candle, features: candle-metal, device: metal }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates/anymd-ocr-vlm
+          key: ${{ matrix.features }}
+
+      - name: Build baseline (harness only) and backend
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cargo build --release --manifest-path "$MANIFEST"
+          bin=crates/anymd-ocr-vlm/target/release/docvlm-bench
+          cp "$bin" "$RUNNER_TEMP/docvlm-bench-baseline"
+          start=$(date +%s)
+          cargo build --release --manifest-path "$MANIFEST" --features "${{ matrix.features }}"
+          echo "BUILD_SECS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
+          if [ "$(uname)" = Darwin ]; then stat_fmt='-f%z'; else stat_fmt='-c%s'; fi
+          echo "BASELINE_BYTES=$(stat $stat_fmt "$RUNNER_TEMP/docvlm-bench-baseline")" >> "$GITHUB_ENV"
+          echo "BINARY_BYTES=$(stat $stat_fmt "$bin")" >> "$GITHUB_ENV"
+
+      - name: Cache model weights
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/models
+          key: docvlm-models-${{ matrix.backend }}-${{ env.REV_GGUF }}-${{ env.REV_VLM }}-${{ env.REV_ONNX }}
+
+      - name: Download pinned weights
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 -m pip install --quiet huggingface_hub
+          python3 - <<'PY'
+          import os
+          from huggingface_hub import hf_hub_download, snapshot_download
+          m = os.path.join(os.environ["RUNNER_TEMP"], "models")
+          os.makedirs(m, exist_ok=True)
+          if "${{ matrix.backend }}" == "llama":
+              hf_hub_download("mradermacher/PaddleOCR-VL-1.6-GGUF", "PaddleOCR-VL-1.6.Q4_K_M.gguf", revision=os.environ["REV_GGUF"], local_dir=m)
+              hf_hub_download("LunarOilRig/PaddleOCR-VL-1.6-GGUF-Q4", "mmproj-Q8_0.gguf", revision=os.environ["REV_MMPROJ"], local_dir=m)
+              hf_hub_download("alex-dinh/PP-DocLayoutV3-ONNX", "PP-DocLayoutV3.onnx", revision=os.environ["REV_ONNX"], local_dir=m)
+          else:
+              snapshot_download("PaddlePaddle/PaddleOCR-VL-1.6", revision=os.environ["REV_VLM"], local_dir=os.path.join(m, "PaddleOCR-VL-1.6"), ignore_patterns=[".eval_results/*"])
+              snapshot_download("PaddlePaddle/PP-DocLayoutV3_safetensors", revision=os.environ["REV_LAYOUT"], local_dir=os.path.join(m, "PP-DocLayoutV3_safetensors"))
+          PY
+          du -sh "$RUNNER_TEMP/models"/* || true
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: docvlm-pages
+          path: ${{ runner.temp }}/set
+
+      - name: Measure
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/out"
+          crates/anymd-ocr-vlm/target/release/docvlm-bench \
+            --backend "${{ matrix.backend }}" --device "${{ matrix.device }}" \
+            --pages "$RUNNER_TEMP/set" --models "$RUNNER_TEMP/models" \
+            --out "$RUNNER_TEMP/out/bench.json" \
+            --max-pages "${{ inputs.max_pages || '50' }}" --budget-minutes "${{ inputs.budget_minutes || '90' }}"
+
+      - name: Summarise
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os
+          out = os.path.join(os.environ["RUNNER_TEMP"], "out")
+          os.makedirs(out, exist_ok=True)
+          meta = {
+              "name": "${{ matrix.name }}", "backend": "${{ matrix.backend }}", "features": "${{ matrix.features }}",
+              "build_secs": int(os.environ.get("BUILD_SECS", 0)),
+              "binary_bytes": int(os.environ.get("BINARY_BYTES", 0)),
+              "baseline_bytes": int(os.environ.get("BASELINE_BYTES", 0)),
+          }
+          meta["size_delta_mib"] = round((meta["binary_bytes"] - meta["baseline_bytes"]) / 1048576, 1)
+          json.dump(meta, open(os.path.join(out, "meta.json"), "w"), indent=2)
+          lines = ["### ${{ matrix.backend }} on ${{ matrix.name }}", "", f"build {meta['build_secs']} s, size delta {meta['size_delta_mib']} MiB", ""]
+          p = os.path.join(out, "bench.json")
+          if os.path.exists(p):
+              b = json.load(open(p))
+              lines += [f"pages ok {b['pages_ok']}/{b['pages_total']}, median {b['sec_per_page_median']} s, mean CER {b['cer_mean']}, load {b['load_secs']:.0f} s, peak RSS {b['peak_rss_mib']:.0f} MiB", "", "| group | pages | sec/page | CER |", "|---|---|---|---|"]
+              for k, v in b["by_category"].items():
+                  lines.append(f"| {k} | {v['pages']} | {v['sec_per_page_mean']:.1f} | {v['cer_mean']:.3f} |")
+          else:
+              lines.append("no bench.json (measure step failed)")
+          open(os.environ["GITHUB_STEP_SUMMARY"], "a").write("\n".join(lines) + "\n")
+          PY
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: results-${{ matrix.name }}-${{ matrix.backend }}
+          path: ${{ runner.temp }}/out
+          retention-days: 30
