@@ -15,6 +15,7 @@ pub mod schema;
 pub mod search;
 pub mod setup;
 pub mod source_access;
+pub mod star_hint;
 pub mod tool_routes;
 mod visual_evidence;
 

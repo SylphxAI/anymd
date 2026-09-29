@@ -1,6 +1,6 @@
 use anymd::{
-    cli, discover_compat, http_transport, setup, source_access::SourceAccessPolicy, PdfReaderMcp,
-    SERVER_VERSION,
+    cli, discover_compat, http_transport, setup, source_access::SourceAccessPolicy, star_hint,
+    PdfReaderMcp, SERVER_VERSION,
 };
 use rmcp::transport::async_rw::AsyncRwTransport;
 use rmcp::{ServerHandler, ServiceExt};
@@ -19,7 +19,14 @@ fn main() -> anyhow::Result<()> {
         cli::Mode::Setup(arguments) => std::process::exit(setup::run(&arguments)),
         cli::Mode::Cli(arguments) => {
             let policy = SourceAccessPolicy::from_process().map_err(anyhow::Error::msg)?;
-            std::process::exit(cli::run(arguments, &policy));
+            let informational = arguments
+                .iter()
+                .any(|a| matches!(a.as_str(), "-h" | "--help" | "-V" | "--version"));
+            let code = cli::run(arguments, &policy);
+            if code == 0 && !informational {
+                star_hint::after_success();
+            }
+            std::process::exit(code);
         }
         cli::Mode::Mcp => tokio::runtime::Builder::new_multi_thread()
             .enable_all()
