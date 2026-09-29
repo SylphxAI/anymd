@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.6.3",
     "@types/pngjs": "^6.0.5",
     "markdown-it": "^15.0.2",
     "pngjs": "^7.0.0",
