@@ -52,7 +52,7 @@ jobs:
 
   pages:
     name: Build page set
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[bench]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[bench')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -70,21 +70,45 @@ jobs:
           path: ${{ runner.temp }}/set
           retention-days: 14
 
+  plan:
+    name: Select jobs
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[bench')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        env:
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          rows = [
+              dict(name="linux-x64-cpu", os="ubuntu-latest", backend="llama", features="llama", device="cpu"),
+              dict(name="linux-x64-cpu", os="ubuntu-latest", backend="candle", features="candle", device="cpu"),
+              dict(name="macos-arm64-cpu", os="macos-latest", backend="llama", features="llama", device="cpu"),
+              dict(name="macos-arm64-cpu", os="macos-latest", backend="candle", features="candle", device="cpu"),
+              dict(name="macos-arm64-metal", os="macos-latest", backend="llama", features="llama-metal", device="metal"),
+              dict(name="macos-arm64-metal", os="macos-latest", backend="candle", features="candle-metal", device="metal"),
+          ]
+          msg = os.environ.get("MSG", "")
+          if "[bench:macos]" in msg:
+              rows = [r for r in rows if r["os"] == "macos-latest"]
+          elif "[bench:linux]" in msg:
+              rows = [r for r in rows if r["os"] == "ubuntu-latest"]
+          print("matrix=" + json.dumps(rows))
+          PY
+
   bench:
     name: ${{ matrix.backend }} on ${{ matrix.name }}
-    needs: pages
+    needs: [plan, pages]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { name: linux-x64-cpu, os: ubuntu-latest, backend: llama, features: llama, device: cpu }
-          - { name: linux-x64-cpu, os: ubuntu-latest, backend: candle, features: candle, device: cpu }
-          - { name: macos-arm64-cpu, os: macos-latest, backend: llama, features: llama, device: cpu }
-          - { name: macos-arm64-cpu, os: macos-latest, backend: candle, features: candle, device: cpu }
-          - { name: macos-arm64-metal, os: macos-latest, backend: llama, features: llama-metal, device: metal }
-          - { name: macos-arm64-metal, os: macos-latest, backend: candle, features: candle-metal, device: metal }
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -117,8 +141,9 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          python3 -m pip install --quiet huggingface_hub
-          python3 - <<'PY'
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet huggingface_hub
+          "$RUNNER_TEMP/venv/bin/python" - <<'PY'
           import os
           from huggingface_hub import hf_hub_download, snapshot_download
           m = os.path.join(os.environ["RUNNER_TEMP"], "models")
