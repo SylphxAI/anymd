@@ -193,16 +193,16 @@ fn parse_opf(opf: &str) -> Result<Package, ConvertError> {
                 opf_element(&e, &mut package);
             }
             Event::Empty(e) => opf_element(&e, &mut package),
-            Event::Text(t) if capture.is_some() => text.push_str(&t.decode().unwrap_or_default()),
-            Event::CData(t) if capture.is_some() => text.push_str(&t.decode().unwrap_or_default()),
+            Event::Text(t) if capture.is_some() => {
+                text.push_str(&t.xml_content(quick_xml::XmlVersion::Implicit1_0))
+            }
+            Event::CData(t) if capture.is_some() => {
+                text.push_str(&t.xml_content(quick_xml::XmlVersion::Implicit1_0))
+            }
             Event::GeneralRef(r) if capture.is_some() => {
                 if let Ok(Some(c)) = r.resolve_char_ref() {
                     text.push(c);
-                } else if let Some(s) = r
-                    .decode()
-                    .ok()
-                    .and_then(|name| quick_xml::escape::resolve_predefined_entity(&name))
-                {
+                } else if let Some(s) = quick_xml::escape::resolve_predefined_entity(&r) {
                     text.push_str(s);
                 }
             }
@@ -257,7 +257,7 @@ fn attr(e: &quick_xml::events::BytesStart<'_>, name: &str) -> Option<String> {
         .flatten()
         .find(|a| a.key.local_name().as_ref() == name)
         .and_then(|a| {
-            a.decoded_and_normalized_value(quick_xml::XmlVersion::Implicit1_0, e.decoder())
+            a.normalized_value(quick_xml::XmlVersion::Implicit1_0)
                 .ok()
                 .map(|v| v.into_owned())
         })
