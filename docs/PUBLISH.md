@@ -41,7 +41,7 @@ crates.io. `set-version.ts` moves the workspace version and the internal
 patch (`anymd-pdf-extract` 0.12.1, `anymd-adobe-cmap-parser` 0.4.1), and their
 version is raised by hand in `vendor/*/Cargo.toml` (and in the `[workspace.dependencies]`
 pin) when the fork changes. CI packs every crate on each pull request
-(`cargo package --workspace`) and fails a package over 9 MB (the limit is 10 MB).
+(`cargo package` for each crate) and fails a package over 9 MB (the limit is 10 MB).
 The token needs the scopes `publish-new` and `publish-update`.
 
 ## npm trusted publishing
