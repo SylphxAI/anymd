@@ -71,6 +71,10 @@ jobs:
           echo "ANYMD_BIN=$PWD/anymd-bin/anymd" >> "$GITHUB_ENV"
 
       - name: Run anymd on the page images
+        env:
+          # Four pages run at once on four cores; tesseract's own OpenMP threads on top of that
+          # oversubscribe the runner until pages exceed the 60 s OCR timeout and come back empty.
+          OMP_THREAD_LIMIT: '1'
         run: |
           python3 bench/omnidocbench/harness.py predict --shard "${{ matrix.shard }}" \
             --limit "$LIMIT" --out "pred/${{ strategy.job-index }}"
