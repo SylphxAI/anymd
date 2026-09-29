@@ -24,6 +24,12 @@ pub const MAX_PIXELS: u64 = 50_000_000;
 pub const MIN_SIDE_PX: u32 = 48;
 /// Images covering less of the page than this are decoration.
 const MIN_PAGE_FRACTION: f64 = 0.02;
+/// An image covering at least this much of a page with no usable text layer is
+/// the page itself (a scan), not a figure: the page goes to OCR instead.
+const SCAN_PAGE_FRACTION: f64 = 0.8;
+/// Fewer letters and digits than this is no usable text layer; the same
+/// threshold as `SPARSE_PAGE_CHARS` in the anymd crate, which sends such a page to OCR.
+const SPARSE_PAGE_CHARS: usize = 24;
 /// The same picture on this many pages is a logo or header.
 const REPEAT_PAGES: usize = 3;
 /// The largest encoded image stream read.
@@ -207,6 +213,14 @@ pub(crate) fn figures_for_page(
     options: &ImageOptions<'_>,
 ) -> Vec<(Figure, PageImage)> {
     let glyphs = page.glyphs.as_ref().ok();
+    let letters = glyphs.map_or(0, |glyphs| {
+        glyphs
+            .iter()
+            .flat_map(|glyph| glyph.text.chars())
+            .filter(|c| c.is_alphanumeric())
+            .count()
+    });
+    let no_text_layer = letters < SPARSE_PAGE_CHARS;
     let mut out: Vec<(Figure, PageImage)> = Vec::new();
     for placement in &page.images {
         let Some(stream) = image_stream(doc, placement.object) else {
@@ -223,6 +237,14 @@ pub(crate) fn figures_for_page(
         }
         let [x0, y0, x1, y1] = placement.bbox;
         if page.area > 0.0 && (x1 - x0) * (y1 - y0) < page.area * MIN_PAGE_FRACTION {
+            continue;
+        }
+        // A scanned page: the image is the page. It emits no ref, so the page
+        // stays sparse and goes to OCR exactly as it does without images.
+        if no_text_layer
+            && page.area > 0.0
+            && (x1 - x0) * (y1 - y0) >= page.area * SCAN_PAGE_FRACTION
+        {
             continue;
         }
         if options

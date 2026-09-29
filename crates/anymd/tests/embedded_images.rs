@@ -4,7 +4,9 @@
 //! Fixtures in `test/fixtures`: `figure-report.pdf` (a captioned figure on
 //! page 1, a banner logo on all three pages, a 32 px icon on page 2),
 //! `alt-text.docx`, `slides.pptx` (a logo on all three slides) and
-//! `field-notes.epub` (an ornament at the end of all three chapters).
+//! `field-notes.epub` (an ornament at the end of all three chapters) and
+//! `scanned-page.pdf` (page 1 is one full-page image and no text; page 2 has a
+//! full-page background image under a line of real text).
 
 use std::path::{Path, PathBuf};
 
@@ -188,5 +190,19 @@ fn epub_images_use_alt_text_and_repeated_ornaments_are_skipped() {
         "{markdown}"
     );
     assert_eq!(refs(&markdown), 1, "{markdown}");
+    assert_eq!(files(cache.path()).len(), 1);
+}
+
+#[test]
+fn a_scanned_page_emits_no_image_ref_and_stays_sparse_for_ocr() {
+    let cache = tempfile::tempdir().unwrap();
+    let markdown = read("scanned-page.pdf", Some(cache.path()));
+    let page1 = &markdown[..at(&markdown, "<!-- page 2 -->")];
+    // The page image is the page: no ref, so the page has no visible text and OCR still picks it up.
+    assert_eq!(refs(page1), 0, "{markdown}");
+    // A page with a text layer keeps the picture under its text.
+    let page2 = &markdown[at(&markdown, "<!-- page 2 -->")..];
+    assert_eq!(refs(page2), 1, "{markdown}");
+    assert!(page2.contains("real text layer"), "{markdown}");
     assert_eq!(files(cache.path()).len(), 1);
 }
