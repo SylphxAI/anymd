@@ -11,6 +11,11 @@ updates:
       prefix: 'chore(rust)'
       include: 'scope'
     rebase-strategy: 'auto'
+    ignore:
+      # anymd-pdf-extract uses the euclid 0.20 Transform2D API (row_major,
+      # pre_transform); 0.22 removed it. Migrate the crate first.
+      - dependency-name: 'euclid'
+        update-types: ['version-update:semver-major']
 
   # Dependency updates for the root package.json, locked by bun.lock. The
   # `npm_and_yarn` updater cannot read bun.lock, so these are the `bun` updater's.
