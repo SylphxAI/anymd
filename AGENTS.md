@@ -9,7 +9,7 @@ publishing is in `docs/PUBLISH.md`.
 
 - `crates/anymd`: the binary: MCP server on rmcp (stdio and Streamable HTTP),
   CLI, `setup` (client registration from mcp-kit) and `version`.
-- `crates/anymd-core`, `anymd-pdf`, `anymd-formats`: conversion; `anymd-wasm`:
+- `crates/anymd-core`, `anymd-pdf`, `anymd-formats`: conversion (published to crates.io); `anymd-wasm`:
   the docs playground build.
 - `packages/anymd`: the npm package; `bin/anymd.js` is mcp-kit's launcher, which
   runs the matching `packages/npm/<platform>` binary. `packages/aliases/*` are
@@ -28,6 +28,9 @@ publishing is in `docs/PUBLISH.md`.
 - Keep page, region and source provenance on extraction and analysis outputs.
 - Publishing happens only in `release.yml` on `main`, because npm trusted
   publishing accepts that workflow alone; a version bump PR is the release.
+  The same workflow publishes the Rust crates to crates.io (`anymd`, `anymd-core`,
+  `anymd-formats`, `anymd-pdf` and the forks `anymd-pdf-extract`,
+  `anymd-adobe-cmap-parser` from `vendor/`).
 - Never commit secrets, private documents or customer data.
 
 ## Commands

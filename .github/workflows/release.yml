@@ -5,7 +5,8 @@ name: release
 # npm (natives, @sylphx/anymd, then the citra and pdf-reader-mcp aliases) ->
 # npx smoke test -> GitHub release -> MCP Registry. Bump with
 # `bun scripts/set-version.ts X.Y.Z` in a pull request. npm trusted publishing
-# trusts this file (SylphxAI/anymd, release.yml) for all 8 packages.
+# trusts this file (SylphxAI/anymd, release.yml) for all 8 packages. Then the
+# `crates` job publishes the Rust crates to crates.io (`cargo install anymd`).
 
 on:
   push:
@@ -44,3 +45,28 @@ jobs:
         grep -q '<!-- page 1 -->' sample.md
         npx -y "@sylphx/citra@$V" version
         npx -y "@sylphx/pdf-reader-mcp@$V" version
+
+  # crates.io takes no git or path-only dependencies, so the two patched
+  # upstream forks and the internal crates are published first, in order
+  # (scripts/publish-crates.sh). A version already on crates.io is skipped, so
+  # every push to main is safe and a failed run can be rerun.
+  crates:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: bash scripts/publish-crates.sh

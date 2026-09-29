@@ -1,11 +1,14 @@
-# vendored adobe-cmap-parser (patched)
+# anymd-adobe-cmap-parser
 
-This directory is a vendored copy of the published
-[`adobe-cmap-parser`](https://crates.io/crates/adobe-cmap-parser) crate
-`v0.4.1` (MIT, © Jeff Muizelaar), with a small correctness/safety patch that
-SylphxAI/pdf-reader-mcp depends on through `pdf-extract`.
+A fork of [`adobe-cmap-parser`](https://crates.io/crates/adobe-cmap-parser)
+`v0.4.1` (MIT, (c) Jeff Muizelaar, see `LICENSE`) with a small correctness and
+safety patch. It is published so that
+[`anymd`](https://github.com/SylphxAI/anymd) can be installed with
+`cargo install anymd`; crates.io does not accept patched path dependencies.
+The library is still named `adobe_cmap_parser`. If you are not using anymd,
+use the upstream crate.
 
-## Why it is vendored
+## Why it is forked
 
 The upstream crate panics with `bad length of hexstring` when a
 `beginbfrange` destination is not 2 or 4 bytes long, and uses similar

@@ -121,6 +121,14 @@ Any client that speaks MCP over stdio: command `npx`, args `["-y", "@sylphx/anym
 ```bash
 npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
 ```
+
+Or build it from [crates.io](https://crates.io/crates/anymd) (Rust 1.92+):
+
+```bash
+cargo install anymd
+```
+
+npm stays the primary install: it ships a prebuilt binary, while `cargo install` compiles one on your machine.
 </details>
 
 ## Benchmarks

@@ -1,16 +1,24 @@
+# anymd-adobe-cmap-parser: the adobe-cmap-parser 0.4.1 fork the anymd crates build on.
+# Upstream: https://github.com/jrmuizel/adobe-cmap-parser (Jeff Muizelaar, MIT).
+# It skips or empties malformed CMaps instead of panicking (SylphxAI/anymd#608); the library keeps the name `adobe_cmap_parser`.
+
 [package]
-name = "adobe-cmap-parser"
+name = "anymd-adobe-cmap-parser"
 version = "0.4.1"
 edition = "2018"
-authors = ["Jeff Muizelaar <jmuizelaar@mozilla.com>"]
-description = "Vendored adobe-cmap-parser 0.4.1 with malformed-CMap crash fixes"
+authors = ["Jeff Muizelaar <jmuizelaar@mozilla.com>", "Sylphx <contact@sylphx.com>"]
+description = "Fork of adobe-cmap-parser 0.4.1 for anymd: malformed CMaps no longer panic the host"
 license = "MIT"
-repository = "https://github.com/jrmuizel/adobe-cmap-parser"
+repository = "https://github.com/SylphxAI/anymd"
+homepage = "https://github.com/SylphxAI/anymd"
 readme = "README.md"
+keywords = ["cmap", "font", "pdf", "postscript", "anymd"]
+categories = ["parser-implementations"]
+include = ["src/**/*", "README.md", "LICENSE"]
 
 [lib]
 name = "adobe_cmap_parser"
 path = "src/lib.rs"
 
-[dependencies.pom]
-version = "1.0.1"
+[dependencies]
+pom = "1.0.1"

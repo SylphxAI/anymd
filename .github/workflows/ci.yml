@@ -93,6 +93,17 @@ jobs:
       - name: Audit Rust dependencies
         run: bash scripts/check-cargo-advisories.sh
 
+      # Packages every publishable crate the way `cargo publish` does (builds each
+      # from its packed sources against the others), then keeps each under the
+      # crates.io limit of 10 MB.
+      - name: Package the crates for crates.io
+        run: |
+          cargo package --workspace --locked
+          bash scripts/publish-crates.sh --list
+          oversized=$(find target/package -name '*.crate' -size +9M)
+          if [ -n "$oversized" ]; then echo "over 9 MB: $oversized" >&2; exit 1; fi
+          ls -l target/package/*.crate
+
       - name: Build the anymd binary
         run: bun run build
 

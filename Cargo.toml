@@ -22,16 +22,24 @@ readme = "README.md"
 # Production binaries: smaller artifacts without requiring runtime downloads.
 # Keep debuginfo available via separate tooling/dSYM workflows in CI when needed.
 
-# pdf-extract depends on adobe-cmap-parser 0.4.1, which panics on malformed
-# CMap destinations (see SylphxAI/anymd#608). Vendor a patched copy
-# so arbitrary PDFs can never abort the server from a CMap parse panic.
-[patch.crates-io]
-adobe-cmap-parser = { path = "vendor/adobe-cmap-parser" }
+# Internal crates and the two patched upstream forks, pinned once. `version`
+# next to `path` is what crates.io needs; `bun scripts/set-version.ts` moves the
+# anymd-core/formats/pdf pins with the workspace version.
+#
 # pdf-extract 0.12.1 runs Form XObjects with an identity CTM (figure text lands
-# at the wrong place) and parses image XObjects as content streams. Vendored
-# with a fix so figures stay where they are drawn, and so every path-painting
-# operator (f*, B, b, s) reaches the output device (table rules).
-pdf-extract = { path = "vendor/pdf-extract" }
+# at the wrong place), parses image XObjects as content streams, and does not
+# send every path-painting operator (f*, B, b, s) to the output device (table
+# rules). adobe-cmap-parser 0.4.1 panics on malformed CMap destinations (see
+# SylphxAI/anymd#608). crates.io has no patched releases, so both live in
+# vendor/ and are published as the forks anymd-pdf-extract and
+# anymd-adobe-cmap-parser. The `package` rename keeps the library names
+# (`pdf_extract`), so no source changes.
+[workspace.dependencies]
+anymd-core = { path = "crates/anymd-core", version = "8.1.0" }
+anymd-formats = { path = "crates/anymd-formats", version = "8.1.0" }
+anymd-pdf = { path = "crates/anymd-pdf", version = "8.1.0" }
+pdf-extract = { package = "anymd-pdf-extract", path = "vendor/pdf-extract", version = "0.12.1" }
+adobe-cmap-parser = { package = "anymd-adobe-cmap-parser", path = "vendor/adobe-cmap-parser", version = "0.4.1" }
 
 [profile.release]
 lto = "thin"
