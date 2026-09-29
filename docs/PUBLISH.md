@@ -6,6 +6,7 @@
 | Platform packages | `@sylphx/anymd-<platform>` for darwin-arm64, darwin-x64, linux-x64-gnu, linux-arm64-gnu, win32-x64-msvc, in `packages/npm/<platform>` |
 | Alias packages | `@sylphx/citra` (bin `citra`) and `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`), in `packages/aliases/` |
 | MCP Registry | `io.github.SylphxAI/anymd`; the old names `io.github.SylphxAI/citra` and `io.github.SylphxAI/pdf-reader-mcp` are marked deprecated |
+| crates.io | `anymd` (binary, `cargo install anymd`), `anymd-core`, `anymd-formats`, `anymd-pdf`, and the forks `anymd-pdf-extract` and `anymd-adobe-cmap-parser` (from `vendor/`); `anymd-wasm` is not published |
 | Release workflow | `.github/workflows/release.yml`, which calls the shared [mcp-kit release workflow](https://github.com/SylphxAI/mcp-kit) |
 
 ## How a release happens
@@ -28,6 +29,20 @@
    A push whose version is already on npm does nothing, so every other merge is a
    no-op for publishing. A failed run can be re-run; each step skips what is
    already published.
+
+## crates.io
+
+The `crates` job in `release.yml` runs after the release job succeeds and calls
+`scripts/publish-crates.sh`, which publishes the six crates in dependency order
+(the two forks, `anymd-pdf`, `anymd-formats`, `anymd-core`, `anymd`) with the
+organization secret `CARGO_REGISTRY_TOKEN`, and skips any version already on
+crates.io. `set-version.ts` moves the workspace version and the internal
+`version` pins together; the forks keep the version of the upstream crate they
+patch (`anymd-pdf-extract` 0.12.1, `anymd-adobe-cmap-parser` 0.4.1), and their
+version is raised by hand in `vendor/*/Cargo.toml` (and in the `[workspace.dependencies]`
+pin) when the fork changes. CI packs every crate on each pull request
+(`cargo package` for each crate) and fails a package over 9 MB (the limit is 10 MB).
+The token needs the scopes `publish-new` and `publish-update`.
 
 ## npm trusted publishing
 

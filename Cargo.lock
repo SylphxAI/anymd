@@ -9,13 +9,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
-name = "adobe-cmap-parser"
-version = "0.4.1"
-dependencies = [
- "pom",
-]
-
-[[package]]
 name = "aes"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -143,16 +136,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "anymd-adobe-cmap-parser"
+version = "0.4.1"
+dependencies = [
+ "pom",
+]
+
+[[package]]
 name = "anymd-core"
 version = "8.1.0"
 dependencies = [
  "anymd-pdf",
+ "anymd-pdf-extract",
  "base64 0.22.1",
  "flate2",
  "hayro",
  "image",
  "lopdf",
- "pdf-extract",
  "rcgen",
  "regex",
  "rustls",
@@ -191,7 +191,24 @@ dependencies = [
 name = "anymd-pdf"
 version = "8.1.0"
 dependencies = [
- "pdf-extract",
+ "anymd-pdf-extract",
+]
+
+[[package]]
+name = "anymd-pdf-extract"
+version = "0.12.1"
+dependencies = [
+ "anymd-adobe-cmap-parser",
+ "cff-parser",
+ "encoding_rs",
+ "euclid 0.20.14",
+ "log",
+ "lopdf",
+ "postscript",
+ "simple_logger",
+ "test-log",
+ "type1-encoding-parser",
+ "unicode-normalization",
 ]
 
 [[package]]
@@ -1949,23 +1966,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
 
 [[package]]
-name = "pdf-extract"
-version = "0.12.1"
-dependencies = [
- "adobe-cmap-parser",
- "cff-parser",
- "encoding_rs",
- "euclid 0.20.14",
- "log",
- "lopdf",
- "postscript",
- "simple_logger",
- "test-log",
- "type1-encoding-parser",
- "unicode-normalization",
-]
-
-[[package]]
 name = "peniko"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2740,8 +2740,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sylphx-mcp-kit"
-version = "0.1.0"
-source = "git+https://github.com/SylphxAI/mcp-kit?tag=v0.1.1#2704cdd32736e3fad8462ed0a4a2e0e3f6eb025a"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4e8d70264c38dcdd03b5f3ac1faf75150c7e0337ca384f2093f683e557632bb"
 dependencies = [
  "anyhow",
  "dirs",

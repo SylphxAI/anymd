@@ -8,6 +8,7 @@ repository.workspace = true
 homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
+include = ["src/**/*", "Cargo.toml"]
 description = "anymd PDF layout engine: glyph geometry to clean Markdown (words, columns, headings, tables)"
 keywords = ["pdf", "markdown", "layout", "tables"]
 categories = ["parsing", "text-processing"]
@@ -16,4 +17,4 @@ categories = ["parsing", "text-processing"]
 path = "src/lib.rs"
 
 [dependencies]
-pdf-extract = "0.12"
+pdf-extract = { workspace = true }

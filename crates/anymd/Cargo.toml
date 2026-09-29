@@ -2,12 +2,14 @@
 name = "anymd"
 version.workspace = true
 edition.workspace = true
+rust-version = "1.92"
 license.workspace = true
 repository.workspace = true
 description = "anymd: any file to clean Markdown for AI agents. Pure-Rust MCP server + CLI binary for @sylphx/anymd"
 homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
+include = ["src/**/*", "Cargo.toml"]
 keywords = ["mcp", "pdf", "rmcp", "agent"]
 categories = ["command-line-utilities"]
 
@@ -24,8 +26,8 @@ axum = "0.8"
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 command-group = { version = "5", features = ["with-tokio"] }
-anymd-core = { path = "../anymd-core" }
-anymd-formats = { path = "../anymd-formats" }
+anymd-core = { workspace = true }
+anymd-formats = { workspace = true }
 ignore = "0.4"
 url = "2"
 rmcp = { version = "3.1.2", features = ["server", "macros", "schemars", "transport-io", "transport-streamable-http-server"] }
@@ -34,7 +36,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 subtle = "2"
-sylphx-mcp-kit = { git = "https://github.com/SylphxAI/mcp-kit", tag = "v0.1.1" }
+# crates.io release of the shared MCP kit (0.2.x only adds the `embed` module to v0.1.1).
+sylphx-mcp-kit = "0.2.3"
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }

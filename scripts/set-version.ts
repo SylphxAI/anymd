@@ -14,6 +14,9 @@ import { join } from 'node:path';
 const root = join(import.meta.dirname, '..');
 const MAIN = 'packages/anymd/package.json';
 const CARGO = 'Cargo.toml';
+// Pins of the published anymd crates in [workspace.dependencies]; the two forks
+// (anymd-pdf-extract, anymd-adobe-cmap-parser) have versions of their own.
+const CARGO_PINS = /^(anymd(?:-core|-formats|-pdf)? = \{ path = "[^"]+", version = ")([^"]+)(")/gm;
 const CARGO_VERSION = /(\[workspace\.package\][^[]*?\nversion = ")([^"]+)(")/;
 
 type Json = Record<string, unknown> & { version: string };
@@ -71,6 +74,7 @@ const manifests: Manifest[] = [
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
 const readJson = (path: string) => JSON.parse(read(path)) as Json;
 const cargoVersion = () => CARGO_VERSION.exec(read(CARGO))?.[2];
+const cargoPins = () => [...read(CARGO).matchAll(CARGO_PINS)].map((m) => m[2] as string);
 
 if (process.argv[2] === '--check') {
   const want = readJson(MAIN).version;
@@ -81,6 +85,9 @@ if (process.argv[2] === '--check') {
       .map((got) => `${m.path}: ${got}`)
   );
   if (cargoVersion() !== want) bad.push(`${CARGO} [workspace.package]: ${cargoVersion()}`);
+  for (const pin of cargoPins()) {
+    if (pin !== want) bad.push(`${CARGO} [workspace.dependencies]: ${pin}`);
+  }
   if (bad.length) {
     console.error(`[set-version] want ${want} everywhere:\n  ${bad.join('\n  ')}`);
     process.exit(1);
@@ -97,7 +104,8 @@ if (process.argv[2] === '--check') {
     m.set(json, v);
     writeFileSync(join(root, m.path), `${JSON.stringify(json, null, 2)}\n`);
   }
-  writeFileSync(join(root, CARGO), read(CARGO).replace(CARGO_VERSION, `$1${v}$3`));
+  const cargo = read(CARGO).replace(CARGO_VERSION, `$1${v}$3`).replace(CARGO_PINS, `$1${v}$3`);
+  writeFileSync(join(root, CARGO), cargo);
   console.log(
     `[set-version] ${v}; now run \`cargo update -w\` and add a "## ${v}" section to CHANGELOG.md`
   );
