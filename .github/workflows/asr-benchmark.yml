@@ -119,9 +119,15 @@ jobs:
         run: |
           set -euxo pipefail
           case "${{ matrix.tool }}" in
-            whisper) source_name=whisper.cpp; target=whisper-cli; extra="-DBUILD_SHARED_LIBS=OFF -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF" ;;
+            whisper) source_name=whisper.cpp; target=whisper-cli; extra="-DBUILD_SHARED_LIBS=OFF -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DGGML_NATIVE=OFF" ;;
             transcribe-cpp) source_name=transcribe.cpp; target=transcribe-cli; extra="" ;;
           esac
+          # Hosted runners of one label have different CPUs (EPYC 7763, 9V74, Xeon...); a binary
+          # tuned to the build machine dies with SIGILL on another. Pin an AVX2 floor instead.
+          if [ "${{ matrix.osk }}" = linux ]; then
+            extra="$extra -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DGGML_BMI2=ON"
+            if [ "${{ matrix.tool }}" = transcribe-cpp ]; then extra="$extra -DTRANSCRIBE_X86_CONSERVATIVE=ON"; fi
+          fi
           eval "$(python3 bench-asr/fetch_asset.py source "$source_name")"
           git clone --recursive --depth 1 --branch "$TAG" "$REPO" "$RUNNER_TEMP/src"
           test "$(git -C "$RUNNER_TEMP/src" rev-parse HEAD)" = "$COMMIT"
