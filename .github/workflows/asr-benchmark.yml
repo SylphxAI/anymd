@@ -236,7 +236,6 @@ jobs:
           # Only the two candidate crates need every target; baseline anywhere is a size reference.
           - { runner: ubuntu-24.04-arm, crate: baseline }
           - { runner: windows-latest, crate: baseline }
-          - { runner: macos-latest, crate: baseline, target: x86_64-apple-darwin }
     steps:
       - uses: actions/checkout@v7
         with:
