@@ -98,6 +98,7 @@ def words_sane(rows) -> tuple[int, int]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("results")
+    parser.add_argument("--probes")
     parser.add_argument("--normalizer-dir", default=str(Path(__file__).parent / "oanorm"))
     args = parser.parse_args()
     english, cjk = load_normalizers(Path(args.normalizer_dir).resolve())
@@ -173,6 +174,30 @@ def main() -> int:
         seen.add(key)
         print(f"| {s['label']} ({s['os']}) | {s['exe_bytes'] / 1e6:.1f} | {s['libs_bytes'] / 1e6:.1f} | {(s['exe_bytes'] + s['libs_bytes']) / 1e6:.1f} |")
     print()
+
+    if args.probes:
+        probes = defaultdict(dict)
+        for path in sorted(Path(args.probes).rglob("probe.json")):
+            item = json.loads(path.read_text())
+            probes[item["crate"]][item["target"]] = item["bytes"]
+        targets = sorted({t for per in probes.values() for t in per})
+        print("## Rust crates: build on every release target, and bytes added\n")
+        print("A minimal binary that links and loads the engine (release, thin LTO, stripped). `FAIL` means the crate did not build on that target (see the run log). Baseline is an empty binary; the difference is what the engine adds to anymd.\n")
+        print("| Crate | " + " | ".join(targets) + " |")
+        print("|---|" + "---|" * len(targets))
+        for crate in ["baseline", "transcribe-cpp", "crispasr", "sherpa-onnx"]:
+            row = []
+            for t in targets:
+                b = probes.get(crate, {}).get(t)
+                base = probes.get("baseline", {}).get(t)
+                if b is None:
+                    row.append("-" if crate == "baseline" else "FAIL")
+                elif crate == "baseline" or base is None:
+                    row.append(f"{b / 1e6:.1f} MB")
+                else:
+                    row.append(f"{b / 1e6:.1f} MB (+{(b - base) / 1e6:.1f})")
+            print(f"| {crate} | " + " | ".join(row) + " |")
+        print()
 
     print("## Timestamps\n")
     print("Share of utterances with each timestamp granularity in the engine's own output; for word timestamps, how many are monotonic and inside the audio.\n")

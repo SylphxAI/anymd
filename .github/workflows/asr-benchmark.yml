@@ -229,17 +229,22 @@ jobs:
           - { runner: ubuntu-latest, target: x86_64-unknown-linux-gnu }
           - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
           - { runner: macos-latest, target: aarch64-apple-darwin }
+          # Intel macOS hosted runners are retired: cross-compile from the arm runner (build only).
+          - { runner: macos-latest, target: x86_64-apple-darwin }
           - { runner: windows-latest, target: x86_64-pc-windows-msvc }
         exclude:
           # Only the two candidate crates need every target; baseline anywhere is a size reference.
           - { runner: ubuntu-24.04-arm, crate: baseline }
           - { runner: windows-latest, crate: baseline }
+          - { runner: macos-latest, crate: baseline, target: x86_64-apple-darwin }
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Build the probe
         shell: bash
@@ -252,10 +257,18 @@ jobs:
             echo "### ${{ matrix.crate }} on ${{ matrix.target }}"
             echo "Built. Stripped binary: $(( bytes / 1024 )) KiB"
           } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p "$RUNNER_TEMP/probe-out"
+          echo "{\"crate\": \"${{ matrix.crate }}\", \"target\": \"${{ matrix.target }}\", \"bytes\": $bytes}" > "$RUNNER_TEMP/probe-out/probe.json"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: probe-${{ matrix.crate }}-${{ matrix.target }}
+          path: ${{ runner.temp }}/probe-out/probe.json
+          retention-days: 30
 
   report:
     name: Report
-    needs: bench
+    needs: [bench, probe]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -275,6 +288,11 @@ jobs:
           pattern: res-*
           path: results
 
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: probe-*
+          path: probes
+
       - name: Open ASR Leaderboard text normaliser (pinned commit)
         run: |
           set -euo pipefail
@@ -287,7 +305,7 @@ jobs:
 
       - name: Score and summarise
         run: |
-          python3 bench-asr/report.py results > report.md
+          python3 bench-asr/report.py results --probes probes > report.md
           cat report.md >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
