@@ -214,9 +214,9 @@ The scores published by the model authors, for context, are self-reported and co
 | PaddleOCR-VL-1.6 | 96.34 |
 | GLM-OCR | 95.22 |
 
-anymd is not close to these, and it does not try to be: it is a converter for documents that carry a text layer (PDF, Word, PowerPoint, Excel, EPUB, HTML), where it scores 96.3 on AgentDocBench above. On a scan or a photographed page it runs tesseract and gives you the text. The dataset ships page images only, so anymd's PDF engine is not measured here.
+This row measures anymd's scan and image path, which today is `tesseract` text recognition with no layout, table, or formula model. anymd's strength is documents that carry a text layer (PDF, Word, PowerPoint, Excel, EPUB, HTML), where it scores 96.3 on AgentDocBench above. The dataset ships page images only, so anymd's PDF engine is not measured here.
 
-The dataset is licensed for research use only. We download it at run time, evaluate anymd, and publish our own score; nothing from the dataset is redistributed. The method, pins, and rerun command are in [`bench/omnidocbench`](https://github.com/SylphxAI/anymd/tree/main/bench/omnidocbench). The scores above are the evaluator's own summary (`run_summary.json`); the workflow's job summary computes the overall with the plain formula on the metric files and shows 20.7.
+The dataset is licensed for research use only. We download it at run time, evaluate anymd, and publish our own score; nothing from the dataset is redistributed. The method, pins, and rerun command are in [`bench/omnidocbench`](https://github.com/SylphxAI/anymd/tree/main/bench/omnidocbench). The scores above are the evaluator's own summary (`run_summary.json`).
 
 ## Reproduce
 
