@@ -93,9 +93,21 @@ impl Node {
 #[derive(Debug, Default)]
 pub(crate) struct Critic {
     tokens: Vec<Token>,
+    /// Text written as is, for a document with no tracked change or comment:
+    /// nothing can open a span there, so nothing needs escaping.
+    plain: bool,
 }
 
 impl Critic {
+    /// A paragraph of a document with no tracked change or comment: its text
+    /// is written unescaped.
+    pub(crate) fn plain() -> Self {
+        Self {
+            plain: true,
+            ..Self::default()
+        }
+    }
+
     pub(crate) fn push(&mut self, text: &str, bold: bool, italic: bool, link: Option<&str>) {
         if !text.is_empty() {
             self.tokens.push(Token::Leaf(Leaf::Text {
@@ -151,7 +163,7 @@ impl Critic {
 
     pub(crate) fn into_inline(self) -> Inline {
         let mut inline = Inline::default();
-        render(&tidy(tree(self.tokens)), &mut inline);
+        render(&tidy(tree(self.tokens)), &mut inline, self.plain);
         inline
     }
 }
@@ -239,12 +251,41 @@ fn tidy(nodes: Vec<Node>) -> Vec<Node> {
         }
         out.extend(comments);
     }
-    out.into_iter()
-        .map(|node| match node {
-            Node::Span(mark, by, nodes) => Node::Span(mark, by, tidy(nodes)),
-            leaf => leaf,
-        })
-        .collect()
+    join_text(
+        out.into_iter()
+            .map(|node| match node {
+                Node::Span(mark, by, nodes) => Node::Span(mark, by, tidy(nodes)),
+                leaf => leaf,
+            })
+            .collect(),
+    )
+}
+
+/// Joins neighbouring text of the same formatting. Word splits runs anywhere,
+/// so a delimiter can arrive in two pieces (`a -` and `-} b`); escaping the
+/// joined text sees it whole.
+fn join_text(nodes: Vec<Node>) -> Vec<Node> {
+    let mut out: Vec<Node> = Vec::with_capacity(nodes.len());
+    for node in nodes {
+        match (out.last_mut(), node) {
+            (
+                Some(Node::Leaf(Leaf::Text {
+                    text: before,
+                    bold: b,
+                    italic: i,
+                    link: l,
+                })),
+                Node::Leaf(Leaf::Text {
+                    text,
+                    bold,
+                    italic,
+                    link,
+                }),
+            ) if *b == bold && *i == italic && *l == link => before.push_str(&text),
+            (_, node) => out.push(node),
+        }
+    }
+    out
 }
 
 /// Removes every comment below `nodes` into `comments`, in order.
@@ -262,7 +303,7 @@ fn lift_comments(nodes: Vec<Node>, comments: &mut Vec<Node>) -> Vec<Node> {
     kept
 }
 
-fn render(nodes: &[Node], out: &mut Inline) {
+fn render(nodes: &[Node], out: &mut Inline, plain: bool) {
     let mut index = 0;
     while index < nodes.len() {
         match (&nodes[index], nodes.get(index + 1)) {
@@ -275,9 +316,9 @@ fn render(nodes: &[Node], out: &mut Inline) {
                 Some(Node::Span(Mark::Deletion, old_by, old)),
             ) => {
                 marker(out, "{~~");
-                render(old, out);
+                render(old, out, plain);
                 marker(out, "~>");
-                render(new, out);
+                render(new, out, plain);
                 marker(out, "~~}");
                 attribution(out, old_by.as_deref());
                 if new_by != old_by {
@@ -289,7 +330,7 @@ fn render(nodes: &[Node], out: &mut Inline) {
             (Node::Span(mark, by, nodes), _) => {
                 let (open, close) = mark.delimiters();
                 marker(out, open);
-                render(nodes, out);
+                render(nodes, out, plain);
                 marker(out, close);
                 attribution(out, by.as_deref());
             }
@@ -302,8 +343,10 @@ fn render(nodes: &[Node], out: &mut Inline) {
                 }),
                 _,
             ) => {
-                out.push(&escape(text), *bold, *italic, link.as_deref());
+                let text = if plain { text.clone() } else { escape(text) };
+                out.push(&text, *bold, *italic, link.as_deref());
             }
+            (Node::Leaf(Leaf::Raw(markdown)), _) if plain => marker(out, markdown),
             (Node::Leaf(Leaf::Raw(markdown)), _) => marker(out, &defuse(markdown)),
             (Node::Leaf(Leaf::Comment(inner)), _) => marker(out, &note(inner)),
         }
@@ -968,5 +1011,26 @@ mod tests {
     #[test]
     fn tree_ignores_a_close_with_nothing_open() {
         assert_eq!(tree(vec![Token::Close(Ins)]), Vec::<Node>::new());
+    }
+
+    #[test]
+    fn a_delimiter_split_across_runs_is_escaped() {
+        // Word splits runs anywhere; `a -` + `-} b` must not close the deletion.
+        assert_eq!(
+            script(&[("open", "-"), ("t", "a -"), ("t", "-} b"), ("close", "-")]),
+            "{--a --\\} b--}"
+        );
+        // An empty span between the two pieces is dropped, so they still meet.
+        assert_eq!(
+            script(&[
+                ("open", "-"),
+                ("t", "x {"),
+                ("open", "+"),
+                ("close", "+"),
+                ("t", "++ y"),
+                ("close", "-")
+            ]),
+            "{--x {\\++ y--}"
+        );
     }
 }
