@@ -21,6 +21,10 @@ anymd report.pdf --node n1.2                  # section and its children
 anymd report.pdf --node n1.2 --cursor 4:1200  # continue within that section
 ```
 
+Outline and node reads default to no OCR or embedded image export, with Word
+revision markup. `--ocr`, `--images` and `--revisions` select other options; pass
+the same options to outline and node read.
+
 See [outline](./tools#outline) for range and stable-id semantics. Search hits carry
 node ids and title paths. With no `--node`, conversion and paging stay unchanged.
 

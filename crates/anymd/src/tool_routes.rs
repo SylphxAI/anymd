@@ -7,10 +7,8 @@ pub enum ToolRoute {
 
 pub fn route_for_tool(tool: &str) -> Option<ToolRoute> {
     match tool {
-        "read" | "search" | "inspect" | "read_pdf" | "search_pdf" | "pdf_compare" | "pdf_hash"
-        | "pdf_text_search" | "pdf_evidence" => {
-            Some(ToolRoute::RustCore)
-        }
+        "outline" | "read" | "search" | "inspect" | "read_pdf" | "search_pdf" | "pdf_compare"
+        | "pdf_hash" | "pdf_text_search" | "pdf_evidence" => Some(ToolRoute::RustCore),
         _ => None,
     }
 }
@@ -25,6 +23,7 @@ mod tests {
 
     #[test]
     fn maps_primary_tools_to_rust_core() {
+        assert_eq!(route_for_tool("outline"), Some(ToolRoute::RustCore));
         assert_eq!(route_for_tool("read_pdf"), Some(ToolRoute::RustCore));
         assert_eq!(route_for_tool("search_pdf"), Some(ToolRoute::RustCore));
         assert_eq!(route_for_tool("pdf_compare"), Some(ToolRoute::RustCore));

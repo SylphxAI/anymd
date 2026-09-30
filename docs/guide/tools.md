@@ -21,6 +21,9 @@ headings gets unit nodes. No model, vector database, or API key is needed.
 |---|---|---|---|
 | `source` | string | required | File path or `http(s)` URL |
 | `format` | `"json"` \| `"tree"` | `"json"` | Machine-readable preorder nodes or an indented tree |
+| `ocr` | boolean | `false` | OCR image-only pages; use the same option in node reads |
+| `images` | `"none"` \| `"refs"` | `"none"` | Embedded images; use the same option in node reads |
+| `revisions` | string | `"markup"` | Word revision mode; use the same option in node reads |
 
 ```json
 { "source": "report.pdf", "format": "tree" }
@@ -31,7 +34,11 @@ Each node has `id`, `title`, `level`, `from`, `to`, `start`, `end`, `children`, 
 `start` and `end` are a half-open **UTF-8 byte** range in the canonical Markdown
 body (not front matter): each unit's trimmed Markdown followed by two newlines,
 with `<!-- unit label -->` and two newlines before it for PDF or multi-unit files.
-The canonical body leaves embedded images out and uses default Word revision markup.
+The canonical body uses these extraction options: no OCR or embedded images by
+default, and Word revision markup. Node reads use these same defaults; regular
+reads without `node` keep automatic OCR and image refs. Pass matching `ocr`,
+`images`, and `revisions` options to outline and read when changing them. Search
+uses the default outline extraction options.
 `children` counts immediate children; nodes are in preorder and `level` gives
 heading depth. `n1` is the document root; children are `n1.1`, `n1.1.1`, and so on.
 IDs are deterministic for an unchanged document and extraction options, not durable

@@ -18,7 +18,7 @@ anymd turns files, folders and URLs into Markdown, locally, with no API key.
 
 ## How to use it
 
-- Navigate a long document: call `outline`, pick a node by title path, then `read` with the same source and `node`. Search hits also carry a node id and title path. Repeat `node` with `cursor` to continue inside that section. IDs are stable for the unchanged source and extraction options; get a fresh outline after edits.
+- Navigate a long document: call `outline`, pick a node by title path, then `read` with the same source and `node`. Search hits also carry a node id and title path. Repeat `node` with `cursor` to continue inside that section. Outline and node reads default to no OCR/image export and Word revision markup; if you change `ocr`, `images`, or `revisions`, pass them to both tools. Search uses the default outline options. IDs are stable for the unchanged source and extraction options; get a fresh outline after edits.
 - Read long documents in parts: pass `pages`, or continue with the `cursor` that `read` returns when it stops at the token budget.
 - Cite pages from the `<!-- page N -->` anchors in `read` output.
 - Use `search` before reading a whole folder. With no exact match it returns BM25-ranked passages.

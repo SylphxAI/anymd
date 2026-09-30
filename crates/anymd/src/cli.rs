@@ -9,14 +9,12 @@ use crate::schema::{ReadArgs, SearchArgs};
 use crate::source_access::SourceAccessPolicy;
 
 pub const USAGE: &str = "\
-anymd outline <file> [--format tree|json]
-anymd <file> --node <id>
-
 anymd — any file → clean Markdown for AI agents
 
 Usage:
   anymd <file|url|dir>... [options]   Convert to Markdown on stdout
   anymd - [options]                   Convert stdin
+  anymd outline <file|url> [--format tree|json]  Show the heading tree
   anymd search <query> [path|url...]  Search files and directories (default: .)
   anymd mcp [--allow-dir=<path>]...   Run the MCP server on stdio
                                       (also the default when stdin is piped and no file is given)
@@ -26,7 +24,12 @@ Usage:
   anymd doctor                        Print version and optional tool availability
   anymd version                       Print the version
 
+Outline options:
+      --format <mode>      tree (CLI default) or json; --json also selects JSON
+                           --ocr, --images and --revisions match node read options
+
 Read options:
+      --node <id>          Read a node from outline; repeat it with a cursor
   -p, --pages <spec>       Pages, slides, sheets, or chapters, e.g. 1-5,8
   -o, --output <file>      Write to a file instead of stdout
       --max-tokens <n>     Stop at a token budget and print a cursor
@@ -252,6 +255,9 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
         let args = crate::schema::OutlineArgs {
             source: parsed.inputs[0].clone(),
             format: parsed.format.clone().or(Some("tree".into())),
+            ocr: parsed.ocr,
+            images: parsed.images.clone(),
+            revisions: parsed.revisions.clone(),
         };
         match crate::outline::render(&args, policy) {
             Ok(text) => (text, false),

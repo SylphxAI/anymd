@@ -299,7 +299,25 @@ pub fn render(args: &OutlineArgs, policy: &SourceAccessPolicy) -> Result<String,
     if !matches!(args.format.as_deref(), None | Some("json" | "tree")) {
         return Err("format must be json or tree".into());
     }
-    let opened = Opened::open(&args.source, policy, &OpenOptions::default())?;
+    if !matches!(args.images.as_deref(), None | Some("none" | "refs")) {
+        return Err("images must be none or refs".into());
+    }
+    let revisions = match args.revisions.as_deref() {
+        Some(value) => anymd_formats::Revisions::parse(value)
+            .ok_or("revisions must be markup, accept or reject")?,
+        None => anymd_formats::Revisions::default(),
+    };
+    let options = OpenOptions {
+        ocr: Some(args.ocr.unwrap_or(false)),
+        images: if args.images.as_deref() == Some("refs") {
+            anymd_formats::images::ImageStore::default_location()
+        } else {
+            None
+        },
+        revisions,
+        ..Default::default()
+    };
+    let opened = Opened::open(&args.source, policy, &options)?;
     let outline = Outline::build(&opened)?;
     if args.format.as_deref() == Some("tree") {
         Ok(outline.tree())
