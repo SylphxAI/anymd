@@ -1,15 +1,19 @@
 # Changelog
 
-## Unreleased
+## 8.2.0
 
 ### Minor Changes
 
+- `pip install anymd` and `uvx anymd` install the same native binary from PyPI (wheels for Linux x64/arm64, macOS x64/arm64 and Windows x64), and `docker run ghcr.io/sylphxai/anymd` runs it from a multi-arch image.
+- Every release carries `SHA256SUMS`, a CycloneDX SBOM and GitHub build-provenance attestations for its binaries and MCP Bundles; the install guide shows how to verify a download.
+- CI tests every change on Linux, macOS and Windows before it merges.
+- The benchmarks page adds OmniDocBench v1.6 for scans and page images.
 - The CLI prints one GitHub star line to stderr after the fifth successful interactive run, once ever. It is silent in MCP mode, in CI, and when stderr is not a terminal; `ANYMD_NO_STAR_HINT=1` turns it off.
 - `cargo install anymd` works. Each release now also publishes the Rust crates to [crates.io](https://crates.io/crates/anymd): `anymd`, `anymd-core`, `anymd-formats`, `anymd-pdf`, and two forks of upstream crates that carry our fixes, `anymd-pdf-extract` (from `pdf-extract`) and `anymd-adobe-cmap-parser` (from `adobe-cmap-parser`). The forks keep the upstream MIT licence and credit. npm stays the primary install.
 - `sylphx-mcp-kit` now comes from crates.io (0.2.3) instead of a git tag.
 - The Claude Desktop MCP Bundles (`.mcpb`) on each release now carry the anymd icon and a long description, and the install docs point at them.
 - `read` and the CLI gain `images` (`--images refs|none`). By default (`refs`) the raster images embedded in PDFs, DOCX, PPTX and EPUB files, which an agent cannot open from inside the container, are saved once each to `<anymd cache>/images/<sha256>.<ext>` and marked in the Markdown where they sit: `![caption](absolute path)` and an `<!-- image: WxH, page N -->` comment. A PDF figure takes the caption line (`Figure 3`, `Table 2`, `圖1`) directly below or above it, otherwise the alt text, otherwise `image`. Images under 48 x 48 px, PDF images under 2% of the page, and pictures repeated on three or more pages, slides or chapters (logos, headers) are skipped. Images over 50 megapixels are refused, and nothing is written beside the source. `inspect` `structure` also lists a PDF's exported images (`embeddedImages`). The image cache is pruned at start, at most daily: files unused for 30 days go, and the folder stays under 2 GiB. Vector-drawn figures and charts are not exported yet.
-- Word tracked changes and comments come out as CriticMarkup: insertions `{++…++}`, deletions `{--…--}`, a deletion next to an insertion as `{~~old~>new~~}`, and commented text as `{==text==}{>>Author (date): comment<<}`. Each tracked change is followed by its author and date, `{++new++}{>>Author (date)<<}`, the way CriticMarkup tracks several authors. Authors and dates are exactly as Word stores them. Inserted and deleted paragraph breaks, table rows and cells, text boxes, and footnotes are covered, and the output nests cleanly so simple CriticMarkup parsers read it.
+- Word tracked changes and comments come out as CriticMarkup: insertions `{++…++}`, deletions `{--…--}`, a deletion next to an insertion as `{~~old~>new~~}`, and commented text as `{==text==}{>>Author (date): comment<<}`. Each tracked change is followed by its author and date, `{++new++}{>>Author (date)<<}`, the way CriticMarkup tracks several authors. Authors and dates are exactly as Word stores them. Inserted and deleted paragraph breaks, table rows and cells, text boxes, and footnotes are covered, and the output nests cleanly so simple CriticMarkup parsers read it. Contributed by [@arthrod](https://github.com/arthrod) (#814).
 - `read` and the CLI gain `revisions` (`--revisions markup|accept|reject`) for Word files. `markup` (default) writes tracked changes and comments as CriticMarkup; `accept` and `reject` give the text as Word shows it after Accept All or Reject All, without markup or comments. A document with no tracked changes or comments converts exactly as before under all three.
 
 ## 8.1.0
