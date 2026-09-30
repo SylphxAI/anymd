@@ -535,8 +535,19 @@ pub fn read_text(
             return Ok((list_directory(source, Path::new(&admitted)), false));
         }
     }
+    let selection = args
+        .ocr
+        .map(Ok)
+        .unwrap_or_else(|| match std::env::var("ANYMD_OCR") {
+            Ok(v) => crate::ocr_vlm::OcrSelection::parse(&v),
+            Err(std::env::VarError::NotPresent) => {
+                Ok(crate::ocr_vlm::OcrSelection::Engine(Default::default()))
+            }
+            Err(_) => Err("Invalid ANYMD_OCR".into()),
+        })?;
     let options = OpenOptions {
-        ocr: args.ocr.or_else(|| args.node.as_ref().map(|_| false)),
+        ocr: args.ocr.map(|v| v.enabled()).or_else(|| args.node.as_ref().map(|_| false)),
+        ocr_engine: Some(selection.engine()),
         transcript: args.transcript.unwrap_or(false)
             || args.download_whisper_model.unwrap_or(false),
         download_whisper_model: args.download_whisper_model.unwrap_or(false),
@@ -870,6 +881,7 @@ fn load_search_docs(
         .min(files.len().max(1));
     let options = OpenOptions {
         ocr: Some(false),
+        ocr_engine: None,
         transcript: false,
         download_whisper_model: false,
         images: None,

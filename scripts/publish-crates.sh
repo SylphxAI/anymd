@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Dependency order: forks first, then the crates that use them, the binary last.
-CRATES=(anymd-adobe-cmap-parser anymd-pdf-extract anymd-pdf anymd-formats anymd-core anymd)
+CRATES=(anymd-adobe-cmap-parser anymd-pdf-extract anymd-pdf anymd-formats anymd-core anymd-ocr-vlm anymd)
 
 version_of() {
   cargo metadata --no-deps --format-version 1 |

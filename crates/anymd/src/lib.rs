@@ -6,6 +6,7 @@ pub mod evidence;
 pub mod http_transport;
 pub mod lean;
 mod ocr_evidence;
+pub mod ocr_vlm;
 pub mod outline;
 mod page_selection;
 pub mod pdf_compare;

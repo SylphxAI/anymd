@@ -34,7 +34,8 @@ Read options:
   -o, --output <file>      Write to a file instead of stdout
       --max-tokens <n>     Stop at a token budget and print a cursor
       --cursor <cursor>    Continue from a cursor
-      --ocr / --no-ocr     Force or disable OCR (default: automatic when tesseract is installed)
+      --ocr [auto|vlm|tesseract]  Select local OCR; --no-ocr disables it
+      (ANYMD_OCR selects the default; auto never downloads weights)
       --transcript         Transcribe audio/video with a local whisper.cpp
       --download-whisper-model
                            With --transcript (implied): download the ggml model on first use
@@ -94,7 +95,7 @@ struct Parsed {
     output: Option<String>,
     max_tokens: Option<u32>,
     cursor: Option<String>,
-    ocr: Option<bool>,
+    ocr: Option<crate::ocr_vlm::OcrSelection>,
     transcript: bool,
     download_whisper_model: bool,
     images: Option<String>,
@@ -154,8 +155,23 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
             "--format" => parsed.format = Some(value(flag)?),
             "--json" => parsed.format = Some("json".into()),
             "--cursor" => parsed.cursor = Some(value(flag)?),
-            "--ocr" => parsed.ocr = Some(true),
-            "--no-ocr" => parsed.ocr = Some(false),
+            "--ocr" => {
+                let is_engine = iter
+                    .peek()
+                    .is_some_and(|v| matches!(v.as_str(), "auto" | "vlm" | "tesseract"));
+                let named = inline.or_else(|| {
+                    if is_engine {
+                        iter.next().cloned()
+                    } else {
+                        None
+                    }
+                });
+                parsed.ocr = Some(match named {
+                    Some(v) => crate::ocr_vlm::OcrSelection::parse(&v)?,
+                    None => crate::ocr_vlm::OcrSelection::Enabled(true),
+                });
+            }
+            "--no-ocr" => parsed.ocr = Some(crate::ocr_vlm::OcrSelection::Enabled(false)),
             "--transcript" => parsed.transcript = true,
             "--download-whisper-model" => parsed.download_whisper_model = true,
             "--images" => {
@@ -402,7 +418,10 @@ mod tests {
         assert_eq!(parsed.inputs, ["a.pdf"]);
         assert_eq!(parsed.pages.as_deref(), Some("1-3"));
         assert_eq!(parsed.max_tokens, Some(500));
-        assert_eq!(parsed.ocr, Some(false));
+        assert_eq!(
+            parsed.ocr,
+            Some(crate::ocr_vlm::OcrSelection::Enabled(false))
+        );
         let parsed = parse(&args(&["attention", "docs", "--mode", "ranked", "-w"])).unwrap();
         assert_eq!(parsed.inputs, ["attention", "docs"]);
         assert_eq!(parsed.mode.as_deref(), Some("ranked"));

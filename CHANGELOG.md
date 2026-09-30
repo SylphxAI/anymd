@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Add an opt-in local doc-VLM OCR route using PaddleOCR-VL-1.6 and PP-DocLayoutV3 on Candle, including Metal on Macs. `anymd setup ocr` installs SHA-256-pinned weights; `ocr` accepts auto, vlm and tesseract alongside the existing MCP booleans. Automatic OCR never downloads models. The worker has a hard page deadline, a per-region token cap, and repetitive-output trimming. Tables become Markdown and formulas become LaTeX.
+
 - New `outline` MCP tool and `anymd outline <file>` CLI command return a local, deterministic heading tree for PDF, DOCX, PPTX, EPUB, HTML and Markdown, as JSON or tree text. Nodes carry stable ids, title paths, page/slide/chapter ranges, Markdown byte ranges and child counts. `read` gains `node` (`--node` on the CLI), with the existing page selections, token budgets and cursors. Literal and ranked `search` hits carry node ids and title paths. Reads without a node keep their output unchanged.
 
 ## 8.2.0

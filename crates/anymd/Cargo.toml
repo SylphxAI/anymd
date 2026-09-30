@@ -2,7 +2,7 @@
 name = "anymd"
 version.workspace = true
 edition.workspace = true
-rust-version = "1.92"
+rust-version = "1.95"
 license.workspace = true
 repository.workspace = true
 description = "anymd: any file to clean Markdown for AI agents. Pure-Rust MCP server + CLI binary for @sylphx/anymd"
@@ -20,7 +20,13 @@ path = "src/lib.rs"
 name = "anymd"
 path = "src/main.rs"
 
+[features]
+default = ["ocr-vlm"]
+ocr-vlm = ["anymd-ocr-vlm/candle"]
+
 [dependencies]
+anymd-ocr-vlm = { workspace = true }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "tiff", "bmp", "webp"] }
 anyhow = "1"
 axum = "0.8"
 base64 = "0.22"

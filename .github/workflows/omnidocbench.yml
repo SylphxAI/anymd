@@ -6,6 +6,11 @@ name: OmniDocBench
 on:
   workflow_dispatch:
     inputs:
+      ocr:
+        description: 'Local OCR engine (vlm or tesseract)'
+        type: choice
+        options: [vlm, tesseract]
+        default: vlm
       limit:
         description: 'Score only the first N pages by file name (0 = all 1651 pages; use a small N for a smoke test)'
         required: false
@@ -21,7 +26,8 @@ concurrency:
 env:
   # opendatalab/OmniDocBench, "Codebase Update to v1.6" era: README updated to v1.6 (2026-04-10)
   EVALUATOR_COMMIT: 147cd5ac9472002f5751221d390bf00abdbc0d2f
-  LIMIT: ${{ github.event.inputs.limit || '40' }}
+  LIMIT: ${{ github.event.inputs.limit || '0' }}
+  ANYMD_OCR: ${{ github.event.inputs.ocr || 'vlm' }}
 
 jobs:
   build:
@@ -47,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1/4, 2/4, 3/4, 4/4]
+        shard: [1/16, 2/16, 3/16, 4/16, 5/16, 6/16, 7/16, 8/16, 9/16, 10/16, 11/16, 12/16, 13/16, 14/16, 15/16, 16/16]
     steps:
       - uses: actions/checkout@v7
 
@@ -65,6 +71,10 @@ jobs:
           chmod +x anymd-bin/anymd
           echo "ANYMD_BIN=$PWD/anymd-bin/anymd" >> "$GITHUB_ENV"
 
+      - name: Install pinned doc-VLM weights
+        if: env.ANYMD_OCR == 'vlm'
+        run: anymd-bin/anymd setup ocr
+
       - name: Run anymd on the page images
         env:
           # Four pages run at once on four cores; tesseract's own OpenMP threads on top of that
@@ -72,7 +82,7 @@ jobs:
           OMP_THREAD_LIMIT: '1'
         run: |
           python3 bench/omnidocbench/harness.py predict --shard "${{ matrix.shard }}" \
-            --limit "$LIMIT" --out "pred/${{ strategy.job-index }}"
+            --limit "$LIMIT" --workers 1 --timeout 620 --out "pred/${{ strategy.job-index }}"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -101,7 +111,7 @@ jobs:
           echo "predictions: $(ls predictions | wc -l)"
 
       - name: Ground truth
-        run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --out gt.json
+        run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --workers 1 --timeout 620 --out gt.json
 
       - uses: actions/checkout@v7
         with:

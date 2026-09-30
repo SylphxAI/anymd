@@ -24,6 +24,7 @@ const CACHE_MAX_BYTES: usize = 256 * 1024 * 1024;
 pub struct OpenOptions {
     /// None = OCR image-only pages and images when `tesseract` is installed.
     pub ocr: Option<bool>,
+    pub ocr_engine: Option<crate::ocr_vlm::OcrEngine>,
     pub transcript: bool,
     /// With `transcript`: fetch the whisper model when none is installed.
     pub download_whisper_model: bool,
@@ -135,6 +136,8 @@ type CacheKey = (
     u64,
     u128,
     bool,
+    crate::ocr_vlm::OcrEngine,
+    bool,
     Option<PathBuf>,
     anymd_formats::Revisions,
 );
@@ -175,6 +178,8 @@ fn cache_key(path: &Path, ocr: bool, options: &OpenOptions) -> Option<CacheKey> 
         meta.len(),
         modified,
         ocr,
+        options.ocr_engine.unwrap_or_default(),
+        crate::ocr_vlm::root().is_ok_and(|p| p.join("installed").is_file()),
         options.images.as_ref().map(|s| s.dir().to_path_buf()),
         options.revisions,
     ))
@@ -557,7 +562,8 @@ impl Opened {
         if sparse.is_empty() {
             return;
         }
-        if !anymd_formats::image::ocr_available() {
+        let vlm = crate::ocr_vlm::requested(self.options.ocr_engine.unwrap_or_default());
+        if !vlm && !anymd_formats::image::ocr_available() {
             if wanted {
                 for index in sparse {
                     units[index].markdown.push_str(
@@ -590,10 +596,14 @@ impl Opened {
                 (index, image)
             })
             .collect();
-        let workers = std::thread::available_parallelism()
-            .map(|n| n.get())
-            .unwrap_or(1)
-            .clamp(1, 8);
+        let workers = if vlm {
+            1
+        } else {
+            std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(1)
+                .clamp(1, 8)
+        };
         let mut results: Vec<(usize, Result<String, String>)> = Vec::with_capacity(rendered.len());
         for chunk in rendered.chunks(workers) {
             std::thread::scope(|scope| {
@@ -601,7 +611,7 @@ impl Opened {
                     .iter()
                     .map(|(index, image)| {
                         scope.spawn(move || {
-                            let text = image.clone().and_then(|image| ocr_page(&image));
+                            let text = image.clone().and_then(|image| ocr_page(&image, vlm));
                             (*index, text)
                         })
                     })
@@ -635,7 +645,10 @@ impl Opened {
 }
 
 /// OCR one rendered page and lay its words out like a text page.
-fn ocr_page(image: &anymd_core::render::RenderedPage) -> Result<String, String> {
+fn ocr_page(image: &anymd_core::render::RenderedPage, vlm: bool) -> Result<String, String> {
+    if vlm {
+        return crate::ocr_vlm::recognize(&image.png).map(|p| p.text());
+    }
     let words = anymd_formats::image::ocr_words(&image.png, ".png")?;
     let placed: Vec<markdown_layout::PlacedWord> = words
         .into_iter()
@@ -711,19 +724,30 @@ fn convert_other(
         Some(value) => value,
         None => format == Format::Image && anymd_formats::image::ocr_available(),
     };
-    anymd_formats::convert(
+    let vlm = format == Format::Image
+        && options.ocr != Some(false)
+        && crate::ocr_vlm::requested(options.ocr_engine.unwrap_or_default());
+    let mut converted = anymd_formats::convert(
         format,
         bytes,
         &anymd_formats::Options {
             base_url,
-            ocr,
+            ocr: ocr && !vlm,
             transcript: options.transcript,
             download_whisper_model: options.download_whisper_model,
             path,
             images: options.images.clone(),
             revisions: options.revisions,
         },
-    )
+    )?;
+    if vlm {
+        let page = crate::ocr_vlm::recognize(bytes).map_err(ConvertError::Unsupported)?;
+        converted.sections.push(anymd_formats::Section {
+            label: "image".into(),
+            markdown: format!("## Text (OCR)\n\n{}", page.text()),
+        });
+    }
+    Ok(converted)
 }
 
 /// Write one PDF image to the store and build its Markdown.

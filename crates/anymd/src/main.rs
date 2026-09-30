@@ -7,6 +7,9 @@ use rmcp::{ServerHandler, ServiceExt};
 
 fn main() -> anyhow::Result<()> {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
+    if arguments.first().map(String::as_str) == Some("__ocr-vlm-worker") {
+        return anymd::ocr_vlm::worker(&arguments[1..]).map_err(anyhow::Error::msg);
+    }
     match cli::mode(&arguments) {
         cli::Mode::Doctor => {
             doctor();

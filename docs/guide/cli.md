@@ -38,6 +38,7 @@ node ids and title paths. With no `--node`, conversion and paging stay unchanged
 | `anymd search <query> [path\|url...]` | Search files and directories (default: `.`) |
 | `anymd mcp [--allow-dir=<path>]...` | Run the MCP server on stdio |
 | `anymd setup [--dry-run] [--remove]` | Add anymd to the MCP clients on this machine; `--remove` undoes it |
+| `anymd setup ocr` | Download and SHA-256-verify local doc-VLM weights (~2 GB); opts into CPU inference |
 | `anymd doctor` | Print the version and which optional tools were found |
 | `anymd version` | Print the version |
 
@@ -52,7 +53,7 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 | `-o, --output <file>` | Write to a file instead of stdout |
 | `--max-tokens <n>` | Stop at a token budget and print a cursor. The CLI has no budget unless you set one. |
 | `--cursor <cursor>` | Continue from a cursor |
-| `--ocr` / `--no-ocr` | Force or disable OCR (default: automatic when tesseract is installed) |
+| `--ocr [auto\|vlm\|tesseract]` / `--no-ocr` | Select local OCR or disable it. Plain `--ocr` remains automatic. |
 | `--revisions <markup\|accept\|reject>` | Word tracked changes and comments: `markup` (default) writes them as CriticMarkup; `accept` or `reject` gives the text with every change accepted or rejected, without comments (see [Word](formats.md#word)) |
 | `--images <refs\|none>` | `refs` (default) saves images embedded in PDF, DOCX, PPTX and EPUB files to the anymd cache and marks them in the Markdown; `none` leaves them out (see [Embedded images](formats.md#embedded-images)) |
 | `--transcript` | Transcribe audio/video with a local whisper.cpp |
@@ -109,3 +110,13 @@ Ranked search when you do not know the exact wording:
 ```bash
 anymd search "how is attention scaled" papers/ --mode ranked --max 5
 ```
+
+## Local document OCR
+
+`anymd setup ocr` downloads PaddleOCR-VL-1.6 and PP-DocLayoutV3 into the anymd cache (`ANYMD_CACHE_DIR`, otherwise the platform cache directory). Every file has a pinned revision, SHA-256 and size. Nothing downloads under automatic OCR or during conversion. The setup command is an explicit opt-in to the slower CPU route.
+
+`--ocr vlm` uses installed weights, with Metal on supported Macs and CPU elsewhere. Missing weights produce an error directing you to setup; they are not silently downloaded. `--ocr auto` uses the installed models, otherwise tesseract and a one-line hint. `--ocr tesseract` keeps the old route. `ANYMD_OCR=auto|vlm|tesseract` sets the default for CLI and MCP; a request option takes precedence. MCP `read` accepts the same strings in `ocr`; existing booleans remain valid. Native PDF text is unchanged; only images and sparse scanned pages use OCR.
+
+Table regions become Markdown and formula regions become display LaTeX. OCR evidence keeps pixel boxes internally and reading order; the PDF evidence adapter converts boxes to PDF coordinates. Layout confidence is labelled separately from recognition confidence. Set `ANYMD_OCR=vlm` for the built-in `ocr_pages` provider; an explicitly configured command provider still takes precedence.
+
+`ANYMD_OCR_TIMEOUT_MS` sets a hard per-page subprocess deadline (default 300000, range 1000–600000). The timeout terminates the worker and releases model memory. `ANYMD_OCR_MAX_TOKENS` caps generated tokens per region (default 4096, range 1–8192). Repetitive output is trimmed after generation; decode-time repetition cancellation is not yet available in the upstream backend.

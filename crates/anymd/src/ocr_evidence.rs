@@ -206,6 +206,18 @@ fn provider_config_from(
 }
 
 fn provider_config() -> Result<ProviderConfig, String> {
+    if env::var(OCR_COMMAND_ENV).is_err() {
+        if let Ok(value) = env::var("ANYMD_OCR") {
+            let selection = crate::ocr_vlm::OcrSelection::parse(&value)?;
+            if crate::ocr_vlm::requested(selection.engine()) {
+                return Ok(ProviderConfig {
+                    command: std::env::current_exe().map_err(|e| e.to_string())?.to_string_lossy().into_owned(),
+                    args_template: vec!["__ocr-vlm-worker".into(), "{input}".into(), "4096".into()],
+                    output_format: OcrOutputFormat::Auto,
+                });
+            }
+        }
+    }
     provider_config_from(
         env::var(OCR_COMMAND_ENV).ok(),
         env::var(OCR_PRESET_ENV).ok(),
@@ -291,6 +303,9 @@ fn normalize_words(value: &Value, scale: f64) -> Option<Vec<Value>> {
                 return None;
             }
             let mut output = json!({"text": text});
+            for key in ["reading_order", "region_type", "layout_confidence"] {
+                if let Some(value) = word.get(key) { output[key] = value.clone(); }
+            }
             if let Some(confidence) = word.get("confidence").and_then(normalize_confidence) {
                 output["confidence"] = json!(confidence);
             }

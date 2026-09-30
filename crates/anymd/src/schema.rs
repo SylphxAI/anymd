@@ -591,10 +591,9 @@ pub struct ReadArgs {
     #[schemars(description = "Continue a previous read with the cursor from its last line.")]
     pub cursor: Option<String>,
     #[schemars(
-        description = "OCR images and image-only PDF pages with a local tesseract. Default: automatic when tesseract is installed; false disables.",
-        schema_with = "option_bool_schema"
+        description = "Local OCR: auto, vlm, or tesseract. Auto uses installed doc-VLM weights (setup ocr is explicit CPU opt-in), otherwise tesseract. No automatic downloads. Boolean false disables; true retains automatic OCR."
     )]
-    pub ocr: Option<bool>,
+    pub ocr: Option<crate::ocr_vlm::OcrSelection>,
     #[schemars(
         description = "Transcribe audio/video with a local whisper.cpp. Uses ANYMD_WHISPER_MODEL or a model in the anymd cache. Default false.",
         schema_with = "option_bool_schema"
