@@ -1068,26 +1068,33 @@ fn ranked_hits<'a>(
         .map(|(score, index)| {
             let (doc, unit, _, _) = &units[index];
             // Highlight query terms; center on the rarest one present.
-            let lower = unit.markdown.to_lowercase();
-            let same_len = lower.len() == unit.markdown.len();
+            let (lower, offsets) = fold(&unit.markdown, false);
             let mut highlights = Vec::new();
             let mut anchor: Option<(f64, usize, usize)> = None;
-            if same_len {
-                for term in &query_terms {
-                    let mut from = 0;
-                    while let Some(found) = lower[from..].find(term.as_str()) {
-                        let start = from + found;
-                        let end = start + term.len();
-                        from = end;
-                        let bounded = is_cjk(term.chars().next().unwrap_or(' '))
-                            || (!is_word_char(lower[..start].chars().next_back())
-                                && !is_word_char(lower[end..].chars().next()));
-                        if bounded {
-                            highlights.push((start, end));
-                            let weight = idf[term];
-                            if anchor.is_none_or(|(w, _, _)| weight > w) {
-                                anchor = Some((weight, start, end));
-                            }
+            for term in &query_terms {
+                let mut from = 0;
+                while let Some(found) = lower[from..].find(term.as_str()) {
+                    let start = from + found;
+                    let end = start + term.len();
+                    from = end;
+                    let bounded = is_cjk(term.chars().next().unwrap_or(' '))
+                        || (!is_word_char(lower[..start].chars().next_back())
+                            && !is_word_char(lower[end..].chars().next()));
+                    if bounded {
+                        let start = offsets[start];
+                        let mut end = offsets[end];
+                        if end <= start {
+                            end = start
+                                + unit.markdown[start..]
+                                    .chars()
+                                    .next()
+                                    .map(char::len_utf8)
+                                    .unwrap_or(0);
+                        }
+                        highlights.push((start, end));
+                        let weight = idf[term];
+                        if anchor.is_none_or(|(w, _, _)| weight > w) {
+                            anchor = Some((weight, start, end));
                         }
                     }
                 }

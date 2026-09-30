@@ -132,6 +132,22 @@ describe('outline navigation public contract', () => {
     expect(invalid.text).toContain('Unknown node');
   }, 60_000);
 
+  test('ranked Unicode hits retain their source node after case expansion', async () => {
+    const source = path.join(temporary, 'unicode.md');
+    fs.writeFileSync(
+      source,
+      '# Report\n\n## Revenue\n\nİncome growth increased.\n\n## Next\n\nEnd.\n'
+    );
+    const outline = JSON.parse(cli('outline', source, '--json')) as Outline;
+    const node = outline.nodes.find((item) => item.title === 'Revenue');
+    const hit = parseToolPayload(
+      await callTool(proc, ++id, 'search', { query: 'growth', sources: [source], mode: 'ranked' })
+    );
+    expect(hit.isError).toBe(false);
+    expect(hit.text).toContain(`node ${node?.id}`);
+    expect(hit.text).toContain('Report > Revenue');
+  });
+
   test('node paging uses original byte offsets and never reaches the next sibling', async () => {
     const source = path.join(temporary, 'long.md');
     const lines = Array.from({ length: 400 }, (_, n) => `Revenue line ${n}: Income grows.`).join(
@@ -162,5 +178,8 @@ describe('outline navigation public contract', () => {
     }
     expect(accumulated).toContain('Revenue line 0:');
     expect(accumulated).toContain('Revenue line 399:');
+    for (let n = 0; n < 400; n++) {
+      expect(accumulated.split(`Revenue line ${n}:`).length - 1).toBe(1);
+    }
   }, 120_000);
 });
