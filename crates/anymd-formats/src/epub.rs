@@ -113,6 +113,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         return Err(ConvertError::Invalid("EPUB spine is empty".into()));
     }
 
+    let outline = native_outline(&archive, &package, opf_dir, &section_paths);
     let mut metadata = Vec::new();
     if !package.creators.is_empty() {
         metadata.push(("author".to_string(), package.creators.join("; ")));
@@ -128,7 +129,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     }
     metadata.push(("chapters".to_string(), sections.len().to_string()));
     Ok(Converted {
-        outline: native_outline(&archive, &package, opf_dir, &section_paths),
+        outline,
         format: "epub".into(),
         title: package.title,
         sections,
@@ -635,6 +636,57 @@ pub(crate) mod tests {
             converted.sections[1].markdown,
             "# The Road\n\nIt was *long*. See note."
         );
+    }
+
+    #[test]
+    fn native_tocs_preserve_nesting_and_prefer_toc_over_landmarks() {
+        let nav = "<html><body><nav epub:type='landmarks'><ol><li><a href='text/c2.xhtml'>Skip</a></li></ol></nav><nav epub:type='toc'><ol><li><a href='text/c2.xhtml'>Before &amp; after</a><ol><li><a href='text/chapter%201.xhtml#road'>Road</a></li></ol></li></ol></nav></body></html>";
+        let epub = build_epub(&[
+            ("META-INF/container.xml", CONTAINER),
+            ("OEBPS/content.opf", OPF),
+            ("OEBPS/nav.xhtml", nav),
+            ("OEBPS/text/c2.xhtml", "<h1>Before</h1><p>First.</p>"),
+            (
+                "OEBPS/text/chapter 1.xhtml",
+                "<h1>The Road</h1><p>Second.</p>",
+            ),
+        ]);
+        let converted = convert(&epub, &Options::default()).unwrap();
+        assert_eq!(
+            converted.outline,
+            vec![
+                (0, "Before & after".into(), Some(1)),
+                (1, "Road".into(), Some(2))
+            ]
+        );
+    }
+
+    #[test]
+    fn reads_epub2_ncx_without_changing_chapter_markdown() {
+        let opf = OPF.replace(
+            "href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"",
+            "href=\"toc.ncx\" media-type=\"application/x-dtbncx+xml\"",
+        );
+        let ncx = "<ncx><navMap><navPoint><navLabel><text>Before &amp; after</text></navLabel><content src='text/c2.xhtml'/><navPoint><navLabel><text>Road</text></navLabel><content src='text/chapter%201.xhtml#road'/></navPoint></navPoint></navMap></ncx>";
+        let epub = build_epub(&[
+            ("META-INF/container.xml", CONTAINER),
+            ("OEBPS/content.opf", &opf),
+            ("OEBPS/toc.ncx", ncx),
+            ("OEBPS/text/c2.xhtml", "<h1>Before</h1><p>First.</p>"),
+            (
+                "OEBPS/text/chapter 1.xhtml",
+                "<h1>The Road</h1><p>Second.</p>",
+            ),
+        ]);
+        let converted = convert(&epub, &Options::default()).unwrap();
+        assert_eq!(
+            converted.outline,
+            vec![
+                (0, "Before & after".into(), Some(1)),
+                (1, "Road".into(), Some(2))
+            ]
+        );
+        assert_eq!(converted.sections[0].markdown, "# Before\n\nFirst.");
     }
 
     #[test]

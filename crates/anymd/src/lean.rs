@@ -519,6 +519,9 @@ pub fn read_text(
     if !is_url(source) {
         let admitted = policy.admit_path(source)?;
         if Path::new(&admitted).is_dir() {
+            if args.node.is_some() {
+                return Err("node requires a document, not a directory".into());
+            }
             return Ok((list_directory(source, Path::new(&admitted)), false));
         }
     }
