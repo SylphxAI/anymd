@@ -252,6 +252,11 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
         format_regions(&mut result)?;
         let mut evidence = serde_json::to_value(&result).map_err(|e| e.to_string())?;
         evidence["text"] = serde_json::json!(result.text());
+        evidence["device"] = serde_json::json!(device);
+        evidence["model_revision"] = serde_json::json!(weights::REVISION);
+        evidence["quantization"] = serde_json::json!(
+            std::env::var("ANYMD_OCR_QUANTIZATION").unwrap_or_else(|_| "none".into())
+        );
         let mut regions: Vec<_> = result.regions.iter().collect();
         regions.sort_by_key(|r| r.order);
         evidence["words"] = serde_json::json!(regions
@@ -320,8 +325,7 @@ mod tests {
             truncated: 0,
         };
         format_regions(&mut result).unwrap();
-        assert!(result.regions[0].text.contains("| A | B |"));
-        assert!(result.regions[0].text.contains("| 1 | 2 |"));
+        assert_eq!(result.regions[0].text, "|A|B|\n|-|-|\n|1|2|");
         assert_eq!(result.regions[1].text, "$$\nx^2 + y^2\n$$");
     }
 

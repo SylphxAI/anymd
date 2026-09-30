@@ -502,7 +502,7 @@ impl Opened {
                         markdown: page.markdown,
                     })
                     .collect();
-                self.ocr_sparse_pages(&mut units, bytes.as_deref(), path.as_deref());
+                self.ocr_sparse_pages(&mut units, doc, bytes.as_deref(), path.as_deref())?;
                 Ok(units)
             }
         }
@@ -556,22 +556,36 @@ impl Opened {
         }
     }
 
-    fn ocr_sparse_pages(&self, units: &mut [Unit], bytes: Option<&Vec<u8>>, path: Option<&Path>) {
+    fn ocr_sparse_pages(
+        &self,
+        units: &mut [Unit],
+        doc: &markdown_layout::PdfDocument,
+        bytes: Option<&Vec<u8>>,
+        path: Option<&Path>,
+    ) -> Result<(), String> {
         let wanted = match self.options.ocr {
-            Some(false) => return,
+            Some(false) => return Ok(()),
             Some(true) => true,
             None => false,
         };
-        let sparse: Vec<usize> = units
+        let mut sparse: Vec<usize> = units
             .iter()
             .enumerate()
             .filter(|(_, unit)| visible_chars(&unit.markdown) < SPARSE_PAGE_CHARS)
             .map(|(index, _)| index)
             .collect();
         if sparse.is_empty() {
-            return;
+            return Ok(());
         }
         let vlm = crate::ocr_vlm::requested(self.options.ocr_engine.unwrap_or_default());
+        if vlm {
+            let candidates: Vec<u32> = sparse.iter().map(|&index| units[index].number).collect();
+            let image_only = markdown_layout::image_only_pages(doc, &candidates);
+            sparse.retain(|&index| image_only.contains(&units[index].number));
+            if sparse.is_empty() {
+                return Ok(());
+            }
+        }
         if !vlm && !anymd_formats::image::ocr_available() {
             if wanted {
                 for index in sparse {
@@ -580,18 +594,21 @@ impl Opened {
                     );
                 }
             }
-            return;
+            return Ok(());
         }
         let pdf_bytes = match (bytes, path) {
             (Some(bytes), _) => bytes.clone(),
             (None, Some(path)) => match std::fs::read(path) {
                 Ok(bytes) => bytes,
-                Err(_) => return,
+                Err(error) if vlm => return Err(error.to_string()),
+                Err(_) => return Ok(()),
             },
-            (None, None) => return,
+            (None, None) => return Ok(()),
         };
-        let Ok(renderer) = anymd_core::render::RenderDocument::new(pdf_bytes) else {
-            return;
+        let renderer = match anymd_core::render::RenderDocument::new(pdf_bytes) {
+            Ok(renderer) => renderer,
+            Err(error) if vlm => return Err(error.message),
+            Err(_) => return Ok(()),
         };
         let mut results: Vec<(usize, Result<String, String>)> = Vec::with_capacity(sparse.len());
         if vlm {
@@ -656,6 +673,12 @@ impl Opened {
                     };
                 }
                 Ok(_) => {}
+                Err(error) if vlm => {
+                    return Err(format!(
+                        "Doc-VLM OCR failed on page {}: {error}",
+                        units[index].number
+                    ));
+                }
                 Err(error) => {
                     units[index]
                         .markdown
@@ -663,6 +686,7 @@ impl Opened {
                 }
             }
         }
+        Ok(())
     }
 }
 

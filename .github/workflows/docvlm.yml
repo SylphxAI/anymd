@@ -55,9 +55,21 @@ jobs:
       - name: Tests and release binary
         shell: bash
         run: |
-          cargo test --locked -p anymd-oar-ocr-vl -p anymd-ocr-vlm -p anymd
+          cargo test --locked -p anymd-oar-ocr-vl -p anymd-ocr-vlm -p anymd-pdf -p anymd
+          binary="target/${{ matrix.target }}/release/anymd"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then binary="$binary.exe"; fi
+          started=$(python -c 'import time; print(time.monotonic())')
           cargo build --release --locked -p anymd --target "${{ matrix.target }}"
-          cargo check --locked -p anymd --no-default-features
+          python -c 'import json, pathlib, sys, time; print(json.dumps({"build_seconds": time.monotonic()-float(sys.argv[1]), "candle_binary_bytes": pathlib.Path(sys.argv[2]).stat().st_size}))' "$started" "$binary" > docvlm-build.json
+          cp "$binary" "$binary.candle"
+          cargo build --release --locked -p anymd --no-default-features --target "${{ matrix.target }}"
+          python -c 'import json, pathlib, sys; p=pathlib.Path("docvlm-build.json"); d=json.loads(p.read_text()); d["tesseract_binary_bytes"]=pathlib.Path(sys.argv[1]).stat().st_size; d["binary_delta_mib"]=(d["candle_binary_bytes"]-d["tesseract_binary_bytes"])/1048576; p.write_text(json.dumps(d))' "$binary"
+          cp "$binary.candle" "$binary"
+      - name: Retain the existing Intel Mac release target
+        if: matrix.target == 'aarch64-apple-darwin'
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo build --release --locked -p anymd --target x86_64-apple-darwin
       - name: Plain CLI still runs on pre-FP16 ARM hardware
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
