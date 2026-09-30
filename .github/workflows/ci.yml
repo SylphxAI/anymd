@@ -93,6 +93,12 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: ASR scoring regression tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/asr-scoring"
+          "$RUNNER_TEMP/asr-scoring/bin/pip" install jiwer==4.0.0 opencc-python-reimplemented==0.1.7 cn2an==0.5.24 kanjize==1.6.1
+          "$RUNNER_TEMP/asr-scoring/bin/python" -m unittest discover -s bench-asr -p test_report.py
+
       - name: Audit Rust dependencies
         run: bash scripts/check-cargo-advisories.sh
 

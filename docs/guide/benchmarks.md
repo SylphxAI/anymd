@@ -244,3 +244,74 @@ the benchmark; commit the resulting `bench/results/<tool>.json` and the regenera
 
 The official `@modelcontextprotocol/server-pdf` is not included because it has no headless text path: it renders
 PDFs in an interactive viewer, and its `read_pdf_bytes` tool returns base64-encoded bytes.
+
+## Speech-to-text
+
+We selected **transcribe-cpp 0.2.4 / Qwen3-ASR-1.7B Q8_0** as the one local ASR
+runtime/model for every language. The crate built on all four benchmark targets:
+x86_64 Linux, aarch64 Linux, x86_64 macOS and x86_64 Windows. CrispASR failed on
+Linux arm64 and macOS x64; its optional standalone aligner is not required for ASR.
+Whisper appears below only as the historical benchmark control, not a shipping
+engine option.
+
+Source: [ASR run 36523821486](https://github.com/SylphxAI/anymd/actions/runs/36523821486),
+fixed-seed, revision-pinned samples; 200 utterances per Linux dataset. Qwen and
+whisper-turbo ran on CPU, four threads. Scores were recalculated from saved
+reference/hypothesis pairs, without rerunning inference.
+
+### Accuracy
+
+Lower is better. **Raw CER** here means the existing baseline: NFKC, lowercase,
+punctuation/symbol/space/control stripping and OpenCC t2s on both sides. It is
+not punctuation-sensitive literal raw-text CER. English uses the pinned Open ASR
+Leaderboard EnglishTextNormalizer and WER.
+
+**Normalised (bracketed Latin glosses removed, numerals unified)** applies the
+same transformations to references and hypotheses: remove Latin parenthetical
+annotations before stripping punctuation, then numeral ITN via cn2an 0.5.24
+(zh/yue) or kanjize 1.6.1 (ja). Parentheses containing CJK text or just numbers
+remain. This is a scoring-sensitivity diagnostic, not a verified ground-truth
+correction: annotations may be spoken, and generic numeral conversion may alter
+lexical numerals. Kana/kanji readings are not collapsed. Normalisation can make
+scores worse as well as better.
+
+| Dataset | Metric | Qwen raw | Qwen normalised (bracketed Latin glosses removed, numerals unified) | whisper-turbo raw | whisper-turbo normalised (same rules) |
+|---|---|---|---|---|---|
+| FLEURS en | WER | 4.54 | 4.54 | 6.33 | 6.33 |
+| FLEURS zh | CER | 7.73 | 2.53 | 9.21 | 5.03 |
+| FLEURS yue | CER | 5.41 | 3.89 | 12.10 | 12.29 |
+| FLEURS ja | CER | 5.93 | 5.90 | 4.80 | 4.69 |
+| LibriSpeech test-clean | WER | 2.00 | 2.00 | 2.23 | 2.23 |
+
+Mandarin Qwen normalized CER has a 95% utterance-bootstrap CI of [1.92, 3.22];
+whisper-turbo [4.30, 5.77]. Mandarin's original 602 errors include 372 deletions:
+removing Latin parenthetical annotations reduces deletions to 50 and total errors
+to 280; numeral ITN reduces total errors to 189. This explains most of the 7.73%
+raw score, rather than showing a model defect.
+
+**Accepted Japanese trade-off:** on this 200-utterance FLEURS sample, Qwen trails
+whisper-turbo (5.93 vs 4.80 raw CER). Japanese numeral-only diagnostics give
+5.79 vs 4.67; adding kana folding gives 5.56 vs 4.59. Converting everything to
+kana readings is a different metric and still trails (4.50 vs 3.74); it cannot
+be presented as corrected CER. Real errors remain, including `地殻` → `近く`
+and `Taipei` → `大阪`. We accept this gap to use one model across languages.
+
+**No official-score reproduction claim.** [Qwen's published evaluation](https://github.com/QwenLM/Qwen3-ASR/tree/7c6daf77a2421100f5fb066495372c00129d39ff#evaluation)
+uses bfloat16, vLLM, greedy decoding, max_new_tokens=1024 and no language hint.
+The [technical report](https://arxiv.org/html/2601.21337v2) uses CER for Mandarin
+and Cantonese but does not publish its complete text-normalisation protocol.
+Our CPU-quantized, language-hinted, sampled runs differ; the bootstrap intervals
+cover sample variation, not those protocol differences.
+
+### Runtime cost
+
+On the full Linux samples transcribe-cpp's model-load-excluded RTF was 0.574
+(en), 0.535 (zh), 0.559 (yue), 0.369 (ja), and 0.631 (LibriSpeech); RTF is compute
+time divided by audio time. See the original run's report for runner CPUs and
+peak memory; these are benchmark observations, not throughput guarantees.
+
+The harness and all SHA-256/revision pins are in
+[`bench-asr/`](https://github.com/SylphxAI/anymd/tree/main/bench-asr).
+`report.py --cjk-diagnostics` recalculates both scoring columns from saved
+`summary.json` / `results.jsonl` jobs. Its additional scoring dependencies are
+cn2an 0.5.24 and kanjize 1.6.1; the English normalizer is pinned in `pins.json`.

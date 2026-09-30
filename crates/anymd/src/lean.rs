@@ -538,8 +538,8 @@ pub fn read_text(
     let options = OpenOptions {
         ocr: args.ocr.or_else(|| args.node.as_ref().map(|_| false)),
         transcript: args.transcript.unwrap_or(false)
-            || args.download_whisper_model.unwrap_or(false),
-        download_whisper_model: args.download_whisper_model.unwrap_or(false),
+            || args.download_asr_model.unwrap_or(false),
+        download_asr_model: args.download_asr_model.unwrap_or(false),
         images: (args.wants_images() && (args.node.is_none() || args.images.is_some()))
             .then(anymd_formats::images::ImageStore::default_location)
             .flatten(),
@@ -871,7 +871,7 @@ fn load_search_docs(
     let options = OpenOptions {
         ocr: Some(false),
         transcript: false,
-        download_whisper_model: false,
+        download_asr_model: false,
         images: None,
         revisions: anymd_formats::Revisions::default(),
     };
@@ -1399,7 +1399,7 @@ mod tests {
             cursor: None,
             ocr: None,
             transcript: None,
-            download_whisper_model: None,
+            download_asr_model: None,
             images: None,
             revisions: None,
         };
@@ -1419,7 +1419,7 @@ mod tests {
             cursor: None,
             ocr: None,
             transcript: None,
-            download_whisper_model: None,
+            download_asr_model: None,
             images: None,
             revisions: None,
         };

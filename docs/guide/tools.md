@@ -64,8 +64,8 @@ Any file, URL, or directory → Markdown.
 | `ocr` | boolean | automatic | OCR images and image-only PDF pages with a local `tesseract`. Automatic when tesseract is installed; `false` disables. |
 | `revisions` | `"markup"` \| `"accept"` \| `"reject"` | `"markup"` | Word tracked changes and comments. `markup` writes them as CriticMarkup with each change's author and date; `accept` or `reject` gives the text with every change accepted or rejected, without comments (see [Word](./formats#word)). A document with no tracked changes and no comments reads the same either way. |
 | `images` | `"refs"` \| `"none"` | `"refs"` | Images embedded in PDFs, DOCX, PPTX and EPUB files. `refs` saves each meaningful raster image to the anymd cache and marks it in the Markdown (see [Embedded images](./formats#embedded-images)); `none` leaves images out. |
-| `transcript` | boolean | `false` | Transcribe audio/video with a local whisper.cpp |
-| `download_whisper_model` | boolean | `false` | Implies `transcript`; downloads the ggml model (base.en, 148 MB, SHA-256 verified) into the anymd cache when none is installed |
+| `transcript` | boolean | `false` | Transcribe audio/video with bundled Qwen3-ASR |
+| `download_asr_model` | boolean | `false` | Implies `transcript`; downloads Qwen3-ASR-1.7B Q8 weights (2.19 GB, SHA-256 verified) into the anymd cache when none is installed |
 
 ```json
 { "source": "papers/attention.pdf" }

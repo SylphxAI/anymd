@@ -1,6 +1,7 @@
 """Local scorer regressions: python -m unittest discover -s bench-asr -p test_report.py."""
 
 import unittest
+
 import report
 
 
@@ -40,6 +41,13 @@ class MandarinDiagnosticsTests(unittest.TestCase):
         hyp = "桥下垂直净空十五米，二零一一年八月完工。"
         self.assertEqual(self.numerals(ref), self.numerals(hyp))
         self.assertNotEqual(self.cjk(ref), self.cjk(hyp))
+
+    def test_japanese_numerals_without_kana_collapse(self):
+        annotations, numerals = report.cjk_diagnostics(self.cjk, "fleurs-ja")
+        self.assertEqual(numerals("一日"), numerals("1日"))
+        self.assertNotEqual(numerals("地殻"), numerals("近く"))
+        self.assertNotEqual(numerals("暖かい"), numerals("温かい"))
+        self.assertEqual(annotations("先生（カタカナ）"), self.cjk("先生カタカナ"))
 
     def test_reference_annotation_changes_denominator(self):
         ref, hyp = "大学（University）", "大学"

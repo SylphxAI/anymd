@@ -36,7 +36,7 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
 - **Every format, one call.** One tool reads every format listed below. It also accepts web URLs and whole directories, and `search` looks across all of them.
-- **Local and private.** Nothing is uploaded. OCR and transcripts use local tools you already have (tesseract, ffmpeg, whisper.cpp), and only when they are installed.
+- **Local and private.** Nothing is uploaded. OCR uses local tesseract; transcripts use ffmpeg and bundled Qwen3-ASR with pinned weights fetched on first use.
 
 ## Install
 
@@ -136,7 +136,7 @@ docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
 docker run -i --rm ghcr.io/sylphxai/anymd        # MCP server on stdio
 ```
 
-Or build it from [crates.io](https://crates.io/crates/anymd) (needs a Rust 1.92+ toolchain; OCR and transcripts still use `tesseract`/`ffmpeg` when installed):
+Or build it from [crates.io](https://crates.io/crates/anymd) (Rust 1.92+, CMake and a C++ compiler):
 
 ```bash
 cargo install anymd
@@ -170,7 +170,7 @@ anymd exposes four tools.
 | Tool | Use it to | Key arguments |
 |---|---|---|
 | **`outline`** | Navigate a heading tree, with node ids and unit/Markdown ranges | `source`, `format` (`json` · `tree`) |
-| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `revisions` (`markup` · `accept` · `reject`), `transcript`, `download_whisper_model` |
+| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `revisions` (`markup` · `accept` · `reject`), `transcript`, `download_asr_model` |
 | **`search`** | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto` · `literal` · `ranked`), `glob`, `max_results` |
 | **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect` |
 
@@ -239,7 +239,7 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 | **HTML** and **URLs** | The main article only: navigation, cookie banners, and sidebars are dropped. Relative links are resolved, and code keeps its language. |
 | **Markdown, text, JSON** | Returned unchanged, with pagination |
 | **Images** | Dimensions and EXIF (camera, date, GPS), plus OCR text when `tesseract` is installed |
-| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local whisper.cpp transcript with `transcript: true`; `download_whisper_model: true` fetches a verified model on first use. |
+| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local Qwen3-ASR transcript with `transcript: true`; `download_asr_model: true` implies a transcript; pinned Qwen weights are also fetched automatically with `transcript: true`. |
 
 ## How it works
 
@@ -251,7 +251,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 - URL fetches block private and loopback addresses, and every redirect hop is checked again, pinned to its resolved address.
 - `--allow-dir=<path>` (repeatable) or `MCP_PDF_ALLOWED_DIRS` confines the server to the directories you list.
 - Embedded images are written only to anymd's own cache directory (`ANYMD_CACHE_DIR`, else the platform cache), never next to the source document, and refused over 50 megapixels.
-- External tools (tesseract, ffprobe, whisper.cpp) are optional. anymd runs them without a shell, with a timeout and an output cap.
+- External tools (tesseract, ffprobe, ffmpeg) are optional. anymd runs them without a shell, with a timeout and an output cap.
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 

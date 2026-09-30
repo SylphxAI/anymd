@@ -52,7 +52,7 @@ RUNNER = {"linux": "ubuntu-latest", "macos": "macos-latest"}
 
 def main() -> None:
     smoke = os.environ.get("EVENT") == "pull_request"
-    wanted = [e.strip() for e in os.environ.get("ENGINES", "").split(",") if e.strip()] or list(ENGINES)
+    wanted = [e.strip() for e in os.environ.get("ENGINES", "").split(",") if e.strip()] or (["transcribe-cpp"] if smoke else list(ENGINES))
     unknown = [e for e in wanted if e not in ENGINES]
     if unknown:
         raise SystemExit(f"unknown engines: {unknown}")

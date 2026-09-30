@@ -25,6 +25,7 @@ repository scripts and the TypeScript tests that drive the binary over MCP.
 ### Prerequisites
 
 - Rust stable (`rustup`)
+- CMake and a C++ compiler (for the bundled transcribe-cpp runtime)
 - Bun >= 1.4.0 (`packageManager` `bun@1.4.0`; install frozen from `bun.lock`)
 
 ### Getting Started
