@@ -135,6 +135,7 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
+          retention-days: 3
 
   # Queue-only: macOS and Windows run when a pull request enters the merge
   # queue, so they gate the merge without doubling the pull request load. GitHub-hosted
