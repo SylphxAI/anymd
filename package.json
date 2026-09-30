@@ -17,7 +17,7 @@
     "check:github-actions": "bash scripts/check-github-actions.sh",
     "check:versions": "bun scripts/set-version.ts --check",
     "check:copy": "bun scripts/render-copy.ts --check && python3 bench/leaderboard.py --check",
-    "check:no-github-hosted-macos": "python3 scripts/check-public-runner-profiles.py .",
+    "check:runner-profiles": "python3 scripts/check-public-runner-profiles.py .",
     "typecheck": "tsc --noEmit",
     "version:set": "bun scripts/set-version.ts",
     "render:copy": "bun scripts/render-copy.ts",

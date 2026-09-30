@@ -82,7 +82,7 @@ jobs:
         run: bun run check:versions
 
       - name: Public repository runs on GitHub-hosted runners only
-        run: bun run check:no-github-hosted-macos
+        run: bun run check:runner-profiles
 
       - name: Typecheck
         run: bun run typecheck
@@ -135,6 +135,40 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
+
+  # Queue-only: macOS and Windows run when a pull request enters the merge
+  # queue, so they gate the merge without doubling the pull request load. GitHub-hosted
+  # standard runners are free for public repositories (owner standards/dx.md).
+  other-os:
+    if: github.event_name == 'merge_group'
+    name: Test other OS
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust workspace tests
+        run: cargo test --locked --workspace
+
+      - name: Build the anymd binary
+        run: cargo build --release --locked -p anymd
+
+      # The npm launcher (packages/anymd/bin/anymd.js) starts the native binary.
+      - name: Launcher smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          node packages/anymd/bin/anymd.js version
+          node packages/anymd/bin/anymd.js test/fixtures/sample.pdf > sample.md
+          grep -q '<!-- page 1 -->' sample.md
 
   security-secrets:
     name: security:secrets
