@@ -108,7 +108,9 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         .map(str::to_string)
         .collect();
     writer.plain = !has_markup(&document, &writer.comments)
-        && !notes.values().any(|note| has_markup(note, &writer.comments));
+        && !notes
+            .values()
+            .any(|note| has_markup(note, &writer.comments));
     let body = document.child("body").unwrap_or(&document);
     let mut blocks = Blocks::new();
     let mut list = ListIndent::default();
@@ -131,10 +133,11 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         let parts = note
             .children_named("p")
             .map(|p| {
-                let (inline, _) = writer.paragraph_inline(p);
+                let inline = writer.paragraph_inline(p).0.into_inline();
                 (
-                    inline.into_inline().render(true).replace('\n', " "),
+                    inline.render(true).replace('\n', " "),
                     paragraph_mark(p),
+                    inline.edges(),
                 )
             })
             .collect();
@@ -599,20 +602,21 @@ impl Writer<'_> {
         let written = !inline.is_blank();
         if written {
             let inline = inline.into_inline();
+            let edges = inline.edges();
             if let Some(level) = heading {
                 list.reset();
                 let text = inline.render(false).replace('\n', " ");
-                blocks.push_prefixed(&format!("{} ", "#".repeat(level)), &text, false);
+                blocks.push_paragraph(&format!("{} ", "#".repeat(level)), &text, false, edges);
             } else if let Some(marker) =
                 num.and_then(|(id, ilvl)| self.list_marker(&id, ilvl.min(8)).map(|m| (m, ilvl)))
             {
                 let (marker, ilvl) = marker;
                 let item = list.item(ilvl, &marker, &inline.render(true));
                 let prefix = item.len() - item.trim_start().len() + marker.len() + 1;
-                blocks.push_prefixed(&item[..prefix], &item[prefix..], true);
+                blocks.push_paragraph(&item[..prefix], &item[prefix..], true, edges);
             } else {
                 list.reset();
-                blocks.push_prefixed("", &inline.render(true), false);
+                blocks.push_paragraph("", &inline.render(true), false, edges);
             }
         }
         // A text box between this paragraph and the next one takes the break.
@@ -937,14 +941,15 @@ impl Writer<'_> {
     }
 
     /// Paragraph texts in a cell, each with the tracked change on its mark.
-    fn cell_parts(&mut self, container: &Element, parts: &mut Vec<(String, Option<Change>)>) {
+    fn cell_parts(&mut self, container: &Element, parts: &mut Vec<critic::Part>) {
         for child in container.elements() {
             match child.local() {
                 "p" => {
                     let (inline, extra) = self.paragraph_inline(child);
                     let mark = self.paragraph_mark(child).filter(|_| extra.is_empty());
-                    parts.push((inline.into_inline().render(true), mark));
-                    parts.extend(extra.into_iter().map(|block| (block, None)));
+                    let inline = inline.into_inline();
+                    parts.push((inline.render(true), mark, inline.edges()));
+                    parts.extend(extra.into_iter().map(|block| (block, None, (false, false))));
                 }
                 "tbl" => {
                     // Nested tables are flattened to text, one row per line.
@@ -954,7 +959,7 @@ impl Writer<'_> {
                             .map(|tc| self.cell_text(&row_marks, tc))
                             .filter(|t| !t.is_empty())
                             .collect();
-                        parts.push((cells.join("; "), None));
+                        parts.push((cells.join("; "), None, (false, false)));
                     }
                 }
                 "ins" | "moveTo" | "del" | "moveFrom" => {
@@ -988,8 +993,9 @@ impl Writer<'_> {
         for p in comment.children_named("p") {
             let (inline, extra) = self.paragraph_inline(p);
             let mark = self.paragraph_mark(p).filter(|_| extra.is_empty());
-            parts.push((inline.into_inline().render(true), mark));
-            parts.extend(extra.into_iter().map(|block| (block, None)));
+            let inline = inline.into_inline();
+            parts.push((inline.render(true), mark, inline.edges()));
+            parts.extend(extra.into_iter().map(|block| (block, None, (false, false))));
         }
         self.in_comment = false;
         self.revisions = revisions;
@@ -2515,7 +2521,8 @@ mod tests {
     fn a_joined_paragraph_takes_the_later_paragraphs_properties() {
         // Word keeps paragraph properties on the mark that ends the paragraph,
         // so deleting a break gives the joined text the second one's format.
-        let heading = r#"<w:p><w:pPr><w:outlineLvl w:val="0"/></w:pPr><w:r><w:t>Title</w:t></w:r></w:p>"#;
+        let heading =
+            r#"<w:p><w:pPr><w:outlineLvl w:val="0"/></w:pPr><w:r><w:t>Title</w:t></w:r></w:p>"#;
         let body = format!("{}{heading}", pm("", &["del"], &r("Intro ")));
         let bytes = docx(&body, &[]);
         assert_eq!(resolved(&bytes, Revisions::Accept), "# Intro Title\n");
@@ -2597,13 +2604,7 @@ mod tests {
     fn accept_and_reject_leave_comments_out() {
         let body = p(
             "",
-            &format!(
-                "{}{}{}{}",
-                start("1"),
-                r("noted"),
-                end("1"),
-                reference("1")
-            ),
+            &format!("{}{}{}{}", start("1"), r("noted"), end("1"), reference("1")),
         );
         let xml = comments(&[("1", "Ana", "", &p("", &r("why?")))]);
         let bytes = docx(&body, &[("word/comments.xml", &xml)]);

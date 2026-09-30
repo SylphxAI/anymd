@@ -422,12 +422,17 @@ fn defuse(markdown: &str) -> String {
 /// the way the CriticMarkup spec marks a paragraph break (`{++\n\n++}`), with
 /// its attribution after it. An adjoining span of the same kind and attribution
 /// is extended rather than opened twice.
+///
+/// `space` says the text on either side of a tracked break had a space there,
+/// which rendering trimmed: once the break is accepted or rejected away the two
+/// paragraphs join with that space, so it goes after the marked break.
 pub(crate) fn splice(
     out: &mut String,
     separator: &str,
     prefix: &str,
     body: &str,
     change: Option<&Change>,
+    space: bool,
 ) {
     let Some((mark, by)) = change else {
         out.push_str(separator);
@@ -457,17 +462,25 @@ pub(crate) fn splice(
         Some(rest) => out.push_str(rest),
         None => {
             out.push_str(&end);
+            if space {
+                out.push(' ');
+            }
             out.push_str(body);
         }
     }
 }
 
+/// A rendered paragraph, the tracked change on the mark that ends it, and
+/// whether its text started and ended with a space before rendering trimmed it.
+pub(crate) type Part = (String, Option<Change>, (bool, bool));
+
 /// Joins paragraphs, each paired with the tracked change on the paragraph mark
 /// that ends it. A blank paragraph drops the pending change: its own break stays.
-pub(crate) fn join_marked(parts: Vec<(String, Option<Change>)>, separator: &str) -> String {
+pub(crate) fn join_marked(parts: Vec<Part>, separator: &str) -> String {
     let mut out = String::new();
     let mut pending = None;
-    for (part, mark) in parts {
+    let mut trailing = false;
+    for (part, mark, (leading, ends_in_space)) in parts {
         if part.trim().is_empty() {
             pending = None;
             continue;
@@ -475,9 +488,11 @@ pub(crate) fn join_marked(parts: Vec<(String, Option<Change>)>, separator: &str)
         if out.is_empty() {
             out = part;
         } else {
-            splice(&mut out, separator, "", &part, pending.as_ref());
+            let space = trailing || leading;
+            splice(&mut out, separator, "", &part, pending.as_ref(), space);
         }
         pending = mark;
+        trailing = ends_in_space;
     }
     out
 }
@@ -775,6 +790,7 @@ mod tests {
             "",
             &body,
             Some(&(Del, Some("Ana".into()))),
+            false,
         );
         assert_eq!(out, "{--A\n\n$x_{ -- }$--}{>>Ana<<}");
     }
@@ -827,7 +843,14 @@ mod tests {
     fn splice_marks_a_tracked_break_and_extends_adjacent_spans() {
         let join = |out: &str, body: &str, mark: Option<Mark>| {
             let mut out = out.to_string();
-            splice(&mut out, "\n\n", "", body, mark.map(|m| (m, None)).as_ref());
+            splice(
+                &mut out,
+                "\n\n",
+                "",
+                body,
+                mark.map(|m| (m, None)).as_ref(),
+                false,
+            );
             out
         };
         assert_eq!(join("A", "B", None), "A\n\nB");
@@ -842,21 +865,44 @@ mod tests {
         // An escaped delimiter in the text is not a span to extend.
         assert_eq!(join("a --\\}", "b", Some(Del)), "a --\\}{--\n\n--}b");
         let mut heading = "A".to_string();
-        splice(&mut heading, "\n\n", "## ", "B", Some(&(Ins, None)));
+        splice(&mut heading, "\n\n", "## ", "B", Some(&(Ins, None)), false);
         assert_eq!(heading, "A{++\n\n## ++}B");
     }
 
     #[test]
     fn join_marked_uses_each_paragraph_mark_and_resets_on_blanks() {
+        let bare = (false, false);
         let parts = vec![
-            ("a".to_string(), Some((Del, None))),
-            ("b".to_string(), None),
-            ("c".to_string(), Some((Ins, None))),
-            ("  ".to_string(), Some((Del, None))),
-            ("d".to_string(), Some((Del, None))),
+            ("a".to_string(), Some((Del, None)), bare),
+            ("b".to_string(), None, bare),
+            ("c".to_string(), Some((Ins, None)), bare),
+            ("  ".to_string(), Some((Del, None)), bare),
+            ("d".to_string(), Some((Del, None)), bare),
         ];
         assert_eq!(join_marked(parts, " "), "a{-- --}b c d");
         assert_eq!(join_marked(Vec::new(), " "), "");
+    }
+
+    #[test]
+    fn a_space_trimmed_at_a_tracked_break_comes_back_after_it() {
+        // `notice.` + ` The` with the break deleted reads `notice. The` once
+        // accepted; the space stays outside the change.
+        let parts = vec![
+            ("notice.".to_string(), Some((Del, None)), (false, false)),
+            ("The".to_string(), None, (true, false)),
+            ("before".to_string(), Some((Ins, None)), (false, true)),
+            ("accepting".to_string(), None, (false, false)),
+        ];
+        assert_eq!(
+            join_marked(parts, "<br>"),
+            "notice.{--<br>--} The<br>before{++<br>++} accepting"
+        );
+        // An untracked break needs no space: it stays a break.
+        let parts = vec![
+            ("a".to_string(), None, (false, true)),
+            ("b".to_string(), None, (true, false)),
+        ];
+        assert_eq!(join_marked(parts, "<br>"), "a<br>b");
     }
 
     #[test]
@@ -985,7 +1031,7 @@ mod tests {
     fn a_tracked_break_extends_spans_only_by_the_same_person() {
         let join = |out: &str, body: &str, change: Option<Change>| {
             let mut out = out.to_string();
-            splice(&mut out, "\n\n", "", body, change.as_ref());
+            splice(&mut out, "\n\n", "", body, change.as_ref(), false);
             out
         };
         let ana = || Some((Del, Some("Ana".to_string())));

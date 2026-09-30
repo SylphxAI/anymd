@@ -522,6 +522,24 @@ pub(crate) struct Inline {
 }
 
 impl Inline {
+    /// Whether the text starts and ends with a space, which rendering trims.
+    pub(crate) fn edges(&self) -> (bool, bool) {
+        let spaced = |c: char| matches!(c, ' ' | '\u{a0}' | '\t');
+        let mut texts = self
+            .spans
+            .iter()
+            .map(|s| s.text.as_str())
+            .filter(|t| !t.is_empty());
+        let leading = texts.next().is_some_and(|t| t.starts_with(spaced));
+        let trailing = self
+            .spans
+            .iter()
+            .map(|s| s.text.as_str())
+            .rfind(|t| !t.is_empty())
+            .is_some_and(|t| t.ends_with(spaced));
+        (leading, trailing)
+    }
+
     pub(crate) fn push(&mut self, text: &str, bold: bool, italic: bool, link: Option<&str>) {
         if text.is_empty() {
             return;
@@ -772,6 +790,8 @@ pub(crate) struct Blocks {
     last_was_list: bool,
     /// A tracked change on the break before the next block.
     separator: Option<Change>,
+    /// The last paragraph ended with a space, which rendering trimmed.
+    trailing_space: bool,
 }
 
 impl Blocks {
@@ -780,6 +800,7 @@ impl Blocks {
             out: String::new(),
             last_was_list: false,
             separator: None,
+            trailing_space: false,
         }
     }
 
@@ -794,6 +815,19 @@ impl Blocks {
     /// tracked break before it closes after the syntax, so the heading or list
     /// item stays valid.
     pub(crate) fn push_prefixed(&mut self, prefix: &str, body: &str, is_list: bool) {
+        self.push_paragraph(prefix, body, is_list, (false, false));
+    }
+
+    /// A paragraph, with whether its text started and ended with a space before
+    /// rendering trimmed it (see [`critic::splice`]).
+    pub(crate) fn push_paragraph(
+        &mut self,
+        prefix: &str,
+        body: &str,
+        is_list: bool,
+        (leading, trailing): (bool, bool),
+    ) {
+        let space = self.trailing_space || leading;
         let body = body.trim_end();
         if body.trim().is_empty() {
             return;
@@ -808,9 +842,17 @@ impl Blocks {
             } else {
                 "\n\n"
             };
-            critic::splice(&mut self.out, separator, prefix, body, change.as_ref());
+            critic::splice(
+                &mut self.out,
+                separator,
+                prefix,
+                body,
+                change.as_ref(),
+                space,
+            );
         }
         self.last_was_list = is_list;
+        self.trailing_space = trailing;
     }
 
     /// Records that the paragraph mark ending the last block was inserted or

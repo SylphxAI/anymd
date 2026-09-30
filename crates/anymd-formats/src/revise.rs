@@ -100,9 +100,11 @@ fn restore_earlier(properties: &mut Element) {
     };
     let current = std::mem::take(&mut properties.children);
     properties.children = earlier.children;
-    properties.children.extend(current.into_iter().filter(
-        |node| matches!(node, Node::Element(e) if matches!(e.local(), "rPr" | "sectPr")),
-    ));
+    properties.children.extend(
+        current.into_iter().filter(
+            |node| matches!(node, Node::Element(e) if matches!(e.local(), "rPr" | "sectPr")),
+        ),
+    );
 }
 
 /// Joins each paragraph whose break goes away with the paragraph after it.
