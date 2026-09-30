@@ -1,6 +1,7 @@
-# The release image needs only the two staged binaries, not the source tree.
+# The release image needs the staged binaries and root license, not the source tree.
 # Override .dockerignore, which excludes dist/ for ordinary Docker builds.
 **
+!LICENSE
 !dist/
 !dist/amd64/
 !dist/amd64/anymd

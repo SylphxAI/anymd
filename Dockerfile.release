@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 10001 anymd
 COPY --chmod=0755 dist/${TARGETARCH}/anymd /usr/local/bin/anymd
+COPY --chmod=0644 LICENSE /usr/share/licenses/anymd/LICENSE
 USER anymd
 WORKDIR /data
 # No arguments: the MCP server on stdio (`docker run -i`). With a file:
