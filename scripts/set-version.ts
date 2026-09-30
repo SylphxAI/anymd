@@ -2,7 +2,7 @@
 /**
  * One product version in every manifest the release reads: the main npm
  * package and its optional dependencies, the platform packages, the alias
- * packages and their pin on @sylphx/anymd, server.json, and the Cargo
+ * packages and their pin on @sylphx/anymd, server.json, CITATION.cff, and the Cargo
  * workspace (which the binary reports as its version).
  *
  *   bun scripts/set-version.ts 8.1.0   # set it everywhere, then refresh Cargo.lock
@@ -14,6 +14,8 @@ import { join } from 'node:path';
 const root = join(import.meta.dirname, '..');
 const MAIN = 'packages/anymd/package.json';
 const CARGO = 'Cargo.toml';
+const CITATION = 'CITATION.cff';
+const CITATION_VERSION = /^(version: )(\S+)$/m;
 // Pins of the published anymd crates in [workspace.dependencies]; the two forks
 // (anymd-pdf-extract, anymd-adobe-cmap-parser) have versions of their own.
 const CARGO_PINS = /^(anymd(?:-core|-formats|-pdf)? = \{ path = "[^"]+", version = ")([^"]+)(")/gm;
@@ -85,6 +87,8 @@ if (process.argv[2] === '--check') {
       .map((got) => `${m.path}: ${got}`)
   );
   if (cargoVersion() !== want) bad.push(`${CARGO} [workspace.package]: ${cargoVersion()}`);
+  const cited = CITATION_VERSION.exec(read(CITATION))?.[2];
+  if (cited !== want) bad.push(`${CITATION}: ${cited}`);
   for (const pin of cargoPins()) {
     if (pin !== want) bad.push(`${CARGO} [workspace.dependencies]: ${pin}`);
   }
@@ -106,6 +110,7 @@ if (process.argv[2] === '--check') {
   }
   const cargo = read(CARGO).replace(CARGO_VERSION, `$1${v}$3`).replace(CARGO_PINS, `$1${v}$3`);
   writeFileSync(join(root, CARGO), cargo);
+  writeFileSync(join(root, CITATION), read(CITATION).replace(CITATION_VERSION, `$1${v}`));
   console.log(
     `[set-version] ${v}; now run \`cargo update -w\` and add a "## ${v}" section to CHANGELOG.md`
   );

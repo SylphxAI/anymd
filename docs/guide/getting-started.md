@@ -8,6 +8,17 @@ npx -y @sylphx/anymd
 
 Node 18+ is the only requirement; npm installs the native binary for your platform. No API key, no account.
 
+Prefer Python or Docker? These run the same prebuilt binary, with no Node needed:
+
+```bash
+uvx anymd report.pdf > report.md         # run once; or: pip install anymd
+uvx anymd mcp                            # the MCP server, for clients that take a command
+docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
+docker run -i --rm ghcr.io/sylphxai/anymd    # MCP server on stdio (amd64 and arm64)
+```
+
+The Linux wheels and the image use glibc 2.17 or newer, so Alpine (musl) needs `cargo install anymd` instead.
+
 Prefer Cargo? `cargo install anymd` builds the same binary from [crates.io](https://crates.io/crates/anymd). It needs a Rust 1.92+ toolchain, and OCR and transcripts still use `tesseract`/`ffmpeg` when installed.
 
 To add anymd to every MCP client on your machine at once (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI):
@@ -84,7 +95,18 @@ To keep the server inside one folder, add `--allow-dir`:
 
 ```bash
 npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
+# or: uvx anymd <file> · pip install anymd · docker run ghcr.io/sylphxai/anymd <file>
 anymd report.pdf > report.md
+```
+
+## Verify a download
+
+Every release asset (the `.tar.gz` and `.zip` binaries and the `.mcpb` bundles) is listed in `SHA256SUMS` and carries a signed [GitHub artifact attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) that names the workflow run that built it. The release also attaches a CycloneDX software bill of materials (`anymd-<version>.cdx.json`).
+
+```bash
+# download an asset and SHA256SUMS from the release, then:
+sha256sum -c SHA256SUMS --ignore-missing        # macOS: shasum -a 256 -c SHA256SUMS --ignore-missing
+gh attestation verify anymd-darwin-arm64.tar.gz --repo SylphxAI/anymd
 ```
 
 ## Try it

@@ -7,6 +7,10 @@ name: release
 # `bun scripts/set-version.ts X.Y.Z` in a pull request. npm trusted publishing
 # trusts this file (SylphxAI/anymd, release.yml) for all 8 packages. Then the
 # `crates` job publishes the Rust crates to crates.io (`cargo install anymd`).
+# The `wheels` and `pypi` jobs publish platform wheels to PyPI (`pip install
+# anymd`, `uvx anymd`) and `image` pushes ghcr.io/sylphxai/anymd, both from the
+# release's native binaries. The `trust` job then adds an SBOM and SHA256SUMS to the GitHub release and
+# signs every asset with a GitHub artifact attestation.
 
 on:
   push:
@@ -71,3 +75,279 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: bash scripts/publish-crates.sh
+
+  # Trust pack for a new release: a CycloneDX SBOM, SHA256SUMS over every other
+  # asset, and a signed build provenance attestation for each asset (binaries
+  # and .mcpb bundles included). A release that already has SHA256SUMS is
+  # skipped, so every push to main is safe and a failed run can be rerun.
+  trust:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Find the release to complete
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          v=$(jq -r .version packages/anymd/package.json)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if ! gh release view "v$v" >/dev/null 2>&1; then
+            echo "no release v$v yet; nothing to do"
+            echo "todo=false" >> "$GITHUB_OUTPUT"
+          elif gh release view "v$v" --json assets --jq '.assets[].name' | grep -qx SHA256SUMS; then
+            echo "release v$v already carries SHA256SUMS"
+            echo "todo=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "todo=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Rust
+        if: steps.rel.outputs.todo == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download the release assets
+        if: steps.rel.outputs.todo == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.rel.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir assets
+          gh release download "v$V" --dir assets
+
+      - name: Build the SBOM (CycloneDX)
+        if: steps.rel.outputs.todo == 'true'
+        env:
+          V: ${{ steps.rel.outputs.version }}
+        run: |
+          set -euo pipefail
+          cargo install cargo-cyclonedx --locked --version 0.5.9
+          cd crates/anymd
+          cargo cyclonedx --format json --override-filename "anymd-$V.cdx"
+          test -s "anymd-$V.cdx.json"
+          mv "anymd-$V.cdx.json" "$GITHUB_WORKSPACE/assets/"
+
+      - name: Write SHA256SUMS
+        if: steps.rel.outputs.todo == 'true'
+        run: |
+          set -euo pipefail
+          cd assets
+          sha256sum -- * > ../SHA256SUMS
+          mv ../SHA256SUMS .
+          cat SHA256SUMS
+
+      - name: Attest build provenance
+        if: steps.rel.outputs.todo == 'true'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: assets/*
+
+      # SHA256SUMS goes last: an interrupted run leaves no SHA256SUMS, so the
+      # next run redoes the whole job.
+      - name: Attach the SBOM and SHA256SUMS to the release
+        if: steps.rel.outputs.todo == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.rel.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release upload "v$V" "assets/anymd-$V.cdx.json" --clobber
+          gh release upload "v$V" assets/SHA256SUMS --clobber
+
+  # Platform wheels for PyPI, built from the release's native binaries (the
+  # `native-*` artifacts of this run; a run with no new version has none).
+  wheels:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      built: ${{ steps.build.outputs.built }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download the native binaries
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: native-*
+          path: artifacts
+
+      - name: Build the wheels
+        id: build
+        run: |
+          set -euo pipefail
+          if ! ls artifacts/native-*/* >/dev/null 2>&1; then
+            echo "no new release in this run; no wheels"
+            echo "built=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          v=$(jq -r .version packages/anymd/package.json)
+          a=artifacts
+          python3 scripts/build-wheels.py --version "$v" --out dist \
+            --binary "manylinux_2_17_x86_64.manylinux2014_x86_64=$a/native-linux-x64-gnu/anymd" \
+            --binary "manylinux_2_17_aarch64.manylinux2014_aarch64=$a/native-linux-arm64-gnu/anymd" \
+            --binary "macosx_10_12_x86_64=$a/native-darwin-x64/anymd" \
+            --binary "macosx_11_0_arm64=$a/native-darwin-arm64/anymd" \
+            --binary "win_amd64=$a/native-win32-x64-msvc/anymd.exe"
+          ls -l dist
+          echo "built=true" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke the Linux wheel (pip install, then convert a PDF)
+        if: steps.build.outputs.built == 'true'
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install dist/*manylinux_2_17_x86_64*.whl
+          /tmp/venv/bin/anymd version
+          /tmp/venv/bin/anymd test/fixtures/sample.pdf | grep -q '<!-- page 1 -->'
+          /tmp/venv/bin/pip install twine
+          /tmp/venv/bin/twine check dist/*.whl
+
+      - name: Upload the wheels
+        if: steps.build.outputs.built == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wheels
+          path: dist/*.whl
+          if-no-files-found: error
+          retention-days: 7
+
+  # PyPI trusted publishing (OIDC, no token): the publisher is registered on
+  # PyPI for project anymd, owner SylphxAI, repo anymd, workflow release.yml,
+  # environment pypi. Versions already on PyPI are skipped.
+  pypi:
+    needs: wheels
+    if: needs.wheels.outputs.built == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the wheels
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wheels
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          skip-existing: true
+
+  # Multi-arch image on GHCR from the release's Linux binaries (no Rust
+  # compile), tagged with the version and latest.
+  image:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      IMAGE: ghcr.io/sylphxai/anymd
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download the Linux binaries
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: native-linux-*
+          path: artifacts
+
+      - name: Stage the binaries
+        id: stage
+        run: |
+          set -euo pipefail
+          if ! ls artifacts/native-linux-x64-gnu/anymd >/dev/null 2>&1; then
+            echo "no new release in this run; no image"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p dist/amd64 dist/arm64
+          cp artifacts/native-linux-x64-gnu/anymd dist/amd64/
+          cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
+          echo "build=true" >> "$GITHUB_OUTPUT"
+          echo "version=$(jq -r .version packages/anymd/package.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Image tags and OCI labels
+        if: steps.stage.outputs.build == 'true'
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.stage.outputs.version }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=anymd
+            org.opencontainers.image.description=Any file to clean Markdown for AI agents. A fast Rust CLI and MCP server.
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.url=https://sylphxai.github.io/anymd/
+            org.opencontainers.image.documentation=https://sylphxai.github.io/anymd/
+            org.opencontainers.image.vendor=Sylphx
+            io.modelcontextprotocol.server.name=io.github.SylphxAI/anymd
+
+      - if: steps.stage.outputs.build == 'true'
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+      - if: steps.stage.outputs.build == 'true'
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - if: steps.stage.outputs.build == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: steps.stage.outputs.build == 'true'
+        id: push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile.release
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Attest the image
+        if: steps.stage.outputs.build == 'true'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Read back the image
+        if: steps.stage.outputs.build == 'true'
+        env:
+          V: ${{ steps.stage.outputs.version }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "$IMAGE:$V"
+          docker run --rm "$IMAGE:$V" version
