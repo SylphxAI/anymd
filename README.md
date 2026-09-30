@@ -161,6 +161,8 @@ npm, pip and Docker ship a prebuilt binary, while `cargo install` compiles one o
 
 <!-- headline:end -->
 
+On [OmniDocBench v1.6](docs/guide/benchmarks.md#omnidocbench-v16), which is page images, anymd reads scans and images with tesseract and scores 21.4 overall, far below the vision-language OCR models (95 to 97, self-reported); the numbers are in the guide.
+
 The generated leaderboard, per-category scores (including where anymd loses), and method are in the [benchmark guide](docs/guide/benchmarks.md). The corpus, ground truth, adapters, and raw results are in [`bench/`](bench/), and the [Benchmark workflow](.github/workflows/benchmark.yml) reruns everything; new tools can join with a single adapter file.
 
 ## MCP tools

@@ -50,7 +50,7 @@ gh workflow run omnidocbench.yml --ref main -f limit=40   # smoke test: the firs
 
 The [OmniDocBench workflow](../../.github/workflows/omnidocbench.yml) builds anymd in release mode, converts the
 pages in four shards, then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
-JSON files, the config it ran with, and per-page anymd timings). The job summary shows the headline scores.
+JSON files, the config it ran with, and per-page anymd timings). The job summary shows the headline scores, computed from the metric files with the plain formula; the published figures use the evaluator's own `run_summary.json`, whose per-metric page counts differ slightly.
 `summarize.py` computes Overall as the leaderboard does: ((1 - text edit distance) x 100 + table TEDS + formula CDM) / 3.
 
 ## Licence
