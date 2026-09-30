@@ -37,10 +37,13 @@ The `crates` job in `release.yml` runs after the release job succeeds and calls
 (the two forks, `anymd-pdf`, `anymd-formats`, `anymd-core`, `anymd`) with the
 organization secret `CARGO_REGISTRY_TOKEN`, and skips any version already on
 crates.io. `set-version.ts` moves the workspace version and the internal
-`version` pins together; the forks keep the version of the upstream crate they
-patch (`anymd-pdf-extract` 0.12.1, `anymd-adobe-cmap-parser` 0.4.1), and their
+`version` pins together; the forks have their own versions
+(`anymd-pdf-extract` 0.12.2, `anymd-adobe-cmap-parser` 0.4.1), and their
 version is raised by hand in `vendor/*/Cargo.toml` (and in the `[workspace.dependencies]`
-pin) when the fork changes. CI packs every crate on each pull request
+pin) when the fork changes. `check:versions` compares each already-published fork
+with its crates.io package (sources, manifest, README and license), without
+compiling. A changed payload must have a new version and a matching workspace
+pin; registry errors fail the check. CI packs every crate on each pull request
 (`cargo package` for each crate) and fails a package over 9 MB (the limit is 10 MB).
 The token needs the scopes `publish-new` and `publish-update`.
 
@@ -69,3 +72,20 @@ launcher, so `citra` and `pdf-reader-mcp` behave exactly like `anymd`.
 Project site URLs do not redirect on rename. Renaming the repository moves the
 docs site path behind `websiteUrl` and `homepage`, and needs `base` in
 `docs/.vitepress/config.ts` updated with it.
+
+## Recover a partial release
+
+Re-running an old run keeps its original commit and workflow, so it cannot
+pick up a release fix merged afterward. For a fix on `main`, dispatch
+`release.yml` on `main` without changing the product version. npm and the
+GitHub release are skipped when that version already exists; the crates job
+publishes only missing versions. On a dispatch with no native artifacts, the
+image job downloads the two Linux tarballs from the matching GitHub release
+and stages them into `dist/amd64/anymd` and `dist/arm64/anymd`, with no Rust
+compile. `Dockerfile.release.dockerignore` includes only those binaries in the
+build context. Ordinary pushes without new binaries skip the image job.
+
+PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
+workflow `release.yml`, environment `pypi`. That publisher must be registered
+on PyPI before OIDC token exchange can succeed; an image/crates recovery
+dispatch has no new wheels and does not retry PyPI.

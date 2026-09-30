@@ -1,0 +1,8 @@
+# The release image needs only the two staged binaries, not the source tree.
+# Override .dockerignore, which excludes dist/ for ordinary Docker builds.
+**
+!dist/
+!dist/amd64/
+!dist/amd64/anymd
+!dist/arm64/
+!dist/arm64/anymd

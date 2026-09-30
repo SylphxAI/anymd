@@ -15,7 +15,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "check:github-actions": "bash scripts/check-github-actions.sh",
-    "check:versions": "bun scripts/set-version.ts --check",
+    "check:versions": "bun scripts/set-version.ts --check && python3 scripts/check-vendored-crates.py",
     "check:copy": "bun scripts/render-copy.ts --check && python3 bench/leaderboard.py --check",
     "check:runner-profiles": "python3 scripts/check-public-runner-profiles.py .",
     "typecheck": "tsc --noEmit",
