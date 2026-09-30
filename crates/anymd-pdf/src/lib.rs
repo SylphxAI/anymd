@@ -10,6 +10,7 @@
 
 mod blocks;
 mod extract;
+mod images;
 mod margins;
 mod metadata;
 mod ocr;
@@ -26,6 +27,10 @@ use pdf_extract::Document;
 
 use crate::blocks::{layout_page, Block};
 use crate::extract::extract_pages;
+pub use crate::images::{
+    repeated_images, EncodedImage, ImageOptions, PageImage, Placed, MAX_PIXELS, MIN_SIDE_PX,
+    SPARSE_PAGE_CHARS,
+};
 use crate::margins::repeated_margin_lines;
 pub use crate::metadata::{info_title, outline};
 pub use crate::ocr::{words_to_markdown, PlacedWord};
@@ -113,6 +118,11 @@ pub fn pdf_to_markdown(
     doc: &Document,
     pages: Option<&[u32]>,
 ) -> Result<MarkdownDocument, LayoutError> {
+    pdf_to_markdown_with_images(doc, pages, None)
+}
+
+/// The selected pages that exist, and the page count.
+fn selected_pages(doc: &Document, pages: Option<&[u32]>) -> (Vec<u32>, u32) {
     let page_map = doc.get_pages();
     let total = u32::try_from(page_map.len()).unwrap_or(u32::MAX);
     let selected: Vec<u32> = match pages {
@@ -123,7 +133,41 @@ pub fn pdf_to_markdown(
             .collect(),
         None => page_map.keys().copied().collect(),
     };
-    let raw = extract_pages(doc, &selected);
+    (selected, total)
+}
+
+/// The embedded images of the selected pages that matter (see [`ImageOptions`]),
+/// exported through `options.place`, with their page, extent and caption.
+pub fn pdf_images(
+    doc: &Document,
+    pages: Option<&[u32]>,
+    options: &ImageOptions<'_>,
+) -> Vec<PageImage> {
+    let (selected, _) = selected_pages(doc, pages);
+    extract_pages(doc, &selected)
+        .iter()
+        .flat_map(|page| crate::images::figures_for_page(doc, page, options))
+        .map(|(_, image)| image)
+        .collect()
+}
+
+/// Like [`pdf_to_markdown`], with embedded images exported and marked where
+/// they sit in reading order when `images` is given.
+pub fn pdf_to_markdown_with_images(
+    doc: &Document,
+    pages: Option<&[u32]>,
+    images: Option<&ImageOptions<'_>>,
+) -> Result<MarkdownDocument, LayoutError> {
+    let (selected, total) = selected_pages(doc, pages);
+    let mut raw = extract_pages(doc, &selected);
+    if let Some(options) = images {
+        for page in &mut raw {
+            page.figures = crate::images::figures_for_page(doc, page, options)
+                .into_iter()
+                .map(|(figure, _)| figure)
+                .collect();
+        }
+    }
     let body_size = body_font_size(&raw);
     let repeated = repeated_margin_lines(&raw);
     let mut heading_sizes = Vec::<f64>::new();

@@ -19,6 +19,8 @@ pub(crate) enum Block {
     ListItem(String),
     Table(Vec<Vec<String>>),
     Comment(String),
+    /// An embedded image: Markdown that points at the exported file.
+    Image(String),
 }
 
 pub(crate) fn group_rows(mut segments: Vec<Segment>) -> Vec<Vec<Segment>> {
@@ -261,6 +263,30 @@ pub(crate) fn layout_page(
             table: Some(index),
         });
     }
+    // Each embedded image takes part the same way, after the ruled tables.
+    let mut found: Vec<Option<RuledTable>> = ruled.into_iter().map(Some).collect();
+    for figure in &page.figures {
+        let [x0, y0, x1, y1] = figure.bbox;
+        segments.push(Segment {
+            x0,
+            x1,
+            base: y1 - body,
+            top: y1,
+            bottom: y0,
+            size: body,
+            text: String::new(),
+            mono: None,
+            words: Vec::new(),
+            table: Some(found.len()),
+        });
+        found.push(Some(RuledTable {
+            x0,
+            bottom: y0,
+            x1,
+            top: y1,
+            content: Ruled::Image(figure.markdown.clone()),
+        }));
+    }
     let mut spaces: Vec<f64> = segments
         .iter()
         .flat_map(|s| {
@@ -272,7 +298,7 @@ pub(crate) fn layout_page(
         .collect();
     spaces.sort_by(f64::total_cmp);
     let mut tables = PageTables {
-        found: ruled.into_iter().map(Some).collect(),
+        found,
         rules: page.rules.clone(),
         word_space: spaces.get(spaces.len() / 2).copied().unwrap_or(0.25),
     };
@@ -444,6 +470,7 @@ pub(crate) fn region_blocks(
                         }
                         blocks.push(Block::Table(grid.into_rows()));
                     }
+                    Ruled::Image(markdown) => blocks.push(Block::Image(markdown)),
                     Ruled::Frame(boxes) => {
                         for glyphs in boxes {
                             let segments: Vec<Segment> = rows_of(glyphs)

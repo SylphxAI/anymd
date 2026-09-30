@@ -4,8 +4,8 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use crate::{MAX_GLYPHS_PER_PAGE, MAX_WORKERS};
 use pdf_extract::{
-    output_doc_page, ColorSpace, Document, MediaBox, OutputDev, OutputError, Path as PdfPath,
-    PathOp, Transform,
+    output_doc_page, ColorSpace, Document, MediaBox, ObjectId, OutputDev, OutputError,
+    Path as PdfPath, PathOp, Transform,
 };
 
 #[derive(Debug, Clone)]
@@ -34,6 +34,17 @@ pub(crate) struct Rule {
     pub(crate) soft: bool,
 }
 
+/// An image XObject painted on a page: its object and page-space extent
+/// (x0, y0, x1, y1; y up).
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Placement {
+    pub(crate) object: ObjectId,
+    pub(crate) bbox: [f64; 4],
+}
+
+/// Images painted on one page beyond this many are ignored.
+const MAX_PLACEMENTS_PER_PAGE: usize = 256;
+
 pub(crate) struct RawPage {
     pub(crate) number: u32,
     pub(crate) bottom: f64,
@@ -44,11 +55,18 @@ pub(crate) struct RawPage {
     /// Glyphs made from OCR word boxes: even widths inside a word say nothing
     /// about the font being monospace.
     pub(crate) ocr: bool,
+    /// Image XObjects painted on the page.
+    pub(crate) images: Vec<Placement>,
+    /// The page's area in square points (0 when unknown).
+    pub(crate) area: f64,
+    /// Embedded images kept for the output, placed in reading order.
+    pub(crate) figures: Vec<crate::images::Figure>,
 }
 
 #[derive(Default)]
 pub(crate) struct Collector {
     pub(crate) media: Option<MediaBox>,
+    pub(crate) images: Vec<Placement>,
     pub(crate) glyphs: Vec<Glyph>,
     pub(crate) rotated: Vec<Glyph>,
     pub(crate) rules: Vec<Rule>,
@@ -113,6 +131,8 @@ impl Collector {
                 rest.push(glyph);
             }
         }
+        // Image extents are not turned with the text; leave them out.
+        self.images.clear();
         let rules = std::mem::take(&mut self.rules);
         for rule in rules {
             let (a, b) = if rule.horizontal {
@@ -415,7 +435,7 @@ impl OutputDev for Collector {
         Ok(())
     }
 
-    fn image(&mut self, ctm: &Transform) -> Result<(), OutputError> {
+    fn image(&mut self, ctm: &Transform, object: Option<ObjectId>) -> Result<(), OutputError> {
         // An image can sit behind text of any colour: it counts as a box of
         // no colour, which hides nothing.
         let corners = [
@@ -435,6 +455,15 @@ impl OutputDev for Collector {
         self.drawn += 1;
         if self.boxes.len() < MAX_RULES_PER_PAGE {
             self.boxes.push((extent, [f64::NAN; 3], self.drawn));
+        }
+        if let Some(object) = object {
+            if self.images.len() < MAX_PLACEMENTS_PER_PAGE && extent.iter().all(|v| v.is_finite())
+            {
+                self.images.push(Placement {
+                    object,
+                    bbox: extent,
+                });
+            }
         }
         Ok(())
     }
@@ -565,6 +594,11 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
                 "page {number}: text extraction failed (malformed font or content)"
             )),
         };
+        let area = collector
+            .media
+            .map(|media| ((media.urx - media.llx) * (media.ury - media.lly)).abs())
+            .filter(|area| area.is_finite())
+            .unwrap_or(0.0);
         let (mut bottom, mut top) = collector
             .media
             .map(|media| (media.lly.min(media.ury), media.lly.max(media.ury)))
@@ -581,6 +615,9 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
             rotated: collector.rotated,
             rules: collector.rules,
             ocr: false,
+            images: collector.images,
+            area,
+            figures: Vec::new(),
         }
     };
     if workers <= 1 {
@@ -622,6 +659,9 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
                 rotated: Vec::new(),
                 rules: Vec::new(),
                 ocr: false,
+                images: Vec::new(),
+                area: 0.0,
+                figures: Vec::new(),
             })
         })
         .collect()

@@ -12,6 +12,8 @@ Changes from upstream 0.12.1:
 - Form XObjects run with the current transformation matrix, so figure text
   lands where it is drawn instead of at the page origin.
 - Image XObjects are no longer parsed as content streams.
+- `OutputDev::image` also receives the image's XObject id (when the page's
+  resources name it by reference), so a caller can export the image's bytes.
 - Every path-painting operator (`f*`, `B`, `b`, `s`) reaches the output device,
   so table rules are reported.
 - It depends on `anymd-adobe-cmap-parser`, the fork that does not panic on

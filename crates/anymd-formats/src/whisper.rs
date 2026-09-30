@@ -19,7 +19,7 @@ pub const MODEL_ENV: &str = "ANYMD_WHISPER_MODEL";
 pub const BIN_ENV: &str = "ANYMD_WHISPER_BIN";
 pub const SIZE_ENV: &str = "ANYMD_WHISPER_MODEL_SIZE";
 pub const AUTO_DOWNLOAD_ENV: &str = "ANYMD_WHISPER_AUTO_DOWNLOAD";
-pub const CACHE_ENV: &str = "ANYMD_CACHE_DIR";
+pub use crate::cache::CACHE_ENV;
 /// Mirror override, e.g. `https://hf-mirror.com/ggerganov/whisper.cpp/resolve/main`.
 pub const BASE_URL_ENV: &str = "ANYMD_WHISPER_MODEL_BASE_URL";
 pub const DEFAULT_BASE_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main";
@@ -222,21 +222,7 @@ pub fn models_dir() -> Option<PathBuf> {
 }
 
 fn models_dir_from(get: &dyn Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
-    let var = |key: &str| get(key).filter(|v| !v.is_empty()).map(PathBuf::from);
-    if let Some(root) = var(CACHE_ENV) {
-        return Some(root.join("models"));
-    }
-    let base = if cfg!(windows) {
-        var("LOCALAPPDATA").map(|p| p.join("anymd").join("cache"))
-    } else if cfg!(target_os = "macos") {
-        var("HOME").map(|p| p.join("Library").join("Caches").join("anymd"))
-    } else {
-        var("XDG_CACHE_HOME")
-            .filter(|p| p.is_absolute())
-            .or_else(|| var("HOME").map(|p| p.join(".cache")))
-            .map(|p| p.join("anymd"))
-    };
-    base.map(|p| p.join("models"))
+    crate::cache::cache_dir_from(get).map(|root| root.join("models"))
 }
 
 // ---------------------------------------------------------------------------

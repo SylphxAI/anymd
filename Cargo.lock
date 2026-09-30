@@ -192,6 +192,8 @@ name = "anymd-pdf"
 version = "8.1.0"
 dependencies = [
  "anymd-pdf-extract",
+ "flate2",
+ "image",
 ]
 
 [[package]]

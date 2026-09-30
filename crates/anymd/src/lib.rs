@@ -383,12 +383,23 @@ impl PdfReaderMcp {
                         None,
                     ));
                 }
-                self.read_pdf(Parameters(ReadPdfArgs {
-                    sources: args.sources.iter().map(|source| source.as_pdf_source()).collect(),
-                    profile: Some(profile),
-                    ..Default::default()
-                }))
+                let sources: Vec<_> = args.sources.iter().map(|source| source.as_pdf_source()).collect();
+                let mut result = self
+                    .read_pdf(Parameters(ReadPdfArgs {
+                        sources: sources.clone(),
+                        profile: Some(profile),
+                        ..Default::default()
+                    }))
+                    .await?;
+                let policy = self.source_access.clone();
+                tokio::task::spawn_blocking(move || {
+                    document::attach_structure_images(&mut result, &sources, &policy);
+                    result
+                })
                 .await
+                .map_err(|error| {
+                    ErrorData::internal_error(format!("structure worker failed: {error}"), None)
+                })
             }
             operation => {
                 let operation = match operation {

@@ -2,12 +2,13 @@
 //! URL becomes an [`Opened`] document whose citable units (pages, slides,
 //! sheets, chapters) convert to Markdown on demand.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use anymd_core::markdown_layout::{self, load_document, load_document_bytes};
+use anymd_core::markdown_layout::{self, load_document, load_document_bytes, SPARSE_PAGE_CHARS};
 use anymd_core::url_fetch::fetch_url;
+use anymd_formats::images::{self, ImageStore};
 use anymd_formats::{ConvertError, Format};
 
 use crate::source_access::SourceAccessPolicy;
@@ -17,8 +18,6 @@ const MAX_FILE_BYTES: u64 = 512 * 1024 * 1024;
 /// Render scale for OCR: 300 dpi, the resolution tesseract is trained for.
 const OCR_SCALE: f32 = 300.0 / 72.0;
 const OCR_MAX_PIXELS: u64 = 40_000_000;
-/// Pages with fewer visible characters than this count as image-only.
-const SPARSE_PAGE_CHARS: usize = 24;
 const CACHE_MAX_BYTES: usize = 256 * 1024 * 1024;
 
 #[derive(Debug, Clone, Default)]
@@ -28,6 +27,9 @@ pub struct OpenOptions {
     pub transcript: bool,
     /// With `transcript`: fetch the whisper model when none is installed.
     pub download_whisper_model: bool,
+    /// Export images embedded in PDF, DOCX, PPTX and EPUB files into this
+    /// store and mark them in the Markdown. `None` leaves them out.
+    pub images: Option<ImageStore>,
 }
 
 /// One citable unit of a document.
@@ -46,6 +48,8 @@ enum Body {
         bytes: Option<Arc<Vec<u8>>>,
         path: Option<PathBuf>,
         title: Option<String>,
+        /// Pictures that repeat across pages (logos), found on first use.
+        repeated: OnceLock<HashSet<u64>>,
     },
     Units(Arc<Vec<Unit>>),
 }
@@ -122,7 +126,8 @@ fn noun_for(units: &[Unit], format: Format) -> &'static str {
 // Converted-document cache (repeat searches and cursor reads are instant)
 // ---------------------------------------------------------------------------
 
-type CacheKey = (PathBuf, u64, u128, bool);
+/// Path, size, mtime, OCR on, and the image store (its Markdown points there).
+type CacheKey = (PathBuf, u64, u128, bool, Option<PathBuf>);
 
 struct CachedDoc {
     format: &'static str,
@@ -130,6 +135,8 @@ struct CachedDoc {
     metadata: Vec<(String, String)>,
     units: Arc<Vec<Unit>>,
     bytes: usize,
+    /// Exported image files the Markdown points at.
+    images: Vec<PathBuf>,
 }
 
 #[derive(Default)]
@@ -144,7 +151,7 @@ fn cache() -> &'static Mutex<Cache> {
     CACHE.get_or_init(Mutex::default)
 }
 
-fn cache_key(path: &Path, ocr: bool) -> Option<CacheKey> {
+fn cache_key(path: &Path, ocr: bool, images: Option<&ImageStore>) -> Option<CacheKey> {
     let meta = std::fs::metadata(path).ok()?;
     let modified = meta
         .modified()
@@ -152,12 +159,48 @@ fn cache_key(path: &Path, ocr: bool) -> Option<CacheKey> {
         .duration_since(std::time::UNIX_EPOCH)
         .ok()?
         .as_nanos();
-    Some((path.to_path_buf(), meta.len(), modified, ocr))
+    Some((
+        path.to_path_buf(),
+        meta.len(),
+        modified,
+        ocr,
+        images.map(|s| s.dir().to_path_buf()),
+    ))
 }
 
 fn cache_get(key: &CacheKey) -> Option<Arc<CachedDoc>> {
-    let cache = cache().lock().ok()?;
-    cache.entries.get(key).cloned()
+    let doc = cache().lock().ok()?.entries.get(key).cloned()?;
+    // The Markdown points at files in the image cache, which may have been
+    // pruned or deleted since: a missing file makes this a miss, and the
+    // rebuild re-exports it. Files still there are marked as in use.
+    if doc.images.iter().any(|path| !path.is_file()) {
+        return None;
+    }
+    doc.images
+        .iter()
+        .for_each(|path| anymd_formats::cache::touch(path));
+    Some(doc)
+}
+
+/// The exported image files the units' Markdown points at.
+fn referenced_images(units: &[Unit], store: Option<&ImageStore>) -> Vec<PathBuf> {
+    let Some(store) = store else {
+        return Vec::new();
+    };
+    let mut found = Vec::new();
+    for unit in units {
+        for line in unit.markdown.lines().filter(|l| l.starts_with("![")) {
+            let Some((_, rest)) = line.rsplit_once("](") else {
+                continue;
+            };
+            let path = rest.strip_suffix(')').unwrap_or(rest);
+            let path = PathBuf::from(path.trim_start_matches('<').trim_end_matches('>'));
+            if path.starts_with(store.dir()) && !found.contains(&path) {
+                found.push(path);
+            }
+        }
+    }
+    found
 }
 
 fn cache_put(key: CacheKey, doc: Arc<CachedDoc>) {
@@ -232,7 +275,7 @@ impl Opened {
             ));
         }
         let ocr_on = options.ocr != Some(false) && anymd_formats::image::ocr_available();
-        let key = cache_key(&path, ocr_on);
+        let key = cache_key(&path, ocr_on, options.images.as_ref());
         if format != Format::Pdf {
             if let Some(cached) = key.as_ref().and_then(cache_get) {
                 return Ok(Self::from_cached(spec, &cached, options));
@@ -255,6 +298,7 @@ impl Opened {
                     metadata: opened.metadata.clone(),
                     units: units.clone(),
                     bytes: units.iter().map(|u| u.markdown.len()).sum(),
+                    images: referenced_images(units, options.images.as_ref()),
                 }),
             );
         }
@@ -321,6 +365,7 @@ impl Opened {
                 bytes,
                 path,
                 title,
+                repeated: OnceLock::new(),
             },
         }
     }
@@ -393,9 +438,30 @@ impl Opened {
                 bytes,
                 path,
                 title,
+                repeated,
             } => {
-                let converted = markdown_layout::pdf_to_markdown(doc, Some(numbers))
-                    .map_err(|error| error.message)?;
+                let converted = match &self.options.images {
+                    Some(store) => {
+                        let repeated =
+                            repeated.get_or_init(|| markdown_layout::repeated_images(doc));
+                        let place = |image: &markdown_layout::EncodedImage,
+                                     caption: Option<&str>,
+                                     page: u32| {
+                            place_image(store, image, caption, page)
+                        };
+                        let options = markdown_layout::ImageOptions {
+                            repeated,
+                            place: &place,
+                        };
+                        markdown_layout::pdf_to_markdown_with_images(
+                            doc,
+                            Some(numbers),
+                            Some(&options),
+                        )
+                    }
+                    None => markdown_layout::pdf_to_markdown(doc, Some(numbers)),
+                }
+                .map_err(|error| error.message)?;
                 let _ = title;
                 let mut units: Vec<Unit> = converted
                     .pages
@@ -433,7 +499,9 @@ impl Opened {
             Body::Pdf { path, .. } => {
                 let ocr_on =
                     self.options.ocr != Some(false) && anymd_formats::image::ocr_available();
-                let key = path.as_deref().and_then(|p| cache_key(p, ocr_on));
+                let key = path
+                    .as_deref()
+                    .and_then(|p| cache_key(p, ocr_on, self.options.images.as_ref()));
                 if let Some(cached) = key.as_ref().and_then(cache_get) {
                     return Ok(cached.units.clone());
                 }
@@ -448,6 +516,7 @@ impl Opened {
                             metadata: Vec::new(),
                             units: units.clone(),
                             bytes: units.iter().map(|u| u.markdown.len()).sum(),
+                            images: referenced_images(&units, self.options.images.as_ref()),
                         }),
                     );
                 }
@@ -634,8 +703,98 @@ fn convert_other(
             transcript: options.transcript,
             download_whisper_model: options.download_whisper_model,
             path,
+            images: options.images.clone(),
         },
     )
+}
+
+/// Write one PDF image to the store and build its Markdown.
+fn place_image(
+    store: &ImageStore,
+    image: &markdown_layout::EncodedImage,
+    caption: Option<&str>,
+    page: u32,
+) -> Option<markdown_layout::Placed> {
+    let stored = store.put(&image.bytes).ok()?;
+    Some(markdown_layout::Placed {
+        markdown: images::reference(caption, &stored, Some(&format!("page {page}"))),
+        path: stored.path.display().to_string(),
+        width: stored.width,
+        height: stored.height,
+    })
+}
+
+/// The embedded images of a local PDF's pages (all pages when `pages` is
+/// `None`), exported to `store`: page, bounding box in points (y up), size,
+/// caption and cached path.
+pub fn pdf_image_listing(
+    path: &Path,
+    pages: Option<&[u32]>,
+    store: &ImageStore,
+) -> Result<Vec<serde_json::Value>, String> {
+    let doc = load_document(path).map_err(|error| error.message)?;
+    let repeated = markdown_layout::repeated_images(&doc);
+    let place = |image: &markdown_layout::EncodedImage, caption: Option<&str>, page: u32| {
+        place_image(store, image, caption, page)
+    };
+    let options = markdown_layout::ImageOptions {
+        repeated: &repeated,
+        place: &place,
+    };
+    Ok(markdown_layout::pdf_images(&doc, pages, &options)
+        .into_iter()
+        .map(|image| {
+            serde_json::json!({
+                "page": image.page,
+                "bbox": image.bbox,
+                "width": image.width,
+                "height": image.height,
+                "caption": image.caption,
+                "path": image.path,
+            })
+        })
+        .collect())
+}
+
+/// Add `embeddedImages` to each local PDF's data in a `structure` result.
+pub fn attach_structure_images(
+    result: &mut rmcp::model::CallToolResult,
+    sources: &[crate::schema::PdfSource],
+    policy: &SourceAccessPolicy,
+) {
+    let Some(store) = ImageStore::default_location() else {
+        return;
+    };
+    let Some(results) = result
+        .structured_content
+        .as_mut()
+        .and_then(|value| value.get_mut("results"))
+        .and_then(serde_json::Value::as_array_mut)
+    else {
+        return;
+    };
+    for (entry, source) in results.iter_mut().zip(sources) {
+        let Some(path) = source.path.as_deref() else {
+            continue;
+        };
+        let Ok(admitted) = policy.admit_path(path) else {
+            continue;
+        };
+        let pages = crate::page_selection::selected_pages(&source.pages)
+            .ok()
+            .flatten();
+        let Some(data) = entry
+            .get_mut("data")
+            .and_then(serde_json::Value::as_object_mut)
+        else {
+            continue;
+        };
+        if let Ok(images) = pdf_image_listing(Path::new(&admitted), pages.as_deref(), &store) {
+            if !images.is_empty() {
+                data.insert("embeddedImages".into(), serde_json::Value::Array(images));
+            }
+        }
+    }
 }
 
 /// File extensions a directory walk picks up for search.

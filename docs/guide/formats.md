@@ -9,6 +9,7 @@ One `read` call handles every format below, detected from the file's bytes, not 
 | [PowerPoint](#powerpoint) `.pptx` | One section per slide, with notes and chart data |
 | [Excel](#spreadsheets) `.xlsx .xls .ods` · CSV/TSV | One table per sheet |
 | [EPUB](#epub) | One section per chapter |
+| [Embedded images](#embedded-images) | Figures and pictures inside PDF, DOCX, PPTX, EPUB saved as files and marked in place |
 | [HTML and URLs](#html-and-urls) | The main article only |
 | [Markdown, text, JSON](#markdown-text-json) | Unchanged, with pagination |
 | [Images](#images) | Metadata, EXIF, and OCR text |
@@ -24,11 +25,11 @@ How it works: anymd reads glyph positions rather than text runs. Glyphs are grou
 
 ## Word
 
-Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, and equations as LaTeX.
+Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, and equations as LaTeX. Pictures are [exported as image files](#embedded-images).
 
 ## PowerPoint
 
-One section per slide in deck order: titles, bullets, tables, chart data, and speaker notes. `pages` selects slides.
+One section per slide in deck order: titles, bullets, tables, chart data, speaker notes, and pictures ([exported as image files](#embedded-images)). `pages` selects slides.
 
 ## Spreadsheets
 
@@ -36,7 +37,7 @@ One section per slide in deck order: titles, bullets, tables, chart data, and sp
 
 ## EPUB
 
-One section per chapter in spine order, plus title and author. `pages` selects chapters.
+One section per chapter in spine order, plus title and author, with images [exported as files](#embedded-images). `pages` selects chapters.
 
 ## HTML and URLs
 
@@ -45,6 +46,25 @@ The main article only: navigation, cookie banners, and sidebars are dropped. Rel
 ## Markdown, text, JSON
 
 Returned unchanged, with pagination and the token budget.
+
+## Embedded images
+
+An agent can open a standalone image file itself, but not one inside a container. `read` therefore exports the raster images embedded in PDF figures, DOCX and PPTX pictures and EPUB images (`images: "refs"`, the default; CLI `--images refs`), and marks where each sits in reading order:
+
+```markdown
+![Figure 1: Quarterly revenue by region](/home/me/.cache/anymd/images/9f2c1a7be03d55a4.png)
+<!-- image: 240x150, page 1 -->
+```
+
+- **Files.** Each image is written once to `<cache>/images/<first 16 hex of its SHA-256>.<ext>`, where `<cache>` is `$ANYMD_CACHE_DIR`, else `~/.cache/anymd`, `~/Library/Caches/anymd` or `%LOCALAPPDATA%\anymd\cache`. The same picture is one file however often it is read. Files unused for 30 days are deleted (reading a document touches the files it uses), and the folder is kept under 2 GiB, oldest first; this runs at most once a day, at CLI and server start. Nothing is written beside the source document, and an image over 50 megapixels is refused.
+- **Captions.** In a PDF, the nearest line directly below or above the image (within about half an inch) that starts with `Figure`, `Fig.`, `Table`, `圖`, `图` or `表` and a number. Otherwise the alt text (DOCX and PPTX `descr`, EPUB `alt`), otherwise `image`.
+- **Decoration is skipped.** Images smaller than 48 x 48 px, PDF images under 2% of the page, and a picture that appears on three or more pages, slides or chapters (logos, running headers, ornaments).
+- **A scanned page is not a figure.** A PDF page with no usable text layer and one image over at least 80% of it is the page itself: it gets no image ref and goes to OCR as before.
+- **Which images.** PDF image XObjects (JPEG as is; 8-bit gray, RGB and palette rasters as PNG), DOCX `word/media`, PPTX slide pictures in slide order, and EPUB `<img>` files. The comment says `page N` for a PDF, `slide N` for a deck and `chapter N` for a book.
+- **Budget.** A reference costs only its own two lines against `max_tokens`; the image itself is never counted.
+- `inspect` with `operation: "structure"` also lists a local PDF's images as `embeddedImages`: page, bounding box in points (origin bottom left), size, caption and cached path.
+
+Known gap in this version: figures drawn as vector graphics (charts, diagrams made of lines and text), inline images, CMYK, JPEG 2000, JBIG2 and CCITT images, and soft-mask transparency are not exported.
 
 ## Images
 

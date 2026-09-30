@@ -2,12 +2,13 @@
 //! a tiny XML tree, relationship resolution, core properties, and the inline
 //! run renderer that turns formatted text into compact Markdown.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{Cursor, Read};
 
 use quick_xml::events::Event;
 use quick_xml::Reader;
 
+use crate::images::{self, Embed, ImageStore};
 use crate::ConvertError;
 
 /// Largest uncompressed zip entry we will inflate.
@@ -680,6 +681,82 @@ pub(crate) fn image_markdown(alt: &str, target: Option<&str>) -> Option<String> 
         alt.replace('[', "\\[").replace(']', "\\]"),
         name.replace(' ', "%20")
     ))
+}
+
+/// Most image parts read from one part's relationships.
+const MAX_MEDIA_PARTS: usize = 512;
+/// Most image bytes read from one part's relationships.
+const MAX_MEDIA_BYTES: usize = 256 * 1024 * 1024;
+
+/// The image parts a part's relationships list, read up front so rendering
+/// needs no package access. Empty (alt text only) without an image store.
+#[derive(Default)]
+pub(crate) struct Media {
+    store: Option<ImageStore>,
+    files: HashMap<String, Vec<u8>>,
+    repeated: HashSet<u64>,
+}
+
+impl Media {
+    pub(crate) fn load(
+        package: &mut Package<'_>,
+        rels: &Rels,
+        store: Option<&ImageStore>,
+        repeated: &HashSet<u64>,
+    ) -> Self {
+        let Some(store) = store else {
+            return Self::default();
+        };
+        let mut files = HashMap::new();
+        let mut total = 0usize;
+        for id in &rels.order {
+            let Some(rel) = rels.by_id.get(id) else {
+                continue;
+            };
+            if rel.external || !rel.kind.ends_with("/image") || files.contains_key(&rel.target) {
+                continue;
+            }
+            if files.len() >= MAX_MEDIA_PARTS {
+                break;
+            }
+            if let Ok(Some(bytes)) = package.read(&rel.target) {
+                total += bytes.len();
+                if total > MAX_MEDIA_BYTES {
+                    break;
+                }
+                files.insert(rel.target.clone(), bytes);
+            }
+        }
+        Self {
+            store: Some(store.clone()),
+            files,
+            repeated: repeated.clone(),
+        }
+    }
+
+    /// Markdown for a picture: the exported file when there is a store and the
+    /// picture is a raster that matters, nothing for decoration, else the
+    /// alt-text form.
+    pub(crate) fn markdown(
+        &self,
+        alt: &str,
+        target: Option<&str>,
+        place: Option<&str>,
+    ) -> Option<String> {
+        let found = self
+            .store
+            .as_ref()
+            .zip(target)
+            .and_then(|(store, target)| Some((store, self.files.get(target)?)));
+        match found {
+            Some((store, bytes)) => match images::embed(store, bytes, alt, place, &self.repeated) {
+                Embed::Markdown(markdown) => Some(markdown),
+                Embed::Skip => None,
+                Embed::Fallback => image_markdown(alt, target),
+            },
+            None => image_markdown(alt, target),
+        }
+    }
 }
 
 /// Join Markdown blocks: list items stay tight, everything else gets a blank line.

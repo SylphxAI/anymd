@@ -6,11 +6,13 @@
 
 #![cfg_attr(not(feature = "native"), allow(dead_code))]
 
+pub mod cache;
 pub mod csv;
 pub mod docx;
 pub mod epub;
 pub mod html;
 pub mod image;
+pub mod images;
 pub mod pptx;
 #[cfg(feature = "native")]
 mod tool;
@@ -104,6 +106,9 @@ pub struct Options {
     pub download_whisper_model: bool,
     /// Source path when the input came from disk (video/ffprobe needs a path).
     pub path: Option<std::path::PathBuf>,
+    /// Export images embedded in DOCX, PPTX and EPUB files into this store and
+    /// mark them in the Markdown. `None` keeps the alt-text-only form.
+    pub images: Option<images::ImageStore>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

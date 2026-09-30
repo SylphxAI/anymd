@@ -145,7 +145,9 @@ and its `agentdocbench-results` artifact holds the merged results JSON and every
 3. Open a pull request. The Benchmark workflow runs every tool; download `agentdocbench-results`, copy
    `bench/results/<tool>.json` into the branch, run `python bench/leaderboard.py`, and commit both.
 
-Use the tool's default settings, or say in the adapter's docstring which options you chose and why. No
+Use the tool's default settings, or say in the adapter's docstring which options you chose and why.
+
+The anymd adapter reads with the default settings, which export images embedded in a document and mark each with a `![caption](path)` line and an `<!-- image: ... -->` comment. The ground truth has no image lines, so the adapter strips those pairs before scoring; the text and reading order around the placeholders are what is measured. No
 network calls to hosted APIs: every tool must run locally on CPU.
 
 Corpus or truth fixes are welcome the same way: change `corpus.json` or `truth/<id>.json`, say in the pull

@@ -17,4 +17,6 @@ categories = ["parsing", "text-processing"]
 path = "src/lib.rs"
 
 [dependencies]
+flate2 = "1"
+image = { version = "0.25", default-features = false, features = ["png"] }
 pdf-extract = { workspace = true }
