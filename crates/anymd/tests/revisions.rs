@@ -27,6 +27,7 @@ fn args(name: &str, revisions: Option<&str>) -> ReadArgs {
         download_whisper_model: None,
         images: Some("none".into()),
         revisions: revisions.map(str::to_string),
+        node: None,
     }
 }
 

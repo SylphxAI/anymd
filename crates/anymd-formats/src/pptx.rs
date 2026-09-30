@@ -61,6 +61,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         });
     }
     Ok(Converted {
+        outline: Vec::new(),
         format: "pptx".into(),
         title,
         sections,

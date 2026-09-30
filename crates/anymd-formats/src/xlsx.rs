@@ -22,6 +22,7 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
     let sections = std::panic::catch_unwind(|| sheets(bytes))
         .map_err(|_| ooxml::invalid("spreadsheet parser failed on malformed input"))??;
     Ok(Converted {
+        outline: Vec::new(),
         format: "xlsx".into(),
         title,
         sections,

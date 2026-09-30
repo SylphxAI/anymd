@@ -43,7 +43,11 @@ mod tool {
         None
     }
 
-    pub(crate) fn run<I, S>(_program: &Path, _args: I, _timeout: Duration) -> Result<ToolOutput, String>
+    pub(crate) fn run<I, S>(
+        _program: &Path,
+        _args: I,
+        _timeout: Duration,
+    ) -> Result<ToolOutput, String>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<std::ffi::OsStr>,
@@ -91,6 +95,9 @@ pub struct Converted {
     pub format: String,
     pub title: Option<String>,
     pub sections: Vec<Section>,
+    /// Native table of contents: zero-based depth, title, 1-based section.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub outline: Vec<(usize, String, Option<u32>)>,
     /// Small key/value facts worth a header line (author, dimensions, duration...).
     pub metadata: Vec<(String, String)>,
 }
@@ -230,12 +237,15 @@ pub fn detect(path: Option<&Path>, head: &[u8]) -> Option<Format> {
         Some("tsv" | "tab") => Some(Format::Tsv),
         Some("epub") => Some(Format::Epub),
         Some("html" | "htm" | "xhtml") => Some(Format::Html),
-        Some("png" | "jpg" | "jpeg" | "gif" | "webp" | "tiff" | "tif" | "bmp") => Some(Format::Image),
-        Some("mp4" | "mov" | "mkv" | "webm" | "avi" | "m4v" | "mp3" | "wav" | "m4a" | "flac" | "ogg") => {
-            Some(Format::Video)
+        Some("png" | "jpg" | "jpeg" | "gif" | "webp" | "tiff" | "tif" | "bmp") => {
+            Some(Format::Image)
         }
+        Some(
+            "mp4" | "mov" | "mkv" | "webm" | "avi" | "m4v" | "mp3" | "wav" | "m4a" | "flac" | "ogg",
+        ) => Some(Format::Video),
         _ => {
-            let text_head = String::from_utf8_lossy(&head[..head.len().min(512)]).to_ascii_lowercase();
+            let text_head =
+                String::from_utf8_lossy(&head[..head.len().min(512)]).to_ascii_lowercase();
             let trimmed = text_head.trim_start();
             if trimmed.starts_with("<!doctype html") || trimmed.starts_with("<html") {
                 Some(Format::Html)
@@ -277,6 +287,7 @@ pub fn convert(format: Format, bytes: &[u8], options: &Options) -> Result<Conver
         Format::Image => image::convert(bytes, options),
         Format::Video => video::convert(bytes, options),
         Format::Text => Ok(Converted {
+            outline: Vec::new(),
             format: "text".into(),
             title: None,
             sections: vec![Section {
@@ -286,6 +297,7 @@ pub fn convert(format: Format, bytes: &[u8], options: &Options) -> Result<Conver
             metadata: Vec::new(),
         }),
         Format::Subtitles => Ok(Converted {
+            outline: Vec::new(),
             format: "subtitles".into(),
             title: None,
             sections: vec![Section {
@@ -322,7 +334,9 @@ pub fn markdown_table(rows: &[Vec<String>]) -> String {
         // Compact pipe tables: padding spaces cost ~20% more tokens.
         out.push('|');
         for column in 0..width {
-            out.push_str(&table_cell(row.get(column).map(String::as_str).unwrap_or("")));
+            out.push_str(&table_cell(
+                row.get(column).map(String::as_str).unwrap_or(""),
+            ));
             out.push('|');
         }
         out.push('\n');

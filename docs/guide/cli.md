@@ -12,12 +12,29 @@ anymd search "indemnification" contracts/ --glob '*.pdf'
 anymd doctor                                 # lists the optional tools anymd found
 ```
 
+## Document navigation
+
+```bash
+anymd outline report.pdf                     # indented tree
+anymd outline report.pdf --format json       # preorder nodes with byte ranges
+anymd report.pdf --node n1.2                  # section and its children
+anymd report.pdf --node n1.2 --cursor 4:1200  # continue within that section
+```
+
+Outline and node reads default to no OCR or embedded image export, with Word
+revision markup. `--ocr`, `--images` and `--revisions` select other options; pass
+the same options to outline and node read.
+
+See [outline](./tools#outline) for range and stable-id semantics. Search hits carry
+node ids and title paths. With no `--node`, conversion and paging stay unchanged.
+
 ## Commands
 
 | Command | What it does |
 |---|---|
 | `anymd <file\|url\|dir>... [options]` | Convert to Markdown on stdout |
 | `anymd - [options]` | Convert stdin (the format is detected from the bytes) |
+| `anymd outline <file\|url> [--format tree\|json]` | Show the document tree (tree by default; `--json` also selects JSON) |
 | `anymd search <query> [path\|url...]` | Search files and directories (default: `.`) |
 | `anymd mcp [--allow-dir=<path>]...` | Run the MCP server on stdio |
 | `anymd setup [--dry-run] [--remove]` | Add anymd to the MCP clients on this machine; `--remove` undoes it |
@@ -30,6 +47,7 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 
 | Option | Description |
 |---|---|
+| `--node <id>` | Read the section from `outline`; repeat it with `--cursor` to continue |
 | `-p, --pages <spec>` | Pages, slides, sheets, or chapters, e.g. `1-5,8` |
 | `-o, --output <file>` | Write to a file instead of stdout |
 | `--max-tokens <n>` | Stop at a token budget and print a cursor. The CLI has no budget unless you set one. |
