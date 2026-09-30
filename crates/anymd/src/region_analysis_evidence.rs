@@ -1086,8 +1086,28 @@ mod tests {
         let addr = listener.local_addr().expect("addr");
         let handle = thread::spawn(move || {
             let (mut stream, _) = listener.accept().expect("accept");
+            // Read the whole request. Closing with unread bytes makes Windows
+            // reset the connection before the client reads the response.
+            let mut request = Vec::new();
             let mut buffer = [0u8; 8192];
-            let _ = stream.read(&mut buffer);
+            loop {
+                let read = stream.read(&mut buffer).expect("read request");
+                if read == 0 {
+                    break;
+                }
+                request.extend_from_slice(&buffer[..read]);
+                if let Some(end) = request.windows(4).position(|w| w == b"\r\n\r\n") {
+                    let head = String::from_utf8_lossy(&request[..end]).to_ascii_lowercase();
+                    let length = head
+                        .lines()
+                        .find_map(|line| line.strip_prefix("content-length:"))
+                        .and_then(|value| value.trim().parse::<usize>().ok())
+                        .unwrap_or(0);
+                    if request.len() >= end + 4 + length {
+                        break;
+                    }
+                }
+            }
             let body = br#"{"kind":"table","description":"mock http table","confidence":0.9}"#;
             let response = format!(
                 "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
