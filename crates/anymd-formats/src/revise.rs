@@ -120,7 +120,11 @@ fn join_paragraphs(children: Vec<Node>) -> Vec<Node> {
         let mut p = match node {
             Node::Element(p) if p.is("p") => p,
             Node::Element(other) => {
-                joining = None;
+                // Bookmark and range markers hold no content: a break that
+                // goes away still joins across them, as in Word.
+                if !is_empty_marker(other.local()) {
+                    joining = None;
+                }
                 out.push(Node::Element(other));
                 continue;
             }
@@ -155,6 +159,17 @@ fn join_paragraphs(children: Vec<Node>) -> Vec<Node> {
         joining = gone.then_some(at);
     }
     out
+}
+
+/// An empty marker Word writes between paragraphs: a bookmark, a comment or
+/// move range, a permission range, or a proofing mark.
+fn is_empty_marker(local: &str) -> bool {
+    local.ends_with("RangeStart")
+        || local.ends_with("RangeEnd")
+        || matches!(
+            local,
+            "bookmarkStart" | "bookmarkEnd" | "permStart" | "permEnd" | "proofErr"
+        )
 }
 
 /// Set on a paragraph, before it is resolved, when its break goes away.

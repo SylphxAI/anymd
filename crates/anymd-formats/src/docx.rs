@@ -2547,6 +2547,33 @@ mod tests {
     }
 
     #[test]
+    fn a_break_that_goes_away_joins_across_empty_markers() {
+        // Word writes bookmark and range ends between paragraphs; they hold no
+        // content, so the paragraphs still join.
+        for marker in [
+            end("1"),
+            r#"<w:bookmarkEnd w:id="0"/>"#.to_string(),
+            r#"<w:moveToRangeEnd w:id="3"/>"#.to_string(),
+        ] {
+            let body = format!("{}{marker}{}", pm("", &["del"], &r("A")), p("", &r("B")));
+            let bytes = docx(&body, &[]);
+            assert_eq!(resolved(&bytes, Revisions::Accept), "AB\n", "{marker}");
+            assert_eq!(resolved(&bytes, Revisions::Reject), "A\n\nB\n", "{marker}");
+        }
+        // A table between them is content: the break before it stays.
+        let body = format!(
+            "{}<w:tbl><w:tr><w:tc>{}</w:tc></w:tr></w:tbl>{}",
+            pm("", &["del"], &r("A")),
+            p("", &r("cell")),
+            p("", &r("B"))
+        );
+        assert_eq!(
+            resolved(&docx(&body, &[]), Revisions::Accept),
+            "A\n\n|cell|\n|-|\n\nB\n"
+        );
+    }
+
+    #[test]
     fn a_joined_paragraph_takes_the_later_paragraphs_properties() {
         // Word keeps paragraph properties on the mark that ends the paragraph,
         // so deleting a break gives the joined text the second one's format.

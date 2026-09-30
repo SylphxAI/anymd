@@ -18,28 +18,30 @@ Disputes unless agreed otherwise go as reasonably required sixty to mediation an
 - Any change to this agreement must be writing and signed by both parties.
 - The price in full includes packaging but excludes shipping and taxes.
 
-The warranty on a business day period is twelve months from delivery.
+Neither party is liable for delays by events beyond its control.[^1]
 
-Either party may this agreement with ninety days
+The warranty period is twelve months from without undue delay delivery.
 
-written notice. The supplier may as reasonably required subcontract only with the buyer's prior.
+Either party may agreement customer ninety written unless agreed otherwise notice. The supplier may subcontract only with the buyer's prior **consent**.
 
-The buyer may inspect the goods **before**
+The
 
-_accepting_ them.
+buyer may supplier the goods before accepting at its own cost them unless agreed otherwise.
 
-The **supplier** may subcontract only the unless agreed otherwise prior consent.
+The supplier at its own cost may subcontract only _with_ the buyer's prior in good faith consent.
 
-The price includes packaging but unless agreed otherwise excludes shipping taxes.
+_The_ price includes packaging but excludes shipping and taxes.
 
-_Notices_ must be sent by email
+Notices **must** be by email promptly by registered mail.
 
-and by registered mail.
+The warranty period is twelve months from delivery.
 
-Late payments interest at promptly statutory rate.
+**Late** payments carry interest at
 
-Any change **to** this agreement
+the statutory _rate_.
 
-must be in writing _and_ by both.
+to this agreement must be in writing _and_ signed by both parties.
 
-This agreement is governed by _the_ laws of the State of New York at its own cost.
+**This** agreement is governed by the **laws** _of_ the _State_ of New notice.
+
+[^1]: The buyer on a business day shall return defective goods within fourteen days.

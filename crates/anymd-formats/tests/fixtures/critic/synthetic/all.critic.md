@@ -18,32 +18,32 @@ Either party may end this agreement with ninety days{== written notice{++ withou
 - Any{== change to this agreement==}{>>Bo Chen (2026-09-01T06:04:00Z): Too broad, narrow it down.<<} must be{-- in--}{>>Ana Lima (2026-09-01T05:57:00Z)<<} writing and signed by both parties.
 - The price{++ in full++}{>>Carla Duarte (2026-09-01T06:11:00Z)<<} includes packaging but excludes shipping and taxes.{>>Dev Patel (2026-09-01T06:18:00Z): Agreed.<<}
 
-{--Neither party is liable for delays caused by events beyond its control.
+Neither party is liable{== for==}{>>Ana Lima (2026-09-01T06:32:00Z): Is this consistent with the master agreement?<<} delays{-- caused--}{>>Bo Chen (2026-09-01T06:25:00Z)<<} by events beyond its control.{==[^1]==}
 
---}{>>Carla Duarte (2026-09-01T06:46:00Z)<<}The warranty{++ on a business day++}{>>Dev Patel (2026-09-01T06:53:00Z)<<} period is twelve months from delivery.
+{>>Bo Chen (2026-09-01T06:39:00Z): Legal to review.<<}The warranty period is twelve months from{++ without undue delay++}{>>Carla Duarte (2026-09-01T06:53:00Z)<<} delivery.
 
-Either party may{-- end--}{>>Bo Chen (2026-09-01T07:00:00Z)<<} this agreement with ninety days{++
+Either party may{-- end--}{>>Dev Patel (2026-09-01T07:00:00Z)<<}{-- _this_--}{>>Ana Lima (2026-09-01T07:07:00Z)<<}{== agreement {~~with~>customer~~}{>>Carla Duarte (2026-09-01T07:14:00Z)<<}{>>Bo Chen (2026-09-01T07:21:00Z)<<}==}{>>Carla Duarte (2026-09-01T07:42:00Z): Agreed.<<} ninety{-- days--}{>>Carla Duarte (2026-09-01T07:28:00Z)<<} written{++ unless agreed otherwise++}{>>Carla Duarte (2026-09-01T07:35:00Z)<<} notice.{--
 
-++}{>>Ana Lima (2026-09-01T07:07:00Z)<<} written notice.{--
+--}{>>Dev Patel (2026-09-01T07:49:00Z)<<} The supplier may subcontract only with the buyer's{== prior **consent**.==}{>>Carla Duarte (2026-09-01T07:56:00Z): Why thirty and not sixty?<<}{>>Ana Lima (2026-09-01T08:03:00Z): Too broad, narrow it down.<<}
 
---}{>>Bo Chen (2026-09-01T07:14:00Z)<<} The supplier may{++ as reasonably required++}{>>Dev Patel (2026-09-01T07:21:00Z)<<}{== subcontract only with==}{>>Ana Lima (2026-09-01T07:35:00Z): Agreed.<<} the buyer's prior{-- consent--}{>>Dev Patel (2026-09-01T07:28:00Z)<<}.
+The{++
 
-The buyer may inspect the goods{== **before**==}{>>Bo Chen (2026-09-01T07:49:00Z): Agreed.<<}{++
+++}{>>Bo Chen (2026-09-01T08:38:00Z)<<} buyer may {~~inspect~>supplier~~}{>>Ana Lima (2026-09-01T08:10:00Z)<<}{>>Ana Lima (2026-09-01T08:17:00Z)<<}{== the==}{>>Ana Lima (2026-09-01T08:45:00Z): Check the defined term.<<} goods before accepting{++ at its own cost++}{>>Ana Lima (2026-09-01T08:24:00Z)<<} them{++ unless agreed otherwise++}{>>Ana Lima (2026-09-01T08:31:00Z)<<}.{>>Bo Chen (2026-09-01T08:52:00Z): Client asked for this.<<}
 
-++}{>>Bo Chen (2026-09-01T07:42:00Z)<<} _accepting_ them.
+The supplier{++ at its own cost++}{>>Carla Duarte (2026-09-01T08:59:00Z)<<}{== may subcontract only _with_==}{>>Ana Lima (2026-09-01T09:13:00Z): Client asked for this.<<} the buyer's prior{++ in good faith++}{>>Dev Patel (2026-09-01T09:06:00Z)<<} consent.
 
-The **supplier** may subcontract only{-- with--}{>>Ana Lima (2026-09-01T07:56:00Z)<<} the{~~ **buyer's**~> unless agreed otherwise~~}{>>Ana Lima (2026-09-01T08:10:00Z)<<}{>>Ana Lima (2026-09-01T08:03:00Z)<<} prior consent.{>>Dev Patel (2026-09-01T08:17:00Z): Client asked for this.<<}
+_The_ price includes packaging but{== excludes==}{>>Carla Duarte (2026-09-01T09:20:00Z): Check the defined term.<<} shipping and taxes.{>>Ana Lima (2026-09-01T09:27:00Z): Please confirm with finance.<<}
 
-The price{== includes packaging but{++ unless agreed otherwise++}{>>Ana Lima (2026-09-01T08:24:00Z)<<} excludes==}{>>Ana Lima (2026-09-01T08:38:00Z): Client asked for this.<<} shipping{-- and--}{>>Dev Patel (2026-09-01T08:31:00Z)<<} taxes.
+Notices **must**{== be{-- sent--}{>>Dev Patel (2026-09-01T09:34:00Z)<<} by==}{>>Bo Chen (2026-09-01T09:55:00Z): Agreed.<<} email{~~ and~> promptly~~}{>>Carla Duarte (2026-09-01T09:48:00Z)<<}{>>Bo Chen (2026-09-01T09:41:00Z)<<} by registered mail.{++
 
-_Notices_ must be sent by email{++
+++}{>>Ana Lima (2026-09-01T10:02:00Z)<<}{++The warranty period is twelve months from delivery.++}{>>Ana Lima (2026-09-01T10:09:00Z)<<}
 
-++}{>>Bo Chen (2026-09-01T08:45:00Z)<<} and by registered mail.{>>Dev Patel (2026-09-01T08:52:00Z): Why thirty and not sixty?<<}
+**Late** payments carry interest at{++
 
-Late payments{-- carry--}{>>Dev Patel (2026-09-01T08:59:00Z)<<}{== interest==}{>>Bo Chen (2026-09-01T09:20:00Z): Is this consistent with the master agreement?<<} at{~~ the~> promptly~~}{>>Carla Duarte (2026-09-01T09:13:00Z)<<}{>>Bo Chen (2026-09-01T09:06:00Z)<<} statutory rate.
+++}{>>Dev Patel (2026-09-01T10:16:00Z)<<} the statutory _rate_.
 
-Any change **to** this agreement{++
+{--Any--}{>>Dev Patel (2026-09-01T10:23:00Z)<<}{-- change--}{>>Ana Lima (2026-09-01T10:30:00Z)<<} to this agreement must be in writing _and_ signed by both parties.
 
-++}{>>Ana Lima (2026-09-01T09:41:00Z)<<} must be in writing _and_{-- _signed_--}{>>Dev Patel (2026-09-01T09:27:00Z)<<} by both{-- parties--}{>>Dev Patel (2026-09-01T09:34:00Z)<<}.
+**This** agreement is governed by the **laws** _of_ the _State_ of New {~~York~>notice~~}{>>Ana Lima (2026-09-01T10:37:00Z)<<}{>>Carla Duarte (2026-09-01T10:44:00Z)<<}.{>>Bo Chen (2026-09-01T10:51:00Z): Is this consistent with the master agreement?<<}
 
-This agreement{== is governed by==}{>>Carla Duarte (2026-09-01T09:55:00Z): Check the defined term.<<} _the_ laws of the State of New York{++ at its own cost++}{>>Carla Duarte (2026-09-01T09:48:00Z)<<}.
+[^1]: The buyer{++ on a business day++}{>>Dev Patel (2026-09-01T06:46:00Z)<<} shall return defective goods within fourteen days.

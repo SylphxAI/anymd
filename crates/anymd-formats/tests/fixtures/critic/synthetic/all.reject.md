@@ -18,24 +18,26 @@ Disputes go first to mediation and then to the courts of Manhattan.
 - Any change to this agreement must be in writing and signed by both parties.
 - The price includes packaging but excludes shipping and taxes.
 
-Neither party is liable for delays caused by events beyond its control.
+Neither party is liable for delays caused by events beyond its control.[^1]
 
 The warranty period is twelve months from delivery.
 
-Either party may end this agreement with ninety days written notice.
+Either party may end _this_ agreement with ninety days written notice.
 
-The supplier may subcontract only with the buyer's prior consent.
+The supplier may subcontract only with the buyer's prior **consent**.
 
-The buyer may inspect the goods **before** _accepting_ them.
+The buyer may inspect the goods before accepting them.
 
-The **supplier** may subcontract only with the **buyer's** prior consent.
+The supplier may subcontract only _with_ the buyer's prior consent.
 
-The price includes packaging but excludes shipping and taxes.
+_The_ price includes packaging but excludes shipping and taxes.
 
-_Notices_ must be sent by email and by registered mail.
+Notices **must** be sent by email and by registered mail.
 
-Late payments carry interest at the statutory rate.
+**Late** payments carry interest at the statutory _rate_.
 
-Any change **to** this agreement must be in writing _and signed_ by both parties.
+Any change to this agreement must be in writing _and_ signed by both parties.
 
-This agreement is governed by _the_ laws of the State of New York.
+**This** agreement is governed by the **laws** _of_ the _State_ of New York.
+
+[^1]: The buyer shall return defective goods within fourteen days.

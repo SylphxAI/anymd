@@ -332,7 +332,10 @@ def body(profile: Profile, seed: int) -> tuple[str, str]:
         if not last and rng.random() < profile.cross_comment:
             start, open_comment = writer.annotation(rng.choice(NOTES))
             text += start
-        if not joining and not last and rng.random() < profile.cut_paragraph:
+        cut = not joining and not last and rng.random() < profile.cut_paragraph
+        # A paragraph holding a comment (or a comment's end) is not cut: the
+        # deleted copy is plain text, and the comment would lose an end.
+        if cut and "<office:annotation" not in text:
             # The paragraph is deleted whole: Word keeps it with a deleted break.
             pending_start = writer.cut([sentence + "."]) + open_comment
             open_comment = ""

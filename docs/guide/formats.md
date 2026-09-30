@@ -52,7 +52,7 @@ The author and date of changes and comments come from `w:author` and `w:date`. T
 | `accept` | The text as Word shows it after Accept All, with no markup and no comments |
 | `reject` | The text as Word shows it after Reject All, with no markup and no comments |
 
-`accept` and `reject` apply to the body, tables (inserted or deleted rows and cells are kept or dropped), text boxes and footnotes. A paragraph break that goes away joins its paragraph with the next one, which keeps the next one's style, as in Word. `reject` also puts back formatting that a tracked change replaced. A document with no tracked changes reads the same under all three.
+`accept` and `reject` apply to the body, tables (inserted or deleted rows and cells are kept or dropped), text boxes and footnotes. A paragraph break that goes away joins its paragraph with the next one, which keeps the next one's style, as in Word. `reject` also puts back formatting that a tracked change replaced. A document with no tracked changes and no comments reads the same under all three.
 
 ## PowerPoint
 

@@ -198,7 +198,10 @@ fn without_citations(line: &str) -> String {
         if at > 0 && !chars[at - 1].is_whitespace() && citation(&chars[at]) {
             let end = (at..chars.len()).find(|&i| !citation(&chars[i])).unwrap_or(chars.len());
             let alone = chars.get(end).is_none_or(|c| c.is_whitespace() || c.is_ascii_punctuation());
-            let after_word = chars[at - 1].is_alphabetic() && !citation(&chars[at - 1]);
+            // After a word, or after a word and its punctuation (`control.1`).
+            let word = |c: &char| c.is_alphabetic() && !citation(c);
+            let after_word = word(&chars[at - 1])
+                || (chars[at - 1].is_ascii_punctuation() && at > 1 && word(&chars[at - 2]));
             if alone && after_word && chars[at].is_ascii_digit() == chars[at..end].iter().all(char::is_ascii_digit) {
                 at = end;
                 continue;
