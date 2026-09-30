@@ -66,6 +66,10 @@ jobs:
           qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd version
           qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd test/fixtures/sample.pdf --no-ocr > sample.md
           grep -q '<!-- page 1 -->' sample.md
+          if qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd __ocr-vlm-worker missing.png 1 2> hardware-error.txt; then
+            echo 'Expected the FP16 hardware guard to reject the old CPU'; exit 1
+          fi
+          grep -q 'FP16-capable' hardware-error.txt
       - uses: actions/upload-artifact@v7
         with:
           name: anymd-docvlm-${{ matrix.target }}

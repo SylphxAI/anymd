@@ -21,3 +21,6 @@ oar-ocr-vl = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 oar-ocr-vl = { workspace = true, optional = true, features = ["metal"] }
+
+[target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
+libc = "0.2"

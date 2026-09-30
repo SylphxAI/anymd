@@ -34,8 +34,8 @@ def main():
     args = parser.parse_args()
     pages = Path(args.pages)
     rows = [json.loads(line) for line in (pages / 'manifest.jsonl').read_text(encoding='utf-8').splitlines()]
-    # Two EN, TC, SC, scans and photos: identical selection on all targets.
-    selected = [rows[i] for i in [0, 1, 12, 13, 22, 23, 30, 33, 39, 42]]
+    # One clean, scan and photo page per language, plus a mixed page.
+    selected = [rows[i] for i in [0, 12, 22, 30, 33, 36, 39, 42, 45, 47]]
     results = []
     for row in selected:
         started = time.monotonic()
@@ -45,7 +45,8 @@ def main():
             tracked = psutil.Process(process.pid)
             while process.poll() is None:
                 try:
-                    peak = max(peak, tracked.memory_info().rss)
+                    memory = tracked.memory_info()
+                    peak = max(peak, getattr(memory, "peak_wset", memory.rss))
                 except psutil.NoSuchProcess:
                     pass
                 try:
@@ -56,18 +57,21 @@ def main():
                         process.wait()
             output.seek(0)
             raw = output.read()
+        evidence = {}
         try:
             evidence = json.loads(raw)
             text = evidence['text']
         except (ValueError, KeyError):
             text = ''
         results.append({'file': row['file'], 'ok': process.returncode == 0, 'seconds': time.monotonic() - started,
-                        'peak_rss_mib': peak / 1048576, 'cer': cer(row['text'], text)})
+                        'peak_rss_mib': peak / 1048576, 'cer': cer(row['text'], text),
+                        'stopped_regions': evidence.get('truncated', 0)})
     summary = {'pages': results, 'median_seconds': statistics.median(r['seconds'] for r in results),
                'peak_rss_mib': max(r['peak_rss_mib'] for r in results),
                'cer_mean': statistics.mean(r['cer'] for r in results),
                'pages_ok': sum(r['ok'] for r in results), 'binary_bytes': Path(args.binary).stat().st_size,
-               'includes_model_load': True}
+               'includes_model_load': True, 'rss_sampling_interval_ms': 100,
+               'anymd_version': subprocess.check_output([args.binary, 'version'], text=True).strip()}
     Path(args.out).write_text(json.dumps(summary, indent=2), encoding='utf-8')
     print(json.dumps(summary, indent=2))
     if summary['pages_ok'] != len(results):

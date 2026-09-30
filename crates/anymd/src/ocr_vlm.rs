@@ -76,17 +76,7 @@ pub fn requested(engine: OcrEngine) -> bool {
 }
 
 pub fn backend_available() -> bool {
-    if !cfg!(feature = "ocr-vlm") {
-        return false;
-    }
-    #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
-    {
-        return std::arch::is_aarch64_feature_detected!("fp16");
-    }
-    #[cfg(not(all(target_arch = "aarch64", target_os = "linux")))]
-    {
-        true
-    }
+    cfg!(feature = "ocr-vlm") && anymd_ocr_vlm::hardware::cpu_available()
 }
 
 pub fn metal_available() -> bool {

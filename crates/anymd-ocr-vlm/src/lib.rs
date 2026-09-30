@@ -3,6 +3,7 @@
 
 #[cfg(feature = "candle")]
 pub mod candle_backend;
+pub mod hardware;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Region {

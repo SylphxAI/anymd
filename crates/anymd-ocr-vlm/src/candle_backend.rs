@@ -12,6 +12,10 @@ pub struct CandleBackend {
 
 impl CandleBackend {
     pub fn load(vlm_dir: &Path, layout_dir: &Path, device: &str) -> Result<Self> {
+        anyhow::ensure!(
+            device != "cpu" || crate::hardware::cpu_available(),
+            "Doc-VLM needs FP16-capable Linux arm64 hardware"
+        );
         let dev = || parse_device(device).map_err(|e| anyhow!("device {device}: {e}"));
         let layout =
             PpDocLayout::from_dir(layout_dir, dev()?).map_err(|e| anyhow!("layout: {e}"))?;
