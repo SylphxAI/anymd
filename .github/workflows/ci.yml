@@ -78,6 +78,12 @@ jobs:
       - name: Public copy matches product.json and benchmark results
         run: bun run check:copy
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Test vendored crate version checks
+        run: python3 -m unittest discover -s scripts -p test_check_vendored_crates.py
+
       - name: Every manifest carries the same version
         run: bun run check:versions
 
@@ -86,9 +92,6 @@ jobs:
 
       - name: Typecheck
         run: bun run typecheck
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
 
       - name: Audit Rust dependencies
         run: bash scripts/check-cargo-advisories.sh

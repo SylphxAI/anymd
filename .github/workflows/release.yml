@@ -279,16 +279,34 @@ jobs:
 
       - name: Stage the binaries
         id: stage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          if ! ls artifacts/native-linux-x64-gnu/anymd >/dev/null 2>&1; then
+          v=$(jq -r .version packages/anymd/package.json)
+          mkdir -p dist/amd64 dist/arm64
+          if [ -f artifacts/native-linux-x64-gnu/anymd ]; then
+            cp artifacts/native-linux-x64-gnu/anymd dist/amd64/
+            cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
+          elif [ "$EVENT_NAME" = workflow_dispatch ]; then
+            # A recovery run on main has no native artifacts: reuse the exact
+            # binaries already attached to this version's GitHub release.
+            mkdir -p assets
+            gh release download "v$v" --dir assets \
+              --pattern anymd-linux-x64-gnu.tar.gz \
+              --pattern anymd-linux-arm64-gnu.tar.gz
+            tar -xzf assets/anymd-linux-x64-gnu.tar.gz -C dist/amd64 anymd
+            tar -xzf assets/anymd-linux-arm64-gnu.tar.gz -C dist/arm64 anymd
+          else
             echo "no new release in this run; no image"
             echo "build=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          mkdir -p dist/amd64 dist/arm64
-          cp artifacts/native-linux-x64-gnu/anymd dist/amd64/
-          cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
+          test -s dist/amd64/anymd
+          test -s dist/arm64/anymd
+          chmod +x dist/amd64/anymd dist/arm64/anymd
+          dist/amd64/anymd version | grep -Fx "anymd $v"
           echo "build=true" >> "$GITHUB_OUTPUT"
           echo "version=$(jq -r .version packages/anymd/package.json)" >> "$GITHUB_OUTPUT"
 
