@@ -35,6 +35,8 @@ Read options:
                            (base.en, ~148 MB; ANYMD_WHISPER_MODEL_SIZE=tiny|base|small[.en])
       --images <mode>      refs (default): save images embedded in PDF/DOCX/PPTX/EPUB files to the
                            anymd cache and mark them in the Markdown; none: leave them out
+      --revisions <mode>   Word tracked changes and comments: markup (default) as CriticMarkup,
+                           accept or reject for the text with every change accepted or rejected
       --front-matter       Print the source/title/pages header (always on for several inputs)
 
 Search options:
@@ -88,6 +90,7 @@ struct Parsed {
     transcript: bool,
     download_whisper_model: bool,
     images: Option<String>,
+    revisions: Option<String>,
     front_matter: bool,
     mode: Option<String>,
     glob: Option<String>,
@@ -107,6 +110,7 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
         transcript: false,
         download_whisper_model: false,
         images: None,
+        revisions: None,
         front_matter: false,
         mode: None,
         glob: None,
@@ -147,6 +151,13 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
                     return Err("--images needs refs or none".to_string());
                 }
                 parsed.images = Some(mode);
+            }
+            "--revisions" => {
+                let mode = value(flag)?;
+                if anymd_formats::Revisions::parse(&mode).is_none() {
+                    return Err("--revisions needs markup, accept or reject".to_string());
+                }
+                parsed.revisions = Some(mode);
             }
             "--front-matter" => parsed.front_matter = true,
             "--mode" => parsed.mode = Some(value(flag)?),
@@ -279,6 +290,7 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
                 transcript: Some(parsed.transcript),
                 download_whisper_model: Some(parsed.download_whisper_model),
                 images: parsed.images.clone(),
+                revisions: parsed.revisions.clone(),
             };
             let render = ReadRender {
                 front_matter: parsed.front_matter || several,
@@ -365,6 +377,11 @@ mod tests {
         let parsed = parse(&args(&["a.docx", "--images", "none"])).unwrap();
         assert_eq!(parsed.images.as_deref(), Some("none"));
         assert!(parse(&args(&["a.docx", "--images=all"])).is_err());
+        let parsed = parse(&args(&["a.docx", "--revisions", "accept"])).unwrap();
+        assert_eq!(parsed.revisions.as_deref(), Some("accept"));
+        let parsed = parse(&args(&["a.docx", "--revisions=reject"])).unwrap();
+        assert_eq!(parsed.revisions.as_deref(), Some("reject"));
+        assert!(parse(&args(&["a.docx", "--revisions", "all"])).is_err());
         let parsed = parse(&args(&["talk.mp4", "--download-whisper-model"])).unwrap();
         assert!(parsed.download_whisper_model);
         assert_eq!(parsed.inputs, ["talk.mp4"]);
@@ -385,6 +402,7 @@ mod tests {
                 transcript: None,
                 download_whisper_model: None,
                 images: None,
+                revisions: None,
             },
             &SourceAccessPolicy::unrestricted(),
             &ReadRender {

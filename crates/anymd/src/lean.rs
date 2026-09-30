@@ -493,6 +493,7 @@ pub fn read_text(
             .wants_images()
             .then(anymd_formats::images::ImageStore::default_location)
             .flatten(),
+        revisions: args.revisions(),
     };
     let read = match Opened::open(source, policy, &options) {
         Ok(mut opened) => read_opened(&mut opened, selection, cursor, budget, cursor.is_none()),
@@ -807,6 +808,7 @@ fn load_search_docs(
         transcript: false,
         download_whisper_model: false,
         images: None,
+        revisions: anymd_formats::Revisions::default(),
     };
     let mut results: Vec<Option<Result<SearchDoc, String>>> =
         (0..files.len()).map(|_| None).collect();
@@ -1310,6 +1312,7 @@ mod tests {
             transcript: None,
             download_whisper_model: None,
             images: None,
+            revisions: None,
         };
         let text = text_of(&read(&args, &SourceAccessPolicy::unrestricted()).unwrap());
         assert!(text.contains("format: csv"), "{text}");
@@ -1328,6 +1331,7 @@ mod tests {
             transcript: None,
             download_whisper_model: None,
             images: None,
+            revisions: None,
         };
         let text = text_of(&read(&args, &SourceAccessPolicy::unrestricted()).unwrap());
         assert!(text.contains("readable_files: 3"), "{text}");

@@ -5,7 +5,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::critic::{self, Change, Critic, Mark};
 use crate::ooxml::{self, Blocks, Element, ListIndent, Media, Package, Rels};
-use crate::{markdown_table, ConvertError, Converted, Options, Section};
+use crate::revise;
+use crate::{markdown_table, ConvertError, Converted, Options, Revisions, Section};
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
     let mut package = Package::open(bytes, "DOCX")?;
@@ -13,6 +14,15 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     let document = package
         .xml(&main)?
         .ok_or_else(|| ooxml::invalid("DOCX has no word/document.xml part"))?;
+    let accept = match options.revisions {
+        Revisions::Markup => None,
+        Revisions::Accept => Some(true),
+        Revisions::Reject => Some(false),
+    };
+    let document = match accept {
+        Some(accept) => revise::resolve(&document, accept),
+        None => document,
+    };
     let rels = package.rels(&main)?;
 
     let part = |kind: &str, fallback: &str| {
@@ -41,15 +51,21 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         if let Ok(Some(root)) = package.xml(&part(kind, fallback)) {
             for note in root.children_named(name) {
                 if let Some(id) = note.attr("id") {
-                    notes.insert((name == "endnote", id.to_string()), note.clone());
+                    let note = match accept {
+                        Some(accept) => revise::resolve(note, accept),
+                        None => note.clone(),
+                    };
+                    notes.insert((name == "endnote", id.to_string()), note);
                 }
             }
         }
     }
+    // Accepting or rejecting the changes leaves comments out as well.
     let comments = package
         .xml(&part("/comments", "word/comments.xml"))
         .ok()
-        .flatten();
+        .flatten()
+        .filter(|_| accept.is_none());
     let (title, metadata) = ooxml::core_properties(&mut package);
 
     let media = Media::load(
@@ -73,6 +89,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         open_comments: Vec::new(),
         pending_notes: Vec::new(),
         in_comment: false,
+        plain: false,
     };
     if let Some(root) = &comments {
         writer.comments = root
@@ -90,6 +107,8 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         .filter_map(|r| r.attr("id"))
         .map(str::to_string)
         .collect();
+    writer.plain = !has_markup(&document, &writer.comments)
+        && !notes.values().any(|note| has_markup(note, &writer.comments));
     let body = document.child("body").unwrap_or(&document);
     let mut blocks = Blocks::new();
     let mut list = ListIndent::default();
@@ -359,6 +378,24 @@ struct Field {
     link: Option<String>,
 }
 
+/// Whether a part holds a tracked change, or a comment anchor for a comment
+/// that exists. Formatting-only changes (`w:rPrChange`...) do not count: they
+/// are not shown.
+fn has_markup(part: &Element, comments: &HashMap<String, Element>) -> bool {
+    part.elements().any(|child| {
+        let anchored = matches!(
+            child.local(),
+            "commentRangeStart" | "commentRangeEnd" | "commentReference"
+        ) && child.attr("id").is_some_and(|id| comments.contains_key(id));
+        anchored
+            || matches!(
+                child.local(),
+                "ins" | "del" | "moveTo" | "moveFrom" | "cellIns" | "cellDel"
+            )
+            || has_markup(child, comments)
+    })
+}
+
 /// A revision element (`w:ins`, `w:del`, `w:moveTo`, `w:moveFrom`) as a tracked
 /// change. Insertions and move destinations are insertions; deletions and move
 /// sources are deletions (the representation pandiff uses too).
@@ -452,6 +489,9 @@ struct Writer<'a> {
     /// changes keep their marks but not their author, and comment anchors are
     /// ignored.
     in_comment: bool,
+    /// No tracked change or comment anywhere: text is written as is, the way
+    /// it was before tracked changes were rendered.
+    plain: bool,
 }
 
 impl Writer<'_> {
@@ -621,7 +661,11 @@ impl Writer<'_> {
     /// Tracked changes around the paragraph and comment ranges still open from
     /// earlier paragraphs are opened again at its start.
     fn paragraph_inline(&mut self, p: &Element) -> (Critic, Vec<String>) {
-        let mut inline = Critic::default();
+        let mut inline = if self.plain {
+            Critic::plain()
+        } else {
+            Critic::default()
+        };
         let mut extra = Vec::new();
         let mut fields = Vec::new();
         let (bold, italic) = p
@@ -1963,8 +2007,15 @@ mod tests {
 
     #[test]
     fn delimiters_in_document_text_do_not_open_spans() {
+        // With a tracked change in the document, delimiter-like text is escaped.
+        let body = p("", &r("x {++ y ++} ~> z")) + &p("", &ins(&r("new")));
+        assert_eq!(
+            md(&docx(&body, &[])),
+            "x {\\++ y ++\\} ~\\> z\n\n{++new++}{>>Ana (2026-01-02T03:04:00Z)<<}\n"
+        );
+        // Without one, nothing is marked up, so the text is kept as is.
         let body = p("", &r("x {++ y ++} ~> z"));
-        assert_eq!(md(&docx(&body, &[])), "x {\\++ y ++\\} ~\\> z\n");
+        assert_eq!(md(&docx(&body, &[])), "x {++ y ++} ~> z\n");
     }
 
     #[test]
@@ -2425,6 +2476,140 @@ mod tests {
             )),
             "A{>>Ana: see[^1]<<}\n\nB{>>Ana: see[^1]<<}\n\n[^1]: source\n"
         );
+    }
+
+    fn resolved(bytes: &[u8], revisions: Revisions) -> String {
+        let options = Options {
+            revisions,
+            ..Options::default()
+        };
+        convert(bytes, &options).unwrap().sections[0]
+            .markdown
+            .clone()
+    }
+
+    #[test]
+    fn accept_and_reject_resolve_paragraphs_breaks_and_moves() {
+        let body = [
+            pm("", &["del"], &del(&r("Gone"))),
+            p("", &r("Next")),
+            p("", &format!("{}{}", ins(&r("New ")), r("text"))),
+            p("", &by("moveFrom", "Bo", "", &r("Moved away"))),
+            p("", &by("moveTo", "Bo", "", &r("Moved here"))),
+            pm("", &["ins"], &r("One")),
+            p("", &r("two")),
+        ]
+        .concat();
+        let bytes = docx(&body, &[]);
+        assert_eq!(
+            resolved(&bytes, Revisions::Accept),
+            "Next\n\nNew text\n\nMoved here\n\nOne\n\ntwo\n"
+        );
+        assert_eq!(
+            resolved(&bytes, Revisions::Reject),
+            "Gone\n\nNext\n\ntext\n\nMoved away\n\nOnetwo\n"
+        );
+    }
+
+    #[test]
+    fn a_joined_paragraph_takes_the_later_paragraphs_properties() {
+        // Word keeps paragraph properties on the mark that ends the paragraph,
+        // so deleting a break gives the joined text the second one's format.
+        let heading = r#"<w:p><w:pPr><w:outlineLvl w:val="0"/></w:pPr><w:r><w:t>Title</w:t></w:r></w:p>"#;
+        let body = format!("{}{heading}", pm("", &["del"], &r("Intro ")));
+        let bytes = docx(&body, &[]);
+        assert_eq!(resolved(&bytes, Revisions::Accept), "# Intro Title\n");
+        assert_eq!(resolved(&bytes, Revisions::Reject), "Intro\n\n# Title\n");
+    }
+
+    #[test]
+    fn accept_and_reject_resolve_rows_cells_and_nested_tables() {
+        let body = format!(
+            r#"<w:tbl><w:tr><w:tc>{}{}{}</w:tc><w:tc>{}</w:tc></w:tr><w:tr><w:trPr><w:ins/></w:trPr><w:tc><w:tbl><w:tr><w:trPr><w:del/></w:trPr><w:tc>{}</w:tc><w:tc><w:tcPr><w:cellDel/></w:tcPr>{}</w:tc></w:tr></w:tbl></w:tc><w:tc>{}</w:tc></w:tr><w:tr><w:tc>{}</w:tc><w:tc><w:tcPr><w:cellDel/></w:tcPr>{}</w:tc><w:tc><w:tcPr><w:cellIns/></w:tcPr>{}</w:tc></w:tr></w:tbl>"#,
+            pm("", &["del"], &r("a")),
+            pm("", &["ins"], &r("b")),
+            pm("", &["del"], &r("c")),
+            ins(&p("", &r("block ins"))),
+            p("", &r("n1")),
+            p("", &r("n2")),
+            del(&p("", &r("wrapped"))),
+            p("", &r("x")),
+            p("", &r("gone")),
+            p("", &r("added")),
+        );
+        let bytes = docx(&body, &[]);
+        assert_eq!(
+            resolved(&bytes, Revisions::Accept),
+            "|ab<br>c|block ins|\n|-|-|\n|x|added|\n"
+        );
+        assert_eq!(
+            resolved(&bytes, Revisions::Reject),
+            "|a<br>bc||\n|-|-|\n|x|gone|\n"
+        );
+    }
+
+    #[test]
+    fn accept_and_reject_resolve_text_boxes_and_footnotes() {
+        let body = [
+            p("", &del(&text_box(&p("", &r("Deleted box"))))),
+            p(
+                "",
+                &format!(
+                    "{}{}{}",
+                    r("Keep"),
+                    ins(&text_box(&p("", &r("Added box")))),
+                    r#"<w:r><w:footnoteReference w:id="2"/></w:r>"#
+                ),
+            ),
+        ]
+        .concat();
+        let footnotes = format!(
+            r#"<w:footnotes {W}><w:footnote w:id="2">{}{}</w:footnote></w:footnotes>"#,
+            pm(
+                "",
+                &["del"],
+                &format!("{}{}", r("Source"), ins(&r(" updated")))
+            ),
+            p("", &r("page 4")),
+        );
+        let bytes = docx(&body, &[("word/footnotes.xml", &footnotes)]);
+        assert_eq!(
+            resolved(&bytes, Revisions::Accept),
+            "Keep[^1]\n\nAdded box\n\n[^1]: Source updatedpage 4\n"
+        );
+        assert_eq!(
+            resolved(&bytes, Revisions::Reject),
+            "Deleted box\n\nKeep[^1]\n\n[^1]: Source page 4\n"
+        );
+    }
+
+    #[test]
+    fn reject_restores_formatting_that_a_tracked_change_replaced() {
+        let run = r#"<w:r><w:rPr><w:b/><w:rPrChange w:id="1" w:author="Ana"><w:rPr><w:i/></w:rPr></w:rPrChange></w:rPr><w:t>styled</w:t></w:r>"#;
+        let bytes = docx(&p("", run), &[]);
+        // A formatting change alone is not shown as markup.
+        assert_eq!(md(&bytes), "**styled**\n");
+        assert_eq!(resolved(&bytes, Revisions::Accept), "**styled**\n");
+        assert_eq!(resolved(&bytes, Revisions::Reject), "_styled_\n");
+    }
+
+    #[test]
+    fn accept_and_reject_leave_comments_out() {
+        let body = p(
+            "",
+            &format!(
+                "{}{}{}{}",
+                start("1"),
+                r("noted"),
+                end("1"),
+                reference("1")
+            ),
+        );
+        let xml = comments(&[("1", "Ana", "", &p("", &r("why?")))]);
+        let bytes = docx(&body, &[("word/comments.xml", &xml)]);
+        assert!(md(&bytes).contains("{==noted==}"), "{}", md(&bytes));
+        assert_eq!(resolved(&bytes, Revisions::Accept), "noted\n");
+        assert_eq!(resolved(&bytes, Revisions::Reject), "noted\n");
     }
 
     #[test]
