@@ -6,7 +6,7 @@
     "engineMode": "typescript-3.0.14",
     "forbiddenAsDefault": ["pure-rust as npm latest", "Linux-only ELF as cross-platform drop-in"]
   },
-  "requiredTools": ["read", "search", "inspect"],
+  "requiredTools": ["read", "search", "inspect", "outline"],
   "readPdfOptionSmoke": [
     { "id": "meta-pages", "args": { "include_metadata": true, "include_page_count": true } },
     { "id": "full-text", "args": { "include_full_text": true, "include_page_count": true } },

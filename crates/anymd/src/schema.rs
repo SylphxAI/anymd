@@ -133,9 +133,13 @@ pub struct ReadPdfArgs {
         description = "Legacy preset switch. true selects balanced (fast plus safety, trust, and accessibility) when profile and auto_detail are omitted. Omit it to use fast. false keeps manual control. auto_detail wins over profile. Never enables OCR."
     )]
     pub auto: Option<bool>,
-    #[schemars(description = "Depth switch that wins over profile: fast, balanced, or full. full adds structure and audits. Never enables OCR or rendering.")]
+    #[schemars(
+        description = "Depth switch that wins over profile: fast, balanced, or full. full adds structure and audits. Never enables OCR or rendering."
+    )]
     pub auto_detail: Option<ReadPdfAutoDetail>,
-    #[schemars(description = "Named preset: fast (default), quality (structure, no audits, no OCR), or research (quality plus safety, trust, and accessibility). Ignored when auto is false or any include_* flag is set.")]
+    #[schemars(
+        description = "Named preset: fast (default), quality (structure, no audits, no OCR), or research (quality plus safety, trust, and accessibility). Ignored when auto is false or any include_* flag is set."
+    )]
     pub profile: Option<String>,
     #[schemars(
         range(min = 1, max = 20),
@@ -188,9 +192,15 @@ impl ReadPdfArgs {
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct ComparePdfArgs {
-    #[schemars(length(min = 1), description = "Local PDF path for the before document.")]
+    #[schemars(
+        length(min = 1),
+        description = "Local PDF path for the before document."
+    )]
     pub before: String,
-    #[schemars(length(min = 1), description = "Local PDF path for the after document.")]
+    #[schemars(
+        length(min = 1),
+        description = "Local PDF path for the after document."
+    )]
     pub after: String,
     #[schemars(range(min = 1))]
     pub max_file_bytes: Option<u64>,
@@ -567,6 +577,8 @@ pub struct ReadArgs {
         description = "File path, http(s) URL, or directory. PDF, DOCX, PPTX, XLSX/XLS/ODS, CSV/TSV, EPUB, HTML, Markdown/text, images, audio/video, SRT/VTT. A directory returns the list of readable files."
     )]
     pub source: String,
+    /// Read a section id returned by outline; repeat node with a continuation cursor.
+    pub node: Option<String>,
     #[schemars(
         description = "Pages (PDF), slides, sheets, or chapters to read, e.g. \"1-5,8\". Default: all."
     )]
@@ -651,15 +663,23 @@ pub struct SearchArgs {
         description = "auto (default): exact phrase, falling back to ranked passages when nothing matches. literal: exact phrase only. ranked: BM25 over the query words."
     )]
     pub mode: Option<String>,
-    #[schemars(description = "Only search files matching this glob inside directories, e.g. \"*.pdf\" or \"reports/**\".")]
+    #[schemars(
+        description = "Only search files matching this glob inside directories, e.g. \"*.pdf\" or \"reports/**\"."
+    )]
     pub glob: Option<String>,
     #[schemars(schema_with = "option_bool_schema")]
     pub case_sensitive: Option<bool>,
     #[schemars(schema_with = "option_bool_schema")]
     pub whole_word: Option<bool>,
-    #[schemars(range(min = 1, max = 500), description = "Maximum hits to return (default 20).")]
+    #[schemars(
+        range(min = 1, max = 500),
+        description = "Maximum hits to return (default 20)."
+    )]
     pub max_results: Option<u32>,
-    #[schemars(range(min = 0, max = 1000), description = "Snippet context characters on each side (default 80).")]
+    #[schemars(
+        range(min = 0, max = 1000),
+        description = "Snippet context characters on each side (default 80)."
+    )]
     pub context_chars: Option<u32>,
 }
 
@@ -699,7 +719,9 @@ pub enum InspectOperation {
 pub struct InspectArgs {
     pub operation: InspectOperation,
     pub sources: Vec<PdfEvidenceSource>,
-    #[schemars(description = "structure only: fast (default), quality, or research (adds safety, trust, accessibility).")]
+    #[schemars(
+        description = "structure only: fast (default), quality, or research (adds safety, trust, accessibility)."
+    )]
     pub profile: Option<String>,
     #[schemars(range(min = 1, max = 20))]
     pub sample_pages: Option<u32>,
@@ -718,4 +740,13 @@ pub struct InspectArgs {
     #[schemars(range(min = 1_000, max = 1_000_000))]
     pub max_output_chars: Option<u32>,
     pub languages: Option<Vec<String>>,
+}
+
+/// Navigate a document without a model or vector index.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+pub struct OutlineArgs {
+    /// File path or http(s) URL.
+    pub source: String,
+    /// json (default) or tree.
+    pub format: Option<String>,
 }

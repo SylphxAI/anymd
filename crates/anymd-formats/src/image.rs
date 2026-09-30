@@ -90,6 +90,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     }
 
     Ok(Converted {
+        outline: Vec::new(),
         format: "image".into(),
         title: None,
         sections: vec![Section {

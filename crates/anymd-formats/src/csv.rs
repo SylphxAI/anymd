@@ -32,6 +32,7 @@ pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Conver
         }
     }
     Ok(Converted {
+        outline: Vec::new(),
         format: if delimiter == b'\t' { "tsv" } else { "csv" }.into(),
         title: None,
         sections: vec![Section {

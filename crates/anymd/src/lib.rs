@@ -6,6 +6,7 @@ pub mod evidence;
 pub mod http_transport;
 pub mod lean;
 mod ocr_evidence;
+pub mod outline;
 mod page_selection;
 pub mod pdf_compare;
 pub mod pdf_evidence;
@@ -33,8 +34,8 @@ use rmcp::{
 };
 
 use crate::schema::{
-    ComparePdfArgs, InspectArgs, InspectOperation, PdfEvidenceArgs, PdfEvidenceOperation, ReadArgs,
-    ReadPdfArgs, SearchArgs, SearchPdfArgs,
+    ComparePdfArgs, InspectArgs, InspectOperation, OutlineArgs, PdfEvidenceArgs,
+    PdfEvidenceOperation, ReadArgs, ReadPdfArgs, SearchArgs, SearchPdfArgs,
 };
 use crate::source_access::SourceAccessPolicy;
 use serde_json::Value;
@@ -46,7 +47,7 @@ pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
     "Local document reader for agents. read turns any file, URL, or directory listing into clean \
 Markdown (PDF, Office, EPUB, HTML, CSV, images, media) with page/slide/sheet markers and a cursor \
-for long documents. search finds text across files and directories with page locators. inspect \
+for long documents. outline returns a document tree; read node fetches a section. search finds text across files and directories with page locators and node title paths. inspect \
 renders, crops, OCRs, diffs, or returns structured JSON for PDFs. No cloud API key is required.";
 
 fn omit_absent_optional_fields(value: Value) -> Value {
@@ -183,7 +184,9 @@ impl PdfReaderMcp {
         let policy = self.source_access.clone();
         tokio::task::spawn_blocking(move || lean::read(&args, &policy))
             .await
-            .map_err(|error| ErrorData::internal_error(format!("read worker failed: {error}"), None))?
+            .map_err(|error| {
+                ErrorData::internal_error(format!("read worker failed: {error}"), None)
+            })?
     }
 
     #[tool(
@@ -198,7 +201,24 @@ impl PdfReaderMcp {
         let policy = self.source_access.clone();
         tokio::task::spawn_blocking(move || lean::search(&args, &policy))
             .await
-            .map_err(|error| ErrorData::internal_error(format!("search worker failed: {error}"), None))?
+            .map_err(|error| {
+                ErrorData::internal_error(format!("search worker failed: {error}"), None)
+            })?
+    }
+
+    #[tool(
+        description = "Return a document heading tree with stable node ids, title paths, page/slide/chapter ranges and Markdown byte ranges. PDF bookmarks or detected headings, Word headings, PowerPoint slides, EPUB chapters and headings, HTML and Markdown. format json (default) or tree. Pass a node id to read to fetch that section."
+    )]
+    pub async fn outline(
+        &self,
+        Parameters(args): Parameters<OutlineArgs>,
+    ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        let policy = self.source_access.clone();
+        tokio::task::spawn_blocking(move || outline::tool(&args, &policy))
+            .await
+            .map_err(|error| {
+                ErrorData::internal_error(format!("outline worker failed: {error}"), None)
+            })?
     }
 
     #[tool(
@@ -254,7 +274,8 @@ impl PdfReaderMcp {
         &self,
         Parameters(args): Parameters<ComparePdfArgs>,
     ) -> Result<rmcp::model::CallToolResult, ErrorData> {
-        args.validate().map_err(|message| ErrorData::invalid_params(message, None))?;
+        args.validate()
+            .map_err(|message| ErrorData::invalid_params(message, None))?;
         let value = serde_json::to_value(args).map_err(|error| {
             ErrorData::invalid_params(format!("Failed to encode pdf_compare args: {error}"), None)
         })?;
@@ -340,12 +361,18 @@ fn legacy_args<T: serde::de::DeserializeOwned>(
 ) -> Result<T, ErrorData> {
     let value = Value::Object(request.arguments.clone().unwrap_or_default());
     serde_json::from_value(value).map_err(|error| {
-        ErrorData::invalid_params(format!("Invalid arguments for {}: {error}", request.name), None)
+        ErrorData::invalid_params(
+            format!("Invalid arguments for {}: {error}", request.name),
+            None,
+        )
     })
 }
 
 impl PdfReaderMcp {
-    async fn run_inspect(&self, args: InspectArgs) -> Result<rmcp::model::CallToolResult, ErrorData> {
+    async fn run_inspect(
+        &self,
+        args: InspectArgs,
+    ) -> Result<rmcp::model::CallToolResult, ErrorData> {
         match args.operation {
             InspectOperation::Compare => {
                 let paths: Vec<String> = args
@@ -383,7 +410,11 @@ impl PdfReaderMcp {
                         None,
                     ));
                 }
-                let sources: Vec<_> = args.sources.iter().map(|source| source.as_pdf_source()).collect();
+                let sources: Vec<_> = args
+                    .sources
+                    .iter()
+                    .map(|source| source.as_pdf_source())
+                    .collect();
                 let mut result = self
                     .read_pdf(Parameters(ReadPdfArgs {
                         sources: sources.clone(),
@@ -531,19 +562,24 @@ impl ServerHandler for PdfReaderMcp {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_standard_schema_format, sanitize_schema_formats, sanitized_tools, PdfReaderMcp};
+    use super::{
+        is_standard_schema_format, sanitize_schema_formats, sanitized_tools, PdfReaderMcp,
+    };
     use rmcp::handler::server::wrapper::Parameters;
     use serde_json::Value;
     use std::path::PathBuf;
 
     #[test]
-    fn exposes_three_obvious_tools_and_keeps_legacy_names_callable() {
+    fn exposes_four_obvious_tools_and_keeps_legacy_names_callable() {
         let tools = PdfReaderMcp::new().tool_router.list_all();
         let mut names: Vec<_> = tools.iter().map(|tool| tool.name.to_string()).collect();
         names.sort();
-        assert_eq!(names, ["inspect", "read", "search"]);
+        assert_eq!(names, ["inspect", "outline", "read", "search"]);
         for legacy in super::LEGACY_TOOL_NAMES {
-            assert!(!names.contains(&legacy.to_string()), "{legacy} must not be listed");
+            assert!(
+                !names.contains(&legacy.to_string()),
+                "{legacy} must not be listed"
+            );
         }
     }
 
@@ -563,13 +599,18 @@ mod tests {
                 .and_then(|v| v.as_object())
                 .expect("properties object");
             let required: &[&str] = match tool.name.as_ref() {
-                "read" => &["source", "pages", "max_tokens", "cursor"],
+                "read" => &["source", "pages", "max_tokens", "cursor", "node"],
+                "outline" => &["source", "format"],
                 "search" => &["query", "sources", "mode"],
                 "inspect" => &["operation", "sources"],
                 other => panic!("unexpected tool {other}"),
             };
             for key in required {
-                assert!(props.contains_key(*key), "tool {} must document {key}", tool.name);
+                assert!(
+                    props.contains_key(*key),
+                    "tool {} must document {key}",
+                    tool.name
+                );
             }
         }
     }
@@ -810,7 +851,10 @@ mod tests {
             .read_pdf(Parameters(read))
             .await
             .expect("read_pdf must complete on an inline-image PDF");
-        assert!(!result.content.is_empty(), "expected a structured read_pdf result");
+        assert!(
+            !result.content.is_empty(),
+            "expected a structured read_pdf result"
+        );
     }
 
     #[tokio::test]

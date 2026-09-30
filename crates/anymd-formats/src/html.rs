@@ -40,6 +40,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         metadata.push(("published".to_string(), published));
     }
     Ok(Converted {
+        outline: Vec::new(),
         format: "html".into(),
         title: head.title,
         sections: vec![Section {

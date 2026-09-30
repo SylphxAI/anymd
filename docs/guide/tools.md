@@ -1,12 +1,47 @@
 # MCP tools
 
-anymd exposes three tools.
+anymd exposes four tools.
 
 | Tool | Use it to |
 |---|---|
+| [`outline`](#outline) | Navigate a heading tree, without a model or API key |
 | [`read`](#read) | Turn a file, URL, or folder into Markdown |
 | [`search`](#search) | Find text across files, folders, and URLs |
 | [`inspect`](#inspect) | Go deeper on a PDF: render pages, crop regions, OCR, JSON structure, compare |
+
+## outline
+
+Get the document tree before reading a long document. PDF uses bookmarks when
+present, otherwise the headings detected by the layout engine. Word uses headings,
+PowerPoint uses slides, EPUB uses its EPUB 3 TOC or EPUB 2 NCX (chapters and headings
+when neither is present), and HTML and Markdown use headings. A document with no
+headings gets unit nodes. No model, vector database, or API key is needed.
+
+| Argument | Type | Default | Description |
+|---|---|---|---|
+| `source` | string | required | File path or `http(s)` URL |
+| `format` | `"json"` \| `"tree"` | `"json"` | Machine-readable preorder nodes or an indented tree |
+
+```json
+{ "source": "report.pdf", "format": "tree" }
+```
+
+Each node has `id`, `title`, `level`, `from`, `to`, `start`, `end`, `children`, and
+`path`. `from` and `to` are inclusive 1-based units: pages, slides, sheets or chapters.
+`start` and `end` are a half-open **UTF-8 byte** range in the canonical Markdown
+body (not front matter): each unit's trimmed Markdown followed by two newlines,
+with `<!-- unit label -->` and two newlines before it for PDF or multi-unit files.
+The canonical body leaves embedded images out and uses default Word revision markup.
+`children` counts immediate children; nodes are in preorder and `level` gives
+heading depth. `n1` is the document root; children are `n1.1`, `n1.1.1`, and so on.
+IDs are deterministic for an unchanged document and extraction options, not durable
+identifiers across edits. A PDF bookmark resolves to its page, so bookmarks sharing
+a page can overlap. TOCs may omit sections; text outside a section belongs to the
+nearest containing node, including the root.
+
+Read a node with `{ "source": "report.pdf", "node": "n1.2" }`. If it stops, repeat
+both `source` and `node` with the returned `cursor`. `pages` intersects the node's
+unit range. Search hits include a node id and title path for this same navigation.
 
 ## read
 
@@ -15,6 +50,7 @@ Any file, URL, or directory → Markdown.
 | Argument | Type | Default | Description |
 |---|---|---|---|
 | `source` | string | required | File path, `http(s)` URL, or directory. A directory returns the list of readable files. |
+| `node` | string | – | Read the section id from `outline`; includes child sections. Unknown ids return an error. |
 | `pages` | string | all | Pages (PDF), slides, sheets, or chapters, e.g. `"1-5,8"` |
 | `max_tokens` | number ≥ 500 | `20000` | Token budget. Longer documents stop at a page/slide/chapter boundary and end with a cursor. |
 | `cursor` | string | – | Continue a previous read with the cursor from its last line |

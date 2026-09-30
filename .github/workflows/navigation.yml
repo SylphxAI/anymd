@@ -1,0 +1,59 @@
+name: Navigation regression
+
+on:
+  pull_request:
+    paths:
+      - 'crates/anymd/src/outline.rs'
+      - 'test/production/outline.contract.test.ts'
+      - 'scripts/check-navigation-regression.py'
+      - '.github/workflows/navigation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: navigation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: Default read and AgentDocBench parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build changed binary
+        run: |
+          cargo build --release --locked -p anymd
+          cp target/release/anymd "${RUNNER_TEMP}/anymd-new"
+      - name: Build base binary on the same runner
+        run: |
+          mkdir "${RUNNER_TEMP}/anymd-base"
+          git archive "$BASE_SHA" | tar -x -C "${RUNNER_TEMP}/anymd-base"
+          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" cargo build --release --locked -p anymd --manifest-path "${RUNNER_TEMP}/anymd-base/Cargo.toml"
+          cp target/release/anymd "${RUNNER_TEMP}/anymd-before"
+      - name: Fetch pinned AgentDocBench corpus
+        run: python3 bench/fetch.py "${RUNNER_TEMP}/navigation-corpus"
+      - name: Check default output byte parity on every benchmark document
+        run: |
+          python3 scripts/check-navigation-regression.py --before "${RUNNER_TEMP}/anymd-before" --after "${RUNNER_TEMP}/anymd-new" --corpus "${RUNNER_TEMP}/navigation-corpus" --report "${RUNNER_TEMP}/navigation-parity.json"
+      - name: Read back a real corpus PDF outline
+        run: |
+          "${RUNNER_TEMP}/anymd-new" outline "${RUNNER_TEMP}/navigation-corpus/fed-h8.pdf" > "${RUNNER_TEMP}/outline-example.txt"
+          "${RUNNER_TEMP}/anymd-new" outline "${RUNNER_TEMP}/navigation-corpus/fed-h8.pdf" --format json > "${RUNNER_TEMP}/outline-example.json"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: navigation-evidence
+          path: |
+            ${{ runner.temp }}/anymd-new
+            ${{ runner.temp }}/navigation-parity.json
+            ${{ runner.temp }}/outline-example.txt
+            ${{ runner.temp }}/outline-example.json
+          retention-days: 3

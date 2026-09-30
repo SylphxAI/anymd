@@ -9,6 +9,9 @@ use crate::schema::{ReadArgs, SearchArgs};
 use crate::source_access::SourceAccessPolicy;
 
 pub const USAGE: &str = "\
+anymd outline <file> [--format tree|json]
+anymd <file> --node <id>
+
 anymd — any file → clean Markdown for AI agents
 
 Usage:
@@ -81,6 +84,8 @@ pub fn mode(arguments: &[String]) -> Mode {
 }
 
 struct Parsed {
+    node: Option<String>,
+    format: Option<String>,
     inputs: Vec<String>,
     pages: Option<String>,
     output: Option<String>,
@@ -101,6 +106,8 @@ struct Parsed {
 
 fn parse(arguments: &[String]) -> Result<Parsed, String> {
     let mut parsed = Parsed {
+        node: None,
+        format: None,
         inputs: Vec::new(),
         pages: None,
         output: None,
@@ -140,6 +147,9 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
                         .map_err(|_| "--max-tokens needs a number".to_string())?,
                 )
             }
+            "--node" => parsed.node = Some(value(flag)?),
+            "--format" => parsed.format = Some(value(flag)?),
+            "--json" => parsed.format = Some("json".into()),
             "--cursor" => parsed.cursor = Some(value(flag)?),
             "--ocr" => parsed.ocr = Some(true),
             "--no-ocr" => parsed.ocr = Some(false),
@@ -221,8 +231,9 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
         println!("anymd {}", crate::SERVER_VERSION);
         return 0;
     }
+    let is_outline = arguments.first().map(String::as_str) == Some("outline");
     let is_search = arguments.first().map(String::as_str) == Some("search");
-    let parsed = match parse(if is_search {
+    let parsed = match parse(if is_search || is_outline {
         &arguments[1..]
     } else {
         &arguments[..]
@@ -233,7 +244,23 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             return 2;
         }
     };
-    let (text, failed) = if is_search {
+    let (text, failed) = if is_outline {
+        if parsed.inputs.len() != 1 {
+            eprintln!("anymd: outline needs one file or URL");
+            return 2;
+        }
+        let args = crate::schema::OutlineArgs {
+            source: parsed.inputs[0].clone(),
+            format: parsed.format.clone().or(Some("tree".into())),
+        };
+        match crate::outline::render(&args, policy) {
+            Ok(text) => (text, false),
+            Err(message) => {
+                eprintln!("anymd: {message}");
+                return 2;
+            }
+        }
+    } else if is_search {
         let Some((query, sources)) = parsed.inputs.split_first() else {
             eprintln!("anymd: search needs a query");
             return 2;
@@ -283,6 +310,7 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             };
             let args = ReadArgs {
                 source,
+                node: parsed.node.clone(),
                 pages: parsed.pages.clone(),
                 max_tokens: parsed.max_tokens,
                 cursor: parsed.cursor.clone(),
@@ -395,6 +423,7 @@ mod tests {
         let (text, failed) = read_text(
             &ReadArgs {
                 source: path.display().to_string(),
+                node: None,
                 pages: None,
                 max_tokens: None,
                 cursor: None,

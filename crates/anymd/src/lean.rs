@@ -247,7 +247,23 @@ fn read_opened(
     cursor: Option<Cursor>,
     budget: usize,
     first_call: bool,
+    node_id: Option<&str>,
 ) -> SourceRead {
+    let navigation = match node_id {
+        Some(id) => match crate::outline::Outline::build(opened) {
+            Ok(outline) => match outline.nodes.iter().position(|n| n.id == id) {
+                Some(index) => Some((outline, index)),
+                None => {
+                    return failed(
+                        &opened.label,
+                        format!("Unknown node {id}; call outline for this source."),
+                    )
+                }
+            },
+            Err(message) => return failed(&opened.label, message),
+        },
+        None => None,
+    };
     let total = opened.total;
     let mut wanted: Vec<u32> = match selection {
         Some(pages) => pages
@@ -256,6 +272,10 @@ fn read_opened(
             .collect(),
         None => (1..=total).collect(),
     };
+    if let Some((outline, index)) = &navigation {
+        let node = &outline.nodes[*index];
+        wanted.retain(|page| *page >= node.from && *page <= node.to);
+    }
     if let Some(cursor) = cursor {
         wanted.retain(|page| *page >= cursor.page);
     }
@@ -294,16 +314,34 @@ fn read_opened(
         };
         opened.title_from_units(&units);
         for unit in units {
+            let (clip_start, clip_end) = if let Some((outline, index)) = &navigation {
+                let node = &outline.nodes[*index];
+                let Some(range) = outline.units.iter().find(|r| r.number == unit.number) else {
+                    continue;
+                };
+                let start = node.start.max(range.start);
+                let end = node.end.min(range.end);
+                if start >= end {
+                    continue;
+                }
+                (
+                    range.offset + start - range.start,
+                    range.offset + end - range.start,
+                )
+            } else {
+                (0, unit.markdown.len())
+            };
             let mut skip = match cursor {
                 Some(cursor) if cursor.page == unit.number => {
                     cursor.offset.min(unit.markdown.len())
                 }
                 _ => 0,
             };
+            skip = skip.max(clip_start).min(clip_end);
             while !unit.markdown.is_char_boundary(skip) {
                 skip -= 1;
             }
-            let content = unit.markdown[skip..].trim_start();
+            let content = unit.markdown[skip..clip_end].trim_start();
             visible += content.chars().filter(|c| c.is_alphanumeric()).count();
             let marker = match (markers, skip > 0) {
                 (false, false) => String::new(),
@@ -322,7 +360,7 @@ fn read_opened(
                     body.push_str(content[..cut].trim_end());
                     body.push_str("\n\n");
                     shown.push(unit.number);
-                    let consumed = unit.markdown.len() - content.len() + cut;
+                    let consumed = clip_end - content.len() + cut;
                     if cut < content.len() {
                         next = Some(Cursor {
                             page: unit.number,
@@ -377,7 +415,7 @@ fn read_opened(
 Install `tesseract` for automatic OCR, or pass ocr: true. -->\n\n",
         );
     }
-    if next.is_some() && first_call {
+    if next.is_some() && first_call && navigation.is_none() && opened.format == "pdf" {
         let entries: Vec<String> = opened
             .outline()
             .iter()
@@ -496,7 +534,14 @@ pub fn read_text(
         revisions: args.revisions(),
     };
     let read = match Opened::open(source, policy, &options) {
-        Ok(mut opened) => read_opened(&mut opened, selection, cursor, budget, cursor.is_none()),
+        Ok(mut opened) => read_opened(
+            &mut opened,
+            selection,
+            cursor,
+            budget,
+            cursor.is_none(),
+            args.node.as_deref(),
+        ),
         Err(message) => failed(source, message),
     };
     let mut out = if render.front_matter || read.error.is_some() {
@@ -627,7 +672,14 @@ fn pdf_source_read(
         Err(message) => return failed(&label, message),
     };
     match Opened::open(&label, policy, &OpenOptions::default()) {
-        Ok(mut opened) => read_opened(&mut opened, selection, cursor, budget, cursor.is_none()),
+        Ok(mut opened) => read_opened(
+            &mut opened,
+            selection,
+            cursor,
+            budget,
+            cursor.is_none(),
+            None,
+        ),
         Err(message) => failed(&label, message),
     }
 }
@@ -727,6 +779,7 @@ struct SearchDoc {
     noun: &'static str,
     total: u32,
     units: std::sync::Arc<Vec<Unit>>,
+    outline: crate::outline::Outline,
 }
 
 fn locator(doc: &SearchDoc, unit: &Unit) -> String {
@@ -825,11 +878,14 @@ fn load_search_docs(
                         .step_by(workers)
                         .map(|(index, (label, spec))| {
                             let doc = Opened::open(spec, policy, options).and_then(|opened| {
+                                let units = opened.all_units()?;
+                                let outline = crate::outline::Outline::from_units(&opened, &units);
                                 Ok(SearchDoc {
                                     label: label.clone(),
                                     noun: opened.unit_noun,
                                     total: opened.total,
-                                    units: opened.all_units()?,
+                                    units,
+                                    outline,
                                 })
                             });
                             (index, doc)
@@ -886,6 +942,17 @@ struct Hit<'a> {
     doc: &'a SearchDoc,
     unit: &'a Unit,
     snippet: String,
+    offset: usize,
+}
+
+fn hit_locator(hit: &Hit<'_>) -> String {
+    let node = hit.doc.outline.node_at(hit.unit.number, hit.offset);
+    format!(
+        "{} [node {}; {}]",
+        locator(hit.doc, hit.unit),
+        node.id,
+        node.path
+    )
 }
 
 fn literal_hits<'a>(
@@ -928,6 +995,7 @@ fn literal_hits<'a>(
                         doc,
                         unit,
                         snippet: snippet(&unit.markdown, s, e, context, &[(s, e)]),
+                        offset: s,
                     });
                 }
             }
@@ -1029,6 +1097,7 @@ fn ranked_hits<'a>(
                     doc,
                     unit,
                     snippet: snippet(&unit.markdown, start, end, context, &highlights),
+                    offset: start,
                 },
             )
         })
@@ -1096,7 +1165,7 @@ fn run_search(
                     out.push_str(&format!("\n### {} ({count})\n", doc.label));
                 }
                 for hit in hits.iter().take(options.max_results - shown) {
-                    let loc = locator(hit.doc, hit.unit);
+                    let loc = hit_locator(hit);
                     let loc = loc.trim_start();
                     if loc.is_empty() {
                         out.push_str(&format!("- {}\n", hit.snippet));
@@ -1129,7 +1198,7 @@ fn run_search(
                 } else {
                     format!("{} ", hit.doc.label)
                 };
-                let loc = locator(hit.doc, hit.unit);
+                let loc = hit_locator(hit);
                 out.push_str(&format!(
                     "{}. {}{} (score {:.1}): {}\n",
                     rank + 1,
@@ -1306,6 +1375,7 @@ mod tests {
         let args = ReadArgs {
             source: dir.path().join("prices.csv").display().to_string(),
             pages: None,
+            node: None,
             max_tokens: None,
             cursor: None,
             ocr: None,
@@ -1325,6 +1395,7 @@ mod tests {
         let args = ReadArgs {
             source: dir.path().display().to_string(),
             pages: None,
+            node: None,
             max_tokens: None,
             cursor: None,
             ocr: None,

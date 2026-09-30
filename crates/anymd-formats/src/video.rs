@@ -189,6 +189,7 @@ fn basic(container: &str, size: u64, path: Option<&Path>, note: &str) -> Convert
     }];
     sections.extend(sidecar_sections(path));
     Converted {
+        outline: Vec::new(),
         format: "video".into(),
         title: None,
         sections,
@@ -357,6 +358,7 @@ fn render_probe(
     }];
     sections.extend(extra_sections);
     Converted {
+        outline: Vec::new(),
         format: "video".into(),
         title: tag("title"),
         sections,

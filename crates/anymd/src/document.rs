@@ -67,6 +67,7 @@ pub struct Opened {
     pub metadata: Vec<(String, String)>,
     options: OpenOptions,
     body: Body,
+    native_outline: Vec<(usize, String, Option<u32>)>,
 }
 
 /// A source spec is a URL when it starts with http:// or https://.
@@ -140,6 +141,7 @@ type CacheKey = (
 
 struct CachedDoc {
     format: &'static str,
+    native_outline: Vec<(usize, String, Option<u32>)>,
     title: Option<String>,
     metadata: Vec<(String, String)>,
     units: Arc<Vec<Unit>>,
@@ -304,6 +306,7 @@ impl Opened {
                 key,
                 Arc::new(CachedDoc {
                     format: opened.format,
+                    native_outline: opened.native_outline.clone(),
                     title: opened.title.clone(),
                     metadata: opened.metadata.clone(),
                     units: units.clone(),
@@ -370,6 +373,7 @@ impl Opened {
             total,
             metadata: Vec::new(),
             options: options.clone(),
+            native_outline: Vec::new(),
             body: Body::Pdf {
                 doc: Box::new(doc),
                 bytes,
@@ -405,6 +409,7 @@ impl Opened {
             total: units.len() as u32,
             metadata: converted.metadata,
             options: options.clone(),
+            native_outline: converted.outline,
             body: Body::Units(Arc::new(units)),
         }
     }
@@ -419,6 +424,7 @@ impl Opened {
             total: cached.units.len() as u32,
             metadata: cached.metadata.clone(),
             options: options.clone(),
+            native_outline: cached.native_outline.clone(),
             body: Body::Units(cached.units.clone()),
         }
     }
@@ -432,7 +438,7 @@ impl Opened {
     pub fn outline(&self) -> Vec<(usize, String, Option<u32>)> {
         match &self.body {
             Body::Pdf { doc, .. } => markdown_layout::outline(doc),
-            Body::Units(_) => Vec::new(),
+            Body::Units(_) => self.native_outline.clone(),
         }
     }
 
@@ -522,6 +528,7 @@ impl Opened {
                         key,
                         Arc::new(CachedDoc {
                             format: "pdf",
+                            native_outline: Vec::new(),
                             title: self.title.clone(),
                             metadata: Vec::new(),
                             units: units.clone(),
