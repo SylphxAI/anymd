@@ -1,0 +1,15 @@
+Tables and text boxes
+Merged 
+C
+Line one
+
+line two
+Para
+
+noted
+in 
+gone
+
+all deleted
+A paragraph with a text box  inside.
+A deleted text boxgone and after.

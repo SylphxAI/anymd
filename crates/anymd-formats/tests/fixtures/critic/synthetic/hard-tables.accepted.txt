@@ -1,0 +1,14 @@
+Tables and text boxes
+Merged header
+C
+Line one
+line two
+Para
+Added para
+noted
+in nested
+
+
+
+A paragraph with a text box  inside.
+A deleted text box and after.

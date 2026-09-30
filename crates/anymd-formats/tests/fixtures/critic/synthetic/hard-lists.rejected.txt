@@ -1,0 +1,12 @@
+Lists
+Before the list.
+First item
+Second item
+
+Nested 
+Nested deleted itemNested kept
+Third old item
+ fourth item
+After the list.
+Bullet one
+Bullet 

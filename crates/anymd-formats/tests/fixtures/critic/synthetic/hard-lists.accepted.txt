@@ -1,0 +1,11 @@
+Lists
+Before the list.
+First new item
+Second item
+Nested inserted
+Nested kept
+Third item
+Inserted fourth item
+After the list.
+Bullet 
+Bullet two

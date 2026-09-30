@@ -1,0 +1,15 @@
+# Heading
+
+Body text.
+
+## Deleted Heading two
+
+More text
+
+## Heading joined to the text above
+
+Text before an inserted heading.
+
+Text after it.
+
+### Commented heading

@@ -1,0 +1,6 @@
+Links
+See the page for details.
+An inserted link: .
+A deleted link: old linkkept link.
+A link whose text is replaced: before.
+A comment on a link.

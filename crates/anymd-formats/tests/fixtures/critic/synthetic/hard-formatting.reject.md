@@ -1,0 +1,13 @@
+# Formatting
+
+Bold inserted: text.
+
+Deleted bold: heavy text.
+
+Mid-word: conual and words.
+
+Formatting change only: now bold and now italic.
+
+Bold **around inside** end.
+
+_Italic paragraph with a deleted word._

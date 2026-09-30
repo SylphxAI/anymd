@@ -1,0 +1,7 @@
+Formatting
+Bold inserted: strong and slanted text.
+Deleted bold:  text.
+Mid-word: contractual and wos.
+Formatting change only: now bold and now italic.
+Bold around an insertion inside end.
+Italic paragraph with a  word.
