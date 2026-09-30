@@ -1,11 +1,17 @@
 #!/usr/bin/python3
-"""Write LibreOffice Writer's accept-all and reject-all text of a .docx.
+"""Write LibreOffice Writer's accept-all and reject-all text of a document.
 
-Usage: /usr/bin/python3 libreoffice-oracle.py FILE.docx PROFILE_DIR
+Usage: /usr/bin/python3 libreoffice-oracle.py FILE.docx|FILE.fodt PROFILE_DIR [--docx]
 
 Needs LibreOffice Writer and its Python bridge (python3-uno), so it runs with
 the system Python rather than uv. Output: FILE.accepted.txt and
-FILE.rejected.txt next to FILE.docx.
+FILE.rejected.txt next to FILE. With --docx, FILE.accepted.docx and
+FILE.rejected.docx as well: the whole result saved as Word, tables and lists
+included, which the plain text leaves out.
+
+Run it on the .fodt when there is one: Writer re-reading its own .docx can
+drop a tracked paragraph break that is in the file, so Accept All on the
+source is the reliable result.
 """
 
 import shutil
@@ -62,10 +68,10 @@ def connect(port: int, attempts: int = 60) -> Any:
     raise SystemExit(message)
 
 
-def main(document: Path, profile: Path) -> None:
+def main(document: Path, profile: Path, *, save_docx: bool = False) -> None:
     """Write the accepted and rejected text of `document` beside it."""
-    if document.suffix != ".docx" or not document.is_file():
-        message = f"not a .docx file: {document}"
+    if document.suffix not in {".docx", ".fodt"} or not document.is_file():
+        message = f"not a .docx or .fodt file: {document}"
         raise SystemExit(message)
     port = free_port()
     soffice = shutil.which("soffice")
@@ -104,10 +110,15 @@ def main(document: Path, profile: Path) -> None:
             document.with_suffix(f".{suffix}.txt").write_text(
                 text + "\n", encoding="utf-8"
             )
+            if save_docx:
+                doc.storeToURL(
+                    document.with_suffix(f".{suffix}.docx").resolve().as_uri(),
+                    (prop("FilterName", value="MS Word 2007 XML"),),
+                )
             doc.close(DELIVER_OWNERSHIP)
     finally:
         office.terminate()
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    main(Path(sys.argv[1]), Path(sys.argv[2]), save_docx="--docx" in sys.argv[3:])
