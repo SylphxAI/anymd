@@ -138,6 +138,10 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
 }
 
 /// EPUB 3 navigation documents and EPUB 2 NCX share the same chapter ranges.
+/// Most table-of-contents entries and nesting levels read from an EPUB.
+const MAX_TOC_ENTRIES: usize = 10_000;
+const MAX_TOC_DEPTH: usize = 64;
+
 fn native_outline(
     archive: &SharedArchive<'_>,
     package: &Package,
@@ -177,7 +181,9 @@ fn native_outline(
             if kind.is_some_and(|kind| !kind.split_whitespace().any(|k| k == "toc")) {
                 continue;
             }
-            for item in nav.select(&item_selector) {
+            // A hostile nav can nest thousands of lists; the tree stays useful and
+            // linear-time under these caps.
+            for item in nav.select(&item_selector).take(MAX_TOC_ENTRIES) {
                 let label = item
                     .children()
                     .filter_map(scraper::ElementRef::wrap)
@@ -208,6 +214,7 @@ fn native_outline(
                     .filter_map(scraper::ElementRef::wrap)
                     .take_while(|e| e.value().name() != "nav")
                     .filter(|e| e.value().name() == "li")
+                    .take(MAX_TOC_DEPTH + 1)
                     .count()
                     .saturating_sub(1);
                 if !title.is_empty() {
@@ -225,6 +232,9 @@ fn native_outline(
             while let Ok(event) = reader.read_event() {
                 match event {
                     Event::Start(e) if e.local_name().as_ref() == "navPoint" => {
+                        if pending.len() >= MAX_TOC_ENTRIES {
+                            break;
+                        }
                         points.push(pending.len());
                         pending.push((depth, String::new(), None));
                         depth += 1;
