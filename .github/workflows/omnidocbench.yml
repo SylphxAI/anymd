@@ -1,0 +1,165 @@
+name: OmniDocBench
+
+# anymd on OmniDocBench v1.6 (https://github.com/opendatalab/OmniDocBench), scored by the official
+# end2end evaluator at a pinned commit. Page images go through `anymd --ocr` (the image and OCR path).
+# The dataset ships no source PDFs, so there is no PDF-variant run. See bench/omnidocbench/README.md.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Score only the first N pages by file name (0 = all 1651 pages; use a small N for a smoke test)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omnidocbench-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # opendatalab/OmniDocBench, "Codebase Update to v1.6" era: README updated to v1.6 (2026-04-10)
+  EVALUATOR_COMMIT: 147cd5ac9472002f5751221d390bf00abdbc0d2f
+  LIMIT: ${{ github.event.inputs.limit || '40' }}
+
+jobs:
+  build:
+    name: Build anymd
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release -p anymd
+      - uses: actions/upload-artifact@v7
+        with:
+          name: anymd-binary
+          path: target/release/anymd
+          retention-days: 7
+
+  predict:
+    name: Pages ${{ matrix.shard }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/4, 2/4, 3/4, 4/4]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: anymd-binary
+          path: anymd-bin
+
+      - name: Tesseract (English, Chinese, Japanese packs)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-chi-tra tesseract-ocr-chi-sim tesseract-ocr-jpn
+          tesseract --version | head -1
+          tesseract --list-langs
+          chmod +x anymd-bin/anymd
+          echo "ANYMD_BIN=$PWD/anymd-bin/anymd" >> "$GITHUB_ENV"
+
+      - name: Run anymd on the page images
+        env:
+          # Four pages run at once on four cores; tesseract's own OpenMP threads on top of that
+          # oversubscribe the runner until pages exceed the 60 s OCR timeout and come back empty.
+          OMP_THREAD_LIMIT: '1'
+        run: |
+          python3 bench/omnidocbench/harness.py predict --shard "${{ matrix.shard }}" \
+            --limit "$LIMIT" --out "pred/${{ strategy.job-index }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: predictions-${{ strategy.job-index }}
+          path: pred/
+          retention-days: 7
+
+  evaluate:
+    name: Official evaluator
+    needs: predict
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: predictions-*
+          path: pred-parts
+          merge-multiple: true
+
+      - name: Collect predictions
+        run: |
+          mkdir -p predictions
+          find pred-parts -name '*.md' -exec mv -t predictions {} +
+          echo "predictions: $(ls predictions | wc -l)"
+
+      - name: Ground truth
+        run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --out gt.json
+
+      - uses: actions/checkout@v7
+        with:
+          repository: opendatalab/OmniDocBench
+          ref: ${{ env.EVALUATOR_COMMIT }}
+          path: evaluator
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.10'
+
+      - name: CDM system dependencies (LaTeX with CJK, Ghostscript, ImageMagick)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ghostscript imagemagick texlive-latex-base texlive-latex-extra \
+            texlive-fonts-recommended texlive-science latex-cjk-common latex-cjk-chinese texlive-lang-chinese fonts-arphic-gkai00mp
+          # The evaluator calls `magick` (ImageMagick 7); Ubuntu ships ImageMagick 6, whose `convert` takes the same arguments.
+          printf '#!/bin/sh\nexec convert "$@"\n' | sudo tee /usr/local/bin/magick >/dev/null
+          sudo chmod +x /usr/local/bin/magick
+          # Ubuntu's ImageMagick policy blocks PDF; CDM renders LaTeX through PDF.
+          sudo sed -i 's|<policy domain="coder" rights="none" pattern="PDF" />|<policy domain="coder" rights="read\|write" pattern="PDF" />|' /etc/ImageMagick-6/policy.xml
+          pdflatex --version | head -1
+          convert --version | head -1
+          gs --version
+          kpsewhich CJK.sty c70gkai.fd || echo 'warning: CJK LaTeX files missing; Chinese formulas will not render in CDM'
+
+      - name: Install the evaluator
+        working-directory: evaluator
+        run: pip install --quiet -e .
+
+      - name: Score (official end2end config, quick_match)
+        working-directory: evaluator
+        run: |
+          # configs/end2end.yaml unchanged except the two data paths and the worker counts (this runner has 4 cores).
+          sed -i \
+            -e "s|./demo_data/omnidocbench_demo/OmniDocBench_demo.json|$GITHUB_WORKSPACE/gt.json|" \
+            -e "s|./demo_data/end2end|$GITHUB_WORKSPACE/predictions|" \
+            -e 's|cdm_workers: 13|cdm_workers: 2|; s|teds_workers: 13|teds_workers: 2|; s|match_workers: 13|match_workers: 2|' \
+            configs/end2end.yaml
+          git diff --stat configs/end2end.yaml
+          python pdf_validation.py --config configs/end2end.yaml
+          ls result
+
+      - name: Headline scores
+        run: |
+          {
+            echo "### anymd on OmniDocBench v1.6 (image pages, \`anymd --ocr\`, limit=$LIMIT)"
+            echo '```json'
+            python3 bench/omnidocbench/summarize.py evaluator/result/predictions_quick_match_metric_result.json
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: omnidocbench-results
+          path: |
+            evaluator/result/
+            evaluator/configs/end2end.yaml
+            pred-parts/**/timings-*.json
+          retention-days: 90
