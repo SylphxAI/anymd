@@ -88,18 +88,20 @@ fn resolve_in(element: &mut Element, accept: bool) {
 
 /// On reject, puts back the properties a formatting change replaced. A
 /// paragraph keeps its mark's run properties and its section, which
-/// `w:pPrChange` does not record.
+/// `w:pPrChange` does not record. A change with no earlier properties inside
+/// (LibreOffice writes `<w:rPrChange/>` for text that was plain) had none.
 fn restore_earlier(properties: &mut Element) {
     let change = format!("{}Change", properties.local());
-    let Some(earlier) = properties
-        .child(&change)
-        .and_then(|c| c.elements().find(|e| e.local() == properties.local()))
-        .cloned()
-    else {
+    let Some(change) = properties.child(&change) else {
         return;
     };
+    let earlier = change
+        .elements()
+        .find(|e| e.local() == properties.local())
+        .map(|e| e.children.clone())
+        .unwrap_or_default();
     let current = std::mem::take(&mut properties.children);
-    properties.children = earlier.children;
+    properties.children = earlier;
     properties.children.extend(
         current.into_iter().filter(
             |node| matches!(node, Node::Element(e) if matches!(e.local(), "rPr" | "sectPr")),

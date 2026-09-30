@@ -96,6 +96,9 @@ pub(crate) struct Critic {
     /// Text written as is, for a document with no tracked change or comment:
     /// nothing can open a span there, so nothing needs escaping.
     plain: bool,
+    /// The paragraph is joined to more text on the same line (a flattened
+    /// table's cells): see [`space_into_last_change`].
+    inline_end: bool,
 }
 
 impl Critic {
@@ -106,6 +109,11 @@ impl Critic {
             plain: true,
             ..Self::default()
         }
+    }
+
+    /// Marks the paragraph as joined to more text on the same line.
+    pub(crate) fn set_inline_end(&mut self) {
+        self.inline_end = true;
     }
 
     pub(crate) fn push(&mut self, text: &str, bold: bool, italic: bool, link: Option<&str>) {
@@ -124,6 +132,32 @@ impl Critic {
             self.tokens
                 .push(Token::Leaf(Leaf::Raw(markdown.to_string())));
         }
+    }
+
+    /// Converter-built Markdown at token position `at` (see [`Critic::len`]),
+    /// as the start of the paragraph: text right after it loses its leading
+    /// space, up to the first marker, as the paragraph's own start would.
+    pub(crate) fn insert_raw(&mut self, at: usize, markdown: &str) {
+        for token in &mut self.tokens[at..] {
+            match token {
+                Token::Leaf(Leaf::Text { text, .. }) => {
+                    let trimmed = text.trim_start().to_string();
+                    let done = !trimmed.is_empty();
+                    *text = trimmed;
+                    if done {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        self.tokens
+            .insert(at, Token::Leaf(Leaf::Raw(markdown.to_string())));
+    }
+
+    /// The number of tokens so far, a position for [`Critic::insert_raw`].
+    pub(crate) fn len(&self) -> usize {
+        self.tokens.len()
     }
 
     pub(crate) fn comment(&mut self, note: &str) {
@@ -162,8 +196,17 @@ impl Critic {
     }
 
     pub(crate) fn into_inline(self) -> Inline {
+        let mut nodes = tidy(tree(self.tokens));
+        if self.inline_end {
+            space_into_last_change(&mut nodes);
+        }
+        let mut pieces = Vec::new();
+        render(&nodes, &mut pieces, self.plain, &mut 0);
+        wrap_markers(&mut pieces);
         let mut inline = Inline::default();
-        render(&tidy(tree(self.tokens)), &mut inline, self.plain);
+        for piece in pieces {
+            inline.push(&piece.text, piece.bold, piece.italic, piece.link.as_deref());
+        }
         inline
     }
 }
@@ -288,6 +331,28 @@ fn join_text(nodes: Vec<Node>) -> Vec<Node> {
     out
 }
 
+/// Moves the space before an insertion or deletion that ends the paragraph
+/// into it: `in{++ nested++}`, not `in {++nested++}`. Both read the same once
+/// accepted, but rejected the second leaves a trailing space, which shows
+/// when more text follows on the same line (`in ; gone` in a flattened table).
+fn space_into_last_change(nodes: &mut [Node]) {
+    let [.., Node::Leaf(Leaf::Text { text, .. }), Node::Span(Mark::Insertion | Mark::Deletion, _, inner)] =
+        nodes
+    else {
+        return;
+    };
+    // Only into text the change starts with, so the space keeps a format.
+    let Some(Node::Leaf(Leaf::Text { text: first, .. })) = inner.first_mut() else {
+        return;
+    };
+    let kept = text.trim_end().len();
+    if kept == text.len() || kept == 0 {
+        return;
+    }
+    first.insert_str(0, &text[kept..]);
+    text.truncate(kept);
+}
+
 /// Removes every comment below `nodes` into `comments`, in order.
 fn lift_comments(nodes: Vec<Node>, comments: &mut Vec<Node>) -> Vec<Node> {
     let mut kept = Vec::new();
@@ -303,7 +368,19 @@ fn lift_comments(nodes: Vec<Node>, comments: &mut Vec<Node>) -> Vec<Node> {
     kept
 }
 
-fn render(nodes: &[Node], out: &mut Inline, plain: bool) {
+/// One piece of rendered inline text. Markers are CriticMarkup delimiters and
+/// notes, which take a link only from the text around them.
+struct Piece {
+    text: String,
+    bold: bool,
+    italic: bool,
+    link: Option<String>,
+    /// For a marker, the change or comment it belongs to: all of one change's
+    /// markers join a link, or none do, so brackets never cross.
+    marker: Option<usize>,
+}
+
+fn render(nodes: &[Node], out: &mut Vec<Piece>, plain: bool, ids: &mut usize) {
     let mut index = 0;
     while index < nodes.len() {
         match (&nodes[index], nodes.get(index + 1)) {
@@ -315,24 +392,28 @@ fn render(nodes: &[Node], out: &mut Inline, plain: bool) {
                 Node::Span(Mark::Insertion, new_by, new),
                 Some(Node::Span(Mark::Deletion, old_by, old)),
             ) => {
-                marker(out, "{~~");
-                render(old, out, plain);
-                marker(out, "~>");
-                render(new, out, plain);
-                marker(out, "~~}");
-                attribution(out, old_by.as_deref());
+                *ids += 1;
+                let id = *ids;
+                marker(out, "{~~", id);
+                render(old, out, plain, ids);
+                marker(out, "~>", id);
+                render(new, out, plain, ids);
+                marker(out, "~~}", id);
+                attribution(out, old_by.as_deref(), id);
                 if new_by != old_by {
-                    attribution(out, new_by.as_deref());
+                    attribution(out, new_by.as_deref(), id);
                 }
                 index += 2;
                 continue;
             }
             (Node::Span(mark, by, nodes), _) => {
+                *ids += 1;
+                let id = *ids;
                 let (open, close) = mark.delimiters();
-                marker(out, open);
-                render(nodes, out, plain);
-                marker(out, close);
-                attribution(out, by.as_deref());
+                marker(out, open, id);
+                render(nodes, out, plain, ids);
+                marker(out, close, id);
+                attribution(out, by.as_deref(), id);
             }
             (
                 Node::Leaf(Leaf::Text {
@@ -343,24 +424,88 @@ fn render(nodes: &[Node], out: &mut Inline, plain: bool) {
                 }),
                 _,
             ) => {
-                let text = if plain { text.clone() } else { escape(text) };
-                out.push(&text, *bold, *italic, link.as_deref());
+                out.push(Piece {
+                    text: if plain { text.clone() } else { escape(text) },
+                    bold: *bold,
+                    italic: *italic,
+                    link: link.clone(),
+                    marker: None,
+                });
             }
-            (Node::Leaf(Leaf::Raw(markdown)), _) if plain => marker(out, markdown),
-            (Node::Leaf(Leaf::Raw(markdown)), _) => marker(out, &defuse(markdown)),
-            (Node::Leaf(Leaf::Comment(inner)), _) => marker(out, &note(inner)),
+            (Node::Leaf(Leaf::Raw(markdown)), _) => out.push(Piece {
+                text: if plain {
+                    markdown.clone()
+                } else {
+                    defuse(markdown)
+                },
+                bold: false,
+                italic: false,
+                link: None,
+                marker: None,
+            }),
+            (Node::Leaf(Leaf::Comment(inner)), _) => {
+                *ids += 1;
+                marker(out, &note(inner), *ids);
+            }
         }
         index += 1;
     }
 }
 
-fn marker(out: &mut Inline, text: &str) {
-    out.push(text, false, false, None);
+fn marker(out: &mut Vec<Piece>, text: &str, id: usize) {
+    out.push(Piece {
+        text: text.to_string(),
+        bold: false,
+        italic: false,
+        link: None,
+        marker: Some(id),
+    });
 }
 
-fn attribution(out: &mut Inline, by: Option<&str>) {
+/// Markers between two pieces of the same link or emphasis take it on, so a
+/// change inside a link's text or a bold run keeps one link or one run around
+/// it: `[the {++new ++}page](url)`, `**around {++this++} inside**`.
+/// CriticMarkup is read before Markdown, so the link and the emphasis still
+/// resolve. A change joins only if all its markers do; one that starts inside
+/// the link and ends after it stays outside.
+fn wrap_markers(pieces: &mut [Piece]) {
+    type Format = (bool, bool, Option<String>);
+    let format = |piece: &Piece| -> Format { (piece.bold, piece.italic, piece.link.clone()) };
+    let mut joined: Vec<Option<Format>> = vec![None; pieces.len()];
+    let mut start = 0;
+    while start < pieces.len() {
+        if pieces[start].marker.is_none() {
+            start += 1;
+            continue;
+        }
+        let end = (start..pieces.len())
+            .find(|&at| pieces[at].marker.is_none())
+            .unwrap_or(pieces.len());
+        let before = start.checked_sub(1).map(|at| format(&pieces[at]));
+        let after = pieces.get(end).map(format);
+        if let Some(around) = before.filter(|f| *f != (false, false, None) && Some(f) == after.as_ref()) {
+            joined[start..end].fill(Some(around));
+        }
+        start = end;
+    }
+    let refused: std::collections::HashSet<usize> = pieces
+        .iter()
+        .zip(&joined)
+        .filter(|(piece, around)| around.is_none() && piece.marker.is_some())
+        .filter_map(|(piece, _)| piece.marker)
+        .collect();
+    for (piece, around) in pieces.iter_mut().zip(joined) {
+        if let Some((bold, italic, link)) = around.filter(|_| piece.marker.is_some_and(|id| !refused.contains(&id))) {
+            piece.bold = bold;
+            piece.italic = italic;
+            piece.link = link;
+        }
+    }
+}
+
+fn attribution(out: &mut Vec<Piece>, by: Option<&str>, id: usize) {
     if let Some(by) = by {
-        marker(out, &note(by));
+        marker(out, &note(by), id);
     }
 }
 
@@ -470,6 +615,39 @@ pub(crate) fn splice(
     }
 }
 
+/// The change a rendered part is wholly inside, with its attribution:
+/// `{--gone--}{>>Ana<<}` is `(Deletion, Some("Ana"))`. Document text is
+/// escaped, so the first closer after the opener is the span's own.
+fn whole_change(part: &str) -> Option<Change> {
+    [Mark::Insertion, Mark::Deletion].into_iter().find_map(|mark| {
+        let (open, close) = mark.delimiters();
+        let inner = part.strip_prefix(open)?;
+        let after = &inner[inner.find(close)? + close.len()..];
+        match after {
+            "" => Some((mark, None)),
+            _ => {
+                let by = after.strip_prefix("{>>")?.strip_suffix("<<}")?;
+                (!by.contains("<<}")).then(|| (mark, Some(by.to_string())))
+            }
+        }
+    })
+}
+
+/// Joins parts that sit side by side, such as the cells of a flattened
+/// table. A part that is wholly one change takes the separator before it into
+/// that change (the first part, the separator after it), so accepting or
+/// rejecting the change leaves no stray separator.
+pub(crate) fn join_changed(parts: Vec<String>, separator: &str) -> String {
+    let mut parts = parts.into_iter();
+    let mut out = parts.next().unwrap_or_default();
+    let first = whole_change(&out);
+    for (index, part) in parts.enumerate() {
+        let change = whole_change(&part).or_else(|| first.clone().filter(|_| index == 0));
+        splice(&mut out, separator, "", &part, change.as_ref(), false);
+    }
+    out
+}
+
 /// A rendered paragraph, the tracked change on the mark that ends it, and
 /// whether its text started and ended with a space before rendering trimmed it.
 pub(crate) type Part = (String, Option<Change>, (bool, bool));
@@ -480,16 +658,23 @@ pub(crate) fn join_marked(parts: Vec<Part>, separator: &str) -> String {
     let mut out = String::new();
     let mut pending = None;
     let mut trailing = false;
+    // The first paragraph, while it is the only one and wholly one change.
+    let mut first = None;
     for (part, mark, (leading, ends_in_space)) in parts {
         if part.trim().is_empty() {
             pending = None;
             continue;
         }
         if out.is_empty() {
+            first = whole_change(&part);
             out = part;
         } else {
+            // A break with no change of its own goes with a paragraph that is
+            // wholly one change, which leaves no stray break once resolved.
+            let first = first.take();
+            let change = pending.take().or_else(|| whole_change(&part)).or(first);
             let space = trailing || leading;
-            splice(&mut out, separator, "", &part, pending.as_ref(), space);
+            splice(&mut out, separator, "", &part, change.as_ref(), space);
         }
         pending = mark;
         trailing = ends_in_space;
@@ -884,6 +1069,59 @@ mod tests {
     }
 
     #[test]
+    fn a_space_before_a_change_that_ends_the_paragraph_goes_inside_it() {
+        let joined = |steps: &[(&str, &str)]| {
+            let mut critic = Critic::default();
+            critic.set_inline_end();
+            for (op, value) in steps {
+                match *op {
+                    "open" => critic.open(kind(value), None),
+                    "close" => critic.close(kind(value)),
+                    _ => text(&mut critic, value),
+                }
+            }
+            md(critic)
+        };
+        assert_eq!(
+            joined(&[("t", "in "), ("open", "+"), ("t", "nested"), ("close", "+")]),
+            "in{++ nested++}"
+        );
+        assert_eq!(
+            joined(&[("t", "kept "), ("open", "-"), ("t", "gone"), ("close", "-")]),
+            "kept{-- gone--}"
+        );
+        // Not at the end, or not a change: left as it is.
+        assert_eq!(
+            joined(&[("t", "a "), ("open", "+"), ("t", "b"), ("close", "+"), ("t", " c")]),
+            "a {++b++} c"
+        );
+        assert_eq!(
+            joined(&[("t", "a "), ("open", "="), ("t", "b"), ("close", "=")]),
+            "a {==b==}"
+        );
+        // A paragraph of its own keeps the space where it was.
+        assert_eq!(
+            script(&[("t", "in "), ("open", "+"), ("t", "nested"), ("close", "+")]),
+            "in {++nested++}"
+        );
+    }
+
+    #[test]
+    fn a_wholly_changed_paragraph_takes_the_break_before_it() {
+        let bare = (false, false);
+        let parts = vec![
+            ("Para".to_string(), None, bare),
+            ("{++Added para++}{>>Ana<<}".to_string(), None, bare),
+        ];
+        assert_eq!(join_marked(parts, "<br>"), "Para{++<br>Added para++}{>>Ana<<}");
+        let parts = vec![
+            ("{--Gone--}".to_string(), None, bare),
+            ("Kept".to_string(), None, bare),
+        ];
+        assert_eq!(join_marked(parts, "<br>"), "{--Gone<br>--}Kept");
+    }
+
+    #[test]
     fn a_space_trimmed_at_a_tracked_break_comes_back_after_it() {
         // `notice.` + ` The` with the break deleted reads `notice. The` once
         // accepted; the space stays outside the change.
@@ -1057,6 +1295,73 @@ mod tests {
     #[test]
     fn tree_ignores_a_close_with_nothing_open() {
         assert_eq!(tree(vec![Token::Close(Ins)]), Vec::<Node>::new());
+    }
+
+    #[test]
+    fn a_separator_next_to_a_wholly_changed_part_joins_its_change() {
+        let by = "{>>Ana<<}";
+        let joined = |parts: &[&str]| {
+            join_changed(parts.iter().map(|part| part.to_string()).collect(), "; ")
+        };
+        assert_eq!(
+            joined(&["in {++nested++}", &format!("{{--gone--}}{by}")]),
+            format!("in {{++nested++}}{{--; gone--}}{by}")
+        );
+        assert_eq!(
+            joined(&[&format!("{{--gone--}}{by}"), "kept", "{++new++}"]),
+            format!("{{--gone; --}}{by}kept{{++; new++}}")
+        );
+        // Text around the change keeps the separator outside it.
+        assert_eq!(joined(&["a {--b--}", "c {++d++} e"]), "a {--b--}; c {++d++} e");
+    }
+
+    #[test]
+    fn a_change_inside_bold_text_keeps_one_bold_run() {
+        let mut critic = Critic::default();
+        critic.push("around ", true, false, None);
+        critic.open(Ins, Some("Ana"));
+        critic.push("an insertion", true, false, None);
+        critic.close(Ins);
+        critic.push(" inside", true, false, None);
+        critic.push(" end", false, false, None);
+        assert_eq!(
+            md(critic),
+            "**around {++an insertion++}{>>Ana<<} inside** end"
+        );
+        // Bold text next to a plain change stays apart from it.
+        let mut critic = Critic::default();
+        critic.push("bold", true, false, None);
+        critic.open(Del, None);
+        critic.push(" plain", false, false, None);
+        critic.close(Del);
+        assert_eq!(md(critic), "**bold**{-- plain--}");
+    }
+
+    #[test]
+    fn a_change_inside_link_text_keeps_one_link() {
+        let mut critic = Critic::default();
+        let url = Some("https://example.com");
+        critic.push("the ", false, false, url);
+        critic.open(Ins, Some("Ana"));
+        critic.push("new ", false, false, url);
+        critic.close(Ins);
+        critic.push("page", false, false, url);
+        assert_eq!(
+            md(critic),
+            "[the {++new ++}{>>Ana<<}page](https://example.com)"
+        );
+        // A change around a whole link, or between two different links,
+        // stays outside them.
+        let mut critic = Critic::default();
+        critic.push("see ", false, false, None);
+        critic.open(Del, None);
+        critic.push("old", false, false, Some("https://a.example"));
+        critic.close(Del);
+        critic.push(" and ", false, false, Some("https://b.example"));
+        assert_eq!(
+            md(critic),
+            "see {--[old](https://a.example)--} [and](https://b.example)"
+        );
     }
 
     #[test]

@@ -82,6 +82,9 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         counters: HashMap::new(),
         started_nums: Vec::new(),
         note_refs: Vec::new(),
+        note_changes: Vec::new(),
+        lead: None,
+        flattening: 0,
         revisions: Vec::new(),
         comments: HashMap::new(),
         notes: HashMap::new(),
@@ -126,10 +129,15 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     let mut defs = Vec::new();
     while index < writer.note_refs.len() {
         let key = writer.note_refs[index].clone();
+        // A note whose reference was inserted or deleted was inserted or
+        // deleted with it, label and all.
+        let changes = writer.note_changes[index].clone();
         index += 1;
         let Some(note) = notes.get(&key) else {
             continue;
         };
+        let around = std::mem::replace(&mut writer.revisions, changes);
+        writer.lead = Some(format!("[^{index}]: "));
         let parts = note
             .children_named("p")
             .map(|p| {
@@ -141,9 +149,10 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
                 )
             })
             .collect();
-        let text = critic::join_marked(parts, " ");
-        if !text.is_empty() {
-            defs.push(format!("[^{index}]: {text}"));
+        writer.revisions = around;
+        // Still set: no paragraph had text, so there is no note.
+        if writer.lead.take().is_none() {
+            defs.push(critic::join_marked(parts, " "));
         }
     }
     let mut markdown = blocks.finish();
@@ -472,6 +481,13 @@ struct Writer<'a> {
     started_nums: Vec<String>,
     /// (is_endnote, id) in first-reference order.
     note_refs: Vec<(bool, String)>,
+    /// The tracked changes around each note's first reference.
+    note_changes: Vec<Vec<Change>>,
+    /// Markdown for the start of the next paragraph with text, inside its
+    /// tracked changes: a note's `[^N]: ` label.
+    lead: Option<String>,
+    /// Inside a nested table, whose cells are flattened onto one line.
+    flattening: usize,
     /// Tracked changes around the content being written, outermost first.
     revisions: Vec<Change>,
     /// Comment id → its `w:comment` element.
@@ -670,6 +686,9 @@ impl Writer<'_> {
         } else {
             Critic::default()
         };
+        if self.flattening > 0 {
+            inline.set_inline_end();
+        }
         let mut extra = Vec::new();
         let mut fields = Vec::new();
         let (bold, italic) = p
@@ -686,10 +705,17 @@ impl Writer<'_> {
         for (mark, by) in &self.revisions {
             inline.open(*mark, by.as_deref());
         }
+        // A note's label goes inside its tracked changes, before any comment.
+        let start = inline.len();
         for _ in &self.open_comments {
             inline.open(Mark::Highlight, None);
         }
         self.inline(p, None, base, &mut fields, &mut inline, &mut extra);
+        if !self.in_comment && !inline.is_blank() {
+            if let Some(lead) = self.lead.take() {
+                inline.insert_raw(start, &lead);
+            }
+        }
         if self.in_comment {
             inline = inline.unattributed();
         }
@@ -832,6 +858,7 @@ impl Writer<'_> {
                         Some(i) => i + 1,
                         None => {
                             self.note_refs.push(key);
+                            self.note_changes.push(self.revisions.clone());
                             self.note_refs.len()
                         }
                     };
@@ -953,14 +980,16 @@ impl Writer<'_> {
                 }
                 "tbl" => {
                     // Nested tables are flattened to text, one row per line.
+                    self.flattening += 1;
                     for tr in table_rows(child) {
                         let row_marks = tr.child("trPr").map(revision_marks).unwrap_or_default();
                         let cells: Vec<String> = row_cells(tr)
                             .map(|tc| self.cell_text(&row_marks, tc))
                             .filter(|t| !t.is_empty())
                             .collect();
-                        parts.push((cells.join("; "), None, (false, false)));
+                        parts.push((critic::join_changed(cells, "; "), None, (false, false)));
                     }
+                    self.flattening -= 1;
                 }
                 "ins" | "moveTo" | "del" | "moveFrom" => {
                     self.revised(change_of(child), |w| w.cell_parts(child, parts));
@@ -2105,7 +2134,7 @@ mod tests {
         );
         assert_eq!(
             md(&docx(&body, &[])),
-            "|a{--<br>--}{>>Ana (2026-01-02T03:04:00Z)<<}b{++<br>++}{>>Ana (2026-01-02T03:04:00Z)<<}c|{++block ins++}{>>Ana (2026-01-02T03:04:00Z)<<}|\n|-|-|\n|{++{--n1--}++}; {++{--n2--}++}|{++{--wrapped--}{>>Ana (2026-01-02T03:04:00Z)<<}++}|\n"
+            "|a{--<br>--}{>>Ana (2026-01-02T03:04:00Z)<<}b{++<br>++}{>>Ana (2026-01-02T03:04:00Z)<<}c|{++block ins++}{>>Ana (2026-01-02T03:04:00Z)<<}|\n|-|-|\n|{++{--n1--}; {--n2--}++}|{++{--wrapped--}{>>Ana (2026-01-02T03:04:00Z)<<}++}|\n"
         );
     }
 
@@ -2174,7 +2203,7 @@ mod tests {
         );
         assert_eq!(
             md(&docx(&body, &[])),
-            "|{--cell--}<br>{--box--}|{--control--}|\n|-|-|\n"
+            "|{--cell<br>box--}|{--control--}|\n|-|-|\n"
         );
     }
 
@@ -2598,6 +2627,12 @@ mod tests {
         assert_eq!(md(&bytes), "**styled**\n");
         assert_eq!(resolved(&bytes, Revisions::Accept), "**styled**\n");
         assert_eq!(resolved(&bytes, Revisions::Reject), "_styled_\n");
+        // LibreOffice records a change from plain text with no earlier `w:rPr`
+        // inside: rejecting it leaves the text plain.
+        let run = r#"<w:r><w:rPr><w:b/><w:rPrChange w:id="1" w:author="Ana"></w:rPrChange></w:rPr><w:t>styled</w:t></w:r>"#;
+        let bytes = docx(&p("", run), &[]);
+        assert_eq!(resolved(&bytes, Revisions::Accept), "**styled**\n");
+        assert_eq!(resolved(&bytes, Revisions::Reject), "styled\n");
     }
 
     #[test]
@@ -2611,6 +2646,36 @@ mod tests {
         assert!(md(&bytes).contains("{==noted==}"), "{}", md(&bytes));
         assert_eq!(resolved(&bytes, Revisions::Accept), "noted\n");
         assert_eq!(resolved(&bytes, Revisions::Reject), "noted\n");
+    }
+
+    #[test]
+    fn a_note_whose_reference_is_changed_is_changed_too() {
+        let reference = |id: &str| format!(r#"<w:r><w:footnoteReference w:id="{id}"/></w:r>"#);
+        let body = [
+            p("", &(r("Kept") + &reference("2"))),
+            p("", &ins(&(r("Added") + &reference("3")))),
+            p("", &del(&(dr("Gone") + &reference("4")))),
+        ]
+        .concat();
+        let footnotes = format!(
+            r#"<w:footnotes {W}><w:footnote w:id="2">{}</w:footnote><w:footnote w:id="3">{}</w:footnote><w:footnote w:id="4">{}</w:footnote></w:footnotes>"#,
+            p("", &r("Plain note.")),
+            p("", &r("Added note.")),
+            p("", &format!("{}{}", r("Gone "), ins(&r("note")))),
+        );
+        let bytes = docx(&body, &[("word/footnotes.xml", &footnotes)]);
+        let by = "{>>Ana (2026-01-02T03:04:00Z)<<}";
+        assert_eq!(
+            md(&bytes),
+            format!(
+                "Kept[^1]\n\n{{++Added[^2]++}}{by}\n\n{{--Gone[^3]--}}{by}\n\n[^1]: Plain note.\n{{++[^2]: Added note.++}}{by}\n{{--[^3]: Gone {{++note++}}{by}--}}{by}\n"
+            )
+        );
+        // Resolved first, the notes are numbered as they are left.
+        assert_eq!(
+            resolved(&bytes, Revisions::Reject),
+            "Kept[^1]\n\nGone[^2]\n\n[^1]: Plain note.\n[^2]: Gone\n"
+        );
     }
 
     #[test]
