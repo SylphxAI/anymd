@@ -61,7 +61,10 @@ def cjk_diagnostics(cjk, dataset="fleurs-zh"):
     def remove_annotation(match):
         content = match.group(0)[1:-1]
         latin = any("LATIN" in unicodedata.name(c, "") for c in content)
-        cjk_char = any("CJK" in unicodedata.name(c, "") for c in content)
+        cjk_char = any(
+            any(script in unicodedata.name(c, "") for script in ("CJK", "HIRAGANA", "KATAKANA", "HANGUL"))
+            for c in content
+        )
         return "" if latin and not cjk_char else match.group(0)
 
     def annotations(text):

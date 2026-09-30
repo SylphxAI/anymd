@@ -280,7 +280,7 @@ scores worse as well as better.
 | FLEURS en | WER | 4.54 | 4.54 | 6.33 | 6.33 |
 | FLEURS zh | CER | 7.73 | 2.53 | 9.21 | 5.03 |
 | FLEURS yue | CER | 5.41 | 3.89 | 12.10 | 12.29 |
-| FLEURS ja | CER | 5.93 | 5.90 | 4.80 | 4.69 |
+| FLEURS ja | CER | 5.93 | 5.85 | 4.80 | 4.65 |
 | LibriSpeech test-clean | WER | 2.00 | 2.00 | 2.23 | 2.23 |
 
 Mandarin Qwen normalized CER has a 95% utterance-bootstrap CI of [1.92, 3.22];

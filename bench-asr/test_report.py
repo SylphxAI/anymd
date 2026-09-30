@@ -48,6 +48,8 @@ class MandarinDiagnosticsTests(unittest.TestCase):
         self.assertNotEqual(numerals("地殻"), numerals("近く"))
         self.assertNotEqual(numerals("暖かい"), numerals("温かい"))
         self.assertEqual(annotations("先生（カタカナ）"), self.cjk("先生カタカナ"))
+        self.assertEqual(annotations("先生（pHのH）"), self.cjk("先生pHのH"))
+        self.assertEqual(annotations("先生（English カタカナ）"), self.cjk("先生English カタカナ"))
 
     def test_reference_annotation_changes_denominator(self):
         ref, hyp = "大学（University）", "大学"
