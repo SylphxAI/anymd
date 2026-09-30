@@ -16,7 +16,7 @@ permissions:
 concurrency:
   # Fast Trunk: supersede obsolete runs for the same PR or branch tip.
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   plain-language:
