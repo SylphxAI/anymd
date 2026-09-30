@@ -1,6 +1,4 @@
-# Contributing to PDF Reader MCP
-
-Thank you for considering contributing! We welcome contributions from the community.
+# Contributing to anymd
 
 ## How to Contribute
 
@@ -11,7 +9,7 @@ Thank you for considering contributing! We welcome contributions from the commun
 
 2. **Submitting Pull Requests:**
    - Fork the repository.
-   - Create a new branch for your feature or bugfix (e.g., `feature/new-pdf-feature` or `bugfix/parsing-error`).
+   - Create a new branch for your change.
    - Make your changes, adhering to the project's coding style and guidelines.
    - Add tests for your changes and ensure all tests pass.
    - Ensure your commit messages follow the conventional commits standard.
@@ -61,7 +59,7 @@ bun run docs:build     # Build docs site
 
 A release is a pull request that runs `bun scripts/set-version.ts X.Y.Z` and adds
 a `## X.Y.Z` section to `CHANGELOG.md`. Merging it publishes every package; see
-[docs/PUBLISH.md](docs/PUBLISH.md). Do not publish to npm or create tags by hand.
+[docs/PUBLISH.md](docs/PUBLISH.md). Publishing and tags come from that workflow only.
 
 ## License
 

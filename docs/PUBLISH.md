@@ -62,17 +62,10 @@ npm compares it with the publishing repository.
 ## Aliases
 
 The alias packages depend on `@sylphx/anymd` at the same version and run its
-launcher, so `citra` and `pdf-reader-mcp` behave exactly like `anymd`. To clear
-an old deprecation notice on them (an owner action, outside the release):
-
-```bash
-npm deprecate "@sylphx/pdf-reader-mcp@*" ""
-npm deprecate "@sylphx/citra@*" ""
-```
+launcher, so `citra` and `pdf-reader-mcp` behave exactly like `anymd`.
 
 ## Repository slug
 
-The repository was `SylphxAI/citra` and `SylphxAI/pdf-reader-mcp`; GitHub
-redirects both, except project site URLs. A rename therefore moves the docs
-site path behind `websiteUrl` and `homepage`, and needs `base` in
+Project site URLs do not redirect on rename. Renaming the repository moves the
+docs site path behind `websiteUrl` and `homepage`, and needs `base` in
 `docs/.vitepress/config.ts` updated with it.

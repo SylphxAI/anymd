@@ -30,6 +30,10 @@ claude mcp add anymd -- npx -y @sylphx/anymd --allow-dir=$HOME/docs --allow-dir=
 
 Paths outside the allowed directories, including ones reached through symlinks, are refused.
 
+## HTTP transport
+
+stdio is the default. `MCP_TRANSPORT=http` serves MCP on `MCP_HTTP_HOST:MCP_HTTP_PORT` (default `127.0.0.1:8080`). Set `MCP_API_KEY` and every `/mcp` request must send a matching `X-API-Key` header, or it gets `401`; `/mcp/health` stays open. The server refuses a non-loopback bind without a key. `MCP_CORS_ORIGIN` sets an explicit CORS origin.
+
 ## External tools
 
 `tesseract`, `ffprobe`, `ffmpeg`, and whisper.cpp are optional. When anymd uses them, it runs them directly, without a shell, with a timeout and an output cap. Nothing from a document is ever interpreted as a command.
