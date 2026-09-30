@@ -61,7 +61,7 @@ Any file, URL, or directory → Markdown.
 | `pages` | string | all | Pages (PDF), slides, sheets, or chapters, e.g. `"1-5,8"` |
 | `max_tokens` | number ≥ 500 | `20000` | Token budget. Longer documents stop at a page/slide/chapter boundary and end with a cursor. |
 | `cursor` | string | – | Continue a previous read with the cursor from its last line |
-| `ocr` | boolean | automatic | OCR images and image-only PDF pages with a local `tesseract`. Automatic when tesseract is installed; `false` disables. |
+| `ocr` | `"auto"` \| `"vlm"` \| `"tesseract"` \| boolean | automatic | Local OCR for images and scanned PDF pages. Auto uses explicitly installed models, otherwise tesseract. No automatic downloads. `false` disables; `true` enables the default runtime (`ANYMD_OCR` when set). See [local OCR](./cli#local-document-ocr). |
 | `revisions` | `"markup"` \| `"accept"` \| `"reject"` | `"markup"` | Word tracked changes and comments. `markup` writes them as CriticMarkup with each change's author and date; `accept` or `reject` gives the text with every change accepted or rejected, without comments (see [Word](./formats#word)). A document with no tracked changes and no comments reads the same either way. |
 | `images` | `"refs"` \| `"none"` | `"refs"` | Images embedded in PDFs, DOCX, PPTX and EPUB files. `refs` saves each meaningful raster image to the anymd cache and marks it in the Markdown (see [Embedded images](./formats#embedded-images)); `none` leaves images out. |
 | `transcript` | boolean | `false` | Transcribe audio/video with a local whisper.cpp |
@@ -161,7 +161,8 @@ Go deeper on a PDF. `inspect` returns JSON, for the cases where an agent needs g
 | `max_regions` | number 1–100 | Region cap |
 | `max_pixels_per_page` | number | Pixel cap per rendered page |
 | `include_image` | boolean | Include the rendered PNG in the response |
-| `languages` | string[] | OCR languages, e.g. `["eng", "chi_tra"]` |
+| `ocr` | `"auto"` \| `"vlm"` \| `"tesseract"` | Engine for `ocr_pages`; omit to use the configured command provider. |
+| `languages` | string[] | Tesseract OCR languages, e.g. `["eng", "chi_tra"]`; doc-VLM detects the language. |
 | `timeout_ms` | number | Time limit for external tools (1,000–300,000) |
 | `max_output_chars` | number | Output cap (1,000–1,000,000) |
 

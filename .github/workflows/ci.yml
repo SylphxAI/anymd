@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   merge_group:
   push:
     branches:
@@ -144,7 +145,7 @@ jobs:
   # queue, so they gate the merge without doubling the pull request load. GitHub-hosted
   # standard runners are free for public repositories (owner standards/dx.md).
   other-os:
-    if: github.event_name == 'merge_group'
+    if: github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch'
     name: Test other OS
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45

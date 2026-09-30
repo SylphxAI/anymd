@@ -535,19 +535,23 @@ pub fn read_text(
             return Ok((list_directory(source, Path::new(&admitted)), false));
         }
     }
-    let ocr_selection = args
-        .ocr
-        .map(Ok)
-        .unwrap_or_else(|| match std::env::var("ANYMD_OCR") {
-            Ok(v) => crate::ocr_vlm::OcrSelection::parse(&v),
-            Err(std::env::VarError::NotPresent) => {
-                Ok(crate::ocr_vlm::OcrSelection::Engine(Default::default()))
-            }
-            Err(_) => Err("Invalid ANYMD_OCR".into()),
-        })?;
+    let inherits_env = matches!(
+        args.ocr,
+        None | Some(crate::ocr_vlm::OcrSelection::Enabled(true))
+    );
+    let environment = if inherits_env {
+        match std::env::var("ANYMD_OCR") {
+            Ok(value) => Some(value),
+            Err(std::env::VarError::NotPresent) => None,
+            Err(_) => return Err("Invalid ANYMD_OCR".into()),
+        }
+    } else {
+        None
+    };
+    let ocr_engine = crate::ocr_vlm::resolve_engine(args.ocr, environment.as_deref())?;
     let options = OpenOptions {
         ocr: args.ocr.map(|v| v.enabled()).or_else(|| args.node.as_ref().map(|_| false)),
-        ocr_engine: Some(ocr_selection.engine()),
+        ocr_engine: Some(ocr_engine),
         transcript: args.transcript.unwrap_or(false)
             || args.download_whisper_model.unwrap_or(false),
         download_whisper_model: args.download_whisper_model.unwrap_or(false),

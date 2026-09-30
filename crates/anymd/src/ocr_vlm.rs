@@ -44,6 +44,22 @@ impl OcrSelection {
     }
 }
 
+/// A boolean enables/disables OCR but does not choose a runtime. Named modes
+/// override the environment; legacy `--ocr`/`ocr: true` inherit its runtime.
+pub fn resolve_engine(
+    selection: Option<OcrSelection>,
+    environment: Option<&str>,
+) -> Result<OcrEngine, String> {
+    match selection {
+        Some(OcrSelection::Engine(engine)) => Ok(engine),
+        Some(OcrSelection::Enabled(false)) => Ok(OcrEngine::Auto),
+        _ => environment
+            .map(OcrSelection::parse)
+            .transpose()
+            .map(|s| s.map(OcrSelection::engine).unwrap_or_default()),
+    }
+}
+
 pub fn root() -> Result<PathBuf, String> {
     anymd_formats::cache::cache_dir()
         .map(|p| p.join("models/docvlm-v1"))
@@ -70,7 +86,11 @@ pub fn requested(engine: OcrEngine) -> bool {
         return true;
     }
     static HINT: std::sync::Once = std::sync::Once::new();
-    HINT.call_once(|| eprintln!("anymd OCR: using tesseract; run `anymd setup ocr` to opt into local doc-VLM OCR (~2 GB weights)."));
+    HINT.call_once(|| {
+        if !cfg!(feature = "ocr-vlm") { eprintln!("anymd OCR: using tesseract; this build has no doc-VLM backend."); }
+        else if !anymd_ocr_vlm::hardware::cpu_available() { eprintln!("anymd OCR: using tesseract; doc-VLM needs FP16-capable Linux arm64 hardware."); }
+        else { eprintln!("anymd OCR: using tesseract; run `anymd setup ocr` to opt into local doc-VLM OCR (~2 GB weights)."); }
+    });
     // Acceleration alone cannot trigger a model download.
     false
 }
@@ -313,6 +333,24 @@ mod tests {
         assert!(verified(file.path(), &hash).unwrap());
         file.write_all(b" changed").unwrap();
         assert!(!verified(file.path(), &hash).unwrap());
+    }
+
+    #[test]
+    fn booleans_inherit_the_env_but_named_modes_override_it() {
+        assert_eq!(
+            resolve_engine(Some(OcrSelection::Enabled(true)), Some("tesseract")).unwrap(),
+            OcrEngine::Tesseract
+        );
+        assert_eq!(resolve_engine(None, Some("vlm")).unwrap(), OcrEngine::Vlm);
+        assert_eq!(
+            resolve_engine(Some(OcrSelection::Engine(OcrEngine::Auto)), Some("vlm")).unwrap(),
+            OcrEngine::Auto
+        );
+        assert_eq!(
+            resolve_engine(Some(OcrSelection::Enabled(false)), Some("invalid")).unwrap(),
+            OcrEngine::Auto
+        );
+        assert!(resolve_engine(None, Some("invalid")).is_err());
     }
 
     #[test]

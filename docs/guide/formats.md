@@ -17,7 +17,7 @@ One `read` call handles every format below, detected from the file's bytes, not 
 
 ## PDF
 
-Reading-order Markdown: headings, paragraphs, lists, tables, sub/superscripts, `<!-- page N -->` markers, and bookmarks as an outline. Running headers and page numbers are removed. Image-only pages are OCR'd when `tesseract` is installed: pages are read at 300 dpi, several at a time, and the words tesseract finds are laid out like a text page, so scans get paragraphs and tables too.
+Reading-order Markdown: headings, paragraphs, lists, tables, sub/superscripts, `<!-- page N -->` markers, and bookmarks as an outline. Running headers and page numbers are removed. Image-only pages use [local doc-VLM OCR](./cli#local-document-ocr) after explicit model setup, otherwise installed tesseract. Both read pages at 300 dpi. Doc-VLM uses layout boxes and reading order, with tables as Markdown and formulas as LaTeX; its model workers run one page at a time. Tesseract pages run in parallel and their words are laid out like a text page, so scans get paragraphs and tables too.
 
 How it works: anymd reads glyph positions rather than text runs. Glyphs are grouped into lines by baseline, which tolerates super- and subscripts. Word spaces come from the gaps between glyphs, measured against the font size and adjusted for letter tracking. A column-aware XY cut finds gutters between running text. Tables come from drawn lines where a table has them (a missing line between two cells makes a merged cell) and from aligned columns of whitespace where it does not. Wrapped cell text stays in its cell, stacked header lines become one header, and a header over several columns is kept with each of them. Text a reader cannot see (invisible text, or text in the colour of the box behind it) is left out. Pages are processed in parallel and isolated from each other, so one malformed page never fails the whole document.
 
@@ -95,7 +95,7 @@ Known gap in this version: figures drawn as vector graphics (charts, diagrams ma
 
 ## Images
 
-Dimensions and EXIF (camera, date, GPS), plus OCR text when `tesseract` is installed.
+Dimensions and EXIF (camera, date, GPS), plus local OCR. `anymd setup ocr` explicitly installs doc-VLM weights; automatic OCR otherwise uses installed tesseract without downloading anything. See [local OCR](./cli#local-document-ocr).
 
 ## Audio and video
 

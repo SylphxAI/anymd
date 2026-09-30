@@ -36,7 +36,7 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
 - **Every format, one call.** One tool reads every format listed below. It also accepts web URLs and whole directories, and `search` looks across all of them.
-- **Local and private.** Nothing is uploaded. OCR and transcripts use local tools you already have (tesseract, ffmpeg, whisper.cpp), and only when they are installed.
+- **Local and private.** Nothing is uploaded. OCR uses installed local doc-VLM models or tesseract; transcripts use ffmpeg and whisper.cpp. Models are downloaded only by an explicit setup command.
 
 ## Install
 
@@ -136,7 +136,7 @@ docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
 docker run -i --rm ghcr.io/sylphxai/anymd        # MCP server on stdio
 ```
 
-Or build it from [crates.io](https://crates.io/crates/anymd) (needs a Rust 1.92+ toolchain; OCR and transcripts still use `tesseract`/`ffmpeg` when installed):
+Or build it from [crates.io](https://crates.io/crates/anymd) (needs a Rust 1.95+ toolchain; doc-VLM OCR is included, with tesseract and ffmpeg still optional):
 
 ```bash
 cargo install anymd
@@ -220,6 +220,8 @@ anymd report.pdf > report.md                 # a file
 anymd deck.pptx notes.docx budget.xlsx        # several files, each with a header
 anymd https://example.com/article            # a web page (main content only)
 cat scan.png | anymd - --ocr                 # stdin, with OCR
+anymd setup ocr                             # explicitly install pinned local models (~2 GB)
+anymd scan.png --ocr vlm                    # tables as Markdown, formulas as LaTeX
 anymd paper.pdf --pages 1-3 --max-tokens 4000
 anymd search "indemnification" contracts/ --glob '*.pdf'
 anymd doctor                                 # lists the optional tools anymd found
@@ -231,14 +233,14 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 
 | Input | What you get |
 |---|---|
-| **PDF** | Reading-order Markdown: headings, paragraphs, lists, tables, sub/superscripts, `<!-- page N -->` markers, bookmarks as an outline. Running headers and page numbers are removed. Image-only pages are OCR'd when `tesseract` is installed. Embedded figures are saved to the anymd cache and marked in place with their caption (`images: "refs"`, the default). |
+| **PDF** | Reading-order Markdown: headings, paragraphs, lists, tables, sub/superscripts, `<!-- page N -->` markers, bookmarks as an outline. Running headers and page numbers are removed. Image-only pages use local doc-VLM OCR after explicit model setup, otherwise installed tesseract. Embedded figures are saved to the anymd cache and marked in place with their caption (`images: "refs"`, the default). |
 | **Word** `.docx` | Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, equations as LaTeX, embedded pictures as image files, tracked changes and comments as CriticMarkup |
 | **PowerPoint** `.pptx` | One section per slide in deck order, titles, bullets, tables, chart data, speaker notes, pictures as image files |
 | **Excel** `.xlsx .xls .ods` · **CSV/TSV** | One table per sheet, dates as ISO strings, capped at 2,000 rows per sheet |
 | **EPUB** | One section per chapter in spine order, plus title and author; pictures as image files |
 | **HTML** and **URLs** | The main article only: navigation, cookie banners, and sidebars are dropped. Relative links are resolved, and code keeps its language. |
 | **Markdown, text, JSON** | Returned unchanged, with pagination |
-| **Images** | Dimensions and EXIF (camera, date, GPS), plus OCR text when `tesseract` is installed |
+| **Images** | Dimensions and EXIF (camera, date, GPS), plus local doc-VLM OCR after model setup, or installed tesseract |
 | **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local whisper.cpp transcript with `transcript: true`; `download_whisper_model: true` fetches a verified model on first use. |
 
 ## How it works
