@@ -84,10 +84,19 @@ impl Outline {
             path: String::new(),
         }];
         let has_headings = units.iter().any(|u| !headings(&u.markdown).is_empty());
-        let bookmarks: Vec<_> = opened
-            .outline()
-            .into_iter()
-            .filter_map(|(depth, title, page)| {
+        let entries = opened.outline();
+        let bookmarks: Vec<_> = entries
+            .iter()
+            .enumerate()
+            .filter_map(|(index, (depth, title, page))| {
+                // Organizational bookmarks need not have a destination of their
+                // own. Their first child supplies the start of the subtree.
+                let page = page.or_else(|| {
+                    entries[index + 1..]
+                        .iter()
+                        .take_while(|entry| entry.0 > *depth)
+                        .find_map(|entry| entry.2)
+                });
                 let range = ranges.iter().find(|r| Some(r.number) == page)?;
                 let start = if opened.format == "epub" {
                     units
@@ -96,14 +105,14 @@ impl Outline {
                         .and_then(|u| {
                             headings(&u.markdown)
                                 .into_iter()
-                                .find(|(_, heading, _)| heading == &title)
+                                .find(|(_, heading, _)| heading == title)
                         })
                         .map(|(_, _, offset)| range.start + offset.saturating_sub(range.offset))
                         .unwrap_or(range.start)
                 } else {
                     range.start
                 };
-                Some((depth + 1, title, range.number, start))
+                Some((depth + 1, title.clone(), range.number, start))
             })
             .collect();
         let native = !bookmarks.is_empty();

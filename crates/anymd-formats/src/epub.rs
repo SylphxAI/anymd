@@ -167,6 +167,7 @@ fn native_outline(
         let html = scraper::Html::parse_document(&xml);
         let selector = scraper::Selector::parse("nav").unwrap();
         let link_selector = scraper::Selector::parse("a[href]").unwrap();
+        let item_selector = scraper::Selector::parse("li").unwrap();
         let mut found = Vec::new();
         for nav in html.select(&selector) {
             let kind = nav
@@ -176,18 +177,22 @@ fn native_outline(
             if kind.is_some_and(|kind| !kind.split_whitespace().any(|k| k == "toc")) {
                 continue;
             }
-            for link in nav.select(&link_selector) {
-                let target = join_path(
-                    base,
-                    &percent_decode(
-                        link.value()
-                            .attr("href")
-                            .unwrap_or("")
-                            .split('#')
-                            .next()
-                            .unwrap_or(""),
-                    ),
-                );
+            for item in nav.select(&item_selector) {
+                let label = item
+                    .children()
+                    .filter_map(scraper::ElementRef::wrap)
+                    .find(|e| matches!(e.value().name(), "a" | "span"));
+                let Some(link) = label.or_else(|| item.select(&link_selector).next()) else {
+                    continue;
+                };
+                let destination = link.value().attr("href").map(str::to_string).or_else(|| {
+                    item.select(&link_selector)
+                        .find_map(|e| e.value().attr("href").map(str::to_string))
+                });
+                let Some(href) = destination else {
+                    continue;
+                };
+                let target = join_path(base, &percent_decode(href.split('#').next().unwrap_or("")));
                 let Some(index) = paths.iter().position(|p| p == &target) else {
                     continue;
                 };
@@ -219,13 +224,20 @@ fn native_outline(
             let mut capture = false;
             while let Ok(event) = reader.read_event() {
                 match event {
-                    Event::Start(e) if e.local_name().as_ref() == b"navPoint" => {
+                    Event::Start(e) if e.local_name().as_ref() == "navPoint" => {
                         points.push(pending.len());
                         pending.push((depth, String::new(), None));
                         depth += 1;
                     }
-                    Event::Start(e) if e.local_name().as_ref() == b"text" => capture = true,
+                    Event::Start(e) if e.local_name().as_ref() == "text" => capture = true,
                     Event::Text(t) if capture => {
+                        if let Some(&index) = points.last() {
+                            pending[index]
+                                .1
+                                .push_str(&t.xml_content(quick_xml::XmlVersion::Implicit1_0));
+                        }
+                    }
+                    Event::CData(t) if capture => {
                         if let Some(&index) = points.last() {
                             pending[index]
                                 .1
@@ -243,12 +255,8 @@ fn native_outline(
                             }
                         }
                     }
-                    Event::Empty(e) | Event::Start(e) if e.local_name().as_ref() == b"content" => {
-                        let src = e
-                            .attributes()
-                            .flatten()
-                            .find(|a| a.key.as_ref() == b"src")
-                            .and_then(|a| a.unescape_value().ok().map(|v| v.into_owned()));
+                    Event::Empty(e) | Event::Start(e) if e.local_name().as_ref() == "content" => {
+                        let src = attr(&e, "src");
                         if let (Some(&index), Some(src)) = (points.last(), src) {
                             let target = join_path(
                                 base,
@@ -260,18 +268,18 @@ fn native_outline(
                                 .map(|p| p as u32 + 1);
                         }
                     }
-                    Event::End(e) if e.local_name().as_ref() == b"navPoint" => {
+                    Event::End(e) if e.local_name().as_ref() == "navPoint" => {
                         points.pop();
                         depth = depth.saturating_sub(1);
                     }
-                    Event::End(e) if e.local_name().as_ref() == b"text" => capture = false,
+                    Event::End(e) if e.local_name().as_ref() == "text" => capture = false,
                     Event::Eof => break,
                     _ => {}
                 }
             }
             found = pending
                 .into_iter()
-                .filter(|(_, title, page)| !title.trim().is_empty() && page.is_some())
+                .filter(|(_, title, _)| !title.trim().is_empty())
                 .map(|(level, title, page)| {
                     (
                         level,
@@ -640,7 +648,7 @@ pub(crate) mod tests {
 
     #[test]
     fn native_tocs_preserve_nesting_and_prefer_toc_over_landmarks() {
-        let nav = "<html><body><nav epub:type='landmarks'><ol><li><a href='text/c2.xhtml'>Skip</a></li></ol></nav><nav epub:type='toc'><ol><li><a href='text/c2.xhtml'>Before &amp; after</a><ol><li><a href='text/chapter%201.xhtml#road'>Road</a></li></ol></li></ol></nav></body></html>";
+        let nav = "<html><body><nav epub:type='landmarks'><ol><li><a href='text/c2.xhtml'>Skip</a></li></ol></nav><nav epub:type='toc'><ol><li><span>Part</span><ol><li><a href='text/c2.xhtml'>Before &amp; after</a><ol><li><a href='text/chapter%201.xhtml#road'>Road</a></li></ol></li></ol></li></ol></nav></body></html>";
         let epub = build_epub(&[
             ("META-INF/container.xml", CONTAINER),
             ("OEBPS/content.opf", OPF),
@@ -655,8 +663,9 @@ pub(crate) mod tests {
         assert_eq!(
             converted.outline,
             vec![
-                (0, "Before & after".into(), Some(1)),
-                (1, "Road".into(), Some(2))
+                (0, "Part".into(), Some(1)),
+                (1, "Before & after".into(), Some(1)),
+                (2, "Road".into(), Some(2))
             ]
         );
     }
@@ -667,7 +676,7 @@ pub(crate) mod tests {
             "href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"",
             "href=\"toc.ncx\" media-type=\"application/x-dtbncx+xml\"",
         );
-        let ncx = "<ncx><navMap><navPoint><navLabel><text>Before &amp; after</text></navLabel><content src='text/c2.xhtml'/><navPoint><navLabel><text>Road</text></navLabel><content src='text/chapter%201.xhtml#road'/></navPoint></navPoint></navMap></ncx>";
+        let ncx = "<ncx><navMap><navPoint><navLabel><text>Before &amp; after</text></navLabel><content src='text/c2.xhtml'/><navPoint><navLabel><text><![CDATA[Road]]></text></navLabel><content src='text/chapter%201.xhtml#road'/></navPoint></navPoint></navMap></ncx>";
         let epub = build_epub(&[
             ("META-INF/container.xml", CONTAINER),
             ("OEBPS/content.opf", &opf),
