@@ -130,7 +130,7 @@ jobs:
         run: bun run docs:build
 
       - name: Upload coverage reports
-        if: ${{ !cancelled() && hashFiles('coverage/**') != '' }}
+        if: ${{ github.event_name != 'merge_group' && !cancelled() && hashFiles('coverage/**') != '' }}
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
