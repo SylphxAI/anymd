@@ -113,6 +113,9 @@ describe('outline navigation public contract', () => {
     expect(text).toContain('Costs fell.');
     expect(text).not.toContain('Do not include this.');
     expect(text).not.toContain('Intro.');
+    expect(text).not.toContain('<!-- continued -->');
+    const body = Buffer.from(`${cli(source, '--images', 'none').trimEnd()}\n\n`);
+    expect(text.trim()).toBe(body.subarray(revenue?.start, revenue?.end).toString().trim());
     for (const mode of ['literal', 'ranked']) {
       const hit = parseToolPayload(
         await callTool(proc, ++id, 'search', {

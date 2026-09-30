@@ -342,8 +342,18 @@ fn read_opened(
                 skip -= 1;
             }
             let content = unit.markdown[skip..clip_end].trim_start();
-            visible += content.chars().filter(|c| c.is_alphanumeric()).count();
-            let marker = match (markers, skip > 0) {
+            let visible_text = if navigation.is_some() {
+                unit.markdown.as_str()
+            } else {
+                content
+            };
+            visible += visible_text.chars().filter(|c| c.is_alphanumeric()).count();
+            let continued = if navigation.is_some() {
+                cursor.is_some_and(|cursor| cursor.page == unit.number && cursor.offset > 0)
+            } else {
+                skip > 0
+            };
+            let marker = match (markers, continued) {
                 (false, false) => String::new(),
                 (false, true) => "<!-- continued -->\n\n".to_string(),
                 (true, false) => format!("<!-- {} -->\n\n", unit.label),

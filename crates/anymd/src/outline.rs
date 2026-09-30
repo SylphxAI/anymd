@@ -397,6 +397,20 @@ mod tests {
                 canonical.push_str("\n\n");
             }
             assert!(outline.nodes.len() > 1, "{file}");
+            if file == "differential/v3014-behavior-v1.pdf" {
+                let group = outline
+                    .nodes
+                    .iter()
+                    .find(|n| n.title == "External docs")
+                    .unwrap();
+                assert_eq!((group.from, group.to, group.children), (3, 3, 1));
+                let child = outline
+                    .nodes
+                    .iter()
+                    .find(|n| n.title == "Page three")
+                    .unwrap();
+                assert_eq!(child.path, "External docs > Page three");
+            }
             assert_eq!(outline.tree(), Outline::build(&opened).unwrap().tree());
             for node in &outline.nodes {
                 assert!(
