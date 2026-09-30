@@ -21,17 +21,8 @@ export default defineConfig({
   lastUpdated: true,
   sitemap: { hostname: site },
 
-  // Internal records kept for repository scripts and history; not part of the site.
-  srcExclude: [
-    '**/adr/**',
-    '**/specs/**',
-    '**/api/**',
-    '**/operations/**',
-    '**/reference/**',
-    '**/security/**',
-    '**/performance/**',
-    'PUBLISH.md',
-  ],
+  // Maintainer docs that are not part of the site.
+  srcExclude: ['PUBLISH.md', 'vision.md', 'security/**'],
   vite: {
     build: {
       target: 'esnext',
