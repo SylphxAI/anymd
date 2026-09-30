@@ -50,7 +50,7 @@ pub fn root() -> Result<PathBuf, String> {
         .ok_or_else(|| "Cannot locate anymd cache; set ANYMD_CACHE_DIR".into())
 }
 
-fn installed_at(root: &Path) -> bool {
+pub(crate) fn installed_at(root: &Path) -> bool {
     weights::FILES.iter().all(|f| root.join(f.path).is_file())
         && std::fs::read_to_string(root.join("installed"))
             .ok()
@@ -152,8 +152,8 @@ pub fn recognize(bytes: &[u8]) -> Result<anymd_ocr_vlm::PageResult, String> {
     }
     let mut input = tempfile::NamedTempFile::new().map_err(|e| e.to_string())?;
     input.write_all(bytes).map_err(|e| e.to_string())?;
-    let timeout = bounded_env("ANYMD_OCR_TIMEOUT_MS", 300_000, 1_000, 600_000)?;
-    let tokens = bounded_env("ANYMD_OCR_MAX_TOKENS", 4096, 1, 8192)?;
+    let timeout = page_timeout()?;
+    let tokens = max_tokens()?;
     let command = std::env::current_exe().map_err(|e| e.to_string())?;
     let output = command_provider::run(CommandInvocation {
         command: command.to_string_lossy().into_owned(),
@@ -169,6 +169,13 @@ pub fn recognize(bytes: &[u8]) -> Result<anymd_ocr_vlm::PageResult, String> {
     })
     .map_err(|e| e.message)?;
     serde_json::from_str(&output).map_err(|e| format!("Invalid doc-VLM evidence: {e}"))
+}
+
+pub(crate) fn max_tokens() -> Result<u64, String> {
+    bounded_env("ANYMD_OCR_MAX_TOKENS", 4096, 1, 8192)
+}
+pub(crate) fn page_timeout() -> Result<u64, String> {
+    bounded_env("ANYMD_OCR_TIMEOUT_MS", 300_000, 1_000, 600_000)
 }
 
 fn bounded_env(name: &str, default: u64, min: u64, max: u64) -> Result<u64, String> {
@@ -197,6 +204,9 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
             return Err("Invalid OCR worker arguments".into());
         }
         let tokens = arguments[1].parse::<usize>().map_err(|e| e.to_string())?;
+        if !(1..=8192).contains(&tokens) {
+            return Err("OCR token cap must be 1..8192".into());
+        }
         let root = root()?;
         if !installed_at(&root) {
             return Err("OCR models not installed".into());
@@ -229,24 +239,7 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
         let mut result = backend
             .recognize_page(&page, tokens)
             .map_err(|e| e.to_string())?;
-        for region in &mut result.regions {
-            if region.label.to_ascii_lowercase().contains("table") && region.text.contains("<table")
-            {
-                let converted =
-                    anymd_formats::html::convert(region.text.as_bytes(), &Default::default())
-                        .map_err(|e| e.to_string())?;
-                region.text = converted
-                    .sections
-                    .into_iter()
-                    .map(|s| s.markdown)
-                    .collect::<Vec<_>>()
-                    .join("\n\n");
-            } else if region.label.to_ascii_lowercase().contains("formula")
-                && !region.text.trim().starts_with('$')
-            {
-                region.text = format!("$$\n{}\n$$", region.text.trim());
-            }
-        }
+        format_regions(&mut result)?;
         let mut evidence = serde_json::to_value(&result).map_err(|e| e.to_string())?;
         evidence["text"] = serde_json::json!(result.text());
         let mut regions: Vec<_> = result.regions.iter().collect();
@@ -270,9 +263,68 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
     }
 }
 
+fn format_regions(result: &mut anymd_ocr_vlm::PageResult) -> Result<(), String> {
+    for region in &mut result.regions {
+        if region.label.to_ascii_lowercase().contains("table")
+            && region.text.to_ascii_lowercase().contains("<table")
+        {
+            let converted =
+                anymd_formats::html::convert(region.text.as_bytes(), &Default::default())
+                    .map_err(|e| e.to_string())?;
+            region.text = converted
+                .sections
+                .into_iter()
+                .map(|s| s.markdown)
+                .collect::<Vec<_>>()
+                .join("\n\n");
+        } else if region.label.to_ascii_lowercase().contains("formula")
+            && !region.text.trim().starts_with('$')
+        {
+            region.text = format!("$$\n{}\n$$", region.text.trim());
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn table_html_and_formulas_use_the_existing_markdown_converter() {
+        use anymd_ocr_vlm::{PageResult, Region};
+        let region = |label: &str, text: &str| Region {
+            label: label.into(),
+            bbox: [0., 0., 10., 10.],
+            score: 0.9,
+            order: 1,
+            text: text.into(),
+        };
+        let mut result = PageResult {
+            regions: vec![
+                region(
+                    "table",
+                    "<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>",
+                ),
+                region("display_formula", "x^2 + y^2"),
+            ],
+            truncated: 0,
+        };
+        format_regions(&mut result).unwrap();
+        assert!(result.regions[0].text.contains("| A | B |"));
+        assert!(result.regions[0].text.contains("| 1 | 2 |"));
+        assert_eq!(result.regions[1].text, "$$\nx^2 + y^2\n$$");
+    }
+
+    #[test]
+    fn checksum_rejects_a_changed_cache_file() {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        file.write_all(b"hello").unwrap();
+        let hash = format!("{:x}", Sha256::digest(b"hello"));
+        assert!(verified(file.path(), &hash).unwrap());
+        file.write_all(b" changed").unwrap();
+        assert!(!verified(file.path(), &hash).unwrap());
+    }
+
     #[test]
     fn selections_preserve_boolean_contract() {
         assert_eq!(

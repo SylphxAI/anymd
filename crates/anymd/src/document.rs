@@ -136,8 +136,10 @@ type CacheKey = (
     u64,
     u128,
     bool,
+    Option<bool>,
     crate::ocr_vlm::OcrEngine,
     bool,
+    String,
     Option<PathBuf>,
     anymd_formats::Revisions,
 );
@@ -178,8 +180,15 @@ fn cache_key(path: &Path, ocr: bool, options: &OpenOptions) -> Option<CacheKey> 
         meta.len(),
         modified,
         ocr,
+        options.ocr,
         options.ocr_engine.unwrap_or_default(),
         crate::ocr_vlm::root().is_ok_and(|p| p.join("installed").is_file()),
+        format!(
+            "{:?}|{:?}|{:?}",
+            crate::ocr_vlm::root(),
+            std::env::var("ANYMD_OCR_QUANTIZATION").ok(),
+            std::env::var("ANYMD_OCR_MAX_TOKENS").ok()
+        ),
         options.images.as_ref().map(|s| s.dir().to_path_buf()),
         options.revisions,
     ))
@@ -584,44 +593,57 @@ impl Opened {
         let Ok(renderer) = anymd_core::render::RenderDocument::new(pdf_bytes) else {
             return;
         };
-        // Render one page at a time, then OCR the pages side by side (one
-        // tesseract thread each).
-        let rendered: Vec<(usize, Result<anymd_core::render::RenderedPage, String>)> = sparse
-            .iter()
-            .map(|&index| {
-                let page = units[index].number as usize;
-                let image = renderer
-                    .render_page(page, OCR_SCALE, OCR_MAX_PIXELS, 256 * 1024 * 1024)
-                    .map_err(|error| error.message);
-                (index, image)
-            })
-            .collect();
-        let workers = if vlm {
-            1
+        let mut results: Vec<(usize, Result<String, String>)> = Vec::with_capacity(sparse.len());
+        if vlm {
+            // Keep at most one rendered page and one model worker resident.
+            for &index in &sparse {
+                let text = renderer
+                    .render_page(
+                        units[index].number as usize,
+                        OCR_SCALE,
+                        OCR_MAX_PIXELS,
+                        256 * 1024 * 1024,
+                    )
+                    .map_err(|error| error.message)
+                    .and_then(|page| ocr_page(&page, true));
+                results.push((index, text));
+            }
         } else {
-            std::thread::available_parallelism()
+            // Render one page at a time, then OCR the pages side by side (one
+            // tesseract thread each).
+            let rendered: Vec<(usize, Result<anymd_core::render::RenderedPage, String>)> = sparse
+                .iter()
+                .map(|&index| {
+                    let page = units[index].number as usize;
+                    let image = renderer
+                        .render_page(page, OCR_SCALE, OCR_MAX_PIXELS, 256 * 1024 * 1024)
+                        .map_err(|error| error.message);
+                    (index, image)
+                })
+                .collect();
+            let workers = std::thread::available_parallelism()
                 .map(|n| n.get())
                 .unwrap_or(1)
-                .clamp(1, 8)
-        };
-        let mut results: Vec<(usize, Result<String, String>)> = Vec::with_capacity(rendered.len());
-        for chunk in rendered.chunks(workers) {
-            std::thread::scope(|scope| {
-                let handles: Vec<_> = chunk
-                    .iter()
-                    .map(|(index, image)| {
-                        scope.spawn(move || {
-                            let text = image.clone().and_then(|image| ocr_page(&image, vlm));
-                            (*index, text)
+                .clamp(1, 8);
+
+            for chunk in rendered.chunks(workers) {
+                std::thread::scope(|scope| {
+                    let handles: Vec<_> = chunk
+                        .iter()
+                        .map(|(index, image)| {
+                            scope.spawn(move || {
+                                let text = image.clone().and_then(|image| ocr_page(&image, vlm));
+                                (*index, text)
+                            })
                         })
-                    })
-                    .collect();
-                for handle in handles {
-                    if let Ok(result) = handle.join() {
-                        results.push(result);
+                        .collect();
+                    for handle in handles {
+                        if let Ok(result) = handle.join() {
+                            results.push(result);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         for (index, text) in results {
             match text {
@@ -647,7 +669,7 @@ impl Opened {
 /// OCR one rendered page and lay its words out like a text page.
 fn ocr_page(image: &anymd_core::render::RenderedPage, vlm: bool) -> Result<String, String> {
     if vlm {
-        return crate::ocr_vlm::recognize(&image.png).map(|p| p.text());
+        return crate::ocr_vlm::recognize(&image.png).map(|p| p.markdown());
     }
     let words = anymd_formats::image::ocr_words(&image.png, ".png")?;
     let placed: Vec<markdown_layout::PlacedWord> = words
@@ -742,10 +764,17 @@ fn convert_other(
     )?;
     if vlm {
         let page = crate::ocr_vlm::recognize(bytes).map_err(ConvertError::Unsupported)?;
-        converted.sections.push(anymd_formats::Section {
-            label: "image".into(),
-            markdown: format!("## Text (OCR)\n\n{}", page.text()),
-        });
+        if let Some(section) = converted.sections.first_mut() {
+            if let Some(hint) = section
+                .markdown
+                .find("_Image text is not extracted by default")
+            {
+                section.markdown.truncate(hint);
+            }
+            section
+                .markdown
+                .push_str(&format!("\n\n## Text (OCR)\n\n{}", page.markdown()));
+        }
     }
     Ok(converted)
 }
@@ -901,6 +930,20 @@ pub fn readable_extension(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn disabled_ocr_has_a_distinct_cache_key_without_tesseract() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        let automatic = OpenOptions::default();
+        let disabled = OpenOptions {
+            ocr: Some(false),
+            ..Default::default()
+        };
+        assert_ne!(
+            cache_key(file.path(), false, &automatic),
+            cache_key(file.path(), false, &disabled)
+        );
+    }
 
     #[test]
     fn content_types_map_to_formats() {

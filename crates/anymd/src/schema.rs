@@ -404,6 +404,10 @@ pub struct PdfEvidenceArgs {
     #[schemars(range(min = 1_000, max = 1_000_000))]
     pub max_output_chars: Option<u32>,
     pub languages: Option<Vec<String>>,
+    #[schemars(
+        description = "Local OCR engine for ocr_pages: auto, vlm, or tesseract. Omit to use the configured command provider."
+    )]
+    pub ocr: Option<crate::ocr_vlm::OcrEngine>,
 }
 
 impl PdfEvidenceArgs {
@@ -739,6 +743,10 @@ pub struct InspectArgs {
     #[schemars(range(min = 1_000, max = 1_000_000))]
     pub max_output_chars: Option<u32>,
     pub languages: Option<Vec<String>>,
+    #[schemars(
+        description = "Local OCR engine for ocr_pages: auto, vlm, or tesseract. Omit to use the configured command provider."
+    )]
+    pub ocr: Option<crate::ocr_vlm::OcrEngine>,
 }
 
 /// Navigate a document without a model or vector index.

@@ -128,3 +128,22 @@ pub fn run(invocation: CommandInvocation) -> Result<String, CommandRunError> {
     .join()
     .map_err(|_| CommandRunError::new("Command provider worker failed.".into(), 0))?
 }
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    #[test]
+    fn deadline_terminates_the_worker_instead_of_detaching_it() {
+        let started = std::time::Instant::now();
+        let result = run(CommandInvocation {
+            command: "sh".into(),
+            args: vec!["-c".into(), "sleep 30".into()],
+            timeout_ms: 100,
+            max_stdout_bytes: 1024,
+            failure_message: "worker failed".into(),
+            timeout_message: "page timeout".into(),
+        });
+        assert_eq!(result.unwrap_err().message, "page timeout");
+        assert!(started.elapsed() < Duration::from_secs(5));
+    }
+}

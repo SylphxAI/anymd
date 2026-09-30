@@ -22,6 +22,15 @@ pub struct PageResult {
 }
 
 impl PageResult {
+    pub fn markdown(&self) -> String {
+        let text = self.text();
+        if self.truncated == 0 {
+            text
+        } else {
+            format!("{text}\n\n<!-- OCR generation stopped in {} regions (token limit or repetition). -->", self.truncated)
+        }
+    }
+
     pub fn text(&self) -> String {
         let mut regions: Vec<_> = self.regions.iter().collect();
         regions.sort_by_key(|r| r.order);

@@ -8,10 +8,7 @@ directory runs anymd on it, so its numbers can sit next to theirs. The results a
 
 ## What is measured
 
-- **Variant: page images.** anymd gets each page as a PNG or JPEG, runs `anymd --ocr <image>`, and the output goes to
-  the official evaluator. On an image, anymd runs `tesseract` and returns its text: there is no layout model, no
-  table or formula recognition, and no reading-order model. It also passes no language to tesseract, so the
-  default (English) applies to every page. This is not anymd's strength; it is what anymd does with a picture.
+- **Variant: page images.** anymd gets each page as a PNG or JPEG; the workflow selects `ANYMD_OCR=vlm` or `tesseract`. The historical tesseract baseline uses English-only plain text, with no layout, table or formula model. The VLM route explicitly installs pinned weights, then uses PaddleOCR-VL-1.6 and PP-DocLayoutV3 on CPU, returning reading-order Markdown tables and LaTeX formulas. Each route goes through the same official evaluator.
 - **Variant: source PDFs, not run.** The v1.6 release on Hugging Face ships page images and annotations only. There
   are no source PDFs to run anymd's native text-layer engine on, so this benchmark has no PDF number. (AgentDocBench
   in [`../README.md`](../README.md) is the benchmark that exercises the PDF engine.)
@@ -44,12 +41,12 @@ can differ slightly between renderers.
 Everything runs on GitHub-hosted runners; nothing is run locally.
 
 ```bash
-gh workflow run omnidocbench.yml --ref main            # all 1,651 pages
-gh workflow run omnidocbench.yml --ref main -f limit=40   # smoke test: the first 40 pages by file name
+gh workflow run omnidocbench.yml --ref main -f ocr=vlm -f limit=0  # all 1,651 pages
+gh workflow run omnidocbench.yml --ref main -f ocr=vlm -f limit=40   # smoke test: the first 40 pages by file name
 ```
 
 The [OmniDocBench workflow](../../.github/workflows/omnidocbench.yml) builds anymd in release mode, converts the
-pages in four shards, then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
+pages in 32 shards (one model worker per runner), then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
 JSON files, the config it ran with, and per-page anymd timings). The job summary shows the headline scores, computed from the metric files with the plain formula; the published figures use the evaluator's own `run_summary.json`, whose per-metric page counts differ slightly.
 `summarize.py` computes Overall as the leaderboard does: ((1 - text edit distance) x 100 + table TEDS + formula CDM) / 3.
 

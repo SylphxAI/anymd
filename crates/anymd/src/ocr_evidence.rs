@@ -205,18 +205,35 @@ fn provider_config_from(
     })
 }
 
-fn provider_config() -> Result<ProviderConfig, String> {
-    if env::var(OCR_COMMAND_ENV).is_err() {
-        if let Ok(value) = env::var("ANYMD_OCR") {
-            let selection = crate::ocr_vlm::OcrSelection::parse(&value)?;
-            if crate::ocr_vlm::requested(selection.engine()) {
-                return Ok(ProviderConfig {
-                    command: std::env::current_exe().map_err(|e| e.to_string())?.to_string_lossy().into_owned(),
-                    args_template: vec!["__ocr-vlm-worker".into(), "{input}".into(), "4096".into()],
-                    output_format: OcrOutputFormat::Auto,
-                });
+fn provider_config(engine: Option<crate::ocr_vlm::OcrEngine>) -> Result<ProviderConfig, String> {
+    let selected = match engine {
+        Some(engine) => Some(engine),
+        None if env::var(OCR_COMMAND_ENV).is_err() => env::var("ANYMD_OCR")
+            .ok()
+            .map(|value| crate::ocr_vlm::OcrSelection::parse(&value).map(|s| s.engine()))
+            .transpose()?,
+        None => None,
+    };
+    if let Some(engine) = selected {
+        if crate::ocr_vlm::requested(engine) {
+            let root = crate::ocr_vlm::root()?;
+            if !crate::ocr_vlm::installed_at(&root) {
+                return Err("Doc-VLM weights are not installed; run `anymd setup ocr`".into());
             }
+            return Ok(ProviderConfig {
+                command: std::env::current_exe()
+                    .map_err(|e| e.to_string())?
+                    .to_string_lossy()
+                    .into_owned(),
+                args_template: vec![
+                    "__ocr-vlm-worker".into(),
+                    "{input}".into(),
+                    crate::ocr_vlm::max_tokens()?.to_string(),
+                ],
+                output_format: OcrOutputFormat::Auto,
+            });
         }
+        return provider_config_from(None, Some("tesseract-tsv".into()), None);
     }
     provider_config_from(
         env::var(OCR_COMMAND_ENV).ok(),
@@ -304,7 +321,9 @@ fn normalize_words(value: &Value, scale: f64) -> Option<Vec<Value>> {
             }
             let mut output = json!({"text": text});
             for key in ["reading_order", "region_type", "layout_confidence"] {
-                if let Some(value) = word.get(key) { output[key] = value.clone(); }
+                if let Some(value) = word.get(key) {
+                    output[key] = value.clone();
+                }
             }
             if let Some(confidence) = word.get("confidence").and_then(normalize_confidence) {
                 output["confidence"] = json!(confidence);
@@ -568,10 +587,24 @@ fn normalize_output(
     {
         output["language"] = json!(language);
     }
+    let mut warnings = Vec::new();
     if truncated {
-        output["warnings"] = json!([format!(
+        warnings.push(format!(
             "OCR output truncated to {max_output_chars} characters."
-        )]);
+        ));
+    }
+    if let Some(stops) = parsed
+        .as_ref()
+        .and_then(|value| value.get("truncated"))
+        .and_then(Value::as_u64)
+        .filter(|n| *n > 0)
+    {
+        warnings.push(format!(
+            "Doc-VLM generation stopped in {stops} regions (token limit or repetition)."
+        ));
+    }
+    if !warnings.is_empty() {
+        output["warnings"] = json!(warnings);
     }
     output
 }
@@ -617,7 +650,7 @@ pub(crate) fn run_read_ocr(
             })
             .collect();
     }
-    let config = match provider_config() {
+    let config = match provider_config(None) {
         Ok(config) => config,
         Err(error) => {
             return sources
@@ -752,13 +785,15 @@ pub(crate) fn run_read_ocr(
                     };
                 }
                 normalized["page"] = json!(page.page);
-                normalized["provider"] = json!("command");
+                normalized["provider"] = json!(if config.args_template.first().is_some_and(|a| a == "__ocr-vlm-worker") { "candle" } else { "command" });
                 normalized["source_render_evidence_id"] = json!(page.evidence_id);
                 normalized["source_render_scale"] = json!(page.scale);
                 normalized["source_render_width"] = json!(page.width);
                 normalized["source_render_height"] = json!(page.height);
                 normalized["provenance"] =
-                    json!({"engine": "external-command", "source": "ocr-provider"});
+                    if config.args_template.first().is_some_and(|a| a == "__ocr-vlm-worker") {
+                        json!({"engine": "candle", "source": "paddleocr-vl-1.6", "layout": "pp-doclayoutv3"})
+                    } else { json!({"engine": "external-command", "source": "ocr-provider"}) };
                 match serde_json::from_value::<OcrPage>(normalized) {
                     Ok(page) => pages.push(page),
                     Err(error) => {
@@ -805,7 +840,7 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
     if args.sources.is_empty() {
         return Ok(error_result("All PDF sources failed OCR: ".into()));
     }
-    let config = match provider_config() {
+    let config = match provider_config(args.ocr) {
         Ok(config) => config,
         Err(message) => {
             return Ok(error_result(format!(
@@ -824,7 +859,16 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
     let scale = args.scale.unwrap_or(2.0);
     let max_pages = args.max_pages.unwrap_or(5);
     let max_pixels = args.max_pixels_per_page.unwrap_or(16_000_000);
-    let timeout_ms = u64::from(args.timeout_ms.unwrap_or(DEFAULT_TIMEOUT_MS as u32));
+    let default_timeout = if config
+        .args_template
+        .first()
+        .is_some_and(|v| v == "__ocr-vlm-worker")
+    {
+        crate::ocr_vlm::page_timeout().map_err(|e| rmcp::ErrorData::invalid_params(e, None))?
+    } else {
+        DEFAULT_TIMEOUT_MS
+    };
+    let timeout_ms = args.timeout_ms.map_or(default_timeout, u64::from);
     let max_output_chars = args
         .max_output_chars
         .map_or(DEFAULT_MAX_OUTPUT_CHARS, |value| value as usize);
@@ -910,13 +954,28 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
                     .map_or(0, |text| text.encode_utf16().count());
                 request_budget.charge(stdout.len(), output_chars)?;
                 normalized["page"] = json!(page_number);
-                normalized["provider"] = json!("command");
+                normalized["provider"] = json!(if config
+                    .args_template
+                    .first()
+                    .is_some_and(|a| a == "__ocr-vlm-worker")
+                {
+                    "candle"
+                } else {
+                    "command"
+                });
                 normalized["source_render_evidence_id"] = page["evidence_id"].clone();
                 normalized["source_render_scale"] = page["scale"].clone();
                 normalized["source_render_width"] = page["width"].clone();
                 normalized["source_render_height"] = page["height"].clone();
-                normalized["provenance"] =
-                    json!({"engine": "external-command", "source": "ocr-provider"});
+                normalized["provenance"] = if config
+                    .args_template
+                    .first()
+                    .is_some_and(|a| a == "__ocr-vlm-worker")
+                {
+                    json!({"engine": "candle", "source": "paddleocr-vl-1.6", "layout": "pp-doclayoutv3"})
+                } else {
+                    json!({"engine": "external-command", "source": "ocr-provider"})
+                };
                 ocr_pages.push(normalized);
             }
             let mut result = json!({
@@ -964,6 +1023,26 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn vlm_evidence_keeps_order_boxes_and_layout_confidence_separate() {
+        let output = normalize_output(
+            r#"{"text":"cell","truncated":1,"words":[{"text":"cell","reading_order":2,"region_type":"table","layout_confidence":0.9,"bounding_box":{"left":10,"bottom":20,"right":30,"top":40}}]}"#,
+            1000,
+            &[],
+            2.0,
+            OcrOutputFormat::Auto,
+            Some(100.0),
+        );
+        assert_eq!(output["words"][0]["reading_order"], 2);
+        assert_eq!(output["words"][0]["bounding_box"]["left"], 5.0);
+        assert_eq!(output["words"][0]["layout_confidence"], 0.9);
+        assert!(output["words"][0].get("confidence").is_none());
+        assert!(output["warnings"][0]
+            .as_str()
+            .unwrap()
+            .contains("generation stopped"));
+    }
 
     #[test]
     fn normalizes_json_provider_output_and_utf16_truncation() {

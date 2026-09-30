@@ -406,6 +406,23 @@ mod tests {
     }
 
     #[test]
+    fn parses_named_ocr_without_consuming_a_filename() {
+        use crate::ocr_vlm::{OcrEngine, OcrSelection};
+        assert_eq!(
+            parse(&args(&["--ocr", "vlm", "scan.png"])).unwrap().ocr,
+            Some(OcrSelection::Engine(OcrEngine::Vlm))
+        );
+        let legacy = parse(&args(&["--ocr", "scan.png"])).unwrap();
+        assert_eq!(legacy.inputs, ["scan.png"]);
+        assert_eq!(legacy.ocr, Some(OcrSelection::Enabled(true)));
+        assert_eq!(
+            parse(&args(&["scan.png", "--ocr=tesseract"])).unwrap().ocr,
+            Some(OcrSelection::Engine(OcrEngine::Tesseract))
+        );
+        assert!(parse(&args(&["--ocr=remote", "scan.png"])).is_err());
+    }
+
+    #[test]
     fn parses_read_and_search_options() {
         let parsed = parse(&args(&[
             "a.pdf",

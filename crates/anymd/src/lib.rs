@@ -454,6 +454,7 @@ impl PdfReaderMcp {
                     timeout_ms: args.timeout_ms,
                     max_output_chars: args.max_output_chars,
                     languages: args.languages,
+                    ocr: args.ocr,
                 }))
                 .await
             }

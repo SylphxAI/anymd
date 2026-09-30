@@ -2,7 +2,7 @@
 """Measure the production CLI worker, including model load and process overhead."""
 import argparse
 import json
-import os
+import re
 from pathlib import Path
 import statistics
 import subprocess
@@ -11,7 +11,8 @@ import psutil
 
 
 def normalise(text):
-    return ''.join(c for c in text if not c.isspace() and c not in '#*|`_')
+    text = re.sub(r'<[^>]*>', '', text).translate(str.maketrans({'‘': "'", '’': "'", '“': '"', '”': '"'}))
+    return ''.join(c for c in text if not c.isspace() and c not in '#*|`_\u200b')
 
 
 def cer(reference, hypothesis):
