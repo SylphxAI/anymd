@@ -1,0 +1,14 @@
+# Release image: packs the prebuilt Linux binaries from the release workflow
+# (glibc 2.17, built once for amd64 and arm64), so no Rust compile runs here.
+# Build context must contain dist/<TARGETARCH>/anymd.
+FROM debian:bookworm-slim
+ARG TARGETARCH
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 10001 anymd
+COPY --chmod=0755 dist/${TARGETARCH}/anymd /usr/local/bin/anymd
+USER anymd
+WORKDIR /data
+# No arguments: the MCP server on stdio (`docker run -i`). With a file:
+# `docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf`.
+ENTRYPOINT ["anymd"]
