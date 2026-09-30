@@ -156,7 +156,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Rust workspace tests
-        run: cargo test --locked --workspace
+        run: cargo test --locked --workspace --no-fail-fast
 
       - name: Build the anymd binary
         run: cargo build --release --locked -p anymd
