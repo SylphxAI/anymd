@@ -369,3 +369,6 @@ jobs:
           set -euo pipefail
           docker buildx imagetools inspect "$IMAGE:$V"
           docker run --rm "$IMAGE:$V" version
+          docker run --rm --entrypoint cat "$IMAGE:$V" \
+            /usr/share/licenses/anymd/LICENSE > image-license
+          cmp LICENSE image-license

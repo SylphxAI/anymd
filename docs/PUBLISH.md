@@ -82,8 +82,12 @@ GitHub release are skipped when that version already exists; the crates job
 publishes only missing versions. On a dispatch with no native artifacts, the
 image job downloads the two Linux tarballs from the matching GitHub release
 and stages them into `dist/amd64/anymd` and `dist/arm64/anymd`, with no Rust
-compile. `Dockerfile.release.dockerignore` includes only those binaries in the
-build context. Ordinary pushes without new binaries skip the image job.
+compile. `Dockerfile.release.dockerignore` includes those binaries and the root
+`LICENSE` in the build context. The image ships that file at
+`/usr/share/licenses/anymd/LICENSE`, including any bundled third-party notices,
+and the release job compares its contents with the checkout after publishing.
+The OCI metadata includes `org.opencontainers.image.licenses=MIT`.
+Ordinary pushes without new binaries skip the image job.
 
 PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
 workflow `release.yml`, environment `pypi`. That publisher must be registered
