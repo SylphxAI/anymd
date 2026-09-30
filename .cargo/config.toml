@@ -1,0 +1,5 @@
+# gemm-common's AArch64 FP16 inline assembly lacks target-feature annotations.
+# Candle's FP16 kernels require these instructions; check them at runtime before
+# VLM inference. The non-VLM CLI path is tested on an emulated Cortex-A72 in CI.
+[target.aarch64-unknown-linux-gnu]
+rustflags = ["-C", "target-feature=+fp16"]

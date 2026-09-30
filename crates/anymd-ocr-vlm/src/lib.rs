@@ -43,8 +43,8 @@ pub trait DocOcr {
 }
 
 /// Remove a repeating suffix after three identical runs. The hard generation
-/// token cap bounds compute even when the upstream decoder does not expose a
-/// token callback. Do not mistake this output guard for decode cancellation.
+/// token cap and the fork's token-run guard bound generation; this separate
+/// text guard also removes repetition after task postprocessing.
 pub fn stop_repetition(text: &str) -> (String, bool) {
     let chars: Vec<char> = text.chars().collect();
     for end in 24..=chars.len() {

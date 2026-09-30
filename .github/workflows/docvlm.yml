@@ -55,9 +55,17 @@ jobs:
       - name: Tests and release binary
         shell: bash
         run: |
-          cargo test --locked -p anymd-ocr-vlm -p anymd
+          cargo test --locked -p anymd-oar-ocr-vl -p anymd-ocr-vlm -p anymd
           cargo build --release --locked -p anymd --target "${{ matrix.target }}"
           cargo check --locked -p anymd --no-default-features
+      - name: Plain CLI still runs on pre-FP16 ARM hardware
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-user
+          qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd version
+          qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd test/fixtures/sample.pdf --no-ocr > sample.md
+          grep -q '<!-- page 1 -->' sample.md
       - uses: actions/upload-artifact@v7
         with:
           name: anymd-docvlm-${{ matrix.target }}
@@ -83,11 +91,13 @@ jobs:
           if [[ "${{ runner.os }}" == "Windows" ]]; then binary="$binary.exe"; fi
           "$binary" setup ocr
           pip install psutil==7.0.0
-          python crates/anymd-ocr-vlm/bench/measure.py --binary "$binary" --pages pages --out measure.json
+          for mode in none q8 q4; do
+            ANYMD_OCR_QUANTIZATION="$mode" python crates/anymd-ocr-vlm/bench/measure.py --binary "$binary" --pages pages --out "measure-$mode.json"
+          done
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: docvlm-measure-${{ matrix.target }}
-          path: measure.json
+          path: measure-*.json
           if-no-files-found: ignore
           retention-days: 30

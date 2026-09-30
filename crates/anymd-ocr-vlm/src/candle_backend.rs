@@ -36,10 +36,11 @@ impl DocOcr for CandleBackend {
             markdown_pretty: false,
             ..DocParserConfig::default()
         };
+        self.vlm.reset_generation_stops();
         let result = DocParser::with_config(&self.vlm, config)
             .parse(&self.layout, page.clone())
             .map_err(|e| anyhow!("parse: {e}"))?;
-        let mut truncated = 0;
+        let mut truncated = self.vlm.generation_stops() as u32;
         let regions = result
             .layout_elements
             .iter()

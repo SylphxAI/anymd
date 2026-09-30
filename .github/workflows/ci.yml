@@ -101,7 +101,7 @@ jobs:
       # crates.io limit of 10 MB.
       - name: Package the crates for crates.io
         run: |
-          cargo package --locked -p anymd-adobe-cmap-parser -p anymd-pdf-extract -p anymd-pdf -p anymd-formats -p anymd-core -p anymd-ocr-vlm -p anymd
+          cargo package --locked -p anymd-oar-ocr-vl -p anymd-adobe-cmap-parser -p anymd-pdf-extract -p anymd-pdf -p anymd-formats -p anymd-core -p anymd-ocr-vlm -p anymd
           bash scripts/publish-crates.sh --list
           oversized=$(find target/package -name '*.crate' -size +9M)
           if [ -n "$oversized" ]; then echo "over 9 MB: $oversized" >&2; exit 1; fi

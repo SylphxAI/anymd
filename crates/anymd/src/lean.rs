@@ -535,7 +535,7 @@ pub fn read_text(
             return Ok((list_directory(source, Path::new(&admitted)), false));
         }
     }
-    let selection = args
+    let ocr_selection = args
         .ocr
         .map(Ok)
         .unwrap_or_else(|| match std::env::var("ANYMD_OCR") {
@@ -547,7 +547,7 @@ pub fn read_text(
         })?;
     let options = OpenOptions {
         ocr: args.ocr.map(|v| v.enabled()).or_else(|| args.node.as_ref().map(|_| false)),
-        ocr_engine: Some(selection.engine()),
+        ocr_engine: Some(ocr_selection.engine()),
         transcript: args.transcript.unwrap_or(false)
             || args.download_whisper_model.unwrap_or(false),
         download_whisper_model: args.download_whisper_model.unwrap_or(false),

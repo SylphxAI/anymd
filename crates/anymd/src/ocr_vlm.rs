@@ -66,13 +66,27 @@ pub fn requested(engine: OcrEngine) -> bool {
         return false;
     }
     let installed = root().is_ok_and(|p| installed_at(&p));
-    if installed {
+    if installed && backend_available() {
         return true;
     }
     static HINT: std::sync::Once = std::sync::Once::new();
     HINT.call_once(|| eprintln!("anymd OCR: using tesseract; run `anymd setup ocr` to opt into local doc-VLM OCR (~2 GB weights)."));
     // Acceleration alone cannot trigger a model download.
     false
+}
+
+pub fn backend_available() -> bool {
+    if !cfg!(feature = "ocr-vlm") {
+        return false;
+    }
+    #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
+    {
+        return std::arch::is_aarch64_feature_detected!("fp16");
+    }
+    #[cfg(not(all(target_arch = "aarch64", target_os = "linux")))]
+    {
+        true
+    }
 }
 
 pub fn metal_available() -> bool {
@@ -173,6 +187,12 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
     #[cfg(feature = "ocr-vlm")]
     {
         use anymd_ocr_vlm::DocOcr;
+        if !backend_available() {
+            return Err(
+                "Doc-VLM needs FP16-capable Linux arm64 hardware; tesseract remains available"
+                    .into(),
+            );
+        }
         if arguments.len() != 2 {
             return Err("Invalid OCR worker arguments".into());
         }
@@ -194,7 +214,12 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
         if u64::from(page.width()) * u64::from(page.height()) > 40_000_000 {
             return Err("OCR page exceeds 40 megapixels".into());
         }
-        let device = if metal_available() { "metal" } else { "cpu" };
+        let quantized = std::env::var("ANYMD_OCR_QUANTIZATION").is_ok_and(|v| v != "none");
+        let device = if !quantized && metal_available() {
+            "metal"
+        } else {
+            "cpu"
+        };
         let mut backend = anymd_ocr_vlm::candle_backend::CandleBackend::load(
             &root.join("vlm"),
             &root.join("layout"),

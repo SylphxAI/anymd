@@ -17,7 +17,7 @@ metal = ["candle", "oar-ocr-vl/metal"]
 anyhow = "1"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "tiff", "bmp", "webp"] }
 serde = { version = "1", features = ["derive"] }
-oar-ocr-vl = { version = "=0.9.2", optional = true }
+oar-ocr-vl = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-oar-ocr-vl = { version = "=0.9.2", optional = true, features = ["metal"] }
+oar-ocr-vl = { workspace = true, optional = true, features = ["metal"] }
