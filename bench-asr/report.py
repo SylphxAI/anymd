@@ -9,6 +9,10 @@ RESULTS_DIR holds one sub-directory per job, each with summary.json and results.
   zh / yue / ja: CER after NFKC, dropping punctuation, symbols and spaces, and OpenCC t2s
   on both sides (Cantonese references are Traditional).
 Confidence intervals are 95% percentile bootstrap over utterances (1000 resamples).
+
+--mandarin-diagnostics additionally shows sensitivity to Latin parenthetical
+annotations and Chinese numeral spelling (requires cn2an==0.5.24). This is NOT
+Qwen's verified scoring protocol: the public report does not specify normalization.
 """
 
 import argparse
@@ -45,6 +49,31 @@ def load_normalizers(directory: Path):
         return t2s.convert(text)
 
     return english, cjk
+
+
+def mandarin_diagnostics(cjk):
+    """Return symmetric ablations, not an inferred official normalizer.
+
+    Remove only Latin parenthetical annotations, preserving Chinese glosses and
+    numeric parentheses. Numeral conversion is deliberately diagnostic: a generic
+    ITN converter can also change lexical numerals (e.g. 一 in a Chinese word).
+    """
+    import cn2an
+
+    def remove_annotation(match):
+        content = match.group(0)[1:-1]
+        latin = any("LATIN" in unicodedata.name(c, "") for c in content)
+        cjk_char = any("CJK" in unicodedata.name(c, "") for c in content)
+        return "" if latin and not cjk_char else match.group(0)
+
+    def annotations(text):
+        text = unicodedata.normalize("NFKC", text)
+        return cjk(re.sub(r"\([^()]*\)", remove_annotation, text))
+
+    def numerals(text):
+        return cn2an.transform(annotations(text), "cn2an")
+
+    return annotations, numerals
 
 
 def edit_stats(ref: str, hyp: str, unit: str) -> tuple[int, int]:
@@ -99,6 +128,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("results")
     parser.add_argument("--probes")
+    parser.add_argument("--mandarin-diagnostics", action="store_true")
     parser.add_argument("--normalizer-dir", default=str(Path(__file__).parent / "oanorm"))
     args = parser.parse_args()
     english, cjk = load_normalizers(Path(args.normalizer_dir).resolve())
@@ -139,8 +169,24 @@ def main() -> int:
         print(f"| {label} | {os_} | " + " | ".join(cells) + " |")
     print("| _Qwen3-ASR-1.7B published_ | | " + " | ".join(f"{PUBLISHED[d]:.2f}" for d in DATASETS) + " |\n")
 
-    print("## Parity with Qwen's published numbers (Linux, full-size samples)\n")
-    print("Gate: within 0.5 absolute. A 200-utterance sample has a wide interval, so the point estimate and whether the published value lies inside the CI are both shown.\n")
+    print("## Comparison with Qwen's published numbers (Linux, sampled utterances)\n")
+    print("Reference only, not a verified reproduction gate. [Qwen's evaluation settings](https://github.com/QwenLM/Qwen3-ASR/tree/7c6daf77a2421100f5fb066495372c00129d39ff#evaluation) are bfloat16, vLLM, greedy decoding, max_new_tokens=1024 and no language parameter. These runs use CPU quantized engines; see each summary's lang_mode. The [technical report](https://arxiv.org/html/2601.21337v2) specifies CER for Mandarin/Cantonese but does not publish the text normalization protocol. Our 200-utterance samples are not the complete test sets. Within 0.5 is only a numerical comparison; its CI covers sampling, not protocol mismatch.\n")
+
+    if args.mandarin_diagnostics:
+        annotations, numerals = mandarin_diagnostics(cjk)
+        print("### Mandarin normalization sensitivity (not verified Qwen protocol)\n")
+        print("Both reference and hypothesis receive the same transformations. Remove Latin parenthetical annotations before punctuation stripping; then optionally convert Chinese numeral spellings with cn2an 0.5.24. These ablations can remove spoken annotations or alter lexical numerals; they do not prove the audio's ground truth or official score parity. Other languages remain unchanged.\n")
+        print("| Engine | OS | n | Original CER | Without Latin parentheses | Plus numeral ITN (95% CI) |")
+        print("|---|---|---|---|---|---|")
+        for s, rows in sorted(ok, key=lambda j: (j[0]["label"], j[0]["os"], j[0]["dataset"])):
+            if s["dataset"] != "fleurs-zh":
+                continue
+            original = score(rows, "fleurs-zh", english, cjk)[0]
+            without = score(rows, "fleurs-zh", english, annotations)[0]
+            rate, lo, hi, _ = score(rows, "fleurs-zh", english, numerals)
+            print(f"| {s['label']} | {s['os']} | {len(rows)} | {original:.2f} | {without:.2f} | {rate:.2f} [{lo:.2f}, {hi:.2f}] |")
+        print()
+
     print("| Engine | Dataset | Measured | Published | Diff | Published inside CI | Within 0.5 |")
     print("|---|---|---|---|---|---|---|")
     for (label, os_), per in sorted(accuracy.items()):
