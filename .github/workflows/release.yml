@@ -225,7 +225,7 @@ jobs:
           name: wheels
           path: dist/*.whl
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 3
 
   # PyPI trusted publishing (OIDC, no token): the publisher is registered on
   # PyPI for project anymd, owner SylphxAI, repo anymd, workflow release.yml,

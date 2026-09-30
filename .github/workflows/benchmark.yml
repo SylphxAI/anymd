@@ -53,13 +53,13 @@ jobs:
         with:
           name: corpus
           path: corpus/
-          retention-days: 7
+          retention-days: 3
 
       - uses: actions/upload-artifact@v7
         with:
           name: anymd-binary
           path: target/release/anymd
-          retention-days: 7
+          retention-days: 3
 
   bench:
     name: ${{ matrix.tool }} ${{ matrix.shard }}
@@ -164,6 +164,7 @@ jobs:
           name: results-${{ env.NAME }}
           path: out/
           if-no-files-found: ignore
+          retention-days: 3
 
   report:
     name: Leaderboard
@@ -193,3 +194,4 @@ jobs:
           path: |
             bench/results/
             parts/outputs/
+          retention-days: 3
