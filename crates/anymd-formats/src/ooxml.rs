@@ -8,6 +8,7 @@ use std::io::{Cursor, Read};
 use quick_xml::events::Event;
 use quick_xml::Reader;
 
+use crate::critic::{self, Change};
 use crate::images::{self, Embed, ImageStore};
 use crate::ConvertError;
 
@@ -521,6 +522,24 @@ pub(crate) struct Inline {
 }
 
 impl Inline {
+    /// Whether the text starts and ends with a space, which rendering trims.
+    pub(crate) fn edges(&self) -> (bool, bool) {
+        let spaced = |c: char| matches!(c, ' ' | '\u{a0}' | '\t');
+        let mut texts = self
+            .spans
+            .iter()
+            .map(|s| s.text.as_str())
+            .filter(|t| !t.is_empty());
+        let leading = texts.next().is_some_and(|t| t.starts_with(spaced));
+        let trailing = self
+            .spans
+            .iter()
+            .map(|s| s.text.as_str())
+            .rfind(|t| !t.is_empty())
+            .is_some_and(|t| t.ends_with(spaced));
+        (leading, trailing)
+    }
+
     pub(crate) fn push(&mut self, text: &str, bold: bool, italic: bool, link: Option<&str>) {
         if text.is_empty() {
             return;
@@ -679,7 +698,13 @@ pub(crate) fn image_markdown(alt: &str, target: Option<&str>) -> Option<String> 
     Some(format!(
         "![{}]({})",
         alt.replace('[', "\\[").replace(']', "\\]"),
+        // Characters a URI may not hold, encoded; `{`, `}`, `<` and `>` would
+        // otherwise form CriticMarkup delimiters.
         name.replace(' ', "%20")
+            .replace('{', "%7B")
+            .replace('}', "%7D")
+            .replace('<', "%3C")
+            .replace('>', "%3E")
     ))
 }
 
@@ -763,6 +788,10 @@ impl Media {
 pub(crate) struct Blocks {
     out: String,
     last_was_list: bool,
+    /// A tracked change on the break before the next block.
+    separator: Option<Change>,
+    /// The last paragraph ended with a space, which rendering trimmed.
+    trailing_space: bool,
 }
 
 impl Blocks {
@@ -770,23 +799,66 @@ impl Blocks {
         Self {
             out: String::new(),
             last_was_list: false,
+            separator: None,
+            trailing_space: false,
         }
     }
 
+    /// A block whose start cannot carry a CriticMarkup delimiter (a table, a
+    /// text box); a tracked break before it is left unmarked.
     pub(crate) fn push(&mut self, block: &str, is_list: bool) {
-        let block = block.trim_end();
-        if block.trim().is_empty() {
+        self.separator = None;
+        self.push_prefixed("", block, is_list);
+    }
+
+    /// A block made of Markdown syntax (`## `, `  1. `) followed by its text. A
+    /// tracked break before it closes after the syntax, so the heading or list
+    /// item stays valid.
+    pub(crate) fn push_prefixed(&mut self, prefix: &str, body: &str, is_list: bool) {
+        self.push_paragraph(prefix, body, is_list, (false, false));
+    }
+
+    /// A paragraph, with whether its text started and ended with a space before
+    /// rendering trimmed it (see [`critic::splice`]).
+    pub(crate) fn push_paragraph(
+        &mut self,
+        prefix: &str,
+        body: &str,
+        is_list: bool,
+        (leading, trailing): (bool, bool),
+    ) {
+        let space = self.trailing_space || leading;
+        let body = body.trim_end();
+        if body.trim().is_empty() {
             return;
         }
-        if !self.out.is_empty() {
-            self.out.push_str(if is_list && self.last_was_list {
+        let change = self.separator.take();
+        if self.out.is_empty() {
+            self.out.push_str(prefix);
+            self.out.push_str(body);
+        } else {
+            let separator = if is_list && self.last_was_list {
                 "\n"
             } else {
                 "\n\n"
-            });
+            };
+            critic::splice(
+                &mut self.out,
+                separator,
+                prefix,
+                body,
+                change.as_ref(),
+                space,
+            );
         }
-        self.out.push_str(block);
         self.last_was_list = is_list;
+        self.trailing_space = trailing;
+    }
+
+    /// Records that the paragraph mark ending the last block was inserted or
+    /// deleted (`None` clears it).
+    pub(crate) fn set_separator(&mut self, change: Option<Change>) {
+        self.separator = change;
     }
 
     pub(crate) fn finish(self) -> String {

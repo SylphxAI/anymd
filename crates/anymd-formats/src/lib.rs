@@ -7,6 +7,7 @@
 #![cfg_attr(not(feature = "native"), allow(dead_code))]
 
 pub mod cache;
+mod critic;
 pub mod csv;
 pub mod docx;
 pub mod epub;
@@ -14,6 +15,7 @@ pub mod html;
 pub mod image;
 pub mod images;
 pub mod pptx;
+mod revise;
 #[cfg(feature = "native")]
 mod tool;
 /// Without `native` (WebAssembly) no helper binary exists: every lookup misses,
@@ -109,6 +111,33 @@ pub struct Options {
     /// Export images embedded in DOCX, PPTX and EPUB files into this store and
     /// mark them in the Markdown. `None` keeps the alt-text-only form.
     pub images: Option<images::ImageStore>,
+    /// How Word tracked changes and comments come out (DOCX).
+    pub revisions: Revisions,
+}
+
+/// How a DOCX file's tracked changes and comments are written. A document
+/// without any converts the same way under every choice.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub enum Revisions {
+    /// Tracked changes and comments as CriticMarkup (the default).
+    #[default]
+    Markup,
+    /// The text with every change accepted; comments are left out.
+    Accept,
+    /// The text with every change rejected; comments are left out.
+    Reject,
+}
+
+impl Revisions {
+    /// `markup`, `accept` or `reject`.
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "markup" => Some(Self::Markup),
+            "accept" => Some(Self::Accept),
+            "reject" => Some(Self::Reject),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

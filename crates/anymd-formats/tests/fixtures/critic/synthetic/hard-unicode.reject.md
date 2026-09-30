@@ -1,0 +1,13 @@
+# Unicode everywhere
+
+中文和删除的文字。日本語のコメントです。
+
+עברית וטקסט ישן. العربية نص.
+
+Emoji 👍🏽 and 👨‍👩‍👧 family done.
+
+Combining: é and non breaking space.
+
+Tabs		end.
+
+A line and onedeleted.

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.text">
+ <office:automatic-styles>
+  <style:style style:name="B" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style>
+  <style:style style:name="I" style:family="text"><style:text-properties fo:font-style="italic"/></style:style>
+  <text:list-style style:name="L1"><text:list-level-style-bullet text:level="1" text:bullet-char="•"/><text:list-level-style-bullet text:level="2" text:bullet-char="◦"/></text:list-style>
+  <text:list-style style:name="N1"><text:list-level-style-number text:level="1" style:num-format="1" style:num-suffix="."/><text:list-level-style-number text:level="2" style:num-format="a" style:num-suffix="."/></text:list-style>
+ </office:automatic-styles>
+ <office:body>
+  <office:text>
+   <text:tracked-changes text:track-changes="true"><text:changed-region xml:id="ct1" text:id="ct1"><text:deletion><office:change-info><dc:creator>Bo Chen</dc:creator><dc:date>2026-10-01T00:35:00</dc:date></office:change-info><text:p>deleted text</text:p></text:deletion></text:changed-region><text:changed-region xml:id="ct2" text:id="ct2"><text:insertion><office:change-info><dc:creator>Ana Lima</dc:creator><dc:date>2026-10-01T00:45:00</dc:date></office:change-info></text:insertion></text:changed-region></text:tracked-changes>
+   <text:h text:outline-level="1">Comments</text:h>
+   <text:p>Overlap: <office:annotation office:name="c1"><dc:creator>Ana Lima</dc:creator><dc:date>2026-10-01T00:05:00</dc:date><text:p>First of two overlapping comments</text:p></office:annotation>one two <office:annotation office:name="c2"><dc:creator>Bo Chen</dc:creator><dc:date>2026-10-01T00:10:00</dc:date><text:p>Second, overlapping the first</text:p></office:annotation>three four<office:annotation-end office:name="c1"/> five six<office:annotation-end office:name="c2"/> seven.</text:p>
+   <text:p>Start <office:annotation office:name="c3"><dc:creator>Dev Patel</dc:creator><dc:date>2026-10-01T00:15:00</dc:date><text:p>Runs over three paragraphs</text:p><text:p>It has two paragraphs itself</text:p></office:annotation>of a long range.</text:p>
+   <text:p>The middle paragraph.</text:p>
+   <text:p>The end<office:annotation-end office:name="c3"/> of it.</text:p>
+   <text:p><office:annotation><dc:creator>Dev Patel</dc:creator><dc:date>2026-10-01T00:25:00</dc:date><text:p>A point comment at the start</text:p></office:annotation>Point at start, <office:annotation office:name="c4"><dc:creator>Émile Zola-Ng</dc:creator><dc:date>2026-10-01T00:20:00</dc:date><text:p/></office:annotation>an empty comment<office:annotation-end office:name="c4"/>, and at the end.<office:annotation><dc:creator>Dev Patel</dc:creator><dc:date>2026-10-01T00:30:00</dc:date><text:p>Last</text:p><text:p>word</text:p></office:annotation></text:p>
+   <text:p>A comment on <office:annotation office:name="c5"><dc:creator>Carla Duarte</dc:creator><dc:date>2026-10-01T00:40:00</dc:date><text:p>Why delete?</text:p></office:annotation><text:change text:change-id="ct1"/><office:annotation-end office:name="c5"/> and on <office:annotation office:name="c6"><dc:creator>Carla Duarte</dc:creator><dc:date>2026-10-01T00:50:00</dc:date><text:p>Good.</text:p></office:annotation><text:change-start text:change-id="ct2"/>inserted text<text:change-end text:change-id="ct2"/><office:annotation-end office:name="c6"/>.</text:p>
+   <text:p><office:annotation office:name="c7"><dc:creator>Carla Duarte</dc:creator><dc:date>2026-10-01T00:55:00</dc:date><text:p>Whole paragraph</text:p></office:annotation>A whole paragraph under one comment.<office:annotation-end office:name="c7"/></text:p>
+  </office:text>
+ </office:body>
+</office:document>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.text">
+ <office:automatic-styles>
+  <style:style style:name="B" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style>
+ </office:automatic-styles>
+ <office:body>
+  <office:text>
+   <text:tracked-changes text:track-changes="true">
+    <text:changed-region xml:id="ct1" text:id="ct1">
+     <text:deletion>
+      <office:change-info><dc:creator>Ana Lima</dc:creator><dc:date>2026-09-29T14:05:00</dc:date></office:change-info>
+      <text:p>fonts</text:p>
+     </text:deletion>
+    </text:changed-region>
+    <text:changed-region xml:id="ct2" text:id="ct2">
+     <text:insertion>
+      <office:change-info><dc:creator>Ana Lima</dc:creator><dc:date>2026-09-29T14:05:00</dc:date></office:change-info>
+     </text:insertion>
+    </text:changed-region>
+    <text:changed-region xml:id="ct3" text:id="ct3">
+     <text:insertion>
+      <office:change-info><dc:creator>Bo Chen</dc:creator><dc:date>2026-09-29T15:10:00</dc:date></office:change-info>
+     </text:insertion>
+    </text:changed-region>
+    <text:changed-region xml:id="ct4" text:id="ct4">
+     <text:deletion>
+      <office:change-info><dc:creator>Bo Chen</dc:creator><dc:date>2026-09-29T15:12:00</dc:date></office:change-info>
+      <text:p><text:s/>to people that</text:p>
+     </text:deletion>
+    </text:changed-region>
+    <text:changed-region xml:id="ct5" text:id="ct5">
+     <text:deletion>
+      <office:change-info><dc:creator>Ana Lima</dc:creator><dc:date>2026-09-30T09:00:00</dc:date></office:change-info>
+      <text:p>This whole paragraph was cut.</text:p>
+      <text:p/>
+     </text:deletion>
+    </text:changed-region>
+    <text:changed-region xml:id="ct6" text:id="ct6">
+     <text:insertion>
+      <office:change-info><dc:creator>Bo Chen</dc:creator><dc:date>2026-09-30T09:30:00</dc:date></office:change-info>
+     </text:insertion>
+    </text:changed-region>
+   </text:tracked-changes>
+   <text:h text:outline-level="1">Putting it all together</text:h>
+   <text:p>Don’t go around saying<text:change text:change-id="ct4"/> the world owes you a living.</text:p>
+   <text:p>I really love <text:change text:change-id="ct1"/><text:change-start text:change-id="ct2"/>font-styles<text:change-end text:change-id="ct2"/>.</text:p>
+   <text:p>To find <text:change-start text:change-id="ct3"/><text:span text:style-name="B">any</text:span> <text:change-end text:change-id="ct3"/>sense in any copyright law.</text:p>
+   <text:p><office:annotation office:name="c1"><dc:creator>Bill Winter</dc:creator><dc:date>2024-04-08T10:32:00</dc:date><text:p>true</text:p></office:annotation>Truth is stranger than fiction<office:annotation-end office:name="c1"/>, but it is because Fiction is obliged to stick to possibilities.</text:p>
+   <text:p><text:change text:change-id="ct5"/>The paragraph after the cut.</text:p>
+   <text:p>One sentence,<text:change-start text:change-id="ct6"/></text:p>
+   <text:p><text:change-end text:change-id="ct6"/>split in two.</text:p>
+   <text:p>Lorem ipsum dolor sit amet.<office:annotation><dc:creator>Ana Lima</dc:creator><dc:date>2026-09-30T08:15:00</dc:date><text:p>This is a comment</text:p></office:annotation></text:p>
+  </office:text>
+ </office:body>
+</office:document>

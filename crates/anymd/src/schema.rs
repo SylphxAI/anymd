@@ -17,6 +17,14 @@ fn option_bool_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
     .expect("option bool schema")
 }
 
+fn option_revisions_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    serde_json::from_value(serde_json::json!({
+        "type": ["string", "null"],
+        "enum": ["markup", "accept", "reject", null]
+    }))
+    .expect("option revisions schema")
+}
+
 fn option_images_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
     serde_json::from_value(serde_json::json!({
         "type": ["string", "null"],
@@ -590,6 +598,11 @@ pub struct ReadArgs {
         schema_with = "option_images_schema"
     )]
     pub images: Option<String>,
+    #[schemars(
+        description = "Tracked changes and comments in Word (DOCX) files. \"markup\" (default) shows them as CriticMarkup: {++inserted++}, {--deleted--}, {~~old~>new~~}, {==commented==}{>>Author (date): comment<<}, each change followed by its author and date. \"accept\" gives the text with every change accepted and \"reject\" the text with every change rejected, both without comments. A document with no tracked changes or comments reads the same either way.",
+        schema_with = "option_revisions_schema"
+    )]
+    pub revisions: Option<String>,
 }
 
 impl ReadArgs {
@@ -598,9 +611,23 @@ impl ReadArgs {
         self.images.as_deref() != Some("none")
     }
 
+    /// How Word tracked changes come out: CriticMarkup unless `accept` or
+    /// `reject` was asked for.
+    pub fn revisions(&self) -> anymd_formats::Revisions {
+        self.revisions
+            .as_deref()
+            .and_then(anymd_formats::Revisions::parse)
+            .unwrap_or_default()
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         if self.source.trim().is_empty() {
             return Err("source must not be empty.".into());
+        }
+        if let Some(mode) = self.revisions.as_deref() {
+            if anymd_formats::Revisions::parse(mode).is_none() {
+                return Err("revisions must be \"markup\", \"accept\" or \"reject\".".into());
+            }
         }
         if let Some(mode) = self.images.as_deref() {
             if mode != "refs" && mode != "none" {

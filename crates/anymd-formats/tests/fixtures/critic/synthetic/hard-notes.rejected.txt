@@ -1,0 +1,6 @@
+Notes
+A claim1 stands.
+An inserted note reference here.
+A deleted sentence with a note goes away2.
+An endnotei too.
+Comment around a note3.

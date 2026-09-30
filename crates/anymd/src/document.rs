@@ -30,6 +30,8 @@ pub struct OpenOptions {
     /// Export images embedded in PDF, DOCX, PPTX and EPUB files into this
     /// store and mark them in the Markdown. `None` leaves them out.
     pub images: Option<ImageStore>,
+    /// How Word tracked changes and comments come out.
+    pub revisions: anymd_formats::Revisions,
 }
 
 /// One citable unit of a document.
@@ -127,7 +129,14 @@ fn noun_for(units: &[Unit], format: Format) -> &'static str {
 // ---------------------------------------------------------------------------
 
 /// Path, size, mtime, OCR on, and the image store (its Markdown points there).
-type CacheKey = (PathBuf, u64, u128, bool, Option<PathBuf>);
+type CacheKey = (
+    PathBuf,
+    u64,
+    u128,
+    bool,
+    Option<PathBuf>,
+    anymd_formats::Revisions,
+);
 
 struct CachedDoc {
     format: &'static str,
@@ -151,7 +160,7 @@ fn cache() -> &'static Mutex<Cache> {
     CACHE.get_or_init(Mutex::default)
 }
 
-fn cache_key(path: &Path, ocr: bool, images: Option<&ImageStore>) -> Option<CacheKey> {
+fn cache_key(path: &Path, ocr: bool, options: &OpenOptions) -> Option<CacheKey> {
     let meta = std::fs::metadata(path).ok()?;
     let modified = meta
         .modified()
@@ -164,7 +173,8 @@ fn cache_key(path: &Path, ocr: bool, images: Option<&ImageStore>) -> Option<Cach
         meta.len(),
         modified,
         ocr,
-        images.map(|s| s.dir().to_path_buf()),
+        options.images.as_ref().map(|s| s.dir().to_path_buf()),
+        options.revisions,
     ))
 }
 
@@ -275,7 +285,7 @@ impl Opened {
             ));
         }
         let ocr_on = options.ocr != Some(false) && anymd_formats::image::ocr_available();
-        let key = cache_key(&path, ocr_on, options.images.as_ref());
+        let key = cache_key(&path, ocr_on, options);
         if format != Format::Pdf {
             if let Some(cached) = key.as_ref().and_then(cache_get) {
                 return Ok(Self::from_cached(spec, &cached, options));
@@ -501,7 +511,7 @@ impl Opened {
                     self.options.ocr != Some(false) && anymd_formats::image::ocr_available();
                 let key = path
                     .as_deref()
-                    .and_then(|p| cache_key(p, ocr_on, self.options.images.as_ref()));
+                    .and_then(|p| cache_key(p, ocr_on, &self.options));
                 if let Some(cached) = key.as_ref().and_then(cache_get) {
                     return Ok(cached.units.clone());
                 }
@@ -704,6 +714,7 @@ fn convert_other(
             download_whisper_model: options.download_whisper_model,
             path,
             images: options.images.clone(),
+            revisions: options.revisions,
         },
     )
 }

@@ -1,0 +1,6 @@
+Links
+See the new page for details.
+An inserted link: fresh link.
+A deleted link: kept link.
+A link whose text is replaced: after.
+A comment on a link.

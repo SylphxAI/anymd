@@ -1,0 +1,16 @@
+Adjacent and spanning changes
+Back to back: threefour.
+middle end of paragraph
+Replaced by two people: old.
+Deletion across paragraphs: alpha beta
+gamma delta.
+Insertion across paragraphs: one four.
+Before three cut paragraphs.
+Cut one.
+Cut two.
+Cut three.
+After them.
+
+An empty paragraph above
+ and a joined one.
+Last

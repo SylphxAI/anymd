@@ -1,0 +1,17 @@
+# Heading with an insertion
+
+Body text.
+
+## Heading two
+
+More text
+
+## Heading joined to the text above
+
+Text before an inserted heading.
+
+## Inserted heading
+
+Text after it.
+
+### Commented heading
