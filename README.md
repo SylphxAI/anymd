@@ -221,7 +221,7 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 | Input | What you get |
 |---|---|
 | **PDF** | Reading-order Markdown: headings, paragraphs, lists, tables, sub/superscripts, `<!-- page N -->` markers, bookmarks as an outline. Running headers and page numbers are removed. Image-only pages are OCR'd when `tesseract` is installed. Embedded figures are saved to the anymd cache and marked in place with their caption (`images: "refs"`, the default). |
-| **Word** `.docx` | Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, equations as LaTeX, embedded pictures as image files |
+| **Word** `.docx` | Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, equations as LaTeX, embedded pictures as image files, tracked changes and comments as CriticMarkup |
 | **PowerPoint** `.pptx` | One section per slide in deck order, titles, bullets, tables, chart data, speaker notes, pictures as image files |
 | **Excel** `.xlsx .xls .ods` · **CSV/TSV** | One table per sheet, dates as ISO strings, capped at 2,000 rows per sheet |
 | **EPUB** | One section per chapter in spine order, plus title and author; pictures as image files |

@@ -27,6 +27,21 @@ How it works: anymd reads glyph positions rather than text runs. Glyphs are grou
 
 Headings, bold/italic, links, nested lists, tables with merged cells, footnotes, and equations as LaTeX. Pictures are [exported as image files](#embedded-images).
 
+Tracked changes and comments become [CriticMarkup](https://github.com/CriticMarkup/CriticMarkup-toolkit), in the body, tables, text boxes, and footnotes:
+
+| In Word | In the Markdown |
+|---|---|
+| Inserted text, or moved text at its new place | `{++new++}{>>Ana Lima (2026-09-29T14:05:00Z)<<}` |
+| Deleted text, or moved text at its old place | `{--old--}{>>Ana Lima (2026-09-29T14:05:00Z)<<}` |
+| Deleted text next to inserted text | `{~~old~>new~~}{>>Ana Lima (2026-09-29T14:05:00Z)<<}` |
+| A comment on some text | `{==text==}{>>Ana Lima (2026-09-30T08:15:00Z): comment<<}` |
+| A comment on a point | `{>>Ana Lima (2026-09-30T08:15:00Z): comment<<}` |
+| An inserted or deleted paragraph break | `{++` or `{--` around the blank line between the paragraphs, then its author and date |
+
+Every tracked change is followed by who made it and when, as a comment, which is how CriticMarkup tracks several authors. A substitution made by two people names both, the deletion's author first. Neighbouring changes join into one only when the same person made them at the same time. Tracked changes inside a comment's own text keep their marks but not their author, since a comment cannot hold another comment.
+
+The author and date of changes and comments come from `w:author` and `w:date`. The date is copied exactly as stored, never converted; Word writes the author's local time there even though it ends in `Z`. Comments on the same text follow it in the order their anchors appear in the document, which is where Word puts a reply after the comment it answers. Formatting-only changes are not shown. Text that happens to contain a CriticMarkup delimiter is escaped with a backslash (`{\++`), so it reads the same but opens no span. In equations and image descriptions a space goes inside the delimiter instead (`-- }`), which LaTeX ignores.
+
 ## PowerPoint
 
 One section per slide in deck order: titles, bullets, tables, chart data, speaker notes, and pictures ([exported as image files](#embedded-images)). `pages` selects slides.

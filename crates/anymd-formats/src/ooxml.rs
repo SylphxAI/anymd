@@ -8,6 +8,7 @@ use std::io::{Cursor, Read};
 use quick_xml::events::Event;
 use quick_xml::Reader;
 
+use crate::critic::{self, Change};
 use crate::images::{self, Embed, ImageStore};
 use crate::ConvertError;
 
@@ -679,7 +680,13 @@ pub(crate) fn image_markdown(alt: &str, target: Option<&str>) -> Option<String> 
     Some(format!(
         "![{}]({})",
         alt.replace('[', "\\[").replace(']', "\\]"),
+        // Characters a URI may not hold, encoded; `{`, `}`, `<` and `>` would
+        // otherwise form CriticMarkup delimiters.
         name.replace(' ', "%20")
+            .replace('{', "%7B")
+            .replace('}', "%7D")
+            .replace('<', "%3C")
+            .replace('>', "%3E")
     ))
 }
 
@@ -763,6 +770,8 @@ impl Media {
 pub(crate) struct Blocks {
     out: String,
     last_was_list: bool,
+    /// A tracked change on the break before the next block.
+    separator: Option<Change>,
 }
 
 impl Blocks {
@@ -770,23 +779,44 @@ impl Blocks {
         Self {
             out: String::new(),
             last_was_list: false,
+            separator: None,
         }
     }
 
+    /// A block whose start cannot carry a CriticMarkup delimiter (a table, a
+    /// text box); a tracked break before it is left unmarked.
     pub(crate) fn push(&mut self, block: &str, is_list: bool) {
-        let block = block.trim_end();
-        if block.trim().is_empty() {
+        self.separator = None;
+        self.push_prefixed("", block, is_list);
+    }
+
+    /// A block made of Markdown syntax (`## `, `  1. `) followed by its text. A
+    /// tracked break before it closes after the syntax, so the heading or list
+    /// item stays valid.
+    pub(crate) fn push_prefixed(&mut self, prefix: &str, body: &str, is_list: bool) {
+        let body = body.trim_end();
+        if body.trim().is_empty() {
             return;
         }
-        if !self.out.is_empty() {
-            self.out.push_str(if is_list && self.last_was_list {
+        let change = self.separator.take();
+        if self.out.is_empty() {
+            self.out.push_str(prefix);
+            self.out.push_str(body);
+        } else {
+            let separator = if is_list && self.last_was_list {
                 "\n"
             } else {
                 "\n\n"
-            });
+            };
+            critic::splice(&mut self.out, separator, prefix, body, change.as_ref());
         }
-        self.out.push_str(block);
         self.last_was_list = is_list;
+    }
+
+    /// Records that the paragraph mark ending the last block was inserted or
+    /// deleted (`None` clears it).
+    pub(crate) fn set_separator(&mut self, change: Option<Change>) {
+        self.separator = change;
     }
 
     pub(crate) fn finish(self) -> String {
