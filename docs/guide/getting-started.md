@@ -87,6 +87,16 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 anymd report.pdf > report.md
 ```
 
+## Verify a download
+
+Every release asset (the `.tar.gz` and `.zip` binaries and the `.mcpb` bundles) is listed in `SHA256SUMS` and carries a signed [GitHub artifact attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) that names the workflow run that built it. The release also attaches a CycloneDX software bill of materials (`anymd-<version>.cdx.json`).
+
+```bash
+# download an asset and SHA256SUMS from the release, then:
+sha256sum -c SHA256SUMS --ignore-missing        # macOS: shasum -a 256 -c SHA256SUMS --ignore-missing
+gh attestation verify anymd-darwin-arm64.tar.gz --repo SylphxAI/anymd
+```
+
 ## Try it
 
 Ask your agent something that needs a document:
