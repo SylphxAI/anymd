@@ -36,20 +36,21 @@ pub struct Outline {
     pub unit: String,
     pub nodes: Vec<Node>,
     #[serde(skip)]
-    pub markdown: String,
-    #[serde(skip)]
     pub units: Vec<UnitRange>,
 }
 
 impl Outline {
     pub fn build(opened: &Opened) -> Result<Self, String> {
         let units = opened.all_units()?;
+        if units.is_empty() {
+            return Err("document has no readable units".into());
+        }
         Ok(Self::from_units(opened, &units))
     }
 
     pub fn from_units(opened: &Opened, units: &[Unit]) -> Self {
         let markers = opened.total > 1 || opened.is_paged();
-        let mut markdown = String::new();
+        let mut length = 0usize;
         let mut ranges = Vec::new();
         for unit in units {
             let marker = if markers {
@@ -57,13 +58,13 @@ impl Outline {
             } else {
                 String::new()
             };
-            markdown.push_str(&marker);
-            let start = markdown.len();
+            length += marker.len();
+            let start = length;
             let content = unit.markdown.trim();
             let offset = unit.markdown.len() - unit.markdown.trim_start().len();
-            markdown.push_str(content);
-            let end = markdown.len();
-            markdown.push_str("\n\n");
+            length += content.len();
+            let end = length;
+            length += 2;
             ranges.push(UnitRange {
                 number: unit.number,
                 start,
@@ -78,7 +79,7 @@ impl Outline {
             from: 1,
             to: opened.total,
             start: 0,
-            end: markdown.len(),
+            end: length,
             children: 0,
             path: String::new(),
         }];
@@ -115,7 +116,7 @@ impl Outline {
                     from,
                     to: opened.total,
                     start,
-                    end: markdown.len(),
+                    end: length,
                     children: 0,
                     path: String::new(),
                 });
@@ -154,7 +155,7 @@ impl Outline {
                         from: unit.number,
                         to: opened.total,
                         start: range.start + offset.saturating_sub(range.offset),
-                        end: markdown.len(),
+                        end: length,
                         children: 0,
                         path: String::new(),
                     });
@@ -204,7 +205,6 @@ impl Outline {
             format: opened.format.into(),
             unit: opened.unit_noun.into(),
             nodes,
-            markdown,
             units: ranges,
         }
     }
@@ -249,12 +249,19 @@ fn headings(markdown: &str) -> Vec<(usize, String, usize)> {
     let mut fence: Option<(char, usize)> = None;
     let mut previous: Option<(&str, usize)> = None;
     let mut offset = 0;
+    let mut comment = false;
     for line in markdown.split_inclusive('\n') {
         let text = line.trim_end();
         let trimmed = text.trim_start();
         let indent = text.len() - trimmed.len();
         let first = trimmed.chars().next().unwrap_or(' ');
         let run = trimmed.chars().take_while(|&c| c == first).count();
+        if fence.is_none() && (comment || trimmed.starts_with("<!--")) {
+            comment = !trimmed.contains("-->");
+            previous = None;
+            offset += line.len();
+            continue;
+        }
         if indent <= 3 && matches!(first, '`' | '~') && run >= 3 {
             if let Some((ch, length)) = fence {
                 if first == ch && run >= length && trimmed[run..].trim().is_empty() {
@@ -340,7 +347,7 @@ mod tests {
     use super::*;
     #[test]
     fn headings_ignore_code_and_keep_utf8_offsets() {
-        let text = "# 中文\n\n```md\n# not a heading\n```\n\nRevenue\n-------\n## Costs ##\n";
+        let text = "# 中文\n\n```md\n# not a heading\n```\n\n<!--\n# hidden\n-->\n\nRevenue\n-------\n## Costs ##\n";
         let found = headings(text);
         assert_eq!(
             found.iter().map(|h| h.1.as_str()).collect::<Vec<_>>(),
@@ -370,17 +377,26 @@ mod tests {
             )
             .unwrap();
             let outline = Outline::build(&opened).unwrap();
+            // Build the canonical body only in the test; the runtime index stores
+            // lengths and offsets, not a second copy of the whole document.
+            let mut canonical = String::new();
+            for unit in opened.all_units().unwrap().iter() {
+                if opened.total > 1 || opened.is_paged() {
+                    canonical.push_str(&format!("<!-- {} -->\n\n", unit.label));
+                }
+                canonical.push_str(unit.markdown.trim());
+                canonical.push_str("\n\n");
+            }
             assert!(outline.nodes.len() > 1, "{file}");
             assert_eq!(outline.tree(), Outline::build(&opened).unwrap().tree());
             for node in &outline.nodes {
                 assert!(
-                    node.start <= node.end && node.end <= outline.markdown.len(),
+                    node.start <= node.end && node.end <= canonical.len(),
                     "{file}: {}",
                     node.id
                 );
                 assert!(
-                    outline.markdown.is_char_boundary(node.start)
-                        && outline.markdown.is_char_boundary(node.end)
+                    canonical.is_char_boundary(node.start) && canonical.is_char_boundary(node.end)
                 );
                 assert!(node.from <= node.to);
             }
