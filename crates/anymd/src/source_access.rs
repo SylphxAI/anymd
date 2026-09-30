@@ -273,6 +273,8 @@ mod tests {
         let root = temp.path().join("allowed");
         fs::create_dir_all(root.join("nested")).expect("allowed tree");
         let existing = root.join("nested/existing.pdf");
+        // Admitted paths are canonical (/private/var on macOS, \\?\ on Windows).
+        let canonical_root = fs::canonicalize(&root).expect("canonical root");
         fs::write(&existing, b"pdf").expect("fixture");
         let args = vec![OsString::from(format!("--allow-dir={}", root.display()))];
         let policy = SourceAccessPolicy::from_inputs(&args, None, temp.path().to_path_buf())
@@ -287,7 +289,7 @@ mod tests {
             source
                 .path
                 .as_deref()
-                .is_some_and(|path| PathBuf::from(path).starts_with(&root))
+                .is_some_and(|path| PathBuf::from(path).starts_with(&canonical_root))
         }));
     }
 
