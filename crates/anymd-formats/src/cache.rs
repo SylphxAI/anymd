@@ -15,20 +15,13 @@ pub fn cache_dir() -> Option<PathBuf> {
 }
 
 pub(crate) fn cache_dir_from(get: &dyn Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
-    let var = |key: &str| get(key).filter(|v| !v.is_empty()).map(PathBuf::from);
-    if let Some(root) = var(CACHE_ENV) {
-        return Some(root);
-    }
-    if cfg!(windows) {
-        var("LOCALAPPDATA").map(|p| p.join("anymd").join("cache"))
-    } else if cfg!(target_os = "macos") {
-        var("HOME").map(|p| p.join("Library").join("Caches").join("anymd"))
-    } else {
-        var("XDG_CACHE_HOME")
-            .filter(|p| p.is_absolute())
-            .or_else(|| var("HOME").map(|p| p.join(".cache")))
-            .map(|p| p.join("anymd"))
-    }
+    mcp_kit::cache::root_with_env(
+        CACHE_ENV,
+        "anymd",
+        mcp_kit::cache::Fallback::Environment,
+        mcp_kit::cache::Override::NonEmpty,
+        get,
+    )
 }
 
 // ---------------------------------------------------------------------------
