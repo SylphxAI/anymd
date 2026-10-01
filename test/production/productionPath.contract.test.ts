@@ -9,6 +9,7 @@ import type { ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { productVersion } from '../utils/cargoBinaries.js';
+import { assertPdfSuccess, requirePdfFixture } from '../utils/pdfContract.js';
 import {
   callTool,
   ensureProductionArtifacts,
@@ -139,7 +140,7 @@ describe('production-path public contract', () => {
   }, 300_000);
 
   test('pdf_evidence public operations smoke on production path (sole-Rust)', async () => {
-    const failures: string[] = [];
+    requirePdfFixture(samplePdf);
     for (const entry of matrix.pdfEvidenceCases) {
       const args = structuredClone(entry.args) as Record<string, unknown>;
       if (!args.sources) {
@@ -153,15 +154,9 @@ describe('production-path public contract', () => {
         });
       }
       const response = await callTool(proc, nextId(), 'pdf_evidence', args, 120_000);
-      const payload = parseToolPayload(response);
-      // TS path: ops may succeed or fail on missing optional canvas/OCR providers,
-      // but must not crash the process. inspect must not be hard-error without source.
-      if (payload.isError && entry.id === 'inspect') {
-        failures.push(`${entry.id}: ${payload.text.slice(0, 400)}`);
-      }
-      expect(payload.text.length).toBeGreaterThan(0);
+      // These operations use the built-in Rust renderer, not optional OCR/providers.
+      assertPdfSuccess(response);
     }
-    expect(failures).toEqual([]);
   }, 300_000);
 
   test('security contract rejects private/transition SSRF URLs and invalid locators', async () => {
