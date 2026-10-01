@@ -10,6 +10,15 @@ import unittest
 from anymd import convert, ConversionTimeoutError
 
 
+def proc_exited(stat):
+    if not stat.exists():
+        return False  # Non-/proc platforms still use the existing status probe.
+    try:
+        return stat.read_text().rsplit(")", 1)[1].split()[0] == "Z"
+    except (FileNotFoundError, ProcessLookupError):
+        return True  # The process exited between exists() and read_text().
+
+
 def alive(pid):
     if os.name == "nt":
         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -26,13 +35,47 @@ def alive(pid):
         finally:
             kernel.CloseHandle(handle)
     stat = Path("/proc/{}/stat".format(pid))
-    if stat.exists() and stat.read_text().rsplit(")", 1)[1].split()[0] == "Z":
+    if proc_exited(stat):
         return False  # An exited orphan awaiting init reaping is not running.
     try:
         os.kill(pid, 0)
         return True
     except ProcessLookupError:
         return False
+
+
+class ObserverReadTests(unittest.TestCase):
+    """Desk-safe mocked reads: never call alive(), spawn or signal a process."""
+
+    def test_process_disappears_during_read(self):
+        from unittest.mock import Mock
+        for error in (FileNotFoundError(), ProcessLookupError()):
+            with self.subTest(error=type(error).__name__):
+                stat = Mock()
+                stat.exists.return_value = True
+                stat.read_text.side_effect = error
+                self.assertTrue(proc_exited(stat))
+
+    def test_unexpected_read_error_is_not_hidden(self):
+        from unittest.mock import Mock
+        stat = Mock()
+        stat.exists.return_value = True
+        stat.read_text.side_effect = PermissionError()
+        with self.assertRaises(PermissionError):
+            proc_exited(stat)
+
+    def test_existing_state_and_platform_fallback_are_preserved(self):
+        from unittest.mock import Mock
+        stat = Mock()
+        stat.exists.return_value = True
+        stat.read_text.return_value = "123 (fixture name) Z 1"
+        self.assertTrue(proc_exited(stat))
+        stat.read_text.return_value = "123 (fixture name) S 1"
+        self.assertFalse(proc_exited(stat))
+        stat.exists.return_value = False
+        stat.read_text.reset_mock()
+        self.assertFalse(proc_exited(stat))
+        stat.read_text.assert_not_called()
 
 
 class WorkerLifecycleTests(unittest.TestCase):
