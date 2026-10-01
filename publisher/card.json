@@ -1,0 +1,28 @@
+{
+  "slug": "anymd",
+  "kind": "open-source",
+  "name": {
+    "en": "anymd",
+    "zh-Hant": "anymd"
+  },
+  "tagline": {
+    "en": "Any file in, clean Markdown out: PDF, Word, Excel, images and audio, via a fast local Rust MCP server and CLI.",
+    "zh-Hant": "PDF、Word、Excel、圖片以至音訊，一律轉成乾淨 Markdown，由本機運行的高速 Rust MCP 伺服器與命令列工具處理。"
+  },
+  "category": {
+    "en": "Agent tools",
+    "zh-Hant": "代理工具"
+  },
+  "url": "https://sylphxai.github.io/anymd/",
+  "status": "available",
+  "image": {
+    "src": "card.webp",
+    "alt": {
+      "en": "anymd home page: any file to clean Markdown for AI agents",
+      "zh-Hant": "anymd 首頁：任何檔案轉為乾淨 Markdown，專為 AI 代理而設"
+    }
+  },
+  "repo": "SylphxAI/anymd",
+  "licence": "MIT",
+  "docs": "https://sylphxai.github.io/anymd/guide/getting-started"
+}
