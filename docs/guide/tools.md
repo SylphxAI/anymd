@@ -21,7 +21,7 @@ headings gets unit nodes. No model, vector database, or API key is needed.
 |---|---|---|---|
 | `source` | string | required | File path or `http(s)` URL |
 | `format` | `"json"` \| `"tree"` | `"json"` | Machine-readable preorder nodes or an indented tree |
-| `ocr` | boolean | `false` | OCR image-only pages; use the same option in node reads |
+| `ocr` | boolean or `"auto"` \| `"vlm"` \| `"tesseract"` | `false` | OCR image-only pages; use the same option in node reads. `true` inherits `ANYMD_OCR`; a named engine overrides it. |
 | `images` | `"none"` \| `"refs"` | `"none"` | Embedded images; use the same option in node reads |
 | `revisions` | string | `"markup"` | Word revision mode; use the same option in node reads |
 
