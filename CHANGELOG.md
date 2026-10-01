@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 8.4.0
+
+### Minor Changes
+
 - Add bounded local video timelines and decoded frames to `inspect`, with matching `read` and `outline` projections. Scene cuts, chapters and timed subtitle/ASR cues retain their playback clock and source hash. Optional frame OCR reuses the existing request permit; captions require a configured local-command adapter and are sampled-frame descriptions, not native video understanding. Frames, manifests and successful captions share the existing generated-image cache budget. Ordinary reads remain unchanged without `timeline`.
 
 ## 8.3.0
