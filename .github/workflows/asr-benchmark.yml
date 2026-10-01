@@ -1,0 +1,317 @@
+name: ASR benchmark
+
+# Speech-to-text engines on the same audio: Qwen3-ASR-1.7B on each candidate runtime
+# against whisper.cpp large-v3-turbo (the engine anymd shipped). GitHub-hosted standard
+# runners only (ubuntu-latest x64, macos-latest arm64). Data, metrics and pins are in
+# bench-asr/. Run it with
+# workflow_dispatch. Full inference stays opt-in: pull requests build the actual
+# anymd binary on every release target in ci.yml, without fetching model weights.
+on:
+  workflow_dispatch:
+    inputs:
+      engines:
+        description: 'Comma-separated: whisper, crispasr, transcribe-cpp, sherpa-onnx (empty = all)'
+        required: false
+        default: ''
+      utts:
+        description: 'Utterances per dataset (Linux)'
+        required: false
+        default: '200'
+      macos_utts:
+        description: 'Utterances per dataset on macOS (fleurs-en and fleurs-yue only; 0 = skip macOS)'
+        required: false
+        default: '40'
+      lang_mode:
+        description: 'explicit = tell the engine the language; auto = let it detect'
+        required: false
+        default: 'explicit'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asr-benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      builds: ${{ steps.plan.outputs.builds }}
+      datasets: ${{ steps.plan.outputs.datasets }}
+      utts: ${{ steps.plan.outputs.utts }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          ENGINES: ${{ inputs.engines }}
+          UTTS: ${{ inputs.utts }}
+          MACOS_UTTS: ${{ inputs.macos_utts }}
+          LANG_MODE: ${{ inputs.lang_mode }}
+        run: python3 bench-asr/plan.py
+
+  data:
+    name: data ${{ matrix.dataset }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        dataset: ${{ fromJSON(needs.plan.outputs.datasets) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - run: pip install pyarrow
+
+      - name: ffmpeg (resamples every clip to 16 kHz mono)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Fetch the pinned sample
+        run: python3 bench-asr/fetch_data.py "${{ matrix.dataset }}" "$RUNNER_TEMP/data" --utts "${{ needs.plan.outputs.utts }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: data-${{ matrix.dataset }}
+          path: ${{ runner.temp }}/data
+          retention-days: 3
+
+  build:
+    name: build ${{ matrix.tool }} (${{ matrix.osk }})
+    needs: plan
+    if: ${{ needs.plan.outputs.builds != '[]' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.builds) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: OpenBLAS (transcribe.cpp uses it for the decoder on Linux)
+        if: matrix.osk == 'linux' && matrix.tool == 'transcribe-cpp'
+        run: sudo apt-get update && sudo apt-get install -y libopenblas-dev
+
+      - name: Build ${{ matrix.tool }}
+        run: |
+          set -euxo pipefail
+          case "${{ matrix.tool }}" in
+            whisper) source_name=whisper.cpp; target=whisper-cli; extra="-DBUILD_SHARED_LIBS=OFF -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DGGML_NATIVE=OFF" ;;
+            transcribe-cpp) source_name=transcribe.cpp; target=transcribe-cli; extra="" ;;
+          esac
+          # Hosted runners of one label have different CPUs (EPYC 7763, 9V74, Xeon...); a binary
+          # tuned to the build machine dies with SIGILL on another. Pin an AVX2 floor instead.
+          if [ "${{ matrix.osk }}" = linux ]; then
+            extra="$extra -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DGGML_BMI2=ON"
+            if [ "${{ matrix.tool }}" = transcribe-cpp ]; then extra="$extra -DTRANSCRIBE_X86_CONSERVATIVE=ON"; fi
+          fi
+          eval "$(python3 bench-asr/fetch_asset.py source "$source_name")"
+          git clone --recursive --depth 1 --branch "$TAG" "$REPO" "$RUNNER_TEMP/src"
+          test "$(git -C "$RUNNER_TEMP/src" rev-parse HEAD)" = "$COMMIT"
+          # shellcheck disable=SC2086
+          cmake -S "$RUNNER_TEMP/src" -B "$RUNNER_TEMP/src/build" -DCMAKE_BUILD_TYPE=Release $extra
+          cmake --build "$RUNNER_TEMP/src/build" -j 4 --target "$target"
+          mkdir -p "$RUNNER_TEMP/tool"
+          find "$RUNNER_TEMP/src/build" -name "$target" -type f -exec cp {} "$RUNNER_TEMP/tool/" \;
+          find "$RUNNER_TEMP/src/build" \( -name '*.so' -o -name '*.so.*' -o -name '*.dylib' \) -type f -exec cp -a {} "$RUNNER_TEMP/tool/" \;
+          ls -la "$RUNNER_TEMP/tool"
+          tar -C "$RUNNER_TEMP/tool" -czf "$RUNNER_TEMP/tool.tgz" .
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tool-${{ matrix.tool }}-${{ matrix.osk }}
+          path: ${{ runner.temp }}/tool.tgz
+          retention-days: 3
+
+  bench:
+    name: ${{ matrix.id }}
+    needs: [plan, data, build]
+    # A skipped or failed build must not block the engines that do not need it.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.data.result == 'success' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: data-${{ matrix.dataset }}
+          path: ${{ runner.temp }}/data
+
+      - name: Built tool
+        if: startsWith(matrix.tool, 'build:')
+        uses: actions/download-artifact@v8
+        with:
+          name: tool-${{ matrix.tool_key }}-${{ matrix.osk }}
+          path: ${{ runner.temp }}/tool-archive
+
+      - name: Unpack the built tool
+        if: startsWith(matrix.tool, 'build:')
+        run: |
+          mkdir -p "$RUNNER_TEMP/tool"
+          tar -C "$RUNNER_TEMP/tool" -xzf "$RUNNER_TEMP/tool-archive/tool.tgz"
+
+      - name: OpenBLAS runtime (transcribe.cpp links it on Linux)
+        if: matrix.osk == 'linux' && matrix.engine == 'transcribe-cpp'
+        run: sudo apt-get update && sudo apt-get install -y libopenblas0
+
+      - name: Fetch the prebuilt tool
+        if: ${{ !startsWith(matrix.tool, 'build:') }}
+        run: python3 bench-asr/fetch_asset.py tools "${{ matrix.tool }}-${{ matrix.osk }}" "$RUNNER_TEMP/tool"
+
+      - name: Fetch the model
+        run: |
+          python3 bench-asr/fetch_asset.py models "${{ matrix.model }}" "$RUNNER_TEMP/models"
+          if [ -n "${{ matrix.aligner }}" ]; then python3 bench-asr/fetch_asset.py models "${{ matrix.aligner }}" "$RUNNER_TEMP/models"; fi
+          ls -la "$RUNNER_TEMP/models"
+
+      - name: Run
+        run: |
+          set -euo pipefail
+          model="$RUNNER_TEMP/models"
+          if [ -n "${{ matrix.model_file }}" ]; then model="$model/${{ matrix.model_file }}"; fi
+          aligner=()
+          if [ -n "${{ matrix.aligner }}" ]; then aligner=(--aligner "$RUNNER_TEMP/models/${{ matrix.aligner_file }}"); fi
+          python3 bench-asr/run_engine.py "${{ matrix.engine }}" \
+            --manifest "$RUNNER_TEMP/data/manifest.jsonl" --out "$RUNNER_TEMP/out" \
+            --tool-dir "$RUNNER_TEMP/tool" --model "$model" ${aligner[@]+"${aligner[@]}"} \
+            --limit "${{ matrix.limit }}" --lang-mode "${{ matrix.lang_mode }}" --label "${{ matrix.label }}"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: res-${{ matrix.id }}
+          path: |
+            ${{ runner.temp }}/out/summary.json
+            ${{ runner.temp }}/out/results.jsonl
+          retention-days: 30
+
+  # Does each runtime's Rust crate build into a binary on every anymd release target,
+  # and what does it add to a minimal binary? (The CLI sizes above are the C++ tools.)
+  probe:
+    name: crate ${{ matrix.crate }} (${{ matrix.target }})
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        crate: ${{ fromJSON(github.event_name == 'pull_request' && '["baseline","transcribe-cpp"]' || '["baseline","transcribe-cpp","crispasr","sherpa-onnx"]') }}
+        include:
+          - { runner: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          - { runner: macos-latest, target: aarch64-apple-darwin }
+          # Intel macOS hosted runners are retired: cross-compile from the arm runner (build only).
+          - { runner: macos-latest, target: x86_64-apple-darwin }
+          - { runner: windows-latest, target: x86_64-pc-windows-msvc }
+        exclude:
+          # Only the two candidate crates need every target; baseline anywhere is a size reference.
+          - { runner: ubuntu-24.04-arm, crate: baseline }
+          - { runner: windows-latest, crate: baseline }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build the probe
+        shell: bash
+        run: |
+          cargo build --release --manifest-path "bench-asr/probe/${{ matrix.crate }}/Cargo.toml" --target-dir "$RUNNER_TEMP/probe-target" --target "${{ matrix.target }}"
+          exe=$(find "$RUNNER_TEMP/probe-target/${{ matrix.target }}/release" -maxdepth 1 -type f \( -name 'probe-*' -o -name 'probe-*.exe' \) ! -name '*.d' | head -1)
+          bytes=$(wc -c < "$exe")
+          echo "probe ${{ matrix.crate }} ${{ matrix.target }} bytes=$bytes"
+          {
+            echo "### ${{ matrix.crate }} on ${{ matrix.target }}"
+            echo "Built. Stripped binary: $(( bytes / 1024 )) KiB"
+          } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p "$RUNNER_TEMP/probe-out"
+          echo "{\"crate\": \"${{ matrix.crate }}\", \"target\": \"${{ matrix.target }}\", \"bytes\": $bytes}" > "$RUNNER_TEMP/probe-out/probe.json"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: probe-${{ matrix.crate }}-${{ matrix.target }}
+          path: ${{ runner.temp }}/probe-out/probe.json
+          retention-days: 30
+
+  report:
+    name: Report
+    needs: [bench, probe]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - run: pip install jiwer opencc-python-reimplemented regex
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: res-*
+          path: results
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: probe-*
+          path: probes
+
+      - name: Open ASR Leaderboard text normaliser (pinned commit)
+        run: |
+          set -euo pipefail
+          eval "$(python3 bench-asr/fetch_asset.py source open_asr_leaderboard)"
+          mkdir -p bench-asr/oanorm
+          touch bench-asr/oanorm/__init__.py
+          for f in normalizer.py english_abbreviations.py; do
+            curl -fL --retry 5 -o "bench-asr/oanorm/$f" "https://raw.githubusercontent.com/huggingface/open_asr_leaderboard/$COMMIT/normalizer/$f"
+          done
+
+      - name: Score and summarise
+        run: |
+          python3 bench-asr/report.py results --probes probes > report.md
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: asr-report
+          path: report.md
+          retention-days: 90

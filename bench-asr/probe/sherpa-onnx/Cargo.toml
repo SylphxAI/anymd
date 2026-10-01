@@ -1,0 +1,16 @@
+[package]
+name = "probe-sherpa-onnx"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+sherpa-onnx = "=1.13.8"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true
+codegen-units = 1
+
+[workspace]

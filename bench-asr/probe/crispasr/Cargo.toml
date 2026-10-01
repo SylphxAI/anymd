@@ -1,0 +1,16 @@
+[package]
+name = "probe-crispasr"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+crispasr = { git = "https://github.com/CrispStrobe/CrispASR", tag = "v0.8.38" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true
+codegen-units = 1
+
+[workspace]

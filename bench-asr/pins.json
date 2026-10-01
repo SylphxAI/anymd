@@ -1,0 +1,138 @@
+{
+ "_comment": "Every download the ASR benchmark makes, pinned by URL revision and SHA-256. Re-pin deliberately.",
+ "tools": {
+  "crispasr-linux": {
+   "files": [
+    {
+     "url": "https://github.com/CrispStrobe/CrispASR/releases/download/v0.8.38/crispasr-linux-x86_64.tar.gz",
+     "sha256": "75e69237920466950a402eef71db656419402fe88e6934082822757477b5df3f",
+     "name": "crispasr.tar.gz",
+     "extract": true
+    }
+   ]
+  },
+  "crispasr-macos": {
+   "files": [
+    {
+     "url": "https://github.com/CrispStrobe/CrispASR/releases/download/v0.8.38/crispasr-macos.tar.gz",
+     "sha256": "5a94e4c0d42828f13d9e3123d91dd3ef9871e33e405c3b2e95c5627bbeb24ae1",
+     "name": "crispasr.tar.gz",
+     "extract": true
+    }
+   ]
+  },
+  "sherpa-linux": {
+   "files": [
+    {
+     "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-linux-x64-shared.tar.bz2",
+     "sha256": "c0bdb7907d3a74bba1d55d22bf4d9fa75586cf1530614ebe88a27b9118e015c4",
+     "name": "sherpa.tar.bz2",
+     "extract": true
+    }
+   ]
+  },
+  "sherpa-macos": {
+   "files": [
+    {
+     "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-osx-arm64-shared.tar.bz2",
+     "sha256": "b10e5c7e2c30ea03de9c442655d14860d9edc475c6251d58a8f5f06e913a1d56",
+     "name": "sherpa.tar.bz2",
+     "extract": true
+    }
+   ]
+  }
+ },
+ "models": {
+  "whisper-large-v3-turbo": {
+   "files": [
+    {
+     "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-large-v3-turbo.bin",
+     "sha256": "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69",
+     "name": "ggml-large-v3-turbo.bin"
+    }
+   ]
+  },
+  "crispasr-qwen3-1.7b-q8": {
+   "files": [
+    {
+     "url": "https://huggingface.co/cstr/qwen3-asr-1.7b-GGUF/resolve/674df5d44b50a63e7102a18895ed20e3f91de301/qwen3-asr-1.7b-q8_0.gguf",
+     "sha256": "9851ab996591a2d0cb0efb216002764b509c86bd40c95e613d7b65b8e69c8a6e",
+     "name": "qwen3-asr-1.7b-q8_0.gguf"
+    }
+   ]
+  },
+  "qwen3-aligner-0.6b-q8": {
+   "files": [
+    {
+     "url": "https://huggingface.co/cstr/qwen3-forced-aligner-0.6b-GGUF/resolve/1ec5110602ccab18c878ddebedab0891e290a95c/qwen3-forced-aligner-0.6b-q8_0.gguf",
+     "sha256": "539df5dd0fe1721e378ac13bfac9a26b1260dafb62d892c518c1f21244762636",
+     "name": "qwen3-forced-aligner-0.6b-q8_0.gguf"
+    }
+   ]
+  },
+  "transcribe-qwen3-1.7b-q8": {
+   "files": [
+    {
+     "url": "https://huggingface.co/handy-computer/Qwen3-ASR-1.7B-gguf/resolve/3555bd238a8572bbace3ebf60d23b036dc0a5dbe/Qwen3-ASR-1.7B-Q8_0.gguf",
+     "sha256": "9a0d81792dfea2d5f278b8a63deb3ea6e02139ce42c2301f32ea19c4f77526b7",
+     "name": "Qwen3-ASR-1.7B-Q8_0.gguf"
+    }
+   ]
+  },
+  "sherpa-qwen3-1.7b-int8": {
+   "files": [
+    {
+     "url": "https://huggingface.co/solavr/sherpa-onnx-qwen3-asr-1.7B-int8/resolve/455608654fe097e55cc9ecac65fd83e53d2347c1/conv_frontend.onnx",
+     "sha256": "04e7cf82516a445c3dfb7d9662ca3231afb8220c14116c7cec83aedb0f3a8fd7",
+     "name": "conv_frontend.onnx"
+    },
+    {
+     "url": "https://huggingface.co/solavr/sherpa-onnx-qwen3-asr-1.7B-int8/resolve/455608654fe097e55cc9ecac65fd83e53d2347c1/decoder.int8.onnx",
+     "sha256": "5873c56e5431830065bbc7814fe64e65608cb83c60cd346b0649524d0731db37",
+     "name": "decoder.int8.onnx"
+    },
+    {
+     "url": "https://huggingface.co/solavr/sherpa-onnx-qwen3-asr-1.7B-int8/resolve/455608654fe097e55cc9ecac65fd83e53d2347c1/decoder.int8.onnx.data",
+     "sha256": "92bdbc584e1bc4657cdb4de4cad10f336082a754a0e9ce52acab2f9050a88b20",
+     "name": "decoder.int8.onnx.data"
+    },
+    {
+     "url": "https://huggingface.co/solavr/sherpa-onnx-qwen3-asr-1.7B-int8/resolve/455608654fe097e55cc9ecac65fd83e53d2347c1/encoder.int8.onnx",
+     "sha256": "d4a47f8aef45649486db25a12880e50a4844fe107f4f59adfee79170875c0b7f",
+     "name": "encoder.int8.onnx"
+    },
+    {
+     "url": "https://huggingface.co/solavr/sherpa-onnx-qwen3-asr-1.7B-int8/resolve/455608654fe097e55cc9ecac65fd83e53d2347c1/tokenizer/merges.txt",
+     "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+     "name": "tokenizer/merges.txt"
+    },
+    {
+     "url": "https://huggingface.co/solavr/sherpa-onnx-qwen3-asr-1.7B-int8/resolve/455608654fe097e55cc9ecac65fd83e53d2347c1/tokenizer/tokenizer_config.json",
+     "sha256": "4942d005604266809309cabc9f4e9cb89ce855d59b14681fdc0e1cc62ea26c4c",
+     "name": "tokenizer/tokenizer_config.json"
+    },
+    {
+     "url": "https://huggingface.co/solavr/sherpa-onnx-qwen3-asr-1.7B-int8/resolve/455608654fe097e55cc9ecac65fd83e53d2347c1/tokenizer/vocab.json",
+     "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+     "name": "tokenizer/vocab.json"
+    }
+   ]
+  }
+ },
+ "sources": {
+  "whisper.cpp": {
+   "repo": "https://github.com/ggml-org/whisper.cpp",
+   "tag": "v1.9.4",
+   "commit": "927cfce34f31707e17f2bff35c349632fb9e2c3a"
+  },
+  "transcribe.cpp": {
+   "repo": "https://github.com/handy-computer/transcribe.cpp",
+   "tag": "v0.2.4",
+   "commit": "4807edaf210d0d7e8a6f7fb2a44b65966a2797f0"
+  },
+  "open_asr_leaderboard": {
+   "repo": "https://github.com/huggingface/open_asr_leaderboard",
+   "commit": "7ce09ca6c5fb4aac32b4a528d906356a21ad5399"
+  }
+ }
+}

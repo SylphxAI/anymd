@@ -25,8 +25,8 @@ pub struct OpenOptions {
     /// None = OCR image-only pages and images when `tesseract` is installed.
     pub ocr: Option<bool>,
     pub transcript: bool,
-    /// With `transcript`: fetch the whisper model when none is installed.
-    pub download_whisper_model: bool,
+    /// With `transcript`: fetch the Qwen3-ASR model when none is installed.
+    pub download_asr_model: bool,
     /// Export images embedded in PDF, DOCX, PPTX and EPUB files into this
     /// store and mark them in the Markdown. `None` leaves them out.
     pub images: Option<ImageStore>,
@@ -272,7 +272,7 @@ impl Opened {
                 &anymd_formats::Options {
                     path: Some(path.clone()),
                     transcript: options.transcript,
-                    download_whisper_model: options.download_whisper_model,
+                    download_asr_model: options.download_asr_model,
                     ..Default::default()
                 },
             )
@@ -718,7 +718,7 @@ fn convert_other(
             base_url,
             ocr,
             transcript: options.transcript,
-            download_whisper_model: options.download_whisper_model,
+            download_asr_model: options.download_asr_model,
             path,
             images: options.images.clone(),
             revisions: options.revisions,

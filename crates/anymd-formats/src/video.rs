@@ -1,18 +1,16 @@
 //! Audio/video → Markdown: container facts, streams, chapters, subtitles, and an
 //! opt-in transcript. Ported from cue `video-reader-core` (ffprobe, subtitle
-//! extraction, whisper.cpp orchestration), reduced to what reads well as text.
+//! extraction, local ASR orchestration), reduced to what reads well as text.
 //!
 //! Everything degrades: without ffprobe the output is the sniffed container plus
-//! an install hint; without whisper.cpp the transcript is a how-to line.
+//! an install hint; without ffmpeg the transcript is a how-to line.
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde_json::Value;
 
-use crate::whisper;
-#[cfg(feature = "native")]
-use crate::whisper::ModelConfig;
+use crate::asr;
 use crate::{tool, ConvertError, Converted, Options, Section};
 
 const PROBE_TIMEOUT: Duration = Duration::from_secs(60);
@@ -323,7 +321,7 @@ fn render_probe(
 
     if has_audio {
         if options.transcript {
-            match transcribe(path, options.download_whisper_model) {
+            match transcribe(path, options.download_asr_model) {
                 Ok(text) if !text.is_empty() => extra_sections.push(Section {
                     label: "transcript".into(),
                     markdown: text,
@@ -342,7 +340,7 @@ fn render_probe(
             }
         } else {
             notes.push(
-                "_Pass `transcript: true` for a speech transcript (local whisper.cpp; `anymd doctor` shows what is installed)._"
+                "_Pass `transcript: true` for a speech transcript (local Qwen3-ASR; `anymd doctor` shows what is installed)._"
                     .into(),
             );
         }
@@ -494,176 +492,305 @@ fn sidecar_sections(path: Option<&Path>) -> Vec<Section> {
 }
 
 // ---------------------------------------------------------------------------
-// Transcript (whisper.cpp)
+// Transcript (bundled transcribe-cpp / Qwen3-ASR)
 
 #[cfg(not(feature = "native"))]
 fn transcribe(_path: &Path, _download: bool) -> Result<String, String> {
     Err("transcripts need the native anymd build".into())
 }
 
+#[derive(Debug, PartialEq)]
+struct TranscriptCue {
+    start_ms: u64,
+    end_ms: u64,
+    text: String,
+    word: bool,
+}
+
 #[cfg(feature = "native")]
 fn transcribe(path: &Path, download: bool) -> Result<String, String> {
-    let binary = whisper::find_binary();
-    let ffmpeg = tool::find("ffmpeg");
-    let config = ModelConfig::from_env();
-    // Only fetch a model once the tools that use it are present.
-    let tools_ready = matches!(binary, Ok(Some(_))) && ffmpeg.is_some();
-    let model = match &config {
-        Ok(config) if tools_ready => config.ensure(download),
-        Ok(config) => config.locate().and_then(|found| {
-            found.ok_or_else(|| {
-                if download || config.auto_download {
-                    format!(
-                        "{} will be downloaded into {} once the tools above are installed",
-                        config.spec.file_name(),
-                        config
-                            .dir
-                            .as_ref()
-                            .map(|d| d.display().to_string())
-                            .unwrap_or_else(|| "the anymd cache".into())
-                    )
-                } else {
-                    config.missing_hint()
+    use transcribe_cpp::{Backend, CancelToken, Model, ModelOptions, RunOptions, SessionOptions};
+    const CHUNK_SECONDS: u64 = 20;
+    const SAMPLES_PER_CHUNK: usize = 16_000 * CHUNK_SECONDS as usize;
+
+    let ffmpeg = tool::find("ffmpeg")
+        .ok_or_else(|| format!("needs ffmpeg; install with {}", asr::ffmpeg_hint()))?;
+    // No model download if the audio extraction tool is missing.
+    let model_path = asr::ensure_model(&asr::ASR, asr::MODEL_ENV, download)?;
+    let model = Model::load_with(
+        &model_path,
+        &ModelOptions {
+            backend: Backend::Cpu,
+            ..Default::default()
+        },
+    )
+    .map_err(|e| format!("Qwen3-ASR model load: {e}"))?;
+    let mut session = model
+        .session_with(&SessionOptions {
+            n_threads: 4,
+            ..Default::default()
+        })
+        .map_err(|e| format!("Qwen3-ASR session: {e}"))?;
+    let cancel = CancelToken::new();
+    session.set_cancel_token(&cancel);
+    let (done, wait) = std::sync::mpsc::channel::<()>();
+    let timer_cancel = cancel.clone();
+    let timer = std::thread::spawn(move || {
+        if matches!(
+            wait.recv_timeout(TRANSCRIBE_TIMEOUT),
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout)
+        ) {
+            timer_cancel.cancel();
+        }
+    });
+    // Every exit drops the sender, releasing the timer (including errors).
+    let result = (|| {
+        let dir = tempfile::tempdir().map_err(|e| format!("temp dir: {e}"))?;
+        let wav = dir.path().join("chunk.wav");
+        let mut cues = Vec::new();
+        let mut offset_ms = 0u64;
+        let mut aligner = None;
+        let mut alignment_disabled = false;
+        loop {
+            if cancel.is_cancelled() {
+                return Err("Qwen3-ASR transcript timed out".into());
+            }
+            let seek = format!("{:.3}", offset_ms as f64 / 1000.0);
+            let output = tool::run(
+                &ffmpeg,
+                [
+                    std::ffi::OsStr::new("-nostdin"),
+                    "-loglevel".as_ref(),
+                    "error".as_ref(),
+                    "-y".as_ref(),
+                    "-ss".as_ref(),
+                    seek.as_ref(),
+                    "-i".as_ref(),
+                    path.as_os_str(),
+                    "-t".as_ref(),
+                    "20".as_ref(),
+                    "-vn".as_ref(),
+                    "-ac".as_ref(),
+                    "1".as_ref(),
+                    "-ar".as_ref(),
+                    "16000".as_ref(),
+                    "-acodec".as_ref(),
+                    "pcm_s16le".as_ref(),
+                    wav.as_os_str(),
+                ],
+                AUDIO_EXTRACT_TIMEOUT,
+            )?;
+            if !output.success {
+                return Err("ffmpeg could not extract the audio track".into());
+            }
+            let mut reader =
+                hound::WavReader::open(&wav).map_err(|e| format!("audio chunk: {e}"))?;
+            let pcm = reader
+                .samples::<i16>()
+                .take(SAMPLES_PER_CHUNK + 1)
+                .map(|s| s.map(|s| s as f32 / 32768.0))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("audio samples: {e}"))?;
+            if pcm.is_empty() {
+                break;
+            }
+            if pcm.len() > SAMPLES_PER_CHUNK {
+                return Err("ffmpeg exceeded the audio chunk limit".into());
+            }
+            let duration_ms = pcm.len() as u64 * 1000 / 16_000;
+            // Avoid hallucination on digitally silent chunks, without a speech-volume threshold.
+            if pcm.iter().any(|s| *s != 0.0) {
+                let transcript = session
+                    .run(&pcm, &RunOptions::default())
+                    .map_err(|e| format!("Qwen3-ASR inference: {e}"))?;
+                let text = transcript.text.trim();
+                if !text.is_empty() {
+                    let language = transcript.language.as_deref().unwrap_or("");
+                    let supported = matches!(
+                        language,
+                        "en" | "zh" | "yue" | "ja" | "ko" | "fr" | "de" | "it" | "pt" | "ru" | "es"
+                    );
+                    if supported && !alignment_disabled && aligner.is_none() {
+                        // CrispASR is used ONLY for standalone ForcedAligner, never ASR.
+                        let binary = std::env::var_os(asr::ALIGNER_BIN_ENV)
+                            .map(PathBuf::from)
+                            .or_else(|| tool::find("crispasr"));
+                        if let Some(binary) = binary {
+                            match asr::ensure_model(&asr::ALIGNER, asr::ALIGNER_ENV, download) {
+                                Ok(weights) => aligner = Some((binary, weights)),
+                                Err(e) => {
+                                    eprintln!("anymd: word alignment unavailable: {e}");
+                                    alignment_disabled = true;
+                                }
+                            }
+                        } else {
+                            alignment_disabled = true;
+                        }
+                    }
+                    let aligned = if supported && !alignment_disabled {
+                        aligner.as_ref().and_then(|(binary, weights)| {
+                            match align_words(binary, weights, &wav, text, duration_ms) {
+                                Ok(words) => Some(words),
+                                Err(e) => {
+                                    eprintln!("anymd: word alignment unavailable: {e}");
+                                    alignment_disabled = true;
+                                    None
+                                }
+                            }
+                        })
+                    } else {
+                        None
+                    };
+                    if let Some(words) = aligned {
+                        cues.extend(words.into_iter().map(|mut cue| {
+                            cue.start_ms += offset_ms;
+                            cue.end_ms += offset_ms;
+                            cue
+                        }));
+                    } else {
+                        cues.push(TranscriptCue {
+                            start_ms: offset_ms,
+                            end_ms: offset_ms + duration_ms,
+                            text: text.into(),
+                            word: false,
+                        });
+                    }
                 }
-            })
-        }),
-        Err(error) => Err(error.clone()),
-    };
-    let (Ok(Some(adapter)), Some(ffmpeg), Ok(model)) = (&binary, &ffmpeg, &model) else {
-        return Err(missing_message(
-            binary.as_ref().map(Option::is_some),
-            ffmpeg.is_some(),
-            model.as_ref().err().map(String::as_str),
-        ));
-    };
-    let (adapter, ffmpeg, model) = (adapter.clone(), ffmpeg.clone(), model.clone());
-    let dir = tempfile::tempdir().map_err(|e| format!("temp dir: {e}"))?;
-    let wav = dir.path().join("audio.wav");
-    let extract: Vec<&std::ffi::OsStr> = vec![
-        "-nostdin".as_ref(),
-        "-hide_banner".as_ref(),
-        "-loglevel".as_ref(),
-        "error".as_ref(),
-        "-y".as_ref(),
-        "-i".as_ref(),
-        path.as_os_str(),
-        "-vn".as_ref(),
-        "-ac".as_ref(),
-        "1".as_ref(),
-        "-ar".as_ref(),
-        "16000".as_ref(),
-        "-f".as_ref(),
-        "wav".as_ref(),
-        wav.as_os_str(),
-    ];
-    let output = tool::run(&ffmpeg, extract, AUDIO_EXTRACT_TIMEOUT)?;
-    if !output.success {
-        return Err("ffmpeg could not extract the audio track".into());
-    }
-    let prefix = dir.path().join("transcript");
-    let mut args: Vec<&std::ffi::OsStr> = vec![
-        "-m".as_ref(),
-        model.as_os_str(),
-        "-f".as_ref(),
-        wav.as_os_str(),
-        "-oj".as_ref(),
-        "-of".as_ref(),
-        prefix.as_os_str(),
-    ];
-    // Multilingual models default to English in whisper.cpp; detect instead.
-    let english_only = model
-        .file_name()
-        .is_some_and(|name| name.to_string_lossy().contains(".en"));
-    if !english_only {
-        args.extend([std::ffi::OsStr::new("-l"), std::ffi::OsStr::new("auto")]);
-    }
-    let output = tool::run(&adapter, args, TRANSCRIBE_TIMEOUT)?;
-    if !output.success {
-        return Err(format!(
-            "whisper.cpp failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-                .lines()
-                .last()
-                .unwrap_or("")
-                .trim()
-        ));
-    }
-    let json = std::fs::read_to_string(prefix.with_extension("json"))
-        .map_err(|e| format!("whisper.cpp wrote no JSON output: {e}"))?;
-    parse_whisper_json(&json)
+            }
+            if pcm.len() < SAMPLES_PER_CHUNK {
+                break;
+            }
+            offset_ms += CHUNK_SECONDS * 1000;
+        }
+        Ok(render_transcript(&cues))
+    })();
+    drop(done);
+    let _ = timer.join();
+    result
 }
 
-/// "needs X and Y." plus one how-to bullet per missing piece.
-fn missing_message(binary: Result<bool, &String>, ffmpeg: bool, model: Option<&str>) -> String {
-    let mut needs = Vec::new();
-    let mut how = Vec::new();
-    match binary {
-        Ok(true) => {}
-        Ok(false) => {
-            needs.push("whisper.cpp");
-            how.push(format!("- whisper.cpp: {}", whisper::install_hint()));
-        }
-        Err(error) => {
-            needs.push("whisper.cpp");
-            how.push(format!("- whisper.cpp: {error}"));
-        }
+#[cfg(feature = "native")]
+fn align_words(
+    binary: &Path,
+    model: &Path,
+    wav: &Path,
+    text: &str,
+    duration_ms: u64,
+) -> Result<Vec<TranscriptCue>, String> {
+    let dir = tempfile::tempdir().map_err(|e| e.to_string())?;
+    let reference = dir.path().join("reference.txt");
+    std::fs::write(&reference, text).map_err(|e| e.to_string())?;
+    let output = tool::run(
+        binary,
+        [
+            std::ffi::OsStr::new("--align-only"),
+            "-am".as_ref(),
+            model.as_os_str(),
+            "-f".as_ref(),
+            wav.as_os_str(),
+            "--text-file".as_ref(),
+            reference.as_os_str(),
+            "--align-format".as_ref(),
+            "json".as_ref(),
+            "--align-granularity".as_ref(),
+            "word".as_ref(),
+            "-t".as_ref(),
+            "4".as_ref(),
+            "-ng".as_ref(),
+        ],
+        PROBE_TIMEOUT,
+    )?;
+    if !output.success {
+        return Err("ForcedAligner failed; retaining segment timestamps".into());
     }
-    if !ffmpeg {
-        needs.push("ffmpeg");
-        how.push(format!("- ffmpeg: install with {}", whisper::ffmpeg_hint()));
-    }
-    if let Some(model) = model {
-        needs.push("a whisper model");
-        how.push(format!("- model: {model}"));
-    }
-    let needs = match needs.as_slice() {
-        [] => "an unknown component".to_string(),
-        [one] => one.to_string(),
-        [init @ .., last] => format!("{} and {last}", init.join(", ")),
-    };
-    format!("needs {needs}.\n{}", how.join("\n"))
+    let payload = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
+    parse_alignment(&payload, text, duration_ms)
 }
 
-/// whisper.cpp `-oj` output → timestamped lines.
-fn parse_whisper_json(payload: &str) -> Result<String, String> {
+fn parse_alignment(
+    payload: &str,
+    text: &str,
+    duration_ms: u64,
+) -> Result<Vec<TranscriptCue>, String> {
     let root: Value =
-        serde_json::from_str(payload).map_err(|e| format!("unreadable whisper JSON: {e}"))?;
-    let entries = root
-        .get("transcription")
-        .or_else(|| root.get("segments"))
-        .and_then(Value::as_array)
-        .ok_or("whisper JSON has no transcription array")?;
+        serde_json::from_str(payload).map_err(|e| format!("ForcedAligner JSON: {e}"))?;
+    let rows = root
+        .as_array()
+        .ok_or("ForcedAligner JSON must be a word array")?;
     let mut cues = Vec::new();
-    for entry in entries {
-        let text = entry
-            .get("text")
+    let mut previous_end = 0u64;
+    for row in rows {
+        let start = row
+            .get("start")
+            .and_then(Value::as_f64)
+            .ok_or("missing word start")?;
+        let end = row
+            .get("end")
+            .and_then(Value::as_f64)
+            .ok_or("missing word end")?;
+        let word = row
+            .get("word")
             .and_then(Value::as_str)
-            .unwrap_or("")
-            .trim();
-        if text.is_empty() {
-            continue;
+            .ok_or("missing alignment word")?;
+        if !start.is_finite()
+            || !end.is_finite()
+            || start < 0.0
+            || end < start
+            || end * 1000.0 > duration_ms as f64
+        {
+            return Err("word timestamps outside audio".into());
         }
-        let start_ms = entry
-            .get("offsets")
-            .and_then(|o| o.get("from"))
-            .and_then(Value::as_u64)
-            .or_else(|| {
-                entry
-                    .get("timestamps")
-                    .and_then(|t| t.get("from"))
-                    .and_then(Value::as_str)
-                    .and_then(parse_timestamp)
-            })
-            .or_else(|| {
-                entry
-                    .get("start")
-                    .and_then(Value::as_f64)
-                    .map(|s| (s * 1000.0) as u64)
-            })
-            .unwrap_or(0);
-        cues.push((start_ms, text.to_string()));
+        let start_ms = (start * 1000.0).round() as u64;
+        let end_ms = (end * 1000.0).round() as u64;
+        if start_ms < previous_end || word.trim().is_empty() {
+            return Err("invalid word alignment".into());
+        }
+        previous_end = end_ms;
+        cues.push(TranscriptCue {
+            start_ms,
+            end_ms,
+            text: word.into(),
+            word: true,
+        });
     }
-    Ok(render_cues(&cues))
+    let letters = |s: &str| {
+        s.chars()
+            .filter(|c| c.is_alphanumeric())
+            .collect::<String>()
+    };
+    let aligned = cues.iter().map(|c| c.text.as_str()).collect::<String>();
+    if cues.is_empty() || letters(&aligned) != letters(text) {
+        return Err("word alignment omitted or changed transcript text".into());
+    }
+    Ok(cues)
+}
+
+fn render_transcript(cues: &[TranscriptCue]) -> String {
+    if cues.is_empty() {
+        return String::new();
+    }
+    let kind = if cues.iter().all(|c| c.word) {
+        "word (Qwen3-ForcedAligner)"
+    } else if cues.iter().any(|c| c.word) {
+        "mixed word and segment"
+    } else {
+        "segment (20-second chunk boundaries, not word timing)"
+    };
+    let clock = |ms: u64| {
+        format!(
+            "{:02}:{:02}:{:02}.{:03}",
+            ms / 3_600_000,
+            ms / 60_000 % 60,
+            ms / 1000 % 60,
+            ms % 1000
+        )
+    };
+    let lines = cues
+        .iter()
+        .map(|c| format!("[{} --> {}] {}", clock(c.start_ms), clock(c.end_ms), c.text))
+        .collect::<Vec<_>>()
+        .join("\n");
+    format!("_Timestamps: {kind}._\n\n{lines}")
 }
 
 // ---------------------------------------------------------------------------
@@ -883,31 +1010,46 @@ mod tests {
     }
 
     #[test]
-    fn whisper_json_is_parsed() {
-        let json = r#"{"transcription":[{"timestamps":{"from":"00:00:00,000","to":"00:00:02,000"},"offsets":{"from":0,"to":2000},"text":" Hello world."},{"offsets":{"from":65000,"to":66000},"text":"Bye."}]}"#;
-        assert_eq!(
-            parse_whisper_json(json).unwrap(),
-            "[00:00] Hello world.\n[01:05] Bye."
+    fn alignment_preserves_text_and_validates_bounds() {
+        let json = include_str!("../tests/fixtures/aligner/crispasr-0.8.38-words.json");
+        let cues = parse_alignment(json, "Hello world", 1000).unwrap();
+        assert_eq!(cues[0].start_ms, 100);
+        assert!(render_transcript(&cues).contains("word (Qwen3-ForcedAligner)"));
+        assert!(parse_alignment(json, "Hello world again", 1000).is_err());
+        assert!(parse_alignment(json, "Hello world", 900).is_err());
+        assert!(parse_alignment("[]", "Hello", 1000).is_err());
+        assert!(
+            parse_alignment(r#"[{"start":1.0,"end":0.5,"word":"Hello"}]"#, "Hello", 1000).is_err()
         );
-        assert!(parse_whisper_json("{}").is_err());
+        assert!(parse_alignment(
+            r#"[{"start":0.1,"end":0.7,"word":"Hello"},{"start":0.6,"end":0.9,"word":"world"}]"#,
+            "Hello world",
+            1000
+        )
+        .is_err());
     }
 
     #[test]
-    fn missing_pieces_are_named_with_how_to_lines() {
-        let all = missing_message(Ok(false), false, Some("no whisper model; rerun with …"));
-        let (head, rest) = all.split_once('\n').unwrap();
-        assert_eq!(head, "needs whisper.cpp, ffmpeg and a whisper model.");
-        let lines: Vec<&str> = rest.lines().collect();
-        assert!(lines[0].starts_with("- whisper.cpp: "), "{all}");
-        assert!(lines[0].contains(whisper::BIN_ENV), "{all}");
-        assert!(lines[1].starts_with("- ffmpeg: install with "), "{all}");
-        assert_eq!(lines[2], "- model: no whisper model; rerun with …");
-
-        let model_only = missing_message(Ok(true), true, Some("x"));
-        assert_eq!(model_only, "needs a whisper model.\n- model: x");
-        let bad_env = "ANYMD_WHISPER_BIN is set to /x, which is not an executable".to_string();
-        let bin = missing_message(Err(&bad_env), true, None);
-        assert_eq!(bin, format!("needs whisper.cpp.\n- whisper.cpp: {bad_env}"));
+    fn chunk_timestamps_remain_on_the_source_timeline() {
+        let cues = vec![
+            TranscriptCue {
+                start_ms: 20_000,
+                end_ms: 40_000,
+                text: "second chunk".into(),
+                word: false,
+            },
+            TranscriptCue {
+                start_ms: 40_000,
+                end_ms: 41_250,
+                text: "last partial chunk".into(),
+                word: false,
+            },
+        ];
+        let rendered = render_transcript(&cues);
+        assert!(rendered.contains("segment (20-second chunk boundaries, not word timing)"));
+        assert!(rendered.contains("[00:00:20.000 --> 00:00:40.000] second chunk"));
+        assert!(rendered.contains("[00:00:40.000 --> 00:00:41.250] last partial chunk"));
+        assert!(render_transcript(&[]).is_empty());
     }
 
     #[test]
@@ -1019,24 +1161,7 @@ mod tests {
         let converted = convert(&bytes, &Options::default()).unwrap();
         assert_eq!(converted.sections.len(), 2);
 
-        // Transcript requested without whisper: a how-to line, not an error.
-        if matches!(whisper::find_binary(), Ok(None)) {
-            let converted = convert(
-                &bytes,
-                &Options {
-                    transcript: true,
-                    ..Options::default()
-                },
-            )
-            .unwrap();
-            assert!(
-                converted.sections[0]
-                    .markdown
-                    .contains("_Transcript unavailable: needs whisper.cpp"),
-                "{:?}",
-                converted
-            );
-            assert!(converted.sections[0].markdown.contains("- whisper.cpp: "));
-        }
+        // The transcript path downloads weights only when explicitly requested;
+        // ordinary media conversion above remains offline and model-free.
     }
 }

@@ -30,6 +30,21 @@
    no-op for publishing. A failed run can be re-run; each step skips what is
    already published.
 
+## Native CPU portability
+
+Repository builds use `.cargo/config.toml` to pass `GGML_NATIVE=OFF` and
+`TRANSCRIBE_X86_CONSERVATIVE=ON` to transcribe-cpp-sys. This disables host-specific
+CPU tuning and optional x86 SIMD tiers: a binary built on a recent CI CPU can
+run on an older supported CPU. CI checks the compiled CMake cache on every
+release target with `scripts/check-native-cpu.py`. Model-free compilation alone
+does not prove CPU portability. The benchmark's AVX2 tool build is a separate
+measurement, not the portable release binary's performance guarantee.
+
+When redistributing a source build outside this checkout, set
+`TRANSCRIBE_CMAKE_ARGS="-DGGML_NATIVE=OFF -DTRANSCRIBE_X86_CONSERVATIVE=ON"`
+before building; Cargo's repository configuration is not inherited by downstream
+crates.io consumers.
+
 ## crates.io
 
 The `crates` job in `release.yml` runs after the release job succeeds and calls

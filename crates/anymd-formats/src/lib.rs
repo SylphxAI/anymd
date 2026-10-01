@@ -19,7 +19,7 @@ mod revise;
 #[cfg(feature = "native")]
 mod tool;
 /// Without `native` (WebAssembly) no helper binary exists: every lookup misses,
-/// so OCR, ffprobe, and whisper paths fall back to their no-tool output.
+/// so OCR, ffprobe, and ASR paths fall back to their no-tool output.
 #[cfg(not(feature = "native"))]
 mod tool {
     use std::path::{Path, PathBuf};
@@ -72,8 +72,8 @@ mod tool {
         Err("temp files are not available in this build".into())
     }
 }
+pub mod asr;
 pub mod video;
-pub mod whisper;
 pub mod xlsx;
 
 mod ooxml;
@@ -108,11 +108,11 @@ pub struct Options {
     pub base_url: Option<String>,
     /// Opt-in OCR for images (runs a local `tesseract` binary when present).
     pub ocr: bool,
-    /// Opt-in transcript for audio/video (runs a local whisper.cpp binary when present).
+    /// Opt-in transcript for audio/video (runs the bundled transcribe-cpp Qwen3-ASR runtime).
     pub transcript: bool,
-    /// With `transcript`: download the configured ggml whisper model into the
-    /// anymd cache when none is installed (see [`whisper`]).
-    pub download_whisper_model: bool,
+    /// With `transcript`: download the pinned Qwen3-ASR model into the
+    /// anymd cache when none is installed (see [`asr`]).
+    pub download_asr_model: bool,
     /// Source path when the input came from disk (video/ffprobe needs a path).
     pub path: Option<std::path::PathBuf>,
     /// Export images embedded in DOCX, PPTX and EPUB files into this store and

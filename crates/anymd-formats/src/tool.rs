@@ -1,4 +1,4 @@
-//! Local helper binaries (ffprobe, ffmpeg, tesseract, whisper.cpp): found on
+//! Local helper binaries (ffprobe, ffmpeg, tesseract, optional forced aligner): found on
 //! PATH, run without a shell, bounded by a timeout and an output cap.
 
 use std::ffi::OsStr;

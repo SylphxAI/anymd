@@ -36,7 +36,7 @@ stdio is the default. `MCP_TRANSPORT=http` serves MCP on `MCP_HTTP_HOST:MCP_HTTP
 
 ## External tools
 
-`tesseract`, `ffprobe`, `ffmpeg`, and whisper.cpp are optional. When anymd uses them, it runs them directly, without a shell, with a timeout and an output cap. Nothing from a document is ever interpreted as a command.
+`tesseract`, `ffprobe`, `ffmpeg`, and the optional ForcedAligner helper are optional. When anymd uses them, it runs them directly, without a shell, with a timeout and an output cap. Nothing from a document is ever interpreted as a command.
 
 ## Parsing untrusted files
 

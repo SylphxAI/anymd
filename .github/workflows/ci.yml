@@ -96,6 +96,12 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: ASR scoring regression tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/asr-scoring"
+          "$RUNNER_TEMP/asr-scoring/bin/pip" install jiwer==4.0.0 opencc-python-reimplemented==0.1.7 cn2an==0.5.24 kanjize==1.6.1
+          "$RUNNER_TEMP/asr-scoring/bin/python" -m unittest discover -s bench-asr -p test_report.py
+
       - name: Audit Rust dependencies
         run: bash scripts/check-cargo-advisories.sh
 
@@ -112,6 +118,9 @@ jobs:
 
       - name: Build the anymd binary
         run: bun run build
+
+      - name: Verify portable ASR CPU configuration
+        run: python3 scripts/check-native-cpu.py target/release/build
 
       - name: Test installed Python wheel and optional framework adapters
         run: |
@@ -199,3 +208,41 @@ jobs:
           fetch-depth: 0 # full history for the new-commit range
       - name: Secret scan (ADR-6 security:secrets)
         uses: SylphxAI/.github/.github/actions/secret-scan@main
+
+  # Validate builds Linux x64. Compile the actual product (not only the runtime
+  # probe) on the other release targets, without downloading model weights.
+  release-targets:
+    name: Release build (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          - { runner: macos-latest, target: aarch64-apple-darwin }
+          - { runner: macos-latest, target: x86_64-apple-darwin }
+          - { runner: windows-latest, target: x86_64-pc-windows-msvc }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --release --locked -p anymd --target ${{ matrix.target }}
+      - name: Verify portable ASR CPU configuration
+        run: python3 scripts/check-native-cpu.py target/${{ matrix.target }}/release/build
+
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [plain-language, identifiers, validate, other-os, security-secrets, release-targets]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every applicable gate
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -e 'to_entries | all(.[]; .value.result == "success" or (.key == "other-os" and .value.result == "skipped"))'

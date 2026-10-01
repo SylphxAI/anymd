@@ -55,8 +55,8 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 | `--ocr` / `--no-ocr` | Force or disable OCR (default: automatic when tesseract is installed) |
 | `--revisions <markup\|accept\|reject>` | Word tracked changes and comments: `markup` (default) writes them as CriticMarkup; `accept` or `reject` gives the text with every change accepted or rejected, without comments (see [Word](formats.md#word)) |
 | `--images <refs\|none>` | `refs` (default) saves images embedded in PDF, DOCX, PPTX and EPUB files to the anymd cache and marks them in the Markdown; `none` leaves them out (see [Embedded images](formats.md#embedded-images)) |
-| `--transcript` | Transcribe audio/video with a local whisper.cpp |
-| `--download-whisper-model` | Download the ggml whisper model on first use (implies `--transcript`; see [Transcripts](formats.md#transcripts)) |
+| `--transcript` | Transcribe audio/video with bundled Qwen3-ASR |
+| `--download-asr-model` | Download pinned Qwen3-ASR weights on first use (presence switch, rejects `=true`/`=false`; implies `--transcript`; see [Transcripts](formats.md#transcripts)) |
 | `--front-matter` | Print the source/title/pages header (always on for several inputs) |
 
 ## Search options
