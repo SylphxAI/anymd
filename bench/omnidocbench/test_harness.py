@@ -12,6 +12,32 @@ harness = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(harness)
 
 
+source_spec = importlib.util.spec_from_file_location('verify_source', Path(__file__).with_name('verify_source.py'))
+source = importlib.util.module_from_spec(source_spec)
+source_spec.loader.exec_module(source)
+
+
+class SourceTests(unittest.TestCase):
+    def setUp(self):
+        self.sha = 'a' * 40
+        self.run = {'id': 123, 'head_sha': self.sha, 'path': '.github/workflows/omnidocbench.yml'}
+        self.jobs = [{'name': f'Pages {i}/32', 'status': 'completed', 'conclusion': 'success'} for i in range(1, 33)]
+        self.log = '2026-10-01T00:00:00Z   ANYMD_OCR: vlm\n2026-10-01T00:00:00Z   LIMIT: 0\n'
+
+    def test_source_provenance_matches(self):
+        self.assertEqual(source.validate(self.run, self.jobs, self.log, self.sha, 'vlm', 0)['source_sha'], self.sha)
+
+    def test_source_mismatches_fail_closed(self):
+        for sha, engine, limit in [('b' * 40, 'vlm', 0), (self.sha, 'tesseract', 0), (self.sha, 'vlm', 40)]:
+            with self.assertRaises(ValueError):
+                source.validate(self.run, self.jobs, self.log, sha, engine, limit)
+
+    def test_incomplete_shard_fails_closed(self):
+        self.jobs[0]['status'] = 'in_progress'
+        with self.assertRaises(ValueError):
+            source.validate(self.run, self.jobs, self.log, self.sha, 'vlm', 0)
+
+
 class HarnessTests(unittest.TestCase):
     def setUp(self):
         self.pages = [{'page_info': {'image_path': f'{i:04d}.png'}} for i in range(1651)]

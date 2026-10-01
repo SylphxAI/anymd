@@ -19,6 +19,10 @@ on:
         description: 'Reuse predictions from a completed run instead of converting pages again (same engine and limit required)'
         required: false
         default: ''
+      predictions_sha:
+        description: 'Full source commit SHA required when reusing predictions'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -114,6 +118,17 @@ jobs:
             echo 'predictions_run must be a numeric workflow run id'; exit 1
           fi
 
+      - name: Verify reused prediction provenance
+        if: inputs.predictions_run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREDICTIONS_RUN: ${{ inputs.predictions_run }}
+          PREDICTIONS_SHA: ${{ inputs.predictions_sha }}
+        run: |
+          python3 bench/omnidocbench/verify_source.py --repo "$GITHUB_REPOSITORY" \
+            --run "$PREDICTIONS_RUN" --sha "$PREDICTIONS_SHA" --ocr "$ANYMD_OCR" \
+            --limit "$LIMIT" --out source-provenance.json
+
       - uses: actions/download-artifact@v8
         with:
           github-token: ${{ github.token }}
@@ -139,6 +154,10 @@ jobs:
           ground_truth = json.loads(Path('gt.json').read_text())
           expected = {p['page_info']['image_path'][:-4] + '.md' for p in ground_truth}
           actual = {p.name for p in Path('predictions').glob('*.md')}
+          timings = list(Path('pred-parts').rglob('timings-*.json'))
+          records = [name for p in timings for name in json.loads(p.read_text())['pages']]
+          if len(timings) != 32 or len(records) != len(set(records)) or {n[:-4] + '.md' for n in records} != expected:
+              raise SystemExit('Timing records do not cover the selected corpus exactly once across 32 shards')
           if actual != expected:
               raise SystemExit(f'Prediction coverage mismatch: {len(expected-actual)} missing, {len(actual-expected)} extra')
           print(f'Prediction coverage: {len(actual)}/{len(expected)} pages')
@@ -201,6 +220,8 @@ jobs:
         with:
           name: omnidocbench-results
           path: |
+            source-provenance.json
+            gt.json
             evaluator/result/
             evaluator/configs/end2end.yaml
             pred-parts/**/timings-*.json

@@ -52,13 +52,13 @@ JSON files, the config it ran with, and per-page anymd timings). The job summary
 
 ### Reuse completed predictions
 
-To recover an evaluator failure without repeating inference, dispatch this workflow with `predictions_run` set to the completed source run id and the same `ocr` and `limit` values. For example:
+To recover an evaluator failure without repeating inference, dispatch this workflow with `predictions_run` set to the completed source run id the full `predictions_sha` source commit, and the same `ocr` and `limit` values. For example:
 
 ```bash
-gh workflow run omnidocbench.yml --ref <fixed-branch> -f ocr=vlm -f limit=0 -f predictions_run=<completed-run-id>
+gh workflow run omnidocbench.yml --ref <fixed-branch> -f ocr=vlm -f limit=0 -f predictions_run=<completed-run-id> -f predictions_sha=<full-source-sha>
 ```
 
-This skips the build and prediction jobs, downloads only that run's prediction artifacts, and checks their filenames against the selected ground truth before scoring. The summary records the source run. Scores certify those source predictions, not inference on the recovery workflow's newer commit. Wait until every source prediction shard has completed and its artifacts are retained before dispatching recovery.
+This skips the build and prediction jobs, downloads only that run's prediction artifacts, and verifies the source workflow/SHA, all 32 successful shards, and the source log’s engine and limit before scoring. Prediction filenames and timing records must cover the selected ground truth exactly once. Provenance verification makes three one-shot API reads in CI; it never polls. The summary records the source run. Scores certify those source predictions, not inference on the recovery workflow's newer commit. Wait until every source prediction shard has completed and its artifacts are retained before dispatching recovery.
 
 ## Licence
 
