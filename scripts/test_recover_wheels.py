@@ -267,7 +267,55 @@ class RecoveryTests(unittest.TestCase):
                     recovery.deliver(self.root, self.artifacts, self.out)
 
 
+class ImageSourceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.artifacts = Path(self.temp.name)
+        for platform in ("linux-x64-gnu", "linux-arm64-gnu"):
+            directory = self.artifacts / f"native-{platform}"
+            directory.mkdir()
+            binary = b"original immutable native"
+            (directory / "anymd").write_bytes(binary)
+            (directory / "identity.json").write_text(json.dumps({
+                "name": "anymd", "version": VERSION, "platform": platform,
+                "sha256": hashlib.sha256(binary).hexdigest(),
+                "source": {"repository": recovery.REPO, "commit": SHA}}))
+
+    def test_original_binary_source_is_independent_of_packaging_checkout(self):
+        self.assertEqual(recovery.image_source(self.artifacts, VERSION), SHA)
+
+    def test_mixed_native_sources_fail(self):
+        path = self.artifacts / "native-linux-arm64-gnu/identity.json"
+        identity = json.loads(path.read_text())
+        identity["source"]["commit"] = "b" * 40
+        path.write_text(json.dumps(identity))
+        with self.assertRaisesRegex(ValueError, "mixed image native sources"):
+            recovery.image_source(self.artifacts, VERSION)
+
+    def test_changed_native_bytes_fail(self):
+        (self.artifacts / "native-linux-x64-gnu/anymd").write_bytes(b"different native")
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            recovery.image_source(self.artifacts, VERSION)
+
+    def test_wrong_native_version_fails(self):
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            recovery.image_source(self.artifacts, "0.0.0")
+
+
 class ReleaseImageTests(unittest.TestCase):
+    def test_image_recovery_separates_packaging_and_tagged_native_sources(self):
+        workflow = (ROOT / ".github/workflows/release.yml").read_text()
+        image = workflow.split("  image:\n", 1)[1]
+        self.assertIn("--image-source", image)
+        self.assertIn('tag_source=$(git rev-parse "v$v^{commit}")', image)
+        self.assertIn('test "$binary_source" = "${tag_source:-$binary_source}"', image)
+        self.assertIn('git show "$binary_source:LICENSE" > LICENSE', image)
+        self.assertIn("io.sylphx.native.source=${{ steps.stage.outputs.source }}", image)
+        self.assertIn("io.sylphx.packaging.source=${{ github.sha }}", image)
+        self.assertIn("file: Dockerfile.release", image)
+        self.assertNotIn("ref: ${{ needs.release.outputs.canonical }}", image)
+
     def test_license_parent_is_created_traversable_before_copy(self):
         dockerfile = (ROOT / "Dockerfile.release").read_text()
         create = "install -d -m 0755 /usr/share/licenses/anymd"
