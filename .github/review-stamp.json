@@ -1,0 +1,13 @@
+{
+  "context": "ops-security/review",
+  "enforceMissing": false,
+  "requireStampLabels": [
+    "security",
+    "area:security"
+  ],
+  "requireStampPaths": [
+    ".github/workflows/",
+    ".github/actions/",
+    ".github/review-stamp.json"
+  ]
+}

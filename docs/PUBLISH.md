@@ -9,6 +9,16 @@
 | crates.io | `anymd` (binary, `cargo install anymd`), `anymd-core`, `anymd-formats`, `anymd-pdf`, and the forks `anymd-pdf-extract` and `anymd-adobe-cmap-parser` (from `vendor/`); `anymd-wasm` is not published |
 | Release workflow | `.github/workflows/release.yml`, which calls the shared [mcp-kit release workflow](https://github.com/SylphxAI/mcp-kit) |
 
+## Merge-group review gate
+
+The required `ci-ok` aggregate includes `review-stamp` on `merge_group`.
+It calls the SHA-pinned shared action with trusted creator ID `8020099` and
+repository scope in `.github/review-stamp.json`: workflows, actions, and that
+scope file. anymd has no hosted auth or billing paths. Explicit trusted
+failure, error, or pending statuses block every queued PR, including earlier
+entries carried by the group. Missing-stamp enforcement is deferred
+(`enforceMissing: false`) until the review-stamping owner is assigned.
+
 ## How a release happens
 
 1. In a pull request, run `bun scripts/set-version.ts X.Y.Z`, then `cargo update -w`,
