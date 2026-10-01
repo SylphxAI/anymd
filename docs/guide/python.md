@@ -66,10 +66,14 @@ requirements produces the CLI's error. Passing a URL explicitly requests a
 network fetch under the native URL policy; local-file conversion never requests
 one through this wrapper.
 
-Executable selection is: explicit `binary`, `ANYMD_BIN`, the current Python
-installation's scripts directory, then `PATH`. An invalid explicit override
-fails instead of falling back. No shell is used. `convert` is synchronous;
-there is no separate Python async converter or MCP client.
+Executable selection is: explicit `binary`, `ANYMD_BIN`, then the native script
+recorded in the installed `anymd` wheel's metadata. This includes `pip --user`
+and custom `PYTHONUSERBASE` installations, even without their scripts on `PATH`.
+Only when wheel metadata is absent does selection fall back to the current
+Python installation's scripts directory, then `PATH`. A wheel missing its
+recorded binary or an invalid explicit override fails instead of selecting a
+competing installation. No shell is used. `convert` is synchronous; there is no
+separate Python async converter or MCP client.
 
 ### Errors
 

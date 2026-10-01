@@ -1,13 +1,14 @@
 """Standard-library tests; real native tests use ANYMD_BIN when available."""
 
 import importlib.util
+from importlib.metadata import PackageNotFoundError
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from anymd import (  # noqa: E402
@@ -148,8 +149,9 @@ class ApiTests(unittest.TestCase):
             with self.subTest(output=output), self.assertRaises(ConversionError):
                 convert(self.source, binary="native")
 
+    @patch("anymd._api.metadata.distribution", side_effect=PackageNotFoundError)
     @patch("anymd._api.subprocess.run")
-    def test_binary_selection(self, run):
+    def test_binary_selection(self, run, distribution):
         run.return_value = subprocess.CompletedProcess([], 0, OUTPUT, b"")
         with patch.dict(os.environ, {"ANYMD_BIN": "from-env"}):
             convert(self.source)
@@ -173,6 +175,27 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(run.call_args[0][0][0], "from-path")
             with patch("anymd._api.shutil.which", return_value=None), self.assertRaises(BinaryNotFoundError):
                 convert(self.source)
+
+    @patch("anymd._api.subprocess.run")
+    def test_wheel_record_precedes_fallback_and_missing_binary_fails(self, run):
+        run.return_value = subprocess.CompletedProcess([], 0, OUTPUT, b"")
+        exe = "anymd.exe" if os.name == "nt" else "anymd"
+        installed = Path(self.directory.name) / exe
+        installed.touch()
+        distribution = Mock(files=[Path("../../../bin") / exe])
+        distribution.locate_file.return_value = installed
+        with patch.dict(os.environ, {}, clear=True), patch(
+            "anymd._api.metadata.distribution", return_value=distribution
+        ), patch("anymd._api.shutil.which", return_value="competing") as which:
+            convert(self.source)
+            self.assertEqual(run.call_args[0][0][0], str(installed))
+            which.assert_not_called()
+            for files in (distribution.files, [], None):
+                installed.unlink(missing_ok=True)
+                distribution.files = files
+                with self.assertRaises(BinaryNotFoundError):
+                    convert(self.source)
+                which.assert_not_called()
 
     def test_core_import_never_imports_frameworks(self):
         subprocess.run(

@@ -5,6 +5,9 @@ import csv
 import hashlib
 import importlib.util
 import io
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -20,6 +23,51 @@ spec.loader.exec_module(builder)
 
 
 class WheelTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "linux", "POSIX script fixture and Linux wheel tag")
+    def test_user_install_uses_record_binary_without_user_scripts_on_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            environment = dict(os.environ, PYTHONUSERBASE=str(out / "user"))
+            for key in ("PYTHONPATH", "PYTHONNOUSERSITE", "ANYMD_BIN"):
+                environment.pop(key, None)
+            # Enable an isolated user site without writing to the desk's Python
+            # installation. The wheel binary is an executable fixture, not a build.
+            subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", str(out / "venv")], check=True)
+            python = out / "venv/bin/python"
+            fixture = out / "native"
+            fixture.write_text(
+                '#!' + str(python) + '\nimport sys\n'
+                'print("---\\nsource: " + sys.argv[1] + "\\n---\\n\\nmatching wheel")\n',
+                encoding="utf-8",
+            )
+            wheel = builder.build("0.0.0", "manylinux_2_17_x86_64", fixture, out)
+            subprocess.run([str(python), "-m", "pip", "install", "--user", "--no-deps",
+                            "--no-index", "--ignore-installed", str(wheel)],
+                           env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            source = out / "source.txt"
+            source.write_text("input", encoding="utf-8")
+            # Empty PATH proves discovery does not depend on user/bin. The second
+            # pass also places a competing executable in default scripts and PATH.
+            environment["PATH"] = ""
+            code = '''
+import sys
+from anymd import convert
+from anymd._api import _binary
+from importlib import metadata
+assert str(metadata.distribution('anymd').locate_file('')).startswith(sys.argv[2])
+assert _binary(None).startswith(sys.argv[2])
+assert convert(sys.argv[1]).text == 'matching wheel\\n'
+'''
+            for competing in (False, True):
+                with self.subTest(competing=competing):
+                    if competing:
+                        wrong = out / "venv/bin/anymd"
+                        wrong.write_text('#!' + str(python) + '\nraise SystemExit("wrong binary")\n', encoding="utf-8")
+                        wrong.chmod(0o755)
+                        environment["PATH"] = str(wrong.parent)
+                    subprocess.run([str(python), "-c", code, str(source), str(out / "user")],
+                                   env=environment, cwd=out, check=True)
+
     def test_platform_wheels_include_api_and_only_optional_deps(self):
         with tempfile.TemporaryDirectory() as directory:
             out = Path(directory)

@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sysconfig
 from dataclasses import dataclass
+from importlib import metadata
 from pathlib import Path
 from typing import Dict, Optional, Union
 
@@ -57,7 +58,22 @@ def _binary(binary: Optional[Source]) -> str:
             raise BinaryNotFoundError("anymd binary path is empty")
         return selected
     exe = "anymd.exe" if os.name == "nt" else "anymd"
-    # Prefer this interpreter's wheel over another installation on PATH.
+    # Installed RECORD paths know where pip put this wheel's script, including
+    # --user/PYTHONUSERBASE installs outside this interpreter's default scripts.
+    try:
+        distribution = metadata.distribution("anymd")
+    except metadata.PackageNotFoundError:
+        distribution = None
+    if distribution is not None:
+        for entry in distribution.files or ():
+            if entry.name == exe:
+                installed = Path(distribution.locate_file(entry))
+                if installed.is_file():
+                    return str(installed)
+        raise BinaryNotFoundError(
+            "The installed anymd wheel has no native binary; reinstall it or set ANYMD_BIN"
+        )
+    # Source checkouts and other CLI installs may have no wheel metadata.
     installed = Path(sysconfig.get_path("scripts")) / exe
     if installed.is_file():
         return str(installed)
