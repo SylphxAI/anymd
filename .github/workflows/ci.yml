@@ -82,7 +82,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Test Python API and wheel packaging without framework dependencies
-        run: python3 -m unittest discover -s packages/pypi/tests -v
+        run: |
+          python3 -m unittest discover -s packages/pypi/tests -v
+          python3 -m unittest discover -s bench/navigation -p 'test_*.py' -v
 
       - name: Test vendored crate version checks
         run: python3 -m unittest discover -s scripts -p test_check_vendored_crates.py

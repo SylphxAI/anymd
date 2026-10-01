@@ -7,7 +7,9 @@ read credentials, or contact a provider.
 
 ## Run without credentials
 
-Python 3.10+ and a supplied anymd binary are enough. From the repository root:
+The required CI code-quality job runs offline navigation discovery alongside the
+existing Python API/wheel tests. Python 3.10+ and a supplied anymd binary are
+enough for the local smoke. From the repository root:
 
 ```sh
 python3 -m unittest discover -s bench/navigation -p 'test_*.py' -v
