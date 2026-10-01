@@ -16,8 +16,12 @@ It calls the SHA-pinned shared action with trusted creator ID `8020099` and
 repository scope in `.github/review-stamp.json`: workflows, actions, and that
 scope file. anymd has no hosted auth or billing paths. Explicit trusted
 failure, error, or pending statuses block every queued PR, including earlier
-entries carried by the group. Missing-stamp enforcement is deferred
-(`enforceMissing: false`) until the review-stamping owner is assigned.
+entries carried by the group. Missing-stamp enforcement is enabled for every
+PR. Security/money/migration classes (mandatory shared globs/labels plus local
+scope) require an Ops success with description prefix `PASS`; other changes
+require the owning lane's independent Opus final reviewer. The product trusts
+creator `[8020099]` as data. Desk lanes share that identity, so reviewer/builder
+independence is an owning-lane process requirement, not provable by GitHub ID.
 
 ## How a release happens
 

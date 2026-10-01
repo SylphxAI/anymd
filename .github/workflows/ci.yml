@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      - uses: SylphxAI/.github/.github/actions/review-stamp-gate@fa31ad44ef1c072e0e88245dfc468573f6ca19b8
+      - uses: SylphxAI/.github/.github/actions/review-stamp-gate@0f4a21fe893880d1443630c6632104140f16a932
         with:
           config-path: .github/review-stamp.json
           trusted-creator-ids: '8020099'
