@@ -36,6 +36,36 @@ class NavigationTests(unittest.TestCase):
         self.assertEqual(result["answer_source_page_accuracy"], 0.5)
         self.assertEqual(result["rows"][1]["prediction"]["status"], "missing")
 
+    def test_failed_correct_predictions_score_zero_and_keep_details(self):
+        for status in ("error", "missing"):
+            with self.subTest(status=status):
+                predictions = [
+                    {"id": q["id"], "answer": q["answers"][0],
+                     "pages": q["evidence_pages"], "status": status,
+                     "error": "retained failure detail"}
+                    for q in self.manifest["questions"]
+                ]
+                result = run.evaluate(self.manifest, predictions)
+                self.assertEqual(result["questions"], 2)
+                self.assertEqual(result["answer_accuracy"], 0)
+                self.assertEqual(result["answer_source_page_accuracy"], 0)
+                for row, prediction in zip(result["rows"], predictions):
+                    self.assertEqual(row["prediction"], prediction)
+                    self.assertTrue(all(value == 0 for value in row["scores"].values()))
+
+    def test_success_status_and_absent_status_replay_are_compatible(self):
+        for status in ({}, {"status": "ok"}):
+            predictions = [{"id": q["id"], "answer": q["answers"][0],
+                            "pages": q["evidence_pages"], **status}
+                           for q in self.manifest["questions"]]
+            self.assertEqual(run.evaluate(self.manifest, predictions)["answer_source_page_accuracy"], 1)
+
+    def test_unsupported_status_rejected(self):
+        for status in (None, "failed", "success", "", 0, [], {}):
+            with self.subTest(status=status), self.assertRaisesRegex(ValueError, "status"):
+                run.evaluate(self.manifest, [{"id": "launch", "status": status,
+                                             "answer": "ORBIT", "pages": [1]}])
+
     def test_unknown_duplicate_prediction_rejected(self):
         for predictions in ([{"id": "unknown"}], [{"id": "launch"}, {"id": "launch"}]):
             with self.assertRaises(ValueError):

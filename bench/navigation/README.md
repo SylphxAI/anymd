@@ -41,9 +41,11 @@ are not an autonomous QA agent or a general question-answering evaluator.
 - **PageIndex OSS:** `pageindex_response()` adapts the Responses envelope used by
   the pinned OSS benchmark: `output` message content, `items` function calls and
   `usage` input/output tokens. No cloud SDK tools or invented local APIs. Missing
-  tokens, latency and price remain unknown, not zero. The adapter is **offline**;
-  live indexing and answering are not implemented pending the controller choice
-  below. An explicit final-answer convention `ANSWER [page N]` supplies physical
+  tokens, latency and price remain unknown, not zero. The adapter is **offline**
+  contract evidence for a separately labelled future native-pipeline track B;
+  it does not implement or measure the selected shared-controller track A.
+  Live A needs pinned public local tree/page API verification.
+  An explicit final-answer convention `ANSWER [page N]` supplies physical
   1-based citations for both systems in a future controlled run. This convention
   is ours, not a claimed native PageIndex citation schema.
 
@@ -64,8 +66,13 @@ inference. Reference answers/pages stay outside agent inputs.
 Answer accuracy is normalized exact match against accepted aliases; source-page
 accuracy is overlap with the annotated physical pages, with precision and recall
 also reported to expose overcitation. Joint answer/source-page accuracy requires
-both. Missing predictions remain zero in the denominator; duplicates and unknown
-IDs are rejected. Exact match is not a semantic judge, and page overlap does not
+both. Prediction status accepts `ok`, `error`, or `missing`; an absent status
+preserves normalized replay compatibility and is scored normally. Explicit `error`
+or `missing` rows score zero on every answer/page/joint metric, even if their raw
+answer and citations are correct. Raw prediction/error details are retained.
+Unsupported statuses are rejected. Missing predictions remain zero in the
+denominator; duplicates and unknown IDs are rejected.
+Exact match is not a semantic judge, and page overlap does not
 prove that cited text entails the answer. Unsupported inputs and failed calls
 remain visible rather than being silently removed.
 
@@ -94,17 +101,21 @@ These are facts from source files, not comparative results:
 
 ## Before a head-to-head model run
 
-**Lead decision required, not an owner-only question:** choose (A) one shared
-agent/controller using both systems' navigation tools, or (B) native PageIndex
-`responses()` against an anymd agent with the same model/prompt/budget. A isolates
-retrieval tools; B compares complete pipelines and includes different controller
-behavior. The current documented Responses contract supports B; a reusable A
-adapter requires verification of pinned public local tree/page tools. Do not
-pretend a guessed cloud method is a local OSS tool.
+**Settled approach A:** use one identical shared agent/controller over both
+systems' navigation tools to isolate retrieval-tool differences. The live A
+adapter prerequisite is verification of pinned public local PageIndex tree/page
+APIs; a guessed cloud method is not a local OSS contract.
+
+A separately labelled future track B could compare native PageIndex `responses()`
+against an anymd agent with the same model/prompt/budget. B compares complete
+pipelines, including different controller behavior. The synthetic Responses
+replay here is offline contract evidence for B only, not an A implementation or
+retrieval-quality result. The controller choice for the main comparison is not
+an outstanding decision.
 
 Then freeze and record all of the following before making a live adapter opt-in:
 
-1. A pinned installed PageIndex version and verified local tool/Responses APIs;
+1. A pinned installed PageIndex version and verified public local tree/page APIs;
    anymd binary containing the merged outline/node feature. No local Rust builds
    are required by this harness.
 2. Identical PDF bytes, public questions, evidence pages and corpus membership.

@@ -29,7 +29,15 @@ def normalize(text):
 
 
 def score(question, prediction):
-    """Exact normalized answer and physical, 1-based evidence-page overlap."""
+    """Exact answer/page scoring; explicit error/missing rows always score zero."""
+    if "status" in prediction:
+        status = prediction["status"]
+        if status not in ("ok", "error", "missing"):
+            raise ValueError("prediction status must be ok, error, or missing")
+        if status != "ok":
+            return {"answer_exact": False, "source_page_hit": False,
+                    "source_page_precision": 0.0, "source_page_recall": 0.0,
+                    "answer_and_source_page": False}
     answer_ok = normalize(prediction.get("answer", "")) in {
         normalize(a) for a in question["answers"]
     }
