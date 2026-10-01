@@ -36,8 +36,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 subtle = "2"
-# crates.io release of the shared MCP kit (0.2.x only adds the `embed` module to v0.1.1).
-sylphx-mcp-kit = "0.2.3"
+# Shared MCP setup, CLI hints and cache-root policy.
+sylphx-mcp-kit = "0.3"
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }

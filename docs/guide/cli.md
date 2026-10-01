@@ -87,7 +87,7 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 
 ## Star reminder
 
-After the fifth successful interactive run, anymd prints one line to stderr asking for a GitHub star, then never again. The run counter is the `star-hint` file in anymd's cache directory (`$ANYMD_CACHE_DIR`, else the platform cache directory). It stays silent in MCP server mode, when stderr is not a terminal, and when `CI` is set. Set `ANYMD_NO_STAR_HINT=1` to turn it off.
+After the fifth successful interactive run, anymd prints one line to stderr asking for a GitHub star, then never again. The run counter is the `star-hint` file in anymd's cache directory (`$ANYMD_CACHE_DIR`, else the platform cache directory). It stays silent in MCP server mode, when stderr is not a terminal, and when `CI` is set. Set `ANYMD_NO_STAR_HINT=1` to turn it off. The hint and cache-root selection come from `sylphx-mcp-kit` 0.3; anymd keeps its existing cache paths and image/model retention.
 
 ## Examples
 
