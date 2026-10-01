@@ -157,7 +157,14 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
             "--ocr" => parsed.ocr = Some(true),
             "--no-ocr" => parsed.ocr = Some(false),
             "--transcript" => parsed.transcript = true,
-            "--download-asr-model" | "--download-whisper-model" => parsed.download_asr_model = true,
+            "--download-asr-model" | "--download-whisper-model" => {
+                if inline.is_some() {
+                    return Err(format!(
+                        "{flag} is a presence switch and does not accept a value"
+                    ));
+                }
+                parsed.download_asr_model = true;
+            }
             "--images" => {
                 let mode = value(flag)?;
                 if mode != "refs" && mode != "none" {
@@ -421,6 +428,17 @@ mod tests {
         let parsed = parse(&args(&["talk.mp4", "--download-whisper-model"])).unwrap();
         assert!(parsed.download_asr_model);
         assert_eq!(parsed.inputs, ["talk.mp4"]);
+    }
+
+    #[test]
+    fn download_presence_switches_reject_inline_values() {
+        for flag in ["--download-asr-model", "--download-whisper-model"] {
+            for value in ["false", "true", "invalid", "", "0", "1"] {
+                assert!(parse(&args(&["talk.mp4", &format!("{flag}={value}")])).is_err());
+            }
+        }
+        let parsed = parse(&args(&["talk.mp4", "--transcript"])).unwrap();
+        assert!(!parsed.download_asr_model);
     }
 
     #[test]

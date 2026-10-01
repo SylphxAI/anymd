@@ -1,0 +1,4 @@
+[
+  { "word": "Hello", "start": 0.1, "end": 0.5 },
+  { "word": "world", "start": 0.6, "end": 1.0 }
+]

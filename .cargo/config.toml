@@ -1,0 +1,4 @@
+# Published binaries must not inherit the CI host's CPU instruction set.
+# transcribe-cpp-sys 0.2.4 forwards these defines to its bundled CMake build.
+[env]
+TRANSCRIBE_CMAKE_ARGS = { value = "-DGGML_NATIVE=OFF -DTRANSCRIBE_X86_CONSERVATIVE=ON", force = true }

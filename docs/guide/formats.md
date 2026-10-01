@@ -146,6 +146,8 @@ anymd talk.mp4 --transcript          # cached/preinstalled models only
 ```
 
 `download_asr_model: true` / `--download-asr-model` also implies `transcript`.
+Both CLI download flags are presence switches; inline values such as `=false`
+are rejected rather than granting permission. MCP download options are booleans.
 The old `download_whisper_model` / `--download-whisper-model` spelling is accepted
 only as a compatibility alias for Qwen; no Whisper engine or weights remain.
 Old `ANYMD_WHISPER_*` settings are not used.

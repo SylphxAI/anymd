@@ -729,9 +729,9 @@ fn parse_alignment(
             .and_then(Value::as_f64)
             .ok_or("missing word end")?;
         let word = row
-            .get("text")
+            .get("word")
             .and_then(Value::as_str)
-            .ok_or("missing word text")?;
+            .ok_or("missing alignment word")?;
         if !start.is_finite()
             || !end.is_finite()
             || start < 0.0
@@ -1011,8 +1011,7 @@ mod tests {
 
     #[test]
     fn alignment_preserves_text_and_validates_bounds() {
-        let json =
-            r#"[{"start":0.1,"end":0.5,"text":"Hello"},{"start":0.6,"end":1.0,"text":"world"}]"#;
+        let json = include_str!("../tests/fixtures/aligner/crispasr-0.8.38-words.json");
         let cues = parse_alignment(json, "Hello world", 1000).unwrap();
         assert_eq!(cues[0].start_ms, 100);
         assert!(render_transcript(&cues).contains("word (Qwen3-ForcedAligner)"));
@@ -1020,10 +1019,10 @@ mod tests {
         assert!(parse_alignment(json, "Hello world", 900).is_err());
         assert!(parse_alignment("[]", "Hello", 1000).is_err());
         assert!(
-            parse_alignment(r#"[{"start":1.0,"end":0.5,"text":"Hello"}]"#, "Hello", 1000).is_err()
+            parse_alignment(r#"[{"start":1.0,"end":0.5,"word":"Hello"}]"#, "Hello", 1000).is_err()
         );
         assert!(parse_alignment(
-            r#"[{"start":0.1,"end":0.7,"text":"Hello"},{"start":0.6,"end":0.9,"text":"world"}]"#,
+            r#"[{"start":0.1,"end":0.7,"word":"Hello"},{"start":0.6,"end":0.9,"word":"world"}]"#,
             "Hello world",
             1000
         )
