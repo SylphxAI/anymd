@@ -285,14 +285,30 @@ jobs:
             mkdir -p assets
             gh release download "v$v" --dir assets \
               --pattern anymd-linux-x64-gnu.tar.gz \
-              --pattern anymd-linux-arm64-gnu.tar.gz
-            tar -xzf assets/anymd-linux-x64-gnu.tar.gz -C dist/amd64 anymd
-            tar -xzf assets/anymd-linux-arm64-gnu.tar.gz -C dist/arm64 anymd
+              --pattern anymd-linux-arm64-gnu.tar.gz \
+              --pattern anymd-linux-x64-gnu.identity.json \
+              --pattern anymd-linux-arm64-gnu.identity.json
+            for platform in linux-x64-gnu linux-arm64-gnu; do
+              mkdir -p "artifacts/native-$platform"
+              tar -xzf "assets/anymd-$platform.tar.gz" -C "artifacts/native-$platform" anymd
+              cp "assets/anymd-$platform.identity.json" "artifacts/native-$platform/identity.json"
+            done
+            cp artifacts/native-linux-x64-gnu/anymd dist/amd64/
+            cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
+            git fetch --no-tags origin "refs/tags/v$v:refs/tags/v$v"
+            tag_source=$(git rev-parse "v$v^{commit}")
           else
             echo "no new release in this run; no image"
             echo "build=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          binary_source=$(python3 scripts/recover-wheels.py --artifacts artifacts --image-source)
+          test "$binary_source" = "${tag_source:-$binary_source}"
+          # Packaging executes from this workflow's reviewed checkout; payload
+          # notices and native identities remain bound to the original source.
+          git fetch --no-tags origin "$binary_source"
+          git show "$binary_source:LICENSE" > LICENSE
+          echo "source=$binary_source" >> "$GITHUB_OUTPUT"
           test -s dist/amd64/anymd
           test -s dist/arm64/anymd
           chmod +x dist/amd64/anymd dist/arm64/anymd
@@ -317,6 +333,8 @@ jobs:
             org.opencontainers.image.documentation=https://sylphxai.github.io/anymd/
             org.opencontainers.image.vendor=Sylphx
             io.modelcontextprotocol.server.name=io.github.SylphxAI/anymd
+            io.sylphx.native.source=${{ steps.stage.outputs.source }}
+            io.sylphx.packaging.source=${{ github.sha }}
 
       - if: steps.stage.outputs.build == 'true'
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
@@ -355,10 +373,14 @@ jobs:
         if: steps.stage.outputs.build == 'true'
         env:
           V: ${{ steps.stage.outputs.version }}
+          NATIVE_SOURCE: ${{ steps.stage.outputs.source }}
+          PACKAGING_SOURCE: ${{ github.sha }}
         run: |
           set -euo pipefail
           docker buildx imagetools inspect "$IMAGE:$V"
           docker run --rm "$IMAGE:$V" version
+          test "$(docker image inspect --format '{{ index .Config.Labels "io.sylphx.native.source" }}' "$IMAGE:$V")" = "$NATIVE_SOURCE"
+          test "$(docker image inspect --format '{{ index .Config.Labels "io.sylphx.packaging.source" }}' "$IMAGE:$V")" = "$PACKAGING_SOURCE"
           docker run --rm --entrypoint cat "$IMAGE:$V" \
             /usr/share/licenses/anymd/LICENSE > image-license
           cmp LICENSE image-license

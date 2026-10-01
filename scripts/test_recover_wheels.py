@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import tarfile
 import tempfile
@@ -126,6 +127,26 @@ class RecoveryTests(unittest.TestCase):
         self.assertFalse(any(call[0] == "gh" for call in self.calls))
         self.assertEqual({p.name for p in self.out.iterdir()}, recovery.wheel_names(VERSION))
 
+    def test_downloaded_native_modes_are_restored_without_changing_bytes(self):
+        binaries = []
+        for platform, _, exe in recovery.PLATFORMS:
+            path = self.artifacts / f"native-{platform}" / exe
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"unchanged published binary")
+            path.chmod(0o644)
+            binaries.append(path)
+        original = self.run_command
+        def require_executable(*args, **kwargs):
+            if args[-1] == "version":
+                for binary in binaries:
+                    self.assertEqual(stat.S_IMODE(binary.stat().st_mode), 0o755)
+                    self.assertEqual(binary.read_bytes(), b"unchanged published binary")
+            return original(*args, **kwargs)
+        with patch.object(recovery, "pypi_complete", side_effect=AssertionError("must not probe")), \
+             patch.object(recovery, "run", side_effect=require_executable):
+            self.assertTrue(recovery.deliver(self.root, self.artifacts, self.out))
+        self.assertFalse(any(call[0] == "gh" for call in self.calls))
+
     def test_partial_native_matrix_fails_without_release_fallback(self):
         path = self.artifacts / "native-linux-x64-gnu/anymd"
         path.parent.mkdir(parents=True)
@@ -244,6 +265,64 @@ class RecoveryTests(unittest.TestCase):
                  patch.object(recovery.subprocess, "run", side_effect=self.run_subprocess):
                 with self.assertRaises(subprocess.CalledProcessError):
                     recovery.deliver(self.root, self.artifacts, self.out)
+
+
+class ImageSourceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.artifacts = Path(self.temp.name)
+        for platform in ("linux-x64-gnu", "linux-arm64-gnu"):
+            directory = self.artifacts / f"native-{platform}"
+            directory.mkdir()
+            binary = b"original immutable native"
+            (directory / "anymd").write_bytes(binary)
+            (directory / "identity.json").write_text(json.dumps({
+                "name": "anymd", "version": VERSION, "platform": platform,
+                "sha256": hashlib.sha256(binary).hexdigest(),
+                "source": {"repository": recovery.REPO, "commit": SHA}}))
+
+    def test_original_binary_source_is_independent_of_packaging_checkout(self):
+        self.assertEqual(recovery.image_source(self.artifacts, VERSION), SHA)
+
+    def test_mixed_native_sources_fail(self):
+        path = self.artifacts / "native-linux-arm64-gnu/identity.json"
+        identity = json.loads(path.read_text())
+        identity["source"]["commit"] = "b" * 40
+        path.write_text(json.dumps(identity))
+        with self.assertRaisesRegex(ValueError, "mixed image native sources"):
+            recovery.image_source(self.artifacts, VERSION)
+
+    def test_changed_native_bytes_fail(self):
+        (self.artifacts / "native-linux-x64-gnu/anymd").write_bytes(b"different native")
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            recovery.image_source(self.artifacts, VERSION)
+
+    def test_wrong_native_version_fails(self):
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            recovery.image_source(self.artifacts, "0.0.0")
+
+
+class ReleaseImageTests(unittest.TestCase):
+    def test_image_recovery_separates_packaging_and_tagged_native_sources(self):
+        workflow = (ROOT / ".github/workflows/release.yml").read_text()
+        image = workflow.split("  image:\n", 1)[1]
+        self.assertIn("--image-source", image)
+        self.assertIn('tag_source=$(git rev-parse "v$v^{commit}")', image)
+        self.assertIn('test "$binary_source" = "${tag_source:-$binary_source}"', image)
+        self.assertIn('git show "$binary_source:LICENSE" > LICENSE', image)
+        self.assertIn("io.sylphx.native.source=${{ steps.stage.outputs.source }}", image)
+        self.assertIn("io.sylphx.packaging.source=${{ github.sha }}", image)
+        self.assertIn("file: Dockerfile.release", image)
+        self.assertNotIn("ref: ${{ needs.release.outputs.canonical }}", image)
+
+    def test_license_parent_is_created_traversable_before_copy(self):
+        dockerfile = (ROOT / "Dockerfile.release").read_text()
+        create = "install -d -m 0755 /usr/share/licenses/anymd"
+        copy = "COPY --chmod=0644 LICENSE /usr/share/licenses/anymd/LICENSE"
+        self.assertIn(create, dockerfile)
+        self.assertLess(dockerfile.index(create), dockerfile.index(copy))
+        self.assertLess(dockerfile.index(copy), dockerfile.index("USER anymd"))
 
 
 class ProbeTests(unittest.TestCase):

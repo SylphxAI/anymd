@@ -146,6 +146,25 @@ def recover(root, version, artifacts, work):
     return source
 
 
+def image_source(artifacts, version):
+    """Bind staged Linux bytes to their original identities, not packaging HEAD."""
+    sources = []
+    for platform in ("linux-x64-gnu", "linux-arm64-gnu"):
+        directory = artifacts / f"native-{platform}"
+        identity = json.loads((directory / "identity.json").read_text())
+        source = identity.get("source", {})
+        if (identity.get("name") != "anymd" or identity.get("version") != version
+                or identity.get("platform") != platform
+                or source.get("repository") != REPO
+                or not re.fullmatch(r"[0-9a-f]{40}", source.get("commit", ""))
+                or identity.get("sha256") != hashlib.sha256((directory / "anymd").read_bytes()).hexdigest()):
+            raise ValueError("image native identity mismatch")
+        sources.append(source["commit"])
+    if len(set(sources)) != 1:
+        raise ValueError("mixed image native sources")
+    return sources[0]
+
+
 def deliver(root, artifacts, out):
     version = json.loads((root / "packages/anymd/package.json").read_text())["version"]
     if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?", version):
@@ -158,6 +177,9 @@ def deliver(root, artifacts, out):
         return False
     with tempfile.TemporaryDirectory(prefix="anymd-wheels-") as temporary:
         if all(present):
+            # Artifact downloads restore files as 0644, not their executable mode.
+            for binary in binaries:
+                binary.chmod(0o755)
             if run(str(binaries[0]), "version") != f"anymd {version}":
                 raise ValueError("native binary version mismatch")
             source = root
@@ -181,8 +203,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", type=Path, default=Path("artifacts"))
     parser.add_argument("--out", type=Path, default=Path("dist"))
+    parser.add_argument("--image-source", action="store_true", help="verify staged Linux identities and print their source")
     args = parser.parse_args()
-    built = deliver(Path(__file__).resolve().parents[1], args.artifacts.resolve(), args.out.resolve())
+    root = Path(__file__).resolve().parents[1]
+    if args.image_source:
+        version = json.loads((root / "packages/anymd/package.json").read_text())["version"]
+        print(image_source(args.artifacts.resolve(), version))
+        return
+    built = deliver(root, args.artifacts.resolve(), args.out.resolve())
     result = f"built={str(built).lower()}\n"
     print(result, end="")
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
