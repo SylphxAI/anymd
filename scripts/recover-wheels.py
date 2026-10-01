@@ -158,6 +158,9 @@ def deliver(root, artifacts, out):
         return False
     with tempfile.TemporaryDirectory(prefix="anymd-wheels-") as temporary:
         if all(present):
+            # Artifact downloads restore files as 0644, not their executable mode.
+            for binary in binaries:
+                binary.chmod(0o755)
             if run(str(binaries[0]), "version") != f"anymd {version}":
                 raise ValueError("native binary version mismatch")
             source = root

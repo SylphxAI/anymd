@@ -102,6 +102,8 @@ compile. `Dockerfile.release.dockerignore` includes those binaries and the root
 `LICENSE` in the build context. The image ships that file at
 `/usr/share/licenses/anymd/LICENSE`, including any bundled third-party notices,
 and the release job compares its contents with the checkout after publishing.
+The image creates the licence directory with mode `0755` before copying the
+`0644` licence, so the default non-root user can traverse and read it.
 The OCI metadata includes `org.opencontainers.image.licenses=MIT`.
 Ordinary pushes without new binaries skip the image job. This image recovery
 path is independent of Python delivery; it is not evidence that wheels were
@@ -123,7 +125,8 @@ archive's trust attestation against that tag's source commit and `release.yml`
 signer. Missing targets, corrupt assets, failed attestations or a recovered
 host binary reporting another version stop recovery. The wheel job waits for
 the trust job to finish; fresh native-artifact delivery does not require the
-trust job to succeed.
+trust job to succeed. Downloaded native files have their executable mode restored
+before the version check and wheel packaging; their bytes are unchanged.
 
 The existing wheel builder packages the Python API, README and licence fetched
 from that exact tag commit alongside those binaries. It must not substitute

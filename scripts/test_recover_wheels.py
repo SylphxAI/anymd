@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import tarfile
 import tempfile
@@ -126,6 +127,26 @@ class RecoveryTests(unittest.TestCase):
         self.assertFalse(any(call[0] == "gh" for call in self.calls))
         self.assertEqual({p.name for p in self.out.iterdir()}, recovery.wheel_names(VERSION))
 
+    def test_downloaded_native_modes_are_restored_without_changing_bytes(self):
+        binaries = []
+        for platform, _, exe in recovery.PLATFORMS:
+            path = self.artifacts / f"native-{platform}" / exe
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"unchanged published binary")
+            path.chmod(0o644)
+            binaries.append(path)
+        original = self.run_command
+        def require_executable(*args, **kwargs):
+            if args[-1] == "version":
+                for binary in binaries:
+                    self.assertEqual(stat.S_IMODE(binary.stat().st_mode), 0o755)
+                    self.assertEqual(binary.read_bytes(), b"unchanged published binary")
+            return original(*args, **kwargs)
+        with patch.object(recovery, "pypi_complete", side_effect=AssertionError("must not probe")), \
+             patch.object(recovery, "run", side_effect=require_executable):
+            self.assertTrue(recovery.deliver(self.root, self.artifacts, self.out))
+        self.assertFalse(any(call[0] == "gh" for call in self.calls))
+
     def test_partial_native_matrix_fails_without_release_fallback(self):
         path = self.artifacts / "native-linux-x64-gnu/anymd"
         path.parent.mkdir(parents=True)
@@ -244,6 +265,16 @@ class RecoveryTests(unittest.TestCase):
                  patch.object(recovery.subprocess, "run", side_effect=self.run_subprocess):
                 with self.assertRaises(subprocess.CalledProcessError):
                     recovery.deliver(self.root, self.artifacts, self.out)
+
+
+class ReleaseImageTests(unittest.TestCase):
+    def test_license_parent_is_created_traversable_before_copy(self):
+        dockerfile = (ROOT / "Dockerfile.release").read_text()
+        create = "install -d -m 0755 /usr/share/licenses/anymd"
+        copy = "COPY --chmod=0644 LICENSE /usr/share/licenses/anymd/LICENSE"
+        self.assertIn(create, dockerfile)
+        self.assertLess(dockerfile.index(create), dockerfile.index(copy))
+        self.assertLess(dockerfile.index(copy), dockerfile.index("USER anymd"))
 
 
 class ProbeTests(unittest.TestCase):
