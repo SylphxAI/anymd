@@ -20,6 +20,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  review-stamp:
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+      - uses: SylphxAI/.github/.github/actions/review-stamp-gate@0f4a21fe893880d1443630c6632104140f16a932
+        with:
+          config-path: .github/review-stamp.json
+          trusted-creator-ids: '8020099'
+
   plain-language:
     name: Plain language
     runs-on: ubuntu-latest
@@ -52,6 +68,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Merge-group review gate contract
+        run: python3 -m unittest discover -s scripts -p test_review_gate.py
 
       - name: Validate GitHub Actions workflows
         run: bash scripts/check-github-actions.sh
@@ -241,11 +260,11 @@ jobs:
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [plain-language, identifiers, validate, other-os, security-secrets, release-targets]
+    needs: [plain-language, identifiers, validate, other-os, security-secrets, release-targets, review-stamp]
     runs-on: ubuntu-latest
     steps:
       - name: Require every applicable gate
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |
-          echo "$RESULTS" | jq -e 'to_entries | all(.[]; .value.result == "success" or (.key == "other-os" and .value.result == "skipped"))'
+          echo "$RESULTS" | jq -e 'to_entries | all(.[]; .value.result == "success" or ((.key == "other-os" or .key == "review-stamp") and .value.result == "skipped"))'

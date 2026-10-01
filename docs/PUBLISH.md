@@ -9,6 +9,20 @@
 | crates.io | `anymd` (binary, `cargo install anymd`), `anymd-core`, `anymd-formats`, `anymd-pdf`, `anymd-ocr-vlm`, and the forks `anymd-pdf-extract`, `anymd-adobe-cmap-parser`, and `anymd-oar-ocr-vl` (from `vendor/`); `anymd-wasm` is not published |
 | Release workflow | `.github/workflows/release.yml`, which calls the shared [mcp-kit release workflow](https://github.com/SylphxAI/mcp-kit) |
 
+## Merge-group review gate
+
+The required `ci-ok` aggregate includes `review-stamp` on `merge_group`.
+It calls the SHA-pinned shared action with trusted creator ID `8020099` and
+repository scope in `.github/review-stamp.json`: workflows, actions, and that
+scope file. anymd has no hosted auth or billing paths. Explicit trusted
+failure, error, or pending statuses block every queued PR, including earlier
+entries carried by the group. Missing-stamp enforcement is enabled for every
+PR. Security/money/migration classes (mandatory shared globs/labels plus local
+scope) require an Ops success with description prefix `PASS`; other changes
+require the owning lane's independent Opus final reviewer. The product trusts
+creator `[8020099]` as data. Desk lanes share that identity, so reviewer/builder
+independence is an owning-lane process requirement, not provable by GitHub ID.
+
 ## How a release happens
 
 1. In a pull request, run `bun scripts/set-version.ts X.Y.Z`, then `cargo update -w`,

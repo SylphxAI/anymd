@@ -1,0 +1,28 @@
+{
+  "context": "ops-security/review",
+  "enforceMissing": true,
+  "requireStampLabels": [
+    "security",
+    "area:security",
+    "money",
+    "money-path",
+    "migration"
+  ],
+  "requireStampPaths": [
+    ".github/workflows/",
+    ".github/actions/",
+    ".github/review-stamp.json"
+  ],
+  "requireStampPathGlobs": [
+    "**/auth/**",
+    "**/*billing*/**",
+    "**/payment/**",
+    "**/migrations/**"
+  ],
+  "productReview": {
+    "context": "ops-security/review",
+    "trustedCreatorIds": [
+      8020099
+    ]
+  }
+}
