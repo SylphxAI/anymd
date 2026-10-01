@@ -3,16 +3,16 @@
   "benchmark": "AgentDocBench",
   "benchmark_version": "1",
   "tool": "anymd",
-  "tool_version": "anymd 8.1.0",
+  "tool_version": "anymd 8.2.0",
   "tool_url": "https://github.com/SylphxAI/anymd",
-  "date": "2026-09-26",
+  "date": "2026-10-01",
   "runs": 3,
   "timeout": 900,
   "shard": "1/1",
   "machine": "Linux x86_64, 4 CPUs",
   "runner": "github-hosted",
-  "run_url": "https://github.com/SylphxAI/anymd/actions/runs/36208170417",
-  "commit": "a3627875bb79a91f8356d1edfab2215e3b8dfab5",
+  "run_url": "https://github.com/SylphxAI/anymd/actions/runs/36794302607",
+  "commit": "50513326503f2aa98a0b9b6c931bf3bb576d86a6",
   "python": "3.12.14"
  },
  "results": [
@@ -21,7 +21,7 @@
    "category": "paper",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.115,
+   "seconds": 0.073,
    "tokens": 14258,
    "bytes": 56839,
    "metrics": {
@@ -52,7 +52,7 @@
    "category": "paper",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.096,
+   "seconds": 0.064,
    "tokens": 25440,
    "bytes": 61252,
    "metrics": {
@@ -74,7 +74,7 @@
    "category": "paper",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.032,
+   "seconds": 0.022,
    "tokens": 8716,
    "bytes": 29255,
    "metrics": {
@@ -105,7 +105,7 @@
    "category": "two-column",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.142,
+   "seconds": 0.096,
    "tokens": 16303,
    "bytes": 66998,
    "metrics": {
@@ -136,7 +136,7 @@
    "category": "two-column",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.119,
+   "seconds": 0.079,
    "tokens": 14655,
    "bytes": 56008,
    "metrics": {
@@ -167,7 +167,7 @@
    "category": "two-column",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.121,
+   "seconds": 0.081,
    "tokens": 19195,
    "bytes": 70676,
    "metrics": {
@@ -198,9 +198,9 @@
    "category": "report",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.051,
-   "tokens": 8150,
-   "bytes": 32299,
+   "seconds": 0.04,
+   "tokens": 8151,
+   "bytes": 32300,
    "metrics": {
     "sentences": [
      7,
@@ -229,7 +229,7 @@
    "category": "report",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.016,
+   "seconds": 0.014,
    "tokens": 1689,
    "bytes": 8726,
    "metrics": {
@@ -251,7 +251,7 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.091,
+   "seconds": 0.064,
    "tokens": 34952,
    "bytes": 68041,
    "metrics": {
@@ -282,7 +282,7 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.028,
+   "seconds": 0.02,
    "tokens": 2887,
    "bytes": 10641,
    "metrics": {
@@ -313,7 +313,7 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.066,
+   "seconds": 0.047,
    "tokens": 10034,
    "bytes": 32680,
    "metrics": {
@@ -344,7 +344,7 @@
    "category": "financial",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.005,
+   "seconds": 0.004,
    "tokens": 623,
    "bytes": 1907,
    "metrics": {
@@ -375,7 +375,7 @@
    "category": "form",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.066,
+   "seconds": 0.046,
    "tokens": 11848,
    "bytes": 48027,
    "metrics": {
@@ -406,7 +406,7 @@
    "category": "form",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.048,
+   "seconds": 0.034,
    "tokens": 6843,
    "bytes": 20938,
    "metrics": {
@@ -437,7 +437,7 @@
    "category": "form",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.038,
+   "seconds": 0.027,
    "tokens": 8710,
    "bytes": 38395,
    "metrics": {
@@ -468,7 +468,7 @@
    "category": "scanned",
    "format": "pdf",
    "status": "ok",
-   "seconds": 3.574,
+   "seconds": 2.22,
    "tokens": 1237,
    "bytes": 5412,
    "metrics": {
@@ -494,7 +494,7 @@
    "category": "scanned",
    "format": "pdf",
    "status": "ok",
-   "seconds": 2.778,
+   "seconds": 1.685,
    "tokens": 1159,
    "bytes": 4892,
    "metrics": {
@@ -520,7 +520,7 @@
    "category": "scanned",
    "format": "pdf",
    "status": "ok",
-   "seconds": 10.435,
+   "seconds": 6.594,
    "tokens": 3887,
    "bytes": 19232,
    "metrics": {
@@ -537,7 +537,7 @@
    "category": "cjk",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.036,
+   "seconds": 0.025,
    "tokens": 4170,
    "bytes": 10362,
    "metrics": {
@@ -568,7 +568,7 @@
    "category": "cjk",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.022,
+   "seconds": 0.016,
    "tokens": 2532,
    "bytes": 8054,
    "metrics": {
@@ -599,7 +599,7 @@
    "category": "cjk",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.051,
+   "seconds": 0.038,
    "tokens": 5818,
    "bytes": 13626,
    "metrics": {
@@ -630,7 +630,7 @@
    "category": "slides",
    "format": "pptx",
    "status": "ok",
-   "seconds": 0.01,
+   "seconds": 0.009,
    "tokens": 3682,
    "bytes": 17718,
    "metrics": {
@@ -662,17 +662,17 @@
    "format": "pptx",
    "status": "ok",
    "seconds": 0.004,
-   "tokens": 582,
-   "bytes": 1927,
+   "tokens": 521,
+   "bytes": 1770,
    "metrics": {
     "sentences": [
      5,
      5
     ],
     "text": {
-     "precision": 0.8214,
+     "precision": 0.888,
      "recall": 1.0,
-     "f1": 0.902
+     "f1": 0.9407
     },
     "order": 1.0,
     "tables": {
@@ -684,7 +684,7 @@
      "cell_precision": 1.0,
      "cell_f1": 1.0
     },
-    "score": 0.9755
+    "score": 0.9852
    }
   },
   {
@@ -692,18 +692,18 @@
    "category": "slides",
    "format": "pdf",
    "status": "ok",
-   "seconds": 4.846,
-   "tokens": 1780,
-   "bytes": 7242,
+   "seconds": 0.039,
+   "tokens": 1763,
+   "bytes": 7203,
    "metrics": {
     "sentences": [
      6,
      7
     ],
     "text": {
-     "precision": 0.9416,
-     "recall": 0.9001,
-     "f1": 0.9204
+     "precision": 0.9454,
+     "recall": 0.8991,
+     "f1": 0.9217
     },
     "order": 1.0,
     "tables": {
@@ -715,7 +715,7 @@
      "cell_precision": 1.0,
      "cell_f1": 1.0
     },
-    "score": 0.9444
+    "score": 0.9447
    }
   },
   {
@@ -723,9 +723,9 @@
    "category": "slides",
    "format": "pdf",
    "status": "ok",
-   "seconds": 0.033,
-   "tokens": 2156,
-   "bytes": 6949,
+   "seconds": 0.042,
+   "tokens": 2160,
+   "bytes": 6960,
    "metrics": {
     "sentences": [
      8,
@@ -754,7 +754,7 @@
    "category": "spreadsheet",
    "format": "csv",
    "status": "ok",
-   "seconds": 0.003,
+   "seconds": 0.002,
    "tokens": 6555,
    "bytes": 12073,
    "metrics": {
@@ -776,7 +776,7 @@
    "category": "spreadsheet",
    "format": "csv",
    "status": "ok",
-   "seconds": 0.003,
+   "seconds": 0.002,
    "tokens": 13854,
    "bytes": 24571,
    "metrics": {
@@ -846,7 +846,7 @@
    "category": "docx",
    "format": "docx",
    "status": "ok",
-   "seconds": 0.009,
+   "seconds": 0.006,
    "tokens": 3545,
    "bytes": 16923,
    "metrics": {
@@ -878,17 +878,17 @@
    "format": "docx",
    "status": "ok",
    "seconds": 0.003,
-   "tokens": 994,
-   "bytes": 4587,
+   "tokens": 964,
+   "bytes": 4486,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9629,
+     "precision": 1.0,
      "recall": 1.0,
-     "f1": 0.9811
+     "f1": 1.0
     },
     "order": 1.0,
     "tables": {
@@ -900,7 +900,7 @@
      "cell_precision": 1.0,
      "cell_f1": 1.0
     },
-    "score": 0.9953
+    "score": 1.0
    }
   },
   {
@@ -908,7 +908,7 @@
    "category": "docx",
    "format": "docx",
    "status": "ok",
-   "seconds": 0.005,
+   "seconds": 0.004,
    "tokens": 3396,
    "bytes": 15341,
    "metrics": {
@@ -939,7 +939,7 @@
    "category": "epub",
    "format": "epub",
    "status": "ok",
-   "seconds": 0.007,
+   "seconds": 0.006,
    "tokens": 36462,
    "bytes": 161030,
    "metrics": {
@@ -961,18 +961,18 @@
    "category": "epub",
    "format": "epub",
    "status": "ok",
-   "seconds": 0.014,
-   "tokens": 42215,
-   "bytes": 205367,
+   "seconds": 0.015,
+   "tokens": 42116,
+   "bytes": 205093,
    "metrics": {
     "sentences": [
      6,
      6
     ],
     "text": {
-     "precision": 0.9977,
+     "precision": 0.998,
      "recall": 0.9994,
-     "f1": 0.9986
+     "f1": 0.9987
     },
     "order": 1.0,
     "tables": {
@@ -984,7 +984,7 @@
      "cell_precision": 1.0,
      "cell_f1": 1.0
     },
-    "score": 0.9996
+    "score": 0.9997
    }
   },
   {
@@ -1014,7 +1014,7 @@
    "category": "html",
    "format": "html",
    "status": "ok",
-   "seconds": 0.007,
+   "seconds": 0.004,
    "tokens": 4680,
    "bytes": 22856,
    "metrics": {
@@ -1040,7 +1040,7 @@
    "category": "html",
    "format": "html",
    "status": "ok",
-   "seconds": 0.016,
+   "seconds": 0.01,
    "tokens": 21733,
    "bytes": 87498,
    "metrics": {
@@ -1066,7 +1066,7 @@
    "category": "html",
    "format": "html",
    "status": "ok",
-   "seconds": 0.031,
+   "seconds": 0.018,
    "tokens": 23146,
    "bytes": 80565,
    "metrics": {
