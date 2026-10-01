@@ -2,10 +2,11 @@
 
 ## How to Contribute
 
-1. **Reporting Issues:** If you find a bug or have a feature request, please open an issue on GitHub.
-   - Provide a clear description of the issue.
-   - Include steps to reproduce (for bugs).
-   - Explain the motivation for the feature request.
+1. **Reporting Issues:** Search [existing issues](https://github.com/SylphxAI/anymd/issues) before opening a [bug report or feature request](https://github.com/SylphxAI/anymd/issues/new/choose).
+   - Include the anymd version, command or MCP tool arguments, and a small synthetic or public document that reproduces the problem.
+   - Describe the expected Markdown and the actual result. Redact private documents, personal paths, tokens and client configuration before sharing logs.
+   - Explain the use case and a testable outcome for feature requests.
+   - Use [Discussions](https://github.com/SylphxAI/anymd/discussions) for questions and ideas; report vulnerabilities through [SECURITY.md](SECURITY.md).
 
 2. **Submitting Pull Requests:**
    - Fork the repository.
