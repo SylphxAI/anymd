@@ -21,15 +21,18 @@ its source hash, requested/processed range and mapping from container PTS to
 playback milliseconds. Unknown clock alignment remains unavailable, not zero.
 
 Scenes include the initial decoded scene and FFmpeg **detected cuts**, using
-policy `ffmpeg_detected_cuts_v1_threshold_0.4`. They are heuristic cuts, not
-verified semantic scenes. Excess cuts are coalesced into the final scene with
+policy `ffmpeg_detected_cuts_v1_threshold_0.4`. They are heuristic FFmpeg
+scene-score 0.4 detections, not semantic scenes, and carry no confidence value. Excess cuts are coalesced into the final scene with
 partial detection status; chapters and codec keyframes are not substitutes.
 
 Structured subtitle/ASR cues retain both endpoints, overlapping/cross-cut cues,
 track identity and timing granularity. Repeated subtitle text remains in the
 structured evidence. Forced-aligned words and 20-second ASR segments are not
 interchangeable. Sidecars are admitted separately; unresolved WebVTT timestamp
-maps are explicit gaps. There is no model download in timeline extraction.
+maps and malformed subtitle files (for example a zero-length cue) become a
+partial `subtitles` gap with the reason; the request continues. Timed ASR cues
+retain their playback clock; this describes plumbing, not transcription accuracy.
+There is no model download in timeline extraction.
 
 ## Frames
 
@@ -58,10 +61,12 @@ deadline covers admission, metadata, decoding and any optional analysis.
 Requested OCR and captions sample scene representatives only. OCR records
 frame-pixel coordinates, geometry granularity, provider/model provenance and
 truncation. It supports text observed at that timestamp, not continuous scene
-coverage. Timeline responses contain no image blocks.
+coverage. OCR and captions are single-frame observations, and this guide makes
+no claim about their quality. Timeline responses contain no image blocks.
 
 `caption: true` uses only the explicitly configured **local-command** vision
-adapter. Without one, captions are unavailable. The document VLM is an OCR
+adapter; anymd has no built-in captioning. Without one, captions are
+unavailable. The document VLM is an OCR
 recognizer, not a general video captioner. The successful manifest and adapter
 cache reuse one description per representative frame; reads, outline navigation
 and extra frame retrieval do not recaption it. Partial or failed descriptions

@@ -320,6 +320,19 @@ pub fn render_frames(
     Ok(frames)
 }
 
+/// Generated text is data, never document structure: a fence longer than any
+/// backtick run inside keeps `#` or underline lines from becoming outline nodes.
+fn fenced(text: &str) -> String {
+    let mut longest = 0;
+    let mut run = 0;
+    for c in text.chars() {
+        run = if c == '`' { run + 1 } else { 0 };
+        longest = longest.max(run);
+    }
+    let fence = "`".repeat((longest + 1).max(3));
+    format!("{fence}text\n{text}\n{fence}")
+}
+
 /// Stable document-section projection for read/outline. It does not execute any
 /// decoder/provider and does not change headings based on generated descriptions.
 pub fn sections(evidence: &VideoEvidence) -> Vec<anymd_formats::Section> {
@@ -362,13 +375,15 @@ pub fn sections(evidence: &VideoEvidence) -> Vec<anymd_formats::Section> {
                 "\n\nSampled OCR at {} ms (frame {}), not continuous scene coverage:\n{}",
                 sample.frame.actual_ms,
                 sample.frame.sha256,
-                sample
-                    .observation
-                    .regions
-                    .iter()
-                    .map(|r| r.text.as_str())
-                    .collect::<Vec<_>>()
-                    .join("\n")
+                fenced(
+                    &sample
+                        .observation
+                        .regions
+                        .iter()
+                        .map(|r| r.text.as_str())
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                )
             ));
         }
         for sample in evidence
@@ -377,13 +392,26 @@ pub fn sections(evidence: &VideoEvidence) -> Vec<anymd_formats::Section> {
             .filter(|x| x.scene_id == scene.id)
         {
             text.push_str(&format!(
-                "\n\nSampled-frame description at {} ms ({}): {}",
-                sample.frame.actual_ms, sample.description.provider, sample.description.text
+                "\n\nSampled-frame description at {} ms ({}):\n{}",
+                sample.frame.actual_ms,
+                sample.description.provider,
+                fenced(&sample.description.text)
             ));
         }
         sections.push(anymd_formats::Section {
             label: format!("scene {}: {}–{} ms", scene.id, scene.start_ms, scene.end_ms),
             markdown: text,
+        });
+    }
+    for chapter in &evidence.timeline.chapters {
+        sections.push(anymd_formats::Section {
+            label: format!("chapter {}", chapter.id),
+            markdown: format!(
+                "{}\n\nPlayback interval: [{} ms, {} ms).",
+                fenced(chapter.title.as_deref().unwrap_or("Untitled chapter")),
+                chapter.start_ms,
+                chapter.end_ms
+            ),
         });
     }
     if !evidence.timeline.cues.is_empty() {
@@ -394,13 +422,13 @@ pub fn sections(evidence: &VideoEvidence) -> Vec<anymd_formats::Section> {
             .enumerate()
             .map(|(index, cue)| {
                 format!(
-                    "- Cue {} (track {}, {}) [{} ms, {} ms): {}",
+                    "- Cue {} (track {}, {}) [{} ms, {} ms):\n{}",
                     index + 1,
                     cue.track,
                     cue.timing,
                     cue.start_ms,
                     cue.end_ms,
-                    cue.text
+                    fenced(&cue.text)
                 )
             })
             .collect::<Vec<_>>()
@@ -410,22 +438,11 @@ pub fn sections(evidence: &VideoEvidence) -> Vec<anymd_formats::Section> {
             markdown,
         });
     }
-    for chapter in &evidence.timeline.chapters {
-        sections.push(anymd_formats::Section {
-            label: format!("chapter {}", chapter.id),
-            markdown: format!(
-                "{}\n\nPlayback interval: [{} ms, {} ms).",
-                chapter.title.as_deref().unwrap_or("Untitled chapter"),
-                chapter.start_ms,
-                chapter.end_ms
-            ),
-        });
-    }
     sections
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     #[test]
     fn observation_geometry_never_assumes_pdf_page() {
@@ -460,7 +477,7 @@ mod tests {
         observation.coordinate_space = "pdf_points".into();
         assert!(validate_observation(&observation, &frame).is_err());
     }
-    fn fixture() -> VideoEvidence {
+    pub(crate) fn fixture() -> VideoEvidence {
         use timeline::{Components, Cue, MediaClock, Scene, TimeRange};
         VideoEvidence {
             timeline: Timeline {
@@ -519,6 +536,80 @@ mod tests {
             ocr_observations: vec![],
             descriptions: vec![],
         }
+    }
+    fn node_ids(evidence: &VideoEvidence) -> Vec<(String, String)> {
+        let opened = crate::document::Opened::from_video("video", evidence);
+        crate::outline::Outline::build(&opened)
+            .unwrap()
+            .nodes
+            .into_iter()
+            .map(|n| (n.id, n.title))
+            .collect()
+    }
+    #[test]
+    fn generated_text_cannot_change_outline_node_ids_and_chapters_precede_cues() {
+        let mut metadata_only = fixture();
+        metadata_only.timeline.chapters.push(timeline::Chapter {
+            id: "chapter-0".into(),
+            start_ms: 0,
+            end_ms: 1000,
+            title: Some("# Chapter".into()),
+        });
+        let labels: Vec<_> = sections(&metadata_only)
+            .into_iter()
+            .map(|s| s.label)
+            .collect();
+        assert_eq!(
+            labels,
+            [
+                "scene scene-0: 0–1000 ms",
+                "scene scene-1000: 1000–2000 ms",
+                "chapter chapter-0",
+                "timeline cues"
+            ]
+        );
+        let mut enriched = metadata_only.clone();
+        let frame = FrameMetadata {
+            requested_ms: 0,
+            actual_ms: 0,
+            decoded_pts: 0,
+            decoded_pts_us: 0,
+            stream: 0,
+            time_base: "1/1000".into(),
+            width: 10,
+            height: 10,
+            sha256: "hash".into(),
+        };
+        enriched.descriptions.push(SampledDescription {
+            scene_id: "scene-0".into(),
+            frame: frame.clone(),
+            description: FrameDescription {
+                text: "# X\n---\n````\n## Y".into(),
+                provider: "external-command".into(),
+                model_revision: None,
+                truncated: false,
+            },
+        });
+        enriched.ocr_observations.push(SampledOcr {
+            scene_id: "scene-0".into(),
+            frame,
+            observation: RasterObservation {
+                provider: "ocr".into(),
+                model_revision: None,
+                coordinate_space: "frame_pixels_top_left".into(),
+                regions: vec![RasterRegion {
+                    text: "Title\n=====".into(),
+                    left: 0.,
+                    top: 0.,
+                    right: 1.,
+                    bottom: 1.,
+                    geometry_level: "ocr_region".into(),
+                }],
+                truncated: false,
+            },
+        });
+        enriched.timeline.cues[0].text = "# cue heading".into();
+        assert_eq!(node_ids(&metadata_only), node_ids(&enriched));
     }
     struct InertContext {
         exhausted: bool,
@@ -628,12 +719,10 @@ mod tests {
         assert_eq!(context.worker_calls, 0);
         assert_eq!(result.timeline.components.ocr.status, Status::Partial);
         assert_eq!(result.timeline.components.caption.status, Status::Partial);
-        assert!(
-            result
-                .timeline
-                .scenes
-                .iter()
-                .all(|s| s.representative.is_none())
-        );
+        assert!(result
+            .timeline
+            .scenes
+            .iter()
+            .all(|s| s.representative.is_none()));
     }
 }

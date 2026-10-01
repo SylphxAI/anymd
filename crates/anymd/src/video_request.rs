@@ -238,20 +238,15 @@ fn execute(work: Work) -> Result<Value, String> {
     }
     let options = work.selection.ok_or("timeline required")?.options();
     let mut timeline = timeline::extract(&work.path, &work.source_hash, &options, deadline)?;
-    for (name, text) in &work.sidecars {
-        let cues = timeline::subtitle_cues(&timeline::SubtitleTrack {
-            id: name,
-            text,
-            playback_offset_ms: 0,
-        })?;
-        timeline::attach_cues(&mut timeline, cues, false)?;
-    }
+    attach_sidecars(&mut timeline, &work.sidecars);
     if work.transcript {
         if let Some(clock) = timeline.clock.as_ref() {
             match anymd_formats::video::transcript_window(&work.path, clock, &options, deadline) {
                 Ok(cues) => timeline::attach_cues(&mut timeline, cues, true)?,
                 Err(message) => timeline.components.transcript = timeline::Component::gap(message),
             }
+        } else {
+            timeline.components.transcript = timeline::Component::gap("media clock unavailable");
         }
     }
     let evidence = video_evidence::enrich(
@@ -262,11 +257,38 @@ fn execute(work: Work) -> Result<Value, String> {
         deadline,
         &mut context,
     )?;
-    let complete = [
-        &evidence.timeline.components.scenes,
-        &evidence.timeline.components.caption,
-        &evidence.timeline.components.ocr,
-        &evidence.timeline.components.transcript,
+    if cacheable(&evidence) {
+        cache_put(&identity, &evidence)?;
+    }
+    serde_json::to_value(evidence).map_err(|e| e.to_string())
+}
+/// A subtitle file error is a gap on that component, never a failed request.
+fn attach_sidecars(timeline: &mut timeline::Timeline, sidecars: &[(String, String)]) {
+    for (name, text) in sidecars {
+        let attached = timeline::subtitle_cues(&timeline::SubtitleTrack {
+            id: name,
+            text,
+            playback_offset_ms: 0,
+        })
+        .and_then(|cues| timeline::attach_cues(timeline, cues, false));
+        if let Err(reason) = attached {
+            timeline.components.subtitles =
+                timeline::Component::partial(format!("subtitle file {name}: {reason}"));
+        }
+    }
+}
+
+/// Only a fully complete manifest is cached; the key has no deadline, so a
+/// deadline-limited partial result must never be reused.
+fn cacheable(evidence: &VideoEvidence) -> bool {
+    let components = &evidence.timeline.components;
+    [
+        &components.scenes,
+        &components.chapters,
+        &components.subtitles,
+        &components.caption,
+        &components.ocr,
+        &components.transcript,
     ]
     .iter()
     .all(|c| {
@@ -274,12 +296,9 @@ fn execute(work: Work) -> Result<Value, String> {
             c.status,
             timeline::Status::Ok | timeline::Status::NotRequested
         )
-    });
-    if complete {
-        cache_put(&identity, &evidence)?;
-    }
-    serde_json::to_value(evidence).map_err(|e| e.to_string())
+    })
 }
+
 /// Private supervised self-worker entry, with no model download permission.
 pub fn worker(args: &[String]) -> Result<(), String> {
     if args.len() != 2 {
@@ -538,6 +557,49 @@ mod tests {
             let error = inspect(args, &SourceAccessPolicy::unrestricted()).unwrap_err();
             assert!(!error.message.contains("No such file"), "{:?}", error);
         }
+    }
+    #[test]
+    fn malformed_sidecar_is_a_subtitles_gap_not_a_request_error() {
+        let mut evidence = crate::video_evidence::tests::fixture();
+        evidence.timeline.cues.clear();
+        evidence.timeline.components.subtitles = timeline::Component::not_requested();
+        attach_sidecars(
+            &mut evidence.timeline,
+            &[
+                (
+                    "srt".into(),
+                    "1\n00:00:01,000 --> 00:00:01,000\nzero".into(),
+                ),
+                ("vtt".into(), "WEBVTT\n\n00:00.100 --> 00:00.200\nok".into()),
+            ],
+        );
+        let subtitles = &evidence.timeline.components.subtitles;
+        assert_eq!(subtitles.status, timeline::Status::Partial);
+        assert!(subtitles
+            .reason
+            .as_deref()
+            .unwrap()
+            .contains("subtitle file srt"));
+        assert_eq!(evidence.timeline.cues.len(), 1);
+        evidence.timeline.components.subtitles = timeline::Component::gap("embedded unavailable");
+        attach_sidecars(
+            &mut evidence.timeline,
+            &[("vtt".into(), "WEBVTT\n\n00:00.300 --> 00:00.400\nok".into())],
+        );
+        assert_eq!(
+            evidence.timeline.components.subtitles.status,
+            timeline::Status::Unavailable
+        );
+    }
+    #[test]
+    fn partial_subtitles_or_chapters_are_not_cacheable() {
+        let mut evidence = crate::video_evidence::tests::fixture();
+        assert!(cacheable(&evidence));
+        evidence.timeline.components.subtitles = timeline::Component::partial("deadline");
+        assert!(!cacheable(&evidence));
+        evidence.timeline.components.subtitles = timeline::Component::ok();
+        evidence.timeline.components.chapters = timeline::Component::partial("deadline");
+        assert!(!cacheable(&evidence));
     }
     #[test]
     fn additive_options_preserve_legacy_and_require_end() {

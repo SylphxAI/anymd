@@ -76,6 +76,12 @@ impl Component {
             reason: Some(reason.into()),
         }
     }
+    pub fn partial(reason: impl Into<String>) -> Self {
+        Self {
+            status: Status::Partial,
+            reason: Some(reason.into()),
+        }
+    }
     pub fn not_requested() -> Self {
         Self {
             status: Status::NotRequested,
@@ -254,7 +260,8 @@ pub fn attach_cues(
     timeline.cues.sort_by_key(|c| (c.start_ms, c.end_ms));
     if transcript {
         timeline.components.transcript = Component::ok();
-    } else {
+    } else if timeline.components.subtitles.status == Status::NotRequested {
+        // Never overwrite a partial or unavailable result with a later success.
         timeline.components.subtitles = Component::ok();
     }
     Ok(())
@@ -847,6 +854,20 @@ mod tests {
         assert_eq!((cues[0].start_ms, cues[0].end_ms), (300, 1737));
         assert_eq!(cues[0].text, cues[1].text);
         assert!(cues[1].start_ms < cues[0].end_ms);
+    }
+    #[test]
+    fn malformed_sidecars_error_without_hiding_prior_gaps() {
+        for text in [
+            "WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00.000,MPEGTS:450000\n\n00:00.100 --> 00:00.200\nx",
+            "1\n00:00:01,000 --> 00:00:01,000\nzero length",
+        ] {
+            let track = SubtitleTrack {
+                id: "side",
+                playback_offset_ms: 0,
+                text,
+            };
+            assert!(subtitle_cues(&track).is_err());
+        }
     }
     #[test]
     fn unknown_origin_is_not_zero() {

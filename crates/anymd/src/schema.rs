@@ -528,6 +528,19 @@ mod provider_schema_compat_tests {
     use schemars::schema_for;
 
     #[test]
+    fn read_node_keeps_its_own_description() {
+        let schema = serde_json::to_value(schema_for!(ReadArgs)).unwrap();
+        let properties = &schema["properties"];
+        let node = properties["node"]["description"].as_str().unwrap_or("");
+        assert!(
+            node.contains("section id returned by outline"),
+            "{properties}"
+        );
+        let timeline = properties["timeline"]["description"].as_str().unwrap_or("");
+        assert!(timeline.contains("video"), "{properties}");
+        assert!(!timeline.contains("section id returned by outline"));
+    }
+    #[test]
     fn pdf_source_schema_omits_not_required_xor() {
         let schema = schema_for!(PdfSource);
         let json = serde_json::to_string(&schema).expect("serialize schema");
@@ -581,8 +594,11 @@ pub struct ReadArgs {
         description = "File path, http(s) URL, or directory. PDF, DOCX, PPTX, XLSX/XLS/ODS, CSV/TSV, EPUB, HTML, Markdown/text, images, audio/video, SRT/VTT. A directory returns the list of readable files."
     )]
     pub source: String,
-    /// Read a section id returned by outline; repeat node with a continuation cursor.
+    #[schemars(
+        description = "Local video only: read this bounded playback window as deterministic timeline sections. end_ms is required; the window is half-open, at most ten minutes and twenty scenes."
+    )]
     pub timeline: Option<crate::video_request::TimelineSelection>,
+    /// Read a section id returned by outline; repeat node with a continuation cursor.
     pub node: Option<String>,
     #[schemars(
         description = "Pages (PDF), slides, sheets, or chapters to read, e.g. \"1-5,8\". Default: all."
@@ -727,9 +743,21 @@ pub enum InspectOperation {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct InspectArgs {
     pub operation: InspectOperation,
+    #[schemars(
+        description = "video_timeline only (required there): half-open playback window with required end_ms, at most ten minutes and twenty detected-cut scenes. caption only samples one frame per scene through a user-configured local-command adapter."
+    )]
     pub timeline: Option<crate::video_request::TimelineSelection>,
+    #[schemars(
+        description = "render_frame only: playback timestamps in integer milliseconds (at most twenty). Returns decoded frame metadata with the actual decoded timestamp."
+    )]
     pub timestamps_ms: Option<Vec<u64>>,
+    #[schemars(
+        description = "Video only: fail if the admitted source's SHA-256 differs from this value."
+    )]
     pub expected_source_sha256: Option<String>,
+    #[schemars(
+        description = "video_timeline only: also attach timed ASR cues from preinstalled local Qwen3-ASR weights. Never downloads models. Default false."
+    )]
     pub transcript: Option<bool>,
     pub sources: Vec<PdfEvidenceSource>,
     #[schemars(
@@ -762,6 +790,9 @@ pub struct InspectArgs {
 /// Navigate a document without a model or vector index.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct OutlineArgs {
+    #[schemars(
+        description = "Local video only: outline this bounded playback window from metadata (cuts, chapters, subtitles). No ASR, OCR or captions run."
+    )]
     pub timeline: Option<crate::video_request::TimelineSelection>,
     /// File path or http(s) URL.
     pub source: String,
