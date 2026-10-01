@@ -7,10 +7,7 @@ pub(super) fn not_configured_message() -> String {
 }
 
 pub(super) fn parse_http_headers(raw: Option<String>) -> Result<Vec<(String, String)>, String> {
-    let Some(raw) = raw
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty())
-    else {
+    let Some(raw) = raw.map(|value| value.trim().to_string()).filter(|value| !value.is_empty()) else {
         return Ok(Vec::new());
     };
     let value: Value = serde_json::from_str(&raw).map_err(|_| {
@@ -159,30 +156,30 @@ pub(super) fn provider_config_from(
                 return http_provider_config(url, headers, Some(preset), Some(model));
             }
             "openai-compatible" | "lmstudio" | "llamacpp" => {
-                let (model_env, url_env, default_url, model_value, url_value) =
-                    match preset.as_str() {
-                        "openai-compatible" => (
-                            OPENAI_MODEL_ENV,
-                            OPENAI_URL_ENV,
-                            None,
-                            openai_model,
-                            openai_url,
-                        ),
-                        "lmstudio" => (
-                            LMSTUDIO_MODEL_ENV,
-                            LMSTUDIO_URL_ENV,
-                            Some(DEFAULT_LMSTUDIO_URL),
-                            lmstudio_model,
-                            lmstudio_url,
-                        ),
-                        _ => (
-                            LLAMACPP_MODEL_ENV,
-                            LLAMACPP_URL_ENV,
-                            Some(DEFAULT_LLAMACPP_URL),
-                            llamacpp_model,
-                            llamacpp_url,
-                        ),
-                    };
+                let (model_env, url_env, default_url, model_value, url_value) = match preset.as_str()
+                {
+                    "openai-compatible" => (
+                        OPENAI_MODEL_ENV,
+                        OPENAI_URL_ENV,
+                        None,
+                        openai_model,
+                        openai_url,
+                    ),
+                    "lmstudio" => (
+                        LMSTUDIO_MODEL_ENV,
+                        LMSTUDIO_URL_ENV,
+                        Some(DEFAULT_LMSTUDIO_URL),
+                        lmstudio_model,
+                        lmstudio_url,
+                    ),
+                    _ => (
+                        LLAMACPP_MODEL_ENV,
+                        LLAMACPP_URL_ENV,
+                        Some(DEFAULT_LLAMACPP_URL),
+                        llamacpp_model,
+                        llamacpp_url,
+                    ),
+                };
                 let model = model_value
                     .map(|value| value.trim().to_string())
                     .filter(|value| !value.is_empty())
