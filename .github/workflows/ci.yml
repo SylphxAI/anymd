@@ -56,7 +56,7 @@ jobs:
         run: bash scripts/check-github-actions.sh
 
       - name: Brand home matches its masters
-        run: python3 brand/build.py --check
+        uses: SylphxAI/.github/.github/actions/brand@a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb # shared brand generator
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
