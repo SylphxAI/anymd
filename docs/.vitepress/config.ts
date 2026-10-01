@@ -85,6 +85,7 @@ export default defineConfig({
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'MCP tools', link: '/guide/tools' },
           { text: 'CLI', link: '/guide/cli' },
+          { text: 'Python and loaders', link: '/guide/python' },
           { text: 'Formats', link: '/guide/formats' },
           { text: 'Benchmarks', link: '/guide/benchmarks' },
           { text: 'Migration', link: '/guide/migration' },

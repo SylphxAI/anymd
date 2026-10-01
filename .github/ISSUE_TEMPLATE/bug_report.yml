@@ -1,0 +1,52 @@
+name: Bug report
+description: Report a reproducible anymd problem.
+labels:
+- bug
+- owner:anymd
+body:
+- type: markdown
+  attributes:
+    value: 'Search existing issues first. Use [Discussions](https://github.com/SylphxAI/anymd/discussions)
+      for questions. Reports are public: use synthetic/public examples and redact secrets, personal data
+      and private source material. Report vulnerabilities through the [security policy](https://github.com/SylphxAI/anymd/security/policy),
+      not a public issue.'
+- type: textarea
+  id: environment
+  attributes:
+    label: Version and environment
+    description: Include `anymd version`, installation method (npm, native binary, Cargo, Docker or pip),
+      OS/architecture, and Node or MCP client version if relevant.
+  validations:
+    required: true
+- type: textarea
+  id: configuration
+  attributes:
+    label: Command, tool arguments and configuration
+    description: CLI command or MCP tool name and JSON arguments; format, pages, token budget, OCR/transcript
+      options and optional-tool versions when relevant. Replace private paths and URLs with placeholders.
+  validations:
+    required: true
+- type: textarea
+  id: reproduction
+  attributes:
+    label: Minimal reproduction
+    description: Numbered steps and the smallest synthetic or public document/URL that reproduces the
+      problem. Include format, page/sheet and relevant structure. Do not attach private documents.
+  validations:
+    required: true
+- type: textarea
+  id: result
+  attributes:
+    label: Expected and actual behavior
+    description: Show the expected Markdown/citations and the actual output, including the page or region
+      affected.
+  validations:
+    required: true
+- type: textarea
+  id: logs
+  attributes:
+    label: Redacted logs
+    description: Paste only the relevant error/output. Remove tokens, credentials, personal paths and
+      private content; leave this blank if there are no useful logs.
+  validations:
+    required: false

@@ -18,8 +18,9 @@ everything else.
 
 | Path | What it is |
 |---|---|
-| `corpus.json` | The documents: id, category, format, pinned URL, SHA-256, license, attribution |
-| `files/` | Small license-clean documents committed as-is (the rest are downloaded) |
+| `corpus.json` | The documents: id, category, format, original URL, release mirror URL, SHA-256, license, attribution |
+| `CORPUS-NOTICE` | Redistribution terms and source attribution for every release document |
+| `files/` | Small license-clean documents committed as-is (the rest come from the corpus release) |
 | `truth/<id>.json` | Ground truth for each document (schema below) |
 | `reference/<id>.txt` | Reference text for text F1 (see `reference.py`) |
 | `adapters/<tool>.py` | One adapter per tool |
@@ -38,9 +39,34 @@ MIT-licensed test files, or published under an open government license (Japan PD
 entry in `corpus.json` records the license and where it is stated. arXiv papers are included only when their
 arXiv license is CC BY; papers under arXiv's default non-exclusive license are not.
 
-Documents are downloaded from pinned URLs (versioned arXiv PDFs, dated government releases, Wayback Machine
-`id_` snapshots for pages that change) and verified by SHA-256. Files of 200 KB or less whose license allows it
-are committed in `files/`, so the benchmark survives link rot for those.
+The public [agentdocbench-corpus-v1 release](https://github.com/SylphxAI/anymd/releases/tag/agentdocbench-corpus-v1)
+mirrors all 38 existing documents byte-for-byte. It is a separate corpus release, not an anymd software
+release. Each entry keeps its original `url` (versioned arXiv PDF, dated government release or Wayback
+Machine `id_` snapshot) and adds a fixed `mirror_url` for its release asset. The original SHA-256 remains
+the authority: neither a changed upstream file nor a changed release asset is accepted.
+
+`fetch.py` reuses a verified local file, then a committed file in `files/`, otherwise downloads the release
+asset. It checks the SHA-256 before replacing the destination and fails on corrupt or unavailable assets;
+it does not fall back to upstream or disable TLS certificate checks. Files of 200 KB or less already
+committed in `files/` stay there. No document IDs, bytes, truth, reference text, results or scoring changed.
+
+The release includes `corpus.json`, `CORPUS-NOTICE` and `SHA256SUMS` alongside the individual documents.
+[CORPUS-NOTICE](CORPUS-NOTICE) retains attribution, source links, license links and the MIT notice. CC BY
+and CC BY-SA files remain under those licenses; government files retain their open-government terms.
+Project Gutenberg EPUBs retain their embedded notices and are public domain in the USA; redistribution
+elsewhere depends on local copyright rules.
+
+### Releasing the same corpus
+
+Release v1 was recovered from the existing verified corpus cache and checked against every checksum and
+byte count in `corpus.json` from source commit `50513326503f2aa98a0b9b6c931bf3bb576d86a6`. Recovery from a
+successful Benchmark run's `corpus` artifact is also possible: download it once and verify every file
+against the manifest before publishing. Never regenerate or substitute a document to repair a download.
+
+For a future mirror release, inspect the existing tag's assets first. Publish only files whose manifest
+license evidence permits redistribution, together with the manifest, notices and checksums; use a new
+corpus tag and `--latest=false` so it does not replace the latest software release. Do not overwrite v1
+assets. Any change to corpus bytes is a benchmark change, not mirror maintenance.
 
 Categories: math-heavy papers, two-column papers, designed reports, financial and statistical tables,
 fillable forms, scanned (image-only) PDFs, CJK documents, slides (PDF and PPTX), spreadsheets (XLSX and CSV),

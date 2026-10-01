@@ -215,6 +215,7 @@ jobs:
           /tmp/venv/bin/pip install dist/*manylinux_2_17_x86_64*.whl
           /tmp/venv/bin/anymd version
           /tmp/venv/bin/anymd test/fixtures/sample.pdf | grep -q '<!-- page 1 -->'
+          /tmp/venv/bin/python -c 'from anymd import convert; assert "<!-- page 1 -->" in convert("test/fixtures/sample.pdf").text'
           /tmp/venv/bin/pip install twine
           /tmp/venv/bin/twine check dist/*.whl
 

@@ -104,6 +104,23 @@ and the release job compares its contents with the checkout after publishing.
 The OCI metadata includes `org.opencontainers.image.licenses=MIT`.
 Ordinary pushes without new binaries skip the image job.
 
+## Python wheel payload
+
+`scripts/build-wheels.py` packages the same release binary as a scripts entry
+and includes `packages/pypi/anymd` as an importable Python package in that wheel.
+The wrapper never downloads another binary or implements conversion. Base
+requirements stay empty; `langchain` and `llamaindex` extras declare their
+optional core framework dependencies. All payload files are hashed in `RECORD`.
+No separate Python version or release workflow is introduced.
+
+CI runs the standard-library API/packaging tests, then installs a wheel built
+from its native binary with both extras and tests the actual adapters and small
+PDF/CSV fixtures. The release smoke checks both the installed CLI and Python
+API before `twine check`. Locally, use
+`python3 -m unittest discover -s packages/pypi/tests -v`; set `ANYMD_BIN` to an
+existing native binary for fixture tests and install the extras to run framework
+tests. Neither these checks nor the examples download models.
+
 PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
 workflow `release.yml`, environment `pypi`. That publisher must be registered
 on PyPI before OIDC token exchange can succeed; an image/crates recovery

@@ -1,0 +1,44 @@
+name: Documentation report
+description: Report missing, incorrect or unclear anymd documentation.
+labels:
+- documentation
+- owner:anymd
+body:
+- type: markdown
+  attributes:
+    value: 'Search existing issues first. Use [Discussions](https://github.com/SylphxAI/anymd/discussions)
+      for usage questions. This report is public: redact secrets, personal data and private content. Report
+      vulnerabilities through the [security policy](https://github.com/SylphxAI/anymd/security/policy),
+      not a public issue.'
+- type: textarea
+  id: location
+  attributes:
+    label: Affected page and section
+    description: Link the anymd docs page or repository file and name the section. Include the documentation
+      revision or anymd version when relevant.
+  validations:
+    required: true
+- type: textarea
+  id: current
+  attributes:
+    label: Incorrect, missing or unclear content
+    description: Quote the relevant public text or describe what is missing. Explain why it is incorrect,
+      unclear, outdated or a broken link.
+  validations:
+    required: true
+- type: textarea
+  id: correction
+  attributes:
+    label: Proposed correction
+    description: Describe the corrected wording, example or link and why it would help. For command examples,
+      include the expected result with a synthetic or public input.
+  validations:
+    required: true
+- type: textarea
+  id: logs
+  attributes:
+    label: Redacted public logs or examples
+    description: Optional supporting output, screenshots or examples. Remove credentials, tokens, private
+      source/documents, package names and personal paths before sharing.
+  validations:
+    required: false

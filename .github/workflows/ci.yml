@@ -81,6 +81,9 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Test Python API and wheel packaging without framework dependencies
+        run: python3 -m unittest discover -s packages/pypi/tests -v
+
       - name: Test vendored crate version checks
         run: python3 -m unittest discover -s scripts -p test_check_vendored_crates.py
 
@@ -118,6 +121,18 @@ jobs:
 
       - name: Verify portable ASR CPU configuration
         run: python3 scripts/check-native-cpu.py target/release/build
+
+      - name: Test installed Python wheel and optional framework adapters
+        run: |
+          python3 scripts/build-wheels.py --version 0.0.0 --out "${RUNNER_TEMP}/python-wheels" \
+            --binary "manylinux_2_17_x86_64=target/release/anymd"
+          python3 -m venv "${RUNNER_TEMP}/anymd-python"
+          "${RUNNER_TEMP}/anymd-python/bin/pip" install \
+            "${RUNNER_TEMP}/python-wheels/anymd-0.0.0-py3-none-manylinux_2_17_x86_64.whl[langchain,llamaindex]"
+          "${RUNNER_TEMP}/anymd-python/bin/python" -c \
+            'from anymd import convert; assert "<!-- page 1 -->" in convert("test/fixtures/sample.pdf").text'
+          ANYMD_BIN="$PWD/target/release/anymd" "${RUNNER_TEMP}/anymd-python/bin/python" \
+            -m unittest discover -s packages/pypi/tests -v
 
       - name: Fetch Markdown regression corpus
         run: bash scripts/fetch-markdown-corpus.sh "${RUNNER_TEMP}/markdown-corpus"

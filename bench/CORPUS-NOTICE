@@ -1,0 +1,382 @@
+AgentDocBench corpus release notice
+
+These 38 documents are redistributed byte-for-byte, without modification,
+under their individual licenses, not the license of the anymd software.
+Original source URLs, license evidence and attribution are retained below
+and in corpus.json. SHA256SUMS records the checksum of each release asset.
+
+License links:
+CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/
+Japan PDL 1.0: https://www.stat.go.jp/info/riyou.html
+Taiwan OGDL 1.0: https://data.gov.tw/license
+US federal government works: public domain under 17 U.S.C. 105.
+Project Gutenberg EPUBs: public domain in the USA; embedded Project
+Gutenberg license and trademark notices remain intact. Check local
+copyright rules before redistributing them outside the USA.
+
+paper-evsched.pdf
+  Title: Grid-constrained online scheduling of flexible electric vehicle charging
+  Attribution: Emily van Huffelen, Roel Brouwer, Marjan van den Akker (Utrecht University) (arXiv:2403.03109v1)
+  License: CC-BY-4.0
+  Source: https://arxiv.org/pdf/2403.03109v1
+  Evidence: https://arxiv.org/abs/2403.03109v1 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2403.03109&metadataPrefix=arXiv <license>
+  SHA-256: 402de06ee9e5df0ec8ded433eb9440b802f02cc2e44acd8eaa89977892322cd2
+  Changes: none
+
+paper-rankone.pdf
+  Title: Probabilistic bounds on best rank-one approximation ratio
+  Attribution: Khazhgali Kozhasov, Josué Tonelli-Cueto (arXiv:2201.02191v2)
+  License: CC-BY-4.0
+  Source: https://arxiv.org/pdf/2201.02191v2
+  Evidence: https://arxiv.org/abs/2201.02191v2 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2201.02191&metadataPrefix=arXiv <license>
+  SHA-256: 328a7069a9ea1f569158ead666352111ea4eccd695c6e00d56ddf0306f554c46
+  Changes: none
+
+paper-ulam.pdf
+  Title: Diametric problem for permutations with the Ulam metric (optimal anticodes)
+  Attribution: Pat Devlin, Leo Douhovnikoff (Swarthmore College) (arXiv:2403.02276v1)
+  License: CC-BY-4.0
+  Source: https://arxiv.org/pdf/2403.02276v1
+  Evidence: https://arxiv.org/abs/2403.02276v1 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2403.02276&metadataPrefix=arXiv <license>
+  SHA-256: fbc9633924adb8d5cc2b2ee72fdcaea52ebcb7772edc55c38d8b9d2820fab66a
+  Changes: none
+
+twocol-bygpt5.pdf
+  Title: ByGPT5: End-to-End Style-conditioned Poetry Generation with Token-free Language Models
+  Attribution: Jonas Belouadi, Steffen Eger (arXiv:2212.10474v2)
+  License: CC-BY-4.0
+  Source: https://arxiv.org/pdf/2212.10474v2
+  Evidence: https://arxiv.org/abs/2212.10474v2 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2212.10474&metadataPrefix=arXiv <license>
+  SHA-256: d07da94752759e80f573979603e0d5f1c060083459e83f1a57771a59d97fad55
+  Changes: none
+
+twocol-smile.pdf
+  Title: SMiLE: Schema-augmented Multi-level Contrastive Learning for Knowledge Graph Link Prediction
+  Attribution: Miao Peng, Ben Liu, Qianqian Xie, Wenjie Xu, Hua Wang, Min Peng (arXiv:2210.04870v3)
+  License: CC-BY-4.0
+  Source: https://arxiv.org/pdf/2210.04870v3
+  Evidence: https://arxiv.org/abs/2210.04870v3 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2210.04870&metadataPrefix=arXiv <license>
+  SHA-256: cff9c2ff011e00aa50a7e8615d85bd928048eb4a8eb7d29d6f31f101200fbe54
+  Changes: none
+
+twocol-uscore.pdf
+  Title: USCORE: An Effective Approach to Fully Unsupervised Evaluation Metrics for Machine Translation
+  Attribution: Jonas Belouadi, Steffen Eger (arXiv:2202.10062v3)
+  License: CC-BY-4.0
+  Source: https://arxiv.org/pdf/2202.10062v3
+  Evidence: https://arxiv.org/abs/2202.10062v3 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2202.10062&metadataPrefix=arXiv <license>
+  SHA-256: 7a46f079adac9b3ed19d76fe224c1c0523c8a5113281662022c188abe5a85987
+  Changes: none
+
+report-crs-dod-approps.pdf
+  Title: FY2026 Department of Defense Appropriations: In Brief (CRS R48891, version 4)
+  Attribution: Congressional Research Service (Cameron M. Keys)
+  License: public-domain-us-gov
+  Source: https://www.congress.gov/crs_external_products/R/PDF/R48891/R48891.4.pdf
+  Evidence: In-document disclaimer (last page): 'CRS Reports, as a work of the United States Government, are not subject to copyright protection in the United States.'
+  SHA-256: 3467a0131f7900f8caaf7c106b1748973b25fb28e7dd891c6ef5836c98273682
+  Changes: none
+
+report-plz.pdf
+  Title: U.S. Access Board Technical Guide: Passenger Loading Zones
+  Attribution: U.S. Access Board
+  License: public-domain-us-gov
+  Source: https://www.access-board.gov/files/ada/guides/plz.pdf
+  Evidence: Work of the U.S. Access Board, a US federal agency (17 U.S.C. 105)
+  SHA-256: 0f8daeba6773577fac1d443828d6ff4bf8755e03d119d1ca13ca3827ffd8f66e
+  Changes: none
+
+fed-h8.pdf
+  Title: H.8 Assets and Liabilities of Commercial Banks in the United States, September 18, 2026
+  Attribution: Board of Governors of the Federal Reserve System
+  License: public-domain-us-gov
+  Source: https://www.federalreserve.gov/releases/h8/20260918/h8.pdf
+  Evidence: Work of the Board of Governors of the Federal Reserve System, a US federal agency (17 U.S.C. 105); https://www.federalreserve.gov/disclaimer.htm
+  SHA-256: a56c5e4c4ac5391770abff75d3d9f9ab8d2d3cd9a9f9e057ad83f9828841a768
+  Changes: none
+
+fin-bls-realer.pdf
+  Title: Real Earnings – July 2026 (USDL-26-1379)
+  Attribution: U.S. Bureau of Labor Statistics
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20260819200140id_/https://www.bls.gov/news.release/archives/realer_08122026.pdf
+  Evidence: https://www.bls.gov/opub/copyright-information.htm (BLS material is in the public domain); US federal work, 17 U.S.C. 105
+  SHA-256: 58686e3cf434e81e853b4d8f01b6e3ab55f16e84556516ce74eb33a649950a78
+  Changes: none
+
+fin-census-income.pdf
+  Title: Household Income in States and Metropolitan Areas: 2024 (ACSBR-025)
+  Attribution: U.S. Census Bureau (Gloria G. Guzman)
+  License: public-domain-us-gov
+  Source: https://www2.census.gov/library/publications/2025/demo/acsbr-025.pdf
+  Evidence: US federal work (17 U.S.C. 105), U.S. Census Bureau publication; landing page https://www.census.gov/library/publications/2025/acs/acsbr-025.html
+  SHA-256: 5de1b0d5ec469344896bdf8485d3e93206351c0f1f9e51029b8d57d2df9054b9
+  Changes: none
+
+invoice-borderless.pdf
+  Title: Inventory Reconciliation Report SPARSE-2024-INV-1234 (markitdown test file)
+  Attribution: Microsoft Corporation (markitdown test files)
+  License: MIT
+  Source: https://raw.githubusercontent.com/microsoft/markitdown/b8f79c57ebc0044be41323d89b2a45d3fda8460e/packages/markitdown/tests/test_files/SPARSE-2024-INV-1234_borderless_table.pdf
+  Evidence: https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT)
+  SHA-256: 784fef202eb748d5d274eaaf2ded51dfd0d0d1e92225e84fd33dafc2333d15d3
+  Changes: none
+
+form-1040es.pdf
+  Title: 2024 Form 1040-ES: Estimated Tax for Individuals
+  Attribution: Internal Revenue Service
+  License: public-domain-us-gov
+  Source: https://www.irs.gov/pub/irs-prior/f1040es--2024.pdf
+  Evidence: IRS form, US federal government work (17 U.S.C. 105)
+  SHA-256: 860a291f7e24b2e146b4c164e41cf79f0f0afa9fadde2690b474c2bf21300ee6
+  Changes: none
+
+form-w4.pdf
+  Title: 2024 Form W-4: Employee's Withholding Certificate
+  Attribution: Internal Revenue Service
+  License: public-domain-us-gov
+  Source: https://www.irs.gov/pub/irs-prior/fw4--2024.pdf
+  Evidence: IRS form, US federal government work (17 U.S.C. 105)
+  SHA-256: e60e3af7512073bffbd7ef3c4f3a2fc9593d2aed2e420718d4ccf17659e2c3ed
+  Changes: none
+
+irs-w9.pdf
+  Title: Form W-9 (Rev. March 2024): Request for Taxpayer Identification Number and Certification
+  Attribution: Internal Revenue Service
+  License: public-domain-us-gov
+  Source: https://www.irs.gov/pub/irs-prior/fw9--2024.pdf
+  Evidence: IRS form, US federal government work (17 U.S.C. 105); https://www.irs.gov/privacy-disclosure/irs-privacy-policy
+  SHA-256: 2d420cbb4123dcf1fb82595b2359cfbb5d81f00b9df9d359fcc7af361d093f53
+  Changes: none
+
+scan-nasa-budget.pdf
+  Title: Office Memorandum: NASA 1961 Estimates and BOB Staff Proposal to BOB Director (J. L. Mitchell to G. B. Kistiakowsky, 14 Nov 1959)
+  Attribution: Jesse L. Mitchell (Office of the Special Assistant for Science and Technology) / Dwight D. Eisenhower Presidential Library, NARA
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20250515183040id_/https://www.eisenhowerlibrary.gov/sites/default/files/file/nasa_Binder20.pdf
+  Evidence: https://www.eisenhowerlibrary.gov/research/online-documents ("All of these items are in the public domain"); authored by US federal government employees in the course of duty (17 U.S.C. 105)
+  SHA-256: f0637cdd4026471afa0cf1ab199a4030844ee619f0a6dd727ceab5f29717e847
+  Changes: none
+
+scan-nasa-notes.pdf
+  Title: Memorandum for Dr. Killian: Notes on "NASA" (Robert Piland, 10 April 1958)
+  Attribution: Robert Piland (White House science advisory staff) / Dwight D. Eisenhower Presidential Library, NARA
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20250515183039id_/https://www.eisenhowerlibrary.gov/sites/default/files/file/nasa_Binder18.pdf
+  Evidence: https://www.eisenhowerlibrary.gov/research/online-documents ("All of these items are in the public domain"); authored by US federal government employees in the course of duty (17 U.S.C. 105)
+  SHA-256: 0d0ae5bc4a51949159beea4455d198852087e7fd6b95e9d6730a6248700975bf
+  Changes: none
+
+scan-oklahoma-address.pdf
+  Title: Text of the Address on "Our Future Security", Oklahoma City, November 13, 1957 (White House press release)
+  Attribution: The White House (President Dwight D. Eisenhower) / Dwight D. Eisenhower Presidential Library, NARA
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20250515183607id_/https://www.eisenhowerlibrary.gov/sites/default/files/research/online-documents/sputnik/11-13-57.pdf
+  Evidence: https://www.eisenhowerlibrary.gov/research/online-documents ("All of these items are in the public domain"); authored by US federal government employees in the course of duty (17 U.S.C. 105)
+  SHA-256: f9da22937bda1617e919bb4a3b902551187bb484a07af254ccff22647ae81848
+  Changes: none
+
+cjk-jp-stat-elderly.pdf
+  Title: 統計トピックスNo.142 統計からみた我が国の高齢者 Ⅰ 高齢者の人口
+  Attribution: 総務省統計局 (Statistics Bureau of Japan)
+  License: PDL-1.0
+  Source: https://web.archive.org/web/20241117224402id_/https://www.stat.go.jp/data/topics/pdf/topi142_01.pdf
+  Evidence: https://www.stat.go.jp/info/riyou.html (統計局ホームページ利用規約: 公共データ利用規約（第1.0版）(PDL1.0) に準拠; 'クリエイティブ・コモンズ・ライセンスの表示4.0 国際 ... と互換性があり'; numeric data/simple tables not copyrightable)
+  SHA-256: 5565b9c00fff2065023da95dd313a5f5b950d75b162669a167538152fcd4efe1
+  Changes: none
+
+cjk-tw-archives.pdf
+  Title: 參考文獻格式 (reference citation format guide)
+  Attribution: 國家發展委員會檔案管理局 (National Archives Administration, National Development Council, Taiwan)
+  License: CC-BY-4.0
+  Source: https://www.archives.gov.tw/wSite/public/Attachment/0/f1715062099077.pdf
+  Evidence: https://www.archives.gov.tw/tw/arctw/625-10226.html (政府網站資料開放宣告: all site materials released under CC BY 4.0, attribution required)
+  SHA-256: b28e5e6d91923d27d6fa2d29b42018584e71b3a38ff04aa9acc638b0c11e1bd3
+  Changes: none
+
+cjk-tw-dgbas-cpi.pdf
+  Title: 115 年 8 月物價變動概況 (DGBAS price statistics press release, Aug 2026)
+  Attribution: 行政院主計總處 (Directorate-General of Budget, Accounting and Statistics, Executive Yuan, Taiwan)
+  License: Taiwan-OGDL-1.0
+  Source: https://ws.dgbas.gov.tw/001/Upload/463/relfile/10980/236675/news11508.pdf
+  Evidence: https://www.stat.gov.tw/cp.aspx?n=3164 (行政院主計總處 政府網站資料開放宣告: 採政府資料開放授權條款-第1版發布); release page https://www.stat.gov.tw/News_Content.aspx?n=2668&s=236675
+  SHA-256: 203a27ef3771ffc870f3694c860aff660b8cb06e5bf3e4351bfeba8d02074630
+  Changes: none
+
+slides-epa-1bp.pptx
+  Title: 1-Bromopropane (1-BP) Proposed Rulemaking Under TSCA Section 6(a) - Public Webinar, August 28, 2024
+  Attribution: U.S. Environmental Protection Agency
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20241116234835id_/https://www.epa.gov/system/files/documents/2024-09/1-bp-public-webinar-slides_08.28.24.pptx
+  Evidence: Work of US EPA staff (Office of Chemical Safety and Pollution Prevention), 17 U.S.C. 105; EPA site copyright note: https://www.epa.gov/web-policies-and-procedures/epa-disclaimers
+  SHA-256: c02b2620a068190818dddfbe7e15b083c21fd0f99f441f166762441a6734bf46
+  Changes: none
+
+slides-markitdown-pptx.pptx
+  Title: markitdown test deck (AutoGen)
+  Attribution: Microsoft (markitdown contributors)
+  License: MIT
+  Source: https://raw.githubusercontent.com/microsoft/markitdown/b8f79c57ebc0044be41323d89b2a45d3fda8460e/packages/markitdown/tests/test_files/test.pptx
+  Evidence: https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT, repository test file)
+  SHA-256: f0b9e5252aec3730c91f276a7c3b8f4a9893a7b66540f6c6af160a49855ca507
+  Changes: none
+
+slides-nasa-clarreo.pdf
+  Title: CLARREO Pathfinder Mission Overview and Status (CEOS WGCV IVOS 2022)
+  Attribution: Yolanda L. Shea, Rajendra Bhatt / NASA Langley Research Center
+  License: public-domain-us-gov
+  Source: https://ntrs.nasa.gov/api/citations/20220013266/downloads/Shea_etal_CEOS_WGCV_IVOS_2022_STRIVES.pdf
+  Evidence: https://ntrs.nasa.gov/citations/20220013266 (NTRS copyright determination GOV_PUBLIC_USE_PERMITTED: 'Work of the US Gov. Public Use Permitted'; both authors are NASA LaRC civil servants)
+  SHA-256: bb04eb9ea712c6960198b5153ae119ff58d3b5a4ce4d775af5299ba38c392a82
+  Changes: none
+
+slides-nist-pqc-update.pdf
+  Title: NIST Post-Quantum Cryptography Update (Dustin Moody, ISPAB Oct 2023)
+  Attribution: Dustin Moody / NIST Computer Security Division
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20241002031327id_/https://csrc.nist.gov/csrc/media/Presentations/2023/nist-post-quantum-cryptography-update/2a-Moody_NIST_PQC_2.pdf
+  Evidence: Work of a NIST employee, 17 U.S.C. 105; https://www.nist.gov/oism/copyrights and https://csrc.nist.gov/presentations/2023/nist-post-quantum-cryptography-update
+  SHA-256: 1c50a396a1eefc93ece22e43d6b389e6338c40685cb625bb29ff7d29453a5ee5
+  Changes: none
+
+csv-census-popest-2023.csv
+  Title: Annual Estimates of the Resident Population and Population Change, States, 2020-2023 (NST-EST2023-POPCHG2020_2023)
+  Attribution: U.S. Census Bureau, Population Division
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20240623113748id_/https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/state/totals/NST-EST2023-POPCHG2020_2023.csv
+  Evidence: US Census Bureau data product, a work of the US Government (17 U.S.C. 105); https://www.census.gov/about/policies/citation.html
+  SHA-256: c7f1d6d644007e129baaf1be509b83c914f4a1e167e3407af65207dd14d8a9e5
+  Changes: none
+
+csv-usgs-quakes-week.csv
+  Title: USGS earthquake feed: M4.5+ past 7 days, snapshot 2025-01-07
+  Attribution: U.S. Geological Survey, Earthquake Hazards Program
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20250107124642id_/https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.csv
+  Evidence: https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits (USGS-authored information is in the US public domain)
+  SHA-256: 707c6820e37b3a433ed4f46aec942bf8e1b18924e02025cdbf6348d098decade
+  Changes: none
+
+sheet-ers-crop-insurance.xlsx
+  Title: Federal crop insurance premiums and subsidies, 2000-25 (ERS chart data file 102257)
+  Attribution: USDA Economic Research Service
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20260629195302id_/https://www.ers.usda.gov/media/29251/102257-chart-data-file.xlsx?v=88166
+  Evidence: USDA web policy (ERS follows it): 'Most information presented on the USDA Web site is considered public domain information' https://www.usda.gov/about-usda/policies-and-links ; https://www.ers.usda.gov/about-ers/policies-and-standards/website
+  SHA-256: edcffe753bec87bd69fe41c5da7bb5a71344169d8819da22cef9822d0a05ac50
+  Changes: none
+
+sheet-markitdown-xlsx.xlsx
+  Title: markitdown test workbook
+  Attribution: Microsoft (markitdown contributors)
+  License: MIT
+  Source: https://raw.githubusercontent.com/microsoft/markitdown/b8f79c57ebc0044be41323d89b2a45d3fda8460e/packages/markitdown/tests/test_files/test.xlsx
+  Evidence: https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT, repository test file)
+  SHA-256: a867be6ece38a4224bcfe34312e5c296ed520a76a431e0454603ceb171fbd4af
+  Changes: none
+
+docx-hhs-market-research.docx
+  Title: HHS Market Research Report Template (Tab D, final 1/18/2022)
+  Attribution: U.S. Department of Health and Human Services
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20241008230234id_/https://www.cms.gov/files/document/tab-d-hhs-market-research-template-final-1182022.docx
+  Evidence: Work of the US Department of Health and Human Services, published on cms.gov (17 U.S.C. 105); https://www.hhs.gov/web/policies-and-standards/index.html
+  SHA-256: 89e4f8e3b3ac964f04f85385310b97f70bd0ab33e741a4fe26b84c493c170e1e
+  Changes: none
+
+docx-markitdown.docx
+  Title: markitdown test document (AutoGen)
+  Attribution: Microsoft (markitdown contributors)
+  License: MIT
+  Source: https://raw.githubusercontent.com/microsoft/markitdown/b8f79c57ebc0044be41323d89b2a45d3fda8460e/packages/markitdown/tests/test_files/test.docx
+  Evidence: https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT, repository test file)
+  SHA-256: ee1974633f3b1e8bb54201abce779a755cb1cd5259641a08cf7b1b9b36dec42b
+  Changes: none
+
+docx-nsf-aaac-minutes.docx
+  Title: Minutes of the Meeting of the Astronomy and Astrophysics Advisory Committee (AAAC), 15 December 2023
+  Attribution: U.S. National Science Foundation (AAAC)
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20260426103635id_/https://nsf-gov-resources.nsf.gov/attachments/308681/public/AAAC_Meeting_Minutes_Dec_15_2023.docx
+  Evidence: Federal advisory committee minutes published by NSF (17 U.S.C. 105); NSF site policy: https://www.nsf.gov/policies/site-policies
+  SHA-256: de2aa4a0731d343ddf71b1a2f27a500146ebc2a90df928193ae2a3bbdf2fc9a9
+  Changes: none
+
+epub-gutenberg-jekyll.epub
+  Title: The Strange Case of Dr. Jekyll and Mr. Hyde (Project Gutenberg #43)
+  Attribution: Robert Louis Stevenson; Project Gutenberg
+  License: public-domain
+  Source: https://web.archive.org/web/20250115052559id_/https://www.gutenberg.org/cache/epub/43/pg43-images-3.epub
+  Evidence: EPUB content.opf <dc:rights>Public domain in the USA.</dc:rights>; https://www.gutenberg.org/ebooks/43 (Robert Louis Stevenson, 1886)
+  SHA-256: b7b093591573ff4562dc799c3940be5ddab4e0ac686cdb062bb6853bb2c4d66e
+  Changes: none
+
+epub-gutenberg-relativity.epub
+  Title: Relativity: The Special and General Theory (Project Gutenberg #5001)
+  Attribution: Albert Einstein, translated by Robert W. Lawson; Project Gutenberg
+  License: public-domain
+  Source: https://web.archive.org/web/20241012103314id_/https://www.gutenberg.org/cache/epub/5001/pg5001-images-3.epub
+  Evidence: EPUB content.opf <dc:rights>Public domain in the USA.</dc:rights>; https://www.gutenberg.org/ebooks/5001 (Einstein, tr. R. W. Lawson, 1920)
+  SHA-256: 698baa25db272591503de1ed8df5a594595dc4dc1f6713fad1b6b4be97875c09
+  Changes: none
+
+epub-markitdown.epub
+  Title: Test EPUB Document (markitdown test file)
+  Attribution: Microsoft (markitdown test suite)
+  License: MIT
+  Source: https://raw.githubusercontent.com/microsoft/markitdown/b8f79c57ebc0044be41323d89b2a45d3fda8460e/packages/markitdown/tests/test_files/test.epub
+  Evidence: https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE
+  SHA-256: 33e65f39f54bd24f74d5f333d24213a68c62ee2f2854d12f8c4c59b15a4031a7
+  Changes: none
+
+html-bls-ooh-software-developers.html
+  Title: Software Developers, Quality Assurance Analysts, and Testers - Occupational Outlook Handbook (BLS)
+  Attribution: U.S. Bureau of Labor Statistics
+  License: public-domain-us-gov
+  Source: https://web.archive.org/web/20260910003547id_/https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm
+  Evidence: https://www.bls.gov/opub/copyright-information.htm (BLS material is in the public domain except photographs/graphics credited to other sources; this page's text credits none); U.S. Department of Labor work
+  SHA-256: bf71737fceeb5e1891815ec1881c20844365779e696eb1b6d52dd4de1f2ce34a
+  Changes: none
+
+html-markitdown-wikipedia.html
+  Title: Microsoft - Wikipedia (markitdown test_wikipedia.html)
+  Attribution: Wikipedia contributors (article 'Microsoft'); Microsoft markitdown
+  License: CC-BY-SA-4.0 (Wikipedia content in an MIT test file)
+  Source: https://raw.githubusercontent.com/microsoft/markitdown/b8f79c57ebc0044be41323d89b2a45d3fda8460e/packages/markitdown/tests/test_files/test_wikipedia.html
+  Evidence: https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT repo); article text CC BY-SA 4.0 per https://en.wikipedia.org/wiki/Wikipedia:Text_of_the_Creative_Commons_Attribution-ShareAlike_4.0_International_License
+  SHA-256: 4c1f6c5ca1147455b8df8b19cd957844cad37d23d541c039af421a7634074ea6
+  Changes: none
+
+html-wikipedia-roman-numerals.html
+  Title: Roman numerals - Wikipedia (revision 1374259684)
+  Attribution: Wikipedia contributors (article 'Roman numerals', oldid 1374259684)
+  License: CC-BY-SA-4.0
+  Source: https://web.archive.org/web/20260924023032id_/https://en.wikipedia.org/wiki/Roman_numerals
+  Evidence: https://en.wikipedia.org/wiki/Wikipedia:Text_of_the_Creative_Commons_Attribution-ShareAlike_4.0_International_License (footer of page states CC BY-SA 4.0)
+  SHA-256: 4addcd13f130fbac818f8acbd57f2aa5d7aea9ad8a0f2687efa3cd629ee0a575
+  Changes: none
+
+Microsoft markitdown test files (including slides-markitdown-pptx):
+
+    MIT License
+
+    Copyright (c) Microsoft Corporation.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE

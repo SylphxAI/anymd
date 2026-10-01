@@ -31,7 +31,7 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 ## Why anymd
 
 <!-- fast:start -->
-- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **12.1 s** in total; docling 1,723.3 s (143×), markitdown 45.4 s (4×), marker 5,256.3 s (435×).
+- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **4.58 s** in total; docling 1,723.3 s (376×), markitdown 45.4 s (10×), marker 5,256.3 s (1,146×).
 <!-- fast:end -->
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
@@ -153,11 +153,11 @@ npm, pip and Docker ship a prebuilt binary, while `cargo install` compiles one o
 
 | | **anymd** | docling | kreuzberg | unstructured | markitdown | marker | pdftotext |
 |---|---|---|---|---|---|---|---|
-| Overall score | 96.3 | 93.0 | 81.7 | 81.2 | 76.8 | 71.0 | 42.2 |
+| Overall score | 96.4 | 93.0 | 81.7 | 81.2 | 76.8 | 71.0 | 42.2 |
 | Table cells F1 | 92.2 | 89.9 | 38.4 | 38.4 | 57.2 | 60.9 | 0.0 |
 | Reading order | 98.8 | 94.4 | 96.8 | 93.9 | 85.5 | 76.8 | 52.0 |
 | Docs converted | 38/38 | 38/38 | 38/38 | 38/38 | 38/38 | 30/38 | 23/38 |
-| Time, all docs | 22.9 s | 2,432.4 s | 16.0 s | 346.5 s | 75.6 s | 7,104.5 s | 0.90 s |
+| Time, all docs | 11.5 s | 2,432.4 s | 16.0 s | 346.5 s | 75.6 s | 7,104.5 s | 0.90 s |
 
 <!-- headline:end -->
 

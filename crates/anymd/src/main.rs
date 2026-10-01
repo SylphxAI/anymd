@@ -1,6 +1,6 @@
 use anymd::{
-    cli, discover_compat, http_transport, setup, source_access::SourceAccessPolicy, star_hint,
-    PdfReaderMcp, SERVER_VERSION,
+    cli, discover_compat, http_transport, setup, source_access::SourceAccessPolicy, PdfReaderMcp,
+    SERVER_VERSION,
 };
 use rmcp::transport::async_rw::AsyncRwTransport;
 use rmcp::{ServerHandler, ServiceExt};
@@ -25,7 +25,14 @@ fn main() -> anyhow::Result<()> {
                 .any(|a| matches!(a.as_str(), "-h" | "--help" | "-V" | "--version"));
             let code = cli::run(arguments, &policy);
             if code == 0 && !informational {
-                star_hint::after_success();
+                if let Some(root) = anymd_formats::cache::cache_dir() {
+                    mcp_kit::star_hint::after_success(
+                        "Enjoying anymd? A GitHub star helps others find it: https://github.com/SylphxAI/anymd",
+                        "ANYMD_NO_STAR_HINT",
+                        &root,
+                        false,
+                    );
+                }
             }
             std::process::exit(code);
         }

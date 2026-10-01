@@ -181,6 +181,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sylphx-mcp-kit",
  "tempfile",
  "transcribe-cpp",
  "ureq",
@@ -2794,9 +2795,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sylphx-mcp-kit"
-version = "0.2.3"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4e8d70264c38dcdd03b5f3ac1faf75150c7e0337ca384f2093f683e557632bb"
+checksum = "baba92c4baf8d691a65fbd0776db27a91e20e4d9f032c7845d1788b8eae7ac58"
 dependencies = [
  "anyhow",
  "dirs",
