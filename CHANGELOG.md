@@ -8,6 +8,8 @@
 
 - Add bounded local video timelines and decoded frames to `inspect`, with matching `read` and `outline` projections. Cuts are heuristic FFmpeg scene-score 0.4 detections, not semantic scenes or confidence values. Chapters and timed subtitle/ASR cues retain their playback clock and source hash. Optional OCR and captions are sampled single-frame observations; OCR reuses the existing request permit, and captions need a user-configured local-command adapter, with no built-in captioning. Malformed subtitle files become a subtitles gap instead of failing the request. Frames, manifests and successful captions share the existing generated-image cache budget. Ordinary reads remain unchanged without `timeline`.
 
+- anymd Pro licence check. `anymd pro status` and `anymd pro activate <token>` manage an offline-verified (Ed25519) licence, read from `ANYMD_PRO_TOKEN` or `<config dir>/anymd/pro-token`. Pro will unlock only new operations (video evidence, cite-check); everything that is free today stays free, MIT and ungated. See [anymd Pro](https://sylphxai.github.io/anymd/pro).
+
 ## 8.3.0
 
 ### Minor Changes

@@ -11,6 +11,7 @@ pub mod outline;
 mod page_selection;
 pub mod pdf_compare;
 pub mod pdf_evidence;
+pub mod pro;
 pub mod read_pdf;
 mod region_analysis_evidence;
 pub mod schema;

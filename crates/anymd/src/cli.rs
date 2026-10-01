@@ -19,6 +19,7 @@ Usage:
   anymd mcp [--allow-dir=<path>]...   Run the MCP server on stdio
                                       (also the default when stdin is piped and no file is given)
   anymd setup [--dry-run] [--remove]  Add anymd to the MCP clients on this machine
+  anymd pro status | activate <token> Show or activate an anymd Pro licence
                                       (Claude Code, Codex, Cursor, VS Code, Claude Desktop,
                                       Windsurf, Gemini CLI); --remove undoes it
   anymd doctor                        Print version and optional tool availability
@@ -65,6 +66,7 @@ pub enum Mode {
     Doctor,
     Version,
     Setup(Vec<String>),
+    Pro(Vec<String>),
     Cli(Vec<String>),
 }
 
@@ -76,6 +78,7 @@ pub fn mode(arguments: &[String]) -> Mode {
         Some("doctor") => return Mode::Doctor,
         Some("version") => return Mode::Version,
         Some("setup") => return Mode::Setup(arguments[1..].to_vec()),
+        Some("pro") => return Mode::Pro(arguments[1..].to_vec()),
         _ => {}
     }
     let only_server_flags = arguments

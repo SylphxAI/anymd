@@ -247,6 +247,10 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 
 For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped into lines by baseline, which tolerates super- and subscripts. Word spaces come from the gaps between glyphs, measured against the font size and adjusted for letter tracking. A column-aware XY cut finds gutters between running text. Tables come from drawn lines where a table has them (a missing line between two cells makes a merged cell) and from aligned columns of whitespace where it does not. Wrapped cell text stays in its cell, stacked header lines become one header, and a header over several columns is kept with each of them. Text a reader cannot see (invisible text, or text in the colour of the box behind it) is left out. Pages are processed in parallel and isolated from each other, so one malformed page never fails the whole document. The other formats are parsed natively in Rust (zip/XML, calamine, html5ever); no Python, LibreOffice, or cloud service is involved.
 
+## anymd Pro
+
+The core stays MIT and free forever. anymd Pro is an optional one-time licence for new operations: video evidence and cite-check. [Details and activation](https://sylphxai.github.io/anymd/pro).
+
 ## Security
 
 - Local-first: documents never leave your machine unless you pass a URL, and even then only that URL is fetched.
