@@ -5,7 +5,8 @@ FROM debian:bookworm-slim
 ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --uid 10001 anymd
+    && useradd --create-home --uid 10001 anymd \
+    && install -d -m 0755 /usr/share/licenses/anymd
 COPY --chmod=0755 dist/${TARGETARCH}/anymd /usr/local/bin/anymd
 COPY --chmod=0644 LICENSE /usr/share/licenses/anymd/LICENSE
 USER anymd
