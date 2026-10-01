@@ -756,8 +756,8 @@ pub struct OutlineArgs {
     pub source: String,
     /// json (default) or tree.
     pub format: Option<String>,
-    /// OCR image-only pages; false by default for deterministic navigation.
-    pub ocr: Option<bool>,
+    /// OCR image-only pages; false by default. Accepts booleans or auto/vlm/tesseract.
+    pub ocr: Option<crate::ocr_vlm::OcrSelection>,
     /// Embedded images: none (default) or refs. Match this option in node reads.
     pub images: Option<String>,
     /// Word revisions: markup (default), accept or reject. Match node reads.
