@@ -537,8 +537,7 @@ pub fn read_text(
     }
     let options = OpenOptions {
         ocr: args.ocr.or_else(|| args.node.as_ref().map(|_| false)),
-        transcript: args.transcript.unwrap_or(false)
-            || args.download_asr_model.unwrap_or(false),
+        transcript: args.transcript.unwrap_or(false) || args.download_asr_model.unwrap_or(false),
         download_asr_model: args.download_asr_model.unwrap_or(false),
         images: (args.wants_images() && (args.node.is_none() || args.images.is_some()))
             .then(anymd_formats::images::ImageStore::default_location)

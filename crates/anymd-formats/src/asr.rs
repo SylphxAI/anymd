@@ -1,5 +1,5 @@
 //! One local speech model for every language: Qwen3-ASR-1.7B Q8_0.
-//! Weights are downloaded on first transcript use, size/SHA-256 verified and
+//! Weights are downloaded only when requested, size/SHA-256 verified and
 //! atomically installed. Documents and audio never leave this machine.
 
 use std::ffi::OsString;
@@ -42,19 +42,35 @@ pub const ALIGNER: ModelSpec = ModelSpec {
 };
 
 /// Only the pinned model is accepted, including files supplied by the caller.
-pub fn ensure_model(spec: &ModelSpec, env: &str) -> Result<PathBuf, String> {
-    if let Some(path) = std::env::var_os(env).filter(|v| !v.is_empty()) {
-        let path = PathBuf::from(path);
-        verify_model(spec, &path)?;
-        return Ok(path);
+pub fn ensure_model(spec: &ModelSpec, env: &str, download: bool) -> Result<PathBuf, String> {
+    let supplied = std::env::var_os(env)
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from);
+    resolve_model(spec, supplied.as_deref(), models_dir().as_deref(), download)
+}
+
+fn resolve_model(
+    spec: &ModelSpec,
+    supplied: Option<&Path>,
+    cache: Option<&Path>,
+    download: bool,
+) -> Result<PathBuf, String> {
+    if let Some(path) = supplied {
+        verify_model(spec, path)?;
+        return Ok(path.to_path_buf());
     }
-    let dir = models_dir().ok_or_else(|| format!("no model cache; set {CACHE_ENV} or {env}"))?;
+    let dir = cache.ok_or_else(|| format!("no model cache; set {CACHE_ENV} or {MODEL_ENV}"))?;
     let path = dir.join(spec.file_name());
     if path.exists() {
         verify_model(spec, &path)?;
         Ok(path)
+    } else if download {
+        download_model(spec, dir, spec.base_url)
     } else {
-        download_model(spec, &dir, spec.base_url)
+        Err(format!(
+            "pinned model {} is not installed; use download_asr_model: true / --download-asr-model to allow a download, or install the pinned model locally",
+            spec.name
+        ))
     }
 }
 
@@ -116,7 +132,7 @@ pub fn status_lines() -> Vec<(String, String)> {
             format!("found {} (verified before inference)", path.display())
         }
         _ => format!(
-            "downloaded on first use: {} ({}, SHA-256 pinned)",
+            "not installed: {} ({}, SHA-256 pinned)",
             ASR.name,
             ASR.size_label()
         ),
@@ -296,6 +312,16 @@ pub fn download_model(_spec: &ModelSpec, _dir: &Path, _base_url: &str) -> Result
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "native")]
+    #[test]
+    fn missing_model_without_permission_does_not_create_cache() {
+        let root = tempfile::tempdir().unwrap();
+        let cache = root.path().join("models");
+        let error = resolve_model(&ASR, None, Some(&cache), false).unwrap_err();
+        assert!(error.contains("--download-asr-model"), "{error}");
+        assert!(!cache.exists(), "read-only resolution created a cache");
+    }
+
     #[cfg(feature = "native")]
     #[test]
     fn cached_model_verification_rejects_wrong_size_and_same_size_corruption() {

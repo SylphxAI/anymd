@@ -4,8 +4,8 @@ name: ASR benchmark
 # against whisper.cpp large-v3-turbo (the engine anymd shipped). GitHub-hosted standard
 # runners only (ubuntu-latest x64, macos-latest arm64). Data, metrics and pins are in
 # bench-asr/. Run it with
-# workflow_dispatch; a pull request touching bench-asr/ runs a 3-utterance smoke test
-# of the selected transcribe-cpp runtime. Dispatch retains all comparison candidates.
+# workflow_dispatch. Full inference stays opt-in: pull requests build the actual
+# anymd binary on every release target in ci.yml, without fetching model weights.
 on:
   workflow_dispatch:
     inputs:
@@ -25,10 +25,6 @@ on:
         description: 'explicit = tell the engine the language; auto = let it detect'
         required: false
         default: 'explicit'
-  pull_request:
-    paths:
-      - 'bench-asr/**'
-      - '.github/workflows/asr-benchmark.yml'
 
 permissions:
   contents: read

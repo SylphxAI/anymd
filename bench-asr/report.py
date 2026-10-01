@@ -93,6 +93,27 @@ def mandarin_diagnostics(cjk):
     return cjk_diagnostics(cjk)
 
 
+def japanese_kana_diagnostic(cjk):
+    """Numeral and katakana/hiragana sensitivity, retaining all annotations.
+
+    This preserves the baseline OpenCC step for comparability. It does not map
+    kanji to readings, so lexical errors remain errors.
+    """
+    from kanjize import kanji2number
+
+    def normalize(text):
+        def convert(match):
+            try:
+                return str(kanji2number(match.group(0)))
+            except ValueError:
+                return match.group(0)
+
+        text = re.sub(r"[〇零一二三四五六七八九十百千万億兆]+", convert, cjk(text))
+        return "".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in text)
+
+    return normalize
+
+
 def edit_stats(ref: str, hyp: str, unit: str) -> tuple[int, int]:
     import jiwer
 
@@ -203,6 +224,16 @@ def main() -> int:
             without = score(rows, dataset, english, annotations)[0]
             rate, lo, hi, _ = score(rows, dataset, english, numerals)
             print(f"| {s['label']} | {s['os']} | {dataset} | {len(rows)} | {original:.2f} | {without:.2f} | {rate:.2f} [{lo:.2f}, {hi:.2f}] |")
+        print()
+        print("### Japanese numeral and kana sensitivity (annotations retained)\n")
+        print("Baseline NFKC/punctuation/space/OpenCC scoring, then kanjize numeral conversion and katakana-to-hiragana folding on both sides. Kanji readings are not collapsed. This is not official Qwen scoring.\n")
+        print("| Engine | OS | n | Numerals + kana CER |")
+        print("|---|---|---|---|")
+        kana = japanese_kana_diagnostic(cjk)
+        for s, rows in sorted(ok, key=lambda j: (j[0]["label"], j[0]["os"])):
+            if s["dataset"] == "fleurs-ja":
+                rate = score(rows, "fleurs-ja", english, kana)[0]
+                print(f"| {s['label']} | {s['os']} | {len(rows)} | {rate:.2f} |")
         print()
 
     print("| Engine | Dataset | Measured | Published | Diff | Published inside CI | Within 0.5 |")

@@ -36,7 +36,7 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
 - **Every format, one call.** One tool reads every format listed below. It also accepts web URLs and whole directories, and `search` looks across all of them.
-- **Local and private.** Nothing is uploaded. OCR uses local tesseract; transcripts use ffmpeg and bundled Qwen3-ASR with pinned weights fetched on first use.
+- **Local and private.** Nothing is uploaded. OCR uses local tesseract; transcripts use ffmpeg and bundled Qwen3-ASR with pinned weights downloaded only when asked.
 
 ## Install
 
@@ -239,7 +239,7 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 | **HTML** and **URLs** | The main article only: navigation, cookie banners, and sidebars are dropped. Relative links are resolved, and code keeps its language. |
 | **Markdown, text, JSON** | Returned unchanged, with pagination |
 | **Images** | Dimensions and EXIF (camera, date, GPS), plus OCR text when `tesseract` is installed |
-| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local Qwen3-ASR transcript with `transcript: true`; `download_asr_model: true` implies a transcript; pinned Qwen weights are also fetched automatically with `transcript: true`. |
+| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local Qwen3-ASR transcript with `transcript: true`; `download_asr_model: true` implies a transcript; `transcript: true` alone never downloads weights. |
 
 ## How it works
 

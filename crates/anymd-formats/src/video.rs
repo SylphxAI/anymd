@@ -508,7 +508,7 @@ struct TranscriptCue {
 }
 
 #[cfg(feature = "native")]
-fn transcribe(path: &Path, _download: bool) -> Result<String, String> {
+fn transcribe(path: &Path, download: bool) -> Result<String, String> {
     use transcribe_cpp::{Backend, CancelToken, Model, ModelOptions, RunOptions, SessionOptions};
     const CHUNK_SECONDS: u64 = 20;
     const SAMPLES_PER_CHUNK: usize = 16_000 * CHUNK_SECONDS as usize;
@@ -516,7 +516,7 @@ fn transcribe(path: &Path, _download: bool) -> Result<String, String> {
     let ffmpeg = tool::find("ffmpeg")
         .ok_or_else(|| format!("needs ffmpeg; install with {}", asr::ffmpeg_hint()))?;
     // No model download if the audio extraction tool is missing.
-    let model_path = asr::ensure_model(&asr::ASR, asr::MODEL_ENV)?;
+    let model_path = asr::ensure_model(&asr::ASR, asr::MODEL_ENV, download)?;
     let model = Model::load_with(
         &model_path,
         &ModelOptions {
@@ -616,7 +616,7 @@ fn transcribe(path: &Path, _download: bool) -> Result<String, String> {
                             .map(PathBuf::from)
                             .or_else(|| tool::find("crispasr"));
                         if let Some(binary) = binary {
-                            match asr::ensure_model(&asr::ALIGNER, asr::ALIGNER_ENV) {
+                            match asr::ensure_model(&asr::ALIGNER, asr::ALIGNER_ENV, download) {
                                 Ok(weights) => aligner = Some((binary, weights)),
                                 Err(e) => {
                                     eprintln!("anymd: word alignment unavailable: {e}");

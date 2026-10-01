@@ -291,7 +291,11 @@ raw score, rather than showing a model defect.
 
 **Accepted Japanese trade-off:** on this 200-utterance FLEURS sample, Qwen trails
 whisper-turbo (5.93 vs 4.80 raw CER). Japanese numeral-only diagnostics give
-5.79 vs 4.67; adding kana folding gives 5.56 vs 4.59. Converting everything to
+5.79 vs 4.67; adding katakana-to-hiragana folding gives **5.56 vs 4.59**
+normalised CER. This separate diagnostic retains parenthetical annotations and
+the baseline OpenCC step; it is not the annotation-removal column above.
+Reproduce it with `python3 bench-asr/report.py RESULTS --cjk-diagnostics
+--normalizer-dir NORMALIZERS` using the saved run transcripts. Converting everything to
 kana readings is a different metric and still trails (4.50 vs 3.74); it cannot
 be presented as corrected CER. Real errors remain, including `地殻` → `近く`
 and `Taipei` → `大阪`. We accept this gap to use one model across languages.

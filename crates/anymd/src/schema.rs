@@ -596,12 +596,12 @@ pub struct ReadArgs {
     )]
     pub ocr: Option<bool>,
     #[schemars(
-        description = "Transcribe audio/video locally with bundled transcribe-cpp and Qwen3-ASR-1.7B Q8. Downloads SHA-256 pinned weights on first use (~2.2 GB). Audio stays local. Default false.",
+        description = "Transcribe audio/video locally with bundled transcribe-cpp and Qwen3-ASR-1.7B Q8. Needs preinstalled SHA-256 pinned weights (~2.2 GB), unless download_asr_model is true. Audio stays local. Default false.",
         schema_with = "option_bool_schema"
     )]
     pub transcript: Option<bool>,
     #[schemars(
-        description = "Implies transcript. Downloads pinned Qwen3-ASR-1.7B Q8 weights (~2.2 GB) into the anymd cache. Also automatic with transcript. Legacy download_whisper_model is accepted as an alias. Default false.",
+        description = "Implies transcript. Downloads pinned Qwen3-ASR-1.7B Q8 weights (~2.2 GB) into the anymd cache. Downloads only when explicitly enabled. Legacy download_whisper_model is accepted as an alias. Default false.",
         schema_with = "option_bool_schema"
     )]
     #[serde(alias = "download_whisper_model")]

@@ -107,7 +107,8 @@ Duration, streams, chapters, and embedded and sidecar subtitles (SRT/VTT), via `
 **Qwen3-ASR-1.7B Q8_0 for every language**, with automatic language detection.
 Whisper is no longer an engine option. Audio and documents stay on your machine.
 
-Install **ffmpeg** to extract audio. On the first transcript request, anymd fetches
+Install **ffmpeg** to extract audio. With `download_asr_model: true` (CLI:
+`--download-asr-model`), anymd fetches
 `Qwen3-ASR-1.7B-Q8_0.gguf` (2.19 GB), checks its exact size and pinned SHA-256,
 and atomically saves it in `$ANYMD_CACHE_DIR/models`, or the platform cache
 (`~/.cache/anymd/models`, `~/Library/Caches/anymd/models`, or
@@ -116,8 +117,9 @@ and atomically saves it in `$ANYMD_CACHE_DIR/models`, or the platform cache
 other models and corrupt cached files are rejected, not silently substituted.
 The pinned download revision and checksum are in
 [`asr.rs`](https://github.com/SylphxAI/anymd/blob/main/crates/anymd-formats/src/asr.rs).
-To work offline, install that exact model first. No weights are fetched for
-ordinary metadata or subtitle reads.
+To work offline, install that exact model first. `transcript: true` alone never
+downloads models; missing weights produce an installation hint. No weights are
+fetched for ordinary metadata or subtitle reads.
 
 Long audio is decoded one 20-second chunk at a time, keeping audio memory bounded
 and all timestamps on the original source timeline. The model is loaded once per
@@ -129,7 +131,8 @@ For **word timestamps**, an optional [CrispASR 0.8.38](https://github.com/CrispS
 `crispasr` binary on PATH (or `ANYMD_ALIGNER_BIN`) runs **standalone alignment only**
 with Qwen3-ForcedAligner-0.6B Q8_0. It does not run ASR or replace transcribe-cpp.
 The aligner weights (986 MB) are also revision/size/SHA-256 pinned and fetched on
-first supported use; `ANYMD_ALIGNER_MODEL` accepts a preinstalled pinned copy.
+first supported use only when `download_asr_model` is true;
+`ANYMD_ALIGNER_MODEL` accepts a preinstalled pinned copy.
 Supported language codes are en, zh, yue, ja, ko, fr, de, it, pt, ru and es.
 Where that optional runtime is unavailable, the language is unsupported, or
 alignment fails validation, anymd keeps the transcript and labels its timestamps
@@ -138,7 +141,8 @@ account for the transcript text. Output explicitly names word, segment or mixed
 granularity and includes millisecond start/end times.
 
 ```bash
-anymd talk.mp4 --transcript
+anymd talk.mp4 --download-asr-model  # explicitly allow the model download
+anymd talk.mp4 --transcript          # cached/preinstalled models only
 ```
 
 `download_asr_model: true` / `--download-asr-model` also implies `transcript`.
@@ -147,7 +151,8 @@ only as a compatibility alias for Qwen; no Whisper engine or weights remain.
 Old `ANYMD_WHISPER_*` settings are not used.
 
 **Japanese trade-off:** on our 200-utterance FLEURS sample, Qwen trails the
-whisper-turbo benchmark control (5.93 vs 4.80 raw CER). We use one speech model
+whisper-turbo benchmark control (5.93 vs 4.80 raw CER; 5.56 vs 4.59 with
+symmetric numeral/kana normalisation). We use one speech model
 for all languages and accept this gap. See [ASR benchmarks](benchmarks.md#speech-to-text).
 
 ## Optional tools
@@ -171,7 +176,7 @@ anymd 6.0.0 (native Rust)
   ffmpeg       found      embedded subtitles and transcript audio
 Transcripts (--transcript):
   ASR runtime    transcribe-cpp 0.2.4 (CPU, bundled)
-  ASR model      downloaded on first use: Qwen3-ASR-1.7B-Q8_0.gguf (2185 MB, SHA-256 pinned)
+  ASR model      not installed: Qwen3-ASR-1.7B-Q8_0.gguf (2185 MB, SHA-256 pinned)
 ```
 
 Typical installs: `brew install tesseract ffmpeg` on macOS, `apt install tesseract-ocr ffmpeg` on Debian/Ubuntu. For other OCR languages, install the tesseract language pack (for example `tesseract-ocr-chi-tra`).

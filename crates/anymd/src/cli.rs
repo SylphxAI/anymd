@@ -38,7 +38,7 @@ Read options:
       --transcript         Transcribe audio/video locally with Qwen3-ASR-1.7B Q8
       --download-asr-model
                            With --transcript (implied): download the pinned Qwen3 model on first use
-                           (Q8, ~2.2 GB; also downloaded by --transcript)
+                           (Q8, ~2.2 GB; --transcript alone never downloads)
       --images <mode>      refs (default): save images embedded in PDF/DOCX/PPTX/EPUB files to the
                            anymd cache and mark them in the Markdown; none: leave them out
       --revisions <mode>   Word tracked changes and comments: markup (default) as CriticMarkup,

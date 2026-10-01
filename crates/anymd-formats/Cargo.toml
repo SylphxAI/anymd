@@ -40,7 +40,7 @@ hound = { version = "3.5", optional = true }
 
 [features]
 # Local helper binaries (tesseract OCR, ffprobe/ffmpeg, bundled transcribe-cpp) and the
-# first-use Qwen3 model download. Off for WebAssembly: images then report
+# opt-in Qwen3 model download. Off for WebAssembly: images then report
 # metadata only and media the sniffed container.
 default = ["native"]
 native = ["dep:tempfile", "dep:wait-timeout", "dep:ureq", "dep:sha2", "dep:transcribe-cpp", "dep:hound"]

@@ -51,6 +51,12 @@ class MandarinDiagnosticsTests(unittest.TestCase):
         self.assertEqual(annotations("先生（pHのH）"), self.cjk("先生pHのH"))
         self.assertEqual(annotations("先生（English カタカナ）"), self.cjk("先生English カタカナ"))
 
+    def test_japanese_kana_diagnostic_retains_annotations_and_lexical_errors(self):
+        normalize = report.japanese_kana_diagnostic(self.cjk)
+        self.assertEqual(normalize("一日カタカナ"), normalize("1日かたかな"))
+        self.assertEqual(normalize("大学（University）"), "大学university")
+        self.assertNotEqual(normalize("地殻"), normalize("近く"))
+
     def test_reference_annotation_changes_denominator(self):
         ref, hyp = "大学（University）", "大学"
         self.assertEqual(report.edit_stats(self.cjk(ref), self.cjk(hyp), "char"), (10, 12))
