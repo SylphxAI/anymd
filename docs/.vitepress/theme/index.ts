@@ -1,6 +1,8 @@
 import DefaultTheme from 'vitepress/theme';
 import type { Theme } from 'vitepress';
 import Playground from './components/Playground.vue';
+import ProBuy from './components/ProBuy.vue';
+import ProTracking from './components/ProTracking.vue';
 import './custom.css';
 
 /**
@@ -12,6 +14,8 @@ const theme: Theme = {
   extends: DefaultTheme,
   enhanceApp({ app }) {
     app.component('Playground', Playground);
+    app.component('ProBuy', ProBuy);
+    app.component('ProTracking', ProTracking);
   },
 };
 

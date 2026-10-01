@@ -19,7 +19,11 @@ export default defineConfig({
   // toggle still lets readers choose light.
   appearance: 'dark',
   lastUpdated: true,
-  sitemap: { hostname: site },
+  sitemap: {
+    hostname: site,
+    // The post-purchase page is not a landing page.
+    transformItems: (items) => items.filter((item) => !item.url.includes('pro/thanks')),
+  },
 
   // Maintainer docs that are not part of the site.
   srcExclude: ['PUBLISH.md', 'vision.md', 'security/**'],
@@ -74,6 +78,7 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/getting-started', activeMatch: '^/guide/(?!benchmarks)' },
       { text: 'Benchmarks', link: '/guide/benchmarks' },
       { text: 'Playground', link: '/playground' },
+      { text: 'Pro', link: '/pro' },
       { text: 'GitHub', link: 'https://github.com/SylphxAI/anymd' },
       { text: 'npm', link: 'https://www.npmjs.com/package/@sylphx/anymd' },
     ],

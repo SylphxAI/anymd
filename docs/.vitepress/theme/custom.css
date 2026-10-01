@@ -586,3 +586,48 @@
     margin: 56px 0;
   }
 }
+
+/* Pro landing: buy button, consent banner. */
+.pro-buy {
+  display: inline-block;
+  margin: 8px 0;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: var(--vp-c-brand-1);
+  color: var(--vp-c-bg) !important;
+  font-weight: 600;
+  text-decoration: none !important;
+}
+.pro-buy:hover { background: var(--vp-c-brand-2); }
+.pro-cookie-link { margin-top: 32px; font-size: 13px; }
+.pro-consent {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  background: var(--vp-c-bg-elv);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.35);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.pro-consent-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pro-consent button {
+  padding: 6px 14px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg-soft);
+  cursor: pointer;
+}
+.pro-consent button[aria-pressed='true'],
+.pro-consent button:first-child { border-color: var(--vp-c-brand-1); }
