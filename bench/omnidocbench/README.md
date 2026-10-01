@@ -13,8 +13,9 @@ directory runs anymd on it, so its numbers can sit next to theirs. The results a
   are no source PDFs to run anymd's native text-layer engine on, so this benchmark has no PDF number. (AgentDocBench
   in [`../README.md`](../README.md) is the benchmark that exercises the PDF engine.)
 - **Adapter step.** anymd prints an image as a metadata table (format, size, EXIF) followed by a `## Text (OCR)`
-  section. `harness.py` keeps only the OCR text; the metadata table is not page content. A page where anymd fails or
-  finds no text gets an empty file and scores as such.
+  section. `harness.py` keeps only the OCR text; the metadata table is not page content. A successful OCR section
+  with no text gets an empty prediction and is scored. Conversion errors, timeouts or output without the OCR
+  section are recorded in timing diagnostics and make the prediction stage exit nonzero; they are not valid scores.
 
 ## Pinned versions
 
@@ -46,7 +47,8 @@ gh workflow run omnidocbench.yml --ref main -f ocr=vlm -f limit=40   # smoke tes
 ```
 
 The [OmniDocBench workflow](../../.github/workflows/omnidocbench.yml) builds anymd in release mode, converts the
-pages in 32 shards (one model worker per runner), then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
+pages in 32 shards (one model worker per runner), validates every planned page, shard, prediction digest and successful timing outcome against
+frozen ground truth, then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
 JSON files, the config it ran with, and per-page anymd timings). The job summary shows the headline scores, computed from the metric files with the plain formula; the published figures use the evaluator's own `run_summary.json`, whose per-metric page counts differ slightly.
 `summarize.py` computes Overall as the leaderboard does: ((1 - text edit distance) x 100 + table TEDS + formula CDM) / 3.
 
@@ -58,7 +60,7 @@ To recover an evaluator failure without repeating inference, dispatch this workf
 gh workflow run omnidocbench.yml --ref <fixed-branch> -f ocr=vlm -f limit=0 -f predictions_run=<completed-run-id> -f predictions_sha=<full-source-sha>
 ```
 
-This skips the build and prediction jobs, downloads only that run's prediction artifacts, and verifies the source workflow/SHA, all 32 successful shards, and the source log’s engine and limit before scoring. Prediction filenames and timing records must cover the selected ground truth exactly once. Provenance verification makes three one-shot API reads in CI; it never polls. The summary records the source run. Scores certify those source predictions, not inference on the recovery workflow's newer commit. Wait until every source prediction shard has completed and its artifacts are retained before dispatching recovery.
+This skips the build and prediction jobs, downloads only that run's prediction artifacts, and verifies the source workflow/SHA, all 32 successful shards, and the source log’s engine and limit before scoring. Prediction filenames and timing records must cover the selected ground truth exactly once. Historical recovery uses its original timing schema and provenance checks; fresh predictions also require the new frozen-plan, successful-outcome and prediction-digest validation. Provenance verification makes three one-shot API reads in CI; it never polls. The summary records the source run. Scores certify those source predictions, not inference on the recovery workflow's newer commit. Wait until every source prediction shard has completed and its artifacts are retained before dispatching recovery.
 
 ## Licence
 

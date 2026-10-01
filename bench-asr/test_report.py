@@ -1,8 +1,20 @@
 """Local scorer regressions: python -m unittest discover -s bench-asr -p test_report.py."""
 
+import importlib.util
 import unittest
+from pathlib import Path
 
 import report
+
+
+def load_tests(loader, tests, pattern):
+    # The existing hosted scorer check also exercises all benchmark validity contracts.
+    path = Path(__file__).resolve().parents[1] / "bench/test_validity.py"
+    spec = importlib.util.spec_from_file_location("benchmark_validity_tests", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    tests.addTests(loader.loadTestsFromModule(module))
+    return tests
 
 
 class MandarinDiagnosticsTests(unittest.TestCase):

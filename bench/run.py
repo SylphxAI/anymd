@@ -59,10 +59,15 @@ def supports(adapter, doc):
 
 
 def select(docs, only, shard):
+    ids = [d["id"] for d in docs]
+    if len(ids) != len(set(ids)) or only - set(ids):
+        raise ValueError("duplicate corpus IDs or unknown selected document IDs")
     if only:
         docs = [d for d in docs if d["id"] in only]
     if shard:
         index, count = (int(x) for x in shard.split("/"))
+        if not 1 <= index <= count:
+            raise ValueError("shard must be i/n with 1 <= i <= n")
         docs = [d for i, d in enumerate(docs) if i % count == index - 1]
     return docs
 
@@ -85,7 +90,10 @@ def main():
     adapter = load_adapter(args.tool)
     runs = args.runs or getattr(adapter, "RUNS", 3)
     manifest = json.loads((HERE / "corpus.json").read_text("utf-8"))["docs"]
-    docs = select(manifest, set(filter(None, args.docs.split(","))), args.shard)
+    planned = select(manifest, set(filter(None, args.docs.split(","))), "")
+    docs = select(planned, set(), args.shard)
+    if not planned or runs < 1:
+        raise ValueError("benchmark needs selected documents and at least one timed run")
     corpus = Path(args.corpus)
 
     warm = next((d for d in docs if supports(adapter, d) and (corpus / d["file"]).exists()), None)
@@ -140,6 +148,9 @@ def main():
         "runs": runs,
         "timeout": args.timeout,
         "shard": args.shard or "1/1",
+        "planned_ids": [d["id"] for d in planned],
+        "expected_ids": [d["id"] for d in docs],
+        "status": "failed" if any(r["status"] not in ("ok", "unsupported") for r in results) else "ok",
         "machine": f"{platform.system()} {platform.machine()}, {os.cpu_count()} CPUs",
         "runner": "github-hosted" if os.environ.get("GITHUB_ACTIONS") else "local",
         "run_url": (
@@ -152,7 +163,8 @@ def main():
     }
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps({"meta": meta, "results": results}, indent=1, ensure_ascii=False) + "\n")
+    return 1 if meta["status"] == "failed" else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

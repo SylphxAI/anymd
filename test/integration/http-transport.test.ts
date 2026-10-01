@@ -9,6 +9,7 @@ import net from 'node:net';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { productVersion, resolveServerPath } from '../utils/cargoBinaries.js';
+import { assertPdfSuccess, requirePdfFixture } from '../utils/pdfContract.js';
 
 const repoRoot = path.resolve(__dirname, '../..');
 const serverBinary = resolveServerPath();
@@ -238,6 +239,7 @@ describe('MCP Server HTTP Transport Integration (Rust rmcp)', () => {
     await client.initializeSession();
 
     const testPdfPath = path.resolve(__dirname, '../fixtures/sample.pdf');
+    requirePdfFixture(testPdfPath);
 
     const response = await client.sendRequest(
       'tools/call',
@@ -255,13 +257,7 @@ describe('MCP Server HTTP Transport Integration (Rust rmcp)', () => {
 
     expect(response.id).toBe(3);
 
-    // If test PDF doesn't exist, expect error
-    if (response.error || response.result?.isError) {
-      expect(response.error?.message || response.result?.content?.[0]?.text).toContain('PDF');
-    } else {
-      expect(response.result?.content).toBeDefined();
-      expect(response.result?.content?.[0]?.type).toBe('text');
-    }
+    assertPdfSuccess(response);
   });
 
   it('should return bounded PNG evidence over HTTP', async () => {

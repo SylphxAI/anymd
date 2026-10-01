@@ -69,6 +69,11 @@ def annotations(cache):
 
 def page_names(pages, limit):
     names = sorted(p["page_info"]["image_path"] for p in pages)
+    if limit < 0 or len(names) != len(set(names)):
+        raise ValueError("negative page limit or duplicate ground-truth page IDs")
+    outputs = [Path(n).with_suffix(".md").name for n in names]
+    if len(outputs) != len(set(outputs)):
+        raise ValueError("page IDs collide as prediction filenames")
     return names[:limit] if limit else names
 
 
@@ -86,9 +91,12 @@ def convert(binary, image, timeout):
     try:
         run = subprocess.run([binary, "--ocr", str(image)], capture_output=True, text=True, timeout=timeout)
         ok, text = run.returncode == 0, run.stdout
-    except subprocess.TimeoutExpired:
-        ok, text = False, ""
-    return ok, strip_metadata(text) if ok else "", time.time() - started
+        error = None if ok else (run.stderr[-600:] or f"exit {run.returncode}")
+        if ok and OCR_HEADING not in text:
+            ok, error = False, "conversion output has no OCR section"
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        ok, text, error = False, "", str(exc)
+    return ok, strip_metadata(text) if ok else "", time.time() - started, error
 
 
 def predict(args):
@@ -98,6 +106,8 @@ def predict(args):
     _, pages = annotations(cache)
     names = page_names(pages, args.limit)
     index, total = (int(part) for part in args.shard.split("/"))
+    if not names or not 1 <= index <= total:
+        raise ValueError("benchmark needs pages and a valid i/n shard")
     mine = names[index - 1 :: total]
     digests = manifest()
     out = Path(args.out)
@@ -110,17 +120,61 @@ def predict(args):
             download(f"{BASE}/images/{urllib.parse.quote(name)}", image)
             if sha256(image) != digests[f"images/{name}"]:
                 sys.exit(f"{name} does not match its pinned SHA-256")
-        ok, markdown, seconds = convert(binary, image, args.timeout)
-        (out / (name[:-4] + ".md")).write_text(markdown, encoding="utf-8")
-        return name, {"ok": ok, "seconds": round(seconds, 3), "chars": len(markdown)}
+        ok, markdown, seconds, error = convert(binary, image, args.timeout)
+        prediction = out / Path(name).with_suffix(".md").name
+        prediction.write_text(markdown, encoding="utf-8")
+        return name, {"ok": ok, "seconds": round(seconds, 3), "chars": len(markdown),
+                      "error": error, "sha256": sha256(prediction)}
 
     with concurrent.futures.ThreadPoolExecutor(args.workers) as pool:
         results = dict(pool.map(one, mine))
     version = subprocess.run([binary, "--version"], capture_output=True, text=True).stdout.strip()
-    timings = {"anymd": version, "shard": args.shard, "pages": results}
+    timings = {"anymd": version, "shard": args.shard, "pages": results,
+               "planned_pages": names, "expected_pages": mine, "revision": REVISION}
     (out / f"timings-{index}of{total}.json").write_text(json.dumps(timings, indent=1))
     failed = sum(not r["ok"] for r in results.values())
     print(f"shard {args.shard}: {len(results)} pages, {failed} failed, {sum(r['seconds'] for r in results.values()):.0f} s of anymd time")
+    return 1 if failed else 0
+
+
+def validate(args):
+    """Check the frozen ground truth, every shard outcome and prediction before evaluation."""
+    names = page_names(json.loads(Path(args.gt).read_text()), 0)
+    if not names:
+        raise ValueError("no ground-truth pages")
+    parts = Path(args.parts)
+    predictions = {}
+    for path in parts.rglob("*.md"):
+        if path.name in predictions:
+            raise ValueError(f"duplicate prediction: {path.name}")
+        predictions[path.name] = path
+    expected_files = {Path(n).with_suffix(".md").name for n in names}
+    if set(predictions) != expected_files:
+        raise ValueError("missing or unexpected prediction files")
+    shards, seen, total = set(), set(), None
+    for path in sorted(parts.rglob("timings-*.json")):
+        data = json.loads(path.read_text())
+        index, count = (int(p) for p in data["shard"].split("/"))
+        if not 1 <= index <= count or index in shards or (total is not None and total != count):
+            raise ValueError("invalid or duplicate prediction shard")
+        total = count
+        shards.add(index)
+        expected = names[index - 1::count]
+        if data["revision"] != REVISION or data["planned_pages"] != names or data["expected_pages"] != expected:
+            raise ValueError("prediction shard does not match frozen ground truth")
+        if set(data["pages"]) != set(expected):
+            raise ValueError("missing or unexpected timing rows")
+        for name, row in data["pages"].items():
+            if name in seen or row.get("ok") is not True:
+                raise ValueError(f"duplicate or failed conversion: {name}")
+            prediction = predictions[Path(name).with_suffix(".md").name]
+            if row["sha256"] != sha256(prediction) or row["chars"] != len(prediction.read_text(encoding="utf-8")):
+                raise ValueError(f"prediction does not match timing record: {name}")
+            seen.add(name)
+    if total is None or shards != set(range(1, total + 1)) or seen != set(names):
+        raise ValueError("incomplete timing shard coverage")
+    print(f"Validated {len(names)} predictions and {total} successful shards")
+    return 0
 
 
 def gt(args):
@@ -147,9 +201,13 @@ def main():
     g.add_argument("--out", required=True)
     g.add_argument("--limit", type=int, default=0)
     g.set_defaults(run=gt)
+    v = sub.add_parser("validate")
+    v.add_argument("--gt", required=True)
+    v.add_argument("--parts", required=True)
+    v.set_defaults(run=validate)
     args = parser.parse_args()
-    args.run(args)
+    return args.run(args)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

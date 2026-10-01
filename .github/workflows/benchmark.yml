@@ -185,11 +185,20 @@ jobs:
           merge-multiple: true
 
       - name: Merge shards and render
+        env:
+          TOOLS: ${{ github.event.inputs.tools }}
         run: |
-          for tool in $(ls parts/*.json | xargs -n1 basename | sed -E 's/-[0-9]+of[0-9]+\.json$//' | sort -u); do
+          set -euo pipefail
+          mkdir -p current-results
+          selected=0
+          for tool in anymd pdftotext markitdown kreuzberg docling marker unstructured; do
+            if [ -n "$TOOLS" ] && [[ ",$TOOLS," != *",$tool,"* ]]; then continue; fi
+            selected=$((selected + 1))
             python3 bench/merge.py "bench/results/$tool.json" parts/"$tool"-*.json
+            cp "bench/results/$tool.json" "current-results/$tool.json"
           done
-          python3 bench/leaderboard.py --print | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$selected" -gt 0 ] || { echo 'No supported benchmark tools selected' >&2; exit 1; }
+          python3 bench/leaderboard.py --results current-results --print | tee -a "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         with:
