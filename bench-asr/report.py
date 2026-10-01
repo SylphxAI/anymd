@@ -162,22 +162,42 @@ def words_sane(rows) -> tuple[int, int]:
     return have, ok
 
 
-def validate_job(summary, rows):
+def validate_job(summary, rows, allow_legacy=False):
     """A success claim requires the frozen utterance set, not only a row count."""
     expected = summary.get("expected_ids", [])
     actual = [r["id"] for r in rows]
+    legacy = allow_legacy and "expected_ids" not in summary
+    if legacy:
+        expected = actual
     if (not expected or len(expected) != len(set(expected)) or summary.get("n") != len(expected)
             or len(actual) != len(set(actual)) or set(actual) != set(expected)
-            or summary.get("missing", 0) or any(r.get("status") != "ok" for r in rows)):
+            or summary.get("missing", 0) or any(r.get("status", "ok" if legacy else None) != "ok" for r in rows)):
         raise ValueError("missing, duplicate or failed utterance results")
     if summary.get("rtf_incl") is None:
         raise ValueError("complete run has no measured throughput")
+
+
+def validate_plan(matrix, jobs):
+    """Freeze selected job identities, including jobs that produced no artifacts."""
+    expected = [entry["id"] for entry in matrix]
+    actual = [summary.get("job_id", "") for summary, _ in jobs]
+    errors = []
+    if not expected or len(expected) != len(set(expected)):
+        errors.append("empty or duplicate selected job plan")
+    for identity in sorted(set(expected)):
+        count = actual.count(identity)
+        if count != 1:
+            errors.append(f"selected job {identity}: expected one outcome, found {count}")
+    for identity in sorted(set(actual) - set(expected)):
+        errors.append(f"unexpected job outcome: {identity or '(missing job_id)'}")
+    return errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("results")
     parser.add_argument("--probes")
+    parser.add_argument("--plan", help="selected plan.py matrix JSON file (optional for historical reports)")
     parser.add_argument("--cjk-diagnostics", "--mandarin-diagnostics", dest="cjk_diagnostics", action="store_true")
     parser.add_argument("--normalizer-dir", default=str(Path(__file__).parent / "oanorm"))
     args = parser.parse_args()
@@ -190,12 +210,19 @@ def main() -> int:
         rows = [json.loads(l) for l in results.read_text(encoding="utf-8").splitlines() if l.strip()] if results.exists() else []
         if summary.get("status") == "ok":
             try:
-                validate_job(summary, rows)
+                validate_job(summary, rows, allow_legacy=not args.plan)
             except ValueError as exc:
                 summary = dict(summary, status="failed", error=str(exc), rtf_incl=None, rtf_excl=None)
         jobs.append((summary, rows))
 
+    plan_errors = validate_plan(json.loads(Path(args.plan).read_text()), jobs) if args.plan else []
     print("# ASR benchmark results\n")
+    if plan_errors:
+        print("## Invalid selected job coverage\n")
+        for error in plan_errors:
+            print(f"- {error}")
+        print()
+
     if not jobs:
         print("No ASR job outcomes found; report is invalid.")
         return 1
@@ -331,7 +358,7 @@ def main() -> int:
         acc[5] += good
     for (label, os_), acc in sorted(stamps.items()):
         print(f"| {label} | {os_} | {acc[0]} | {acc[1]} | {acc[2]} | {acc[3]} | {acc[5]}/{acc[4]} |")
-    return 1 if failed else 0
+    return 1 if failed or plan_errors else 0
 
 
 if __name__ == "__main__":

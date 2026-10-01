@@ -171,7 +171,16 @@ OmniDocBench applies the same contract to page predictions and timing records. A
 freezes utterance IDs: a missing output file or row is a failure, while a present,
 valid empty transcript is an accuracy observation. Incomplete ASR batches have no
 valid full-audio RTF and are excluded from accuracy, speed and timestamp tables.
-The ASR report exits nonzero for failed or invalid jobs, or no job outcomes.
+The ASR workflow passes its selected plan matrix to the report: each selected job
+must produce exactly one matching outcome, including jobs that failed during setup.
+Unselected engines need no outcome. The report exits nonzero for missing, duplicate,
+unexpected, failed or invalid jobs. Without a plan, complete historical outputs
+remain readable, but are not evidence of selected-job coverage.
+
+Docling and Marker must export exactly one Markdown file even when their CLI exits
+zero. A missing export is a conversion error; a present empty file remains a valid
+accuracy-zero observation. Sherpa disables its argument banner and recognizes only
+exact requested audio paths, not log lines that happen to end in `.wav`.
 
 Offline checks need no model, dataset or Rust build:
 

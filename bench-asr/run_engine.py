@@ -121,6 +121,7 @@ def run(engine: str, args, wavs: list[Path], lang: str, work: Path):
             f"--qwen3-asr-decoder={model / 'decoder.int8.onnx'}",
             f"--qwen3-asr-tokenizer={model / 'tokenizer'}",
             f"--num-threads={threads}",
+            "--print-args=false",
             *map(str, wavs),
         ]
     else:
@@ -159,7 +160,8 @@ def run(engine: str, args, wavs: list[Path], lang: str, work: Path):
     else:
         # sherpa-onnx prints every input path first, then one JSON object per input, in order.
         lines = (proc.stdout + "\n" + proc.stderr).splitlines()  # sherpa-onnx logs to stderr
-        paths = [Path(l.strip()) for l in lines if l.strip().endswith(".wav")]
+        requested = {str(w) for w in wavs}
+        paths = [Path(l.strip()) for l in lines if l.strip() in requested]
         rows = []
         for line in lines:
             line = line.strip()
@@ -189,6 +191,7 @@ def main() -> int:
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--lang-mode", choices=["explicit", "auto"], default="explicit")
     parser.add_argument("--label", default="")
+    parser.add_argument("--job-id", default="", help="identity from the selected workflow matrix")
     parser.add_argument("--timeout", type=int, default=5 * 3600)
     args = parser.parse_args()
 
@@ -208,6 +211,7 @@ def main() -> int:
     exe = find_exe(tool, EXE[args.engine])
     summary = {
         "engine": args.engine,
+        "job_id": args.job_id,
         "label": args.label or args.engine,
         "os": platform.system(),
         "arch": platform.machine(),

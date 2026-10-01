@@ -205,7 +205,7 @@ jobs:
           python3 bench-asr/run_engine.py "${{ matrix.engine }}" \
             --manifest "$RUNNER_TEMP/data/manifest.jsonl" --out "$RUNNER_TEMP/out" \
             --tool-dir "$RUNNER_TEMP/tool" --model "$model" ${aligner[@]+"${aligner[@]}"} \
-            --limit "${{ matrix.limit }}" --lang-mode "${{ matrix.lang_mode }}" --label "${{ matrix.label }}"
+            --limit "${{ matrix.limit }}" --lang-mode "${{ matrix.lang_mode }}" --label "${{ matrix.label }}" --job-id "${{ matrix.id }}"
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -270,7 +270,7 @@ jobs:
 
   report:
     name: Report
-    needs: [bench, probe]
+    needs: [plan, bench, probe]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -306,9 +306,14 @@ jobs:
           done
 
       - name: Score and summarise
+        env:
+          PLAN: ${{ needs.plan.outputs.matrix }}
         run: |
-          python3 bench-asr/report.py results --probes probes > report.md
+          printf '%s\n' "$PLAN" > selected-plan.json
+          rc=0
+          python3 bench-asr/report.py results --probes probes --plan selected-plan.json > report.md || rc=$?
           cat report.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
 
       - uses: actions/upload-artifact@v7
         with:
