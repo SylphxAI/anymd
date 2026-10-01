@@ -14,7 +14,7 @@ version_of() {
 
 published() {
   local code
-  code=$(curl -s -o /dev/null -w '%{http_code}' -A 'anymd-release (contact@sylphx.com)' \
+  code=$(curl -s -o /dev/null -w '%{http_code}' -A 'anymd-release (hi@sylphx.com)' \
     "https://crates.io/api/v1/crates/$1/$2")
   case "$code" in
     200) return 0 ;;

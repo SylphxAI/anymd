@@ -20,8 +20,12 @@ const REGIONS = [
 export const buyUrl: string = config.buyUrl;
 
 export function isPlaceholder(value: string | undefined): boolean {
-  return !value || /X{4}/.test(value);
+  return !value || /X{4}|PRO_PAYMENT_LINK/.test(value);
 }
+
+/** True once buyUrl is a real link. Until then the button is a purchase email, never a dead link. */
+export const buyReady = !isPlaceholder(config.buyUrl);
+export const buyMailto = 'mailto:hi@sylphx.com?subject=anymd%20Pro%20purchase';
 
 export function trackingEnabled(): boolean {
   return !isPlaceholder(config.ga4MeasurementId) || !isPlaceholder(config.adsConversionId);
@@ -69,7 +73,7 @@ export function clickId(search: string): string {
 }
 
 export function buyHref(gclid: string): string {
-  if (!gclid) return buyUrl;
+  if (!gclid || !/^https:\/\/buy\.stripe\.com\//.test(buyUrl)) return buyUrl;
   const sep = buyUrl.includes('?') ? '&' : '?';
   return `${buyUrl}${sep}client_reference_id=${encodeURIComponent(gclid)}`;
 }
@@ -102,7 +106,7 @@ export function loadTags(page: 'pro' | 'thanks'): boolean {
   // The thanks URL carries a Stripe session id: report the path only.
   if (page === 'thanks') params.page_location = location.origin + location.pathname;
   if (useGa) g('config', ga4, params);
-  if (!isPlaceholder(ads)) g('config', ads);
+  if (!isPlaceholder(ads)) g('config', ads, page === 'thanks' ? { page_location: params.page_location } : {});
   const s = document.createElement('script');
   s.async = true;
   s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(useGa ? ga4 : ads)}`;
@@ -124,21 +128,16 @@ export function trackBeginCheckout(): void {
   });
 }
 
-function randomId(): string {
-  const bytes = new Uint8Array(12);
-  crypto.getRandomValues(bytes);
-  return `rnd_${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
-}
-
-/** Stripe session id from the redirect, else a random id. */
+/** Stripe session id from the redirect, or '' (a reload or direct visit never counts as a purchase). */
 export function transactionId(search: string): string {
   const id = new URLSearchParams(search).get('session_id') ?? '';
-  return /^cs_[A-Za-z0-9_]{8,200}$/.test(id) ? id : randomId();
+  return /^cs_[A-Za-z0-9_]+$/.test(id) ? id : '';
 }
 
-/** Fires `purchase` once per transaction id per browser session. Returns the id. */
+/** Fires `purchase` once per Stripe session id per browser session; nothing without one. Returns the id. */
 export function trackPurchase(search: string): string {
   const id = transactionId(search);
+  if (!id) return '';
   const key = `anymd_pro_purchase_${id}`;
   if (!gtag || storageGet('session', key)) return id;
   storageSet('session', key, '1');

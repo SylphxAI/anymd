@@ -39,8 +39,9 @@ export default defineConfig({
     ['meta', { property: 'og:site_name', content: 'anymd' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:site', content: '@sylphxai' }],
-    ['meta', { property: 'og:image', content: 'https://sylphxai.github.io/anymd/og-image.png' }],
-    ['meta', { name: 'twitter:image', content: 'https://sylphxai.github.io/anymd/og-image.png' }],
+    ['meta', { property: 'og:image:alt', content: 'anymd: any file to clean Markdown for AI agents' }],
+    ['meta', { property: 'og:image:width', content: '1280' }],
+    ['meta', { property: 'og:image:height', content: '640' }],
     [
       'meta',
       {
@@ -61,11 +62,17 @@ export default defineConfig({
     const pageTitle =
       pageData.frontmatter.title ?? (pageData.title || `${product.name} — ${product.tagline}`);
     const pageDesc = pageData.frontmatter.description ?? product.description;
+    const isHome = pageData.relativePath === 'index.md';
+    const ogTitle = isHome ? pageTitle : `${pageTitle} | anymd`;
+    const image = pageData.frontmatter.image ?? `${site}og-image.png`;
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push(
       ['link', { rel: 'canonical', href: pageUrl }],
       ['meta', { property: 'og:url', content: pageUrl }],
-      ['meta', { property: 'og:title', content: pageTitle }],
+      ['meta', { property: 'og:title', content: ogTitle }],
+      ['meta', { name: 'twitter:title', content: ogTitle }],
+      ['meta', { property: 'og:image', content: image }],
+      ['meta', { name: 'twitter:image', content: image }],
       ['meta', { property: 'og:description', content: pageDesc }],
     );
   },
@@ -117,11 +124,6 @@ export default defineConfig({
     editLink: {
       pattern: 'https://github.com/SylphxAI/anymd/edit/main/docs/:path',
       text: 'Edit this page on GitHub',
-    },
-
-    footer: {
-      message: 'MIT licensed · local, no API key',
-      copyright: 'Copyright 2024–2026 Sylphx',
     },
 
     outline: { level: [2, 3] },

@@ -1,3 +1,7 @@
+---
+description: "AgentDocBench: anymd against docling, markitdown, marker, kreuzberg, unstructured and pdftotext on the same documents."
+---
+
 # Benchmarks
 
 **AgentDocBench** is an open, reproducible benchmark for "document → Markdown for agents". It measures what an

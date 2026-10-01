@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { withBase } from 'vitepress';
 import { onMounted, ref } from 'vue';
 import {
   type Choice,
@@ -36,13 +37,13 @@ onMounted(() => {
 
 <template>
   <div v-if="enabled" class="pro-consent-wrap">
-    <p class="pro-cookie-link"><a href="#cookie-settings" @click.prevent="open = true">Cookie settings</a></p>
+    <p class="pro-cookie-link"><a href="#cookie-settings" @click.prevent="open = true">Cookie settings and Your Privacy Choices</a></p>
     <div v-if="open" class="pro-consent" role="region" aria-label="Cookie consent">
       <span>
         This page uses Google Analytics and Google Ads measurement to see how people find us and which
         ads work. Depending on your choice, Google may set cookies and process identifiers such as your
-        IP address and the ad click id. We never send your name or email. You can change this at any time
-        from Cookie settings.
+        IP address and the ad click id. We never send your name or email. Sylphx Limited is the controller.
+        You can change this at any time from Cookie settings. <a :href="withBase('/legal/privacy')">Privacy</a>
       </span>
       <span class="pro-consent-actions">
         <button

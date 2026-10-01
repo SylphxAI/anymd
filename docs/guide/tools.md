@@ -1,3 +1,7 @@
+---
+description: "The four anymd MCP tools (read, outline, search, inspect), their arguments and example output."
+---
+
 # MCP tools
 
 anymd exposes four tools.

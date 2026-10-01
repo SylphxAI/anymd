@@ -39,7 +39,7 @@ def metadata(version: str) -> str:
         + f"Version: {version}\n"
         + "Summary: Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML, images (OCR), audio and video. A fast Rust CLI and MCP server.\n"
         + "Keywords: markdown,pdf,mcp,model-context-protocol,document-conversion,ai-agents\n"
-        + "Author-email: Sylphx <contact@sylphx.com>\n"
+        + "Author-email: Sylphx <hi@sylphx.com>\n"
         + "License-Expression: MIT\n"
         + "License-File: LICENSE\n"
         + "Project-URL: Homepage, https://sylphxai.github.io/anymd/\n"

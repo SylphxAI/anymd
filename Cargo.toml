@@ -18,7 +18,7 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/SylphxAI/anymd"
 homepage = "https://github.com/SylphxAI/anymd"
-authors = ["Sylphx <contact@sylphx.com>"]
+authors = ["Sylphx <hi@sylphx.com>"]
 readme = "README.md"
 
 # Production binaries: smaller artifacts without requiring runtime downloads.

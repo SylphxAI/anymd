@@ -1,20 +1,29 @@
 ---
-title: anymd Pro
-description: Verifiable video evidence and cite-check for agents doing legal, research, finance or media work. US$29 once, verified offline.
+title: "anymd Pro: verifiable video evidence and cite-check for AI agents"
+titleTemplate: false
+description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline checks that a quote is on the page it cites. US$29 once, works offline.
+image: https://sylphxai.github.io/anymd/og-pro.png
 aside: false
+sidebar: false
+editLink: false
+lastUpdated: false
+prev: false
+next: false
 ---
 
-# anymd Pro
+# Let your agent show its evidence
 
-**Let your agent show its evidence.** Pro adds two capabilities to anymd: a video timeline with exact frames, and cite-check, which proves a quote is on a given page at a given location.
+**anymd Pro** adds two things to the free anymd MCP server: exact video frames your agent can cite, and **cite-check**, which proves a quote is on the page and at the spot it claims. Everything runs on your machine.
 
 <ProBuy />
 
-US$29, once. Your licence token arrives by email.
+<p class="pro-trust">US$29 once, including any applicable tax · licence never expires · works offline, no account · 14-day refund · <a href="/anymd/legal/pro-terms">Terms</a></p>
+
+Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
 
 ## Why it matters
 
-When an agent summarises a deposition video, an earnings call recording, a lecture or a contract PDF, you still have to trust it. Pro gives the agent something you can check.
+When an agent summarises a deposition video, an earnings call, a lecture or a contract PDF, you still have to trust it. Pro gives the agent something you can check.
 
 ### Verifiable video evidence
 
@@ -39,7 +48,7 @@ Agents and people who have to point at a source and be believed: legal review, r
 
 ## Price
 
-**US$29, once.** No subscription.
+**US$29 once, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Your licence token arrives by email, usually within a few hours.
 
 <ProBuy label="Buy anymd Pro" />
 
@@ -63,7 +72,7 @@ The environment variable wins over the saved file. `status` shows whether Pro is
 ## FAQ
 
 **Does it work offline? Do I need an account?**
-Offline, and no account. Licences are verified on your machine against a public key built into anymd. Nothing is sent anywhere when you use Pro.
+Offline, and no account. Your licence is checked on your machine against a public key built into anymd. Nothing is sent anywhere when you use Pro.
 
 **Is the core still free?**
 Yes. anymd stays MIT licensed. Reading, outlining, searching and inspecting documents, OCR, transcripts, the MCP server and the CLI stay free and ungated, and nothing that was free has moved to Pro. Ordinary `read` and `outline` of video (metadata, chapters, subtitles) are still free.
@@ -71,10 +80,16 @@ Yes. anymd stays MIT licensed. Reading, outlining, searching and inspecting docu
 **What happens without a licence?**
 A Pro operation returns a short message with a link to this page and does no work. Nothing else changes.
 
-**Refunds?**
-Email us by replying to the email your token came in, and we will refund you.
+**Which version do I need?**
+anymd 8.4.0 or later. `anymd pro status` tells you whether Pro is active.
 
-**What do I get for the money?**
-The two capabilities above, and you fund development of anymd.
+**Can my team use one licence?**
+A licence is for one person. Buy one for each person who uses Pro.
+
+**Refunds?**
+Email hi@sylphx.com within 14 days of purchase and we refund you in full, no questions asked.
+
+**Who sells it?**
+Sylphx Limited, a company registered in England and Wales (company number 16438428). See the [anymd Pro terms](/legal/pro-terms) and [Privacy](/legal/privacy).
 
 <ProTracking page="pro" />

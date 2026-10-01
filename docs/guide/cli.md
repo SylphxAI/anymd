@@ -1,3 +1,7 @@
+---
+description: "Convert files to Markdown and search folders from the terminal with the anymd CLI."
+---
+
 # CLI
 
 The same binary is a command-line converter, like MarkItDown but much faster. Install it with `npm install -g @sylphx/anymd`, or run it once with `npx -y @sylphx/anymd <file>`. From Python, `uvx anymd <file>` or `pip install anymd`; with Docker, `docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd <file>`.

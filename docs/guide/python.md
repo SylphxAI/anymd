@@ -1,3 +1,7 @@
+---
+description: "Use anymd from Python, with LangChain and LlamaIndex loaders, without another binary."
+---
+
 # Python API and document loaders
 
 The platform wheel contains the native CLI and a thin Python API. Conversion

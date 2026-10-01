@@ -1,3 +1,7 @@
+---
+description: "Move from pdf-reader-mcp to anymd: same tools, one package rename."
+---
+
 # Migration
 
 anymd was called **pdf-reader-mcp**, then **Citra**. Existing setups keep working; this page lists what changed and how to move to the new names.
