@@ -66,6 +66,10 @@ jobs:
           cargo build --release --locked -p anymd --no-default-features --target "${{ matrix.target }}"
           python -c 'import json, pathlib, sys; p=pathlib.Path("docvlm-build.json"); d=json.loads(p.read_text()); d["tesseract_binary_bytes"]=pathlib.Path(sys.argv[1]).stat().st_size; d["binary_delta_mib"]=(d["candle_binary_bytes"]-d["tesseract_binary_bytes"])/1048576; p.write_text(json.dumps(d))' "$binary"
           cp "$binary.candle" "$binary"
+      - name: Model-free Python and native worker lifecycle regressions
+        env:
+          ANYMD_TEST_WORKER_LIFECYCLE: '1'
+        run: cargo test --locked -p anymd --test worker_lifecycle
       - name: Retain the existing Intel Mac release target
         if: matrix.target == 'aarch64-apple-darwin'
         run: |

@@ -64,6 +64,9 @@ bundled Qwen3-ASR with cached or preinstalled pinned weights; install the ASR mo
 explicitly with the native CLI’s `--download-asr-model` option before requesting
 `transcript=True`. For doc-VLM OCR, run `anymd setup ocr` explicitly; `ocr=True`
 inherits the native engine default, while `ocr=False` keeps OCR disabled.
+A Python timeout terminates the native CLI; its supervised doc-VLM worker exits
+on caller-pipe EOF even though it runs in a separate process group, and also has
+an independent page deadline.
 Requesting OCR or transcription without its native
 requirements produces the CLI's error. Passing a URL explicitly requests a
 network fetch under the native URL policy; local-file conversion never requests

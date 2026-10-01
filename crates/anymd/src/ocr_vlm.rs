@@ -224,7 +224,7 @@ pub(crate) fn recognize_admitted(
     let timeout = remaining_page_timeout(deadline)?;
     let tokens = max_tokens()?;
     let command = std::env::current_exe().map_err(|e| e.to_string())?;
-    let output = command_provider::run(CommandInvocation {
+    let output = command_provider::run_supervised(CommandInvocation {
         command: command.to_string_lossy().into_owned(),
         args: vec![
             "__ocr-vlm-worker".into(),
@@ -260,6 +260,17 @@ fn bounded_env(name: &str, default: u64, min: u64, max: u64) -> Result<u64, Stri
 }
 
 pub fn worker(arguments: &[String]) -> Result<(), String> {
+    let arguments = match arguments
+        .last()
+        .and_then(|arg| arg.strip_prefix("--supervised="))
+    {
+        Some(timeout) => {
+            let timeout = timeout.parse::<u64>().map_err(|e| e.to_string())?;
+            command_provider::supervise_parent(timeout)?;
+            &arguments[..arguments.len() - 1]
+        }
+        None => arguments, // Preserve direct benchmark invocation.
+    };
     #[cfg(feature = "ocr-vlm")]
     {
         use anymd_ocr_vlm::DocOcr;

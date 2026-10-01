@@ -9,7 +9,7 @@ description = "anymd: any file to clean Markdown for AI agents. Pure-Rust MCP se
 homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
-include = ["src/**/*", "Cargo.toml"]
+include = ["src/**/*", "Cargo.toml", "tests/worker_lifecycle.rs", "tests/worker_lifecycle.py"]
 keywords = ["mcp", "pdf", "rmcp", "agent"]
 categories = ["command-line-utilities"]
 
@@ -53,3 +53,9 @@ ureq = { version = "3.4", default-features = false, features = ["rustls", "gzip"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
+
+# Model-free lifecycle regressions run only on isolated CI runners.
+[[test]]
+name = "worker_lifecycle"
+path = "tests/worker_lifecycle.rs"
+harness = false
