@@ -18,6 +18,8 @@ pub mod search;
 pub mod setup;
 pub mod source_access;
 pub mod tool_routes;
+pub mod video_evidence;
+pub mod video_request;
 mod visual_evidence;
 
 use rmcp::{
@@ -222,7 +224,7 @@ impl PdfReaderMcp {
     }
 
     #[tool(
-        description = "Deep PDF inspection when Markdown is not enough. operation: inspect (page facts, metadata), render_page (PNG images), extract_regions (crop bounding boxes), ocr_pages / analyze_regions (configured OCR or vision provider), structure (JSON with document map, elements, geometry; profile quality|research adds trust and accessibility reports), compare (page-level diff of sources[0] vs sources[1])."
+        description = "Document and media evidence when Markdown is not enough. video_timeline (bounded scene/cue timeline), render_frame (actual decoded frames), or PDF operation: inspect (page facts, metadata), render_page (PNG images), extract_regions (crop bounding boxes), ocr_pages / analyze_regions (configured OCR or vision provider), structure (JSON with document map, elements, geometry; profile quality|research adds trust and accessibility reports), compare (page-level diff of sources[0] vs sources[1])."
     )]
     pub async fn inspect(
         &self,
@@ -373,6 +375,27 @@ impl PdfReaderMcp {
         &self,
         args: InspectArgs,
     ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        if matches!(
+            args.operation,
+            InspectOperation::VideoTimeline | InspectOperation::RenderFrame
+        ) {
+            let policy = self.source_access.clone();
+            return tokio::task::spawn_blocking(move || {
+                crate::video_request::inspect(args, &policy)
+            })
+            .await
+            .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        }
+        if args.timeline.is_some()
+            || args.timestamps_ms.is_some()
+            || args.expected_source_sha256.is_some()
+            || args.transcript.is_some()
+        {
+            return Err(ErrorData::invalid_params(
+                "video options require a video operation",
+                None,
+            ));
+        }
         match args.operation {
             InspectOperation::Compare => {
                 let paths: Vec<String> = args
@@ -439,7 +462,10 @@ impl PdfReaderMcp {
                     InspectOperation::ExtractRegions => PdfEvidenceOperation::ExtractRegions,
                     InspectOperation::OcrPages => PdfEvidenceOperation::OcrPages,
                     InspectOperation::AnalyzeRegions => PdfEvidenceOperation::AnalyzeRegions,
-                    InspectOperation::Structure | InspectOperation::Compare => unreachable!(),
+                    InspectOperation::Structure
+                    | InspectOperation::Compare
+                    | InspectOperation::VideoTimeline
+                    | InspectOperation::RenderFrame => unreachable!(),
                 };
                 self.pdf_evidence(Parameters(PdfEvidenceArgs {
                     operation,

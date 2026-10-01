@@ -122,6 +122,15 @@ jobs:
       - name: Build the anymd binary
         run: bun run build
 
+      - name: Hosted real video core and MCP API fixtures
+        env:
+          ANYMD_BIN: ${{ github.workspace }}/target/release/anymd
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          cargo test --locked -p anymd-formats --test video_timeline -- --ignored
+          python3 scripts/video_api_fixture.py
+
       - name: Verify portable ASR CPU configuration
         run: python3 scripts/check-native-cpu.py target/release/build
 

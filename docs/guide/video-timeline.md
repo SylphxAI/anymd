@@ -88,3 +88,22 @@ origin, a delayed audio stream, overlapping subtitles and VFR frame intervals.
 It compares returned decoded timestamps and frame hashes. Adapter fixtures prove
 plumbing only, not OCR/caption quality. Shared routing, admission/cache/cursor,
 provider and clean-client acceptance are checked with the integrated feature.
+
+## Shared request behavior
+
+Sources and subtitle sidecars are admitted before cache lookup. Local inputs are
+snapshotted and explicit URLs are fetched once through the existing URL policy;
+all evidence hashes the bytes actually processed. A supervised native request
+worker bounds decoding, preinstalled ASR, sampled OCR and local captions under
+one deadline. No timeline request grants model download permission.
+
+`read` continuation cursors bind to the source and full timeline manifest. Repeat
+the same timeline/OCR/transcript options; changed evidence invalidates the cursor.
+Outline extracts only navigation metadata, even when `caption` is true. Frames,
+manifest JSON and successful caption records live in the existing generated-image
+cache and share its age/size pruning. Incomplete components are not cached as
+completed timelines. Missing caption adapters remain explicit gaps.
+
+The hosted CI gate explicitly executes real FFmpeg fixtures and native MCP
+timeline/frame/read/outline requests. Mock descriptions test adapter/cache plumbing
+only, not caption quality.

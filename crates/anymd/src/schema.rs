@@ -71,7 +71,7 @@ pub struct PdfSource {
     pub path: Option<String>,
     #[schemars(
         length(min = 1),
-        description = "URL of the PDF file. Provide exactly one of path or url (not both)."
+        description = "Explicit source URL. Provide exactly one of path or url (not both)."
     )]
     pub url: Option<String>,
     pub pages: Option<PageSpecifier>,
@@ -333,12 +333,12 @@ impl PdfEvidenceRegion {
 pub struct PdfEvidenceSource {
     #[schemars(
         length(min = 1),
-        description = "Path to the local PDF file. Provide exactly one of path or url (not both)."
+        description = "Path to a local source (PDF for PDF operations; media for video operations). Provide exactly one of path or url (not both)."
     )]
     pub path: Option<String>,
     #[schemars(
         length(min = 1),
-        description = "URL of the PDF file. Provide exactly one of path or url (not both)."
+        description = "Explicit source URL. Provide exactly one of path or url (not both)."
     )]
     pub url: Option<String>,
     pub pages: Option<PageSpecifier>,
@@ -582,6 +582,7 @@ pub struct ReadArgs {
     )]
     pub source: String,
     /// Read a section id returned by outline; repeat node with a continuation cursor.
+    pub timeline: Option<crate::video_request::TimelineSelection>,
     pub node: Option<String>,
     #[schemars(
         description = "Pages (PDF), slides, sheets, or chapters to read, e.g. \"1-5,8\". Default: all."
@@ -703,6 +704,10 @@ impl SearchArgs {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum InspectOperation {
+    /// Bounded local video timeline.
+    VideoTimeline,
+    /// Decode actual video frames at requested playback timestamps.
+    RenderFrame,
     /// Page count, metadata, and per-page facts.
     Inspect,
     /// Render pages to PNG images.
@@ -722,6 +727,10 @@ pub enum InspectOperation {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct InspectArgs {
     pub operation: InspectOperation,
+    pub timeline: Option<crate::video_request::TimelineSelection>,
+    pub timestamps_ms: Option<Vec<u64>>,
+    pub expected_source_sha256: Option<String>,
+    pub transcript: Option<bool>,
     pub sources: Vec<PdfEvidenceSource>,
     #[schemars(
         description = "structure only: fast (default), quality, or research (adds safety, trust, accessibility)."
@@ -753,6 +762,7 @@ pub struct InspectArgs {
 /// Navigate a document without a model or vector index.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct OutlineArgs {
+    pub timeline: Option<crate::video_request::TimelineSelection>,
     /// File path or http(s) URL.
     pub source: String,
     /// json (default) or tree.

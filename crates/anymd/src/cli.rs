@@ -276,6 +276,7 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             return 2;
         }
         let args = crate::schema::OutlineArgs {
+            timeline: None,
             source: parsed.inputs[0].clone(),
             format: parsed.format.clone().or(Some("tree".into())),
             ocr: parsed.ocr,
@@ -338,6 +339,7 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
                 input.clone()
             };
             let args = ReadArgs {
+                timeline: None,
                 source,
                 node: parsed.node.clone(),
                 pages: parsed.pages.clone(),
@@ -484,6 +486,7 @@ mod tests {
         std::fs::write(&path, "a,b\n1,2\n").unwrap();
         let (text, failed) = read_text(
             &ReadArgs {
+                timeline: None,
                 source: path.display().to_string(),
                 node: None,
                 pages: None,

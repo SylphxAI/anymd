@@ -80,5 +80,36 @@ class VideoSourceContracts(unittest.TestCase):
         self.assertIn("run_captured(program, args, env, timeout, MAX_OUTPUT, MAX_OUTPUT, false)", RUNNER)
 
 
+class SharedVideoContracts(unittest.TestCase):
+    def test_existing_owners_and_supervised_worker(self):
+        request = (ROOT / "crates/anymd/src/video_request.rs").read_text()
+        for text in ("policy.admit_path", "fetch_url_deadline", "run_supervised", "OcrRequestPermit::acquire", "FrameContext for Context", 'join("images")', "cache::touch", "transcript_window", "attach_evidence"):
+            self.assertIn(text, request)
+        self.assertNotIn("Command::new", request)
+        self.assertNotIn("Semaphore", request)
+        self.assertNotIn("ensure_model", request)
+
+    def test_four_tools_additive_dispatch_and_manifest_cursor(self):
+        schema = (ROOT / "crates/anymd/src/schema.rs").read_text()
+        lib = (ROOT / "crates/anymd/src/lib.rs").read_text()
+        lean = (ROOT / "crates/anymd/src/lean.rs").read_text()
+        for text in ("VideoTimeline", "RenderFrame", "TimelineSelection", "expected_source_sha256"):
+            self.assertIn(text, schema)
+        self.assertLess(lib.index("crate::video_request::inspect"), lib.index("InspectOperation::Compare =>"))
+        self.assertIn("video cursor source/manifest/options mismatch", lean)
+        self.assertIn("Opened::from_video", lean)
+        outline = (ROOT / "crates/anymd/src/outline.rs").read_text()
+        self.assertIn("metadata_only.caption = false", outline)
+        self.assertIn("&metadata_only, false, None", outline)
+
+    def test_hosted_real_fixtures_are_explicit(self):
+        ci = (ROOT / ".github/workflows/ci.yml").read_text()
+        self.assertIn("--test video_timeline -- --ignored", ci)
+        self.assertIn("python3 scripts/video_api_fixture.py", ci)
+        fixture = (ROOT / "scripts/video_api_fixture.py").read_text()
+        self.assertIn('os.environ.get("CI") == "true"', fixture)
+        self.assertIn('"tools/list"', fixture)
+
+
 if __name__ == "__main__":
     unittest.main()

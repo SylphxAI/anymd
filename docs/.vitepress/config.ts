@@ -86,6 +86,7 @@ export default defineConfig({
           { text: 'MCP tools', link: '/guide/tools' },
           { text: 'CLI', link: '/guide/cli' },
           { text: 'Python and loaders', link: '/guide/python' },
+          { text: 'Video timelines', link: '/guide/video-timeline' },
           { text: 'Formats', link: '/guide/formats' },
           { text: 'Benchmarks', link: '/guide/benchmarks' },
           { text: 'Migration', link: '/guide/migration' },

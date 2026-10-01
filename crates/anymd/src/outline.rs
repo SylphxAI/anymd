@@ -344,7 +344,15 @@ pub fn render(args: &OutlineArgs, policy: &SourceAccessPolicy) -> Result<String,
         revisions,
         ..Default::default()
     };
-    let opened = Opened::open(&args.source, policy, &options)?;
+    let opened = if let Some(selection) = &args.timeline {
+        let mut metadata_only = selection.clone();
+        metadata_only.caption = false;
+        let evidence =
+            crate::video_request::document(&args.source, &metadata_only, false, None, policy)?;
+        Opened::from_video(&args.source, &evidence)
+    } else {
+        Opened::open(&args.source, policy, &options)?
+    };
     let outline = Outline::build(&opened)?;
     if args.format.as_deref() == Some("tree") {
         Ok(outline.tree())

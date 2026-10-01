@@ -18,6 +18,7 @@ fn fixture(name: &str) -> String {
 
 fn args(name: &str, revisions: Option<&str>) -> ReadArgs {
     ReadArgs {
+        timeline: None,
         source: fixture(name),
         pages: None,
         max_tokens: None,

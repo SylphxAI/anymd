@@ -1340,3 +1340,89 @@ mod tests {
         assert_eq!(ACTIVE_OCR_REQUESTS.load(Ordering::Acquire), 0);
     }
 }
+
+/// Video raster input borrows the same OCR request permit; no PDF-space fiction.
+pub(crate) fn recognize_raster(
+    frame: &anymd_formats::video::timeline::DecodedFrame,
+    engine: crate::ocr_vlm::OcrEngine,
+    deadline: Instant,
+    permit: &OcrRequestPermit,
+) -> Result<crate::video_evidence::RasterObservation, String> {
+    let config = provider_config(Some(engine))?;
+    let remaining = deadline
+        .saturating_duration_since(Instant::now())
+        .as_millis() as u64;
+    if remaining == 0 {
+        return Err("video request deadline exceeded".into());
+    }
+    let mut value = if config.builtin_vlm() {
+        let page = crate::ocr_vlm::recognize_admitted(&frame.png, deadline, permit)?;
+        let mut value = serde_json::to_value(&page).map_err(|e| e.to_string())?;
+        value["words"] = json!(page.regions.iter().map(|r| json!({"text":r.text,"region_type":r.label,"bounding_box":{"left":r.bbox[0],"right":r.bbox[2],"top":frame.metadata.height as f32-r.bbox[1],"bottom":frame.metadata.height as f32-r.bbox[3]}})).collect::<Vec<_>>());
+        value["model_revision"] = json!(crate::ocr_vlm::model_revision());
+        value
+    } else {
+        let stdout = run_provider(
+            &config,
+            &frame.png,
+            0,
+            &frame.metadata.sha256,
+            &[],
+            remaining.min(60_000),
+            200_000,
+        )
+        .map_err(|e| e.message)?;
+        normalize_output(
+            &stdout,
+            200_000,
+            &[],
+            1.0,
+            config.output_format,
+            Some(frame.metadata.height as f64),
+        )
+    };
+    config.stamp_provenance(&mut value);
+    let height = frame.metadata.height as f64;
+    let mut regions = Vec::new();
+    for word in value["words"].as_array().into_iter().flatten() {
+        let bbox = &word["bounding_box"];
+        let (Some(left), Some(right), Some(top), Some(bottom)) = (
+            bbox["left"].as_f64(),
+            bbox["right"].as_f64(),
+            bbox["top"].as_f64(),
+            bbox["bottom"].as_f64(),
+        ) else {
+            continue;
+        };
+        regions.push(crate::video_evidence::RasterRegion {
+            text: word["text"].as_str().unwrap_or("").into(),
+            left,
+            right,
+            top: height - top,
+            bottom: height - bottom,
+            geometry_level: if config.builtin_vlm() {
+                "ocr_region"
+            } else {
+                "ocr_word"
+            }
+            .into(),
+        });
+    }
+    if regions.is_empty() && !value["text"].as_str().unwrap_or("").is_empty() {
+        return Err("OCR text lacks frame geometry".into());
+    }
+    Ok(crate::video_evidence::RasterObservation {
+        provider: if config.builtin_vlm() {
+            "doc-vlm"
+        } else {
+            "command"
+        }
+        .into(),
+        model_revision: value["provenance"]["model_revision"]
+            .as_str()
+            .map(str::to_string),
+        coordinate_space: "frame_pixels_top_left".into(),
+        regions,
+        truncated: value["truncated"].as_bool().unwrap_or(false),
+    })
+}
