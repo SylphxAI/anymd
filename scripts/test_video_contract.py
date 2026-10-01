@@ -29,6 +29,10 @@ class VideoSourceContracts(unittest.TestCase):
         self.assertNotIn("setpts=", BACKEND)
         self.assertNotIn("skip_frame", BACKEND)
 
+    def test_pinned_imagesize_byte_api(self):
+        self.assertIn("imagesize::blob_size(&output.stdout)", BACKEND)
+        self.assertNotIn("imagesize::blob(", BACKEND)
+
     def test_existing_runner_only_and_lower_caps_fail_closed(self):
         self.assertIn("tool::run_bounded", BACKEND)
         self.assertNotIn("Command::new", BACKEND)

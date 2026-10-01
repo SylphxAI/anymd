@@ -778,7 +778,7 @@ pub fn render_frame(
     {
         return Err("decoded frame outside requested interval".into());
     }
-    let size = imagesize::blob(&output.stdout).map_err(|_| "invalid decoded PNG")?;
+    let size = imagesize::blob_size(&output.stdout).map_err(|_| "invalid decoded PNG")?;
     if size.width == 0
         || size.height == 0
         || (size.width as u64) * (size.height as u64) > MAX_FRAME_PIXELS
