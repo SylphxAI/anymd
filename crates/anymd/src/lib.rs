@@ -1,3 +1,4 @@
+pub mod cite_check;
 pub mod cli;
 mod command_provider;
 pub mod discover_compat;
@@ -222,7 +223,7 @@ impl PdfReaderMcp {
     }
 
     #[tool(
-        description = "Deep PDF inspection when Markdown is not enough. operation: inspect (page facts, metadata), render_page (PNG images), extract_regions (crop bounding boxes), ocr_pages / analyze_regions (configured OCR or vision provider), structure (JSON with document map, elements, geometry; profile quality|research adds trust and accessibility reports), compare (page-level diff of sources[0] vs sources[1])."
+        description = "Deep PDF inspection when Markdown is not enough. operation: cite_check (quote/location support, not semantic truth), inspect (page facts, metadata), render_page (PNG images), extract_regions (crop bounding boxes), ocr_pages / analyze_regions (configured OCR or vision provider), structure (JSON with document map, elements, geometry; profile quality|research adds trust and accessibility reports), compare (page-level diff of sources[0] vs sources[1])."
     )]
     pub async fn inspect(
         &self,
@@ -374,6 +375,9 @@ impl PdfReaderMcp {
         args: InspectArgs,
     ) -> Result<rmcp::model::CallToolResult, ErrorData> {
         match args.operation {
+            InspectOperation::CiteCheck => {
+                crate::cite_check::inspect(args, self.source_access.clone()).await
+            }
             InspectOperation::Compare => {
                 let paths: Vec<String> = args
                     .sources
@@ -439,7 +443,9 @@ impl PdfReaderMcp {
                     InspectOperation::ExtractRegions => PdfEvidenceOperation::ExtractRegions,
                     InspectOperation::OcrPages => PdfEvidenceOperation::OcrPages,
                     InspectOperation::AnalyzeRegions => PdfEvidenceOperation::AnalyzeRegions,
-                    InspectOperation::Structure | InspectOperation::Compare => unreachable!(),
+                    InspectOperation::CiteCheck
+                    | InspectOperation::Structure
+                    | InspectOperation::Compare => unreachable!(),
                 };
                 self.pdf_evidence(Parameters(PdfEvidenceArgs {
                     operation,

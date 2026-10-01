@@ -660,8 +660,43 @@ fn normalize_output(
     output
 }
 
+// Existing provider normalization emits bottom-left boxes divided by scale.
+// Recover raster corners and use the actual render inverse, not scale alone.
+fn restore_render_geometry(output: &mut Value, transform: [f64; 6], scale: f64, height: u32) {
+    if let Some(words) = output.get_mut("words").and_then(Value::as_array_mut) {
+        for word in words {
+            let mapped = word
+                .get("bounding_box")
+                .cloned()
+                .and_then(|value| {
+                    serde_json::from_value::<anymd_core::render::BoundingBox>(value).ok()
+                })
+                .and_then(|b| {
+                    anymd_core::render::pdf_box_from_pixel_box(
+                        transform,
+                        anymd_core::render::BoundingBox {
+                            left: b.left * scale,
+                            right: b.right * scale,
+                            bottom: f64::from(height) - b.top * scale,
+                            top: f64::from(height) - b.bottom * scale,
+                        },
+                    )
+                    .ok()
+                });
+            if let Some(b) = mapped {
+                word["bounding_box"] = json!(b);
+            } else if let Some(object) = word.as_object_mut() {
+                object.remove("bounding_box");
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct ReadOcrOptions {
+    pub(crate) engine: Option<crate::ocr_vlm::OcrEngine>,
+    pub(crate) deadline: Option<Instant>,
+    pub(crate) exact_geometry: bool,
     pub(crate) scale: f64,
     pub(crate) max_pages: usize,
     pub(crate) max_pixels_per_page: u64,
@@ -672,6 +707,9 @@ pub(crate) struct ReadOcrOptions {
 impl Default for ReadOcrOptions {
     fn default() -> Self {
         Self {
+            engine: None,
+            deadline: None,
+            exact_geometry: false,
             scale: 2.0,
             max_pages: 5,
             max_pixels_per_page: 16_000_000,
@@ -701,7 +739,7 @@ pub(crate) fn run_read_ocr(
             })
             .collect();
     }
-    let config = match provider_config(None) {
+    let config = match provider_config(options.engine) {
         Ok(config) => config,
         Err(error) => {
             return sources
@@ -744,7 +782,9 @@ pub(crate) fn run_read_ocr(
         }
     };
 
-    let request_deadline = Instant::now() + Duration::from_millis(MAX_REQUEST_OCR_TIMEOUT_MS);
+    let request_deadline = options
+        .deadline
+        .unwrap_or_else(|| Instant::now() + Duration::from_millis(MAX_REQUEST_OCR_TIMEOUT_MS));
     let mut request_budget = RequestOcrBudget::default();
     let mut render_budget = RequestWorkBudget::default();
     let languages = Vec::new();
@@ -789,7 +829,7 @@ pub(crate) fn run_read_ocr(
                 if let Err(error) = request_budget.ensure_available() {
                     return SourceOcrOutcome {
                         source_index: rendered.source_index,
-                        pages: Vec::new(),
+                        pages: if options.exact_geometry { pages } else { Vec::new() },
                         warnings: rendered.warnings,
                         error: Some(error),
                     };
@@ -803,7 +843,7 @@ pub(crate) fn run_read_ocr(
                 if remaining_ms == 0 {
                     return SourceOcrOutcome {
                         source_index: rendered.source_index,
-                        pages: Vec::new(),
+                        pages: if options.exact_geometry { pages } else { Vec::new() },
                         warnings: rendered.warnings,
                         error: Some(format!(
                             "Request exceeds OCR provider time limit of {MAX_REQUEST_OCR_TIMEOUT_MS} milliseconds."
@@ -824,7 +864,7 @@ pub(crate) fn run_read_ocr(
                         let _ = request_budget.charge_failed_provider(error.charge_bytes);
                         return SourceOcrOutcome {
                             source_index: rendered.source_index,
-                            pages: Vec::new(),
+                            pages: if options.exact_geometry { pages } else { Vec::new() },
                             warnings: rendered.warnings,
                             error: Some(error.message),
                         };
@@ -838,13 +878,16 @@ pub(crate) fn run_read_ocr(
                     config.output_format,
                     Some(f64::from(page.height)),
                 );
+                if options.exact_geometry {
+                    restore_render_geometry(&mut normalized, page.pdf_to_pixel, page.scale, page.height);
+                }
                 let output_chars = normalized["text"]
                     .as_str()
                     .map_or(0, |text| text.encode_utf16().count());
                 if let Err(error) = request_budget.charge(stdout.len(), output_chars) {
                     return SourceOcrOutcome {
                         source_index: rendered.source_index,
-                        pages: Vec::new(),
+                        pages: if options.exact_geometry { pages } else { Vec::new() },
                         warnings: rendered.warnings,
                         error: Some(error),
                     };
@@ -861,7 +904,7 @@ pub(crate) fn run_read_ocr(
                     Err(error) => {
                         return SourceOcrOutcome {
                             source_index: rendered.source_index,
-                            pages: Vec::new(),
+                            pages: if options.exact_geometry { pages } else { Vec::new() },
                             warnings: rendered.warnings,
                             error: Some(format!("Failed to normalize OCR provider output: {error}")),
                         }
@@ -1070,6 +1113,18 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cite_check_ocr_uses_rotation_and_cropbox_inverse() {
+        let mut output = json!({"words": [{"text": "word", "bounding_box": {"left":15., "bottom":70., "right":35., "top":100.}}]});
+        restore_render_geometry(&mut output, [0., 2., 2., 0., -120., -100.], 2., 240);
+        assert_eq!(
+            output["words"][0]["bounding_box"],
+            json!({"left":70., "bottom":75., "right":100., "top":95.})
+        );
+        restore_render_geometry(&mut output, [0.; 6], 2., 240);
+        assert!(output["words"][0].get("bounding_box").is_none());
+    }
 
     #[test]
     fn vlm_evidence_keeps_order_boxes_and_layout_confidence_separate() {

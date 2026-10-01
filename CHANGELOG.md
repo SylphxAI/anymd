@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `inspect` operation `cite_check` for deterministic PDF quote and location checks. Exact, case-sensitive matching is the default; optional `whitespace_v1` only collapses and trims whitespace. Results distinguish supported quotes, complete non-matches and insufficient evidence, keep native/OCR geometry provenance, and check source SHA-256 when requested. This checks extracted text at a location, not semantic truth or OCR accuracy.
+
 ## 8.3.0
 
 ### Minor Changes

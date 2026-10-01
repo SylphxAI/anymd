@@ -3,12 +3,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use base64::Engine;
 use anymd_core::render::{
     crop_pixels_for_bounding_box, crop_rendered_page_png_with_limit, BoundingBox, RenderDocument,
     DEFAULT_MAX_RENDER_OUTPUT_BYTES, DEFAULT_MAX_RENDER_PIXELS, DEFAULT_RENDER_SCALE,
 };
 use anymd_core::url_fetch::{cleanup_temp_file, fetch_url_to_temp_file};
+use base64::Engine;
 use rmcp::model::{CallToolResult, ContentBlock};
 use serde_json::{json, Value};
 
@@ -105,6 +105,7 @@ impl MaterializedSource {
 
 #[derive(Debug)]
 pub(crate) struct RenderedOcrPage {
+    pub(crate) pdf_to_pixel: [f64; 6],
     pub(crate) page: u32,
     pub(crate) png: Vec<u8>,
     pub(crate) evidence_id: String,
@@ -288,6 +289,7 @@ pub(crate) fn render_ocr_source(
                 )
                 .map_err(|error| error.message)?;
             pages.push(RenderedOcrPage {
+                pdf_to_pixel: rendered.pdf_to_pixel_transform(),
                 page: rendered.page as u32,
                 png: rendered.png,
                 evidence_id: format!(

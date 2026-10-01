@@ -703,6 +703,8 @@ impl SearchArgs {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum InspectOperation {
+    /// Deterministic quote and location support, not semantic truth.
+    CiteCheck,
     /// Page count, metadata, and per-page facts.
     Inspect,
     /// Render pages to PNG images.
@@ -719,8 +721,54 @@ pub enum InspectOperation {
     Compare,
 }
 
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CiteNormalization {
+    #[default]
+    None,
+    WhitespaceV1,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CiteBoundingBox {
+    pub left: f64,
+    pub bottom: f64,
+    pub right: f64,
+    pub top: f64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Citation {
+    pub id: Option<String>,
+    #[schemars(
+        length(min = 1, max = 4096),
+        description = "Nonempty quote, at most 4096 UTF-16 units; request total at most 64000 units."
+    )]
+    pub quote: String,
+    #[schemars(
+        range(min = 1),
+        description = "One-based physical PDF page, not a printed page label. At most 20 distinct pages per request."
+    )]
+    pub page: u32,
+    /// Bottom-left PDF coordinates, finite and with positive area. No padding.
+    pub bounding_box: CiteBoundingBox,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct InspectArgs {
+    #[schemars(
+        length(min = 1, max = 100),
+        description = "cite_check only: 1–100 quotes with required page and bounding_box; exactly one PDF source."
+    )]
+    pub citations: Option<Vec<Citation>>,
+    pub normalization: Option<CiteNormalization>,
+    #[schemars(
+        length(min = 64, max = 64),
+        description = "cite_check only: expected source SHA-256, hexadecimal."
+    )]
+    pub expected_source_sha256: Option<String>,
     pub operation: InspectOperation,
     pub sources: Vec<PdfEvidenceSource>,
     #[schemars(
