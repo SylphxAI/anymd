@@ -84,6 +84,7 @@ export default defineConfig({
         items: [
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'MCP tools', link: '/guide/tools' },
+          { text: 'Cite-check', link: '/guide/cite-check' },
           { text: 'CLI', link: '/guide/cli' },
           { text: 'Python and loaders', link: '/guide/python' },
           { text: 'Video timelines', link: '/guide/video-timeline' },

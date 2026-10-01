@@ -111,6 +111,56 @@ pub struct RenderedPage {
     pdf_to_pixel: [f64; 6],
 }
 
+impl RenderedPage {
+    /// The actual Hayro affine transform, including rotation and CropBox origin.
+    pub fn pdf_to_pixel_transform(&self) -> [f64; 6] {
+        self.pdf_to_pixel
+    }
+}
+
+/// Inverse of the render owner's transform. Pixel boxes use a top-left origin.
+/// All four corners are projected, so rotated/CropBox pages do not use a
+/// scale-only approximation. Invalid/singular transforms fail closed.
+pub fn pdf_box_from_pixel_box(
+    transform: [f64; 6],
+    bounds: BoundingBox,
+) -> Result<BoundingBox, RenderError> {
+    let [a, b, c, d, e, f] = transform;
+    let determinant = a * d - b * c;
+    if !transform.into_iter().all(f64::is_finite)
+        || !determinant.is_finite()
+        || determinant.abs() < f64::EPSILON
+    {
+        return Err(RenderError::invalid_request("Invalid render transform."));
+    }
+    if ![bounds.left, bounds.bottom, bounds.right, bounds.top]
+        .into_iter()
+        .all(f64::is_finite)
+        || bounds.right <= bounds.left
+        || bounds.top <= bounds.bottom
+    {
+        return Err(RenderError::invalid_request("Invalid pixel bounding box."));
+    }
+    let corners = [
+        (bounds.left, bounds.bottom),
+        (bounds.left, bounds.top),
+        (bounds.right, bounds.bottom),
+        (bounds.right, bounds.top),
+    ];
+    let points = corners.map(|(x, y)| {
+        (
+            (d * (x - e) - c * (y - f)) / determinant,
+            (-b * (x - e) + a * (y - f)) / determinant,
+        )
+    });
+    Ok(BoundingBox {
+        left: points.iter().map(|p| p.0).fold(f64::INFINITY, f64::min),
+        bottom: points.iter().map(|p| p.1).fold(f64::INFINITY, f64::min),
+        right: points.iter().map(|p| p.0).fold(f64::NEG_INFINITY, f64::max),
+        top: points.iter().map(|p| p.1).fold(f64::NEG_INFINITY, f64::max),
+    })
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RenderLimits {
     pub max_pages: usize,
@@ -719,6 +769,56 @@ pub fn crop_rendered_page_region(
 mod tests {
     use super::*;
     use hayro::hayro_interpret::hayro_syntax::DecryptionError;
+
+    #[test]
+    fn cite_check_inverse_matches_real_rotated_cropbox_render() {
+        for rotation in [0, 90, 180, 270] {
+            let rendered = render_pdf_page(
+                fixture_pdf_with_crop_box(rotation, Some("50 60 170 140")),
+                1,
+                2.0,
+                DEFAULT_MAX_RENDER_PIXELS,
+            )
+            .unwrap();
+            let bounds = BoundingBox {
+                left: 70.,
+                bottom: 75.,
+                right: 100.,
+                top: 95.,
+            };
+            let matrix = rendered.pdf_to_pixel_transform();
+            let corners = [
+                (bounds.left, bounds.bottom),
+                (bounds.left, bounds.top),
+                (bounds.right, bounds.bottom),
+                (bounds.right, bounds.top),
+            ]
+            .map(|(x, y)| apply_transform(matrix, x, y));
+            let pixels = BoundingBox {
+                left: corners.iter().map(|p| p.0).fold(f64::INFINITY, f64::min),
+                bottom: corners.iter().map(|p| p.1).fold(f64::INFINITY, f64::min),
+                right: corners
+                    .iter()
+                    .map(|p| p.0)
+                    .fold(f64::NEG_INFINITY, f64::max),
+                top: corners
+                    .iter()
+                    .map(|p| p.1)
+                    .fold(f64::NEG_INFINITY, f64::max),
+            };
+            assert_eq!(pdf_box_from_pixel_box(matrix, pixels).unwrap(), bounds);
+        }
+        assert!(pdf_box_from_pixel_box(
+            [0.; 6],
+            BoundingBox {
+                left: 0.,
+                bottom: 0.,
+                right: 1.,
+                top: 1.
+            }
+        )
+        .is_err());
+    }
 
     fn fixture_pdf(rotation: i32) -> Vec<u8> {
         fixture_pdf_with_crop_box(rotation, None)

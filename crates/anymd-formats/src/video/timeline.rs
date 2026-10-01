@@ -534,7 +534,7 @@ pub fn extract(
         timeline.components.scenes =
             Component::gap("media origin unavailable; detected cuts cannot be aligned");
         timeline.components.subtitles =
-            Component::gap("media origin unavailable; subtitle cues cannot be aligned");
+            Component::gap("media origin unavailable; embedded subtitle cues cannot be aligned");
         return Ok(timeline);
     }
     let end = duration.map_or(options.end_ms, |d| d.min(options.end_ms));

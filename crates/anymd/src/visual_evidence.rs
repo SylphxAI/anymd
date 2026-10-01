@@ -116,6 +116,7 @@ impl MaterializedSource {
 
 #[derive(Debug)]
 pub(crate) struct RenderedOcrPage {
+    pub(crate) pdf_to_pixel: [f64; 6],
     pub(crate) page: u32,
     pub(crate) png: Vec<u8>,
     pub(crate) evidence_id: String,
@@ -299,6 +300,7 @@ pub(crate) fn render_ocr_source(
                 )
                 .map_err(|error| error.message)?;
             pages.push(RenderedOcrPage {
+                pdf_to_pixel: rendered.pdf_to_pixel_transform(),
                 page: rendered.page as u32,
                 png: rendered.png,
                 evidence_id: format!(

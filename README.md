@@ -172,7 +172,7 @@ anymd exposes four tools.
 | **`outline`** | Navigate a heading tree, with node ids and unit/Markdown ranges | `source`, `format` (`json` · `tree`) |
 | **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `revisions` (`markup` · `accept` · `reject`), `transcript`, `download_asr_model` |
 | **`search`** | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto` · `literal` · `ranked`), `glob`, `max_results` |
-| **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect` |
+| **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect`, [`cite_check`](docs/guide/cite-check.md) (quote and location support) |
 
 A `read` answer looks like this:
 
@@ -249,7 +249,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 
 ## anymd Pro
 
-The core stays MIT and free forever. anymd Pro is an optional one-time licence for new operations: video evidence and cite-check. [Details and activation](https://sylphxai.github.io/anymd/pro).
+The anymd core stays free and open source (MIT), forever; nothing that was free before is now paid. anymd Pro (US$29 once) adds exactly two things in 8.4.0: video evidence (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check. Pro funds development. [Details and activation](https://sylphxai.github.io/anymd/pro).
 
 ## Security
 

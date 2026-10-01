@@ -13,7 +13,17 @@ use super::*;
 /// the failure below becomes `Failed to extract PDF text: invalid content
 /// stream (page N)`.
 pub(super) fn validate_page_content_streams(doc: &Document) -> Result<(), TextIndexError> {
+    validate_selected_page_content_streams(doc, None)
+}
+
+pub(super) fn validate_selected_page_content_streams(
+    doc: &Document,
+    selected: Option<&[u32]>,
+) -> Result<(), TextIndexError> {
     for (page_number, object_id) in doc.get_pages() {
+        if selected.is_some_and(|pages| !pages.contains(&page_number)) {
+            continue;
+        }
         let content = doc.get_page_content(object_id).map_err(|err| {
             TextIndexError::extraction_failed(format!(
                 "Failed to extract PDF text: invalid content stream (page {page_number}): {err}"

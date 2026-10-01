@@ -103,11 +103,7 @@ fn find_token(env: Option<String>, file: Option<PathBuf>) -> Option<String> {
 
 /// The active licence, or `None` when no valid token is configured.
 pub fn current_license() -> Option<ProLicense> {
-    current_license_with(
-        std::env::var(TOKEN_ENV).ok(),
-        token_path(),
-        PRO_PUBLIC_KEYS,
-    )
+    current_license_with(std::env::var(TOKEN_ENV).ok(), token_path(), PRO_PUBLIC_KEYS)
 }
 
 fn current_license_with(
@@ -142,7 +138,7 @@ pub fn require_pro(feature: &str) -> Result<(), ProRequired> {
     require_pro_with(feature, current_license().is_some())
 }
 
-fn require_pro_with(feature: &str, active: bool) -> Result<(), ProRequired> {
+pub(crate) fn require_pro_with(feature: &str, active: bool) -> Result<(), ProRequired> {
     if active {
         Ok(())
     } else {
@@ -150,6 +146,14 @@ fn require_pro_with(feature: &str, active: bool) -> Result<(), ProRequired> {
             feature: feature.to_string(),
         })
     }
+}
+
+/// The normal (non-error) MCP tool result an unlicensed Pro call returns, so
+/// the agent relays the message to the user.
+pub fn required_result(required: &ProRequired) -> rmcp::model::CallToolResult {
+    rmcp::model::CallToolResult::success(vec![rmcp::model::ContentBlock::text(
+        required.to_string(),
+    )])
 }
 
 /// `anymd pro status | activate <token>`; returns the exit code.
@@ -290,7 +294,11 @@ mod tests {
         let k = [public(&key(1))];
         let keys: Vec<&str> = k.iter().map(String::as_str).collect();
         for t in ["", "abc", "a.b", "!!.!!", "e30.AAAA"] {
-            assert_eq!(verify_token_with(t, &keys), Err(LicenseError::Malformed), "{t}");
+            assert_eq!(
+                verify_token_with(t, &keys),
+                Err(LicenseError::Malformed),
+                "{t}"
+            );
         }
     }
 
@@ -319,7 +327,9 @@ mod tests {
     #[test]
     fn require_pro_message() {
         assert!(require_pro_with("Video evidence", true).is_ok());
-        let message = require_pro_with("Cite-check", false).unwrap_err().to_string();
+        let message = require_pro_with("Cite-check", false)
+            .unwrap_err()
+            .to_string();
         assert_eq!(
             message,
             "Cite-check is part of anymd Pro. Learn more and get it: https://sylphxai.github.io/anymd/pro"

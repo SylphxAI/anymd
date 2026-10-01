@@ -13,6 +13,7 @@ use pdf_extract::{
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+pub mod cite_check;
 mod content_streams;
 mod search;
 
@@ -981,6 +982,57 @@ pub(crate) fn read_pdf_info(doc: &Document) -> PdfInfo {
         is_collection_present,
         is_signatures_present,
     }
+}
+
+/// Extract only the bounded physical pages requested by cite-check. A page
+/// failure stays local so supported matches on other pages remain useful.
+pub fn extract_cite_pages(
+    path: &Path,
+    max_file_bytes: u64,
+    pages: &[u32],
+) -> Result<BTreeMap<u32, Result<ExtractedPageText, TextIndexError>>, TextIndexError> {
+    if pages.is_empty() || pages.len() > 20 || pages.contains(&0) {
+        return Err(TextIndexError::invalid_params(
+            "cite_check needs 1–20 physical pages.",
+        ));
+    }
+    validate_pdf_path(path, max_file_bytes)?;
+    let mut doc =
+        Document::load(path).map_err(|e| TextIndexError::extraction_failed(e.to_string()))?;
+    if doc.is_encrypted() {
+        doc.decrypt("")
+            .map_err(|e| TextIndexError::extraction_failed(e.to_string()))?;
+    }
+    let mut segment_count = 0;
+    Ok(pages
+        .iter()
+        .map(|&page| {
+            let extracted = (|| {
+                validate_selected_page_content_streams(&doc, Some(&[page]))?;
+                let mut output = TextItemOutput::default();
+                catch_unwind(AssertUnwindSafe(|| {
+                    pdf_extract::output_doc_page(&doc, &mut output, page)
+                }))
+                .map_err(|_| TextIndexError::extraction_failed("Malformed PDF page."))?
+                .map_err(|e| TextIndexError::extraction_failed(e.to_string()))?;
+                let parts = output
+                    .pages
+                    .pop()
+                    .ok_or_else(|| TextIndexError::extraction_failed("Missing physical page."))?;
+                let positioned_items = normalize_page_text_parts(parts, &mut segment_count)?;
+                let items = positioned_items
+                    .iter()
+                    .map(|i| i.text.clone())
+                    .collect::<Vec<_>>();
+                Ok(ExtractedPageText {
+                    text: items.join("\n"),
+                    items,
+                    positioned_items,
+                })
+            })();
+            (page, extracted)
+        })
+        .collect())
 }
 
 pub fn extract_pdf_text(

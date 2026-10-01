@@ -85,7 +85,8 @@ fn materialize(
 struct Work {
     path: PathBuf,
     source_hash: String,
-    sidecars: Vec<(String, String)>,
+    /// Each sidecar load outcome; a load error is a subtitles gap, not a failed request.
+    sidecars: Vec<(String, Result<String, String>)>,
     selection: Option<TimelineSelection>,
     timestamps: Option<Vec<u64>>,
     transcript: bool,
@@ -242,7 +243,7 @@ fn execute(work: Work) -> Result<Value, String> {
     if work.transcript {
         if let Some(clock) = timeline.clock.as_ref() {
             match anymd_formats::video::transcript_window(&work.path, clock, &options, deadline) {
-                Ok(cues) => timeline::attach_cues(&mut timeline, cues, true)?,
+                Ok(cues) => apply_transcript_cues(&mut timeline, cues),
                 Err(message) => timeline.components.transcript = timeline::Component::gap(message),
             }
         } else {
@@ -262,20 +263,82 @@ fn execute(work: Work) -> Result<Value, String> {
     }
     serde_json::to_value(evidence).map_err(|e| e.to_string())
 }
-/// A subtitle file error is a gap on that component, never a failed request.
-fn attach_sidecars(timeline: &mut timeline::Timeline, sidecars: &[(String, String)]) {
-    for (name, text) in sidecars {
-        let attached = timeline::subtitle_cues(&timeline::SubtitleTrack {
-            id: name,
-            text,
-            playback_offset_ms: 0,
-        })
-        .and_then(|cues| timeline::attach_cues(timeline, cues, false));
-        if let Err(reason) = attached {
-            timeline.components.subtitles =
-                timeline::Component::partial(format!("subtitle file {name}: {reason}"));
+fn apply_transcript_cues(timeline: &mut timeline::Timeline, cues: Vec<timeline::Cue>) {
+    if let Err(reason) = timeline::attach_cues(timeline, cues, true) {
+        timeline.components.transcript =
+            timeline::Component::gap(format!("transcript cues rejected: {reason}"));
+    }
+}
+
+/// A subtitle file error (load or parse) is a gap on that component, never a
+/// failed request. Reasons accumulate and the worse status is kept.
+fn attach_sidecars(
+    timeline: &mut timeline::Timeline,
+    sidecars: &[(String, Result<String, String>)],
+) {
+    for (name, loaded) in sidecars {
+        let attached = loaded.as_ref().map_err(String::clone).and_then(|text| {
+            let cues = timeline::subtitle_cues(&timeline::SubtitleTrack {
+                id: name,
+                text,
+                playback_offset_ms: 0,
+            })?;
+            let any = !cues.is_empty();
+            timeline::attach_cues(timeline, cues, false)?;
+            Ok(any)
+        });
+        match attached {
+            Err(reason) => note_subtitle_gap(timeline, format!("subtitle file {name}: {reason}")),
+            Ok(true)
+                if timeline
+                    .clock
+                    .as_ref()
+                    .is_some_and(|c| c.origin_pts_us.is_none()) =>
+            {
+                // Sidecar cues carry their own playback clock; only embedded
+                // tracks and cuts need the unknown media origin.
+                let existing = timeline.components.subtitles.reason.take();
+                timeline.components.subtitles = timeline::Component::partial(match existing {
+                    Some(reason) => format!(
+                        "{reason}; subtitle file {name} cues are attached on their own playback clock"
+                    ),
+                    None => format!("subtitle file {name} cues are attached on their own playback clock"),
+                });
+            }
+            Ok(_) => {}
         }
     }
+}
+
+fn note_subtitle_gap(timeline: &mut timeline::Timeline, reason: String) {
+    let current = &timeline.components.subtitles;
+    let status = if current.status == timeline::Status::Unavailable {
+        timeline::Status::Unavailable
+    } else {
+        timeline::Status::Partial
+    };
+    let reason = match &current.reason {
+        Some(existing) => format!("{existing}; {reason}"),
+        None => reason,
+    };
+    timeline.components.subtitles = timeline::Component {
+        status,
+        reason: Some(reason),
+    };
+}
+
+/// Read one sidecar; every failure is a reason string, not a request error.
+fn load_sidecar(path: &Path, policy: &SourceAccessPolicy) -> Result<String, String> {
+    let admitted = policy.admit_path(&path.to_string_lossy())?;
+    let file = std::fs::File::open(admitted).map_err(|e| e.to_string())?;
+    let mut bytes = Vec::new();
+    file.take(4 * 1024 * 1024 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|e| e.to_string())?;
+    if bytes.len() > 4 * 1024 * 1024 {
+        return Err("exceeds the 4 MiB sidecar limit".into());
+    }
+    String::from_utf8(bytes).map_err(|_| "is not valid UTF-8".into())
 }
 
 /// Only a fully complete manifest is cached; the key has no deadline, so a
@@ -352,16 +415,7 @@ fn request(
         for extension in ["srt", "vtt"] {
             let sidecar = Path::new(source).with_extension(extension);
             if sidecar.exists() {
-                let admitted = policy.admit_path(&sidecar.to_string_lossy())?;
-                let file = std::fs::File::open(admitted).map_err(|e| e.to_string())?;
-                let mut bytes = Vec::new();
-                file.take(4 * 1024 * 1024 + 1)
-                    .read_to_end(&mut bytes)
-                    .map_err(|e| e.to_string())?;
-                let text = String::from_utf8(bytes).map_err(|e| e.to_string())?;
-                if text.len() > 4 * 1024 * 1024 {
-                    return Err("subtitle sidecar exceeds 4 MiB".into());
-                }
+                let text = load_sidecar(&sidecar, policy);
                 sidecars.push((extension.into(), text));
             }
         }
@@ -568,9 +622,12 @@ mod tests {
             &[
                 (
                     "srt".into(),
-                    "1\n00:00:01,000 --> 00:00:01,000\nzero".into(),
+                    Ok("1\n00:00:01,000 --> 00:00:01,000\nzero".into()),
                 ),
-                ("vtt".into(), "WEBVTT\n\n00:00.100 --> 00:00.200\nok".into()),
+                (
+                    "vtt".into(),
+                    Ok("WEBVTT\n\n00:00.100 --> 00:00.200\nok".into()),
+                ),
             ],
         );
         let subtitles = &evidence.timeline.components.subtitles;
@@ -584,10 +641,92 @@ mod tests {
         evidence.timeline.components.subtitles = timeline::Component::gap("embedded unavailable");
         attach_sidecars(
             &mut evidence.timeline,
-            &[("vtt".into(), "WEBVTT\n\n00:00.300 --> 00:00.400\nok".into())],
+            &[(
+                "vtt".into(),
+                Ok("WEBVTT\n\n00:00.300 --> 00:00.400\nok".into()),
+            )],
         );
         assert_eq!(
             evidence.timeline.components.subtitles.status,
+            timeline::Status::Unavailable
+        );
+    }
+    #[test]
+    fn unreadable_sidecars_are_gaps_and_the_request_survives() {
+        let dir = tempfile::tempdir().unwrap();
+        let policy = SourceAccessPolicy::unrestricted();
+        let latin1 = dir.path().join("movie.srt");
+        std::fs::write(&latin1, b"1\n00:00:01,000 --> 00:00:02,000\ncaf\xe9\n").unwrap();
+        let reason = load_sidecar(&latin1, &policy).unwrap_err();
+        assert!(reason.contains("UTF-8"), "{reason}");
+        let big = dir.path().join("big.srt");
+        std::fs::write(&big, vec![b'a'; 4 * 1024 * 1024 + 1]).unwrap();
+        assert!(load_sidecar(&big, &policy).unwrap_err().contains("4 MiB"));
+        assert!(load_sidecar(dir.path(), &policy).is_err());
+        let mut evidence = crate::video_evidence::tests::fixture();
+        evidence.timeline.cues.clear();
+        evidence.timeline.components.subtitles = timeline::Component::not_requested();
+        attach_sidecars(
+            &mut evidence.timeline,
+            &[
+                ("srt".into(), Err(reason)),
+                ("vtt".into(), Err("is a directory".into())),
+            ],
+        );
+        let subtitles = &evidence.timeline.components.subtitles;
+        assert_eq!(subtitles.status, timeline::Status::Partial);
+        let text = subtitles.reason.as_deref().unwrap();
+        assert!(text.contains("subtitle file srt") && text.contains("subtitle file vtt"));
+    }
+    #[test]
+    fn sidecar_errors_keep_the_worse_status_and_earlier_reasons() {
+        let mut evidence = crate::video_evidence::tests::fixture();
+        evidence.timeline.components.subtitles = timeline::Component::gap("embedded unavailable");
+        attach_sidecars(&mut evidence.timeline, &[("srt".into(), Err("bad".into()))]);
+        let subtitles = &evidence.timeline.components.subtitles;
+        assert_eq!(subtitles.status, timeline::Status::Unavailable);
+        let text = subtitles.reason.as_deref().unwrap();
+        assert!(text.contains("embedded unavailable") && text.contains("subtitle file srt: bad"));
+    }
+    #[test]
+    fn unknown_origin_with_sidecar_cues_reports_what_is_attached() {
+        let mut evidence = crate::video_evidence::tests::fixture();
+        evidence.timeline.cues.clear();
+        evidence.timeline.clock.as_mut().unwrap().origin_pts_us = None;
+        evidence.timeline.components.subtitles = timeline::Component::gap(
+            "media origin unavailable; embedded subtitle cues cannot be aligned",
+        );
+        attach_sidecars(
+            &mut evidence.timeline,
+            &[(
+                "vtt".into(),
+                Ok("WEBVTT\n\n00:00.300 --> 00:00.400\nok".into()),
+            )],
+        );
+        let subtitles = &evidence.timeline.components.subtitles;
+        assert_eq!(subtitles.status, timeline::Status::Partial);
+        let text = subtitles.reason.as_deref().unwrap();
+        assert!(
+            text.contains("embedded") && text.contains("own playback clock"),
+            "{text}"
+        );
+        assert!(!evidence.timeline.cues.is_empty());
+    }
+    #[test]
+    fn invalid_transcript_cue_timing_is_a_gap_not_an_error() {
+        let mut evidence = crate::video_evidence::tests::fixture();
+        let bad = timeline::Cue {
+            track: "asr".into(),
+            start_ms: 5,
+            end_ms: 5,
+            text: "x".into(),
+            timing: "segment".into(),
+            provider: "t".into(),
+        };
+        assert!(timeline::attach_cues(&mut evidence.timeline, vec![bad.clone()], true).is_err());
+        apply_transcript_cues(&mut evidence.timeline, vec![bad]);
+        assert_eq!(
+            evidence.timeline.components.transcript.status,
             timeline::Status::Unavailable
         );
     }
