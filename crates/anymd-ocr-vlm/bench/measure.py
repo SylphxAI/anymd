@@ -42,8 +42,9 @@ def main():
     for row in selected:
         started = time.monotonic()
         peak = 0
-        with open(Path(args.out).with_suffix('.stdout'), 'w+', encoding='utf-8') as output:
-            process = subprocess.Popen([args.binary, '__ocr-vlm-worker', str(pages / 'pages' / row['file']), '4096'], stdout=output)
+        with open(Path(args.out).with_suffix('.stdout'), 'w+', encoding='utf-8') as output, \
+                open(Path(args.out).with_suffix('.stderr'), 'w+', encoding='utf-8') as errors:
+            process = subprocess.Popen([args.binary, '__ocr-vlm-worker', str(pages / 'pages' / row['file']), '4096'], stdout=output, stderr=errors)
             tracked = psutil.Process(process.pid)
             while process.poll() is None:
                 try:
@@ -59,22 +60,29 @@ def main():
                         process.wait()
             output.seek(0)
             raw = output.read()
+            errors.seek(0)
+            error = errors.read()[-8192:]
         evidence = {}
         try:
             evidence = json.loads(raw)
             text = evidence['text']
         except (ValueError, KeyError):
             text = ''
-        results.append({'file': row['file'], 'ok': process.returncode == 0, 'seconds': time.monotonic() - started,
-                        'peak_rss_mib': peak / 1048576, 'cer': cer(row['text'], text),
+        ok = process.returncode == 0 and isinstance(evidence.get('text'), str)
+        results.append({'file': row['file'], 'ok': ok, 'exit_code': process.returncode,
+                        'error': error if not ok else None, 'seconds': time.monotonic() - started,
+                        'peak_rss_mib': peak / 1048576, 'cer': cer(row['text'], text) if ok else None,
                         'stopped_regions': evidence.get('truncated', 0),
                         'device': evidence.get('device'), 'model_revision': evidence.get('model_revision'),
                         'quantization': evidence.get('quantization')})
-    summary = {'pages': results, 'median_seconds': statistics.median(r['seconds'] for r in results),
-               'p90_seconds': sorted(r['seconds'] for r in results)[math.ceil(0.9 * len(results)) - 1],
+    complete = all(r['ok'] for r in results)
+    summary = {'pages': results, 'status': 'measured' if complete else 'failed',
+               'requested_quantization': os.environ.get('ANYMD_OCR_QUANTIZATION', 'none'),
+               'median_seconds': statistics.median(r['seconds'] for r in results) if complete else None,
+               'p90_seconds': sorted(r['seconds'] for r in results)[math.ceil(0.9 * len(results)) - 1] if complete else None,
                'head_sha': os.environ.get('GITHUB_SHA'),
-               'peak_rss_mib': max(r['peak_rss_mib'] for r in results),
-               'cer_mean': statistics.mean(r['cer'] for r in results),
+               'peak_rss_mib': max(r['peak_rss_mib'] for r in results) if complete else None,
+               'cer_mean': statistics.mean(r['cer'] for r in results) if complete else None,
                'pages_ok': sum(r['ok'] for r in results), 'binary_bytes': Path(args.binary).stat().st_size,
                'includes_model_load': True, 'rss_sampling_interval_ms': 100,
                'anymd_version': subprocess.check_output([args.binary, 'version'], text=True).strip()}

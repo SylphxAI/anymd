@@ -195,6 +195,31 @@ pinned by SHA-256. Generated from `bench/corpus.json`:
 
 <!-- corpus:end -->
 
+## Local doc-VLM resource measurements
+
+[Production worker run 36785961923](https://github.com/SylphxAI/anymd/actions/runs/36785961923), commit `befd305`, measured ten synthetic pages: English, Traditional Chinese and Simplified Chinese clean text, scans and photos, plus a mixed-language page. Each page starts a fresh worker, so timing includes model loading and process overhead. These are not OmniDocBench scores and are not directly comparable to the earlier 50-page spike.
+
+| Target / device | Decoder weights | Median seconds/page | p90 seconds/page | Peak process RSS MiB | Mean CER |
+|---|---|---|---|---|---|
+| Linux x64 / CPU | none | 81.4 | 93.4 | 5320 | 1.90% |
+| Linux x64 / CPU | q8 | 229.7 | 280.1 | 4378 | 1.96% |
+| Linux x64 / CPU | q4 | 207.3 | 254.6 | 4186 | 2.41% |
+| Linux arm64 / CPU | none | 108.2 | 129.5 | 5386 | 1.90% |
+| Linux arm64 / CPU | q8 | 59.8 | 73.4 | 4367 | 1.98% |
+| Linux arm64 / CPU | q4 | 62.4 | 77.3 | 4202 | 1.94% |
+| macOS arm64 / Metal | none | 38.9 | 47.8 | 3763 | 1.88% |
+| macOS arm64 / CPU | q8 | 69.4 | 94.8 | 4477 | 1.94% |
+| macOS arm64 / CPU | q4 | 89.4 | 110.4 | 4458 | 2.41% |
+| Windows x64 / CPU | none | 101.8 | 127.6 | 5358 | 1.90% |
+| Windows x64 / CPU | q8 | 254.2 | 338.0 | 4348 | 1.96% |
+| Windows x64 / CPU | q4 | 230.6 | 285.7 | 4175 | 2.47% |
+
+All twelve configurations converted all ten pages. Quantization applies only to the decoder's linear weights; vision, embeddings and layout stay unquantized. q8/q4 reduce peak RSS on Linux and Windows, but slow x64 CPUs substantially. They remain experimental, CPU-only options, not the default. macOS quantized rows use CPU rather than Metal. RSS was sampled every 100 ms (Windows uses the process peak working set), so it is not a whole-system or GPU-memory measurement.
+
+The default remains unquantized. Automatic OCR never downloads models: without explicit setup it uses tesseract; `anymd setup ocr` opts into installed local models, including slower CPU inference. Native PDF text keeps its existing extraction path. The VLM binary adds 7.5 MiB on Linux x64, 6.1 MiB on Linux arm64, 6.9 MiB on macOS arm64 and 8.2 MiB on Windows x64 compared with the no-VLM build.
+
+The Windows job passed tests, both binary builds and all measurements, then reached its two-hour limit while saving the Rust cache. Its measurements were uploaded before cancellation; the cancelled job itself is not a green release-target check.
+
 ## OmniDocBench v1.6
 
 [OmniDocBench](https://github.com/opendatalab/OmniDocBench) (CVPR 2025) is the public benchmark for turning page images into Markdown: 1,651 pages, scored on text, display formulas, tables, and reading order. We ran anymd on all 1,651 pages with the official end2end evaluator, pinned by commit. anymd read each page image with `tesseract`, the way it reads any scan or image: it returns the recognised text and nothing else. There is no layout model and no table, formula, or reading-order recognition, and tesseract runs with its default English model.
