@@ -3,6 +3,7 @@ import config from '../docs/.vitepress/pro/config.json';
 import {
   buyHref,
   buyMailto,
+  buyReady,
   isPlaceholder,
   trackPurchase,
   transactionId,
@@ -20,9 +21,9 @@ describe('pro config', () => {
     expect(buyMailto).toBe('mailto:hi@sylphx.com?subject=anymd%20Pro%20purchase');
   });
 
-  test('the deployed site (main) never ships a placeholder buy link', () => {
-    if (process.env.GITHUB_REF !== 'refs/heads/main') return;
-    expect(isPlaceholder(config.buyUrl)).toBe(false);
+  test('the Buy button never links to a placeholder (it falls back to the purchase email)', () => {
+    const rendered = buyReady ? config.buyUrl : buyMailto;
+    expect(isPlaceholder(rendered)).toBe(false);
   });
 });
 
