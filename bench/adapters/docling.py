@@ -22,4 +22,6 @@ def command(src, out_dir):
 
 def read_output(stdout, out_dir):
     files = sorted(Path(out_dir).glob("*.md"))
-    return files[0].read_text("utf-8") if files else ""
+    if len(files) != 1:
+        raise RuntimeError(f"docling expected one Markdown export, found {len(files)}")
+    return files[0].read_text("utf-8")

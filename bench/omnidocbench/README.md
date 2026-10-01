@@ -16,8 +16,9 @@ directory runs anymd on it, so its numbers can sit next to theirs. The results a
   are no source PDFs to run anymd's native text-layer engine on, so this benchmark has no PDF number. (AgentDocBench
   in [`../README.md`](../README.md) is the benchmark that exercises the PDF engine.)
 - **Adapter step.** anymd prints an image as a metadata table (format, size, EXIF) followed by a `## Text (OCR)`
-  section. `harness.py` keeps only the OCR text; the metadata table is not page content. A page where anymd fails or
-  finds no text gets an empty file and scores as such.
+  section. `harness.py` keeps only the OCR text; the metadata table is not page content. A successful OCR section
+  with no text gets an empty prediction and is scored. Conversion errors, timeouts or output without the OCR
+  section are recorded in timing diagnostics and make the prediction stage exit nonzero; they are not valid scores.
 
 ## Pinned versions
 
@@ -49,7 +50,8 @@ gh workflow run omnidocbench.yml --ref main -f limit=40   # smoke test: the firs
 ```
 
 The [OmniDocBench workflow](../../.github/workflows/omnidocbench.yml) builds anymd in release mode, converts the
-pages in four shards, then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
+pages in four shards, validates every planned page, shard, prediction digest and successful timing outcome against
+frozen ground truth, then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
 JSON files, the config it ran with, and per-page anymd timings). The job summary shows the headline scores, computed from the metric files with the plain formula; the published figures use the evaluator's own `run_summary.json`, whose per-metric page counts differ slightly.
 `summarize.py` computes Overall as the leaderboard does: ((1 - text edit distance) x 100 + table TEDS + formula CDM) / 3.
 
