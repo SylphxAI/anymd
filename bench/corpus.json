@@ -16,7 +16,8 @@
    "license_evidence": "https://arxiv.org/abs/2403.03109v1 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2403.03109&metadataPrefix=arXiv <license>",
    "attribution": "Emily van Huffelen, Roel Brouwer, Marjan van den Akker (Utrecht University) (arXiv:2403.03109v1)",
    "ocr": false,
-   "challenge": "single-column OR paper with 9 numeric tables incl. row-grouped tables with merged first-column labels, some math"
+   "challenge": "single-column OR paper with 9 numeric tables incl. row-grouped tables with merged first-column labels, some math",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/paper-evsched.pdf"
   },
   {
    "id": "paper-rankone",
@@ -33,7 +34,8 @@
    "license_evidence": "https://arxiv.org/abs/2201.02191v2 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2201.02191&metadataPrefix=arXiv <license>",
    "attribution": "Khazhgali Kozhasov, Josué Tonelli-Cueto (arXiv:2201.02191v2)",
    "ocr": false,
-   "challenge": "single-column, very math-heavy (27 pp of propositions, proofs, multi-line display equations, legacy Type1 math fonts); no tables"
+   "challenge": "single-column, very math-heavy (27 pp of propositions, proofs, multi-line display equations, legacy Type1 math fonts); no tables",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/paper-rankone.pdf"
   },
   {
    "id": "paper-ulam",
@@ -50,7 +52,8 @@
    "license_evidence": "https://arxiv.org/abs/2403.02276v1 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2403.02276&metadataPrefix=arXiv <license>",
    "attribution": "Pat Devlin, Leo Douhovnikoff (Swarthmore College) (arXiv:2403.02276v1)",
    "ocr": false,
-   "challenge": "single-column combinatorics paper: theorems/proofs, display math, a math-symbol table (∉, ∪, \\) with double rules"
+   "challenge": "single-column combinatorics paper: theorems/proofs, display math, a math-symbol table (∉, ∪, \\) with double rules",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/paper-ulam.pdf"
   },
   {
    "id": "twocol-bygpt5",
@@ -67,7 +70,8 @@
    "license_evidence": "https://arxiv.org/abs/2212.10474v2 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2212.10474&metadataPrefix=arXiv <license>",
    "attribution": "Jonas Belouadi, Steffen Eger (arXiv:2212.10474v2)",
    "ocr": false,
-   "challenge": "ACL two-column; small-caps model names, tables with ✓/✗ marks and row spans, figures interleaved between columns"
+   "challenge": "ACL two-column; small-caps model names, tables with ✓/✗ marks and row spans, figures interleaved between columns",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/twocol-bygpt5.pdf"
   },
   {
    "id": "twocol-smile",
@@ -84,7 +88,8 @@
    "license_evidence": "https://arxiv.org/abs/2210.04870v3 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2210.04870&metadataPrefix=arXiv <license>",
    "attribution": "Miao Peng, Ben Liu, Qianqian Xie, Wenjie Xu, Hua Wang, Min Peng (arXiv:2210.04870v3)",
    "ocr": false,
-   "challenge": "EMNLP-Findings two-column; column-spanning tables, inline/display math, large figure on page 1 whose labels pollute the text layer"
+   "challenge": "EMNLP-Findings two-column; column-spanning tables, inline/display math, large figure on page 1 whose labels pollute the text layer",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/twocol-smile.pdf"
   },
   {
    "id": "twocol-uscore",
@@ -101,7 +106,8 @@
    "license_evidence": "https://arxiv.org/abs/2202.10062v3 (license link http://creativecommons.org/licenses/by/4.0/); confirmed via https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:2202.10062&metadataPrefix=arXiv <license>",
    "attribution": "Jonas Belouadi, Steffen Eger (arXiv:2202.10062v3)",
    "ocr": false,
-   "challenge": "EACL two-column; wide multi-group results tables with subscript/superscript metric names, figures with scattered labels"
+   "challenge": "EACL two-column; wide multi-group results tables with subscript/superscript metric names, figures with scattered labels",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/twocol-uscore.pdf"
   },
   {
    "id": "report-crs-dod-approps",
@@ -118,7 +124,8 @@
    "license_evidence": "In-document disclaimer (last page): 'CRS Reports, as a work of the United States Government, are not subject to copyright protection in the United States.'",
    "attribution": "Congressional Research Service (Cameron M. Keys)",
    "ocr": false,
-   "challenge": "report with table of contents duplicating headings, heavy footnotes on every page, and a table with 7 stacked multi-line column heads, wrapped row labels, italic subset rows and superscript footnote letters"
+   "challenge": "report with table of contents duplicating headings, heavy footnotes on every page, and a table with 7 stacked multi-line column heads, wrapped row labels, italic subset rows and superscript footnote letters",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/report-crs-dod-approps.pdf"
   },
   {
    "id": "report-plz",
@@ -135,7 +142,8 @@
    "license_evidence": "Work of the U.S. Access Board, a US federal agency (17 U.S.C. 105)",
    "attribution": "U.S. Access Board",
    "ocr": false,
-   "challenge": "designed guide: icons, photo with caption, labelled diagram with callout boxes in two columns, Q&A section, running headers"
+   "challenge": "designed guide: icons, photo with caption, labelled diagram with callout boxes in two columns, Q&A section, running headers",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/report-plz.pdf"
   },
   {
    "id": "fed-h8",
@@ -152,7 +160,8 @@
    "license_evidence": "Work of the Board of Governors of the Federal Reserve System, a US federal agency (17 U.S.C. 105); https://www.federalreserve.gov/disclaimer.htm",
    "attribution": "Board of Governors of the Federal Reserve System",
    "ocr": false,
-   "challenge": "22 pages of dense landscape statistical tables (16 columns), wrapped row labels, line-number column, superscript footnote markers, two-line column heads"
+   "challenge": "22 pages of dense landscape statistical tables (16 columns), wrapped row labels, line-number column, superscript footnote markers, two-line column heads",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/fed-h8.pdf"
   },
   {
    "id": "fin-bls-realer",
@@ -169,7 +178,8 @@
    "license_evidence": "https://www.bls.gov/opub/copyright-information.htm (BLS material is in the public domain); US federal work, 17 U.S.C. 105",
    "attribution": "U.S. Bureau of Labor Statistics",
    "ocr": false,
-   "challenge": "leader-dot tables with section rows and superscript footnotes, bar charts whose data labels spill into text, two-column technical note"
+   "challenge": "leader-dot tables with section rows and superscript footnotes, bar charts whose data labels spill into text, two-column technical note",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/fin-bls-realer.pdf"
   },
   {
    "id": "fin-census-income",
@@ -186,7 +196,8 @@
    "license_evidence": "US federal work (17 U.S.C. 105), U.S. Census Bureau publication; landing page https://www.census.gov/library/publications/2025/acs/acsbr-025.html",
    "attribution": "U.S. Census Bureau (Gloria G. Guzman)",
    "ocr": false,
-   "challenge": "designed multi-column brief (2-3 columns) with shaded definition sidebars and text box, maps/charts, three appendix tables with two-level headers and leader dots (53-row state table)"
+   "challenge": "designed multi-column brief (2-3 columns) with shaded definition sidebars and text box, maps/charts, three appendix tables with two-level headers and leader dots (53-row state table)",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/fin-census-income.pdf"
   },
   {
    "id": "invoice-borderless",
@@ -203,7 +214,8 @@
    "license_evidence": "https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT)",
    "attribution": "Microsoft Corporation (markitdown test files)",
    "ocr": false,
-   "challenge": "borderless sparse table with split rows and empty cells, second ruled table after a page break, chart image"
+   "challenge": "borderless sparse table with split rows and empty cells, second ruled table after a page break, chart image",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/invoice-borderless.pdf"
   },
   {
    "id": "form-1040es",
@@ -220,7 +232,8 @@
    "license_evidence": "IRS form, US federal government work (17 U.S.C. 105)",
    "attribution": "Internal Revenue Service",
    "ocr": false,
-   "challenge": "fillable package (113 fields incl. payment vouchers), two-column instructions, standard-deduction chart, side-by-side tax rate schedules with multi-level headers, worksheets with dot leaders"
+   "challenge": "fillable package (113 fields incl. payment vouchers), two-column instructions, standard-deduction chart, side-by-side tax rate schedules with multi-level headers, worksheets with dot leaders",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/form-1040es.pdf"
   },
   {
    "id": "form-w4",
@@ -237,7 +250,8 @@
    "license_evidence": "IRS form, US federal government work (17 U.S.C. 105)",
    "attribution": "Internal Revenue Service",
    "ocr": false,
-   "challenge": "fillable form (29 fields), step boxes with dot leaders, two-column instructions page 2, three 13-column numeric tax tables with spanning header on page 4"
+   "challenge": "fillable form (29 fields), step boxes with dot leaders, two-column instructions page 2, three 13-column numeric tax tables with spanning header on page 4",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/form-w4.pdf"
   },
   {
    "id": "irs-w9",
@@ -254,7 +268,8 @@
    "license_evidence": "IRS form, US federal government work (17 U.S.C. 105); https://www.irs.gov/privacy-disclosure/irs-privacy-policy",
    "attribution": "Internal Revenue Service",
    "ocr": false,
-   "challenge": "fillable form (AcroForm/XFA, 23 fields), dense form grid page 1, two-column instructions, boxed two-column tables with bullets, footnote markers"
+   "challenge": "fillable form (AcroForm/XFA, 23 fields), dense form grid page 1, two-column instructions, boxed two-column tables with bullets, footnote markers",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/irs-w9.pdf"
   },
   {
    "id": "scan-nasa-budget",
@@ -271,7 +286,8 @@
    "license_evidence": "https://www.eisenhowerlibrary.gov/research/online-documents (\"All of these items are in the public domain\"); authored by US federal government employees in the course of duty (17 U.S.C. 105)",
    "attribution": "Jesse L. Mitchell (Office of the Special Assistant for Science and Technology) / Dwight D. Eisenhower Presidential Library, NARA",
    "ocr": true,
-   "challenge": "image-only typed scan on blue paper, borderless typed numeric tables (3-col and 4-col), handwritten corrections, library stamp"
+   "challenge": "image-only typed scan on blue paper, borderless typed numeric tables (3-col and 4-col), handwritten corrections, library stamp",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/scan-nasa-budget.pdf"
   },
   {
    "id": "scan-nasa-notes",
@@ -288,7 +304,8 @@
    "license_evidence": "https://www.eisenhowerlibrary.gov/research/online-documents (\"All of these items are in the public domain\"); authored by US federal government employees in the course of duty (17 U.S.C. 105)",
    "attribution": "Robert Piland (White House science advisory staff) / Dwight D. Eisenhower Presidential Library, NARA",
    "ocr": true,
-   "challenge": "image-only typewritten scan (~150 dpi), declassification stamps and handwriting in margins, typed budget list with amounts"
+   "challenge": "image-only typewritten scan (~150 dpi), declassification stamps and handwriting in margins, typed budget list with amounts",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/scan-nasa-notes.pdf"
   },
   {
    "id": "scan-oklahoma-address",
@@ -305,7 +322,8 @@
    "license_evidence": "https://www.eisenhowerlibrary.gov/research/online-documents (\"All of these items are in the public domain\"); authored by US federal government employees in the course of duty (17 U.S.C. 105)",
    "attribution": "The White House (President Dwight D. Eisenhower) / Dwight D. Eisenhower Presidential Library, NARA",
    "ocr": true,
-   "challenge": "image-only 7-page typeset/mimeographed press release on legal paper, uneven ink, library stamp overlapping text"
+   "challenge": "image-only 7-page typeset/mimeographed press release on legal paper, uneven ink, library stamp overlapping text",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/scan-oklahoma-address.pdf"
   },
   {
    "id": "cjk-jp-stat-elderly",
@@ -322,7 +340,8 @@
    "license_evidence": "https://www.stat.go.jp/info/riyou.html (統計局ホームページ利用規約: 公共データ利用規約（第1.0版）(PDL1.0) に準拠; 'クリエイティブ・コモンズ・ライセンスの表示4.0 国際 ... と互換性があり'; numeric data/simple tables not copyrightable)",
    "attribution": "総務省統計局 (Statistics Bureau of Japan)",
    "ocr": false,
-   "challenge": "letter-spaced justified Japanese (text layer has a space between most glyphs), full-width digits, three statistics tables incl. a two-level header table and a nested row-group table, charts with axis-label text"
+   "challenge": "letter-spaced justified Japanese (text layer has a space between most glyphs), full-width digits, three statistics tables incl. a two-level header table and a nested row-group table, charts with axis-label text",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/cjk-jp-stat-elderly.pdf"
   },
   {
    "id": "cjk-tw-archives",
@@ -339,7 +358,8 @@
    "license_evidence": "https://www.archives.gov.tw/tw/arctw/625-10226.html (政府網站資料開放宣告: all site materials released under CC BY 4.0, attribution required)",
    "attribution": "國家發展委員會檔案管理局 (National Archives Administration, National Development Council, Taiwan)",
    "ocr": false,
-   "challenge": "Traditional Chinese with ruled two-column tables whose cells hold multi-line mixed CJK/Latin text; second table continues across a page break; italic CJK"
+   "challenge": "Traditional Chinese with ruled two-column tables whose cells hold multi-line mixed CJK/Latin text; second table continues across a page break; italic CJK",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/cjk-tw-archives.pdf"
   },
   {
    "id": "cjk-tw-dgbas-cpi",
@@ -356,7 +376,8 @@
    "license_evidence": "https://www.stat.gov.tw/cp.aspx?n=3164 (行政院主計總處 政府網站資料開放宣告: 採政府資料開放授權條款-第1版發布); release page https://www.stat.gov.tw/News_Content.aspx?n=2668&s=236675",
    "attribution": "行政院主計總處 (Directorate-General of Budget, Accounting and Statistics, Executive Yuan, Taiwan)",
    "ocr": false,
-   "challenge": "Traditional Chinese press release: two-level-header statistics table, body text wrapped around embedded charts whose labels interleave with prose, footnote circled numerals"
+   "challenge": "Traditional Chinese press release: two-level-header statistics table, body text wrapped around embedded charts whose labels interleave with prose, footnote circled numerals",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/cjk-tw-dgbas-cpi.pdf"
   },
   {
    "id": "slides-epa-1bp",
@@ -373,7 +394,8 @@
    "license_evidence": "Work of US EPA staff (Office of Chemical Safety and Pollution Prevention), 17 U.S.C. 105; EPA site copyright note: https://www.epa.gov/web-policies-and-procedures/epa-disclaimers",
    "attribution": "U.S. Environmental Protection Agency",
    "ocr": false,
-   "challenge": "title placeholders come after the body shapes in XML order; 2 slide tables with multi-paragraph cells; zero-width spaces/NBSP; nested bullets"
+   "challenge": "title placeholders come after the body shapes in XML order; 2 slide tables with multi-paragraph cells; zero-width spaces/NBSP; nested bullets",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/slides-epa-1bp.pptx"
   },
   {
    "id": "slides-markitdown-pptx",
@@ -390,7 +412,8 @@
    "license_evidence": "https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT, repository test file)",
    "attribution": "Microsoft (markitdown contributors)",
    "ocr": false,
-   "challenge": "slide table, chart, nested group shapes, alt text, UUID canaries"
+   "challenge": "slide table, chart, nested group shapes, alt text, UUID canaries",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/slides-markitdown-pptx.pptx"
   },
   {
    "id": "slides-nasa-clarreo",
@@ -407,7 +430,8 @@
    "license_evidence": "https://ntrs.nasa.gov/citations/20220013266 (NTRS copyright determination GOV_PUBLIC_USE_PERMITTED: 'Work of the US Gov. Public Use Permitted'; both authors are NASA LaRC civil servants)",
    "attribution": "Yolanda L. Shea, Rajendra Bhatt / NASA Langley Research Center",
    "ocr": false,
-   "challenge": "PowerPoint-to-PDF deck (Quartz); slide tables incl. an empty header cell; slide 10 table carries hidden text in its empty third column; labelled photos and diagrams; slides of logos only"
+   "challenge": "PowerPoint-to-PDF deck (Quartz); slide tables incl. an empty header cell; slide 10 table carries hidden text in its empty third column; labelled photos and diagrams; slides of logos only",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/slides-nasa-clarreo.pdf"
   },
   {
    "id": "slides-nist-pqc-update",
@@ -424,7 +448,8 @@
    "license_evidence": "Work of a NIST employee, 17 U.S.C. 105; https://www.nist.gov/oism/copyrights and https://csrc.nist.gov/presentations/2023/nist-post-quantum-cryptography-update",
    "attribution": "Dustin Moody / NIST Computer Security Division",
    "ocr": false,
-   "challenge": "all-caps titles, strikethrough cells in a table, 3 small slide tables, text rendered as images (timeline, memo scans), duplicated hidden title text on slide 5"
+   "challenge": "all-caps titles, strikethrough cells in a table, 3 small slide tables, text rendered as images (timeline, memo scans), duplicated hidden title text on slide 5",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/slides-nist-pqc-update.pdf"
   },
   {
    "id": "csv-census-popest-2023",
@@ -441,7 +466,8 @@
    "license_evidence": "US Census Bureau data product, a work of the US Government (17 U.S.C. 105); https://www.census.gov/about/policies/citation.html",
    "attribution": "U.S. Census Bureau, Population Division",
    "ocr": false,
-   "challenge": "31 columns wide; leading-zero codes (010, 00); 'X' placeholders; long decimals; negative numbers"
+   "challenge": "31 columns wide; leading-zero codes (010, 00); 'X' placeholders; long decimals; negative numbers",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/csv-census-popest-2023.csv"
   },
   {
    "id": "csv-usgs-quakes-week",
@@ -458,7 +484,8 @@
    "license_evidence": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits (USGS-authored information is in the US public domain)",
    "attribution": "U.S. Geological Survey, Earthquake Hazards Program",
    "ocr": false,
-   "challenge": "22 columns; quoted fields containing commas; ISO 8601 timestamps; empty cells; 130 data rows"
+   "challenge": "22 columns; quoted fields containing commas; ISO 8601 timestamps; empty cells; 130 data rows",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/csv-usgs-quakes-week.csv"
   },
   {
    "id": "sheet-ers-crop-insurance",
@@ -475,7 +502,8 @@
    "license_evidence": "USDA web policy (ERS follows it): 'Most information presented on the USDA Web site is considered public domain information' https://www.usda.gov/about-usda/policies-and-links ; https://www.ers.usda.gov/about-ers/policies-and-standards/website",
    "attribution": "USDA Economic Research Service",
    "ocr": false,
-   "challenge": "display formatting differs from stored values ('0.0000' number format on 9-digit floats); title/note/source rows inside the sheet; years stored as text"
+   "challenge": "display formatting differs from stored values ('0.0000' number format on 9-digit floats); title/note/source rows inside the sheet; years stored as text",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/sheet-ers-crop-insurance.xlsx"
   },
   {
    "id": "sheet-markitdown-xlsx",
@@ -492,7 +520,8 @@
    "license_evidence": "https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT, repository test file)",
    "attribution": "Microsoft (markitdown contributors)",
    "ocr": false,
-   "challenge": "two sheets, one sheet name is a truncated UUID, UUID canaries in cells"
+   "challenge": "two sheets, one sheet name is a truncated UUID, UUID canaries in cells",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/sheet-markitdown-xlsx.xlsx"
   },
   {
    "id": "docx-hhs-market-research",
@@ -509,7 +538,8 @@
    "license_evidence": "Work of the US Department of Health and Human Services, published on cms.gov (17 U.S.C. 105); https://www.hhs.gov/web/policies-and-standards/index.html",
    "attribution": "U.S. Department of Health and Human Services",
    "ocr": false,
-   "challenge": "numbered section headings as plain paragraphs (no Heading styles); nested numbered lists; checkbox form fields; 4 blank template tables with empty cells; a cell split across paragraphs"
+   "challenge": "numbered section headings as plain paragraphs (no Heading styles); nested numbered lists; checkbox form fields; 4 blank template tables with empty cells; a cell split across paragraphs",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/docx-hhs-market-research.docx"
   },
   {
    "id": "docx-markitdown",
@@ -526,7 +556,8 @@
    "license_evidence": "https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT, repository test file)",
    "attribution": "Microsoft (markitdown contributors)",
    "ocr": false,
-   "challenge": "table with no header row, embedded image with alt text, UUID canaries, a heading that is only a UUID"
+   "challenge": "table with no header row, embedded image with alt text, UUID canaries, a heading that is only a UUID",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/docx-markitdown.docx"
   },
   {
    "id": "docx-nsf-aaac-minutes",
@@ -543,7 +574,8 @@
    "license_evidence": "Federal advisory committee minutes published by NSF (17 U.S.C. 105); NSF site policy: https://www.nsf.gov/policies/site-policies",
    "attribution": "U.S. National Science Foundation (AAAC)",
    "ocr": false,
-   "challenge": "title in a text box (mc:AlternateContent, duplicated in the fallback); TOC content control repeats the headings; repeated 'Q&A Session' headings; deeply nested bullet lists; layout-grid attendee table with spacer rows"
+   "challenge": "title in a text box (mc:AlternateContent, duplicated in the fallback); TOC content control repeats the headings; repeated 'Q&A Session' headings; deeply nested bullet lists; layout-grid attendee table with spacer rows",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/docx-nsf-aaac-minutes.docx"
   },
   {
    "id": "epub-gutenberg-jekyll",
@@ -560,7 +592,8 @@
    "license_evidence": "EPUB content.opf <dc:rights>Public domain in the USA.</dc:rights>; https://www.gutenberg.org/ebooks/43 (Robert Louis Stevenson, 1886)",
    "attribution": "Robert Louis Stevenson; Project Gutenberg",
    "ocr": false,
-   "challenge": "10 chapters across spine files; chapter titles repeated in in-book contents, nav and NCX; PG header/license boilerplate; cover image"
+   "challenge": "10 chapters across spine files; chapter titles repeated in in-book contents, nav and NCX; PG header/license boilerplate; cover image",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/epub-gutenberg-jekyll.epub"
   },
   {
    "id": "epub-gutenberg-relativity",
@@ -577,7 +610,8 @@
    "license_evidence": "EPUB content.opf <dc:rights>Public domain in the USA.</dc:rights>; https://www.gutenberg.org/ebooks/5001 (Einstein, tr. R. W. Lawson, 1920)",
    "attribution": "Albert Einstein, translated by Robert W. Lawson; Project Gutenberg",
    "ocr": false,
-   "challenge": "math rendered as ~150 inline/display SVG images; TOC as a table; data table with two-level spanning header; colophon/corrections tables"
+   "challenge": "math rendered as ~150 inline/display SVG images; TOC as a table; data table with two-level spanning header; colophon/corrections tables",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/epub-gutenberg-relativity.epub"
   },
   {
    "id": "epub-markitdown",
@@ -594,7 +628,8 @@
    "license_evidence": "https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE",
    "attribution": "Microsoft (markitdown test suite)",
    "ocr": false,
-   "challenge": "tiny EPUB3 with nav document in spine; inline strong/em, bullet list, blockquote"
+   "challenge": "tiny EPUB3 with nav document in spine; inline strong/em, bullet list, blockquote",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/epub-markitdown.epub"
   },
   {
    "id": "html-bls-ooh-software-developers",
@@ -611,7 +646,8 @@
    "license_evidence": "https://www.bls.gov/opub/copyright-information.htm (BLS material is in the public domain except photographs/graphics credited to other sources; this page's text credits none); U.S. Department of Labor work",
    "attribution": "U.S. Bureau of Labor Statistics",
    "ocr": false,
-   "challenge": "tabbed page: summary tab duplicates section text, hidden glossary pop-ups; header-less 2-column tables; quick-facts table with spanning title row; projections table with two-level header"
+   "challenge": "tabbed page: summary tab duplicates section text, hidden glossary pop-ups; header-less 2-column tables; quick-facts table with spanning title row; projections table with two-level header",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/html-bls-ooh-software-developers.html"
   },
   {
    "id": "html-markitdown-wikipedia",
@@ -628,7 +664,8 @@
    "license_evidence": "https://github.com/microsoft/markitdown/blob/b8f79c57ebc0044be41323d89b2a45d3fda8460e/LICENSE (MIT repo); article text CC BY-SA 4.0 per https://en.wikipedia.org/wiki/Wikipedia:Text_of_the_Creative_Commons_Attribution-ShareAlike_4.0_International_License",
    "attribution": "Wikipedia contributors (article 'Microsoft'); Microsoft markitdown",
    "ocr": false,
-   "challenge": "full Vector-2022 skin page: sidebar nav/TOC, language list, infobox, navboxes around the article; financial wikitables with footnote markers"
+   "challenge": "full Vector-2022 skin page: sidebar nav/TOC, language list, infobox, navboxes around the article; financial wikitables with footnote markers",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/html-markitdown-wikipedia.html"
   },
   {
    "id": "html-wikipedia-roman-numerals",
@@ -645,7 +682,8 @@
    "license_evidence": "https://en.wikipedia.org/wiki/Wikipedia:Text_of_the_Creative_Commons_Attribution-ShareAlike_4.0_International_License (footer of page states CC BY-SA 4.0)",
    "attribution": "Wikipedia contributors (article 'Roman numerals', oldid 1374259684)",
    "ocr": false,
-   "challenge": "Parsoid HTML with heavy chrome; tables with empty cells, fraction slashes, rare Unicode (Ↄ, 𐆕, Cyrillic); header-in-first-column table; footnote markers"
+   "challenge": "Parsoid HTML with heavy chrome; tables with empty cells, fraction slashes, rare Unicode (Ↄ, 𐆕, Cyrillic); header-in-first-column table; footnote markers",
+   "mirror_url": "https://github.com/SylphxAI/anymd/releases/download/agentdocbench-corpus-v1/html-wikipedia-roman-numerals.html"
   }
  ]
 }
