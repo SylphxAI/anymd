@@ -166,13 +166,16 @@ jobs:
           gh release upload "v$V" "assets/anymd-$V.cdx.json" --clobber
           gh release upload "v$V" assets/SHA256SUMS --clobber
 
-  # Platform wheels for PyPI, built from the release's native binaries (the
-  # `native-*` artifacts of this run; a run with no new version has none).
+  # Platform wheels use this run's natives, or the matching tagged release's
+  # verified trust pack when PyPI delivery is incomplete. No Rust rebuild.
   wheels:
-    needs: release
-    if: needs.release.result == 'success'
+    needs: [release, trust]
+    if: always() && !cancelled() && needs.release.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      attestations: read
     outputs:
       built: ${{ steps.build.outputs.built }}
     steps:
@@ -189,23 +192,9 @@ jobs:
 
       - name: Build the wheels
         id: build
-        run: |
-          set -euo pipefail
-          if ! ls artifacts/native-*/* >/dev/null 2>&1; then
-            echo "no new release in this run; no wheels"
-            echo "built=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          v=$(jq -r .version packages/anymd/package.json)
-          a=artifacts
-          python3 scripts/build-wheels.py --version "$v" --out dist \
-            --binary "manylinux_2_17_x86_64.manylinux2014_x86_64=$a/native-linux-x64-gnu/anymd" \
-            --binary "manylinux_2_17_aarch64.manylinux2014_aarch64=$a/native-linux-arm64-gnu/anymd" \
-            --binary "macosx_10_12_x86_64=$a/native-darwin-x64/anymd" \
-            --binary "macosx_11_0_arm64=$a/native-darwin-arm64/anymd" \
-            --binary "win_amd64=$a/native-win32-x64-msvc/anymd.exe"
-          ls -l dist
-          echo "built=true" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/recover-wheels.py --artifacts artifacts --out dist
 
       - name: Smoke the Linux wheel (pip install, then convert a PDF)
         if: steps.build.outputs.built == 'true'

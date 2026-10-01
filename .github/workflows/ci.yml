@@ -84,8 +84,8 @@ jobs:
       - name: Test Python API and wheel packaging without framework dependencies
         run: python3 -m unittest discover -s packages/pypi/tests -v
 
-      - name: Test vendored crate version checks
-        run: python3 -m unittest discover -s scripts -p test_check_vendored_crates.py
+      - name: Test release recovery and vendored crate version checks
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
 
       - name: Every manifest carries the same version
         run: bun run check:versions
