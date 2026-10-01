@@ -7,6 +7,7 @@ import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { resolveServerPath } from '../utils/cargoBinaries.js';
+import { assertPdfSuccess, requirePdfFixture } from '../utils/pdfContract.js';
 
 const repoRoot = path.resolve(__dirname, '../..');
 const serverBinary = resolveServerPath();
@@ -159,6 +160,7 @@ describe('MCP Server Integration', () => {
 
   mcpIt('should call pdf_evidence inspect operation with a test PDF', async () => {
     const testPdfPath = path.resolve(__dirname, '../fixtures/sample.pdf');
+    requirePdfFixture(testPdfPath);
 
     const callRequest = createRequest(3, 'tools/call', {
       name: 'pdf_evidence',
@@ -179,21 +181,19 @@ describe('MCP Server Integration', () => {
 
     expect(response.id).toBe(3);
 
-    if (response.error || response.result?.isError) {
-      expect(response.error?.message || response.result?.content?.[0]?.text).toContain('PDF');
-    } else {
-      const textContent = response.result?.content?.[0]?.text ?? '';
-      const parsed = JSON.parse(textContent) as {
-        results: Array<{ success: boolean; data?: Record<string, unknown> }>;
-      };
-      expect(response.result?.content?.[0]?.type).toBe('text');
-      expect(textContent).toContain('"profile"');
-      expect(parsed.results[0]?.success).toBe(true);
-    }
+    assertPdfSuccess(response);
+    const textContent = response.result?.content?.[0]?.text ?? '';
+    const parsed = JSON.parse(textContent) as {
+      results: Array<{ success: boolean; data?: Record<string, unknown> }>;
+    };
+    expect(response.result?.content?.[0]?.type).toBe('text');
+    expect(textContent).toContain('"profile"');
+    expect(parsed.results[0]?.success).toBe(true);
   });
 
   mcpIt('should call read_pdf tool with a test PDF', async () => {
     const testPdfPath = path.resolve(__dirname, '../fixtures/sample.pdf');
+    requirePdfFixture(testPdfPath);
 
     const callRequest = createRequest(4, 'tools/call', {
       name: 'read_pdf',
@@ -214,15 +214,7 @@ describe('MCP Server Integration', () => {
 
     expect(response.id).toBe(4);
 
-    // If test PDF doesn't exist, expect error
-    if (response.error || response.result?.isError) {
-      // Expected if no test PDF
-      expect(response.error?.message || response.result?.content?.[0]?.text).toContain('PDF');
-    } else {
-      // If it exists, should have content
-      expect(response.result?.content).toBeDefined();
-      expect(response.result?.content?.[0]?.type).toBe('text');
-    }
+    assertPdfSuccess(response);
   });
 
   mcpIt('should render bounded PNG evidence through pdf_evidence render_page', async () => {
