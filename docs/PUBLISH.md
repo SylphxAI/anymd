@@ -26,9 +26,10 @@
      section as notes,
    - publishes `server.json` to the MCP Registry and marks the old names deprecated.
 
-   A push whose version is already on npm does nothing, so every other merge is a
-   no-op for publishing. A failed run can be re-run; each step skips what is
-   already published.
+   The shared npm release skips targets already published for that version.
+   That does not prove crates.io or PyPI delivery is complete: their jobs can
+   still recover missing delivery without a version bump, subject to the
+   source and trust checks below.
 
 ## Native CPU portability
 
@@ -102,7 +103,36 @@ compile. `Dockerfile.release.dockerignore` includes those binaries and the root
 `/usr/share/licenses/anymd/LICENSE`, including any bundled third-party notices,
 and the release job compares its contents with the checkout after publishing.
 The OCI metadata includes `org.opencontainers.image.licenses=MIT`.
-Ordinary pushes without new binaries skip the image job.
+Ordinary pushes without new binaries skip the image job. This image recovery
+path is independent of Python delivery; it is not evidence that wheels were
+built or published.
+
+With no matching native artifacts, the wheel job uses
+`scripts/recover-wheels.py` to probe the exact version on PyPI. The helper skips
+wheel building only when all five expected, non-yanked platform wheels are
+listed. A version-specific 404 or an incomplete wheel list triggers recovery;
+non-404 probe errors and mismatched version or wheel names fail. A partial
+native artifact matrix or an empty native binary fails instead of falling
+back to release assets.
+
+Recovery downloads all five binary archives from the matching GitHub release
+`vX.Y.Z`, never a latest release or a global binary. It resolves the actual tag
+commit, checks its npm and Cargo versions, verifies the archives against the
+existing trust job's SHA256SUMS and GitHub asset digests, and verifies each
+archive's trust attestation against that tag's source commit and `release.yml`
+signer. Missing targets, corrupt assets, failed attestations or a recovered
+host binary reporting another version stop recovery. The wheel job waits for
+the trust job to finish; fresh native-artifact delivery does not require the
+trust job to succeed.
+
+The existing wheel builder packages the Python API, README and licence fetched
+from that exact tag commit alongside those binaries. It must not substitute
+newer API or licence files from `main`. The `v8.2.0` tag lacks the Python API,
+so its recovery fails with an explicit requirement for a new release containing
+the API. The 8.3 release must include that API source in its own tag before
+this recovery path can be used; no historical tag is retrofitted. Offline
+fixtures cover these decisions and source identities, but do not establish
+live PyPI delivery.
 
 ## Python wheel payload
 
@@ -123,8 +153,11 @@ tests. Neither these checks nor the examples download models.
 
 PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
 workflow `release.yml`, environment `pypi`. That publisher must be registered
-on PyPI before OIDC token exchange can succeed; an image/crates recovery
-dispatch has no new wheels and does not retry PyPI.
+on PyPI before OIDC token exchange can succeed. After registration, a fresh
+recovery run can build missing wheels under the exact-tag checks above and
+pass them through the existing CLI/API smoke tests and OIDC `pypi` job. The
+publisher skips files already present; neither publisher registration nor a
+successful image/crates job proves that the five Python wheels were delivered.
 
 ## Doc-VLM builds
 
