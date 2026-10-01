@@ -2,7 +2,7 @@
 
 ## How to Contribute
 
-1. **Reporting Issues:** Search [existing issues](https://github.com/SylphxAI/anymd/issues) before opening a [bug report or feature request](https://github.com/SylphxAI/anymd/issues/new/choose).
+1. **Reporting Issues:** Search [existing issues](https://github.com/SylphxAI/anymd/issues) before opening a [bug, feature or documentation report](https://github.com/SylphxAI/anymd/issues/new/choose).
    - Include the anymd version, command or MCP tool arguments, and a small synthetic or public document that reproduces the problem.
    - Describe the expected Markdown and the actual result. Redact private documents, personal paths, tokens and client configuration before sharing logs.
    - Explain the use case and a testable outcome for feature requests.
