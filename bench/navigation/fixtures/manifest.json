@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "license": "CC0-1.0",
+  "track": "synthetic-contract-smoke",
+  "documents": [
+    {
+      "id": "navigation",
+      "file": "navigation.pdf",
+      "sha256": "ed0838a60f851efc0812ec18995bc8c7526fff5b7faf5caa37b6f3d99cc4a4fc",
+      "pages": 2
+    }
+  ],
+  "questions": [
+    {
+      "id": "launch",
+      "document": "navigation",
+      "question": "What is the launch code?",
+      "query": "launch code",
+      "section": "Launch",
+      "pattern": "launch code is ([A-Z]+)",
+      "answers": [
+        "ORBIT"
+      ],
+      "evidence_pages": [
+        1
+      ]
+    },
+    {
+      "id": "recovery",
+      "document": "navigation",
+      "question": "What is the recovery code?",
+      "query": "recovery code",
+      "section": "Recovery",
+      "pattern": "recovery code is ([A-Z]+)",
+      "answers": [
+        "HARBOR"
+      ],
+      "evidence_pages": [
+        2
+      ]
+    }
+  ]
+}

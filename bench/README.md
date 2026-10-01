@@ -14,6 +14,10 @@ The benchmark lives in the anymd repository, and anymd is one of the tools it me
 not know which tool produced an output, and the places where anymd loses are in the leaderboard like
 everything else.
 
+Navigation and retrieval QA are a separate track in [`navigation/`](navigation/README.md):
+a frozen public contract fixture, keyless anymd smoke, offline PageIndex Responses adapter,
+and answer/source-page scoring. Its smoke results do not enter the extraction leaderboard.
+
 ## Layout
 
 | Path | What it is |
