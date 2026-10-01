@@ -35,7 +35,7 @@ We email your token to the address you give at checkout, usually within a few ho
 
 ## Refunds and cancellation
 
-If you are not happy, email hi@sylphx.com within 14 days of purchase and we refund you in full, no questions asked. This includes your legal right as a UK or EU consumer to cancel within 14 days.
+If you are not happy, email hi@sylphx.com within 14 days of purchase and we refund you in full, no questions asked. This includes your legal right as a UK or EU consumer to cancel within 14 days. If we refund you, your licence ends and you must stop using and delete the token.
 
 ## What Pro does and does not prove
 

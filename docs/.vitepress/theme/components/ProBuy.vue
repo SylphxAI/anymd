@@ -30,6 +30,6 @@ onUnmounted(() => window.removeEventListener('anymd-pro-consent', refresh));
 <template>
   <span class="pro-buy-wrap">
     <a class="pro-buy" :href="href" rel="noopener" @click="buyReady && trackBeginCheckout()">{{ label ?? 'Buy anymd Pro, US$29 once' }}</a>
-    <span v-if="!buyReady" class="pro-buy-note">Purchase is by email: your licence token arrives by email, usually within a few hours.</span>
+    <span v-if="!buyReady" class="pro-buy-note">Purchase is by email: we reply with a secure Stripe payment link, and your licence token follows by email, usually within a few hours.</span>
   </span>
 </template>
