@@ -1,5 +1,5 @@
 use anymd::{
-    cli, discover_compat, http_transport, setup, source_access::SourceAccessPolicy, PdfReaderMcp,
+    cli, discover_compat, http_transport, pro, setup, source_access::SourceAccessPolicy, PdfReaderMcp,
     SERVER_VERSION,
 };
 use rmcp::transport::async_rw::AsyncRwTransport;
@@ -20,6 +20,7 @@ fn main() -> anyhow::Result<()> {
             Ok(())
         }
         cli::Mode::Setup(arguments) => std::process::exit(setup::run(&arguments)),
+        cli::Mode::Pro(arguments) => std::process::exit(pro::run(&arguments)),
         cli::Mode::Cli(arguments) => {
             let policy = SourceAccessPolicy::from_process().map_err(anyhow::Error::msg)?;
             anymd_formats::cache::prune_images_daily();

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Minor Changes
+
+- anymd Pro licence check. `anymd pro status` and `anymd pro activate <token>` manage an offline-verified (Ed25519) licence, read from `ANYMD_PRO_TOKEN` or `<config dir>/anymd/pro-token`. Pro will unlock only new operations (video evidence, cite-check); everything that is free today stays free, MIT and ungated. See [anymd Pro](https://sylphxai.github.io/anymd/pro).
+
 ## 8.3.0
 
 ### Minor Changes

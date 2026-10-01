@@ -96,6 +96,10 @@ export default defineConfig({
         text: 'Try it',
         items: [{ text: 'Playground', link: '/playground' }],
       },
+      {
+        text: 'Pro',
+        items: [{ text: 'anymd Pro', link: '/pro' }],
+      },
     ],
 
     socialLinks: [
