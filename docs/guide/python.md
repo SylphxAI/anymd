@@ -4,8 +4,8 @@ The platform wheel contains the native CLI and a thin Python API. Conversion
 runs in the same Rust binary as the CLI; Python does not implement a converter.
 The base package uses only the Python standard library (Python 3.8 or newer).
 
-These additions ship with the next wheel release. An older wheel that contains
-only the CLI does not provide these imports. No release is cut by this change.
+anymd 8.3.0 platform wheels include this API. Older CLI-only wheels do not
+provide these imports.
 
 ## Convert one document
 
@@ -59,9 +59,15 @@ front matter and separates it from the Markdown body; it does not parse arbitrar
 YAML inside the document. There is no output-file option: write `document.text`
 yourself when needed.
 
-No models or executable binaries are downloaded at runtime. Transcription uses
-an already installed whisper.cpp and local model; the API never passes
-`--download-whisper-model`. Requesting OCR or transcription without its native
+The Python API never requests model or executable downloads. Transcription uses
+bundled Qwen3-ASR with cached or preinstalled pinned weights; install the ASR model
+explicitly with the native CLI’s `--download-asr-model` option before requesting
+`transcript=True`. For doc-VLM OCR, run `anymd setup ocr` explicitly; `ocr=True`
+inherits the native engine default, while `ocr=False` keeps OCR disabled.
+A Python timeout terminates the native CLI; its supervised doc-VLM worker exits
+on caller-pipe EOF even though it runs in a separate process group, and also has
+an independent page deadline.
+Requesting OCR or transcription without its native
 requirements produces the CLI's error. Passing a URL explicitly requests a
 network fetch under the native URL policy; local-file conversion never requests
 one through this wrapper.

@@ -404,6 +404,10 @@ pub struct PdfEvidenceArgs {
     #[schemars(range(min = 1_000, max = 1_000_000))]
     pub max_output_chars: Option<u32>,
     pub languages: Option<Vec<String>>,
+    #[schemars(
+        description = "Local OCR engine for ocr_pages: auto, vlm, or tesseract. Omit to use the configured command provider."
+    )]
+    pub ocr: Option<crate::ocr_vlm::OcrEngine>,
 }
 
 impl PdfEvidenceArgs {
@@ -591,10 +595,9 @@ pub struct ReadArgs {
     #[schemars(description = "Continue a previous read with the cursor from its last line.")]
     pub cursor: Option<String>,
     #[schemars(
-        description = "OCR images and image-only PDF pages with a local tesseract. Default: automatic when tesseract is installed; false disables.",
-        schema_with = "option_bool_schema"
+        description = "Local OCR: auto, vlm, or tesseract. Auto uses installed doc-VLM weights (setup ocr is explicit CPU opt-in), otherwise tesseract. No automatic downloads. Boolean false disables; true retains automatic OCR."
     )]
-    pub ocr: Option<bool>,
+    pub ocr: Option<crate::ocr_vlm::OcrSelection>,
     #[schemars(
         description = "Transcribe audio/video locally with bundled transcribe-cpp and Qwen3-ASR-1.7B Q8. Needs preinstalled SHA-256 pinned weights (~2.2 GB), unless download_asr_model is true. Audio stays local. Default false.",
         schema_with = "option_bool_schema"
@@ -741,6 +744,10 @@ pub struct InspectArgs {
     #[schemars(range(min = 1_000, max = 1_000_000))]
     pub max_output_chars: Option<u32>,
     pub languages: Option<Vec<String>>,
+    #[schemars(
+        description = "Local OCR engine for ocr_pages: auto, vlm, or tesseract. Omit to use the configured command provider."
+    )]
+    pub ocr: Option<crate::ocr_vlm::OcrEngine>,
 }
 
 /// Navigate a document without a model or vector index.
@@ -750,8 +757,8 @@ pub struct OutlineArgs {
     pub source: String,
     /// json (default) or tree.
     pub format: Option<String>,
-    /// OCR image-only pages; false by default for deterministic navigation.
-    pub ocr: Option<bool>,
+    /// OCR image-only pages; false by default. Accepts booleans or auto/vlm/tesseract.
+    pub ocr: Option<crate::ocr_vlm::OcrSelection>,
     /// Embedded images: none (default) or refs. Match this option in node reads.
     pub images: Option<String>,
     /// Word revisions: markup (default), accept or reject. Match node reads.

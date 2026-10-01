@@ -5,6 +5,21 @@ use mcp_kit::setup::{self, Options, Server};
 
 /// Run `anymd setup [--dry-run] [--remove] [--client=a,b]`; returns the exit code.
 pub fn run(arguments: &[String]) -> i32 {
+    if arguments.first().map(String::as_str) == Some("ocr") {
+        if arguments.len() != 1 {
+            return usage_error("setup ocr takes no options");
+        }
+        return match crate::ocr_vlm::install() {
+            Ok(path) => {
+                println!("OCR models installed and verified at {}", path.display());
+                0
+            }
+            Err(error) => {
+                eprintln!("anymd setup ocr: {error}");
+                1
+            }
+        };
+    }
     let mut options = Options::default();
     let mut iter = arguments.iter();
     while let Some(argument) = iter.next() {

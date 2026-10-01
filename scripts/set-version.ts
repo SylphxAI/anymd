@@ -18,7 +18,8 @@ const CITATION = 'CITATION.cff';
 const CITATION_VERSION = /^(version: )(\S+)$/m;
 // Pins of the published anymd crates in [workspace.dependencies]; the two forks
 // (anymd-pdf-extract, anymd-adobe-cmap-parser) have versions of their own.
-const CARGO_PINS = /^(anymd(?:-core|-formats|-pdf)? = \{ path = "[^"]+", version = ")([^"]+)(")/gm;
+const CARGO_PINS =
+  /^(anymd(?:-core|-formats|-pdf|-ocr-vlm)? = \{ path = "[^"]+", version = ")([^"]+)(")/gm;
 const CARGO_VERSION = /(\[workspace\.package\][^[]*?\nversion = ")([^"]+)(")/;
 
 type Json = Record<string, unknown> & { version: string };

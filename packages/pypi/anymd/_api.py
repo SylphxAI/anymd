@@ -136,7 +136,8 @@ def convert(
 
     Defaults disable automatic OCR and embedded-image writes. Set ``ocr=None``
     for the CLI's automatic OCR behavior, or ``ocr=True`` to request OCR.
-    ``transcript=True`` uses an already installed whisper.cpp/model only.
+    ``transcript=True`` uses bundled Qwen3-ASR with preinstalled pinned weights;
+    it never implicitly downloads a model.
     Cursor notes and page/source markers remain in the Markdown body.
     """
     value = os.fspath(source)

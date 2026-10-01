@@ -396,3 +396,34 @@ fn a_table_in_one_column_keeps_the_page_gutter() {
     let right = order.iter().position(|t| t.starts_with("R0")).unwrap();
     assert!(model < right, "{order:?}");
 }
+
+#[test]
+fn image_only_detection_preserves_even_short_and_rotated_native_text() {
+    let mut page = RawPage {
+        number: 1,
+        bottom: 0.0,
+        top: 100.0,
+        glyphs: Ok(Vec::new()),
+        rotated: Vec::new(),
+        rules: Vec::new(),
+        ocr: false,
+        images: vec![Placement {
+            object: (1, 0),
+            bbox: [0.0, 0.0, 100.0, 100.0],
+        }],
+        area: 10000.0,
+        figures: Vec::new(),
+    };
+    assert!(crate::image_only_page(&page));
+    page.glyphs = Ok(glyphs("Title", 0.0, 50.0, 10.0, 5.0, 3.0));
+    assert!(!crate::image_only_page(&page));
+    page.rotated = page.glyphs.as_ref().unwrap().clone();
+    page.glyphs = Ok(Vec::new());
+    assert!(!crate::image_only_page(&page));
+    page.rotated.clear();
+    page.glyphs = Err("text extraction failed".into());
+    assert!(!crate::image_only_page(&page));
+    page.glyphs = Ok(Vec::new());
+    page.images.clear();
+    assert!(!crate::image_only_page(&page));
+}

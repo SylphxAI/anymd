@@ -8,10 +8,7 @@ directory runs anymd on it, so its numbers can sit next to theirs. The results a
 
 ## What is measured
 
-- **Variant: page images.** anymd gets each page as a PNG or JPEG, runs `anymd --ocr <image>`, and the output goes to
-  the official evaluator. On an image, anymd runs `tesseract` and returns its text: there is no layout model, no
-  table or formula recognition, and no reading-order model. It also passes no language to tesseract, so the
-  default (English) applies to every page. This is not anymd's strength; it is what anymd does with a picture.
+- **Variant: page images.** anymd gets each page as a PNG or JPEG; the workflow selects `ANYMD_OCR=vlm` or `tesseract`. The historical tesseract baseline uses English-only plain text, with no layout, table or formula model. The VLM route explicitly installs pinned weights, then uses PaddleOCR-VL-1.6 and PP-DocLayoutV3 on CPU, returning reading-order Markdown tables and LaTeX formulas. Each route goes through the same official evaluator.
 - **Variant: source PDFs, not run.** The v1.6 release on Hugging Face ships page images and annotations only. There
   are no source PDFs to run anymd's native text-layer engine on, so this benchmark has no PDF number. (AgentDocBench
   in [`../README.md`](../README.md) is the benchmark that exercises the PDF engine.)
@@ -45,15 +42,25 @@ can differ slightly between renderers.
 Everything runs on GitHub-hosted runners; nothing is run locally.
 
 ```bash
-gh workflow run omnidocbench.yml --ref main            # all 1,651 pages
-gh workflow run omnidocbench.yml --ref main -f limit=40   # smoke test: the first 40 pages by file name
+gh workflow run omnidocbench.yml --ref main -f ocr=vlm -f limit=0  # all 1,651 pages
+gh workflow run omnidocbench.yml --ref main -f ocr=vlm -f limit=40   # smoke test: the first 40 pages by file name
 ```
 
 The [OmniDocBench workflow](../../.github/workflows/omnidocbench.yml) builds anymd in release mode, converts the
-pages in four shards, validates every planned page, shard, prediction digest and successful timing outcome against
+pages in 32 shards (one model worker per runner), validates every planned page, shard, prediction digest and successful timing outcome against
 frozen ground truth, then runs the evaluator and uploads the `omnidocbench-results` artifact (the evaluator's result
 JSON files, the config it ran with, and per-page anymd timings). The job summary shows the headline scores, computed from the metric files with the plain formula; the published figures use the evaluator's own `run_summary.json`, whose per-metric page counts differ slightly.
 `summarize.py` computes Overall as the leaderboard does: ((1 - text edit distance) x 100 + table TEDS + formula CDM) / 3.
+
+### Reuse completed predictions
+
+To recover an evaluator failure without repeating inference, dispatch this workflow with `predictions_run` set to the completed source run id the full `predictions_sha` source commit, and the same `ocr` and `limit` values. For example:
+
+```bash
+gh workflow run omnidocbench.yml --ref <fixed-branch> -f ocr=vlm -f limit=0 -f predictions_run=<completed-run-id> -f predictions_sha=<full-source-sha>
+```
+
+This skips the build and prediction jobs, downloads only that run's prediction artifacts, and verifies the source workflow/SHA, all 32 successful shards, and the source log’s engine and limit before scoring. Prediction filenames and timing records must cover the selected ground truth exactly once. Historical recovery uses its original timing schema and provenance checks; fresh predictions also require the new frozen-plan, successful-outcome and prediction-digest validation. Provenance verification makes three one-shot API reads in CI; it never polls. The summary records the source run. Scores certify those source predictions, not inference on the recovery workflow's newer commit. Wait until every source prediction shard has completed and its artifacts are retained before dispatching recovery.
 
 ## Licence
 

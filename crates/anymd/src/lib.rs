@@ -6,6 +6,7 @@ pub mod evidence;
 pub mod http_transport;
 pub mod lean;
 mod ocr_evidence;
+pub mod ocr_vlm;
 pub mod outline;
 mod page_selection;
 pub mod pdf_compare;
@@ -453,6 +454,7 @@ impl PdfReaderMcp {
                     timeout_ms: args.timeout_ms,
                     max_output_chars: args.max_output_chars,
                     languages: args.languages,
+                    ocr: args.ocr,
                 }))
                 .await
             }

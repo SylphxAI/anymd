@@ -1,0 +1,26 @@
+[package]
+name = "anymd-ocr-vlm"
+version.workspace = true
+edition.workspace = true
+rust-version = "1.95"
+license.workspace = true
+repository.workspace = true
+description = "Local document OCR with PaddleOCR-VL and PP-DocLayout on Candle"
+readme = "README.md"
+
+[features]
+default = []
+candle = ["dep:oar-ocr-vl"]
+metal = ["candle", "oar-ocr-vl/metal"]
+
+[dependencies]
+anyhow = "1"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "tiff", "bmp", "webp"] }
+serde = { version = "1", features = ["derive"] }
+oar-ocr-vl = { workspace = true, optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+oar-ocr-vl = { workspace = true, optional = true, features = ["metal"] }
+
+[target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
+libc = "0.2"

@@ -961,21 +961,33 @@ mod tests {
             crate::OcrWord {
                 text: "Metric".into(),
                 confidence: None,
+                reading_order: None,
+                region_type: None,
+                layout_confidence: None,
                 bounding_box: Some(json!({"left":40.0,"bottom":700.0,"right":88.0,"top":710.0})),
             },
             crate::OcrWord {
                 text: "Value".into(),
                 confidence: None,
+                reading_order: None,
+                region_type: None,
+                layout_confidence: None,
                 bounding_box: Some(json!({"left":120.0,"bottom":700.0,"right":202.0,"top":710.0})),
             },
             crate::OcrWord {
                 text: "Revenue".into(),
                 confidence: None,
+                reading_order: None,
+                region_type: None,
+                layout_confidence: None,
                 bounding_box: Some(json!({"left":40.0,"bottom":680.0,"right":100.0,"top":690.0})),
             },
             crate::OcrWord {
                 text: "24%".into(),
                 confidence: None,
+                reading_order: None,
+                region_type: None,
+                layout_confidence: None,
                 bounding_box: Some(json!({"left":112.0,"bottom":680.0,"right":184.0,"top":690.0})),
             },
         ];

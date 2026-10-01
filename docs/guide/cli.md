@@ -38,6 +38,7 @@ node ids and title paths. With no `--node`, conversion and paging stay unchanged
 | `anymd search <query> [path\|url...]` | Search files and directories (default: `.`) |
 | `anymd mcp [--allow-dir=<path>]...` | Run the MCP server on stdio |
 | `anymd setup [--dry-run] [--remove]` | Add anymd to the MCP clients on this machine; `--remove` undoes it |
+| `anymd setup ocr` | Download and SHA-256-verify local doc-VLM weights (~2 GB); opts into CPU inference |
 | `anymd doctor` | Print the version and which optional tools were found |
 | `anymd version` | Print the version |
 
@@ -52,7 +53,7 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 | `-o, --output <file>` | Write to a file instead of stdout |
 | `--max-tokens <n>` | Stop at a token budget and print a cursor. The CLI has no budget unless you set one. |
 | `--cursor <cursor>` | Continue from a cursor |
-| `--ocr` / `--no-ocr` | Force or disable OCR (default: automatic when tesseract is installed) |
+| `--ocr [auto\|vlm\|tesseract]` / `--no-ocr` | Select local OCR or disable it. Plain `--ocr` remains automatic. |
 | `--revisions <markup\|accept\|reject>` | Word tracked changes and comments: `markup` (default) writes them as CriticMarkup; `accept` or `reject` gives the text with every change accepted or rejected, without comments (see [Word](formats.md#word)) |
 | `--images <refs\|none>` | `refs` (default) saves images embedded in PDF, DOCX, PPTX and EPUB files to the anymd cache and marks them in the Markdown; `none` leaves them out (see [Embedded images](formats.md#embedded-images)) |
 | `--transcript` | Transcribe audio/video with bundled Qwen3-ASR |
@@ -109,3 +110,15 @@ Ranked search when you do not know the exact wording:
 ```bash
 anymd search "how is attention scaled" papers/ --mode ranked --max 5
 ```
+
+## Local document OCR
+
+`anymd setup ocr` downloads PaddleOCR-VL-1.6 and PP-DocLayoutV3 into the anymd cache (`ANYMD_CACHE_DIR`, otherwise the platform cache directory). Every file has a pinned revision, SHA-256 and size. Nothing downloads under automatic OCR or during conversion. The setup command is an explicit opt-in to the slower CPU route.
+
+`--ocr vlm` uses installed weights, with Metal on supported Macs and CPU elsewhere. Missing weights produce an error directing you to setup; they are not silently downloaded. `--ocr auto` uses the installed models, otherwise tesseract and a one-line hint. `--ocr tesseract` keeps the old route. `ANYMD_OCR=auto|vlm|tesseract` sets the default for CLI and MCP; a request option takes precedence. MCP `read` accepts the same strings in `ocr`; existing booleans remain valid. Native PDF text is unchanged: VLM conversion requires painted raster images and no native letters or digits, including rotated text. Even a short native title page stays on the text-layer engine. Image/PDF VLM failures return an error rather than silently substituting tesseract or caching partial OCR.
+
+Table regions become Markdown and formula regions become display LaTeX. OCR evidence keeps pixel boxes internally and reading order; the PDF evidence adapter converts boxes to PDF coordinates. Layout confidence is labelled separately from recognition confidence. MCP `inspect` with `operation: "ocr_pages"` accepts `ocr: "auto"|"vlm"|"tesseract"`; the legacy `pdf_evidence` route accepts it too. A per-call engine overrides the command provider. When there is no per-call engine, `ANYMD_OCR=vlm` selects the built-in provider unless an explicit command provider is configured.
+
+`ANYMD_OCR_TIMEOUT_MS` sets a hard per-page subprocess deadline (default 300000, range 1000–600000). The timeout terminates the worker and releases model memory. `ANYMD_OCR_MAX_TOKENS` caps generated tokens per region (default 4096, range 1–8192). A token-run guard stops generation after at least 32 repeating tokens; completed text is not trimmed for repetition, so legitimate repeated rows keep their following content. Normal image/PDF reads and OCR evidence share the existing process-wide limit of two active OCR requests. A PDF request shares a 600000 ms aggregate deadline across its pages and stops on its first failed page; no later model worker starts. `ANYMD_OCR_QUANTIZATION=q8|q4` selects experimental CPU-only GGML quantization of the decoder linear weights. The default (`none`) uses the pinned safetensors as-is; vision, embeddings and layout remain unquantized.
+
+Linux arm64 doc-VLM inference needs an FP16-capable CPU (ARMv8.2 or newer). Older ARM machines keep the tesseract/native-text routes; explicit VLM requests report the hardware limit. CI checks the plain CLI on an emulated Cortex-A72.

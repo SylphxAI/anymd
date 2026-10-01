@@ -323,8 +323,19 @@ pub fn render(args: &OutlineArgs, policy: &SourceAccessPolicy) -> Result<String,
             .ok_or("revisions must be markup, accept or reject")?,
         None => anymd_formats::Revisions::default(),
     };
+    let environment = if matches!(args.ocr, Some(crate::ocr_vlm::OcrSelection::Enabled(true))) {
+        match std::env::var("ANYMD_OCR") {
+            Ok(value) => Some(value),
+            Err(std::env::VarError::NotPresent) => None,
+            Err(_) => return Err("Invalid ANYMD_OCR".into()),
+        }
+    } else {
+        None
+    };
+    let ocr_engine = crate::ocr_vlm::resolve_engine(args.ocr, environment.as_deref())?;
     let options = OpenOptions {
-        ocr: Some(args.ocr.unwrap_or(false)),
+        ocr: Some(args.ocr.is_some_and(|selection| selection.enabled())),
+        ocr_engine: Some(ocr_engine),
         images: if args.images.as_deref() == Some("refs") {
             anymd_formats::images::ImageStore::default_location()
         } else {
@@ -354,6 +365,34 @@ pub fn tool(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn outline_accepts_legacy_booleans_and_named_ocr() {
+        use crate::ocr_vlm::{OcrEngine, OcrSelection};
+        for (value, expected) in [
+            (serde_json::json!(false), OcrSelection::Enabled(false)),
+            (serde_json::json!(true), OcrSelection::Enabled(true)),
+            (
+                serde_json::json!("vlm"),
+                OcrSelection::Engine(OcrEngine::Vlm),
+            ),
+            (
+                serde_json::json!("tesseract"),
+                OcrSelection::Engine(OcrEngine::Tesseract),
+            ),
+        ] {
+            let args: OutlineArgs = serde_json::from_value(serde_json::json!({
+                "source": "sample.pdf", "ocr": value
+            }))
+            .unwrap();
+            assert_eq!(args.ocr, Some(expected));
+        }
+        let args: OutlineArgs = serde_json::from_value(serde_json::json!({
+            "source": "sample.pdf"
+        }))
+        .unwrap();
+        assert!(args.ocr.is_none());
+    }
+
     #[test]
     fn headings_ignore_code_and_keep_utf8_offsets() {
         let text = "# 中文\n\n```md\n# not a heading\n```\n\n<!--\n# hidden\n-->\n\nRevenue\n-------\n## Costs ##\n";
