@@ -45,16 +45,29 @@ async fn read_bounded<R: AsyncRead + Unpin>(reader: R, maximum: usize) -> std::i
     Ok(bytes)
 }
 
-async fn run_async(invocation: CommandInvocation) -> Result<String, CommandRunError> {
+async fn run_async(
+    invocation: CommandInvocation,
+    supervised: bool,
+) -> Result<String, CommandRunError> {
     let mut command = Command::new(&invocation.command);
     command
         .args(&invocation.args)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    if supervised {
+        // Only cooperating native workers use stdin as a parent-held liveness
+        // pipe. EOF survives abrupt parent death even across process groups.
+        command
+            .arg(format!("--supervised={}", invocation.timeout_ms))
+            .stdin(Stdio::piped());
+    }
     let mut child = command
         .group_spawn()
         .map_err(|_| CommandRunError::new(invocation.failure_message.clone(), 0))?;
+    // Keep this writer alive for the entire invocation; never pass it to another
+    // process. Direct benchmark workers retain their ordinary null stdin.
+    let _liveness = child.inner().stdin.take();
     let stdout = child
         .inner()
         .stdout
@@ -113,6 +126,47 @@ async fn run_async(invocation: CommandInvocation) -> Result<String, CommandRunEr
 }
 
 pub fn run(invocation: CommandInvocation) -> Result<String, CommandRunError> {
+    run_with_supervision(invocation, false)
+}
+
+pub fn run_supervised(invocation: CommandInvocation) -> Result<String, CommandRunError> {
+    run_with_supervision(invocation, true)
+}
+
+/// A cooperating worker must install this before loading models or starting
+/// work. EOF/error means its caller is gone; the independent deadline also
+/// bounds a worker whose parent is alive but no longer driving the request.
+pub fn supervise_parent(timeout_ms: u64) -> Result<(), String> {
+    if timeout_ms == 0 || timeout_ms > 600_000 {
+        return Err("Invalid supervised worker deadline".into());
+    }
+    thread::Builder::new()
+        .name("worker-parent-liveness".into())
+        .spawn(|| {
+            use std::io::Read;
+            let mut byte = [0];
+            loop {
+                match std::io::stdin().read(&mut byte) {
+                    Ok(0) | Err(_) => std::process::exit(124),
+                    Ok(_) => {}
+                }
+            }
+        })
+        .map_err(|e| e.to_string())?;
+    thread::Builder::new()
+        .name("worker-deadline".into())
+        .spawn(move || {
+            thread::sleep(Duration::from_millis(timeout_ms));
+            std::process::exit(124);
+        })
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+fn run_with_supervision(
+    invocation: CommandInvocation,
+    supervised: bool,
+) -> Result<String, CommandRunError> {
     thread::spawn(move || {
         tokio::runtime::Builder::new_current_thread()
             .enable_all()
@@ -123,8 +177,27 @@ pub fn run(invocation: CommandInvocation) -> Result<String, CommandRunError> {
                     0,
                 )
             })?
-            .block_on(run_async(invocation))
+            .block_on(run_async(invocation, supervised))
     })
     .join()
     .map_err(|_| CommandRunError::new("Command provider worker failed.".into(), 0))?
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    #[test]
+    fn deadline_terminates_the_worker_instead_of_detaching_it() {
+        let started = std::time::Instant::now();
+        let result = run(CommandInvocation {
+            command: "sh".into(),
+            args: vec!["-c".into(), "sleep 30".into()],
+            timeout_ms: 100,
+            max_stdout_bytes: 1024,
+            failure_message: "worker failed".into(),
+            timeout_message: "page timeout".into(),
+        });
+        assert_eq!(result.unwrap_err().message, "page timeout");
+        assert!(started.elapsed() < Duration::from_secs(5));
+    }
 }

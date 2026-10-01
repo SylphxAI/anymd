@@ -206,3 +206,13 @@ fn a_scanned_page_emits_no_image_ref_and_stays_sparse_for_ocr() {
     assert!(page2.contains("real text layer"), "{markdown}");
     assert_eq!(files(cache.path()).len(), 1);
 }
+
+#[test]
+fn vlm_candidates_exclude_a_native_text_layer_over_a_full_page_image() {
+    let doc = anymd_core::markdown_layout::load_document(Path::new(&fixture("scanned-page.pdf")))
+        .unwrap();
+    assert_eq!(
+        anymd_core::markdown_layout::image_only_pages(&doc, &[1, 2]),
+        vec![1]
+    );
+}

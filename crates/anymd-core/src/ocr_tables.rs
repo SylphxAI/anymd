@@ -753,6 +753,9 @@ mod tests {
         OcrWord {
             text: text.into(),
             confidence: Some(0.9),
+            reading_order: None,
+            region_type: None,
+            layout_confidence: None,
             bounding_box: Some(json!({
                 "left": left,
                 "bottom": bottom,
@@ -828,6 +831,9 @@ mod tests {
         let unboxed = OcrWord {
             text: "plain".into(),
             confidence: None,
+            reading_order: None,
+            region_type: None,
+            layout_confidence: None,
             bounding_box: None,
         };
         assert_eq!(

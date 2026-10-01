@@ -2,14 +2,14 @@
 name = "anymd"
 version.workspace = true
 edition.workspace = true
-rust-version = "1.92"
+rust-version = "1.95"
 license.workspace = true
 repository.workspace = true
 description = "anymd: any file to clean Markdown for AI agents. Pure-Rust MCP server + CLI binary for @sylphx/anymd"
 homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
-include = ["src/**/*", "Cargo.toml"]
+include = ["src/**/*", "Cargo.toml", "tests/worker_lifecycle.rs", "tests/worker_lifecycle.py"]
 keywords = ["mcp", "pdf", "rmcp", "agent"]
 categories = ["command-line-utilities"]
 
@@ -20,7 +20,13 @@ path = "src/lib.rs"
 name = "anymd"
 path = "src/main.rs"
 
+[features]
+default = ["ocr-vlm"]
+ocr-vlm = ["anymd-ocr-vlm/candle"]
+
 [dependencies]
+anymd-ocr-vlm = { workspace = true }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "tiff", "bmp", "webp"] }
 anyhow = "1"
 axum = "0.8"
 base64 = "0.22"
@@ -47,3 +53,9 @@ ureq = { version = "3.4", default-features = false, features = ["rustls", "gzip"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
+
+# Model-free lifecycle regressions run only on isolated CI runners.
+[[test]]
+name = "worker_lifecycle"
+path = "tests/worker_lifecycle.rs"
+harness = false

@@ -535,8 +535,26 @@ pub fn read_text(
             return Ok((list_directory(source, Path::new(&admitted)), false));
         }
     }
+    let inherits_env = matches!(
+        args.ocr,
+        None | Some(crate::ocr_vlm::OcrSelection::Enabled(true))
+    );
+    let environment = if inherits_env {
+        match std::env::var("ANYMD_OCR") {
+            Ok(value) => Some(value),
+            Err(std::env::VarError::NotPresent) => None,
+            Err(_) => return Err("Invalid ANYMD_OCR".into()),
+        }
+    } else {
+        None
+    };
+    let ocr_engine = crate::ocr_vlm::resolve_engine(args.ocr, environment.as_deref())?;
     let options = OpenOptions {
-        ocr: args.ocr.or_else(|| args.node.as_ref().map(|_| false)),
+        ocr: args
+            .ocr
+            .map(|v| v.enabled())
+            .or_else(|| args.node.as_ref().map(|_| false)),
+        ocr_engine: Some(ocr_engine),
         transcript: args.transcript.unwrap_or(false) || args.download_asr_model.unwrap_or(false),
         download_asr_model: args.download_asr_model.unwrap_or(false),
         images: (args.wants_images() && (args.node.is_none() || args.images.is_some()))
@@ -869,6 +887,7 @@ fn load_search_docs(
         .min(files.len().max(1));
     let options = OpenOptions {
         ocr: Some(false),
+        ocr_engine: None,
         transcript: false,
         download_asr_model: false,
         images: None,

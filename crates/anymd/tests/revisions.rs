@@ -22,7 +22,7 @@ fn args(name: &str, revisions: Option<&str>) -> ReadArgs {
         pages: None,
         max_tokens: None,
         cursor: None,
-        ocr: Some(false),
+        ocr: Some(anymd::ocr_vlm::OcrSelection::Enabled(false)),
         transcript: None,
         download_asr_model: None,
         images: Some("none".into()),

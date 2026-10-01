@@ -19,7 +19,7 @@ docker run -i --rm ghcr.io/sylphxai/anymd    # MCP server on stdio (amd64 and ar
 
 The Linux wheels and the image use glibc 2.17 or newer, so Alpine (musl) needs `cargo install anymd` instead.
 
-Prefer Cargo? `cargo install anymd` builds the same binary from [crates.io](https://crates.io/crates/anymd). It needs a Rust 1.92+ toolchain, and OCR and transcripts still use `tesseract`/`ffmpeg` when installed.
+Prefer Cargo? `cargo install anymd` builds the same binary from [crates.io](https://crates.io/crates/anymd). It needs Rust 1.95+, CMake and a C++ compiler, and includes local doc-VLM OCR and bundled ASR. Run `anymd setup ocr` to install the pinned models explicitly; without setup, automatic OCR keeps using installed `tesseract`. Audio and video still use optional `ffmpeg`.
 
 To add anymd to every MCP client on your machine at once (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI):
 

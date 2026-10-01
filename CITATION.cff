@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: If you use anymd in research or a product, please cite it as below.
 title: "anymd: any file to clean Markdown for AI agents"
 type: software
-version: 8.2.0
+version: 8.3.0
 license: MIT
 repository-code: "https://github.com/SylphxAI/anymd"
 url: "https://sylphxai.github.io/anymd/"

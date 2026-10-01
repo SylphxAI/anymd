@@ -16,7 +16,7 @@ import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parent.parent
-FORKS = ("vendor/adobe-cmap-parser", "vendor/pdf-extract")
+FORKS = ("vendor/adobe-cmap-parser", "vendor/pdf-extract", "vendor/oar-ocr-vl")
 
 
 def payload(data):

@@ -6,7 +6,7 @@
 | Platform packages | `@sylphx/anymd-<platform>` for darwin-arm64, darwin-x64, linux-x64-gnu, linux-arm64-gnu, win32-x64-msvc, in `packages/npm/<platform>` |
 | Alias packages | `@sylphx/citra` (bin `citra`) and `@sylphx/pdf-reader-mcp` (bin `pdf-reader-mcp`), in `packages/aliases/` |
 | MCP Registry | `io.github.SylphxAI/anymd`; the old names `io.github.SylphxAI/citra` and `io.github.SylphxAI/pdf-reader-mcp` are marked deprecated |
-| crates.io | `anymd` (binary, `cargo install anymd`), `anymd-core`, `anymd-formats`, `anymd-pdf`, and the forks `anymd-pdf-extract` and `anymd-adobe-cmap-parser` (from `vendor/`); `anymd-wasm` is not published |
+| crates.io | `anymd` (binary, `cargo install anymd`), `anymd-core`, `anymd-formats`, `anymd-pdf`, `anymd-ocr-vlm`, and the forks `anymd-pdf-extract`, `anymd-adobe-cmap-parser`, and `anymd-oar-ocr-vl` (from `vendor/`); `anymd-wasm` is not published |
 | Release workflow | `.github/workflows/release.yml`, which calls the shared [mcp-kit release workflow](https://github.com/SylphxAI/mcp-kit) |
 
 ## How a release happens
@@ -49,12 +49,12 @@ crates.io consumers.
 ## crates.io
 
 The `crates` job in `release.yml` runs after the release job succeeds and calls
-`scripts/publish-crates.sh`, which publishes the six crates in dependency order
-(the two forks, `anymd-pdf`, `anymd-formats`, `anymd-core`, `anymd`) with the
+`scripts/publish-crates.sh`, which publishes the eight crates in dependency order
+(the three forks, `anymd-pdf`, `anymd-formats`, `anymd-core`, `anymd-ocr-vlm`, `anymd`) with the
 organization secret `CARGO_REGISTRY_TOKEN`, and skips any version already on
 crates.io. `set-version.ts` moves the workspace version and the internal
 `version` pins together; the forks have their own versions
-(`anymd-pdf-extract` 0.12.2, `anymd-adobe-cmap-parser` 0.4.1), and their
+(`anymd-pdf-extract` 0.12.2, `anymd-adobe-cmap-parser` 0.4.1, `anymd-oar-ocr-vl` 0.9.2), and their
 version is raised by hand in `vendor/*/Cargo.toml` (and in the `[workspace.dependencies]`
 pin) when the fork changes. `check:versions` compares each already-published fork
 with its crates.io package (sources, manifest, README and license), without
@@ -158,3 +158,11 @@ recovery run can build missing wheels under the exact-tag checks above and
 pass them through the existing CLI/API smoke tests and OIDC `pypi` job. The
 publisher skips files already present; neither publisher registration nor a
 successful image/crates job proves that the five Python wheels were delivered.
+
+## Doc-VLM builds
+
+The binary enables the `ocr-vlm` feature by default; source builds can opt out with `--no-default-features`. macOS includes Metal. `.github/workflows/docvlm.yml` checks Linux x64, Linux arm64, macOS arm64 and Windows x64, with optional measurements of float, q8 and q4 CPU weights. The release still includes its existing darwin-x64 package.
+
+Linux arm64 needs the FP16 assembler flag for the upstream GEMM dependency. Repository builds inherit it from `.cargo/config.toml`; external `cargo install` builds need `RUSTFLAGS="-C target-feature=+fp16"`. CI extracts the published OCR-runtime package outside the repository and checks it with that explicit flag, so the package gate does not inherit `.cargo/config.toml`. The runtime checks actual kernel hardware capabilities rather than compiler-folded feature detection. Old ARM CPUs keep the plain CLI/tesseract route, checked in CI on an emulated Cortex-A72.
+
+`CI` also accepts a manual dispatch for the same full check, including the queue-only macOS and Windows workspace tests. Model weights never ship in release packages; users explicitly install SHA-256-pinned files with `anymd setup ocr`.

@@ -2,11 +2,17 @@
 
 ## Unreleased
 
+## 8.3.0
+
 ### Minor Changes
+
+- Add an opt-in local doc-VLM OCR route using PaddleOCR-VL-1.6 and PP-DocLayoutV3 on Candle, including Metal on Macs. `anymd setup ocr` installs SHA-256-pinned weights; `ocr` accepts auto, vlm and tesseract alongside the existing MCP booleans. Automatic OCR never downloads models. The worker has a hard page deadline, a per-region token cap, decode-time repetition stopping, shared OCR admission, and a fail-fast aggregate PDF deadline. Tables become Markdown and formulas become LaTeX. Experimental CPU q8/q4 decoder quantization is available through `ANYMD_OCR_QUANTIZATION`; Linux arm64 checks actual FP16 hardware and keeps the plain CLI on older machines.
 
 - Local transcripts now use bundled transcribe-cpp and one Qwen3-ASR-1.7B Q8 model for every language; the Whisper engine is removed. Pinned weights download only when explicitly requested and are SHA-256 verified. Long audio uses bounded 20-second chunks with source-relative segment timestamps. Optional Qwen3-ForcedAligner via standalone CrispASR supplies validated word timestamps where available. `download_asr_model` / `--download-asr-model` replaces the old spelling, which remains a Qwen-only compatibility alias. Japanese trails whisper-turbo on the 200-utterance FLEURS sample (5.93 vs 4.80 raw CER; 5.56 vs 4.59 with symmetric numeral/kana normalization), an accepted one-model trade-off. ASR benchmark tables publish both raw and explicitly named normalized scoring; they do not claim to reproduce Qwen's official scores.
 
 - New `outline` MCP tool and `anymd outline <file>` CLI command return a local, deterministic heading tree for PDF, DOCX, PPTX, EPUB, HTML and Markdown, as JSON or tree text. Nodes carry stable ids, title paths, page/slide/chapter ranges, Markdown byte ranges and child counts. `read` gains `node` (`--node` on the CLI), with the existing page selections, token budgets and cursors. Literal and ranked `search` hits carry node ids and title paths. Reads without a node keep their output unchanged.
+
+- The platform wheel includes a thin Python API: `from anymd import convert` returns a `Document` with Markdown text and source metadata. Optional `langchain` and `llamaindex` extras provide `AnyMDLoader` and `AnyMDReader`, using the same native converter without downloading another binary.
 
 ## 8.2.0
 

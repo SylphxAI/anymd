@@ -2,16 +2,18 @@
 members = [
     "crates/anymd-core",
     "crates/anymd",
+    "crates/anymd-ocr-vlm",
     "crates/anymd-formats",
     "crates/anymd-pdf",
     "crates/anymd-wasm",
     "vendor/adobe-cmap-parser",
     "vendor/pdf-extract",
+    "vendor/oar-ocr-vl",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "8.2.0"
+version = "8.3.0"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/SylphxAI/anymd"
@@ -35,9 +37,11 @@ readme = "README.md"
 # anymd-adobe-cmap-parser. The `package` rename keeps the library names
 # (`pdf_extract`), so no source changes.
 [workspace.dependencies]
-anymd-core = { path = "crates/anymd-core", version = "8.2.0" }
-anymd-formats = { path = "crates/anymd-formats", version = "8.2.0" }
-anymd-pdf = { path = "crates/anymd-pdf", version = "8.2.0" }
+oar-ocr-vl = { package = "anymd-oar-ocr-vl", path = "vendor/oar-ocr-vl", version = "0.9.2" }
+anymd-ocr-vlm = { path = "crates/anymd-ocr-vlm", version = "8.3.0" }
+anymd-core = { path = "crates/anymd-core", version = "8.3.0" }
+anymd-formats = { path = "crates/anymd-formats", version = "8.3.0" }
+anymd-pdf = { path = "crates/anymd-pdf", version = "8.3.0" }
 pdf-extract = { package = "anymd-pdf-extract", path = "vendor/pdf-extract", version = "0.12.2" }
 adobe-cmap-parser = { package = "anymd-adobe-cmap-parser", path = "vendor/adobe-cmap-parser", version = "0.4.1" }
 

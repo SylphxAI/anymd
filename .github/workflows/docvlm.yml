@@ -1,0 +1,141 @@
+name: Doc-VLM release targets
+
+on:
+  push:
+    branches: [feat/docvlm-ocr]
+  pull_request:
+    paths: [crates/anymd-ocr-vlm/**, crates/anymd/src/ocr_vlm*, Cargo.lock, .github/workflows/docvlm.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docvlm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Generate the pinned synthetic corpus
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk fonts-liberation
+          pip install pillow==12.1.1 numpy==2.4.2
+          python3 crates/anymd-ocr-vlm/bench/test_measure.py
+          python3 crates/anymd-ocr-vlm/bench/make_pages.py pages
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docvlm-pages
+          path: pages
+          retention-days: 3
+  targets:
+    name: Candle on ${{ matrix.target }}
+    needs: pages
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Tests and release binary
+        shell: bash
+        run: |
+          cargo test --locked -p anymd-oar-ocr-vl -p anymd-ocr-vlm -p anymd-pdf -p anymd
+          binary="target/${{ matrix.target }}/release/anymd"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then binary="$binary.exe"; fi
+          started=$(python -c 'import time; print(time.monotonic())')
+          cargo build --release --locked -p anymd --target "${{ matrix.target }}"
+          python -c 'import json, pathlib, sys, time; print(json.dumps({"build_seconds": time.monotonic()-float(sys.argv[1]), "candle_binary_bytes": pathlib.Path(sys.argv[2]).stat().st_size}))' "$started" "$binary" > docvlm-build.json
+          cp "$binary" "$binary.candle"
+          cargo build --release --locked -p anymd --no-default-features --target "${{ matrix.target }}"
+          python -c 'import json, pathlib, sys; p=pathlib.Path("docvlm-build.json"); d=json.loads(p.read_text()); d["tesseract_binary_bytes"]=pathlib.Path(sys.argv[1]).stat().st_size; d["binary_delta_mib"]=(d["candle_binary_bytes"]-d["tesseract_binary_bytes"])/1048576; p.write_text(json.dumps(d))' "$binary"
+          cp "$binary.candle" "$binary"
+      - name: Model-free Python and native worker lifecycle regressions
+        env:
+          ANYMD_TEST_WORKER_LIFECYCLE: '1'
+        run: cargo test --locked -p anymd --test worker_lifecycle
+      - name: Retain the existing Intel Mac release target
+        if: matrix.target == 'aarch64-apple-darwin'
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo build --release --locked -p anymd --target x86_64-apple-darwin
+      - name: Package the ARM OCR runtime without compiling the checkout
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          cargo package --locked --no-verify -p anymd-oar-ocr-vl
+          mkdir -p "$RUNNER_TEMP/docvlm-package"
+          tar -xzf target/package/anymd-oar-ocr-vl-0.9.2.crate -C "$RUNNER_TEMP/docvlm-package"
+      - name: Check packaged ARM runtime outside repository Cargo config
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        working-directory: ${{ runner.temp }}/docvlm-package
+        env:
+          # Match the documented cargo-install command, not .cargo/config.toml.
+          RUSTFLAGS: '-C target-feature=+fp16'
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target
+        run: cargo check --locked --manifest-path anymd-oar-ocr-vl-0.9.2/Cargo.toml
+
+      - name: Plain CLI still runs on pre-FP16 ARM hardware
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-user
+          qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd version
+          qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd test/fixtures/sample.pdf --no-ocr > sample.md
+          grep -q '<!-- page 1 -->' sample.md
+          if qemu-aarch64 -cpu cortex-a72 target/aarch64-unknown-linux-gnu/release/anymd __ocr-vlm-worker missing.png 1 2> hardware-error.txt; then
+            echo 'Expected the FP16 hardware guard to reject the old CPU'; exit 1
+          fi
+          grep -q 'FP16-capable' hardware-error.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: anymd-docvlm-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/anymd
+            target/${{ matrix.target }}/release/anymd.exe
+          retention-days: 3
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v8
+        with:
+          name: docvlm-pages
+          path: pages
+      - name: Install and measure the production OCR worker
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[measure]')
+        shell: bash
+        env:
+          ANYMD_CACHE_DIR: ${{ runner.temp }}/anymd-cache
+          RAYON_NUM_THREADS: '4'
+        run: |
+          binary="target/${{ matrix.target }}/release/anymd"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then binary="$binary.exe"; fi
+          "$binary" setup ocr
+          pip install psutil==7.0.0
+          failed=0
+          for mode in none q8 q4; do
+            ANYMD_OCR_QUANTIZATION="$mode" python crates/anymd-ocr-vlm/bench/measure.py --binary "$binary" --pages pages --out "measure-$mode.json" || failed=1
+          done
+          exit "$failed"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: docvlm-measure-${{ matrix.target }}
+          path: measure-*.json
+          if-no-files-found: ignore
+          retention-days: 3

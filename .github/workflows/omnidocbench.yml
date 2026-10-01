@@ -6,13 +6,27 @@ name: OmniDocBench
 on:
   workflow_dispatch:
     inputs:
+      ocr:
+        description: 'Local OCR engine (vlm or tesseract)'
+        type: choice
+        options: [vlm, tesseract]
+        default: vlm
       limit:
         description: 'Score only the first N pages by file name (0 = all 1651 pages; use a small N for a smoke test)'
         required: false
         default: '0'
+      predictions_run:
+        description: 'Reuse predictions from a completed run instead of converting pages again (same engine and limit required)'
+        required: false
+        default: ''
+      predictions_sha:
+        description: 'Full source commit SHA required when reusing predictions'
+        required: false
+        default: ''
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: omnidocbench-${{ github.ref }}
@@ -21,10 +35,12 @@ concurrency:
 env:
   # opendatalab/OmniDocBench, "Codebase Update to v1.6" era: README updated to v1.6 (2026-04-10)
   EVALUATOR_COMMIT: 147cd5ac9472002f5751221d390bf00abdbc0d2f
-  LIMIT: ${{ github.event.inputs.limit || '40' }}
+  LIMIT: ${{ github.event.inputs.limit || '0' }}
+  ANYMD_OCR: ${{ github.event.inputs.ocr || 'vlm' }}
 
 jobs:
   build:
+    if: inputs.predictions_run == ''
     name: Build anymd
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -32,6 +48,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - run: python3 bench/omnidocbench/test_harness.py
       - run: cargo build --release -p anymd
       - uses: actions/upload-artifact@v7
         with:
@@ -47,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1/4, 2/4, 3/4, 4/4]
+        shard: [1/32, 2/32, 3/32, 4/32, 5/32, 6/32, 7/32, 8/32, 9/32, 10/32, 11/32, 12/32, 13/32, 14/32, 15/32, 16/32, 17/32, 18/32, 19/32, 20/32, 21/32, 22/32, 23/32, 24/32, 25/32, 26/32, 27/32, 28/32, 29/32, 30/32, 31/32, 32/32]
     steps:
       - uses: actions/checkout@v7
 
@@ -65,6 +82,10 @@ jobs:
           chmod +x anymd-bin/anymd
           echo "ANYMD_BIN=$PWD/anymd-bin/anymd" >> "$GITHUB_ENV"
 
+      - name: Install pinned doc-VLM weights
+        if: env.ANYMD_OCR == 'vlm'
+        run: anymd-bin/anymd setup ocr
+
       - name: Run anymd on the page images
         env:
           # Four pages run at once on four cores; tesseract's own OpenMP threads on top of that
@@ -72,7 +93,7 @@ jobs:
           OMP_THREAD_LIMIT: '1'
         run: |
           python3 bench/omnidocbench/harness.py predict --shard "${{ matrix.shard }}" \
-            --limit "$LIMIT" --out "pred/${{ strategy.job-index }}"
+            --limit "$LIMIT" --workers 1 --timeout 620 --out "pred/${{ strategy.job-index }}"
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -84,13 +105,35 @@ jobs:
   evaluate:
     name: Official evaluator
     needs: predict
+    if: always() && !cancelled() && (needs.predict.result == 'success' || inputs.predictions_run != '')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v7
 
+      - name: Validate prediction run
+        env:
+          PREDICTIONS_RUN: ${{ inputs.predictions_run }}
+        run: |
+          if [[ -n "$PREDICTIONS_RUN" && ! "$PREDICTIONS_RUN" =~ ^[0-9]+$ ]]; then
+            echo 'predictions_run must be a numeric workflow run id'; exit 1
+          fi
+
+      - name: Verify reused prediction provenance
+        if: inputs.predictions_run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREDICTIONS_RUN: ${{ inputs.predictions_run }}
+          PREDICTIONS_SHA: ${{ inputs.predictions_sha }}
+        run: |
+          python3 bench/omnidocbench/verify_source.py --repo "$GITHUB_REPOSITORY" \
+            --run "$PREDICTIONS_RUN" --sha "$PREDICTIONS_SHA" --ocr "$ANYMD_OCR" \
+            --limit "$LIMIT" --out source-provenance.json
+
       - uses: actions/download-artifact@v8
         with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.predictions_run || github.run_id }}
           pattern: predictions-*
           path: pred-parts
           merge-multiple: true
@@ -98,9 +141,30 @@ jobs:
       - name: Ground truth
         run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --out gt.json
 
-      - name: Validate and collect predictions
+      - name: Verify reused prediction coverage
+        if: inputs.predictions_run != ''
         run: |
-          python3 bench/omnidocbench/harness.py validate --gt gt.json --parts pred-parts
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          ground_truth = json.loads(Path('gt.json').read_text())
+          expected = {p['page_info']['image_path'][:-4] + '.md' for p in ground_truth}
+          actual = {p.name for p in Path('pred-parts').rglob('*.md')}
+          timings = list(Path('pred-parts').rglob('timings-*.json'))
+          records = [name for p in timings for name in json.loads(p.read_text())['pages']]
+          if len(timings) != 32 or len(records) != len(set(records)) or {n[:-4] + '.md' for n in records} != expected:
+              raise SystemExit('Timing records do not cover the selected corpus exactly once across 32 shards')
+          if actual != expected:
+              raise SystemExit(f'Prediction coverage mismatch: {len(expected-actual)} missing, {len(actual-expected)} extra')
+          print(f'Prediction coverage: {len(actual)}/{len(expected)} pages')
+          PYTHON
+
+      - name: Validate fresh predictions
+        if: inputs.predictions_run == ''
+        run: python3 bench/omnidocbench/harness.py validate --gt gt.json --parts pred-parts
+
+      - name: Collect validated predictions
+        run: |
           mkdir -p predictions
           find pred-parts -name '*.md' -exec cp -t predictions {} +
 
@@ -150,6 +214,7 @@ jobs:
         run: |
           {
             echo "### anymd on OmniDocBench v1.6 (image pages, \`anymd --ocr\`, limit=$LIMIT)"
+            echo "Prediction source run: ${{ inputs.predictions_run || github.run_id }}; OCR engine: $ANYMD_OCR"
             echo '```json'
             python3 bench/omnidocbench/summarize.py evaluator/result/predictions_quick_match_metric_result.json
             echo '```'
@@ -160,6 +225,8 @@ jobs:
         with:
           name: omnidocbench-results
           path: |
+            source-provenance.json
+            gt.json
             evaluator/result/
             evaluator/configs/end2end.yaml
             pred-parts/**/timings-*.json
