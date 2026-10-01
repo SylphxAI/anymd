@@ -550,7 +550,10 @@ pub fn read_text(
     };
     let ocr_engine = crate::ocr_vlm::resolve_engine(args.ocr, environment.as_deref())?;
     let options = OpenOptions {
-        ocr: args.ocr.map(|v| v.enabled()).or_else(|| args.node.as_ref().map(|_| false)),
+        ocr: args
+            .ocr
+            .map(|v| v.enabled())
+            .or_else(|| args.node.as_ref().map(|_| false)),
         ocr_engine: Some(ocr_engine),
         transcript: args.transcript.unwrap_or(false)
             || args.download_whisper_model.unwrap_or(false),

@@ -15,9 +15,14 @@ on:
         description: 'Score only the first N pages by file name (0 = all 1651 pages; use a small N for a smoke test)'
         required: false
         default: '0'
+      predictions_run:
+        description: 'Reuse predictions from a completed run instead of converting pages again (same engine and limit required)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: omnidocbench-${{ github.ref }}
@@ -31,6 +36,7 @@ env:
 
 jobs:
   build:
+    if: inputs.predictions_run == ''
     name: Build anymd
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -38,6 +44,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - run: python3 bench/omnidocbench/test_harness.py
       - run: cargo build --release -p anymd
       - uses: actions/upload-artifact@v7
         with:
@@ -93,13 +100,24 @@ jobs:
   evaluate:
     name: Official evaluator
     needs: predict
+    if: always() && !cancelled() && (needs.predict.result == 'success' || inputs.predictions_run != '')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v7
 
+      - name: Validate prediction run
+        env:
+          PREDICTIONS_RUN: ${{ inputs.predictions_run }}
+        run: |
+          if [[ -n "$PREDICTIONS_RUN" && ! "$PREDICTIONS_RUN" =~ ^[0-9]+$ ]]; then
+            echo 'predictions_run must be a numeric workflow run id'; exit 1
+          fi
+
       - uses: actions/download-artifact@v8
         with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.predictions_run || github.run_id }}
           pattern: predictions-*
           path: pred-parts
           merge-multiple: true
@@ -111,7 +129,20 @@ jobs:
           echo "predictions: $(ls predictions | wc -l)"
 
       - name: Ground truth
-        run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --workers 1 --timeout 620 --out gt.json
+        run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --out gt.json
+
+      - name: Verify prediction coverage
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          ground_truth = json.loads(Path('gt.json').read_text())
+          expected = {p['page_info']['image_path'][:-4] + '.md' for p in ground_truth}
+          actual = {p.name for p in Path('predictions').glob('*.md')}
+          if actual != expected:
+              raise SystemExit(f'Prediction coverage mismatch: {len(expected-actual)} missing, {len(actual-expected)} extra')
+          print(f'Prediction coverage: {len(actual)}/{len(expected)} pages')
+          PYTHON
 
       - uses: actions/checkout@v7
         with:
@@ -159,6 +190,7 @@ jobs:
         run: |
           {
             echo "### anymd on OmniDocBench v1.6 (image pages, \`anymd --ocr\`, limit=$LIMIT)"
+            echo "Prediction source run: ${{ inputs.predictions_run || github.run_id }}; OCR engine: $ANYMD_OCR"
             echo '```json'
             python3 bench/omnidocbench/summarize.py evaluator/result/predictions_quick_match_metric_result.json
             echo '```'

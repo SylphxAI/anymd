@@ -50,6 +50,16 @@ pages in 32 shards (one model worker per runner), then runs the evaluator and up
 JSON files, the config it ran with, and per-page anymd timings). The job summary shows the headline scores, computed from the metric files with the plain formula; the published figures use the evaluator's own `run_summary.json`, whose per-metric page counts differ slightly.
 `summarize.py` computes Overall as the leaderboard does: ((1 - text edit distance) x 100 + table TEDS + formula CDM) / 3.
 
+### Reuse completed predictions
+
+To recover an evaluator failure without repeating inference, dispatch this workflow with `predictions_run` set to the completed source run id and the same `ocr` and `limit` values. For example:
+
+```bash
+gh workflow run omnidocbench.yml --ref <fixed-branch> -f ocr=vlm -f limit=0 -f predictions_run=<completed-run-id>
+```
+
+This skips the build and prediction jobs, downloads only that run's prediction artifacts, and checks their filenames against the selected ground truth before scoring. The summary records the source run. Scores certify those source predictions, not inference on the recovery workflow's newer commit. Wait until every source prediction shard has completed and its artifacts are retained before dispatching recovery.
+
 ## Licence
 
 The dataset is downloaded at run time and never redistributed; see its licence below.
