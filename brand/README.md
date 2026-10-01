@@ -1,6 +1,29 @@
 # anymd brand
 
-This folder is the source of truth for the anymd brand: every surface is a copy of a file here, so a change lands in a master or in `tokens.json`, and `python3 brand/build.py` writes the generated files and refreshes the surface copies (it needs Pillow, numpy and resvg-py). CI runs `python3 brand/build.py --check`, which needs only Python 3.
+## Shared generator
+
+CI uses the shared brand action pinned to `a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb`.
+The masters, tokens, pixel grids and provenance remain in this repository;
+existing assets are unchanged by moving the generator. To regenerate locally,
+prepare the script from the same pin (run from the repository root):
+
+```sh
+BRAND_SCRIPT="$(mktemp)"
+curl --fail --location --output "$BRAND_SCRIPT" \
+  "https://raw.githubusercontent.com/SylphxAI/.github/a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb/.github/actions/brand/build.py"
+python3 -m pip install pillow numpy resvg-py
+python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD"
+python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" --check
+rm "$BRAND_SCRIPT"
+```
+
+Add `--resnap` only when intentionally redrawing the small favicon grids.
+Check mode needs only Python 3 and does not regenerate files. The commands below
+assume `BRAND_SCRIPT` points to this pinned script. Generated-file comments that
+name `brand/build.py` describe the historical generator; they are preserved to
+keep the asset bytes and hashes unchanged.
+
+This folder is the source of truth for the anymd brand: every surface is a copy of a file here, so a change lands in a master or in `tokens.json`, and `python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD"` writes the generated files and refreshes the surface copies (it needs Pillow, numpy and resvg-py). CI runs `python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" --check`, which needs only Python 3.
 
 ## Name
 
@@ -28,7 +51,7 @@ This folder is the source of truth for the anymd brand: every surface is a copy 
 | app icons | `app-icon/apple-touch-icon-180.png`, `app-icon/icon-192.png`, `app-icon/icon-512.png`, `app-icon/icon-1024.png`, `app-icon/icon-maskable-192.png`, `app-icon/icon-maskable-512.png` |
 | colours | `tokens.json`, generated to `tokens.css` |
 | what feeds what, and where each file came from | `brand.json`, `provenance.json` |
-| the generator | `build.py` |
+| the generator | [shared generator](https://github.com/SylphxAI/.github/tree/a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb/.github/actions/brand) |
 
 ## Colours
 
@@ -57,7 +80,7 @@ The docs site reads them through `docs/.vitepress/theme/custom.css`, which impor
 
 ## Small sizes
 
-The 16 and 32 px favicons are drawn from `favicon/grid-16.txt` and `favicon/grid-32.txt`, not straight from the vector. Each character is one pixel: `.` is empty, `A` is `#C3F53C`, `B` is `#0A0D0A`, `C` is `#2B3A05`. The grid files can be hand-edited, and build.py draws from the edited file until `python3 brand/build.py --resnap` redraws both from the master at 8× and snaps every pixel to the nearest colour in `icon.palette`. The third evidence line is drawn at 55% opacity over the document; its blend lands nearest the fold green, so the grids show it as `C`.
+The 16 and 32 px favicons are drawn from `favicon/grid-16.txt` and `favicon/grid-32.txt`, not straight from the vector. Each character is one pixel: `.` is empty, `A` is `#C3F53C`, `B` is `#0A0D0A`, `C` is `#2B3A05`. The grid files can be hand-edited, and build.py draws from the edited file until `python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" --resnap` redraws both from the master at 8× and snaps every pixel to the nearest colour in `icon.palette`. The third evidence line is drawn at 55% opacity over the document; its blend lands nearest the fold green, so the grids show it as `C`.
 
 ## Clear space and minimum size
 
@@ -67,10 +90,10 @@ Keep the mark legible at 16 px, the floor the drawings are checked at: `favicon/
 
 What this folder enforces by construction:
 
-- Do change a colour once, in `tokens.json`; `build.py` writes `tokens.css`, and the surfaces read it.
+- Do change a colour once, in `tokens.json`; [shared generator](https://github.com/SylphxAI/.github/tree/a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb/.github/actions/brand) writes `tokens.css`, and the surfaces read it.
 - Do use `svg/anymd-symbol-black.svg` or `-white.svg` when one colour is needed.
 - Don't edit a generated file (`favicon/`, `app-icon/`, `tokens.css`, `provenance.json`, or any surface copy) — the next build overwrites it.
-- Don't redraw the mark from scratch; edit a master, then run `build.py`.
+- Don't redraw the mark from scratch; edit a master, then run [shared generator](https://github.com/SylphxAI/.github/tree/a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb/.github/actions/brand).
 
 ## Surfaces
 
@@ -84,7 +107,7 @@ What this folder enforces by construction:
 
 ## Provenance
 
-Everything under `favicon/` and `app-icon/`, plus `tokens.css`, is generated by `build.py`; `brand.json` is the spec that says what feeds what. Every file's SHA-256 is in `provenance.json`.
+Everything under `favicon/` and `app-icon/`, plus `tokens.css`, is generated by [shared generator](https://github.com/SylphxAI/.github/tree/a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb/.github/actions/brand); `brand.json` is the spec that says what feeds what. Every file's SHA-256 is in `provenance.json`.
 
 ## Trademark
 
