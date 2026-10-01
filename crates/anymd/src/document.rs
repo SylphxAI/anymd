@@ -69,6 +69,7 @@ pub struct Opened {
     options: OpenOptions,
     body: Body,
     native_outline: Vec<(usize, String, Option<u32>)>,
+    ocr_request: Mutex<Option<crate::ocr_vlm::OcrRequest>>,
 }
 
 /// A source spec is a URL when it starts with http:// or https://.
@@ -388,6 +389,7 @@ impl Opened {
             metadata: Vec::new(),
             options: options.clone(),
             native_outline: Vec::new(),
+            ocr_request: Mutex::new(None),
             body: Body::Pdf {
                 doc: Box::new(doc),
                 bytes,
@@ -424,6 +426,7 @@ impl Opened {
             metadata: converted.metadata,
             options: options.clone(),
             native_outline: converted.outline,
+            ocr_request: Mutex::new(None),
             body: Body::Units(Arc::new(units)),
         }
     }
@@ -439,6 +442,7 @@ impl Opened {
             metadata: cached.metadata.clone(),
             options: options.clone(),
             native_outline: cached.native_outline.clone(),
+            ocr_request: Mutex::new(None),
             body: Body::Units(cached.units.clone()),
         }
     }
@@ -568,22 +572,23 @@ impl Opened {
             Some(true) => true,
             None => false,
         };
-        let mut sparse: Vec<usize> = units
-            .iter()
-            .enumerate()
-            .filter(|(_, unit)| visible_chars(&unit.markdown) < SPARSE_PAGE_CHARS)
-            .map(|(index, _)| index)
-            .collect();
+        let vlm = crate::ocr_vlm::requested(self.options.ocr_engine.unwrap_or_default());
+        let sparse = ocr_candidates(units, doc, vlm);
         if sparse.is_empty() {
             return Ok(());
         }
-        let vlm = crate::ocr_vlm::requested(self.options.ocr_engine.unwrap_or_default());
-        if vlm {
-            let candidates: Vec<u32> = sparse.iter().map(|&index| units[index].number).collect();
-            let image_only = markdown_layout::image_only_pages(doc, &candidates);
-            sparse.retain(|&index| image_only.contains(&units[index].number));
-            if sparse.is_empty() {
-                return Ok(());
+        let mut admission = if vlm {
+            Some(
+                self.ocr_request
+                    .lock()
+                    .map_err(|_| "OCR request state poisoned".to_string())?,
+            )
+        } else {
+            None
+        };
+        if let Some(admission) = admission.as_mut() {
+            if admission.is_none() {
+                **admission = Some(crate::ocr_vlm::OcrRequest::acquire()?);
             }
         }
         if !vlm && !anymd_formats::image::ocr_available() {
@@ -612,18 +617,33 @@ impl Opened {
         };
         let mut results: Vec<(usize, Result<String, String>)> = Vec::with_capacity(sparse.len());
         if vlm {
-            // Keep at most one rendered page and one model worker resident.
+            // The document keeps one shared permit/deadline across lazy unit
+            // reads. Propagate the first failure before rendering another page.
+            let request = admission
+                .as_mut()
+                .and_then(|guard| guard.as_mut())
+                .ok_or("Missing OCR admission")?;
             for &index in &sparse {
-                let text = renderer
-                    .render_page(
-                        units[index].number as usize,
-                        OCR_SCALE,
-                        OCR_MAX_PIXELS,
-                        256 * 1024 * 1024,
-                    )
-                    .map_err(|error| error.message)
-                    .and_then(|page| ocr_page(&page, true));
-                results.push((index, text));
+                let text = request
+                    .run_page(|deadline, permit| {
+                        let page = renderer
+                            .render_page(
+                                units[index].number as usize,
+                                OCR_SCALE,
+                                OCR_MAX_PIXELS,
+                                256 * 1024 * 1024,
+                            )
+                            .map_err(|error| error.message)?;
+                        crate::ocr_vlm::recognize_admitted(&page.png, deadline, permit)
+                            .map(|p| p.markdown())
+                    })
+                    .map_err(|error| {
+                        format!(
+                            "Doc-VLM OCR failed on page {}: {error}",
+                            units[index].number
+                        )
+                    })?;
+                results.push((index, Ok(text)));
             }
         } else {
             // Render one page at a time, then OCR the pages side by side (one
@@ -649,7 +669,7 @@ impl Opened {
                         .iter()
                         .map(|(index, image)| {
                             scope.spawn(move || {
-                                let text = image.clone().and_then(|image| ocr_page(&image, vlm));
+                                let text = image.clone().and_then(|image| ocr_page(&image));
                                 (*index, text)
                             })
                         })
@@ -690,11 +710,29 @@ impl Opened {
     }
 }
 
-/// OCR one rendered page and lay its words out like a text page.
-fn ocr_page(image: &anymd_core::render::RenderedPage, vlm: bool) -> Result<String, String> {
+/// Native raster/text evidence, not emitted Markdown, selects VLM pages.
+fn ocr_candidates(units: &[Unit], doc: &markdown_layout::PdfDocument, vlm: bool) -> Vec<usize> {
     if vlm {
-        return crate::ocr_vlm::recognize(&image.png).map(|p| p.markdown());
+        let numbers: Vec<_> = units.iter().map(|unit| unit.number).collect();
+        let image_only = markdown_layout::image_only_pages(doc, &numbers);
+        units
+            .iter()
+            .enumerate()
+            .filter(|(_, unit)| image_only.contains(&unit.number))
+            .map(|(index, _)| index)
+            .collect()
+    } else {
+        units
+            .iter()
+            .enumerate()
+            .filter(|(_, unit)| visible_chars(&unit.markdown) < SPARSE_PAGE_CHARS)
+            .map(|(index, _)| index)
+            .collect()
     }
+}
+
+/// OCR one rendered page and lay its words out like a text page.
+fn ocr_page(image: &anymd_core::render::RenderedPage) -> Result<String, String> {
     let words = anymd_formats::image::ocr_words(&image.png, ".png")?;
     let placed: Vec<markdown_layout::PlacedWord> = words
         .into_iter()
@@ -954,6 +992,47 @@ pub fn readable_extension(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn margin_scan_candidates_ignore_emitted_image_reference_length() {
+        let fixture =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../test/fixtures/scanned-page.pdf");
+        let mut doc = load_document(&fixture).unwrap();
+        let page = doc.get_pages()[&1];
+        let media_box = doc
+            .get_object_mut(page)
+            .unwrap()
+            .as_dict_mut()
+            .unwrap()
+            .get_mut(b"MediaBox")
+            .unwrap()
+            .as_array_mut()
+            .unwrap();
+        media_box[2] = 1200.into();
+        media_box[3] = 1600.into();
+        // Enlarging the page puts the painted scan below the 80% whole-page
+        // image threshold; exporting it adds more than 24 visible path chars.
+        let reference = Unit {
+            number: 1,
+            label: "page 1".into(),
+            markdown: "![image](/cache/images/01234567890123456789012345678901234567.png)".into(),
+        };
+        let plain = Unit {
+            markdown: String::new(),
+            ..reference.clone()
+        };
+        assert!(visible_chars(&reference.markdown) > SPARSE_PAGE_CHARS);
+        assert_eq!(ocr_candidates(&[reference.clone()], &doc, true), vec![0]);
+        assert_eq!(ocr_candidates(&[plain], &doc, true), vec![0]);
+        assert!(ocr_candidates(&[reference], &doc, false).is_empty());
+        // Page 2 of the fixture has a native text line over its raster image.
+        let native = Unit {
+            number: 2,
+            label: "page 2".into(),
+            markdown: "Title".into(),
+        };
+        assert!(ocr_candidates(&[native], &doc, true).is_empty());
+    }
 
     #[test]
     fn disabled_ocr_has_a_distinct_cache_key_without_tesseract() {

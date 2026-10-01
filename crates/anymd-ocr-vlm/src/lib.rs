@@ -52,33 +52,28 @@ pub trait DocOcr {
     ) -> anyhow::Result<PageResult>;
 }
 
-/// Remove a repeating suffix after three identical runs. The hard generation
-/// token cap and the fork's token-run guard bound generation; this separate
-/// text guard also removes repetition after task postprocessing.
-pub fn stop_repetition(text: &str) -> (String, bool) {
-    let chars: Vec<char> = text.chars().collect();
-    for end in 24..=chars.len() {
-        for width in 8..=128.min(end / 3) {
-            let a = &chars[end - width..end];
-            if a == &chars[end - 2 * width..end - width]
-                && a == &chars[end - 3 * width..end - 2 * width]
-            {
-                return (chars[..end - 2 * width].iter().collect(), true);
-            }
-        }
-    }
-    (text.to_string(), false)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn repetition_is_bounded_and_unicode_safe() {
-        let (text, stopped) = stop_repetition("中文一二三四五六中文一二三四五六中文一二三四五六尾");
-        assert!(stopped);
-        assert_eq!(text, "中文一二三四五六");
-        assert!(!stop_repetition("A normal paragraph with no repeated suffix.").1);
+    fn completed_repeated_rows_keep_the_distinct_suffix() {
+        for text in [
+            "Header: abcdefghabcdefghabcdefgh; Remaining verified content.",
+            "| Row | Value |\n| Row | Value |\n| Row | Value |\nDistinct verified footer.",
+        ] {
+            let page = PageResult {
+                regions: vec![Region {
+                    label: "table".into(),
+                    bbox: [0.; 4],
+                    score: 1.,
+                    order: 1,
+                    text: text.into(),
+                }],
+                truncated: 0,
+            };
+            assert_eq!(page.text(), text);
+            assert_eq!(page.markdown(), text);
+        }
     }
     #[test]
     fn reading_order_is_not_storage_order() {

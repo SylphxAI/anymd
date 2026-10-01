@@ -155,14 +155,73 @@ pub fn install() -> Result<PathBuf, String> {
     Ok(root)
 }
 
+/// One admitted request, shared by every lazily read PDF page. A failed page
+/// poisons this request so callers cannot start a later worker.
+pub(crate) struct OcrRequest {
+    permit: crate::ocr_evidence::OcrRequestPermit,
+    deadline: std::time::Instant,
+    failed: Option<String>,
+}
+
+impl OcrRequest {
+    pub(crate) fn acquire() -> Result<Self, String> {
+        Ok(Self {
+            permit: crate::ocr_evidence::OcrRequestPermit::acquire()?,
+            deadline: std::time::Instant::now()
+                + std::time::Duration::from_millis(crate::ocr_evidence::MAX_REQUEST_OCR_TIMEOUT_MS),
+            failed: None,
+        })
+    }
+
+    pub(crate) fn run_page<T>(
+        &mut self,
+        run: impl FnOnce(
+            std::time::Instant,
+            &crate::ocr_evidence::OcrRequestPermit,
+        ) -> Result<T, String>,
+    ) -> Result<T, String> {
+        if let Some(error) = &self.failed {
+            return Err(error.clone());
+        }
+        let result =
+            remaining_page_timeout(self.deadline).and_then(|_| run(self.deadline, &self.permit));
+        if let Err(error) = &result {
+            self.failed = Some(error.clone());
+        }
+        result
+    }
+}
+
+pub(crate) fn remaining_page_timeout(deadline: std::time::Instant) -> Result<u64, String> {
+    let remaining = u64::try_from(
+        deadline
+            .saturating_duration_since(std::time::Instant::now())
+            .as_millis(),
+    )
+    .unwrap_or(u64::MAX);
+    if remaining == 0 {
+        return Err("Request exceeds OCR provider time limit; no later worker started".into());
+    }
+    Ok(page_timeout()?.min(remaining))
+}
+
 pub fn recognize(bytes: &[u8]) -> Result<anymd_ocr_vlm::PageResult, String> {
+    let mut request = OcrRequest::acquire()?;
+    request.run_page(|deadline, permit| recognize_admitted(bytes, deadline, permit))
+}
+
+pub(crate) fn recognize_admitted(
+    bytes: &[u8],
+    deadline: std::time::Instant,
+    _permit: &crate::ocr_evidence::OcrRequestPermit,
+) -> Result<anymd_ocr_vlm::PageResult, String> {
     let root = root()?;
     if !installed_at(&root) {
         return Err("Doc-VLM weights are not installed; run `anymd setup ocr`".into());
     }
     let mut input = tempfile::NamedTempFile::new().map_err(|e| e.to_string())?;
     input.write_all(bytes).map_err(|e| e.to_string())?;
-    let timeout = page_timeout()?;
+    let timeout = remaining_page_timeout(deadline)?;
     let tokens = max_tokens()?;
     let command = std::env::current_exe().map_err(|e| e.to_string())?;
     let output = command_provider::run(CommandInvocation {

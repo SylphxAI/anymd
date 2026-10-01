@@ -20,17 +20,17 @@ const OCR_COMMAND_ENV: &str = "MCP_PDF_OCR_COMMAND";
 const OCR_ARGS_ENV: &str = "MCP_PDF_OCR_ARGS_JSON";
 const OCR_PRESET_ENV: &str = "MCP_PDF_OCR_PRESET";
 const MAX_SOURCES_PER_REQUEST: usize = 32;
-const MAX_REQUEST_OCR_TIMEOUT_MS: u64 = 600_000;
+pub(crate) const MAX_REQUEST_OCR_TIMEOUT_MS: u64 = 600_000;
 const MAX_REQUEST_OCR_OUTPUT_CHARS: usize = 2_000_000;
 const MAX_REQUEST_OCR_PROVIDER_BYTES: usize = 16 * 1024 * 1024;
 const MAX_CONCURRENT_OCR_REQUESTS: usize = 2;
 static ACTIVE_OCR_REQUESTS: AtomicUsize = AtomicUsize::new(0);
 
 #[derive(Debug)]
-struct OcrRequestPermit;
+pub(crate) struct OcrRequestPermit;
 
 impl OcrRequestPermit {
-    fn acquire() -> Result<Self, String> {
+    pub(crate) fn acquire() -> Result<Self, String> {
         ACTIVE_OCR_REQUESTS
             .fetch_update(Ordering::AcqRel, Ordering::Acquire, |active| {
                 (active < MAX_CONCURRENT_OCR_REQUESTS).then_some(active + 1)
@@ -121,6 +121,44 @@ struct ProviderConfig {
     command: String,
     args_template: Vec<String>,
     output_format: OcrOutputFormat,
+}
+
+impl ProviderConfig {
+    fn builtin_vlm(&self) -> bool {
+        self.args_template
+            .first()
+            .is_some_and(|arg| arg == "__ocr-vlm-worker")
+    }
+
+    fn page_timeout(&self, requested: Option<u64>) -> Result<u64, String> {
+        requested.map_or_else(
+            || {
+                if self.builtin_vlm() {
+                    crate::ocr_vlm::page_timeout()
+                } else {
+                    Ok(DEFAULT_TIMEOUT_MS)
+                }
+            },
+            Ok,
+        )
+    }
+
+    fn stamp_provenance(&self, output: &mut Value) {
+        let mut provenance = output
+            .get("provenance")
+            .and_then(Value::as_object)
+            .cloned()
+            .unwrap_or_default();
+        if self.builtin_vlm() {
+            provenance.insert("engine".into(), json!("candle"));
+            provenance.insert("source".into(), json!("paddleocr-vl-1.6"));
+            provenance.insert("layout".into(), json!("pp-doclayoutv3"));
+        } else {
+            provenance.insert("engine".into(), json!("external-command"));
+            provenance.insert("source".into(), json!("ocr-provider"));
+        }
+        output["provenance"] = json!(provenance);
+    }
 }
 
 fn parse_args(value: &Value) -> Result<PdfEvidenceArgs, rmcp::ErrorData> {
@@ -565,6 +603,19 @@ fn normalize_output(
         .unwrap_or(trimmed);
     let (text, truncated) = truncate_utf16(raw_text, max_output_chars);
     let mut output = json!({"text": text});
+    let mut provenance = serde_json::Map::new();
+    for key in ["model_revision", "device", "quantization"] {
+        if let Some(value) = parsed
+            .as_ref()
+            .and_then(|value| value.get(key))
+            .and_then(Value::as_str)
+        {
+            provenance.insert(key.into(), json!(value));
+        }
+    }
+    if !provenance.is_empty() {
+        output["provenance"] = json!(provenance);
+    }
     if let Some(confidence) = parsed
         .as_ref()
         .and_then(|value| value.get("confidence"))
@@ -614,7 +665,7 @@ pub(crate) struct ReadOcrOptions {
     pub(crate) scale: f64,
     pub(crate) max_pages: usize,
     pub(crate) max_pixels_per_page: u64,
-    pub(crate) timeout_ms: u64,
+    pub(crate) timeout_ms: Option<u64>,
     pub(crate) max_output_chars: usize,
 }
 
@@ -624,7 +675,7 @@ impl Default for ReadOcrOptions {
             scale: 2.0,
             max_pages: 5,
             max_pixels_per_page: 16_000_000,
-            timeout_ms: DEFAULT_TIMEOUT_MS,
+            timeout_ms: None,
             max_output_chars: DEFAULT_MAX_OUTPUT_CHARS,
         }
     }
@@ -652,6 +703,20 @@ pub(crate) fn run_read_ocr(
     }
     let config = match provider_config(None) {
         Ok(config) => config,
+        Err(error) => {
+            return sources
+                .iter()
+                .map(|(source, _)| SourceOcrOutcome {
+                    source_index: source.source_index(),
+                    pages: Vec::new(),
+                    warnings: Vec::new(),
+                    error: Some(error.clone()),
+                })
+                .collect()
+        }
+    };
+    let timeout_ms = match config.page_timeout(options.timeout_ms) {
+        Ok(timeout) => timeout,
         Err(error) => {
             return sources
                 .iter()
@@ -751,7 +816,7 @@ pub(crate) fn run_read_ocr(
                     u64::from(page.page),
                     &rendered.source,
                     &languages,
-                    options.timeout_ms.min(remaining_ms),
+                    timeout_ms.min(remaining_ms),
                     options.max_output_chars,
                 ) {
                     Ok(stdout) => stdout,
@@ -790,10 +855,7 @@ pub(crate) fn run_read_ocr(
                 normalized["source_render_scale"] = json!(page.scale);
                 normalized["source_render_width"] = json!(page.width);
                 normalized["source_render_height"] = json!(page.height);
-                normalized["provenance"] =
-                    if config.args_template.first().is_some_and(|a| a == "__ocr-vlm-worker") {
-                        json!({"engine": "candle", "source": "paddleocr-vl-1.6", "layout": "pp-doclayoutv3"})
-                    } else { json!({"engine": "external-command", "source": "ocr-provider"}) };
+                config.stamp_provenance(&mut normalized);
                 match serde_json::from_value::<OcrPage>(normalized) {
                     Ok(page) => pages.push(page),
                     Err(error) => {
@@ -859,16 +921,9 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
     let scale = args.scale.unwrap_or(2.0);
     let max_pages = args.max_pages.unwrap_or(5);
     let max_pixels = args.max_pixels_per_page.unwrap_or(16_000_000);
-    let default_timeout = if config
-        .args_template
-        .first()
-        .is_some_and(|v| v == "__ocr-vlm-worker")
-    {
-        crate::ocr_vlm::page_timeout().map_err(|e| rmcp::ErrorData::invalid_params(e, None))?
-    } else {
-        DEFAULT_TIMEOUT_MS
-    };
-    let timeout_ms = args.timeout_ms.map_or(default_timeout, u64::from);
+    let timeout_ms = config
+        .page_timeout(args.timeout_ms.map(u64::from))
+        .map_err(|e| rmcp::ErrorData::invalid_params(e, None))?;
     let max_output_chars = args
         .max_output_chars
         .map_or(DEFAULT_MAX_OUTPUT_CHARS, |value| value as usize);
@@ -967,15 +1022,7 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
                 normalized["source_render_scale"] = page["scale"].clone();
                 normalized["source_render_width"] = page["width"].clone();
                 normalized["source_render_height"] = page["height"].clone();
-                normalized["provenance"] = if config
-                    .args_template
-                    .first()
-                    .is_some_and(|a| a == "__ocr-vlm-worker")
-                {
-                    json!({"engine": "candle", "source": "paddleocr-vl-1.6", "layout": "pp-doclayoutv3"})
-                } else {
-                    json!({"engine": "external-command", "source": "ocr-provider"})
-                };
+                config.stamp_provenance(&mut normalized);
                 ocr_pages.push(normalized);
             }
             let mut result = json!({
@@ -1042,6 +1089,91 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("generation stopped"));
+    }
+
+    #[test]
+    fn worker_evidence_survives_typed_page_and_fusion_without_recognition_confidence() {
+        let worker = json!({
+            "text": "cell", "model_revision": "pinned-revision", "device": "metal", "quantization": "none",
+            "words": [{"text": "cell", "reading_order": 2, "region_type": "table", "layout_confidence": 0.9,
+                "bounding_box": {"left": 10, "bottom": 20, "right": 30, "top": 40}}]
+        });
+        let mut normalized = normalize_output(
+            &worker.to_string(),
+            1000,
+            &[],
+            2.0,
+            OcrOutputFormat::Auto,
+            Some(100.0),
+        );
+        let config = ProviderConfig {
+            command: "anymd".into(),
+            args_template: vec!["__ocr-vlm-worker".into()],
+            output_format: OcrOutputFormat::Auto,
+        };
+        config.stamp_provenance(&mut normalized);
+        normalized["page"] = json!(1);
+        normalized["provider"] = json!("candle");
+        normalized["source_render_evidence_id"] = json!("render-1");
+        let page: OcrPage = serde_json::from_value(normalized).unwrap();
+        let fixture =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../test/fixtures/sample.pdf");
+        let mut response = anymd_core::read_pdf::read_pdf_from_value(
+            &json!({"sources": [{"path": fixture}], "auto": false}),
+        )
+        .unwrap();
+        anymd_core::ocr_fusion::fuse_ocr_outcomes(
+            &mut response,
+            vec![SourceOcrOutcome {
+                source_index: 0,
+                pages: vec![page],
+                warnings: Vec::new(),
+                error: None,
+            }],
+        );
+        let layer = response.results[0]
+            .data
+            .as_ref()
+            .unwrap()
+            .ocr_text_layer
+            .as_ref()
+            .unwrap();
+        let fused = &layer["pages"][0];
+        assert_eq!(fused["words"][0]["reading_order"], 2);
+        assert_eq!(fused["words"][0]["region_type"], "table");
+        assert_eq!(fused["words"][0]["layout_confidence"], 0.9);
+        assert_eq!(fused["words"][0]["bounding_box"]["left"], 5.0);
+        assert!(fused.get("confidence").is_none());
+        assert!(fused["words"][0].get("confidence").is_none());
+        assert_eq!(fused["provenance"]["model_revision"], "pinned-revision");
+        assert_eq!(fused["provenance"]["device"], "metal");
+        assert_eq!(fused["provenance"]["quantization"], "none");
+        assert!(layer["summary"].get("average_confidence").is_none());
+    }
+
+    #[test]
+    fn provider_selection_controls_page_timeout_and_explicit_override() {
+        let external = ProviderConfig {
+            command: "external".into(),
+            args_template: vec!["{input}".into()],
+            output_format: OcrOutputFormat::Auto,
+        };
+        let builtin = ProviderConfig {
+            command: "anymd".into(),
+            args_template: vec!["__ocr-vlm-worker".into()],
+            output_format: OcrOutputFormat::Auto,
+        };
+        assert_eq!(ReadOcrOptions::default().timeout_ms, None);
+        assert_eq!(external.page_timeout(None).unwrap(), DEFAULT_TIMEOUT_MS);
+        assert_eq!(
+            builtin.page_timeout(None).unwrap(),
+            crate::ocr_vlm::page_timeout().unwrap()
+        );
+        assert_eq!(builtin.page_timeout(Some(1234)).unwrap(), 1234);
+        let deadline = Instant::now() - Duration::from_millis(1);
+        assert!(crate::ocr_vlm::remaining_page_timeout(deadline).is_err());
+        let deadline = Instant::now() + Duration::from_millis(1000);
+        assert!(crate::ocr_vlm::remaining_page_timeout(deadline).unwrap() <= 1000);
     }
 
     #[test]
@@ -1180,7 +1312,23 @@ mod tests {
 
     #[test]
     fn provider_concurrency_admission_is_process_wide_and_recoverable() {
-        let first = OcrRequestPermit::acquire().expect("first permit");
+        let mut first = crate::ocr_vlm::OcrRequest::acquire().expect("normal read permit");
+        let deadline = first.run_page(|deadline, _| Ok(deadline)).unwrap();
+        assert_eq!(
+            first.run_page(|deadline, _| Ok(deadline)).unwrap(),
+            deadline
+        );
+        assert!(first
+            .run_page::<()>(|_, _| Err("first page failed".into()))
+            .is_err());
+        let mut later_workers = 0;
+        assert!(first
+            .run_page(|_, _| {
+                later_workers += 1;
+                Ok(())
+            })
+            .is_err());
+        assert_eq!(later_workers, 0);
         let second = OcrRequestPermit::acquire().expect("second permit");
         assert!(OcrRequestPermit::acquire()
             .expect_err("third request rejected")

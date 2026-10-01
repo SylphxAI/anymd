@@ -1,4 +1,4 @@
-use crate::{stop_repetition, DocOcr, PageResult, Region};
+use crate::{DocOcr, PageResult, Region};
 use anyhow::{anyhow, Result};
 use image::RgbImage;
 use oar_ocr_vl::utils::parse_device;
@@ -44,29 +44,25 @@ impl DocOcr for CandleBackend {
         let result = DocParser::with_config(&self.vlm, config)
             .parse(&self.layout, page.clone())
             .map_err(|e| anyhow!("parse: {e}"))?;
-        let mut truncated = self.vlm.generation_stops() as u32;
+        let truncated = self.vlm.generation_stops() as u32;
         let regions = result
             .layout_elements
             .iter()
             .enumerate()
-            .map(|(i, el)| {
-                let (text, stopped) = stop_repetition(el.text.as_deref().unwrap_or_default());
-                truncated += u32::from(stopped);
-                Region {
-                    label: el
-                        .label
-                        .clone()
-                        .unwrap_or_else(|| format!("{:?}", el.element_type)),
-                    bbox: [
-                        el.bbox.x_min(),
-                        el.bbox.y_min(),
-                        el.bbox.x_max(),
-                        el.bbox.y_max(),
-                    ],
-                    score: el.confidence,
-                    order: el.order_index.unwrap_or(i as u32 + 1),
-                    text,
-                }
+            .map(|(i, el)| Region {
+                label: el
+                    .label
+                    .clone()
+                    .unwrap_or_else(|| format!("{:?}", el.element_type)),
+                bbox: [
+                    el.bbox.x_min(),
+                    el.bbox.y_min(),
+                    el.bbox.x_max(),
+                    el.bbox.y_max(),
+                ],
+                score: el.confidence,
+                order: el.order_index.unwrap_or(i as u32 + 1),
+                text: el.text.clone().unwrap_or_default(),
             })
             .collect();
         Ok(PageResult { regions, truncated })

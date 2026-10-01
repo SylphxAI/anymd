@@ -11,13 +11,20 @@ use crate::read_pdf::{rebuild_structured_outputs, ReadPdfResponse};
 
 pub const OCR_STUB_WARNING: &str = "include_ocr_text_layer: provider execution is owned by anymd; pdf-reader-core omits ocr_text_layer until a normalized provider outcome is fused.";
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct OcrWord {
     pub text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub confidence: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bounding_box: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reading_order: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub region_type: Option<String>,
+    /// Layout classification confidence, never recognition confidence.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layout_confidence: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -309,6 +316,7 @@ mod tests {
                         text: "A".into(),
                         confidence: Some(0.9),
                         bounding_box: Some(json!({"left":1,"bottom":2,"right":3,"top":4})),
+                        ..Default::default()
                     }]),
                     language: None,
                     provider: "command".into(),
@@ -466,6 +474,9 @@ mod tests {
                         .map(|(text, left, bottom, right, top)| OcrWord {
                             text: text.into(),
                             confidence: None,
+                            reading_order: None,
+                            region_type: None,
+                            layout_confidence: None,
                             bounding_box: Some(
                                 json!({"left":left,"bottom":bottom,"right":right,"top":top}),
                             ),

@@ -71,6 +71,21 @@ jobs:
         run: |
           rustup target add x86_64-apple-darwin
           cargo build --release --locked -p anymd --target x86_64-apple-darwin
+      - name: Package the ARM OCR runtime without compiling the checkout
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          cargo package --locked --no-verify -p anymd-oar-ocr-vl
+          mkdir -p "$RUNNER_TEMP/docvlm-package"
+          tar -xzf target/package/anymd-oar-ocr-vl-0.9.2.crate -C "$RUNNER_TEMP/docvlm-package"
+      - name: Check packaged ARM runtime outside repository Cargo config
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        working-directory: ${{ runner.temp }}/docvlm-package
+        env:
+          # Match the documented cargo-install command, not .cargo/config.toml.
+          RUSTFLAGS: '-C target-feature=+fp16'
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target
+        run: cargo check --locked --manifest-path anymd-oar-ocr-vl-0.9.2/Cargo.toml
+
       - name: Plain CLI still runs on pre-FP16 ARM hardware
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
