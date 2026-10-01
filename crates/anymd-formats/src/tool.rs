@@ -204,6 +204,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn bounded_capture_retains_overflow_marker_and_rejects_expired_before_spawn() {
+        let bytes = drain(std::io::Cursor::new(vec![1u8; 10]), 4)
+            .join()
+            .unwrap()
+            .unwrap();
+        assert_eq!(bytes.len(), 5);
+        let error = run_bounded(Path::new("not-executed"), ["unused"], Duration::ZERO, 4, 4)
+            .err()
+            .unwrap();
+        assert!(error.contains("expired"));
+    }
+
+    #[test]
     fn missing_tool_is_none_and_timeouts_kill() {
         assert!(find("anymd-definitely-not-a-binary").is_none());
         if let Some(sleep) = find("sleep") {

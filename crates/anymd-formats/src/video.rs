@@ -789,6 +789,7 @@ fn transcribe_structured(
                                 text,
                                 duration_ms,
                                 align_timeout,
+                                window.map(|_| 1024 * 1024),
                             ) {
                                 Ok(words) => Some(words),
                                 Err(e) => {
@@ -838,30 +839,32 @@ fn align_words(
     text: &str,
     duration_ms: u64,
     timeout: Duration,
+    output_limit: Option<u64>,
 ) -> Result<Vec<TranscriptCue>, String> {
     let dir = tempfile::tempdir().map_err(|e| e.to_string())?;
     let reference = dir.path().join("reference.txt");
     std::fs::write(&reference, text).map_err(|e| e.to_string())?;
-    let output = tool::run(
-        binary,
-        [
-            std::ffi::OsStr::new("--align-only"),
-            "-am".as_ref(),
-            model.as_os_str(),
-            "-f".as_ref(),
-            wav.as_os_str(),
-            "--text-file".as_ref(),
-            reference.as_os_str(),
-            "--align-format".as_ref(),
-            "json".as_ref(),
-            "--align-granularity".as_ref(),
-            "word".as_ref(),
-            "-t".as_ref(),
-            "4".as_ref(),
-            "-ng".as_ref(),
-        ],
-        timeout,
-    )?;
+    let args = [
+        std::ffi::OsStr::new("--align-only"),
+        "-am".as_ref(),
+        model.as_os_str(),
+        "-f".as_ref(),
+        wav.as_os_str(),
+        "--text-file".as_ref(),
+        reference.as_os_str(),
+        "--align-format".as_ref(),
+        "json".as_ref(),
+        "--align-granularity".as_ref(),
+        "word".as_ref(),
+        "-t".as_ref(),
+        "4".as_ref(),
+        "-ng".as_ref(),
+    ];
+    let output = match output_limit {
+        Some(limit) => tool::run_bounded(binary, args, timeout, limit, 64 * 1024)?,
+        None => tool::run(binary, args, timeout)?,
+    };
+
     if !output.success {
         return Err("ForcedAligner failed; retaining segment timestamps".into());
     }
@@ -1064,8 +1067,11 @@ fn parse_timestamp(value: &str) -> Option<u64> {
         .map(|p| p.parse().ok())
         .collect::<Option<_>>()?;
     let seconds = match parts.as_slice() {
-        [h, m, s] => h.checked_mul(3600)?.checked_add(m * 60)?.checked_add(*s)?,
-        [m, s] => m.checked_mul(60)?.checked_add(*s)?,
+        [h, m, s] if *m < 60 && *s < 60 => h
+            .checked_mul(3600)?
+            .checked_add(m.checked_mul(60)?)?
+            .checked_add(*s)?,
+        [m, s] if *s < 60 => m.checked_mul(60)?.checked_add(*s)?,
         _ => return None,
     };
     let digits: String = fraction.chars().take(3).collect();

@@ -267,7 +267,7 @@ fn remaining(deadline: Instant) -> Result<Duration, String> {
         .ok_or_else(|| "video request deadline exhausted".into())
 }
 fn args(items: &[&str]) -> Vec<OsString> {
-    items.iter().map(OsString::from).collect()
+    items.iter().map(|item| OsString::from(*item)).collect()
 }
 fn seconds(us: i64) -> String {
     format!("{:.6}", us as f64 / 1_000_000.0)
@@ -457,22 +457,7 @@ fn base(hash: &str, options: &TimelineOptions) -> Timeline {
     }
 }
 
-/// Extract only scene/chapter metadata. No images or inference. `path` must be
-/// the same admitted immutable representation identified by `source_sha256`.
-pub fn extract(
-    path: &Path,
-    source_sha256: &str,
-    options: &TimelineOptions,
-    deadline: Instant,
-) -> Result<Timeline, String> {
-    options.validate()?;
-    remaining(deadline)?;
-    let mut timeline = base(source_sha256, options);
-    let Some(ffprobe) = tool::find("ffprobe") else {
-        timeline.components.scenes = Component::gap("ffprobe unavailable");
-        timeline.components.chapters = Component::gap("ffprobe unavailable");
-        return Ok(timeline);
-    };
+fn read_probe(ffprobe: &Path, path: &Path, deadline: Instant) -> Result<Value, String> {
     let mut probe_args = args(&[
         "-v",
         "error",
@@ -487,7 +472,7 @@ pub fn extract(
     ]);
     probe_args.push(path.as_os_str().into());
     let output = tool::run_bounded(
-        &ffprobe,
+        ffprobe,
         probe_args,
         remaining(deadline)?,
         METADATA_BYTES,
@@ -496,8 +481,37 @@ pub fn extract(
     if !output.success {
         return Err("ffprobe could not read the admitted media source".into());
     }
-    let probe: Value =
-        serde_json::from_slice(&output.stdout).map_err(|_| "invalid ffprobe metadata")?;
+    serde_json::from_slice(&output.stdout).map_err(|_| "invalid ffprobe metadata".into())
+}
+
+/// Clock-only lookup for standalone render_frame. None means ffprobe absent;
+/// no scene extraction or inference is performed.
+pub fn probe_clock(path: &Path, deadline: Instant) -> Result<Option<MediaClock>, String> {
+    remaining(deadline)?;
+    let Some(ffprobe) = tool::find("ffprobe") else {
+        return Ok(None);
+    };
+    metadata(&read_probe(&ffprobe, path, deadline)?).map(|(clock, _, _)| Some(clock))
+}
+
+/// Extract only scene/chapter metadata. No images or inference. `path` must be
+/// the same admitted immutable representation identified by `source_sha256`.
+pub fn extract(
+    path: &Path,
+    source_sha256: &str,
+    options: &TimelineOptions,
+    deadline: Instant,
+) -> Result<Timeline, String> {
+    options.validate()?;
+    remaining(deadline)?;
+    let mut timeline = base(source_sha256, options);
+    let Some(ffprobe) = tool::find("ffprobe") else {
+        timeline.components.scenes = Component::gap("ffprobe unavailable");
+        timeline.components.chapters = Component::gap("ffprobe unavailable");
+        timeline.components.subtitles = Component::gap("ffprobe unavailable");
+        return Ok(timeline);
+    };
+    let probe = read_probe(&ffprobe, path, deadline)?;
     let (clock, duration, chapters) = metadata(&probe)?;
     timeline.chapters = chapters
         .into_iter()
@@ -512,6 +526,8 @@ pub fn extract(
     if clock.origin_pts_us.is_none() {
         timeline.components.scenes =
             Component::gap("media origin unavailable; detected cuts cannot be aligned");
+        timeline.components.subtitles =
+            Component::gap("media origin unavailable; subtitle cues cannot be aligned");
         return Ok(timeline);
     }
     let end = duration.map_or(options.end_ms, |d| d.min(options.end_ms));
@@ -525,6 +541,7 @@ pub fn extract(
     let Some(ffmpeg) = tool::find("ffmpeg") else {
         timeline.components.scenes =
             Component::gap("ffmpeg unavailable; chapters are not detected cuts");
+        timeline.components.subtitles = Component::gap("ffmpeg unavailable for embedded subtitles");
         return Ok(timeline);
     };
     let start = seconds(clock.absolute_us(range.start_ms)?);
@@ -591,7 +608,12 @@ pub fn extract(
     } else {
         Component::ok()
     };
-    extract_subtitles(path, &probe, &mut timeline, deadline)?;
+    if let Err(reason) = extract_subtitles(path, &probe, &mut timeline, deadline) {
+        timeline.components.subtitles = Component {
+            status: Status::Partial,
+            reason: Some(reason),
+        };
+    }
     Ok(timeline)
 }
 
@@ -833,6 +855,20 @@ mod tests {
         )
         .unwrap();
         assert!(clock.playback_us(0).is_none());
+    }
+    #[test]
+    fn exact_filter_timebase_and_unresolved_subtitle_map() {
+        let log = "[Parsed_showinfo_2] config in time_base: 1/90000, frame_rate: 25/1";
+        assert_eq!(decoded_time_base(log).unwrap(), "1/90000");
+        assert_eq!(exact_pts_us(465300, "1/90000").unwrap(), 5_170_000);
+        assert!(exact_pts_us(1, "1/0").is_err());
+        assert!(decoded_time_base("pts_time:5.17").is_err());
+        let track = SubtitleTrack {
+            id: "mapped",
+            playback_offset_ms: 0,
+            text: "WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00.000,MPEGTS:450000\n\n00:00.100 --> 00:00.200\ntext",
+        };
+        assert!(subtitle_cues(&track).is_err());
     }
     #[test]
     fn strict_window_and_scene_limits() {

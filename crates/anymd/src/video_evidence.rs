@@ -285,7 +285,7 @@ pub fn enrich(
 /// the shared inspect owner. Batch uses the same borrowed aggregate and deadline.
 pub fn render_frames(
     path: &Path,
-    timeline: &Timeline,
+    clock: &timeline::MediaClock,
     timestamps_ms: &[u64],
     deadline: Instant,
     context: &mut dyn FrameContext,
@@ -293,18 +293,22 @@ pub fn render_frames(
     if timestamps_ms.is_empty() || timestamps_ms.len() > 20 {
         return Err("timestamps_ms must contain between 1 and 20 positions".into());
     }
-    if timestamps_ms
-        .iter()
-        .any(|x| *x < timeline.requested.start_ms || *x >= timeline.requested.end_ms)
-    {
-        return Err("frame timestamp must lie in the admitted half-open interval".into());
+    if timestamps_ms.iter().any(|x| {
+        x.checked_add(timeline::MAX_WINDOW_MS).is_none()
+            || *x > i64::MAX as u64 / 1000 - timeline::MAX_WINDOW_MS
+    }) {
+        return Err("frame timestamp exceeds media-clock limits".into());
     }
-    let clock = timeline.clock.as_ref().ok_or("video clock unavailable")?;
     let mut frames = Vec::with_capacity(timestamps_ms.len());
     for timestamp in timestamps_ms {
         context.ensure_available(deadline)?;
-        let frame =
-            timeline::render_frame(path, clock, *timestamp, timeline.requested.end_ms, deadline)?;
+        let frame = timeline::render_frame(
+            path,
+            clock,
+            *timestamp,
+            *timestamp + timeline::MAX_WINDOW_MS,
+            deadline,
+        )?;
         if let Some(ref frame) = frame {
             context.charge_frame(
                 frame.metadata.width as u64 * frame.metadata.height as u64,
@@ -455,5 +459,181 @@ mod tests {
         assert!(validate_observation(&observation, &frame).is_err());
         observation.coordinate_space = "pdf_points".into();
         assert!(validate_observation(&observation, &frame).is_err());
+    }
+    fn fixture() -> VideoEvidence {
+        use timeline::{Components, Cue, MediaClock, Scene, TimeRange};
+        VideoEvidence {
+            timeline: Timeline {
+                version: timeline::POLICY.into(),
+                source_sha256: "fixture-hash".into(),
+                requested: TimeRange {
+                    start_ms: 0,
+                    end_ms: 2000,
+                },
+                processed: Some(TimeRange {
+                    start_ms: 0,
+                    end_ms: 2000,
+                }),
+                clock: Some(MediaClock {
+                    origin_pts_us: Some(5_000_000),
+                    video_start_pts_us: Some(5_000_000),
+                    audio_start_pts_us: None,
+                    video_stream: 0,
+                    video_time_base: "1/1000".into(),
+                    audio_stream: None,
+                }),
+                scenes: vec![
+                    Scene {
+                        id: "scene-0".into(),
+                        start_ms: 0,
+                        end_ms: 1000,
+                        detection: "initial_window_scene".into(),
+                        representative: None,
+                    },
+                    Scene {
+                        id: "scene-1000".into(),
+                        start_ms: 1000,
+                        end_ms: 2000,
+                        detection: "detected_cut".into(),
+                        representative: None,
+                    },
+                ],
+                chapters: vec![],
+                cues: vec![Cue {
+                    track: "en".into(),
+                    start_ms: 500,
+                    end_ms: 1500,
+                    text: "cross-cut unique text".into(),
+                    timing: "subtitle_cue".into(),
+                    provider: "srt_webvtt".into(),
+                }],
+                components: Components {
+                    scenes: Component::ok(),
+                    chapters: Component::ok(),
+                    subtitles: Component::ok(),
+                    transcript: Component::not_requested(),
+                    ocr: Component::not_requested(),
+                    caption: Component::not_requested(),
+                },
+            },
+            ocr_observations: vec![],
+            descriptions: vec![],
+        }
+    }
+    struct InertContext {
+        exhausted: bool,
+        local_caption: bool,
+        worker_calls: usize,
+    }
+    impl FrameContext for InertContext {
+        fn ensure_available(&self, _deadline: Instant) -> Result<(), String> {
+            if self.exhausted {
+                Err("shared request budget exhausted".into())
+            } else {
+                Ok(())
+            }
+        }
+        fn charge_frame(&mut self, _pixels: u64, _bytes: u64) -> Result<(), String> {
+            Ok(())
+        }
+        fn ocr(
+            &mut self,
+            _frame: &DecodedFrame,
+            _deadline: Instant,
+        ) -> Result<Option<RasterObservation>, String> {
+            self.worker_calls += 1;
+            Ok(None)
+        }
+        fn local_caption_available(&self) -> bool {
+            self.local_caption
+        }
+        fn caption_cached(
+            &mut self,
+            _hash: &str,
+            _scene: &str,
+            _frame: &DecodedFrame,
+            _deadline: Instant,
+        ) -> Result<Option<FrameDescription>, String> {
+            self.worker_calls += 1;
+            Ok(None)
+        }
+    }
+    #[test]
+    fn absent_local_caption_does_not_decode_or_invent_description() {
+        let evidence = fixture();
+        let original_headings: Vec<_> = sections(&evidence).into_iter().map(|s| s.label).collect();
+        let options = TimelineOptions {
+            start_ms: 0,
+            end_ms: 2000,
+            max_scenes: 20,
+            caption: true,
+        };
+        let mut context = InertContext {
+            exhausted: false,
+            local_caption: false,
+            worker_calls: 0,
+        };
+        let result = enrich(
+            Path::new("not-opened"),
+            evidence.timeline,
+            &options,
+            false,
+            Instant::now(),
+            &mut context,
+        )
+        .unwrap();
+        assert_eq!(context.worker_calls, 0);
+        assert_eq!(
+            result.timeline.components.caption.status,
+            Status::Unavailable
+        );
+        assert!(result.descriptions.is_empty());
+        assert_eq!(
+            original_headings,
+            sections(&result)
+                .into_iter()
+                .map(|s| s.label)
+                .collect::<Vec<_>>()
+        );
+        let text = sections(&result)
+            .into_iter()
+            .map(|s| s.markdown)
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert_eq!(text.matches("cross-cut unique text").count(), 1);
+    }
+    #[test]
+    fn exhausted_request_starts_no_later_representative_or_provider() {
+        let evidence = fixture();
+        let options = TimelineOptions {
+            start_ms: 0,
+            end_ms: 2000,
+            max_scenes: 20,
+            caption: true,
+        };
+        let mut context = InertContext {
+            exhausted: true,
+            local_caption: true,
+            worker_calls: 0,
+        };
+        let result = enrich(
+            Path::new("not-opened"),
+            evidence.timeline,
+            &options,
+            true,
+            Instant::now(),
+            &mut context,
+        )
+        .unwrap();
+        assert_eq!(context.worker_calls, 0);
+        assert_eq!(result.timeline.components.ocr.status, Status::Partial);
+        assert_eq!(result.timeline.components.caption.status, Status::Partial);
+        assert!(
+            result
+                .timeline
+                .scenes
+                .iter()
+                .all(|s| s.representative.is_none())
+        );
     }
 }
