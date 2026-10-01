@@ -31,12 +31,12 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 ## Why anymd
 
 <!-- fast:start -->
-- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **12.1 s** in total; docling 1,723.3 s (143×), markitdown 45.4 s (4×), marker 5,256.3 s (435×).
+- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **4.58 s** in total; docling 1,723.3 s (376×), markitdown 45.4 s (10×), marker 5,256.3 s (1,146×).
 <!-- fast:end -->
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
 - **Every format, one call.** One tool reads every format listed below. It also accepts web URLs and whole directories, and `search` looks across all of them.
-- **Local and private.** Nothing is uploaded. OCR uses installed local doc-VLM models or tesseract; transcripts use ffmpeg and whisper.cpp. Models are downloaded only by an explicit setup command.
+- **Local and private.** Nothing is uploaded. OCR uses installed local doc-VLM models or tesseract; transcripts use ffmpeg and bundled Qwen3-ASR. OCR setup and ASR model downloads require explicit opt-in.
 
 ## Install
 
@@ -136,7 +136,7 @@ docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
 docker run -i --rm ghcr.io/sylphxai/anymd        # MCP server on stdio
 ```
 
-Or build it from [crates.io](https://crates.io/crates/anymd) (needs a Rust 1.95+ toolchain; doc-VLM OCR is included, with tesseract and ffmpeg still optional):
+Or build it from [crates.io](https://crates.io/crates/anymd) (Rust 1.95+, CMake and a C++ compiler; doc-VLM OCR and local ASR are included):
 
 ```bash
 cargo install anymd
@@ -153,11 +153,11 @@ npm, pip and Docker ship a prebuilt binary, while `cargo install` compiles one o
 
 | | **anymd** | docling | kreuzberg | unstructured | markitdown | marker | pdftotext |
 |---|---|---|---|---|---|---|---|
-| Overall score | 96.3 | 93.0 | 81.7 | 81.2 | 76.8 | 71.0 | 42.2 |
+| Overall score | 96.4 | 93.0 | 81.7 | 81.2 | 76.8 | 71.0 | 42.2 |
 | Table cells F1 | 92.2 | 89.9 | 38.4 | 38.4 | 57.2 | 60.9 | 0.0 |
 | Reading order | 98.8 | 94.4 | 96.8 | 93.9 | 85.5 | 76.8 | 52.0 |
 | Docs converted | 38/38 | 38/38 | 38/38 | 38/38 | 38/38 | 30/38 | 23/38 |
-| Time, all docs | 22.9 s | 2,432.4 s | 16.0 s | 346.5 s | 75.6 s | 7,104.5 s | 0.90 s |
+| Time, all docs | 11.5 s | 2,432.4 s | 16.0 s | 346.5 s | 75.6 s | 7,104.5 s | 0.90 s |
 
 <!-- headline:end -->
 
@@ -170,7 +170,7 @@ anymd exposes four tools.
 | Tool | Use it to | Key arguments |
 |---|---|---|
 | **`outline`** | Navigate a heading tree, with node ids and unit/Markdown ranges | `source`, `format` (`json` · `tree`) |
-| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `revisions` (`markup` · `accept` · `reject`), `transcript`, `download_whisper_model` |
+| **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `revisions` (`markup` · `accept` · `reject`), `transcript`, `download_asr_model` |
 | **`search`** | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto` · `literal` · `ranked`), `glob`, `max_results` |
 | **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect` |
 
@@ -241,7 +241,7 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 | **HTML** and **URLs** | The main article only: navigation, cookie banners, and sidebars are dropped. Relative links are resolved, and code keeps its language. |
 | **Markdown, text, JSON** | Returned unchanged, with pagination |
 | **Images** | Dimensions and EXIF (camera, date, GPS), plus local doc-VLM OCR after model setup, or installed tesseract |
-| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local whisper.cpp transcript with `transcript: true`; `download_whisper_model: true` fetches a verified model on first use. |
+| **Audio / video** | Duration, streams, chapters, embedded and sidecar subtitles (via `ffprobe`/`ffmpeg`). Local Qwen3-ASR transcript with `transcript: true`; `download_asr_model: true` implies a transcript; `transcript: true` alone never downloads weights. |
 
 ## How it works
 
@@ -253,7 +253,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 - URL fetches block private and loopback addresses, and every redirect hop is checked again, pinned to its resolved address.
 - `--allow-dir=<path>` (repeatable) or `MCP_PDF_ALLOWED_DIRS` confines the server to the directories you list.
 - Embedded images are written only to anymd's own cache directory (`ANYMD_CACHE_DIR`, else the platform cache), never next to the source document, and refused over 50 megapixels.
-- External tools (tesseract, ffprobe, whisper.cpp) are optional. anymd runs them without a shell, with a timeout and an output cap.
+- External tools (tesseract, ffprobe, ffmpeg) are optional. anymd runs them without a shell, with a timeout and an output cap.
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 

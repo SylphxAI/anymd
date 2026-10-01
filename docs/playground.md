@@ -27,7 +27,7 @@ has loaded and keep converting.
 | PDF | Full layout engine: columns, headings, tables, page markers | Also OCR of scanned pages (local `tesseract`) |
 | DOCX, PPTX, XLSX/ODS, CSV/TSV, EPUB, HTML, text, SRT/VTT | Same output as the CLI | Same |
 | Images | Format, dimensions, EXIF | Also OCR (`--ocr`) |
-| Audio / video | Container type and size | Duration, streams, chapters, subtitles (ffmpeg), transcript (whisper.cpp) |
+| Audio / video | Container type and size | Duration, streams, chapters, subtitles (ffmpeg), transcript (Qwen3-ASR) |
 
 The output uses the CLI conventions: a small front-matter header (`source`,
 `format`, `title`, `pages`/`slides`/`sheets`) and `<!-- page N -->` style

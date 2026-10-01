@@ -23,6 +23,6 @@ anymd turns any file into Markdown for AI agents: one Rust binary (`crates/anymd
 
 - Pull request checks (`.github/workflows/ci.yml`): `Validate Code Quality`, `security:secrets`, `Plain language`, `Identifiers`. Locally: `bun run check`, `bun run check:versions`, `bun run check:copy`, `bun run typecheck`, `bun run build`, `bun run test:rust`, `bun run test:cov`, `bun run docs:build`, `bun run check:github-actions`.
 - Accuracy and speed: AgentDocBench (`bench/`, [Benchmark workflow](.github/workflows/benchmark.yml)). A converter change is judged by its score, reading order, table F1, time and tokens against the committed results.
-- Public copy comes from `product.json` and `bench/leaderboard.py`: edit those and run `bun scripts/render-copy.ts`; `bun run check:copy` fails on drift. Brand files come from `brand/`: run `python3 brand/build.py` after editing.
+- Public copy comes from `product.json` and `bench/leaderboard.py`: edit those and run `bun scripts/render-copy.ts`; `bun run check:copy` fails on drift. Brand files come from `brand/`: run the pinned shared generator ([usage](brand/README.md)) after editing.
 - After a release: `npx -y @sylphx/anymd@X.Y.Z version`.
 - `ANYMD_BIN=/path/to/anymd` points the tests and the launcher at a binary built elsewhere.

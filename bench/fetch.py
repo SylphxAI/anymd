@@ -2,7 +2,8 @@
 """Download the AgentDocBench corpus into DIR and verify every file's SHA-256.
 
 Small license-clean files are committed under bench/files/ and copied from
-there; everything else is downloaded from the pinned URL in bench/corpus.json.
+there; everything else comes from the pinned public corpus release mirror.
+Original source URLs and license evidence remain in bench/corpus.json.
 
   python bench/fetch.py [DIR]   (default: .cache/bench-corpus)
 """
@@ -11,10 +12,8 @@ import gzip
 import hashlib
 import json
 import shutil
-import ssl
 import sys
 import time
-import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -27,26 +26,16 @@ def sha256(path):
 
 
 def download(url, target):
-    # Integrity comes from the pinned SHA-256, not TLS: a server with an incomplete
-    # certificate chain (ws.dgbas.gov.tw) is retried without certificate checks.
-    context = None
+    # Retry transport failures on the same release URL; never fall back to upstream.
     for attempt in range(5):
         try:
             request = urllib.request.Request(url, headers={"User-Agent": AGENT})
-            with urllib.request.urlopen(request, timeout=120, context=context) as response:
+            with urllib.request.urlopen(request, timeout=120) as response:
                 body = response.read()
                 if response.headers.get("Content-Encoding") == "gzip":
-                    body = gzip.decompress(body)  # the Wayback Machine gzips some snapshots
+                    body = gzip.decompress(body)
             target.write_bytes(body)
             return
-        except urllib.error.URLError as exc:
-            if isinstance(exc.reason, ssl.SSLCertVerificationError) and context is None:
-                context = ssl._create_unverified_context()  # noqa: S323 - hash-verified below
-                continue
-            if attempt == 4:
-                raise
-            print(f"  retry {attempt + 1} for {url}: {exc}", file=sys.stderr)
-            time.sleep(5 * (attempt + 1))
         except Exception as exc:  # noqa: BLE001 - retry transient network errors
             if attempt == 4:
                 raise
@@ -68,12 +57,13 @@ def main():
             if committed.exists():
                 shutil.copyfile(committed, tmp)
             else:
-                download(doc["url"], tmp)
+                download(doc["mirror_url"], tmp)
         except Exception as exc:  # noqa: BLE001
             failed.append(f"{doc['id']}: {exc}")
+            tmp.unlink(missing_ok=True)
             continue
         if sha256(tmp) != doc["sha256"]:
-            failed.append(f"{doc['id']}: checksum mismatch for {doc['url']}")
+            failed.append(f"{doc['id']}: checksum mismatch for {doc['mirror_url']}")
             tmp.unlink()
             continue
         tmp.replace(target)

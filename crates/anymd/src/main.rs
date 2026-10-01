@@ -62,7 +62,7 @@ fn doctor() {
         println!("  {name:<12} {state:<10} {purpose}");
     }
     println!("Transcripts (--transcript):");
-    for (name, state) in anymd_formats::whisper::status_lines() {
+    for (name, state) in anymd_formats::asr::status_lines() {
         println!("  {name:<14} {state}");
     }
 }

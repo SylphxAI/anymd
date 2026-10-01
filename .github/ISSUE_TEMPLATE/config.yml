@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+- name: Questions and ideas
+  url: https://github.com/SylphxAI/anymd/discussions
+  about: Ask usage questions or discuss an idea before proposing a change.
+- name: Report a vulnerability privately
+  url: https://github.com/SylphxAI/anymd/security/policy
+  about: Follow the security policy instead of posting sensitive details in a public issue.

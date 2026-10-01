@@ -599,15 +599,16 @@ pub struct ReadArgs {
     )]
     pub ocr: Option<crate::ocr_vlm::OcrSelection>,
     #[schemars(
-        description = "Transcribe audio/video with a local whisper.cpp. Uses ANYMD_WHISPER_MODEL or a model in the anymd cache. Default false.",
+        description = "Transcribe audio/video locally with bundled transcribe-cpp and Qwen3-ASR-1.7B Q8. Needs preinstalled SHA-256 pinned weights (~2.2 GB), unless download_asr_model is true. Audio stays local. Default false.",
         schema_with = "option_bool_schema"
     )]
     pub transcript: Option<bool>,
     #[schemars(
-        description = "Implies transcript. When no whisper model is installed, download ggml base.en (~148 MB, SHA-256 verified; ANYMD_WHISPER_MODEL_SIZE picks tiny/base/small) into the anymd cache first. Default false.",
+        description = "Implies transcript. Downloads pinned Qwen3-ASR-1.7B Q8 weights (~2.2 GB) into the anymd cache. Downloads only when explicitly enabled. Legacy download_whisper_model is accepted as an alias. Default false.",
         schema_with = "option_bool_schema"
     )]
-    pub download_whisper_model: Option<bool>,
+    #[serde(alias = "download_whisper_model")]
+    pub download_asr_model: Option<bool>,
     #[schemars(
         description = "Images embedded inside PDFs, DOCX, PPTX and EPUB files. \"refs\" (default) saves each meaningful raster image once to the anymd cache and marks its place in the Markdown as ![caption](absolute path) plus an <!-- image: WxH, page N --> comment, so you can open the file yourself; logos, icons and repeated headers are skipped. \"none\" leaves images out. Standalone image files are not affected.",
         schema_with = "option_images_schema"

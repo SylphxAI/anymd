@@ -1,0 +1,45 @@
+name: Feature request
+description: Propose a concrete improvement to anymd.
+labels:
+- enhancement
+- owner:anymd
+body:
+- type: markdown
+  attributes:
+    value: 'Search existing issues first. Use [Discussions](https://github.com/SylphxAI/anymd/discussions)
+      for questions. Reports are public: use synthetic/public examples and redact secrets, personal data
+      and private source material. Report vulnerabilities through the [security policy](https://github.com/SylphxAI/anymd/security/policy),
+      not a public issue.'
+- type: textarea
+  id: environment
+  attributes:
+    label: Version and environment
+    description: Include `anymd version`, installation method (npm, native binary, Cargo, Docker or pip),
+      OS/architecture, and Node or MCP client version if relevant.
+  validations:
+    required: true
+- type: textarea
+  id: workflow
+  attributes:
+    label: Use case and current limitation
+    description: Describe the document format or workflow, the Markdown or provenance you need, and why
+      the current tools/options do not cover it.
+  validations:
+    required: true
+- type: textarea
+  id: example
+  attributes:
+    label: Example and configuration
+    description: CLI command or MCP tool name and JSON arguments; format, pages, token budget, OCR/transcript
+      options and optional-tool versions when relevant. Replace private paths and URLs with placeholders.
+      Give a small synthetic input/query and the desired output; do not share private content.
+  validations:
+    required: true
+- type: textarea
+  id: acceptance
+  attributes:
+    label: Acceptance criteria and alternatives
+    description: What observable result would make this useful? Explain the current workaround or alternatives
+      and why they fall short.
+  validations:
+    required: true

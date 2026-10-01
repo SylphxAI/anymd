@@ -57,7 +57,7 @@ jobs:
         run: bash scripts/check-github-actions.sh
 
       - name: Brand home matches its masters
-        run: python3 brand/build.py --check
+        uses: SylphxAI/.github/.github/actions/brand@a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb # shared brand generator
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -82,6 +82,9 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Test Python API and wheel packaging without framework dependencies
+        run: python3 -m unittest discover -s packages/pypi/tests -v
+
       - name: Test vendored crate version checks
         run: python3 -m unittest discover -s scripts -p test_check_vendored_crates.py
 
@@ -93,6 +96,12 @@ jobs:
 
       - name: Typecheck
         run: bun run typecheck
+
+      - name: ASR scoring regression tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/asr-scoring"
+          "$RUNNER_TEMP/asr-scoring/bin/pip" install jiwer==4.0.0 opencc-python-reimplemented==0.1.7 cn2an==0.5.24 kanjize==1.6.1
+          "$RUNNER_TEMP/asr-scoring/bin/python" -m unittest discover -s bench-asr -p test_report.py
 
       - name: Audit Rust dependencies
         run: bash scripts/check-cargo-advisories.sh
@@ -110,6 +119,21 @@ jobs:
 
       - name: Build the anymd binary
         run: bun run build
+
+      - name: Verify portable ASR CPU configuration
+        run: python3 scripts/check-native-cpu.py target/release/build
+
+      - name: Test installed Python wheel and optional framework adapters
+        run: |
+          python3 scripts/build-wheels.py --version 0.0.0 --out "${RUNNER_TEMP}/python-wheels" \
+            --binary "manylinux_2_17_x86_64=target/release/anymd"
+          python3 -m venv "${RUNNER_TEMP}/anymd-python"
+          "${RUNNER_TEMP}/anymd-python/bin/pip" install \
+            "${RUNNER_TEMP}/python-wheels/anymd-0.0.0-py3-none-manylinux_2_17_x86_64.whl[langchain,llamaindex]"
+          "${RUNNER_TEMP}/anymd-python/bin/python" -c \
+            'from anymd import convert; assert "<!-- page 1 -->" in convert("test/fixtures/sample.pdf").text'
+          ANYMD_BIN="$PWD/target/release/anymd" "${RUNNER_TEMP}/anymd-python/bin/python" \
+            -m unittest discover -s packages/pypi/tests -v
 
       - name: Fetch Markdown regression corpus
         run: bash scripts/fetch-markdown-corpus.sh "${RUNNER_TEMP}/markdown-corpus"
@@ -185,3 +209,41 @@ jobs:
           fetch-depth: 0 # full history for the new-commit range
       - name: Secret scan (ADR-6 security:secrets)
         uses: SylphxAI/.github/.github/actions/secret-scan@main
+
+  # Validate builds Linux x64. Compile the actual product (not only the runtime
+  # probe) on the other release targets, without downloading model weights.
+  release-targets:
+    name: Release build (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          - { runner: macos-latest, target: aarch64-apple-darwin }
+          - { runner: macos-latest, target: x86_64-apple-darwin }
+          - { runner: windows-latest, target: x86_64-pc-windows-msvc }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --release --locked -p anymd --target ${{ matrix.target }}
+      - name: Verify portable ASR CPU configuration
+        run: python3 scripts/check-native-cpu.py target/${{ matrix.target }}/release/build
+
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [plain-language, identifiers, validate, other-os, security-secrets, release-targets]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every applicable gate
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -e 'to_entries | all(.[]; .value.result == "success" or (.key == "other-os" and .value.result == "skipped"))'

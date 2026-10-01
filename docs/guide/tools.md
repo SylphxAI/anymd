@@ -64,8 +64,8 @@ Any file, URL, or directory → Markdown.
 | `ocr` | `"auto"` \| `"vlm"` \| `"tesseract"` \| boolean | automatic | Local OCR for images and scanned PDF pages. Auto uses explicitly installed models, otherwise tesseract. No automatic downloads. `false` disables; `true` enables the default runtime (`ANYMD_OCR` when set). See [local OCR](./cli#local-document-ocr). |
 | `revisions` | `"markup"` \| `"accept"` \| `"reject"` | `"markup"` | Word tracked changes and comments. `markup` writes them as CriticMarkup with each change's author and date; `accept` or `reject` gives the text with every change accepted or rejected, without comments (see [Word](./formats#word)). A document with no tracked changes and no comments reads the same either way. |
 | `images` | `"refs"` \| `"none"` | `"refs"` | Images embedded in PDFs, DOCX, PPTX and EPUB files. `refs` saves each meaningful raster image to the anymd cache and marks it in the Markdown (see [Embedded images](./formats#embedded-images)); `none` leaves images out. |
-| `transcript` | boolean | `false` | Transcribe audio/video with a local whisper.cpp |
-| `download_whisper_model` | boolean | `false` | Implies `transcript`; downloads the ggml model (base.en, 148 MB, SHA-256 verified) into the anymd cache when none is installed |
+| `transcript` | boolean | `false` | Transcribe audio/video with bundled Qwen3-ASR |
+| `download_asr_model` | boolean | `false` | Implies `transcript`; downloads Qwen3-ASR-1.7B Q8 weights (2.19 GB, SHA-256 verified) into the anymd cache when none is installed |
 
 ```json
 { "source": "papers/attention.pdf" }

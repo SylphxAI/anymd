@@ -36,10 +36,10 @@ Read options:
       --cursor <cursor>    Continue from a cursor
       --ocr [auto|vlm|tesseract]  Select local OCR; --no-ocr disables it
       (ANYMD_OCR selects the default; auto never downloads weights)
-      --transcript         Transcribe audio/video with a local whisper.cpp
-      --download-whisper-model
-                           With --transcript (implied): download the ggml model on first use
-                           (base.en, ~148 MB; ANYMD_WHISPER_MODEL_SIZE=tiny|base|small[.en])
+      --transcript         Transcribe audio/video locally with Qwen3-ASR-1.7B Q8
+      --download-asr-model
+                           With --transcript (implied): download the pinned Qwen3 model on first use
+                           (Q8, ~2.2 GB; --transcript alone never downloads)
       --images <mode>      refs (default): save images embedded in PDF/DOCX/PPTX/EPUB files to the
                            anymd cache and mark them in the Markdown; none: leave them out
       --revisions <mode>   Word tracked changes and comments: markup (default) as CriticMarkup,
@@ -97,7 +97,7 @@ struct Parsed {
     cursor: Option<String>,
     ocr: Option<crate::ocr_vlm::OcrSelection>,
     transcript: bool,
-    download_whisper_model: bool,
+    download_asr_model: bool,
     images: Option<String>,
     revisions: Option<String>,
     front_matter: bool,
@@ -119,7 +119,7 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
         cursor: None,
         ocr: None,
         transcript: false,
-        download_whisper_model: false,
+        download_asr_model: false,
         images: None,
         revisions: None,
         front_matter: false,
@@ -173,7 +173,14 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
             }
             "--no-ocr" => parsed.ocr = Some(crate::ocr_vlm::OcrSelection::Enabled(false)),
             "--transcript" => parsed.transcript = true,
-            "--download-whisper-model" => parsed.download_whisper_model = true,
+            "--download-asr-model" | "--download-whisper-model" => {
+                if inline.is_some() {
+                    return Err(format!(
+                        "{flag} is a presence switch and does not accept a value"
+                    ));
+                }
+                parsed.download_asr_model = true;
+            }
             "--images" => {
                 let mode = value(flag)?;
                 if mode != "refs" && mode != "none" {
@@ -338,7 +345,7 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
                 cursor: parsed.cursor.clone(),
                 ocr: parsed.ocr,
                 transcript: Some(parsed.transcript),
-                download_whisper_model: Some(parsed.download_whisper_model),
+                download_asr_model: Some(parsed.download_asr_model),
                 images: parsed.images.clone(),
                 revisions: parsed.revisions.clone(),
             };
@@ -452,9 +459,22 @@ mod tests {
         let parsed = parse(&args(&["a.docx", "--revisions=reject"])).unwrap();
         assert_eq!(parsed.revisions.as_deref(), Some("reject"));
         assert!(parse(&args(&["a.docx", "--revisions", "all"])).is_err());
+        let parsed = parse(&args(&["talk.mp4", "--download-asr-model"])).unwrap();
+        assert!(parsed.download_asr_model);
         let parsed = parse(&args(&["talk.mp4", "--download-whisper-model"])).unwrap();
-        assert!(parsed.download_whisper_model);
+        assert!(parsed.download_asr_model);
         assert_eq!(parsed.inputs, ["talk.mp4"]);
+    }
+
+    #[test]
+    fn download_presence_switches_reject_inline_values() {
+        for flag in ["--download-asr-model", "--download-whisper-model"] {
+            for value in ["false", "true", "invalid", "", "0", "1"] {
+                assert!(parse(&args(&["talk.mp4", &format!("{flag}={value}")])).is_err());
+            }
+        }
+        let parsed = parse(&args(&["talk.mp4", "--transcript"])).unwrap();
+        assert!(!parsed.download_asr_model);
     }
 
     #[test]
@@ -471,7 +491,7 @@ mod tests {
                 cursor: None,
                 ocr: None,
                 transcript: None,
-                download_whisper_model: None,
+                download_asr_model: None,
                 images: None,
                 revisions: None,
             },

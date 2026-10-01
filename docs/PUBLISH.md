@@ -30,6 +30,21 @@
    no-op for publishing. A failed run can be re-run; each step skips what is
    already published.
 
+## Native CPU portability
+
+Repository builds use `.cargo/config.toml` to pass `GGML_NATIVE=OFF` and
+`TRANSCRIBE_X86_CONSERVATIVE=ON` to transcribe-cpp-sys. This disables host-specific
+CPU tuning and optional x86 SIMD tiers: a binary built on a recent CI CPU can
+run on an older supported CPU. CI checks the compiled CMake cache on every
+release target with `scripts/check-native-cpu.py`. Model-free compilation alone
+does not prove CPU portability. The benchmark's AVX2 tool build is a separate
+measurement, not the portable release binary's performance guarantee.
+
+When redistributing a source build outside this checkout, set
+`TRANSCRIBE_CMAKE_ARGS="-DGGML_NATIVE=OFF -DTRANSCRIBE_X86_CONSERVATIVE=ON"`
+before building; Cargo's repository configuration is not inherited by downstream
+crates.io consumers.
+
 ## crates.io
 
 The `crates` job in `release.yml` runs after the release job succeeds and calls
@@ -88,6 +103,23 @@ compile. `Dockerfile.release.dockerignore` includes those binaries and the root
 and the release job compares its contents with the checkout after publishing.
 The OCI metadata includes `org.opencontainers.image.licenses=MIT`.
 Ordinary pushes without new binaries skip the image job.
+
+## Python wheel payload
+
+`scripts/build-wheels.py` packages the same release binary as a scripts entry
+and includes `packages/pypi/anymd` as an importable Python package in that wheel.
+The wrapper never downloads another binary or implements conversion. Base
+requirements stay empty; `langchain` and `llamaindex` extras declare their
+optional core framework dependencies. All payload files are hashed in `RECORD`.
+No separate Python version or release workflow is introduced.
+
+CI runs the standard-library API/packaging tests, then installs a wheel built
+from its native binary with both extras and tests the actual adapters and small
+PDF/CSV fixtures. The release smoke checks both the installed CLI and Python
+API before `twine check`. Locally, use
+`python3 -m unittest discover -s packages/pypi/tests -v`; set `ANYMD_BIN` to an
+existing native binary for fixture tests and install the extras to run framework
+tests. Neither these checks nor the examples download models.
 
 PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
 workflow `release.yml`, environment `pypi`. That publisher must be registered

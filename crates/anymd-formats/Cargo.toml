@@ -8,7 +8,7 @@ repository.workspace = true
 homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
-include = ["src/**/*", "Cargo.toml"]
+include = ["src/**/*", "tests/fixtures/aligner/*.json", "Cargo.toml"]
 description = "Non-PDF format converters for anymd: DOCX, PPTX, XLSX, CSV, EPUB, HTML, images, and video to Markdown"
 keywords = ["markdown", "docx", "xlsx", "epub", "mcp"]
 categories = ["parsing", "text-processing"]
@@ -31,17 +31,20 @@ imagesize = "0.15"
 kamadak-exif = "0.6"
 tempfile = { version = "3.20", optional = true }
 wait-timeout = { version = "0.2", optional = true }
-# Whisper model downloader. `rustls` and `gzip`, the features ureq 2 was
+# SHA-256 pinned ASR model downloader. `rustls` and `gzip`, the features ureq 2 was
 # built with here (see anymd-core).
 ureq = { version = "3.4", default-features = false, features = ["rustls", "gzip"], optional = true }
 sha2 = { version = "0.10", optional = true }
 
+transcribe-cpp = { version = "=0.2.4", default-features = false, optional = true }
+hound = { version = "3.5", optional = true }
+
 [features]
-# Local helper binaries (tesseract OCR, ffprobe/ffmpeg, whisper.cpp) and the
-# opt-in whisper model download. Off for WebAssembly: images then report
+# Local helper binaries (tesseract OCR, ffprobe/ffmpeg, bundled transcribe-cpp) and the
+# opt-in Qwen3 model download. Off for WebAssembly: images then report
 # metadata only and media the sniffed container.
 default = ["native"]
-native = ["dep:tempfile", "dep:wait-timeout", "dep:ureq", "dep:sha2"]
+native = ["dep:tempfile", "dep:wait-timeout", "dep:ureq", "dep:sha2", "dep:transcribe-cpp", "dep:hound"]
 
 [dev-dependencies]
 tempfile = "3.20"
