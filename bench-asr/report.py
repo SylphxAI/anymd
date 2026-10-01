@@ -162,6 +162,18 @@ def words_sane(rows) -> tuple[int, int]:
     return have, ok
 
 
+def validate_job(summary, rows):
+    """A success claim requires the frozen utterance set, not only a row count."""
+    expected = summary.get("expected_ids", [])
+    actual = [r["id"] for r in rows]
+    if (not expected or len(expected) != len(set(expected)) or summary.get("n") != len(expected)
+            or len(actual) != len(set(actual)) or set(actual) != set(expected)
+            or summary.get("missing", 0) or any(r.get("status") != "ok" for r in rows)):
+        raise ValueError("missing, duplicate or failed utterance results")
+    if summary.get("rtf_incl") is None:
+        raise ValueError("complete run has no measured throughput")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("results")
@@ -176,9 +188,17 @@ def main() -> int:
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         results = summary_path.with_name("results.jsonl")
         rows = [json.loads(l) for l in results.read_text(encoding="utf-8").splitlines() if l.strip()] if results.exists() else []
+        if summary.get("status") == "ok":
+            try:
+                validate_job(summary, rows)
+            except ValueError as exc:
+                summary = dict(summary, status="failed", error=str(exc), rtf_incl=None, rtf_excl=None)
         jobs.append((summary, rows))
 
     print("# ASR benchmark results\n")
+    if not jobs:
+        print("No ASR job outcomes found; report is invalid.")
+        return 1
     failed = [s for s, _ in jobs if s.get("status") != "ok"]
     if failed:
         print("## Failed jobs\n")
@@ -311,7 +331,7 @@ def main() -> int:
         acc[5] += good
     for (label, os_), acc in sorted(stamps.items()):
         print(f"| {label} | {os_} | {acc[0]} | {acc[1]} | {acc[2]} | {acc[3]} | {acc[5]}/{acc[4]} |")
-    return 0
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

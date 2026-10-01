@@ -75,6 +75,7 @@ jobs:
             --limit "$LIMIT" --out "pred/${{ strategy.job-index }}"
 
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: predictions-${{ strategy.job-index }}
           path: pred/
@@ -94,14 +95,14 @@ jobs:
           path: pred-parts
           merge-multiple: true
 
-      - name: Collect predictions
-        run: |
-          mkdir -p predictions
-          find pred-parts -name '*.md' -exec mv -t predictions {} +
-          echo "predictions: $(ls predictions | wc -l)"
-
       - name: Ground truth
         run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --out gt.json
+
+      - name: Validate and collect predictions
+        run: |
+          python3 bench/omnidocbench/harness.py validate --gt gt.json --parts pred-parts
+          mkdir -p predictions
+          find pred-parts -name '*.md' -exec cp -t predictions {} +
 
       - uses: actions/checkout@v7
         with:

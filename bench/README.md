@@ -154,6 +154,36 @@ GitHub-hosted runner (docling and marker in 4 shards, unstructured in 2) with te
 Japanese), poppler, and pandoc installed for every tool alike. The Leaderboard job's summary shows the table,
 and its `agentdocbench-results` artifact holds the merged results JSON and every Markdown output.
 
+## Run validity
+
+Each shard freezes its planned and expected document IDs before conversion. Supported
+conversion errors, timeouts and missing input files are written to the results JSON,
+then the runner exits nonzero. Adapter-declared unsupported formats remain explicit
+capability exclusions, not execution failures (their corpus score stays zero).
+
+The merge checks every planned shard and document exactly once. Missing, duplicate,
+unexpected or mixed-plan results invalidate the run; failed rows remain diagnostic
+artifacts, not a successful leaderboard. The workflow checks producer status through
+its reporting pipeline and renders only the current selected tools, never stale
+committed results for a missing producer.
+
+OmniDocBench applies the same contract to page predictions and timing records. ASR
+freezes utterance IDs: a missing output file or row is a failure, while a present,
+valid empty transcript is an accuracy observation. Incomplete ASR batches have no
+valid full-audio RTF and are excluded from accuracy, speed and timestamp tables.
+The ASR report exits nonzero for failed or invalid jobs, or no job outcomes.
+
+Offline checks need no model, dataset or Rust build:
+
+```bash
+python3 -m unittest discover -s bench -p test_validity.py
+```
+
+The existing hosted ASR scorer test entrypoint also loads these checks. Outcome
+handling follows [checked subprocess exits](https://docs.python.org/3/library/subprocess.html)
+and the separate failure/error/skipped outcomes in
+[JUnit XML conventions](https://github.com/testmoapp/junitxml).
+
 ## Submitting a tool
 
 1. Add `bench/adapters/<tool>.py`:

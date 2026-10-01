@@ -74,7 +74,9 @@ def text_of(segments) -> str:
 
 def whisper_json(path: Path) -> tuple[str, str, list]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    segments = data.get("transcription") or []
+    segments = data["transcription"]
+    if not isinstance(segments, list) or any(not isinstance(s.get("text"), str) for s in segments):
+        raise ValueError("invalid transcript output; an empty transcription list is allowed")
     kind = "segment" if any("offsets" in s for s in segments) else "none"
     words = []
     for s in segments:
@@ -133,11 +135,13 @@ def run(engine: str, args, wavs: list[Path], lang: str, work: Path):
     if engine == "whisper":
         for wav in wavs:
             path = wav.with_name(wav.name + ".json")
-            out[wav] = whisper_json(path) if path.exists() else ("", "none", [])
+            if path.exists():
+                out[wav] = whisper_json(path)
     elif engine == "crispasr":
         for wav in wavs:
             path = wav.with_suffix(".json")
-            out[wav] = whisper_json(path) if path.exists() else ("", "none", [])
+            if path.exists():
+                out[wav] = whisper_json(path)
     elif engine == "transcribe-cpp":
         for line in proc.stdout.splitlines():
             line = line.strip()
@@ -148,7 +152,10 @@ def run(engine: str, args, wavs: list[Path], lang: str, work: Path):
                 load_ms = row.get("load_ms")
                 continue
             segs = row.get("segments") or []
-            out[Path(row["file"])] = (row.get("text", "").strip(), "segment" if segs else "none", [])
+            path = Path(row["file"])
+            if path in out or not isinstance(row.get("text"), str):
+                raise ValueError("duplicate or malformed transcript output")
+            out[path] = (row["text"].strip(), "segment" if segs else "none", [])
     else:
         # sherpa-onnx prints every input path first, then one JSON object per input, in order.
         lines = (proc.stdout + "\n" + proc.stderr).splitlines()  # sherpa-onnx logs to stderr
@@ -161,8 +168,12 @@ def run(engine: str, args, wavs: list[Path], lang: str, work: Path):
                     rows.append(json.loads(line))
                 except json.JSONDecodeError:
                     pass
+        if len(paths) != len(rows) or len(paths) != len(set(paths)):
+            raise ValueError("missing or duplicate sherpa transcript output")
         for path, row in zip(paths, rows):
-            out[path] = (row.get("text", "").strip(), "word" if row.get("timestamps") else "none", [])
+            if not isinstance(row.get("text"), str):
+                raise ValueError("malformed sherpa transcript output")
+            out[path] = (row["text"].strip(), "word" if row.get("timestamps") else "none", [])
     return out, load_ms, seconds, tail
 
 
@@ -186,6 +197,9 @@ def main() -> int:
         items = items[: args.limit]
     lang = items[0]["lang"]
     wavs = [(Path(args.manifest).parent / i["wav"]).resolve() for i in items]
+    ids = [i["id"] for i in items]
+    if len(ids) != len(set(ids)) or len(wavs) != len(set(wavs)):
+        raise ValueError("duplicate utterance IDs or audio paths")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     work = out / "work"
@@ -206,6 +220,7 @@ def main() -> int:
         "model": Path(args.model).name,
         "aligner": bool(args.aligner),
         "n": len(items),
+        "expected_ids": ids,
         "audio_s": sum(i["dur"] for i in items),
         **footprint(tool, exe),
         "status": "ok",
@@ -213,17 +228,20 @@ def main() -> int:
     try:
         # Calibration: the shortest clip, so the load time dominates.
         first = min(range(len(items)), key=lambda k: items[k]["dur"])
-        _, load_one, t_one, _ = run(args.engine, args, [wavs[first]], lang, work)
+        calibration, load_one, t_one, _ = run(args.engine, args, [wavs[first]], lang, work)
+        if set(calibration) != {wavs[first]}:
+            raise ValueError("incomplete calibration transcript output")
         rss_one = rss_mb()
         results, load_all, t_all, tail = run(args.engine, args, wavs, lang, work)
         rss_all = rss_mb()
         a_one, a_all = items[first]["dur"], summary["audio_s"]
+        complete = set(results) == set(wavs)
         summary.update(
             t_one=t_one,
             a_one=a_one,
             t_all=t_all,
-            rtf_incl=t_all / a_all,
-            rtf_excl=(t_all - t_one) / (a_all - a_one) if a_all > a_one and t_all > t_one else None,
+            rtf_incl=t_all / a_all if complete else None,
+            rtf_excl=(t_all - t_one) / (a_all - a_one) if complete and a_all > a_one and t_all > t_one else None,
             load_s=(load_all / 1000) if load_all else None,
             rss_mb=rss_all,
             rss_mb_one=rss_one,
@@ -241,12 +259,17 @@ def main() -> int:
                 missing += 1
                 hit = ("", "none", [])
             hyp, kind, words = hit
-            fh.write(json.dumps({"id": item["id"], "lang": item["lang"], "dur": item["dur"], "ref": item["ref"], "hyp": hyp, "ts": kind, "words": words}, ensure_ascii=False) + "\n")
+            fh.write(json.dumps({"id": item["id"], "status": "missing" if wav not in results else "ok",
+                                 "lang": item["lang"], "dur": item["dur"], "ref": item["ref"], "hyp": hyp,
+                                 "ts": kind, "words": words}, ensure_ascii=False) + "\n")
     summary["missing"] = missing
+    if not complete:
+        summary.update(status="failed", error="missing or unexpected batch transcript output",
+                       unexpected=len(set(results) - set(wavs)))
     (out / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     print(tail, file=sys.stderr)
-    return 0 if missing < len(items) else 1
+    return 0 if complete else 1
 
 
 if __name__ == "__main__":
