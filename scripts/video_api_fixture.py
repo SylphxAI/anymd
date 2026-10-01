@@ -10,6 +10,38 @@ import tempfile
 import threading
 
 
+def assert_pro_gate(binary, env, source):
+    """The release binary answers an unlicensed Pro call with the polite Pro notice, not an error."""
+    messages = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+         "params": {"protocolVersion": "2024-11-05", "capabilities": {},
+                    "clientInfo": {"name": "pro-gate", "version": "1"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+         "params": {"name": "inspect", "arguments": {
+             "operation": "video_timeline", "sources": [{"path": str(source)}],
+             "timeline": {"start_ms": 0, "end_ms": 1000}}}},
+    ]
+    process = subprocess.Popen([binary, "mcp"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                               stderr=subprocess.DEVNULL, text=True, env=env)
+    try:
+        for message in messages:
+            process.stdin.write(json.dumps(message) + "\n")
+            process.stdin.flush()
+        for line in process.stdout:
+            response = json.loads(line)
+            if response.get("id") == 2:
+                result = response["result"]
+                assert not result.get("isError"), result
+                assert "structuredContent" not in result, result
+                text = " ".join(item.get("text", "") for item in result["content"])
+                assert "anymd Pro" in text and "https://sylphxai.github.io/anymd/pro" in text, text
+                return
+    finally:
+        process.kill()
+    raise AssertionError("no answer to the unlicensed Pro call")
+
+
 def main():
     assert os.environ.get("CI") == "true", "hosted CI only"
     binary = str(Path(os.environ["ANYMD_BIN"]).resolve())
@@ -26,9 +58,16 @@ def main():
         source.with_suffix(".srt").write_text("1\n00:00:00,500 --> 00:00:01,500\ncross-cut\n")
         env = os.environ.copy()
         env["ANYMD_CACHE_DIR"] = str(root / "cache")
+        env["HOME"] = str(root / "home")
+        env["XDG_CONFIG_HOME"] = str(root / "config")
         for key in list(env):
             if key.startswith("MCP_PDF_REGION_ANALYSIS_") or key.startswith("MCP_PDF_OCR_"):
                 env.pop(key)
+        token = env.pop("ANYMD_PRO_TOKEN_CI", "")
+        env.pop("ANYMD_PRO_TOKEN", None)
+        assert_pro_gate(binary, env, source)
+        assert token, "ANYMD_PRO_TOKEN_CI is not set: the licensed video fixture cannot run"
+        env["ANYMD_PRO_TOKEN"] = token
         process = subprocess.Popen([binary, "mcp"], stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                    text=True, env=env)

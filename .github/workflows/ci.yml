@@ -125,6 +125,9 @@ jobs:
       - name: Hosted real video core and MCP API fixtures
         env:
           ANYMD_BIN: ${{ github.workspace }}/target/release/anymd
+          # A real anymd Pro licence for CI (issued for ci@sylphx.com); the fixture
+          # also proves the release binary refuses Pro calls without one.
+          ANYMD_PRO_TOKEN_CI: ${{ secrets.ANYMD_PRO_TOKEN_CI }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
@@ -163,6 +166,8 @@ jobs:
           cargo check -p anymd-wasm --target wasm32-unknown-unknown
 
       - name: Run Tests and Check Coverage
+        env:
+          ANYMD_PRO_TOKEN: ${{ secrets.ANYMD_PRO_TOKEN_CI }}
         run: bun run test:cov
 
       - name: Build docs
