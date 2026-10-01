@@ -4,26 +4,43 @@
 
 CI uses the shared brand action pinned to `a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb`.
 The masters, tokens, pixel grids and provenance remain in this repository;
-existing assets are unchanged by moving the generator. To regenerate locally,
-prepare the script from the same pin (run from the repository root):
+existing assets are unchanged by moving the generator. From the repository
+root, run this self-contained recipe. Select `OPERATION=write` to regenerate
+and verify, `OPERATION=check` to verify only, or `OPERATION=resnap` to
+intentionally redraw the small favicon grids, regenerate and verify.
 
 ```sh
-BRAND_SCRIPT="$(mktemp)"
-curl --fail --location --output "$BRAND_SCRIPT" \
-  "https://raw.githubusercontent.com/SylphxAI/.github/a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb/.github/actions/brand/build.py"
-python3 -m pip install pillow numpy resvg-py
-python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD"
-python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" --check
-rm "$BRAND_SCRIPT"
+(
+  set -eu
+  OPERATION=write # Choose write, check or resnap before running.
+  BRAND_SCRIPT="$(mktemp)"
+  trap 'rm -f "$BRAND_SCRIPT"' EXIT
+  curl --fail --location --output "$BRAND_SCRIPT" \
+    "https://raw.githubusercontent.com/SylphxAI/.github/a6c81b4bcda66bf624f0a68e25e63b3c0ed043eb/.github/actions/brand/build.py"
+  case "$OPERATION" in
+    check) set -- --check ;;
+    write) set -- ;;
+    resnap) set -- --resnap ;;
+    *) echo "Unknown brand operation: $OPERATION" >&2; exit 1 ;;
+  esac
+  if [ "$OPERATION" != check ]; then
+    python3 -m pip install pillow numpy resvg-py
+  fi
+  python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" "$@"
+  if [ "$OPERATION" != check ]; then
+    python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" --check
+  fi
+)
 ```
 
-Add `--resnap` only when intentionally redrawing the small favicon grids.
-Check mode needs only Python 3 and does not regenerate files. The commands below
-assume `BRAND_SCRIPT` points to this pinned script. Generated-file comments that
-name `brand/build.py` describe the historical generator; they are preserved to
-keep the asset bytes and hashes unchanged.
+Check mode needs only Python 3 and does not regenerate files. Each invocation
+prepares and cleans up its own script; later references select an operation in
+this recipe, rather than reusing its temporary path. A download, dependency,
+regeneration or verification failure stops the recipe with a nonzero status.
+Generated-file comments that name `brand/build.py` describe the historical
+generator; they are preserved to keep the asset bytes and hashes unchanged.
 
-This folder is the source of truth for the anymd brand: every surface is a copy of a file here, so a change lands in a master or in `tokens.json`, and `python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD"` writes the generated files and refreshes the surface copies (it needs Pillow, numpy and resvg-py). CI runs `python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" --check`, which needs only Python 3.
+This folder is the source of truth for the anymd brand: every surface is a copy of a file here, so a change lands in a master or in `tokens.json`, and the [shared recipe](#shared-generator) with `OPERATION=write` writes the generated files and refreshes the surface copies (it needs Pillow, numpy and resvg-py). CI runs the [shared recipe](#shared-generator) with `OPERATION=check`, which needs only Python 3.
 
 ## Name
 
@@ -80,7 +97,7 @@ The docs site reads them through `docs/.vitepress/theme/custom.css`, which impor
 
 ## Small sizes
 
-The 16 and 32 px favicons are drawn from `favicon/grid-16.txt` and `favicon/grid-32.txt`, not straight from the vector. Each character is one pixel: `.` is empty, `A` is `#C3F53C`, `B` is `#0A0D0A`, `C` is `#2B3A05`. The grid files can be hand-edited, and build.py draws from the edited file until `python3 "$BRAND_SCRIPT" --brand-dir "$PWD/brand" --root "$PWD" --resnap` redraws both from the master at 8× and snaps every pixel to the nearest colour in `icon.palette`. The third evidence line is drawn at 55% opacity over the document; its blend lands nearest the fold green, so the grids show it as `C`.
+The 16 and 32 px favicons are drawn from `favicon/grid-16.txt` and `favicon/grid-32.txt`, not straight from the vector. Each character is one pixel: `.` is empty, `A` is `#C3F53C`, `B` is `#0A0D0A`, `C` is `#2B3A05`. The grid files can be hand-edited, and build.py draws from the edited file until the [shared recipe](#shared-generator) with `OPERATION=resnap` redraws both from the master at 8× and snaps every pixel to the nearest colour in `icon.palette`. The third evidence line is drawn at 55% opacity over the document; its blend lands nearest the fold green, so the grids show it as `C`.
 
 ## Clear space and minimum size
 
