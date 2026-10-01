@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { duBytes } from './du-bytes.js';
 
 const version = (process.argv.find((a) => a.startsWith('--version=')) || '--version=4.0.2').split('=')[1]!;
 const pkg = `@sylphx/anymd@${version}`;
@@ -18,15 +19,6 @@ function run(cmd: string, args: string[], cwd = root) {
     throw new Error(`${cmd} ${args.join(' ')} failed: ${r.stderr || r.stdout}`);
   }
   return r.stdout;
-}
-
-function duBytes(path: string): number {
-  const r = spawnSync('du', ['-sb', path], { encoding: 'utf8' });
-  if (r.status === 0) return Number((r.stdout || '').split(/\s+/)[0] || 0);
-  // macOS du lacks -sb; fall back
-  const r2 = spawnSync('du', ['-sk', path], { encoding: 'utf8' });
-  const kb = Number((r2.stdout || '').split(/\s+/)[0] || 0);
-  return kb * 1024;
 }
 
 function countFiles(dir: string): number {
