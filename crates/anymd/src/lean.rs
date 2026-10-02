@@ -209,13 +209,19 @@ struct SourceRead {
 }
 
 /// Marker for a page with no text layer that images cover (a scan nobody read).
-pub(crate) fn scan_marker(page: u32) -> String {
+pub(crate) fn scan_marker(page: u32, ocr_ran: bool) -> String {
+    if ocr_ran {
+        return format!("<!-- page {page}: scanned image; OCR found no text -->\n\n");
+    }
     format!(
         "<!-- page {page}: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->\n\n"
     )
 }
 
 const SCAN_ALL_HINT: &str = "<!-- Every page shown is a scanned image with no text layer, so nothing was read; enable OCR: anymd setup ocr / ocr: true -->";
+
+const SCAN_ALL_OCR_HINT: &str =
+    "<!-- Every page shown is a scanned image; OCR ran and found no text -->";
 
 fn front_matter(header: &[(String, String)]) -> String {
     let mut out = String::from("---\n");
@@ -376,7 +382,7 @@ fn read_opened(
             };
             let is_scan = chunk_scans.contains(&unit.number) && !continued;
             if is_scan {
-                marker.push_str(&scan_marker(unit.number));
+                marker.push_str(&scan_marker(unit.number, opened.ocr_ran(unit.number)));
             }
             // A scan page is charged its page label and scan marker, plus its
             // entry in the `scanned_pages` header; text pages keep the old cost.
@@ -463,7 +469,12 @@ fn read_opened(
             ),
         ));
         if scanned.len() == shown.len() {
-            body = format!("{SCAN_ALL_HINT}\n\n{body}");
+            let hint = if scanned.iter().all(|page| opened.ocr_ran(*page)) {
+                SCAN_ALL_OCR_HINT
+            } else {
+                SCAN_ALL_HINT
+            };
+            body = format!("{hint}\n\n{body}");
         }
     }
     if opened.format == "pdf"
@@ -1455,6 +1466,31 @@ mod tests {
         // One page of two is text, so there is no all-scans hint.
         assert!(!read.body.starts_with("<!-- Every page"), "{}", read.body);
         assert!(front_matter(&read.header).contains("scanned_pages: [1]\n"));
+    }
+
+    #[test]
+    fn a_scanned_page_where_ocr_ran_says_it_found_no_text() {
+        let mut opened = Opened::open(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../test/fixtures/scanned-page.pdf")
+                .display()
+                .to_string(),
+            &crate::source_access::SourceAccessPolicy::unrestricted(),
+            &crate::document::OpenOptions {
+                ocr: Some(false),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        opened.note_ocr_ran(1);
+        let read = read_opened(&mut opened, Some(vec![1]), None, usize::MAX, true, None);
+        assert!(
+            read.body
+                .contains("<!-- page 1: scanned image; OCR found no text -->"),
+            "{}",
+            read.body
+        );
+        assert!(!read.body.contains("enable OCR"), "{}", read.body);
     }
 
     #[test]

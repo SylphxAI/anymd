@@ -70,6 +70,8 @@ pub struct Opened {
     body: Body,
     native_outline: Vec<(usize, String, Option<u32>)>,
     ocr_request: Mutex<Option<crate::ocr_vlm::OcrRequest>>,
+    /// Pages an OCR engine actually ran on (whether or not it found text).
+    ocr_ran: Mutex<Vec<u32>>,
 }
 
 /// A source spec is a URL when it starts with http:// or https://.
@@ -282,6 +284,7 @@ impl Opened {
             body: Body::Units(Arc::new(units)),
             native_outline: vec![],
             ocr_request: Mutex::new(None),
+            ocr_ran: Mutex::new(Vec::new()),
         }
     }
 
@@ -417,6 +420,7 @@ impl Opened {
             options: options.clone(),
             native_outline: Vec::new(),
             ocr_request: Mutex::new(None),
+            ocr_ran: Mutex::new(Vec::new()),
             body: Body::Pdf {
                 doc: Box::new(doc),
                 bytes,
@@ -454,6 +458,7 @@ impl Opened {
             options: options.clone(),
             native_outline: converted.outline,
             ocr_request: Mutex::new(None),
+            ocr_ran: Mutex::new(Vec::new()),
             body: Body::Units(Arc::new(units)),
         }
     }
@@ -470,6 +475,7 @@ impl Opened {
             options: options.clone(),
             native_outline: cached.native_outline.clone(),
             ocr_request: Mutex::new(None),
+            ocr_ran: Mutex::new(Vec::new()),
             body: Body::Units(cached.units.clone()),
         }
     }
@@ -485,6 +491,17 @@ impl Opened {
             Body::Pdf { doc, .. } => markdown_layout::outline(doc),
             Body::Units(_) => self.native_outline.clone(),
         }
+    }
+
+    pub(crate) fn note_ocr_ran(&self, page: u32) {
+        if let Ok(mut ran) = self.ocr_ran.lock() {
+            ran.push(page);
+        }
+    }
+
+    /// Whether OCR ran on this page (so a blank result means it found no text).
+    pub fn ocr_ran(&self, page: u32) -> bool {
+        self.ocr_ran.lock().is_ok_and(|ran| ran.contains(&page))
     }
 
     /// Convert the requested units (1-based numbers, ascending).
@@ -729,6 +746,7 @@ impl Opened {
         for (index, text) in results {
             match text {
                 Ok(text) if !text.trim().is_empty() => {
+                    self.note_ocr_ran(units[index].number);
                     let existing = units[index].markdown.trim().to_string();
                     units[index].markdown = if existing.is_empty() {
                         format!("<!-- OCR text -->\n\n{text}")
@@ -736,7 +754,9 @@ impl Opened {
                         format!("{existing}\n\n<!-- OCR text -->\n\n{text}")
                     };
                 }
-                Ok(_) => {}
+                Ok(_) => {
+                    self.note_ocr_ran(units[index].number);
+                }
                 Err(error) if vlm => {
                     return Err(format!(
                         "Doc-VLM OCR failed on page {}: {error}",
