@@ -1,5 +1,8 @@
 //! Explicit model setup and bounded local doc-VLM worker.
 use crate::command_provider::{self, CommandInvocation};
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
+use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -116,10 +119,43 @@ pub(crate) fn worker_command() -> Result<PathBuf, String> {
 }
 
 fn worker_command_at(root: &Path) -> Result<PathBuf, String> {
+    worker_command_with(root, &refreshed_companion)
+}
+
+fn worker_command_with(
+    root: &Path,
+    refresh: &dyn Fn(&Path) -> Result<(), String>,
+) -> Result<PathBuf, String> {
+    refresh_if_stale(root, refresh)?;
     if !ready_at(root) {
         return Err(SETUP_NOTICE.into());
     }
     Ok(root.join(companion_file_name()))
+}
+
+/// Weights are installed (the user opted in) but the engine is missing or from
+/// another version: refresh the small engine, never the weights. Setup consent
+/// covers this.
+fn refresh_if_stale(
+    root: &Path,
+    refresh: &dyn Fn(&Path) -> Result<(), String>,
+) -> Result<(), String> {
+    if !installed_at(root) || companion_installed_at(root) {
+        return Ok(());
+    }
+    refresh(root).map_err(|e| {
+        format!(
+            "the OCR engine for v{} could not be refreshed: {e}; run anymd setup ocr",
+            env!("CARGO_PKG_VERSION")
+        )
+    })
+}
+
+/// One refresh attempt per process, so a failing network is not retried on
+/// every page.
+fn refreshed_companion(root: &Path) -> Result<(), String> {
+    static REFRESH: std::sync::OnceLock<Result<(), String>> = std::sync::OnceLock::new();
+    REFRESH.get_or_init(|| install_companion(root)).clone()
 }
 
 pub(crate) fn installed_at(root: &Path) -> bool {
@@ -137,13 +173,19 @@ pub fn requested(engine: OcrEngine) -> bool {
     if engine == OcrEngine::Tesseract {
         return false;
     }
-    let ready = root().is_ok_and(|p| ready_at(&p));
-    if ready && backend_available() {
-        return true;
+    let mut refresh_error = None;
+    if let Ok(root) = root() {
+        match refresh_if_stale(&root, &refreshed_companion) {
+            Ok(()) if ready_at(&root) && backend_available() => return true,
+            Ok(()) => {}
+            Err(e) => refresh_error = Some(e),
+        }
     }
     static HINT: std::sync::Once = std::sync::Once::new();
     HINT.call_once(|| {
-        if !anymd_ocr_vlm::hardware::cpu_available() { eprintln!("anymd OCR: using tesseract; doc-VLM needs FP16-capable Linux arm64 hardware."); }
+        if let Some(error) = &refresh_error {
+            eprintln!("anymd OCR: using tesseract; {error}");
+        } else if !anymd_ocr_vlm::hardware::cpu_available() { eprintln!("anymd OCR: using tesseract; doc-VLM needs FP16-capable Linux arm64 hardware."); }
         else { eprintln!("anymd OCR: using tesseract; run `anymd setup ocr` to opt into local doc-VLM OCR (~2 GB weights and the OCR engine)."); }
     });
     // Acceleration alone cannot trigger a model download.
@@ -189,9 +231,17 @@ pub fn companion_platform() -> Option<&'static str> {
         Some("darwin-arm64")
     } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
         Some("darwin-x64")
-    } else if cfg!(all(target_os = "linux", target_arch = "x86_64", target_env = "gnu")) {
+    } else if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
         Some("linux-x64-gnu")
-    } else if cfg!(all(target_os = "linux", target_arch = "aarch64", target_env = "gnu")) {
+    } else if cfg!(all(
+        target_os = "linux",
+        target_arch = "aarch64",
+        target_env = "gnu"
+    )) {
         Some("linux-arm64-gnu")
     } else if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
         Some("win32-x64-msvc")
@@ -202,7 +252,11 @@ pub fn companion_platform() -> Option<&'static str> {
 
 /// Release asset name of the companion for `platform`.
 pub fn companion_asset(platform: &str) -> String {
-    let suffix = if platform.starts_with("win32") { ".exe" } else { "" };
+    let suffix = if platform.starts_with("win32") {
+        ".exe"
+    } else {
+        ""
+    };
     format!("anymd-ocr-vlm-{platform}{suffix}")
 }
 
@@ -219,43 +273,138 @@ pub fn manifest_hash(manifest: &str, asset: &str) -> Option<String> {
     })
 }
 
+/// Trusted companion signing keys (base64url raw Ed25519), separate from the
+/// Pro licence keys. A list so rotation is additive.
+pub const COMPANION_PUBLIC_KEYS: &[&str] = &["zQhktMv7ijbI888ZY9i7xXqExloXuZ-yZUma1ll36j4"];
+const COMPANION_SIGNATURE: &str = "anymd-ocr-vlm-SHA256SUMS.sig";
+
+/// The bytes the release signs: a line naming the version, then the manifest.
+/// A signature for another version's manifest therefore fails here.
+fn signed_message(version: &str, manifest: &str) -> Vec<u8> {
+    format!("anymd-ocr-vlm {version}\n{manifest}").into_bytes()
+}
+
+fn verify_manifest(
+    version: &str,
+    manifest: &str,
+    signature_b64: &str,
+    keys: &[&str],
+) -> Result<(), String> {
+    let signature = URL_SAFE_NO_PAD
+        .decode(signature_b64.trim())
+        .ok()
+        .and_then(|bytes| Signature::from_slice(&bytes).ok())
+        .ok_or("OCR engine manifest signature is malformed")?;
+    let message = signed_message(version, manifest);
+    let verified = keys.iter().any(|key| {
+        URL_SAFE_NO_PAD
+            .decode(key)
+            .ok()
+            .and_then(|raw| <[u8; 32]>::try_from(raw).ok())
+            .and_then(|raw| VerifyingKey::from_bytes(&raw).ok())
+            .is_some_and(|key| key.verify(&message, &signature).is_ok())
+    });
+    if verified {
+        Ok(())
+    } else {
+        Err("OCR engine manifest signature is not valid for this version".into())
+    }
+}
+
+fn fetch_text(agent: &ureq::Agent, url: &str, what: &str, version: &str) -> Result<String, String> {
+    let mut text = String::new();
+    agent
+        .get(url)
+        .call()
+        .map_err(|e| match e {
+            ureq::Error::StatusCode(404) => {
+                format!("the OCR engine for v{version} is not published yet; retry later")
+            }
+            e => format!("OCR engine {what}: {e}"),
+        })?
+        .body_mut()
+        .as_reader()
+        .take(1024 * 1024)
+        .read_to_string(&mut text)
+        .map_err(|e| e.to_string())?;
+    Ok(text)
+}
+
 fn install_companion(root: &Path) -> Result<(), String> {
     let platform = companion_platform().ok_or(
         "No VLM OCR engine is published for this platform; tesseract OCR remains available",
     )?;
     let version = env!("CARGO_PKG_VERSION");
     let base = format!("{}/v{version}", crate::RELEASE_DOWNLOAD_BASE);
+    install_companion_from(root, &base, platform, version, COMPANION_PUBLIC_KEYS, true)
+}
+
+/// `https_only` is false only for tests against a local server.
+fn install_companion_from(
+    root: &Path,
+    base: &str,
+    platform: &str,
+    version: &str,
+    keys: &[&str],
+    https_only: bool,
+) -> Result<(), String> {
     let asset = companion_asset(platform);
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .https_only(https_only)
+        .build()
+        .into();
     eprintln!("Downloading the OCR engine {asset}");
-    let mut manifest = String::new();
-    ureq::get(&format!("{base}/{COMPANION_MANIFEST}"))
-        .call()
-        .map_err(|e| format!("OCR engine manifest: {e}"))?
-        .body_mut()
-        .as_reader()
-        .take(1024 * 1024)
-        .read_to_string(&mut manifest)
-        .map_err(|e| e.to_string())?;
+    let manifest = fetch_text(
+        &agent,
+        &format!("{base}/{COMPANION_MANIFEST}"),
+        "manifest",
+        version,
+    )?;
+    let signature = fetch_text(
+        &agent,
+        &format!("{base}/{COMPANION_SIGNATURE}"),
+        "signature",
+        version,
+    )?;
+    verify_manifest(version, &manifest, &signature, keys)?;
     let hash = manifest_hash(&manifest, &asset)
         .ok_or_else(|| format!("OCR engine manifest does not list {asset}"))?;
-    let mut response = ureq::get(&format!("{base}/{asset}"))
+    let mut response = agent
+        .get(&format!("{base}/{asset}"))
         .call()
         .map_err(|e| format!("OCR engine download: {e}"))?;
-    let mut reader = response.body_mut().as_reader().take(COMPANION_MAX_BYTES + 1);
-    let mut temporary = tempfile::NamedTempFile::new_in(root).map_err(|e| e.to_string())?;
+    let mut reader = response
+        .body_mut()
+        .as_reader()
+        .take(COMPANION_MAX_BYTES + 1);
+    let mut temporary = tempfile::Builder::new()
+        .suffix(if cfg!(windows) { ".exe" } else { "" })
+        .tempfile_in(root)
+        .map_err(|e| e.to_string())?;
     let n = std::io::copy(&mut reader, &mut temporary).map_err(|e| e.to_string())?;
     temporary.flush().map_err(|e| e.to_string())?;
     if n > COMPANION_MAX_BYTES || !verified(temporary.path(), &hash)? {
         return Err(format!("OCR engine hash mismatch: {asset}"));
     }
+    // Close the write handle: an open file cannot be executed.
+    let path = temporary.into_temp_path();
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(temporary.path(), std::fs::Permissions::from_mode(0o755))
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
             .map_err(|e| e.to_string())?;
     }
-    temporary
-        .persist(root.join(companion_file_name()))
+    let output = std::process::Command::new(&path)
+        .arg("version")
+        .stdin(std::process::Stdio::null())
+        .output()
+        .map_err(|e| format!("OCR engine does not run: {e}"))?;
+    if String::from_utf8_lossy(&output.stdout).trim_end() != format!("anymd-ocr-vlm {version}") {
+        return Err(format!(
+            "OCR engine {asset} does not report version {version}"
+        ));
+    }
+    path.persist(root.join(companion_file_name()))
         .map_err(|e| e.to_string())?;
     // The version file is what makes the engine count as installed.
     std::fs::write(root.join(COMPANION_VERSION_FILE), version).map_err(|e| e.to_string())
@@ -352,7 +501,7 @@ pub(crate) fn recognize_admitted(
     _permit: &crate::ocr_evidence::OcrRequestPermit,
 ) -> Result<anymd_ocr_vlm::PageResult, String> {
     let root = root()?;
-    if !ready_at(&root) {
+    if !installed_at(&root) {
         return Err(SETUP_NOTICE.into());
     }
     let command = worker_command()?;
@@ -605,16 +754,23 @@ mod tests {
         );
         assert_eq!(manifest_hash(&manifest, "anymd-ocr-vlm-darwin-x64"), None);
         assert_eq!(manifest_hash(&manifest, "anymd-ocr-vlm-linux-x64"), None);
-        assert_eq!(companion_asset("win32-x64-msvc"), "anymd-ocr-vlm-win32-x64-msvc.exe");
-        assert_eq!(companion_asset("darwin-arm64"), "anymd-ocr-vlm-darwin-arm64");
+        assert_eq!(
+            companion_asset("win32-x64-msvc"),
+            "anymd-ocr-vlm-win32-x64-msvc.exe"
+        );
+        assert_eq!(
+            companion_asset("darwin-arm64"),
+            "anymd-ocr-vlm-darwin-arm64"
+        );
     }
 
     #[cfg(not(feature = "ocr-vlm"))]
     #[test]
     fn missing_or_stale_companion_gives_the_setup_notice() {
+        let no_refresh = |_: &Path| Err::<(), String>("offline".into());
         let dir = tempfile::tempdir().unwrap();
         assert_eq!(
-            worker_command_at(dir.path()),
+            worker_command_with(dir.path(), &no_refresh),
             Err("VLM OCR needs a one-time setup: run `anymd setup ocr`".to_string())
         );
         // Weights alone are not enough, and neither is a companion from another version.
@@ -625,13 +781,17 @@ mod tests {
         }
         std::fs::write(dir.path().join("installed"), weights::REVISION).unwrap();
         assert!(installed_at(dir.path()));
-        assert!(worker_command_at(dir.path()).is_err());
+        assert!(worker_command_with(dir.path(), &no_refresh).is_err());
         std::fs::write(dir.path().join(companion_file_name()), b"x").unwrap();
         std::fs::write(dir.path().join(COMPANION_VERSION_FILE), "0.0.0").unwrap();
-        assert!(worker_command_at(dir.path()).is_err());
-        std::fs::write(dir.path().join(COMPANION_VERSION_FILE), env!("CARGO_PKG_VERSION")).unwrap();
+        assert!(worker_command_with(dir.path(), &no_refresh).is_err());
+        std::fs::write(
+            dir.path().join(COMPANION_VERSION_FILE),
+            env!("CARGO_PKG_VERSION"),
+        )
+        .unwrap();
         assert_eq!(
-            worker_command_at(dir.path()).unwrap(),
+            worker_command_with(dir.path(), &no_refresh).unwrap(),
             dir.path().join(companion_file_name())
         );
     }
@@ -675,5 +835,209 @@ printf '{"regions":[{"label":"text","bbox":[0,0,1,1],"score":0.9,"order":2,"text
             assert!(!file.url.contains("/main/"));
             assert!(file.bytes > 0);
         }
+    }
+
+    // ---- Signed companion manifest ----
+
+    use ed25519_dalek::{Signer, SigningKey};
+
+    fn signing_key() -> SigningKey {
+        SigningKey::from_bytes(&[7; 32])
+    }
+    fn public_key(key: &SigningKey) -> String {
+        URL_SAFE_NO_PAD.encode(key.verifying_key().to_bytes())
+    }
+    fn sign(key: &SigningKey, version: &str, manifest: &str) -> String {
+        URL_SAFE_NO_PAD.encode(key.sign(&signed_message(version, manifest)).to_bytes())
+    }
+
+    #[test]
+    fn manifest_signature_binds_the_version_and_the_bytes() {
+        let key = signing_key();
+        let keys = [public_key(&key)];
+        let keys: Vec<&str> = keys.iter().map(String::as_str).collect();
+        let manifest = "aa  anymd-ocr-vlm-x\n";
+        let sig = sign(&key, "1.2.3", manifest);
+        assert!(verify_manifest("1.2.3", manifest, &sig, &keys).is_ok());
+        // A tampered manifest.
+        assert!(verify_manifest("1.2.3", "bb  anymd-ocr-vlm-x\n", &sig, &keys).is_err());
+        // A signature from an older release.
+        let old = sign(&key, "1.2.2", manifest);
+        assert!(verify_manifest("1.2.3", manifest, &old, &keys).is_err());
+        // A signature by another key, and a malformed one.
+        let other = sign(&SigningKey::from_bytes(&[8; 32]), "1.2.3", manifest);
+        assert!(verify_manifest("1.2.3", manifest, &other, &keys).is_err());
+        assert!(verify_manifest("1.2.3", manifest, "not-a-signature", &keys).is_err());
+        // The compiled-in list holds valid public keys.
+        for key in COMPANION_PUBLIC_KEYS {
+            let raw = URL_SAFE_NO_PAD.decode(key).unwrap();
+            assert!(VerifyingKey::from_bytes(&<[u8; 32]>::try_from(raw).unwrap()).is_ok());
+        }
+    }
+
+    /// A one-thread HTTP server over fixed `(path, body)` pairs; anything else is 404.
+    fn serve(files: Vec<(String, Vec<u8>)>) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { continue };
+                let mut request = Vec::new();
+                let mut byte = [0u8; 1];
+                while !request.ends_with(b"\r\n\r\n") && stream.read(&mut byte).unwrap_or(0) == 1 {
+                    request.push(byte[0]);
+                }
+                let line = String::from_utf8_lossy(&request);
+                let path = line.split_whitespace().nth(1).unwrap_or("").to_string();
+                let (status, body) = match files.iter().find(|(p, _)| *p == path) {
+                    Some((_, body)) => ("200 OK", body.clone()),
+                    None => ("404 Not Found", Vec::new()),
+                };
+                let _ = write!(
+                    stream,
+                    "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    body.len()
+                );
+                let _ = stream.write_all(&body);
+            }
+        });
+        format!("http://{address}")
+    }
+
+    #[cfg(unix)]
+    struct Release {
+        base: String,
+    }
+
+    /// A release for `platform` whose companion script prints `reported`; the
+    /// manifest is signed for `signed_version` and then optionally tampered with.
+    #[cfg(unix)]
+    fn release(key: &SigningKey, signed_version: &str, reported: &str, tamper: bool) -> Release {
+        let asset = companion_asset("test-plat");
+        let binary = format!("#!/bin/sh\necho 'anymd-ocr-vlm {reported}'\n").into_bytes();
+        let manifest = format!("{:x}  {asset}\n", Sha256::digest(&binary));
+        let signature = sign(key, signed_version, &manifest);
+        let served = if tamper {
+            format!("{:x}  {asset}\n", Sha256::digest(b"evil"))
+        } else {
+            manifest
+        };
+        let base = serve(vec![
+            ("/v/anymd-ocr-vlm-SHA256SUMS".into(), served.into_bytes()),
+            (
+                "/v/anymd-ocr-vlm-SHA256SUMS.sig".into(),
+                signature.into_bytes(),
+            ),
+            (format!("/v/{asset}"), binary),
+        ]);
+        Release {
+            base: format!("{base}/v"),
+        }
+    }
+
+    #[cfg(unix)]
+    fn install_from(release: &Release, root: &Path, key: &SigningKey) -> Result<(), String> {
+        install_companion_from(
+            root,
+            &release.base,
+            "test-plat",
+            env!("CARGO_PKG_VERSION"),
+            &[&public_key(key)],
+            false,
+        )
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn signed_matching_companion_installs() {
+        let key = signing_key();
+        let version = env!("CARGO_PKG_VERSION");
+        let dir = tempfile::tempdir().unwrap();
+        let ok = release(&key, version, version, false);
+        install_from(&ok, dir.path(), &key).unwrap();
+        assert!(companion_installed_at(dir.path()) || cfg!(feature = "ocr-vlm"));
+        assert!(dir.path().join(companion_file_name()).is_file());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unsafe_companions_refuse_to_install() {
+        let key = signing_key();
+        let version = env!("CARGO_PKG_VERSION");
+        let refuses = |release: Release, key: &SigningKey| {
+            let dir = tempfile::tempdir().unwrap();
+            let result = install_from(&release, dir.path(), key);
+            assert!(result.is_err(), "installed: {result:?}");
+            assert!(!dir.path().join(companion_file_name()).exists());
+            assert!(!dir.path().join(COMPANION_VERSION_FILE).exists());
+            result.unwrap_err()
+        };
+        // Tampered SHA256SUMS.
+        refuses(release(&key, version, version, true), &key);
+        // Signature from an older version.
+        refuses(release(&key, "0.0.1", version, false), &key);
+        // Signature by a key that is not trusted.
+        refuses(
+            release(&SigningKey::from_bytes(&[9; 32]), version, version, false),
+            &key,
+        );
+        // The binary reports another version.
+        let error = refuses(release(&key, version, "0.0.1", false), &key);
+        assert!(error.contains("does not report version"));
+        // Nothing published yet.
+        let dir = tempfile::tempdir().unwrap();
+        let empty = Release {
+            base: format!("{}/v", serve(Vec::new())),
+        };
+        let error = install_from(&empty, dir.path(), &key).unwrap_err();
+        assert!(error.contains("not published yet; retry later"), "{error}");
+        // Plain http is refused by the production agent.
+        let ok = release(&key, version, version, false);
+        let error = install_companion_from(
+            dir.path(),
+            &ok.base,
+            "test-plat",
+            version,
+            &[&public_key(&key)],
+            true,
+        );
+        assert!(error.is_err());
+    }
+
+    /// Weights installed, engine from an older version: the engine is
+    /// refreshed once and VLM stays on. A failed refresh falls back with a hint.
+    #[cfg(all(unix, not(feature = "ocr-vlm")))]
+    #[test]
+    fn upgrade_refreshes_the_engine_when_weights_are_installed() {
+        let key = signing_key();
+        let version = env!("CARGO_PKG_VERSION");
+        let dir = tempfile::tempdir().unwrap();
+        for file in weights::FILES {
+            let path = dir.path().join(file.path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, b"x").unwrap();
+        }
+        std::fs::write(dir.path().join("installed"), weights::REVISION).unwrap();
+        std::fs::write(dir.path().join(companion_file_name()), b"old").unwrap();
+        std::fs::write(dir.path().join(COMPANION_VERSION_FILE), "0.0.0").unwrap();
+        assert!(!ready_at(dir.path()));
+
+        let down = Release {
+            base: format!("{}/v", serve(Vec::new())),
+        };
+        let error =
+            worker_command_with(dir.path(), &|root| install_from(&down, root, &key)).unwrap_err();
+        assert!(error.contains("could not be refreshed"), "{error}");
+        assert!(error.ends_with("run anymd setup ocr"), "{error}");
+
+        let ok = release(&key, version, version, false);
+        let command =
+            worker_command_with(dir.path(), &|root| install_from(&ok, root, &key)).unwrap();
+        assert_eq!(command, dir.path().join(companion_file_name()));
+        assert!(ready_at(dir.path()));
+        // Missing weights never trigger a download.
+        let bare = tempfile::tempdir().unwrap();
+        let result = worker_command_with(bare.path(), &|_| panic!("must not refresh"));
+        assert_eq!(result, Err(SETUP_NOTICE.to_string()));
     }
 }
