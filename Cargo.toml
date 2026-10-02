@@ -37,7 +37,7 @@ readme = "README.md"
 # anymd-adobe-cmap-parser. The `package` rename keeps the library names
 # (`pdf_extract`), so no source changes.
 [workspace.dependencies]
-oar-ocr-vl = { package = "anymd-oar-ocr-vl", path = "vendor/oar-ocr-vl", version = "0.9.2" }
+oar-ocr-vl = { package = "anymd-oar-ocr-vl", path = "vendor/oar-ocr-vl", version = "0.9.3" }
 anymd-ocr-vlm = { path = "crates/anymd-ocr-vlm", version = "8.4.0" }
 anymd-core = { path = "crates/anymd-core", version = "8.4.0" }
 anymd-formats = { path = "crates/anymd-formats", version = "8.4.0" }
