@@ -52,6 +52,8 @@ Agents and people who have to point at a source and be believed: legal review, r
 
 <ProBuy label="Buy anymd Pro" />
 
+Buy from the terminal: `anymd pro buy` (add `--no-browser` to print the link instead of opening it, or `--json` for agents). When the payment completes, the licence is activated on this machine.
+
 ## Activate
 
 Run it once:

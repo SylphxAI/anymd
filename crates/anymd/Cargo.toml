@@ -39,7 +39,6 @@ anyhow = "1"
 axum = "0.8"
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
-dirs = "6"
 ed25519-dalek = "2"
 command-group = { version = "5", features = ["with-tokio"] }
 anymd-core = { workspace = true }
@@ -53,7 +52,7 @@ serde_json = "1"
 sha2 = "0.10"
 subtle = "2"
 # Shared MCP setup, CLI hints and cache-root policy.
-sylphx-mcp-kit = "0.3"
+sylphx-mcp-kit = { version = "0.6.0", features = ["licence"] }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }

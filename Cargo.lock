@@ -155,7 +155,6 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "command-group",
- "dirs",
  "ed25519-dalek",
  "ignore",
  "image",
@@ -165,7 +164,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "subtle",
- "sylphx-mcp-kit",
+ "sylphx-mcp-kit 0.6.0",
  "tempfile",
  "tokio",
  "tokio-util",
@@ -220,7 +219,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "sylphx-mcp-kit",
+ "sylphx-mcp-kit 0.3.3",
  "tempfile",
  "transcribe-cpp",
  "ureq",
@@ -4437,16 +4436,31 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sylphx-mcp-kit"
-version = "0.3.0"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baba92c4baf8d691a65fbd0776db27a91e20e4d9f032c7845d1788b8eae7ac58"
+checksum = "2a507b8c1318bdcb240b4cd0d89f8f091b4b627abca8df8714abdd20e64e4ffb"
 dependencies = [
  "anyhow",
  "dirs",
+ "serde_json",
+]
+
+[[package]]
+name = "sylphx-mcp-kit"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce1ce73cf4a50dfe8ca220339dba2afaa38fd5c1349a18b049c6a433de1b9ad6"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "dirs",
+ "ed25519-dalek",
  "rmcp",
+ "serde",
  "serde_json",
  "tokio",
  "toml_edit",
+ "ureq",
 ]
 
 [[package]]

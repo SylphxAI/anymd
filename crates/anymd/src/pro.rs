@@ -5,11 +5,13 @@
 //! Token: `base64url(payloadJSON).base64url(ed25519 signature over the payload
 //! bytes)`, payload `{"plan":"pro","email"?:string,"issuedAt":number}`.
 //! The token is never logged or printed.
+//!
+//! Verification, the token file, `status`, `activate` and `buy` are the generic
+//! `mcp_kit::licence` flow; this module only holds anymd's policy (key, env
+//! var, file name, URLs). The token format and file location are unchanged, so
+//! tokens issued before the move keep working.
 
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine;
-use ed25519_dalek::{Signature, Verifier, VerifyingKey};
-use serde::Deserialize;
+use mcp_kit::licence::{self, Licence, LicenceError, LicencePolicy};
 use std::fmt;
 use std::path::PathBuf;
 
@@ -22,96 +24,46 @@ pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pro";
 /// Env var holding the token (wins over the token file).
 pub const TOKEN_ENV: &str = "ANYMD_PRO_TOKEN";
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct ProLicense {
-    pub plan: String,
-    #[serde(default)]
-    pub email: Option<String>,
-    #[serde(rename = "issuedAt")]
-    pub issued_at: i64,
-}
+/// The shared Sylphx checkout service behind `anymd pro buy`.
+const CHECKOUT_BASE: &str = "https://buy.sylphx.com";
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum LicenseError {
-    Malformed,
-    BadSignature,
-    WrongPlan,
-}
-
-impl fmt::Display for LicenseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            Self::Malformed => "the anymd Pro token is malformed",
-            Self::BadSignature => "the anymd Pro token signature is not valid",
-            Self::WrongPlan => "the token is not an anymd Pro token",
-        })
+/// anymd's licence policy. `require_product` is false because tokens issued
+/// before the generic flow carry no `product` field.
+fn policy_with<'a>(keys: &'a [&'a str], checkout_base: Option<&'a str>) -> LicencePolicy<'a> {
+    LicencePolicy {
+        product: "anymd",
+        require_product: false,
+        accepted_plans: &["pro"],
+        public_keys: keys,
+        env_var: TOKEN_ENV,
+        // `<config dir>/anymd/pro-token`, as before.
+        file_name: "pro-token",
+        upgrade_url: PRO_URL,
+        tier: "Pro",
+        checkout_base,
     }
 }
 
-impl std::error::Error for LicenseError {}
+fn policy() -> LicencePolicy<'static> {
+    policy_with(PRO_PUBLIC_KEYS, Some(CHECKOUT_BASE))
+}
+
+pub type ProLicense = Licence;
+pub type LicenseError = LicenceError;
 
 /// Verify a token against [`PRO_PUBLIC_KEYS`].
 pub fn verify_token(token: &str) -> Result<ProLicense, LicenseError> {
-    verify_token_with(token, PRO_PUBLIC_KEYS)
-}
-
-fn verify_token_with(token: &str, keys: &[&str]) -> Result<ProLicense, LicenseError> {
-    let (payload_b64, sig_b64) = token
-        .trim()
-        .split_once('.')
-        .ok_or(LicenseError::Malformed)?;
-    let payload = URL_SAFE_NO_PAD
-        .decode(payload_b64)
-        .map_err(|_| LicenseError::Malformed)?;
-    let sig_bytes = URL_SAFE_NO_PAD
-        .decode(sig_b64)
-        .map_err(|_| LicenseError::Malformed)?;
-    let signature = Signature::from_slice(&sig_bytes).map_err(|_| LicenseError::Malformed)?;
-    let license: ProLicense =
-        serde_json::from_slice(&payload).map_err(|_| LicenseError::Malformed)?;
-    let verified = keys.iter().any(|key| {
-        URL_SAFE_NO_PAD
-            .decode(key)
-            .ok()
-            .and_then(|raw| <[u8; 32]>::try_from(raw).ok())
-            .and_then(|raw| VerifyingKey::from_bytes(&raw).ok())
-            .is_some_and(|key| key.verify(&payload, &signature).is_ok())
-    });
-    if !verified {
-        return Err(LicenseError::BadSignature);
-    }
-    if license.plan != "pro" {
-        return Err(LicenseError::WrongPlan);
-    }
-    Ok(license)
+    policy().verify(token)
 }
 
 /// The token file: `<config dir>/anymd/pro-token`.
 pub fn token_path() -> Option<PathBuf> {
-    dirs::config_dir().map(|dir| dir.join("anymd").join("pro-token"))
-}
-
-/// The configured token: env first, else the token file.
-fn find_token(env: Option<String>, file: Option<PathBuf>) -> Option<String> {
-    if let Some(token) = env.map(|t| t.trim().to_string()).filter(|t| !t.is_empty()) {
-        return Some(token);
-    }
-    let text = std::fs::read_to_string(file?).ok()?;
-    let text = text.trim();
-    (!text.is_empty()).then(|| text.to_string())
+    policy().token_path()
 }
 
 /// The active licence, or `None` when no valid token is configured.
 pub fn current_license() -> Option<ProLicense> {
-    current_license_with(std::env::var(TOKEN_ENV).ok(), token_path(), PRO_PUBLIC_KEYS)
-}
-
-fn current_license_with(
-    env: Option<String>,
-    file: Option<PathBuf>,
-    keys: &[&str],
-) -> Option<ProLicense> {
-    verify_token_with(&find_token(env, file)?, keys).ok()
+    policy().current()
 }
 
 /// Returned by [`require_pro`] when a Pro feature is used without a licence.
@@ -156,69 +108,39 @@ pub fn required_result(required: &ProRequired) -> rmcp::model::CallToolResult {
     )])
 }
 
-/// `anymd pro status | activate <token>`; returns the exit code.
+/// `anymd pro status | activate <token> | buy [--no-browser] [--json]`;
+/// returns the exit code.
 pub fn run(arguments: &[String]) -> i32 {
+    run_with(&policy(), arguments)
+}
+
+fn run_with(policy: &LicencePolicy, arguments: &[String]) -> i32 {
     match arguments.first().map(String::as_str) {
-        Some("status") if arguments.len() == 1 => {
-            match current_license() {
-                Some(license) => {
-                    println!("anymd Pro: active");
-                    println!("plan: {}", license.plan);
-                    println!("issuedAt: {}", license.issued_at);
-                }
-                None => {
-                    println!("anymd Pro: inactive");
-                    println!("Learn more and get it: {PRO_URL}");
-                }
-            }
-            0
+        // `--pack` and `--qty` are for packs a product sells in bulk; anymd sells one licence.
+        Some("buy") if arguments[1..].iter().any(|a| a == "--pack" || a == "--qty") => {
+            eprintln!("usage: anymd pro buy [--no-browser] [--json]");
+            2
         }
-        Some("activate") if arguments.len() == 2 => match activate(&arguments[1]) {
-            Ok(path) => {
-                println!("anymd Pro activated ({})", path.display());
-                0
-            }
-            Err(message) => {
-                eprintln!("anymd pro activate: {message}");
-                1
-            }
-        },
+        Some("status" | "activate" | "buy") => licence::run_cli(policy, arguments),
         _ => {
-            eprintln!("usage: anymd pro status | anymd pro activate <token>");
+            eprintln!(
+                "usage: anymd pro status | anymd pro activate <token> | anymd pro buy [--no-browser] [--json]"
+            );
             2
         }
     }
 }
 
-fn activate(token: &str) -> Result<PathBuf, String> {
-    verify_token(token).map_err(|e| e.to_string())?;
-    let path = token_path().ok_or("no config directory on this machine")?;
-    write_token(&path, token.trim()).map_err(|e| format!("cannot write the token file: {e}"))?;
-    Ok(path)
-}
-
-fn write_token(path: &std::path::Path, token: &str) -> std::io::Result<()> {
-    use std::io::Write;
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-    let mut options = std::fs::OpenOptions::new();
-    options.write(true).create(true).truncate(true);
-    #[cfg(unix)]
-    std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
-    let mut file = options.open(path)?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        file.set_permissions(std::fs::Permissions::from_mode(0o600))?;
-    }
-    file.write_all(token.as_bytes())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+    use base64::Engine;
     use ed25519_dalek::{Signer, SigningKey};
+
+    fn verify_token_with(token: &str, keys: &[&str]) -> Result<ProLicense, LicenseError> {
+        policy_with(keys, None).verify(token)
+    }
 
     fn key(seed: u8) -> SigningKey {
         SigningKey::from_bytes(&[seed; 32])
@@ -303,25 +225,43 @@ mod tests {
     }
 
     #[test]
-    fn env_beats_file() {
-        let dir = tempfile::tempdir().unwrap();
-        let file = dir.path().join("pro-token");
+    fn policy_keeps_existing_customer_contract() {
+        let p = policy();
+        assert_eq!(p.product, "anymd");
+        assert!(!p.require_product);
+        assert_eq!(p.accepted_plans, &["pro"]);
+        assert_eq!(p.public_keys, PRO_PUBLIC_KEYS);
+        assert_eq!(
+            PRO_PUBLIC_KEYS,
+            &["xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y"]
+        );
+        assert_eq!(p.env_var, "ANYMD_PRO_TOKEN");
+        assert_eq!(p.upgrade_url, PRO_URL);
+        let path = token_path().expect("config dir");
+        assert!(path.ends_with("anymd/pro-token"), "{path:?}");
+        // A token with no `product` (every pre-move token) is still accepted.
         let k = key(1);
-        let good = token(&k, PRO);
-        let pk = public(&k);
-        write_token(&file, &good).unwrap();
-        // Env wins even when it is invalid: no silent fallback to the file.
-        assert!(current_license_with(Some("junk".into()), Some(file.clone()), &[&pk]).is_none());
-        assert!(current_license_with(None, Some(file.clone()), &[&pk]).is_some());
-        assert!(current_license_with(Some("  ".into()), Some(file.clone()), &[&pk]).is_some());
-        let other = dir.path().join("none");
-        assert!(current_license_with(Some(good), Some(other), &[&pk]).is_some());
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mode = std::fs::metadata(&file).unwrap().permissions().mode();
-            assert_eq!(mode & 0o777, 0o600);
+        assert!(verify_token_with(&token(&k, PRO), &[&public(&k)]).is_ok());
+    }
+
+    #[test]
+    fn buy_wiring() {
+        // No checkout service: `buy` points at the upgrade page and succeeds.
+        assert_eq!(
+            run_with(&policy_with(PRO_PUBLIC_KEYS, None), &["buy".into()]),
+            0
+        );
+        // The production policy sells through the shared checkout over https.
+        assert_eq!(policy().checkout_base, Some("https://buy.sylphx.com"));
+        // anymd sells one licence: pack and quantity flags are usage errors.
+        for flag in ["--pack", "--qty"] {
+            assert_eq!(
+                run_with(&policy(), &["buy".into(), flag.into(), "1".into()]),
+                2
+            );
         }
+        assert_eq!(run_with(&policy(), &[]), 2);
+        assert_eq!(run_with(&policy(), &["status".into(), "x".into()]), 2);
     }
 
     #[test]

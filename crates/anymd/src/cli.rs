@@ -19,7 +19,7 @@ Usage:
   anymd mcp [--allow-dir=<path>]...   Run the MCP server on stdio
                                       (also the default when stdin is piped and no file is given)
   anymd setup [--dry-run] [--remove]  Add anymd to the MCP clients on this machine
-  anymd pro status | activate <token> Show or activate an anymd Pro licence
+  anymd pro status | buy | activate <token> Show, buy or activate an anymd Pro licence
                                       (Claude Code, Codex, Cursor, VS Code, Claude Desktop,
                                       Windsurf, Gemini CLI); --remove undoes it
   anymd doctor                        Print version and optional tool availability
