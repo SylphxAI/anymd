@@ -63,6 +63,18 @@ pub(crate) struct RawPage {
     pub(crate) figures: Vec<crate::images::Figure>,
 }
 
+/// What a text rendering mode puts on the page.
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+enum Ink {
+    #[default]
+    Seen,
+    /// Mode 3: draws nothing, but the text is real and placed. Scanners and
+    /// OCR tools store their text layer this way, over the page image.
+    Invisible,
+    /// Mode 7: adds to the clip and draws nothing; never read.
+    ClipOnly,
+}
+
 #[derive(Default)]
 pub(crate) struct Collector {
     pub(crate) media: Option<MediaBox>,
@@ -72,10 +84,10 @@ pub(crate) struct Collector {
     pub(crate) rules: Vec<Rule>,
     /// Paint of the text being shown: its colour (when known) and whether
     /// its rendering mode draws nothing.
-    paint: (Option<[f64; 3]>, bool),
-    /// For each upright glyph: its paint colour, whether it is invisible,
-    /// and when it was drawn.
-    glyph_paint: Vec<(Option<[f64; 3]>, bool, usize)>,
+    paint: (Option<[f64; 3]>, Ink),
+    /// For each upright glyph: its paint colour, its ink, and when it was
+    /// drawn.
+    glyph_paint: Vec<(Option<[f64; 3]>, Ink, usize)>,
     /// Filled boxes: extent (x0, y0, x1, y1), colour, and when drawn.
     boxes: Vec<([f64; 4], [f64; 3], usize)>,
     drawn: usize,
@@ -110,7 +122,8 @@ impl Collector {
         for turn in &self.turns {
             counts[*turn as usize] += 1;
         }
-        let Some((turn, &count)) = counts.iter().enumerate().skip(1).max_by_key(|(_, c)| **c) else {
+        let Some((turn, &count)) = counts.iter().enumerate().skip(1).max_by_key(|(_, c)| **c)
+        else {
             return;
         };
         if count < 50 || count * 10 < (glyphs.len() + self.rotated.len()) * 6 {
@@ -124,7 +137,10 @@ impl Collector {
         let frame = |x: f64, y: f64| (x * dx + y * dy, -x * dy + y * dx);
         let mut turned = Vec::with_capacity(count);
         let mut rest = std::mem::take(glyphs);
-        for (glyph, t) in std::mem::take(&mut self.rotated).into_iter().zip(&self.turns) {
+        for (glyph, t) in std::mem::take(&mut self.rotated)
+            .into_iter()
+            .zip(&self.turns)
+        {
             if *t as usize == turn {
                 turned.push(glyph);
             } else {
@@ -150,16 +166,21 @@ impl Collector {
                 frame(media.urx, media.ury),
             ];
             *bottom = corners.iter().map(|c| c.1).fold(f64::INFINITY, f64::min);
-            *top = corners.iter().map(|c| c.1).fold(f64::NEG_INFINITY, f64::max);
+            *top = corners
+                .iter()
+                .map(|c| c.1)
+                .fold(f64::NEG_INFINITY, f64::max);
         }
         *glyphs = turned;
         self.rotated = rest;
         self.turns.clear();
     }
 
-    /// Glyphs a reader cannot see: drawn in an invisible rendering mode, or in
-    /// the same colour as the box they sit on (text hidden in a table cell or
-    /// on a coloured panel). They are dropped, as a reader never sees them.
+    /// Glyphs to read. Text drawn in a clip-only mode, or in the same colour
+    /// as the box it sits on (text hidden in a table cell or on a coloured
+    /// panel), is dropped, as a reader never sees it. Invisible text (mode 3)
+    /// is kept with its position, because it is the text layer of a scanned
+    /// page; where it sits on visible text it is dropped as a duplicate.
     pub(crate) fn visible_glyphs(&mut self) -> Vec<Glyph> {
         let glyphs = std::mem::take(&mut self.glyphs);
         if self.glyph_paint.len() != glyphs.len() {
@@ -174,12 +195,12 @@ impl Collector {
                 fills.push(*fill);
             }
         }
-        glyphs
-            .into_iter()
+        let kept: Vec<bool> = glyphs
+            .iter()
             .zip(&self.glyph_paint)
-            .filter(|(glyph, (color, invisible, when))| {
-                if *invisible {
-                    return false;
+            .map(|(glyph, (color, ink, when))| {
+                if *ink != Ink::Seen {
+                    return *ink == Ink::Invisible;
                 }
                 let Some(color) = color else { return true };
                 if !fills.iter().any(|fill| same(fill, color)) {
@@ -191,6 +212,46 @@ impl Collector {
                 });
                 !under.is_some_and(|(_, fill, _)| same(fill, color))
             })
+            .collect();
+        // Invisible glyphs sitting on visible ones repeat them; keep only the
+        // invisible text that stands alone.
+        const CELL: f64 = 8.0;
+        let cell = |v: f64| (v / CELL).floor() as i64;
+        let ink_box = |g: &Glyph| (g.x0, g.base, g.x1, g.base + g.size * 0.8);
+        let mut grid: std::collections::HashMap<(i64, i64), Vec<usize>> = Default::default();
+        for (i, glyph) in glyphs.iter().enumerate() {
+            if !kept[i] || self.glyph_paint[i].1 != Ink::Seen {
+                continue;
+            }
+            let (x0, y0, x1, y1) = ink_box(glyph);
+            if ![x0, y0, x1, y1].iter().all(|v| v.is_finite()) {
+                continue;
+            }
+            for cx in cell(x0)..=cell(x1).min(cell(x0) + 64) {
+                for cy in cell(y0)..=cell(y1).min(cell(y0) + 64) {
+                    grid.entry((cx, cy)).or_default().push(i);
+                }
+            }
+        }
+        let repeats = |glyph: &Glyph| {
+            let (x0, y0, x1, y1) = ink_box(glyph);
+            let (px, py) = ((x0 + x1) / 2.0, (y0 + y1) / 2.0);
+            grid.get(&(cell(px), cell(py))).is_some_and(|ids| {
+                ids.iter().any(|&j| {
+                    let (a, b, c, d) = ink_box(&glyphs[j]);
+                    px >= a && px <= c && py >= b && py <= d
+                })
+            })
+        };
+        let drop: Vec<bool> = glyphs
+            .iter()
+            .enumerate()
+            .map(|(i, g)| !kept[i] || (self.glyph_paint[i].1 == Ink::Invisible && repeats(g)))
+            .collect();
+        glyphs
+            .into_iter()
+            .zip(drop)
+            .filter(|(_, d)| !d)
             .map(|(glyph, _)| glyph)
             .collect()
     }
@@ -457,8 +518,7 @@ impl OutputDev for Collector {
             self.boxes.push((extent, [f64::NAN; 3], self.drawn));
         }
         if let Some(object) = object {
-            if self.images.len() < MAX_PLACEMENTS_PER_PAGE && extent.iter().all(|v| v.is_finite())
-            {
+            if self.images.len() < MAX_PLACEMENTS_PER_PAGE && extent.iter().all(|v| v.is_finite()) {
                 self.images.push(Placement {
                     object,
                     bbox: extent,
@@ -474,7 +534,12 @@ impl OutputDev for Collector {
         color: &[f64],
         render_mode: i64,
     ) -> Result<(), OutputError> {
-        self.paint = (rgb(colorspace, color), render_mode == 3 || render_mode == 7);
+        let ink = match render_mode {
+            3 => Ink::Invisible,
+            7 => Ink::ClipOnly,
+            _ => Ink::Seen,
+        };
+        self.paint = (rgb(colorspace, color), ink);
         Ok(())
     }
 

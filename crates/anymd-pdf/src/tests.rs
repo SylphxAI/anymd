@@ -357,19 +357,30 @@ fn text_painted_like_its_background_is_dropped() {
     collector
         .output_character(&at(120.0), 0.5, 0.0, 10.0, "v")
         .unwrap();
-    // Rendering mode 3 draws nothing.
+    // Rendering mode 7 only clips and draws nothing.
+    collector
+        .text_paint(&ColorSpace::DeviceGray, &[0.0], 7)
+        .unwrap();
+    collector
+        .output_character(&at(130.0), 0.5, 0.0, 10.0, "x")
+        .unwrap();
+    // Rendering mode 3 is a text layer: kept where it stands alone, and
+    // dropped where it repeats visible text.
     collector
         .text_paint(&ColorSpace::DeviceGray, &[0.0], 3)
         .unwrap();
     collector
-        .output_character(&at(130.0), 0.5, 0.0, 10.0, "x")
+        .output_character(&at(140.0), 0.5, 0.0, 10.0, "o")
+        .unwrap();
+    collector
+        .output_character(&at(120.0), 0.5, 0.0, 10.0, "v")
         .unwrap();
     let visible: Vec<String> = collector
         .visible_glyphs()
         .into_iter()
         .map(|g| g.text)
         .collect();
-    assert_eq!(visible, ["v"]);
+    assert_eq!(visible, ["v", "o"]);
 }
 
 #[test]
@@ -426,4 +437,78 @@ fn image_only_detection_preserves_even_short_and_rotated_native_text() {
     page.glyphs = Ok(Vec::new());
     page.images.clear();
     assert!(!crate::image_only_page(&page));
+}
+
+/// A one-page PDF: a full-page image and a text layer shown with `mode Tr`,
+/// plus optional visible text first.
+fn scan_pdf(visible: &str, mode: u8, layer: &str) -> Vec<u8> {
+    let content = format!(
+        "q 612 0 0 792 0 0 cm /Im0 Do Q\n{visible}BT /F1 14 Tf {mode} Tr 72 700 Td ({layer}) Tj ET\n"
+    );
+    let objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> /XObject << /Im0 6 0 R >> >> >>".to_string(),
+        format!("<< /Length {} >>\nstream\n{content}endstream", content.len()),
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".to_string(),
+        "<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Length 1 >>\nstream\n\u{ff}\nendstream".to_string(),
+    ];
+    let mut out = b"%PDF-1.4\n".to_vec();
+    let mut offsets = Vec::new();
+    for (i, body) in objects.iter().enumerate() {
+        offsets.push(out.len());
+        out.extend(format!("{} 0 obj\n", i + 1).bytes());
+        // The image byte must stay a single 0xff byte.
+        if i == 5 {
+            out.extend(b"<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Length 1 >>\nstream\n");
+            out.push(0xff);
+            out.extend(b"\nendstream");
+        } else {
+            out.extend(body.bytes());
+        }
+        out.extend(b"\nendobj\n");
+    }
+    let xref = out.len();
+    out.extend(format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).bytes());
+    for offset in offsets {
+        out.extend(format!("{offset:010} 00000 n \n").bytes());
+    }
+    out.extend(
+        format!(
+            "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n",
+            objects.len() + 1
+        )
+        .bytes(),
+    );
+    out
+}
+
+fn read_scan(bytes: &[u8]) -> String {
+    let doc = crate::load_document_bytes(bytes).expect("load");
+    crate::pdf_to_markdown(&doc, None)
+        .expect("read")
+        .pages
+        .iter()
+        .map(|page| page.markdown.as_str())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+#[test]
+fn an_invisible_text_layer_over_a_page_image_is_read() {
+    let text = read_scan(&scan_pdf("", 3, "Invoice total 4821"));
+    assert!(text.contains("Invoice total 4821"), "{text:?}");
+}
+
+#[test]
+fn an_invisible_layer_repeating_visible_text_is_not_doubled() {
+    let visible = "BT /F1 14 Tf 0 Tr 72 700 Td (Invoice total 4821) Tj ET\n";
+    let text = read_scan(&scan_pdf(visible, 3, "Invoice total 4821"));
+    assert_eq!(text.matches("Invoice total 4821").count(), 1, "{text:?}");
+}
+
+#[test]
+fn clip_only_text_is_still_left_out() {
+    let text = read_scan(&scan_pdf("", 7, "Hidden clip text"));
+    assert!(!text.contains("Hidden"), "{text:?}");
 }

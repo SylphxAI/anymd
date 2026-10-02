@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Patch Changes
+
+- Fix `read` returning nothing for searchable scanned PDFs. Text drawn in rendering mode 3 (`3 Tr`, invisible text over the page image, how OCR tools store their text layer) was dropped; it is now read with its position, like pymupdf and pdftotext do. Invisible text that sits on visible text is still dropped as a duplicate, and clip-only text (mode 7) is still left out. Cite-check and region geometry already indexed this text, so they now agree with `read`.
+
 ## 8.4.0
 
 The anymd core stays free and open source (MIT), forever; nothing that was free before is now paid. 8.4.0 adds anymd Pro (US$29 once): video evidence and cite-check. Pro funds development.
