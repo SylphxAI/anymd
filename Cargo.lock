@@ -291,6 +291,7 @@ dependencies = [
  "anymd-pdf-extract",
  "flate2",
  "image",
+ "libc",
 ]
 
 [[package]]
