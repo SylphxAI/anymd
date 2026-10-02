@@ -35,7 +35,7 @@ We email your token to the address you give at checkout, usually within a few ho
 
 ## Refunds and cancellation
 
-If you are not happy, email hi@sylphx.com within 14 days of purchase and we refund you in full, no questions asked. This includes your legal right as a UK or EU consumer to cancel within 14 days. If we refund you, your licence ends and you must stop using and delete the token.
+Pro is digital content delivered immediately. At checkout you ask us to supply it straight away and acknowledge that you lose your 14-day right to cancel once your licence token is delivered. If you bought without that consent, you can cancel within 14 days of purchase as the law provides. If Pro does not work as described and we cannot fix it, email hi@sylphx.com and we will put it right or refund you. If we refund you, your licence ends and you must stop using and delete the token.
 
 ## What Pro does and does not prove
 
@@ -43,7 +43,7 @@ Cite-check reports whether a quote occurs in the extracted text at a page and lo
 
 ## Warranty and liability
 
-If Pro does not work as described and we cannot fix it, we refund you. Nothing in these terms limits liability that cannot be limited by law, including your statutory rights as a consumer. Otherwise our total liability to you is limited to the price you paid.
+If Pro does not work as described and we cannot fix it, we put it right or refund you. Nothing in these terms limits liability that cannot be limited by law, including your statutory rights as a consumer. Otherwise our total liability to you is limited to the price you paid.
 
 ## Law
 
