@@ -156,39 +156,12 @@ fn companion_intact_at(root: &Path) -> Result<bool, String> {
     let Ok(stored) = std::fs::read_to_string(root.join(COMPANION_HASH_FILE)) else {
         return Ok(false);
     };
-    let Some((actual, _)) = cached_digest(&root.join(companion_file_name()))? else {
+    // Hashed on every launch: ~10 MB takes milliseconds against seconds of
+    // inference, and a cache keyed by size and mtime could be fooled.
+    let Some(actual) = file_digest(&root.join(companion_file_name()))? else {
         return Ok(false);
     };
     Ok(stored.trim() == actual)
-}
-
-type DigestKey = (PathBuf, u64, Option<std::time::SystemTime>);
-
-/// SHA-256 of a file, hashed once per process for the same (path, size,
-/// mtime). The flag says whether the answer came from the cache.
-fn cached_digest(path: &Path) -> Result<Option<(String, bool)>, String> {
-    static CACHE: std::sync::Mutex<Vec<(DigestKey, String)>> = std::sync::Mutex::new(Vec::new());
-    let Ok(meta) = std::fs::metadata(path) else {
-        return Ok(None);
-    };
-    let key: DigestKey = (path.to_path_buf(), meta.len(), meta.modified().ok());
-    // Without an mtime a change could go unseen, so hash every time.
-    let cacheable = key.2.is_some();
-    if cacheable {
-        let cache = CACHE.lock().map_err(|e| e.to_string())?;
-        if let Some((_, hash)) = cache.iter().find(|(k, _)| *k == key) {
-            return Ok(Some((hash.clone(), true)));
-        }
-    }
-    let Some(hash) = file_digest(path)? else {
-        return Ok(None);
-    };
-    if cacheable {
-        let mut cache = CACHE.lock().map_err(|e| e.to_string())?;
-        cache.retain(|(k, _)| k.0 != key.0);
-        cache.push((key, hash.clone()));
-    }
-    Ok(Some((hash, false)))
 }
 
 /// Weights are installed (the user opted in) but the engine is missing or from
@@ -402,6 +375,27 @@ fn install_companion(root: &Path) -> Result<(), String> {
 }
 
 /// `https_only` is false only for tests against a local server.
+/// Run a just-written binary's `version`. On Linux, exec fails with ETXTBSY
+/// ("text file busy") while another thread's fork still holds the write handle
+/// for a moment; that clears within milliseconds, so retry that one error briefly.
+fn run_new_binary(path: &Path) -> std::io::Result<std::process::Output> {
+    const ETXTBSY: i32 = 26;
+    let mut tries = 0;
+    loop {
+        match std::process::Command::new(path)
+            .arg("version")
+            .stdin(std::process::Stdio::null())
+            .output()
+        {
+            Err(e) if e.raw_os_error() == Some(ETXTBSY) && tries < 50 => {
+                tries += 1;
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+            other => return other,
+        }
+    }
+}
+
 fn install_companion_from(
     root: &Path,
     base: &str,
@@ -456,11 +450,7 @@ fn install_companion_from(
         std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
             .map_err(|e| e.to_string())?;
     }
-    let output = std::process::Command::new(&path)
-        .arg("version")
-        .stdin(std::process::Stdio::null())
-        .output()
-        .map_err(|e| format!("OCR engine does not run: {e}"))?;
+    let output = run_new_binary(&path).map_err(|e| format!("OCR engine does not run: {e}"))?;
     if String::from_utf8_lossy(&output.stdout).trim_end() != format!("anymd-ocr-vlm {version}") {
         return Err(format!(
             "OCR engine {asset} does not report version {version}"
@@ -1180,23 +1170,6 @@ printf '{"regions":[{"label":"text","bbox":[0,0,1,1],"score":0.9,"order":2,"text
         std::fs::remove_file(dir.path().join(COMPANION_HASH_FILE)).unwrap();
         let result = worker_command_with(dir.path(), &|_| Ok(()));
         assert_eq!(result, Err(INTEGRITY_NOTICE.to_string()));
-    }
-
-    #[test]
-    fn repeated_reads_hash_the_companion_once() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("engine");
-        std::fs::write(&path, b"engine").unwrap();
-        let first = cached_digest(&path).unwrap().unwrap();
-        let second = cached_digest(&path).unwrap().unwrap();
-        assert!(!first.1, "first read must hash");
-        assert!(second.1, "second read must come from the cache");
-        assert_eq!(first.0, second.0);
-        // A changed file (new size) is hashed again.
-        std::fs::write(&path, b"engine plus").unwrap();
-        let third = cached_digest(&path).unwrap().unwrap();
-        assert!(!third.1);
-        assert_ne!(third.0, first.0);
     }
 
     #[cfg(unix)]
