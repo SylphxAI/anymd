@@ -44,12 +44,17 @@ jobs:
       alias-dirs: packages/aliases/citra packages/aliases/pdf-reader-mcp
       retired-mcp-names: io.github.SylphxAI/citra io.github.SylphxAI/pdf-reader-mcp
       retired-message: Renamed to anymd. Use io.github.SylphxAI/anymd (npm @sylphx/anymd).
+      # Every check polls for npm propagation (scripts/npm-settle.sh: up to 10
+      # minutes, growing pauses, each attempt logged) instead of trusting the
+      # registry to serve a version seconds after `npm publish`.
       smoke: |
-        npx -y "@sylphx/anymd@$V" version
-        npx -y "@sylphx/anymd@$V" "$GITHUB_WORKSPACE/test/fixtures/sample.pdf" | tee sample.md
-        grep -q '<!-- page 1 -->' sample.md
-        npx -y "@sylphx/citra@$V" version
-        npx -y "@sylphx/pdf-reader-mcp@$V" version
+        source "$GITHUB_WORKSPACE/scripts/npm-settle.sh"
+        (cd "$GITHUB_WORKSPACE" && settle_all_packages "$V")
+        settle "@sylphx/anymd@$V version" npx -y "@sylphx/anymd@$V" version
+        settle "@sylphx/anymd@$V converts the sample PDF" \
+          bash -euo pipefail -c 'npx -y "@sylphx/anymd@$1" "$2" > sample.md && grep -q "<!-- page 1 -->" sample.md' _ "$V" "$GITHUB_WORKSPACE/test/fixtures/sample.pdf"
+        settle "@sylphx/citra@$V version" npx -y "@sylphx/citra@$V" version
+        settle "@sylphx/pdf-reader-mcp@$V version" npx -y "@sylphx/pdf-reader-mcp@$V" version
 
   # crates.io takes no git or path-only dependencies, so the two patched
   # upstream forks and the internal crates are published first, in order
