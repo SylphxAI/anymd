@@ -553,7 +553,7 @@ impl Opened {
         if blank.is_empty() {
             return Vec::new();
         }
-        markdown_layout::image_only_pages(doc, &blank)
+        markdown_layout::scanned_pages(doc, &blank)
     }
 
     /// Title from page 1 when the PDF has no usable /Title.
