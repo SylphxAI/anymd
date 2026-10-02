@@ -427,3 +427,39 @@ fn image_only_detection_preserves_even_short_and_rotated_native_text() {
     page.images.clear();
     assert!(!crate::image_only_page(&page));
 }
+
+#[test]
+fn scanned_page_requires_image_coverage() {
+    let page_with = |boxes: &[[f64; 4]]| RawPage {
+        number: 1,
+        bottom: 0.0,
+        top: 100.0,
+        glyphs: Ok(Vec::new()),
+        rotated: Vec::new(),
+        rules: Vec::new(),
+        ocr: false,
+        images: boxes
+            .iter()
+            .map(|bbox| Placement {
+                object: (1, 0),
+                bbox: *bbox,
+            })
+            .collect(),
+        area: 10000.0,
+        figures: Vec::new(),
+    };
+    // A 40 pt logo and a 1 pt spacer are not scans.
+    assert!(!crate::scanned_page(&page_with(&[[0.0, 0.0, 40.0, 40.0]])));
+    assert!(!crate::scanned_page(&page_with(&[[0.0, 0.0, 100.0, 1.0]])));
+    // A full-page image is.
+    assert!(crate::scanned_page(&page_with(&[[0.0, 0.0, 100.0, 100.0]])));
+    // A scan split into strips is.
+    let strips: Vec<[f64; 4]> = (0..10)
+        .map(|i| [0.0, f64::from(i) * 10.0, 100.0, f64::from(i + 1) * 10.0])
+        .collect();
+    assert!(crate::scanned_page(&page_with(&strips)));
+    // Unknown page area is never a scan.
+    let mut unknown = page_with(&[[0.0, 0.0, 100.0, 100.0]]);
+    unknown.area = 0.0;
+    assert!(!crate::scanned_page(&unknown));
+}

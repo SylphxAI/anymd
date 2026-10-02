@@ -208,12 +208,25 @@ struct SourceRead {
     error: Option<String>,
 }
 
+/// Marker for a page with no text layer that images cover (a scan nobody read).
+pub(crate) fn scan_marker(page: u32) -> String {
+    format!(
+        "<!-- page {page}: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->\n\n"
+    )
+}
+
+const SCAN_ALL_HINT: &str = "<!-- Every page shown is a scanned image with no text layer, so nothing was read; enable OCR: anymd setup ocr / ocr: true -->";
+
 fn front_matter(header: &[(String, String)]) -> String {
     let mut out = String::from("---\n");
     for (key, value) in header {
         out.push_str(key);
         out.push_str(": ");
-        out.push_str(&yaml_value(value));
+        if key == "scanned_pages" {
+            out.push_str(value);
+        } else {
+            out.push_str(&yaml_value(value));
+        }
         out.push('\n');
     }
     out.push_str("---\n\n");
@@ -302,6 +315,7 @@ fn read_opened(
     let mut next = None;
     let mut used = 0usize;
     let mut visible = 0usize;
+    let mut scanned: Vec<u32> = Vec::new();
     let chunk_size = if opened.is_paged() {
         PAGE_CHUNK
     } else {
@@ -313,6 +327,7 @@ fn read_opened(
             Err(message) => return failed(&opened.label, message),
         };
         opened.title_from_units(&units);
+        let chunk_scans = opened.scanned_pages(&units);
         for unit in units {
             let (clip_start, clip_end) = if let Some((outline, index)) = &navigation {
                 let node = &outline.nodes[*index];
@@ -353,13 +368,23 @@ fn read_opened(
             } else {
                 skip > 0
             };
-            let marker = match (markers, continued) {
+            let mut marker = match (markers, continued) {
                 (false, false) => String::new(),
                 (false, true) => "<!-- continued -->\n\n".to_string(),
                 (true, false) => format!("<!-- {} -->\n\n", unit.label),
                 (true, true) => format!("<!-- {} (continued) -->\n\n", unit.label),
             };
-            let piece_tokens = estimate_tokens(content) + 8;
+            let is_scan = chunk_scans.contains(&unit.number) && !continued;
+            if is_scan {
+                marker.push_str(&scan_marker(unit.number));
+            }
+            // A scan page is charged its page label and scan marker, plus its
+            // entry in the `scanned_pages` header; text pages keep the old cost.
+            let piece_tokens = if is_scan {
+                estimate_tokens(content) + estimate_tokens(&marker) + 4
+            } else {
+                estimate_tokens(content) + 8
+            };
             if used + piece_tokens > budget {
                 if shown.is_empty() {
                     // A unit larger than the whole budget: cut inside it.
@@ -370,6 +395,9 @@ fn read_opened(
                     body.push_str(content[..cut].trim_end());
                     body.push_str("\n\n");
                     shown.push(unit.number);
+                    if is_scan {
+                        scanned.push(unit.number);
+                    }
                     let consumed = clip_end - content.len() + cut;
                     if cut < content.len() {
                         next = Some(Cursor {
@@ -394,6 +422,9 @@ fn read_opened(
             body.push_str(content.trim_end());
             body.push_str("\n\n");
             shown.push(unit.number);
+            if is_scan {
+                scanned.push(unit.number);
+            }
             used += piece_tokens;
         }
     }
@@ -419,7 +450,27 @@ fn read_opened(
             ));
         }
     }
-    if opened.format == "pdf" && !shown.is_empty() && visible < shown.len() * 20 {
+    if !scanned.is_empty() {
+        header.push((
+            "scanned_pages".into(),
+            format!(
+                "[{}]",
+                scanned
+                    .iter()
+                    .map(u32::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        ));
+        if scanned.len() == shown.len() {
+            body = format!("{SCAN_ALL_HINT}\n\n{body}");
+        }
+    }
+    if opened.format == "pdf"
+        && scanned.is_empty()
+        && !shown.is_empty()
+        && visible < shown.len() * 20
+    {
         body.push_str(
             "<!-- These pages have little or no selectable text (scanned or image-only). \
 Install `tesseract` for automatic OCR, or pass ocr: true. -->\n\n",
@@ -1357,6 +1408,131 @@ pub fn search_pdf(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn read_fixture(name: &str, pages: Option<Vec<u32>>) -> SourceRead {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures")
+            .join(name)
+            .display()
+            .to_string();
+        let options = crate::document::OpenOptions {
+            ocr: Some(false),
+            ..Default::default()
+        };
+        let mut opened = Opened::open(
+            &path,
+            &crate::source_access::SourceAccessPolicy::unrestricted(),
+            &options,
+        )
+        .unwrap();
+        read_opened(&mut opened, pages, None, usize::MAX, true, None)
+    }
+
+    #[test]
+    fn a_scanned_page_gets_a_marker_and_a_header_field() {
+        let read = read_fixture("scanned-page.pdf", None);
+        assert!(
+            read.body.contains(
+                "<!-- page 1 -->\n\n<!-- page 1: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->"
+            ),
+            "{}",
+            read.body
+        );
+        assert!(!read.body.contains("page 2: scanned"), "{}", read.body);
+        assert!(read.body.contains("real text layer"));
+        let field = read.header.iter().find(|(k, _)| k == "scanned_pages");
+        assert_eq!(field.map(|(_, v)| v.as_str()), Some("[1]"));
+        // One page of two is text, so there is no all-scans hint.
+        assert!(!read.body.starts_with("<!-- Every page"), "{}", read.body);
+        assert!(front_matter(&read.header).contains("scanned_pages: [1]\n"));
+    }
+
+    #[test]
+    fn all_scanned_pages_lead_with_a_hint() {
+        let read = read_fixture("scanned-page.pdf", Some(vec![1]));
+        assert!(
+            read.body
+                .starts_with("<!-- Every page shown is a scanned image"),
+            "{}",
+            read.body
+        );
+    }
+
+    /// A PDF of `pages` full-page image-only pages sharing one tiny image.
+    fn scan_pdf(pages: u32) -> Vec<u8> {
+        let mut objects: Vec<String> = vec![
+            "<< /Type /Catalog /Pages 2 0 R >>".into(),
+            format!(
+                "<< /Type /Pages /Kids [{}] /Count {pages} >>",
+                (0..pages)
+                    .map(|i| format!("{} 0 R", 6 + i))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            ),
+            "<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Length 1 >>\nstream\nA\nendstream".into(),
+            "<< /Length 30 >>\nstream\nq 612 0 0 792 0 0 cm /Im1 Do Q\nendstream".into(),
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".into(),
+        ];
+        for _ in 0..pages {
+            objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> /XObject << /Im1 3 0 R >> >> /Contents 4 0 R >>".into());
+        }
+        let mut out = String::from("%PDF-1.4\n");
+        let mut offsets = Vec::new();
+        for (i, body) in objects.iter().enumerate() {
+            offsets.push(out.len());
+            out.push_str(&format!("{} 0 obj\n{body}\nendobj\n", i + 1));
+        }
+        let xref = out.len();
+        out.push_str(&format!(
+            "xref\n0 {}\n0000000000 65535 f \n",
+            objects.len() + 1
+        ));
+        for offset in offsets {
+            out.push_str(&format!("{offset:010} 00000 n \n"));
+        }
+        out.push_str(&format!(
+            "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n",
+            objects.len() + 1
+        ));
+        out.into_bytes()
+    }
+
+    #[test]
+    fn a_long_scan_stays_within_the_token_budget_and_returns_a_cursor() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("scan.pdf");
+        std::fs::write(&path, scan_pdf(500)).unwrap();
+        let options = crate::document::OpenOptions {
+            ocr: Some(false),
+            ..Default::default()
+        };
+        let mut opened = Opened::open(
+            &path.display().to_string(),
+            &crate::source_access::SourceAccessPolicy::unrestricted(),
+            &options,
+        )
+        .unwrap();
+        let read = read_opened(&mut opened, None, None, 20_000, true, None);
+        assert!(read.next.is_some(), "expected a cursor");
+        let header = front_matter(&read.header);
+        let total = estimate_tokens(&header) + estimate_tokens(&read.body);
+        assert!(total <= 20_000, "{total} tokens");
+        assert!(read.header.iter().any(|(k, _)| k == "scanned_pages"));
+        assert!(!read.body.contains("Install `tesseract`"), "{}", read.body);
+    }
+
+    #[test]
+    fn text_pdfs_get_no_scan_marker_or_field() {
+        for name in ["sample.pdf", "figure-report.pdf"] {
+            let read = read_fixture(name, None);
+            assert!(
+                !read.body.contains("scanned image"),
+                "{name}: {}",
+                read.body
+            );
+            assert!(read.header.iter().all(|(k, _)| k != "scanned_pages"));
+        }
+    }
 
     #[test]
     fn cursor_round_trips() {
