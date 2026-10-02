@@ -82,6 +82,10 @@ pub fn is_setup_notice(message: &str) -> bool {
 }
 
 const COMPANION_VERSION_FILE: &str = "anymd-ocr-vlm.version";
+/// The SHA-256 of the companion as verified at install (against the signed
+/// manifest), checked again before every launch.
+const COMPANION_HASH_FILE: &str = "anymd-ocr-vlm.sha256";
+const INTEGRITY_NOTICE: &str = "the OCR engine failed its integrity check; run anymd setup ocr";
 
 /// `anymd-ocr-vlm`, the separate executable that holds the in-process VLM
 /// engine. `anymd setup ocr` installs it next to the weights.
@@ -130,7 +134,34 @@ fn worker_command_with(
     if !ready_at(root) {
         return Err(SETUP_NOTICE.into());
     }
+    if !companion_intact_at(root)? {
+        // A companion damaged on disk after install: treat it like a stale
+        // one when the weights are installed, otherwise refuse. Never run it.
+        if installed_at(root) {
+            refresh(root).map_err(|e| format!("{INTEGRITY_NOTICE} ({e})"))?;
+        }
+        if !companion_intact_at(root)? {
+            return Err(INTEGRITY_NOTICE.into());
+        }
+    }
     Ok(root.join(companion_file_name()))
+}
+
+/// The companion on disk still matches the hash stored at install. A build
+/// that links the engine has no companion file to damage.
+fn companion_intact_at(root: &Path) -> Result<bool, String> {
+    if cfg!(feature = "ocr-vlm") {
+        return Ok(true);
+    }
+    let Ok(stored) = std::fs::read_to_string(root.join(COMPANION_HASH_FILE)) else {
+        return Ok(false);
+    };
+    // Hashed on every launch: ~10 MB takes milliseconds against seconds of
+    // inference, and a cache keyed by size and mtime could be fooled.
+    let Some(actual) = file_digest(&root.join(companion_file_name()))? else {
+        return Ok(false);
+    };
+    Ok(stored.trim() == actual)
 }
 
 /// Weights are installed (the user opted in) but the engine is missing or from
@@ -210,8 +241,12 @@ pub fn metal_available() -> bool {
 }
 
 fn verified(path: &Path, hash: &str) -> Result<bool, String> {
+    Ok(file_digest(path)?.is_some_and(|actual| actual == hash))
+}
+
+fn file_digest(path: &Path) -> Result<Option<String>, String> {
     let Ok(mut file) = std::fs::File::open(path) else {
-        return Ok(false);
+        return Ok(None);
     };
     let mut digest = Sha256::new();
     let mut buffer = [0u8; 65536];
@@ -222,7 +257,7 @@ fn verified(path: &Path, hash: &str) -> Result<bool, String> {
         }
         digest.update(&buffer[..n]);
     }
-    Ok(format!("{:x}", digest.finalize()) == hash)
+    Ok(Some(format!("{:x}", digest.finalize())))
 }
 
 /// The release-asset platform key (the npm package suffix) of this build.
@@ -339,6 +374,27 @@ fn install_companion(root: &Path) -> Result<(), String> {
     install_companion_from(root, &base, platform, version, COMPANION_PUBLIC_KEYS, true)
 }
 
+/// Run a just-written binary's `version`. On Linux, exec fails with ETXTBSY
+/// ("text file busy") while another thread's fork still holds the write handle
+/// for a moment; that clears within milliseconds, so retry that one error briefly.
+fn run_new_binary(path: &Path) -> std::io::Result<std::process::Output> {
+    const ETXTBSY: i32 = 26;
+    let mut tries = 0;
+    loop {
+        match std::process::Command::new(path)
+            .arg("version")
+            .stdin(std::process::Stdio::null())
+            .output()
+        {
+            Err(e) if e.raw_os_error() == Some(ETXTBSY) && tries < 50 => {
+                tries += 1;
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+            other => return other,
+        }
+    }
+}
+
 /// `https_only` is false only for tests against a local server.
 fn install_companion_from(
     root: &Path,
@@ -394,17 +450,23 @@ fn install_companion_from(
         std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))
             .map_err(|e| e.to_string())?;
     }
-    let output = std::process::Command::new(&path)
-        .arg("version")
-        .stdin(std::process::Stdio::null())
-        .output()
-        .map_err(|e| format!("OCR engine does not run: {e}"))?;
+    let output = run_new_binary(&path).map_err(|e| format!("OCR engine does not run: {e}"))?;
     if String::from_utf8_lossy(&output.stdout).trim_end() != format!("anymd-ocr-vlm {version}") {
         return Err(format!(
             "OCR engine {asset} does not report version {version}"
         ));
     }
     path.persist(root.join(companion_file_name()))
+        .map_err(|e| e.to_string())?;
+    // The verified hash, written atomically after the rename, so a later
+    // launch can tell a damaged companion from the one that was verified.
+    let mut stamp = tempfile::NamedTempFile::new_in(root).map_err(|e| e.to_string())?;
+    stamp
+        .write_all(hash.as_bytes())
+        .map_err(|e| e.to_string())?;
+    stamp.flush().map_err(|e| e.to_string())?;
+    stamp
+        .persist(root.join(COMPANION_HASH_FILE))
         .map_err(|e| e.to_string())?;
     // The version file is what makes the engine count as installed.
     std::fs::write(root.join(COMPANION_VERSION_FILE), version).map_err(|e| e.to_string())
@@ -414,7 +476,7 @@ pub fn install() -> Result<PathBuf, String> {
     let root = root()?;
     std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
     // The engine is small and fails fastest, so fetch it before ~2 GB of weights.
-    if !companion_installed_at(&root) {
+    if !companion_installed_at(&root) || !companion_intact_at(&root)? {
         install_companion(&root)?;
     }
     for entry in weights::FILES {
@@ -783,6 +845,11 @@ mod tests {
         assert!(installed_at(dir.path()));
         assert!(worker_command_with(dir.path(), &no_refresh).is_err());
         std::fs::write(dir.path().join(companion_file_name()), b"x").unwrap();
+        std::fs::write(
+            dir.path().join(COMPANION_HASH_FILE),
+            format!("{:x}", Sha256::digest(b"x")),
+        )
+        .unwrap();
         std::fs::write(dir.path().join(COMPANION_VERSION_FILE), "0.0.0").unwrap();
         assert!(worker_command_with(dir.path(), &no_refresh).is_err());
         std::fs::write(
@@ -1039,5 +1106,85 @@ printf '{"regions":[{"label":"text","bbox":[0,0,1,1],"score":0.9,"order":2,"text
         let bare = tempfile::tempdir().unwrap();
         let result = worker_command_with(bare.path(), &|_| panic!("must not refresh"));
         assert_eq!(result, Err(SETUP_NOTICE.to_string()));
+    }
+
+    fn weights_in(root: &Path) {
+        for file in weights::FILES {
+            let path = root.join(file.path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, b"x").unwrap();
+        }
+        std::fs::write(root.join("installed"), weights::REVISION).unwrap();
+    }
+
+    fn companion_in(root: &Path, bytes: &[u8]) {
+        std::fs::write(root.join(companion_file_name()), bytes).unwrap();
+        std::fs::write(
+            root.join(COMPANION_HASH_FILE),
+            format!("{:x}", Sha256::digest(bytes)),
+        )
+        .unwrap();
+        std::fs::write(root.join(COMPANION_VERSION_FILE), env!("CARGO_PKG_VERSION")).unwrap();
+    }
+
+    #[cfg(not(feature = "ocr-vlm"))]
+    #[test]
+    fn a_matching_companion_runs_and_a_tampered_one_never_does() {
+        let dir = tempfile::tempdir().unwrap();
+        weights_in(dir.path());
+        companion_in(dir.path(), b"engine");
+        let must_not_refresh = |_: &Path| -> Result<(), String> { panic!("must not refresh") };
+        assert_eq!(
+            worker_command_with(dir.path(), &must_not_refresh).unwrap(),
+            dir.path().join(companion_file_name())
+        );
+        // Same size, so only the content hash can tell.
+        std::fs::write(dir.path().join(companion_file_name()), b"engind").unwrap();
+        // Refresh once, then run only if it is repaired.
+        let calls = std::cell::Cell::new(0);
+        let broken = |_: &Path| -> Result<(), String> {
+            calls.set(calls.get() + 1);
+            Ok(())
+        };
+        assert_eq!(
+            worker_command_with(dir.path(), &broken),
+            Err(INTEGRITY_NOTICE.to_string())
+        );
+        assert_eq!(calls.get(), 1);
+        let repair = |root: &Path| -> Result<(), String> {
+            companion_in(root, b"engine!");
+            Ok(())
+        };
+        assert_eq!(
+            worker_command_with(dir.path(), &repair).unwrap(),
+            dir.path().join(companion_file_name())
+        );
+    }
+
+    #[cfg(not(feature = "ocr-vlm"))]
+    #[test]
+    fn a_missing_hash_stamp_is_not_trusted() {
+        let dir = tempfile::tempdir().unwrap();
+        weights_in(dir.path());
+        companion_in(dir.path(), b"engine");
+        std::fs::remove_file(dir.path().join(COMPANION_HASH_FILE)).unwrap();
+        let result = worker_command_with(dir.path(), &|_| Ok(()));
+        assert_eq!(result, Err(INTEGRITY_NOTICE.to_string()));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn install_stores_the_verified_hash() {
+        let key = signing_key();
+        let version = env!("CARGO_PKG_VERSION");
+        let dir = tempfile::tempdir().unwrap();
+        let ok = release(&key, version, version, false);
+        install_from(&ok, dir.path(), &key).unwrap();
+        let stored = std::fs::read_to_string(dir.path().join(COMPANION_HASH_FILE)).unwrap();
+        let actual = file_digest(&dir.path().join(companion_file_name()))
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored, actual);
+        assert!(companion_intact_at(dir.path()).unwrap());
     }
 }
