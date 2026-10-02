@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- `anymd pro buy [--no-browser] [--json]` starts a purchase from the terminal through the shared Sylphx checkout and activates the licence on this machine when it is paid. `anymd pro activate` and `anymd pro status` are unchanged, and existing tokens and token files keep working (same key, `ANYMD_PRO_TOKEN`, and `<config dir>/anymd/pro-token`). The licence code now comes from `sylphx-mcp-kit` 0.6, so `anymd pro status` also shows where the token was read and warns before a licence with an expiry runs out.
+- `anymd pro buy [--no-browser] [--json]` opens the Pro page; in-terminal purchase turns on when the checkout service is live. `anymd pro activate` and `anymd pro status` are unchanged, and existing tokens and token files keep working (same key, `ANYMD_PRO_TOKEN`, and `<config dir>/anymd/pro-token`). The licence code now comes from `sylphx-mcp-kit` 0.6, so `anymd pro status` also shows where the token was read and warns before a licence with an expiry runs out.
 
 ## 8.5.0
 

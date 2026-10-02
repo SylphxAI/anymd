@@ -25,6 +25,8 @@ pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pro";
 pub const TOKEN_ENV: &str = "ANYMD_PRO_TOKEN";
 
 /// The shared Sylphx checkout service behind `anymd pro buy`.
+// set when oss-checkout serves /api/v1/claims on this host (and a Money sandbox token passes activate)
+#[allow(dead_code)]
 const CHECKOUT_BASE: &str = "https://buy.sylphx.com";
 
 /// anymd's licence policy. `require_product` is false because tokens issued
@@ -45,7 +47,7 @@ fn policy_with<'a>(keys: &'a [&'a str], checkout_base: Option<&'a str>) -> Licen
 }
 
 fn policy() -> LicencePolicy<'static> {
-    policy_with(PRO_PUBLIC_KEYS, Some(CHECKOUT_BASE))
+    policy_with(PRO_PUBLIC_KEYS, None)
 }
 
 pub type ProLicense = Licence;
@@ -115,20 +117,21 @@ pub fn run(arguments: &[String]) -> i32 {
 }
 
 fn run_with(policy: &LicencePolicy, arguments: &[String]) -> i32 {
-    match arguments.first().map(String::as_str) {
-        // `--pack` and `--qty` are for packs a product sells in bulk; anymd sells one licence.
-        Some("buy") if arguments[1..].iter().any(|a| a == "--pack" || a == "--qty") => {
-            eprintln!("usage: anymd pro buy [--no-browser] [--json]");
-            2
-        }
-        Some("status" | "activate" | "buy") => licence::run_cli(policy, arguments),
-        _ => {
-            eprintln!(
-                "usage: anymd pro status | anymd pro activate <token> | anymd pro buy [--no-browser] [--json]"
-            );
-            2
-        }
+    let ok = match arguments.first().map(String::as_str) {
+        Some("status") => arguments.len() == 1,
+        Some("activate") => arguments.len() == 2,
+        Some("buy") => arguments[1..]
+            .iter()
+            .all(|a| a == "--no-browser" || a == "--json"),
+        _ => false,
+    };
+    if !ok {
+        eprintln!(
+            "usage: anymd pro status | anymd pro activate <token> | anymd pro buy [--no-browser] [--json]"
+        );
+        return 2;
     }
+    licence::run_cli(policy, arguments)
 }
 
 #[cfg(test)]
@@ -251,10 +254,10 @@ mod tests {
             run_with(&policy_with(PRO_PUBLIC_KEYS, None), &["buy".into()]),
             0
         );
-        // The production policy sells through the shared checkout over https.
-        assert_eq!(policy().checkout_base, Some("https://buy.sylphx.com"));
+        // The checkout service is not live yet: the production policy has none.
+        assert_eq!(policy().checkout_base, None);
         // anymd sells one licence: pack and quantity flags are usage errors.
-        for flag in ["--pack", "--qty"] {
+        for flag in ["--pack", "--qty", "--x"] {
             assert_eq!(
                 run_with(&policy(), &["buy".into(), flag.into(), "1".into()]),
                 2
