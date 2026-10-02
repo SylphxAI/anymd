@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 8.5.1
+
+### Patch Changes
+
+- anymd now re-checks the OCR engine program (`anymd-ocr-vlm`) every time it starts to use it, not only when it is installed, so a changed or replaced file is caught before it runs. A brief "text file busy" error while the engine is being refreshed no longer fails the run; anymd retries it.
+
+- When OCR runs on a page or image and finds no text, the result now says `OCR found no text` instead of looking like a page that was never read.
 
 - `anymd pro buy [--no-browser] [--json]` opens the Pro page; in-terminal purchase turns on when the checkout service is live. `anymd pro activate` and `anymd pro status` are unchanged, and existing tokens and token files keep working (same key, `ANYMD_PRO_TOKEN`, and `<config dir>/anymd/pro-token`). The licence code now comes from `sylphx-mcp-kit` 0.6, so `anymd pro status` also shows where the token was read and warns before a licence with an expiry runs out.
 
