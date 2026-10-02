@@ -68,8 +68,8 @@ pub(crate) struct RawPage {
 enum Ink {
     #[default]
     Seen,
-    /// Mode 3: draws nothing, but the text is real and placed. Scanners and
-    /// OCR tools store their text layer this way, over the page image.
+    /// Mode 3: draws nothing. Scanners and OCR tools store their text layer
+    /// this way, over the page image; elsewhere it is hidden text.
     Invisible,
     /// Mode 7: adds to the clip and draws nothing; never read.
     ClipOnly,
@@ -176,11 +176,37 @@ impl Collector {
         self.turns.clear();
     }
 
-    /// Glyphs to read. Text drawn in a clip-only mode, or in the same colour
-    /// as the box it sits on (text hidden in a table cell or on a coloured
-    /// panel), is dropped, as a reader never sees it. Invisible text (mode 3)
-    /// is kept with its position, because it is the text layer of a scanned
-    /// page; where it sits on visible text it is dropped as a duplicate.
+    /// Whether painted images cover at least half of the page.
+    fn covered_by_images(&self) -> bool {
+        let Some(media) = self.media else {
+            return false;
+        };
+        let area = ((media.urx - media.llx) * (media.ury - media.lly)).abs();
+        if !(area.is_finite() && area > 0.0) {
+            return false;
+        }
+        let (px0, px1) = (media.llx.min(media.urx), media.llx.max(media.urx));
+        let (py0, py1) = (media.lly.min(media.ury), media.lly.max(media.ury));
+        let covered: f64 = self
+            .images
+            .iter()
+            .map(|image| {
+                let b = image.bbox;
+                let w = (b[2].min(px1) - b[0].max(px0)).max(0.0);
+                let h = (b[3].min(py1) - b[1].max(py0)).max(0.0);
+                w * h
+            })
+            .sum();
+        covered >= area * 0.5
+    }
+
+    /// Glyphs to read. Text a reader cannot see is dropped (#776): hidden
+    /// text is how a PDF smuggles instructions to an agent. That covers
+    /// clip-only text (mode 7), text in the same colour as the box it sits on
+    /// (a table cell or coloured panel), and invisible text (mode 3), with one
+    /// exception: on a scanned page, whose images cover at least half of it,
+    /// mode-3 text lying over an image is the OCR text layer and is kept with
+    /// its position. There it is still dropped when it repeats visible text.
     pub(crate) fn visible_glyphs(&mut self) -> Vec<Glyph> {
         let glyphs = std::mem::take(&mut self.glyphs);
         if self.glyph_paint.len() != glyphs.len() {
@@ -195,12 +221,21 @@ impl Collector {
                 fills.push(*fill);
             }
         }
+        let scanned = self.covered_by_images();
+        let over_image = |glyph: &Glyph| {
+            let (cx, cy) = ((glyph.x0 + glyph.x1) / 2.0, glyph.base + glyph.size * 0.3);
+            scanned
+                && self.images.iter().any(|image| {
+                    let b = image.bbox;
+                    cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]
+                })
+        };
         let kept: Vec<bool> = glyphs
             .iter()
             .zip(&self.glyph_paint)
             .map(|(glyph, (color, ink, when))| {
                 if *ink != Ink::Seen {
-                    return *ink == Ink::Invisible;
+                    return *ink == Ink::Invisible && over_image(glyph);
                 }
                 let Some(color) = color else { return true };
                 if !fills.iter().any(|fill| same(fill, color)) {

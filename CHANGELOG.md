@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- Fix `read` returning nothing for searchable scanned PDFs. Text drawn in rendering mode 3 (`3 Tr`, invisible text over the page image, how OCR tools store their text layer) was dropped; it is now read with its position, like pymupdf and pdftotext do. Invisible text that sits on visible text is still dropped as a duplicate, and clip-only text (mode 7) is still left out. Cite-check and region geometry already indexed this text, so they now agree with `read`.
+- Fix `read` returning nothing for searchable scanned PDFs. Their OCR text layer is drawn in rendering mode 3 (`3 Tr`, invisible text over the page image) and was dropped. It is now read with its position when it lies over a painted image on a page that images mostly cover (at least half of it). Invisible text elsewhere stays dropped, as before (#776): it is the hidden-text route for injecting instructions into agents. Invisible text that repeats visible text is still dropped as a duplicate, and clip-only text (mode 7) is still left out. Cite-check and region geometry already indexed invisible text with its location.
 
 ## 8.4.0
 
