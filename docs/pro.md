@@ -17,7 +17,7 @@ next: false
 
 <ProBuy />
 
-<p class="pro-trust">US$29 once, including any applicable tax · licence never expires · works offline, no account · 14-day refund · <a href="/anymd/legal/pro-terms">Terms</a></p>
+<p class="pro-trust">US$29 once, including any applicable tax · licence never expires · works offline, no account · <a href="/anymd/legal/pro-terms">Terms</a></p>
 
 Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
 
@@ -87,7 +87,7 @@ anymd 8.4.0 or later. `anymd pro status` tells you whether Pro is active.
 A licence is for one person. Buy one for each person who uses Pro.
 
 **Refunds?**
-Email hi@sylphx.com within 14 days of purchase and we refund you in full, no questions asked.
+Pro is digital content delivered immediately: at checkout you ask us to supply it straight away and acknowledge that you lose your 14-day right to cancel once your licence token is delivered. If Pro doesn't work as described and we can't fix it, email hi@sylphx.com and we'll put it right or refund you. See the [terms](/legal/pro-terms).
 
 **Who sells it?**
 Sylphx Limited, a company registered in England and Wales (company number 16438428). See the [anymd Pro terms](/legal/pro-terms) and [Privacy](/legal/privacy).
