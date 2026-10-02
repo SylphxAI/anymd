@@ -183,7 +183,7 @@ fn cache_key(path: &Path, ocr: bool, options: &OpenOptions) -> Option<CacheKey> 
         ocr,
         options.ocr,
         options.ocr_engine.unwrap_or_default(),
-        crate::ocr_vlm::root().is_ok_and(|p| p.join("installed").is_file()),
+        crate::ocr_vlm::root().is_ok_and(|p| crate::ocr_vlm::ready_at(&p)),
         format!(
             "{:?}|{:?}|{:?}",
             crate::ocr_vlm::root(),

@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- The default `anymd` binary is smaller: about 25 MB instead of 31 MB on Linux x64, with no change to anything it converts. The local VLM OCR engine moved out into its own small program, `anymd-ocr-vlm`. `anymd setup ocr` now downloads that program (checked against the release's `anymd-ocr-vlm-SHA256SUMS`) in the same one-time step as the model weights, so `--ocr vlm` has the same setup as before, and its output is unchanged. If you ask for VLM OCR before running `anymd setup ocr`, anymd says `VLM OCR needs a one-time setup: run `anymd setup ocr``; over MCP that is a normal reply rather than an error. Tesseract OCR and every other feature need no setup. Builds from source with `--features ocr-vlm` keep the engine inside the binary.
+
 - `read` now marks scanned PDF pages it could not read. A page with no text layer that images cover gets `<!-- page N: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->` after its page marker, the front matter gains `scanned_pages: [N, …]`, and a result made only of scans opens with a one-line hint, so agents can tell an empty page from an unread scan. Pages with text, and pages OCR reads, are unchanged.
 
 ## 8.4.0

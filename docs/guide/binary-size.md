@@ -1,15 +1,16 @@
 # Binary size
 
 The `linux-x64-gnu` release binary (what `npm i @sylphx/anymd` installs) was
-35.0 MB. The release profile and one dependency feature set now bring it to
-31.4 MB with byte-identical output on the 39-file benchmark corpus.
+35.0 MB. The release profile and one dependency feature set brought it to
+31.4 MB with byte-identical output on the 39-file benchmark corpus, and moving
+the VLM OCR engine into a companion binary brings the default to 25.4 MB.
 
 | Build (linux-x64-gnu, stripped) | Size | Output vs before |
 |---|---|---|
 | 8.4.0 main (thin LTO) | 35.05 MB | - |
 | vendor image features trimmed | 34.09 MB | identical |
-| + fat LTO (shipped) | 31.41 MB | identical |
-| `--no-default-features` (no VLM OCR), same profile | 25.0 MB | n/a |
+| + fat LTO | 31.41 MB | identical |
+| companion split: default build, no VLM engine (shipped) | 25.38 MB | identical (the VLM path runs in the companion, 10.08 MB) |
 
 ## What is in the binary
 
@@ -41,22 +42,43 @@ image codecs ~1.6 MB, rustls+ring 0.7 MB. `.rodata`, `.eh_frame` and
 - `panic = "abort"`: not safe. The PDF pipeline wraps parsing in
   `catch_unwind` to survive malformed files.
 
-## Drafted: engines as on-demand components (not enabled)
+## Done: the VLM engine is a companion binary
 
-The remaining large pieces are the VLM OCR engine (candle, ~6 MB with its
-tokenizer and kernels; `--no-default-features` already builds without it) and
-Qwen3-ASR (transcribe-cpp, ~1.5 MB+). Getting from 31 MB toward 20 MB means
-moving the VLM engine out of the main binary:
+The in-process VLM engine (candle, oar-ocr-vl and the tokenizer, ~6 MB of
+`.text` plus kernels) now lives in its own executable, `anymd-ocr-vlm`. The
+default `anymd` build has the `ocr-vlm` Cargo feature off, so `npm i`, `pip
+install`, the container image and `cargo install anymd` get the ~25 MB binary.
 
-1. Build `anymd-ocr-vlm` as a separate companion binary
-   (`anymd-ocr-vlm-worker`) shipped as its own optional npm package
-   `@sylphx/anymd-<platform>-ocr`, the way weights are fetched today.
-2. The main binary spawns it over stdio JSON for `--ocr vlm`; if it is
-   missing, `anymd setup ocr` downloads it next to the weights.
-3. Default `npm i` is then ~25 MB (this table's no-default row) and `--ocr
-   vlm` needs one extra explicit download on first use.
+- `anymd setup ocr` downloads the platform's `anymd-ocr-vlm-<platform>` asset
+  from this version's GitHub release, checks it against the release's
+  `anymd-ocr-vlm-SHA256SUMS`, and installs it next to the weights
+  (`<cache>/models/docvlm-v1/`), with a version stamp. Then it fetches the
+  weights as before. The engine goes first because it is small and fails
+  fastest.
+- `--ocr vlm`, or `auto` once weights and engine are installed, runs the
+  existing `__ocr-vlm-worker` protocol against the companion instead of the main
+  binary: page image path and token cap in argv, one JSON evidence document on
+  stdout, same supervision, deadline and size caps. The worker code is the same
+  function, so the Markdown is the same.
+- Without the setup, VLM OCR answers `VLM OCR needs a one-time setup: run
+  `anymd setup ocr``. Over MCP this is a normal tool result, like the Pro notice.
+  A companion from a different anymd version counts as not installed.
+- Tesseract OCR and every other feature are unchanged and need no setup.
+- `cargo build -p anymd --features ocr-vlm` links the engine in (and builds
+  the companion); such a build needs no companion file.
+- It is not a separate npm package: the release uploads the companions as
+  GitHub release assets, so the npm `optionalDependencies` layout is untouched.
 
-UX implication: today `--ocr vlm` needs `anymd setup ocr` (weights) only; the
-split adds a second download of the engine, so the default experience changes
-and that is a product decision. It is not done in this change. The existing
-`ocr-vlm` Cargo feature already gives the main-binary half of that split.
+UX change: `--ocr vlm` already needed the explicit `anymd setup ocr` step for
+about 2 GB of weights; the engine (about 20 MB) comes in the same step, so
+there is no new step.
+
+Qwen3-ASR (transcribe-cpp, ~1.5 MB+) stays in the main binary.
+
+Measured on linux-x64-gnu with the shipped profile: default `anymd` 25.38 MB,
+the `anymd-ocr-vlm` companion 10.08 MB, the old all-in-one build
+(`--features ocr-vlm`) 31.41 MB. Cold start is unchanged: `anymd version`
+median 2.5 ms vs 2.9 ms all-in-one, `anymd sample.pdf` 5.7 ms vs 5.3 ms (30
+runs each). The companion adds its own load time only to a VLM request, where
+model loading dominates. The worker is the same function in the
+all-in-one binary and the companion.

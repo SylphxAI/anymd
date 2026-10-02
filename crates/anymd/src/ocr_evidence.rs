@@ -254,15 +254,9 @@ fn provider_config(engine: Option<crate::ocr_vlm::OcrEngine>) -> Result<Provider
     };
     if let Some(engine) = selected {
         if crate::ocr_vlm::requested(engine) {
-            let root = crate::ocr_vlm::root()?;
-            if !crate::ocr_vlm::installed_at(&root) {
-                return Err("Doc-VLM weights are not installed; run `anymd setup ocr`".into());
-            }
+            let command = crate::ocr_vlm::worker_command()?;
             return Ok(ProviderConfig {
-                command: std::env::current_exe()
-                    .map_err(|e| e.to_string())?
-                    .to_string_lossy()
-                    .into_owned(),
+                command: command.to_string_lossy().into_owned(),
                 args_template: vec![
                     "__ocr-vlm-worker".into(),
                     "{input}".into(),

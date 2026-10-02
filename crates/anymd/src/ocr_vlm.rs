@@ -70,6 +70,58 @@ pub fn root() -> Result<PathBuf, String> {
         .ok_or_else(|| "Cannot locate anymd cache; set ANYMD_CACHE_DIR".into())
 }
 
+/// The one-line message for a VLM request on a machine without the engine or
+/// weights. MCP returns it as a normal tool result, like the Pro notice.
+pub const SETUP_NOTICE: &str = "VLM OCR needs a one-time setup: run `anymd setup ocr`";
+
+pub fn is_setup_notice(message: &str) -> bool {
+    message.contains(SETUP_NOTICE)
+}
+
+const COMPANION_VERSION_FILE: &str = "anymd-ocr-vlm.version";
+
+/// `anymd-ocr-vlm`, the separate executable that holds the in-process VLM
+/// engine. `anymd setup ocr` installs it next to the weights.
+pub fn companion_file_name() -> &'static str {
+    if cfg!(windows) {
+        "anymd-ocr-vlm.exe"
+    } else {
+        "anymd-ocr-vlm"
+    }
+}
+
+/// A build that links the engine (`--features ocr-vlm`, which includes the
+/// companion itself) runs it in-process and needs no companion file.
+pub(crate) fn companion_installed_at(root: &Path) -> bool {
+    cfg!(feature = "ocr-vlm")
+        || (root.join(companion_file_name()).is_file()
+            && std::fs::read_to_string(root.join(COMPANION_VERSION_FILE))
+                .ok()
+                .as_deref()
+                == Some(env!("CARGO_PKG_VERSION")))
+}
+
+/// Weights and engine are both in place.
+pub(crate) fn ready_at(root: &Path) -> bool {
+    installed_at(root) && companion_installed_at(root)
+}
+
+/// The executable that runs the `__ocr-vlm-worker` protocol: this binary when
+/// it links the engine, otherwise the installed companion.
+pub(crate) fn worker_command() -> Result<PathBuf, String> {
+    if cfg!(feature = "ocr-vlm") {
+        return std::env::current_exe().map_err(|e| e.to_string());
+    }
+    worker_command_at(&root()?)
+}
+
+fn worker_command_at(root: &Path) -> Result<PathBuf, String> {
+    if !ready_at(root) {
+        return Err(SETUP_NOTICE.into());
+    }
+    Ok(root.join(companion_file_name()))
+}
+
 pub(crate) fn installed_at(root: &Path) -> bool {
     weights::FILES.iter().all(|f| root.join(f.path).is_file())
         && std::fs::read_to_string(root.join("installed"))
@@ -85,22 +137,23 @@ pub fn requested(engine: OcrEngine) -> bool {
     if engine == OcrEngine::Tesseract {
         return false;
     }
-    let installed = root().is_ok_and(|p| installed_at(&p));
-    if installed && backend_available() {
+    let ready = root().is_ok_and(|p| ready_at(&p));
+    if ready && backend_available() {
         return true;
     }
     static HINT: std::sync::Once = std::sync::Once::new();
     HINT.call_once(|| {
-        if !cfg!(feature = "ocr-vlm") { eprintln!("anymd OCR: using tesseract; this build has no doc-VLM backend."); }
-        else if !anymd_ocr_vlm::hardware::cpu_available() { eprintln!("anymd OCR: using tesseract; doc-VLM needs FP16-capable Linux arm64 hardware."); }
-        else { eprintln!("anymd OCR: using tesseract; run `anymd setup ocr` to opt into local doc-VLM OCR (~2 GB weights)."); }
+        if !anymd_ocr_vlm::hardware::cpu_available() { eprintln!("anymd OCR: using tesseract; doc-VLM needs FP16-capable Linux arm64 hardware."); }
+        else { eprintln!("anymd OCR: using tesseract; run `anymd setup ocr` to opt into local doc-VLM OCR (~2 GB weights and the OCR engine)."); }
     });
     // Acceleration alone cannot trigger a model download.
     false
 }
 
+/// The hardware can run the engine. Whether the engine is installed is
+/// `ready_at`.
 pub fn backend_available() -> bool {
-    cfg!(feature = "ocr-vlm") && anymd_ocr_vlm::hardware::cpu_available()
+    anymd_ocr_vlm::hardware::cpu_available()
 }
 
 pub fn metal_available() -> bool {
@@ -130,12 +183,91 @@ fn verified(path: &Path, hash: &str) -> Result<bool, String> {
     Ok(format!("{:x}", digest.finalize()) == hash)
 }
 
-pub fn install() -> Result<PathBuf, String> {
-    if !cfg!(feature = "ocr-vlm") {
-        return Err("This build has no doc-VLM backend".into());
+/// The release-asset platform key (the npm package suffix) of this build.
+pub fn companion_platform() -> Option<&'static str> {
+    if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+        Some("darwin-arm64")
+    } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        Some("darwin-x64")
+    } else if cfg!(all(target_os = "linux", target_arch = "x86_64", target_env = "gnu")) {
+        Some("linux-x64-gnu")
+    } else if cfg!(all(target_os = "linux", target_arch = "aarch64", target_env = "gnu")) {
+        Some("linux-arm64-gnu")
+    } else if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
+        Some("win32-x64-msvc")
+    } else {
+        None
     }
+}
+
+/// Release asset name of the companion for `platform`.
+pub fn companion_asset(platform: &str) -> String {
+    let suffix = if platform.starts_with("win32") { ".exe" } else { "" };
+    format!("anymd-ocr-vlm-{platform}{suffix}")
+}
+
+pub const COMPANION_MANIFEST: &str = "anymd-ocr-vlm-SHA256SUMS";
+const COMPANION_MAX_BYTES: u64 = 256 * 1024 * 1024;
+
+/// The SHA-256 a `sha256sum`-style manifest lists for `asset`.
+pub fn manifest_hash(manifest: &str, asset: &str) -> Option<String> {
+    manifest.lines().find_map(|line| {
+        let (hash, name) = line.split_once(char::is_whitespace)?;
+        let name = name.trim().trim_start_matches('*');
+        (name == asset && hash.len() == 64 && hash.bytes().all(|b| b.is_ascii_hexdigit()))
+            .then(|| hash.to_ascii_lowercase())
+    })
+}
+
+fn install_companion(root: &Path) -> Result<(), String> {
+    let platform = companion_platform().ok_or(
+        "No VLM OCR engine is published for this platform; tesseract OCR remains available",
+    )?;
+    let version = env!("CARGO_PKG_VERSION");
+    let base = format!("{}/v{version}", crate::RELEASE_DOWNLOAD_BASE);
+    let asset = companion_asset(platform);
+    eprintln!("Downloading the OCR engine {asset}");
+    let mut manifest = String::new();
+    ureq::get(&format!("{base}/{COMPANION_MANIFEST}"))
+        .call()
+        .map_err(|e| format!("OCR engine manifest: {e}"))?
+        .body_mut()
+        .as_reader()
+        .take(1024 * 1024)
+        .read_to_string(&mut manifest)
+        .map_err(|e| e.to_string())?;
+    let hash = manifest_hash(&manifest, &asset)
+        .ok_or_else(|| format!("OCR engine manifest does not list {asset}"))?;
+    let mut response = ureq::get(&format!("{base}/{asset}"))
+        .call()
+        .map_err(|e| format!("OCR engine download: {e}"))?;
+    let mut reader = response.body_mut().as_reader().take(COMPANION_MAX_BYTES + 1);
+    let mut temporary = tempfile::NamedTempFile::new_in(root).map_err(|e| e.to_string())?;
+    let n = std::io::copy(&mut reader, &mut temporary).map_err(|e| e.to_string())?;
+    temporary.flush().map_err(|e| e.to_string())?;
+    if n > COMPANION_MAX_BYTES || !verified(temporary.path(), &hash)? {
+        return Err(format!("OCR engine hash mismatch: {asset}"));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(temporary.path(), std::fs::Permissions::from_mode(0o755))
+            .map_err(|e| e.to_string())?;
+    }
+    temporary
+        .persist(root.join(companion_file_name()))
+        .map_err(|e| e.to_string())?;
+    // The version file is what makes the engine count as installed.
+    std::fs::write(root.join(COMPANION_VERSION_FILE), version).map_err(|e| e.to_string())
+}
+
+pub fn install() -> Result<PathBuf, String> {
     let root = root()?;
     std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
+    // The engine is small and fails fastest, so fetch it before ~2 GB of weights.
+    if !companion_installed_at(&root) {
+        install_companion(&root)?;
+    }
     for entry in weights::FILES {
         let path = root.join(entry.path);
         if verified(&path, entry.sha256)? {
@@ -220,14 +352,24 @@ pub(crate) fn recognize_admitted(
     _permit: &crate::ocr_evidence::OcrRequestPermit,
 ) -> Result<anymd_ocr_vlm::PageResult, String> {
     let root = root()?;
-    if !installed_at(&root) {
-        return Err("Doc-VLM weights are not installed; run `anymd setup ocr`".into());
+    if !ready_at(&root) {
+        return Err(SETUP_NOTICE.into());
     }
+    let command = worker_command()?;
+    let timeout = remaining_page_timeout(deadline)?;
+    run_worker(&command, bytes, timeout, max_tokens()?)
+}
+
+/// The worker protocol: the page image goes in a temp file named in argv, the
+/// worker prints one JSON evidence document on stdout.
+pub(crate) fn run_worker(
+    command: &Path,
+    bytes: &[u8],
+    timeout: u64,
+    tokens: u64,
+) -> Result<anymd_ocr_vlm::PageResult, String> {
     let mut input = tempfile::NamedTempFile::new().map_err(|e| e.to_string())?;
     input.write_all(bytes).map_err(|e| e.to_string())?;
-    let timeout = remaining_page_timeout(deadline)?;
-    let tokens = max_tokens()?;
-    let command = std::env::current_exe().map_err(|e| e.to_string())?;
     let output = command_provider::run_supervised(CommandInvocation {
         command: command.to_string_lossy().into_owned(),
         args: vec![
@@ -348,10 +490,11 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
     #[cfg(not(feature = "ocr-vlm"))]
     {
         let _ = arguments;
-        Err("This build has no doc-VLM backend".into())
+        Err("This build has no doc-VLM engine; run `anymd setup ocr` to install it".into())
     }
 }
 
+#[cfg_attr(not(feature = "ocr-vlm"), allow(dead_code))]
 fn format_regions(result: &mut anymd_ocr_vlm::PageResult) -> Result<(), String> {
     for region in &mut result.regions {
         if region.label.to_ascii_lowercase().contains("table")
@@ -445,6 +588,79 @@ mod tests {
         );
         assert!(serde_json::from_str::<OcrSelection>("\"remote\"").is_err());
     }
+    #[test]
+    fn manifest_lookup_needs_the_exact_asset_and_a_full_hash() {
+        let hash = "a".repeat(64);
+        let manifest = format!(
+            "{hash}  anymd-ocr-vlm-linux-x64-gnu\n{} *anymd-ocr-vlm-win32-x64-msvc.exe\nshort  anymd-ocr-vlm-darwin-x64\n",
+            "B".repeat(64)
+        );
+        assert_eq!(
+            manifest_hash(&manifest, "anymd-ocr-vlm-linux-x64-gnu"),
+            Some(hash)
+        );
+        assert_eq!(
+            manifest_hash(&manifest, "anymd-ocr-vlm-win32-x64-msvc.exe"),
+            Some("b".repeat(64))
+        );
+        assert_eq!(manifest_hash(&manifest, "anymd-ocr-vlm-darwin-x64"), None);
+        assert_eq!(manifest_hash(&manifest, "anymd-ocr-vlm-linux-x64"), None);
+        assert_eq!(companion_asset("win32-x64-msvc"), "anymd-ocr-vlm-win32-x64-msvc.exe");
+        assert_eq!(companion_asset("darwin-arm64"), "anymd-ocr-vlm-darwin-arm64");
+    }
+
+    #[cfg(not(feature = "ocr-vlm"))]
+    #[test]
+    fn missing_or_stale_companion_gives_the_setup_notice() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(
+            worker_command_at(dir.path()),
+            Err("VLM OCR needs a one-time setup: run `anymd setup ocr`".to_string())
+        );
+        // Weights alone are not enough, and neither is a companion from another version.
+        for file in weights::FILES {
+            let path = dir.path().join(file.path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, b"x").unwrap();
+        }
+        std::fs::write(dir.path().join("installed"), weights::REVISION).unwrap();
+        assert!(installed_at(dir.path()));
+        assert!(worker_command_at(dir.path()).is_err());
+        std::fs::write(dir.path().join(companion_file_name()), b"x").unwrap();
+        std::fs::write(dir.path().join(COMPANION_VERSION_FILE), "0.0.0").unwrap();
+        assert!(worker_command_at(dir.path()).is_err());
+        std::fs::write(dir.path().join(COMPANION_VERSION_FILE), env!("CARGO_PKG_VERSION")).unwrap();
+        assert_eq!(
+            worker_command_at(dir.path()).unwrap(),
+            dir.path().join(companion_file_name())
+        );
+    }
+
+    /// The companion protocol with a stub engine: argv carries the worker
+    /// name, the page-image path and the token cap; stdout carries the JSON.
+    #[cfg(unix)]
+    #[test]
+    fn stub_companion_round_trips_a_page() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let stub = dir.path().join("anymd-ocr-vlm");
+        std::fs::write(
+            &stub,
+            r#"#!/bin/sh
+[ "$1" = "__ocr-vlm-worker" ] || exit 3
+[ "$(cat "$2")" = "page-bytes" ] || exit 4
+[ "$3" = "17" ] || exit 5
+printf '{"regions":[{"label":"text","bbox":[0,0,1,1],"score":0.9,"order":2,"text":"world"},{"label":"text","bbox":[0,0,1,1],"score":0.9,"order":1,"text":"hello"}],"truncated":0,"device":"cpu"}'
+"#,
+        )
+        .unwrap();
+        std::fs::set_permissions(&stub, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let page = run_worker(&stub, b"page-bytes", 10_000, 17).unwrap();
+        assert_eq!(page.markdown(), "hello\n\nworld");
+        // A worker that exits non-zero is an error, not a page.
+        assert!(run_worker(&stub, b"other-bytes", 10_000, 17).is_err());
+    }
+
     #[test]
     fn incomplete_cache_is_not_an_opt_in() {
         let dir = tempfile::tempdir().unwrap();
