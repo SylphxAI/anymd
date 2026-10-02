@@ -3,9 +3,6 @@ name: CI
 on:
   workflow_dispatch:
   merge_group:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -15,9 +12,10 @@ permissions:
   contents: read
 
 concurrency:
-  # Fast Trunk: supersede obsolete runs for the same PR or branch tip.
+  # Fast Trunk: supersede obsolete runs of a pull request only; merge queue
+  # and manual runs always finish.
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   plain-language:
@@ -46,9 +44,48 @@ jobs:
       - name: Non-v7 ids on added lines (owner standards/identifiers.md)
         uses: SylphxAI/.github/.github/actions/identifiers@e4a5ea41cbcc87cd93914f89f0d7c3981c868bf9
 
+  # Pull requests that only touch these files skip the heavy jobs; the required
+  # checks (ci-ok and every job name) still report. docs/** is not listed
+  # because CI builds the docs.
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.result.outputs.code }}
+    steps:
+      - name: Changed files that need the full CI
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!LICENSE'
+              - '!CHANGELOG.md'
+              - '!CONTRIBUTING.md'
+              - '!SECURITY.md'
+              - '!.github/ISSUE_TEMPLATE/**'
+
+      # Merge queue, manual and every other event always run everything.
+      - name: Decide
+        id: result
+        env:
+          FILTERED: ${{ steps.filter.outputs.code }}
+        run: echo "code=${FILTERED:-true}" >> "$GITHUB_OUTPUT"
+
+  # Fast checks: none of these compile the Rust workspace.
   validate:
     name: Validate Code Quality
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -64,6 +101,13 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: Cache Bun packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
       - name: Install dependencies
         run: |
           # Dependabot doesn't update bun.lock, so we can't use --frozen-lockfile for its PRs
@@ -78,9 +122,6 @@ jobs:
 
       - name: Public copy matches product.json and benchmark results
         run: bun run check:copy
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
 
       - name: Test Python API and wheel packaging without framework dependencies
         run: |
@@ -105,8 +146,99 @@ jobs:
           "$RUNNER_TEMP/asr-scoring/bin/pip" install jiwer==4.0.0 opencc-python-reimplemented==0.1.7 cn2an==0.5.24 kanjize==1.6.1
           "$RUNNER_TEMP/asr-scoring/bin/python" -m unittest discover -s bench-asr -p test_report.py
 
+  docs:
+    name: Build docs
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+
+      - name: Cache Bun packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            bun install
+          else
+            bun install --frozen-lockfile
+          fi
+
+      - name: Build docs
+        run: bun run docs:build
+
+  audit:
+    name: Audit Rust dependencies
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # scripts/check-cargo-advisories.sh installs cargo-audit from source
+      # when it is missing; keep the binary between runs.
+      - name: Cache cargo-audit
+        uses: actions/cache@v6
+        with:
+          path: ~/.cargo/bin/cargo-audit
+          key: cargo-audit-0.22.2-${{ runner.os }}
+
       - name: Audit Rust dependencies
         run: bash scripts/check-cargo-advisories.sh
+
+  # The Rust workspace: package, build, fixtures, tests and coverage.
+  rust:
+    name: Build and test
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+
+      - name: Cache Bun packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            bun install
+          else
+            bun install --frozen-lockfile
+          fi
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
 
       # Packages every publishable crate the way `cargo publish` does (builds each
       # from its packed sources against the others), then keeps each under the
@@ -170,9 +302,6 @@ jobs:
           ANYMD_PRO_TOKEN: ${{ secrets.ANYMD_PRO_TOKEN_CI }}
         run: bun run test:cov
 
-      - name: Build docs
-        run: bun run docs:build
-
       - name: Upload coverage reports
         if: ${{ github.event_name != 'merge_group' && !cancelled() && hashFiles('coverage/**') != '' }}
         uses: actions/upload-artifact@v7
@@ -199,6 +328,8 @@ jobs:
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: Rust workspace tests
         run: cargo test --locked --workspace --no-fail-fast
@@ -230,6 +361,8 @@ jobs:
   # probe) on the other release targets, without downloading model weights.
   release-targets:
     name: Release build (${{ matrix.target }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -247,6 +380,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
       - name: Build release binary
         run: cargo build --release --locked -p anymd --target ${{ matrix.target }}
       - name: Verify portable ASR CPU configuration
@@ -255,11 +391,18 @@ jobs:
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [plain-language, identifiers, validate, other-os, security-secrets, release-targets]
+    needs: [changes, plain-language, identifiers, validate, docs, audit, rust, other-os, security-secrets, release-targets]
     runs-on: ubuntu-latest
     steps:
+      # Heavy jobs are skipped only for pull requests that touch no code; other-os runs only in the queue.
       - name: Require every applicable gate
         env:
           RESULTS: ${{ toJSON(needs) }}
+          CODE: ${{ needs.changes.outputs.code }}
         run: |
-          echo "$RESULTS" | jq -e 'to_entries | all(.[]; .value.result == "success" or (.key == "other-os" and .value.result == "skipped"))'
+          echo "$RESULTS" | jq -e --arg code "$CODE" '
+            def heavy: ["validate","docs","audit","rust","release-targets"];
+            to_entries | all(.[];
+              .value.result == "success"
+              or (.key == "other-os" and .value.result == "skipped")
+              or (.key as $k | .value.result as $r | (heavy | index($k)) != null and $code == "false" and $r == "skipped"))'
