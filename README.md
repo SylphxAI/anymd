@@ -224,7 +224,7 @@ anymd report.pdf > report.md                 # a file
 anymd deck.pptx notes.docx budget.xlsx        # several files, each with a header
 anymd https://example.com/article            # a web page (main content only)
 cat scan.png | anymd - --ocr                 # stdin, with OCR
-anymd setup ocr                             # explicitly install pinned local models (~2 GB)
+anymd setup ocr                             # one-time: install the OCR engine and pinned local models (~2 GB)
 anymd scan.png --ocr vlm                    # tables as Markdown, formulas as LaTeX
 anymd paper.pdf --pages 1-3 --max-tokens 4000
 anymd search "indemnification" contracts/ --glob '*.pdf'
@@ -253,7 +253,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 
 ## anymd Pro
 
-The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (US$29 once, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. [See anymd Pro](https://sylphxai.github.io/anymd/pro).
+The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (US$29 once, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. Buy from the terminal: `anymd pro buy` opens the Pro page; in-terminal purchase turns on when the checkout service is live. [See anymd Pro](https://sylphxai.github.io/anymd/pro).
 
 ## Security
 

@@ -98,6 +98,10 @@ showing: pages 1-9
 <!-- Stopped at the 20000-token budget. Continue with cursor: "10", or pick pages, or raise max_tokens. -->
 ```
 
+### Scanned pages
+
+A PDF page with no text layer that images cover is a scan. When OCR does not read it (not configured, or `ocr: false`), `read` says so instead of returning an empty page: the page marker is followed by `<!-- page 3: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->`, the front matter lists `scanned_pages: [3, 5]` (page numbers shown in this response), and when every page shown is a scan the body opens with a one-line hint. Pages with text are unchanged, and a page that OCR reads gets no marker.
+
 ### Cursor and pagination
 
 When a document is larger than `max_tokens`, `read` stops at a unit boundary (a page, slide, sheet, or chapter) and its last line names the cursor to continue from. Pass it back unchanged:

@@ -47,6 +47,9 @@ use serde_json::Value;
 pub const SERVER_NAME: &str = "anymd";
 /// The product version: the workspace version, set with `bun scripts/set-version.ts`.
 pub const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// GitHub release assets, `<base>/v<version>/<asset>`: the VLM OCR companion
+/// and its checksum manifest.
+pub const RELEASE_DOWNLOAD_BASE: &str = "https://github.com/SylphxAI/anymd/releases/download";
 pub const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 pub const SERVER_INSTRUCTIONS: &str =
     "Local document reader for agents. read turns any file, URL, or directory listing into clean \

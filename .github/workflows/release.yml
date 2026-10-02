@@ -9,8 +9,11 @@ name: release
 # `crates` job publishes the Rust crates to crates.io (`cargo install anymd`).
 # The `wheels` and `pypi` jobs publish platform wheels to PyPI (`pip install
 # anymd`, `uvx anymd`) and `image` pushes ghcr.io/sylphxai/anymd, both from the
-# release's native binaries. The `trust` job then adds an SBOM and SHA256SUMS to the GitHub release and
-# signs every asset with a GitHub artifact attestation.
+# release's native binaries. The `companion*` jobs build the VLM OCR engine
+# (`anymd-ocr-vlm`, which `anymd setup ocr` downloads) per platform and attach
+# it with its checksum manifest to the GitHub release. The `trust` job then adds
+# an SBOM and SHA256SUMS to the GitHub release and signs every asset with a
+# GitHub artifact attestation.
 
 on:
   push:
@@ -76,13 +79,195 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: bash scripts/publish-crates.sh
 
+  # The VLM OCR engine is not in the default binary. It is built per platform
+  # as the `anymd-ocr-vlm` companion and attached to the GitHub release as
+  # `anymd-ocr-vlm-<platform>` plus the manifest `anymd-ocr-vlm-SHA256SUMS`
+  # that `anymd setup ocr` verifies. Same targets and build recipe as the kit's
+  # native build. A release that already has the manifest is skipped, and the
+  # manifest is uploaded last, so a failed run can be rerun.
+  companion-plan:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      todo: ${{ steps.plan.outputs.todo }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          v=$(jq -r .version packages/anymd/package.json)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if ! gh release view "v$v" >/dev/null 2>&1; then
+            echo "no release v$v yet; no companion"
+            echo "todo=false" >> "$GITHUB_OUTPUT"
+          elif gh release view "v$v" --json assets --jq '.assets[].name' | grep -qx anymd-ocr-vlm-SHA256SUMS; then
+            echo "release v$v already carries the companion manifest"
+            echo "todo=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "todo=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  companion-build:
+    needs: companion-plan
+    if: needs.companion-plan.outputs.todo == 'true'
+    name: companion ${{ matrix.key }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { key: darwin-arm64, os: macos-latest, target: aarch64-apple-darwin }
+          - { key: darwin-x64, os: macos-latest, target: x86_64-apple-darwin }
+          - { key: linux-x64-gnu, os: ubuntu-latest, target: x86_64-unknown-linux-gnu, zig: '2.17' }
+          - { key: linux-arm64-gnu, os: ubuntu-latest, target: aarch64-unknown-linux-gnu, zig: '2.17' }
+          - { key: win32-x64-msvc, os: windows-latest, target: x86_64-pc-windows-msvc, exe: '.exe' }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: companion-${{ matrix.target }}
+
+      - if: matrix.zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2
+        with:
+          version: 0.14.1
+
+      - if: matrix.zig
+        run: cargo install cargo-zigbuild --version 0.23.0 --locked
+
+      - name: Build the companion
+        shell: bash
+        env:
+          V: ${{ needs.companion-plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          test "$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="anymd") | .version')" = "$V"
+          if [ -n "${{ matrix.zig }}" ]; then
+            cargo zigbuild --release --locked -p anymd --features ocr-vlm --bin anymd-ocr-vlm --target ${{ matrix.target }}.${{ matrix.zig }}
+          else
+            cargo build --release --locked -p anymd --features ocr-vlm --bin anymd-ocr-vlm --target ${{ matrix.target }}
+          fi
+          mkdir -p out
+          cp "target/${{ matrix.target }}/release/anymd-ocr-vlm${{ matrix.exe }}" "out/anymd-ocr-vlm-${{ matrix.key }}${{ matrix.exe }}"
+
+      - name: Run it (native targets)
+        if: matrix.key != 'linux-arm64-gnu' && matrix.key != 'darwin-x64'
+        shell: bash
+        env:
+          V: ${{ needs.companion-plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          chmod +x out/anymd-ocr-vlm-*
+          ./out/anymd-ocr-vlm-${{ matrix.key }}${{ matrix.exe }} version | grep -Fx "anymd-ocr-vlm $V"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: companion-${{ matrix.key }}
+          path: out/*
+          if-no-files-found: error
+          retention-days: 3
+
+  companion:
+    needs: [companion-plan, companion-build]
+    if: always() && needs.companion-build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The signing key lives only in this environment (main branch only).
+    environment: companion-signing
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the signing script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/sign-companion-manifest.py
+            scripts/sign-requirements.txt
+            crates/anymd/src/ocr_vlm.rs
+          path: repo
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      # No secret is in scope here: only hash-pinned binary wheels install.
+      - name: Install the signing dependencies
+        run: |
+          pip install --only-binary :all: --require-hashes -r repo/scripts/sign-requirements.txt
+
+      - name: Download the companions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: companion-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Build the manifest
+        run: |
+          set -euo pipefail
+          cd artifacts
+          test "$(find . -maxdepth 1 -type f | wc -l)" -eq 5
+          sha256sum -- anymd-ocr-vlm-* > anymd-ocr-vlm-SHA256SUMS
+          cat anymd-ocr-vlm-SHA256SUMS
+
+      # The only step that sees the key. The signature covers "anymd-ocr-vlm $V\n"
+      # + the manifest; the script never echoes the key and refuses a key that
+      # is not compiled into anymd.
+      - name: Sign the manifest
+        env:
+          V: ${{ needs.companion-plan.outputs.version }}
+          ANYMD_COMPANION_SIGNING_KEY: ${{ secrets.ANYMD_COMPANION_SIGNING_KEY }}
+        run: python3 repo/scripts/sign-companion-manifest.py "$V" artifacts/anymd-ocr-vlm-SHA256SUMS artifacts/anymd-ocr-vlm-SHA256SUMS.sig
+
+      - name: Attach the companions and the manifest to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          V: ${{ needs.companion-plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd artifacts
+          # The signature goes before the manifest, and the manifest last: an
+          # interrupted run leaves none, so the next run redoes all.
+          for asset in anymd-ocr-vlm-darwin-* anymd-ocr-vlm-linux-* anymd-ocr-vlm-win32-*; do
+            gh release upload "v$V" "$asset" --clobber
+          done
+          gh release upload "v$V" anymd-ocr-vlm-SHA256SUMS.sig --clobber
+          gh release upload "v$V" anymd-ocr-vlm-SHA256SUMS --clobber
+
   # Trust pack for a new release: a CycloneDX SBOM, SHA256SUMS over every other
   # asset, and a signed build provenance attestation for each asset (binaries
   # and .mcpb bundles included). A release that already has SHA256SUMS is
   # skipped, so every push to main is safe and a failed run can be rerun.
   trust:
-    needs: release
-    if: needs.release.result == 'success'
+    needs: [release, companion-plan, companion-build, companion]
+    # The companions are release assets too, so they join SHA256SUMS and the
+    # attestations; `skipped` means they were already attached.
+    if: always() && !cancelled() && needs.release.result == 'success' && needs.companion-build.result != 'failure' && needs.companion.result != 'failure' && needs.companion-plan.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

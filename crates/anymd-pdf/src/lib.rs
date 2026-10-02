@@ -133,6 +133,32 @@ pub fn image_only_pages(doc: &Document, pages: &[u32]) -> Vec<u32> {
         .collect()
 }
 
+/// Pages that are image-only AND mostly covered by images: scans, as opposed to
+/// a blank page carrying a logo or a spacer image. Image boxes (summed, capped
+/// at the page area) must cover at least half the page, so a scan split into
+/// strips still counts.
+pub fn scanned_pages(doc: &Document, pages: &[u32]) -> Vec<u32> {
+    extract_pages(doc, pages)
+        .into_iter()
+        .filter(scanned_page)
+        .map(|page| page.number)
+        .collect()
+}
+
+fn scanned_page(page: &crate::extract::RawPage) -> bool {
+    if !image_only_page(page) || !(page.area > 0.0) {
+        return false;
+    }
+    let covered: f64 = page
+        .images
+        .iter()
+        .map(|image| {
+            (image.bbox[2] - image.bbox[0]).max(0.0) * (image.bbox[3] - image.bbox[1]).max(0.0)
+        })
+        .sum();
+    covered.min(page.area) >= 0.5 * page.area
+}
+
 fn image_only_page(page: &crate::extract::RawPage) -> bool {
     !page.images.is_empty()
         && page.glyphs.as_ref().is_ok_and(|glyphs| {
