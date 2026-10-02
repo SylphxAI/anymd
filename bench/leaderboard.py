@@ -234,14 +234,27 @@ def headline(summary, order):
 
 
 def fast_bullet(corpus, summary):
-    """The README's speed claim, from the documents every tool converted."""
-    names = list(summary)
-    common = [d["id"] for d in corpus if all(summary[n]["rows"].get(d["id"], {}).get("status") == "ok" for n in names)]
-    total = {n: sum(summary[n]["rows"][d]["seconds"] for d in common) for n in names}
-    others = [n for n in ("docling", "markitdown", "marker") if n in total]
-    versus = ", ".join(f"{n} {secs(total[n])} ({total[n] / total['anymd']:,.0f}×)" for n in others)
-    return (f"- **Fast.** Native Rust converts in parallel, page by page. On the {len(common)} benchmark documents "
-            f"every tool converted, anymd takes **{secs(total['anymd'])}** in total; {versus}.\n")
+    """The README's speed claim: anymd's total on every document it converted, against each comparison tool."""
+    ids = [d["id"] for d in corpus if summary["anymd"]["rows"].get(d["id"], {}).get("status") == "ok"]
+    mine = sum(summary["anymd"]["rows"][d]["seconds"] for d in ids)
+    full, partial = [], []
+    for name in ("docling", "markitdown", "marker"):
+        if name not in summary:
+            continue
+        rows = summary[name]["rows"]
+        shared = [d for d in ids if rows.get(d, {}).get("status") == "ok"]
+        theirs = sum(rows[d]["seconds"] for d in shared)
+        if len(shared) == len(ids):
+            full.append(f"{name} {secs(theirs)} ({theirs / mine:,.0f}×)")
+        else:
+            same = sum(summary["anymd"]["rows"][d]["seconds"] for d in shared)
+            partial.append(f"{name} converted {len(shared)} of them in {secs(theirs)}, against anymd's {secs(same)} "
+                           f"on the same {len(shared)} ({theirs / same:,.0f}×)")
+    text = (f"- **Fast.** Native Rust converts in parallel, page by page. On the {len(ids)} benchmark documents, "
+            f"anymd takes **{secs(mine)}** in total; {', '.join(full)}")
+    if partial:
+        text += "; " + "; ".join(partial)
+    return text + ".\n"
 
 
 def splice(text, name, block):
