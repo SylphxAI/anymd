@@ -374,7 +374,6 @@ fn install_companion(root: &Path) -> Result<(), String> {
     install_companion_from(root, &base, platform, version, COMPANION_PUBLIC_KEYS, true)
 }
 
-/// `https_only` is false only for tests against a local server.
 /// Run a just-written binary's `version`. On Linux, exec fails with ETXTBSY
 /// ("text file busy") while another thread's fork still holds the write handle
 /// for a moment; that clears within milliseconds, so retry that one error briefly.
@@ -396,6 +395,7 @@ fn run_new_binary(path: &Path) -> std::io::Result<std::process::Output> {
     }
 }
 
+/// `https_only` is false only for tests against a local server.
 fn install_companion_from(
     root: &Path,
     base: &str,
