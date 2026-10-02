@@ -539,6 +539,23 @@ impl Opened {
         }
     }
 
+    /// PDF pages among `units` with no text (after any OCR) that are covered by
+    /// images: scans that were not read, as opposed to genuinely empty pages.
+    pub fn scanned_pages(&self, units: &[Unit]) -> Vec<u32> {
+        let Body::Pdf { doc, .. } = &self.body else {
+            return Vec::new();
+        };
+        let blank: Vec<u32> = units
+            .iter()
+            .filter(|unit| !unit.markdown.chars().any(char::is_alphanumeric))
+            .map(|unit| unit.number)
+            .collect();
+        if blank.is_empty() {
+            return Vec::new();
+        }
+        markdown_layout::image_only_pages(doc, &blank)
+    }
+
     /// Title from page 1 when the PDF has no usable /Title.
     pub fn title_from_units(&mut self, units: &[Unit]) {
         if self.title.is_some() {

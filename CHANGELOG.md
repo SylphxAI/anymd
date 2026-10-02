@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Minor Changes
+
+- `read` now marks scanned PDF pages it could not read. A page with no text layer that images cover gets `<!-- page N: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->` after its page marker, the front matter gains `scanned_pages: [N, …]`, and a result made only of scans opens with a one-line hint, so agents can tell an empty page from an unread scan. Pages with text, and pages OCR reads, are unchanged.
+
 ## 8.4.0
 
 The anymd core stays free and open source (MIT), forever; nothing that was free before is now paid. 8.4.0 adds anymd Pro (US$29 once): video evidence and cite-check. Pro funds development.

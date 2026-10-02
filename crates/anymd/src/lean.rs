@@ -208,12 +208,25 @@ struct SourceRead {
     error: Option<String>,
 }
 
+/// Marker for a page with no text layer that images cover (a scan nobody read).
+pub(crate) fn scan_marker(page: u32) -> String {
+    format!(
+        "<!-- page {page}: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->\n\n"
+    )
+}
+
+const SCAN_ALL_HINT: &str = "<!-- Every page shown is a scanned image with no text layer, so nothing was read; enable OCR: anymd setup ocr / ocr: true -->";
+
 fn front_matter(header: &[(String, String)]) -> String {
     let mut out = String::from("---\n");
     for (key, value) in header {
         out.push_str(key);
         out.push_str(": ");
-        out.push_str(&yaml_value(value));
+        if key == "scanned_pages" {
+            out.push_str(value);
+        } else {
+            out.push_str(&yaml_value(value));
+        }
         out.push('\n');
     }
     out.push_str("---\n\n");
@@ -302,6 +315,7 @@ fn read_opened(
     let mut next = None;
     let mut used = 0usize;
     let mut visible = 0usize;
+    let mut scanned: Vec<u32> = Vec::new();
     let chunk_size = if opened.is_paged() {
         PAGE_CHUNK
     } else {
@@ -313,6 +327,7 @@ fn read_opened(
             Err(message) => return failed(&opened.label, message),
         };
         opened.title_from_units(&units);
+        let chunk_scans = opened.scanned_pages(&units);
         for unit in units {
             let (clip_start, clip_end) = if let Some((outline, index)) = &navigation {
                 let node = &outline.nodes[*index];
@@ -353,12 +368,16 @@ fn read_opened(
             } else {
                 skip > 0
             };
-            let marker = match (markers, continued) {
+            let mut marker = match (markers, continued) {
                 (false, false) => String::new(),
                 (false, true) => "<!-- continued -->\n\n".to_string(),
                 (true, false) => format!("<!-- {} -->\n\n", unit.label),
                 (true, true) => format!("<!-- {} (continued) -->\n\n", unit.label),
             };
+            let is_scan = chunk_scans.contains(&unit.number) && !continued;
+            if is_scan {
+                marker.push_str(&scan_marker(unit.number));
+            }
             let piece_tokens = estimate_tokens(content) + 8;
             if used + piece_tokens > budget {
                 if shown.is_empty() {
@@ -370,6 +389,9 @@ fn read_opened(
                     body.push_str(content[..cut].trim_end());
                     body.push_str("\n\n");
                     shown.push(unit.number);
+                    if is_scan {
+                        scanned.push(unit.number);
+                    }
                     let consumed = clip_end - content.len() + cut;
                     if cut < content.len() {
                         next = Some(Cursor {
@@ -394,6 +416,9 @@ fn read_opened(
             body.push_str(content.trim_end());
             body.push_str("\n\n");
             shown.push(unit.number);
+            if is_scan {
+                scanned.push(unit.number);
+            }
             used += piece_tokens;
         }
     }
@@ -417,6 +442,22 @@ fn read_opened(
                 "showing".into(),
                 format!("{} {}", plural(noun, 2), describe_pages(&shown)),
             ));
+        }
+    }
+    if !scanned.is_empty() {
+        header.push((
+            "scanned_pages".into(),
+            format!(
+                "[{}]",
+                scanned
+                    .iter()
+                    .map(u32::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        ));
+        if scanned.len() == shown.len() {
+            body = format!("{SCAN_ALL_HINT}\n\n{body}");
         }
     }
     if opened.format == "pdf" && !shown.is_empty() && visible < shown.len() * 20 {
@@ -1357,6 +1398,63 @@ pub fn search_pdf(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn read_fixture(name: &str, pages: Option<Vec<u32>>) -> SourceRead {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures")
+            .join(name)
+            .display()
+            .to_string();
+        let options = crate::document::OpenOptions {
+            ocr: Some(false),
+            ..Default::default()
+        };
+        let mut opened = Opened::open(
+            &path,
+            &crate::source_access::SourceAccessPolicy::unrestricted(),
+            &options,
+        )
+        .unwrap();
+        read_opened(&mut opened, pages, None, usize::MAX, true, None)
+    }
+
+    #[test]
+    fn a_scanned_page_gets_a_marker_and_a_header_field() {
+        let read = read_fixture("scanned-page.pdf", None);
+        assert!(
+            read.body.contains(
+                "<!-- page 1 -->\n\n<!-- page 1: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->"
+            ),
+            "{}",
+            read.body
+        );
+        assert!(!read.body.contains("page 2: scanned"), "{}", read.body);
+        assert!(read.body.contains("real text layer"));
+        let field = read.header.iter().find(|(k, _)| k == "scanned_pages");
+        assert_eq!(field.map(|(_, v)| v.as_str()), Some("[1]"));
+        // One page of two is text, so there is no all-scans hint.
+        assert!(!read.body.starts_with("<!-- Every page"), "{}", read.body);
+        assert!(front_matter(&read.header).contains("scanned_pages: [1]\n"));
+    }
+
+    #[test]
+    fn all_scanned_pages_lead_with_a_hint() {
+        let read = read_fixture("scanned-page.pdf", Some(vec![1]));
+        assert!(
+            read.body.starts_with("<!-- Every page shown is a scanned image"),
+            "{}",
+            read.body
+        );
+    }
+
+    #[test]
+    fn text_pdfs_get_no_scan_marker_or_field() {
+        for name in ["sample.pdf", "figure-report.pdf"] {
+            let read = read_fixture(name, None);
+            assert!(!read.body.contains("scanned image"), "{name}: {}", read.body);
+            assert!(read.header.iter().all(|(k, _)| k != "scanned_pages"));
+        }
+    }
 
     #[test]
     fn cursor_round_trips() {
