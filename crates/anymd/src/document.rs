@@ -258,6 +258,33 @@ fn cache_put(key: CacheKey, doc: Arc<CachedDoc>) {
 // ---------------------------------------------------------------------------
 
 impl Opened {
+    pub(crate) fn from_video(label: &str, evidence: &crate::video_evidence::VideoEvidence) -> Self {
+        let units = crate::video_evidence::sections(evidence)
+            .into_iter()
+            .enumerate()
+            .map(|(index, section)| Unit {
+                number: index as u32 + 1,
+                label: format!("section {}", index + 1),
+                markdown: format!("# {}\n\n{}", section.label, section.markdown),
+            })
+            .collect::<Vec<_>>();
+        Self {
+            label: label.into(),
+            format: "video",
+            title: None,
+            unit_noun: "section",
+            total: units.len() as u32,
+            metadata: vec![(
+                "source_sha256".into(),
+                evidence.timeline.source_sha256.clone(),
+            )],
+            options: OpenOptions::default(),
+            body: Body::Units(Arc::new(units)),
+            native_outline: vec![],
+            ocr_request: Mutex::new(None),
+        }
+    }
+
     /// Open a local path (admitted by `policy`) or an http(s) URL.
     pub fn open(
         spec: &str,

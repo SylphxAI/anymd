@@ -1,3 +1,4 @@
+pub mod cite_check;
 pub mod cli;
 mod command_provider;
 pub mod discover_compat;
@@ -11,6 +12,7 @@ pub mod outline;
 mod page_selection;
 pub mod pdf_compare;
 pub mod pdf_evidence;
+pub mod pro;
 pub mod read_pdf;
 mod region_analysis_evidence;
 pub mod schema;
@@ -18,6 +20,8 @@ pub mod search;
 pub mod setup;
 pub mod source_access;
 pub mod tool_routes;
+pub mod video_evidence;
+pub mod video_request;
 mod visual_evidence;
 
 use rmcp::{
@@ -134,9 +138,24 @@ fn sanitized_tools(router: &ToolRouter<PdfReaderMcp>) -> Vec<rmcp::model::Tool> 
 pub struct PdfReaderMcp {
     pub tool_router: ToolRouter<Self>,
     source_access: SourceAccessPolicy,
+    pro_active: fn() -> bool,
 }
 
 impl PdfReaderMcp {
+    /// Replace the licence check (tests inject a fixed answer).
+    pub fn with_pro_check(mut self, pro_active: fn() -> bool) -> Self {
+        self.pro_active = pro_active;
+        self
+    }
+
+    /// Gate for Pro-only operations: `Some(result)` is the normal tool result
+    /// that carries the ProRequired message; nothing has been opened or run.
+    fn pro_gate(&self, feature: &str) -> Option<rmcp::model::CallToolResult> {
+        pro::require_pro_with(feature, (self.pro_active)())
+            .err()
+            .map(|required| pro::required_result(&required))
+    }
+
     pub fn new() -> Self {
         Self::with_source_access(SourceAccessPolicy::unrestricted())
     }
@@ -145,6 +164,7 @@ impl PdfReaderMcp {
         Self {
             tool_router: Self::tool_router(),
             source_access,
+            pro_active: || pro::current_license().is_some(),
         }
     }
 }
@@ -181,6 +201,11 @@ impl PdfReaderMcp {
     ) -> Result<rmcp::model::CallToolResult, ErrorData> {
         args.validate()
             .map_err(|message| ErrorData::invalid_params(message, None))?;
+        if args.timeline.is_some() {
+            if let Some(result) = self.pro_gate("Video timeline") {
+                return Ok(result);
+            }
+        }
         let policy = self.source_access.clone();
         tokio::task::spawn_blocking(move || lean::read(&args, &policy))
             .await
@@ -213,6 +238,11 @@ impl PdfReaderMcp {
         &self,
         Parameters(args): Parameters<OutlineArgs>,
     ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        if args.timeline.is_some() {
+            if let Some(result) = self.pro_gate("Video timeline") {
+                return Ok(result);
+            }
+        }
         let policy = self.source_access.clone();
         tokio::task::spawn_blocking(move || outline::tool(&args, &policy))
             .await
@@ -222,7 +252,7 @@ impl PdfReaderMcp {
     }
 
     #[tool(
-        description = "Deep PDF inspection when Markdown is not enough. operation: inspect (page facts, metadata), render_page (PNG images), extract_regions (crop bounding boxes), ocr_pages / analyze_regions (configured OCR or vision provider), structure (JSON with document map, elements, geometry; profile quality|research adds trust and accessibility reports), compare (page-level diff of sources[0] vs sources[1])."
+        description = "Document and media evidence when Markdown is not enough. video_timeline (bounded scene/cue timeline) and render_frame (actual decoded frames), and cite_check (quote/location support, not semantic truth), are anymd Pro; PDF operations: inspect (page facts, metadata), render_page (PNG images), extract_regions (crop bounding boxes), ocr_pages / analyze_regions (configured OCR or vision provider), structure (JSON with document map, elements, geometry; profile quality|research adds trust and accessibility reports), compare (page-level diff of sources[0] vs sources[1])."
     )]
     pub async fn inspect(
         &self,
@@ -373,7 +403,41 @@ impl PdfReaderMcp {
         &self,
         args: InspectArgs,
     ) -> Result<rmcp::model::CallToolResult, ErrorData> {
+        let pro_feature = match args.operation {
+            InspectOperation::VideoTimeline => Some("Video timeline"),
+            InspectOperation::RenderFrame => Some("Video frame rendering"),
+            InspectOperation::CiteCheck => Some("Cite-check"),
+            _ => None,
+        };
+        if let Some(result) = pro_feature.and_then(|feature| self.pro_gate(feature)) {
+            return Ok(result);
+        }
+        if matches!(
+            args.operation,
+            InspectOperation::VideoTimeline | InspectOperation::RenderFrame
+        ) {
+            let policy = self.source_access.clone();
+            return tokio::task::spawn_blocking(move || {
+                crate::video_request::inspect(args, &policy)
+            })
+            .await
+            .map_err(|e| ErrorData::internal_error(e.to_string(), None))?;
+        }
+        if args.timeline.is_some()
+            || args.timestamps_ms.is_some()
+            || (args.expected_source_sha256.is_some()
+                && !matches!(args.operation, InspectOperation::CiteCheck))
+            || args.transcript.is_some()
+        {
+            return Err(ErrorData::invalid_params(
+                "video options require a video operation",
+                None,
+            ));
+        }
         match args.operation {
+            InspectOperation::CiteCheck => {
+                crate::cite_check::inspect(args, self.source_access.clone()).await
+            }
             InspectOperation::Compare => {
                 let paths: Vec<String> = args
                     .sources
@@ -439,7 +503,11 @@ impl PdfReaderMcp {
                     InspectOperation::ExtractRegions => PdfEvidenceOperation::ExtractRegions,
                     InspectOperation::OcrPages => PdfEvidenceOperation::OcrPages,
                     InspectOperation::AnalyzeRegions => PdfEvidenceOperation::AnalyzeRegions,
-                    InspectOperation::Structure | InspectOperation::Compare => unreachable!(),
+                    InspectOperation::CiteCheck
+                    | InspectOperation::Structure
+                    | InspectOperation::Compare
+                    | InspectOperation::VideoTimeline
+                    | InspectOperation::RenderFrame => unreachable!(),
                 };
                 self.pdf_evidence(Parameters(PdfEvidenceArgs {
                     operation,
@@ -569,6 +637,133 @@ mod tests {
     use rmcp::handler::server::wrapper::Parameters;
     use serde_json::Value;
     use std::path::PathBuf;
+
+    fn locked() -> PdfReaderMcp {
+        PdfReaderMcp::new().with_pro_check(|| false)
+    }
+
+    fn unlocked() -> PdfReaderMcp {
+        PdfReaderMcp::new().with_pro_check(|| true)
+    }
+
+    fn result_text(result: &rmcp::model::CallToolResult) -> String {
+        serde_json::to_string(&result.content).expect("content serializes")
+    }
+
+    const MISSING: &str = "/nonexistent/anymd-pro-gate-probe";
+
+    fn inspect_args(operation: &str, extra: Value) -> crate::schema::InspectArgs {
+        let mut value = serde_json::json!({
+            "operation": operation,
+            "sources": [{"path": MISSING}],
+        });
+        value
+            .as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        serde_json::from_value(value).expect("valid inspect args")
+    }
+
+    #[tokio::test]
+    async fn pro_operations_without_a_licence_return_the_message_and_do_no_work() {
+        let video = serde_json::json!({"timeline": {"end_ms": 1000}, "timestamps_ms": [0]});
+        let cite = serde_json::json!({
+            "citations": [{"quote": "a", "page": 1, "bounding_box": {"left": 0, "bottom": 0, "right": 1, "top": 1}}]
+        });
+        for (operation, feature, extra) in [
+            ("video_timeline", "Video timeline", video.clone()),
+            ("render_frame", "Video frame rendering", video),
+            ("cite_check", "Cite-check", cite),
+        ] {
+            let result = locked()
+                .inspect(Parameters(inspect_args(operation, extra)))
+                .await
+                .expect("an unlicensed Pro call is a normal result, not a protocol error");
+            assert_ne!(result.is_error, Some(true), "{operation}");
+            assert_eq!(
+                result_text(&result),
+                format!(
+                    "[{{\"type\":\"text\",\"text\":\"{feature} is part of anymd Pro. Learn more and get it: https://sylphxai.github.io/anymd/pro\"}}]"
+                ),
+                "{operation}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn timeline_option_on_read_and_outline_is_gated_without_a_licence() {
+        let read: crate::schema::ReadArgs = serde_json::from_value(
+            serde_json::json!({"source": MISSING, "timeline": {"end_ms": 1000}}),
+        )
+        .expect("valid read args");
+        let result = locked()
+            .read(Parameters(read))
+            .await
+            .expect("normal result");
+        assert_ne!(result.is_error, Some(true));
+        assert!(result_text(&result).contains("is part of anymd Pro"));
+        let outline: crate::schema::OutlineArgs = serde_json::from_value(
+            serde_json::json!({"source": MISSING, "timeline": {"end_ms": 1000}}),
+        )
+        .expect("valid outline args");
+        let result = locked()
+            .outline(Parameters(outline))
+            .await
+            .expect("normal result");
+        assert!(result_text(&result).contains("is part of anymd Pro"));
+    }
+
+    #[tokio::test]
+    async fn licensed_pro_operations_proceed_past_the_gate() {
+        let cite = serde_json::json!({
+            "citations": [{"quote": "a", "page": 1, "bounding_box": {"left": 0, "bottom": 0, "right": 1, "top": 1}}]
+        });
+        let video = serde_json::json!({"timeline": {"end_ms": 1000}, "timestamps_ms": [0]});
+        for (operation, extra) in [("cite_check", cite), ("video_timeline", video)] {
+            let outcome = unlocked()
+                .inspect(Parameters(inspect_args(operation, extra)))
+                .await;
+            let text = match &outcome {
+                Ok(result) => result_text(result),
+                Err(error) => error.message.to_string(),
+            };
+            assert!(
+                !text.contains("is part of anymd Pro"),
+                "{operation}: {text}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn free_operations_never_hit_the_pro_gate() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("note.md");
+        std::fs::write(&path, "# Title\n\nhello world\n").expect("write");
+        let server = locked();
+        let read: crate::schema::ReadArgs =
+            serde_json::from_value(serde_json::json!({"source": path})).unwrap();
+        let read = server.read(Parameters(read)).await.expect("read");
+        assert!(result_text(&read).contains("hello world"));
+        let outline: crate::schema::OutlineArgs =
+            serde_json::from_value(serde_json::json!({"source": path})).unwrap();
+        let outline = server.outline(Parameters(outline)).await.expect("outline");
+        assert!(result_text(&outline).contains("Title"));
+        let search: crate::schema::SearchArgs =
+            serde_json::from_value(serde_json::json!({"query": "hello", "sources": [path]}))
+                .unwrap();
+        let search = server.search(Parameters(search)).await.expect("search");
+        assert!(!result_text(&search).contains("is part of anymd Pro"));
+        for operation in ["inspect", "structure", "render_page"] {
+            let outcome = server
+                .inspect(Parameters(inspect_args(operation, serde_json::json!({}))))
+                .await;
+            let text = match &outcome {
+                Ok(result) => result_text(result),
+                Err(error) => error.message.to_string(),
+            };
+            assert!(!text.contains("is part of anymd Pro"), "{operation}");
+        }
+    }
 
     #[test]
     fn exposes_four_obvious_tools_and_keeps_legacy_names_callable() {

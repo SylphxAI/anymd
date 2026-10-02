@@ -515,7 +515,34 @@ pub fn read_text(
         (None, true) => usize::MAX,
         (value, _) => budget_from(value),
     };
-    let cursor = args.cursor.as_deref().map(Cursor::parse).transpose()?;
+    let video = if let Some(selection) = &args.timeline {
+        if args.download_asr_model.unwrap_or(false) {
+            return Err("timeline never downloads models".into());
+        }
+        let ocr = args.ocr.filter(|s| s.enabled()).map(|s| s.engine());
+        Some(crate::video_request::document(
+            &args.source,
+            selection,
+            args.transcript.unwrap_or(false),
+            ocr,
+            policy,
+        )?)
+    } else {
+        None
+    };
+    let manifest = video.as_ref().map(crate::video_request::manifest_id);
+    let cursor_text = match (&manifest, args.cursor.as_deref()) {
+        (Some(identity), Some(cursor)) => Some(
+            cursor
+                .strip_prefix(&format!("video:{identity}:"))
+                .ok_or("video cursor source/manifest/options mismatch")?,
+        ),
+        (None, Some(cursor)) if cursor.starts_with("video:") => {
+            return Err("video cursor requires matching timeline options".into())
+        }
+        (_, cursor) => cursor,
+    };
+    let cursor = cursor_text.map(Cursor::parse).transpose()?;
     let selection = match args
         .pages
         .as_deref()
@@ -562,7 +589,11 @@ pub fn read_text(
             .flatten(),
         revisions: args.revisions(),
     };
-    let read = match Opened::open(source, policy, &options) {
+    let opened = match video {
+        Some(evidence) => Ok(Opened::from_video(source, &evidence)),
+        None => Opened::open(source, policy, &options),
+    };
+    let read = match opened {
         Ok(mut opened) => read_opened(
             &mut opened,
             selection,
@@ -580,7 +611,14 @@ pub fn read_text(
     };
     out.push_str(&read.body);
     if let Some(next) = read.next {
-        out.push_str(&continuation_note(budget, next));
+        let note = continuation_note(budget, next);
+        out.push_str(&match manifest {
+            Some(identity) => note.replace(
+                &format!("\"{}\"", next.render()),
+                &format!("\"video:{identity}:{}\"", next.render()),
+            ),
+            None => note,
+        });
     }
     Ok((out.trim_end().to_string() + "\n", read.error.is_some()))
 }
@@ -1410,6 +1448,7 @@ mod tests {
     fn read_converts_a_csv_to_a_table() {
         let dir = fixture_dir();
         let args = ReadArgs {
+            timeline: None,
             source: dir.path().join("prices.csv").display().to_string(),
             pages: None,
             node: None,
@@ -1430,6 +1469,7 @@ mod tests {
     fn read_lists_a_directory() {
         let dir = fixture_dir();
         let args = ReadArgs {
+            timeline: None,
             source: dir.path().display().to_string(),
             pages: None,
             node: None,

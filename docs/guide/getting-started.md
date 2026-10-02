@@ -1,3 +1,7 @@
+---
+description: "Install anymd in Claude Code, Codex, Cursor, VS Code, Claude Desktop and other MCP clients with one command, or use it as a CLI."
+---
+
 # Getting started
 
 anymd is one binary that runs as an MCP server for your agent and as a command-line converter. Every MCP client runs the same command:
@@ -7,6 +11,14 @@ npx -y @sylphx/anymd
 ```
 
 Node 18+ is the only requirement; npm installs the native binary for your platform. No API key, no account.
+
+To add anymd to every MCP client on your machine at once (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI):
+
+```bash
+npx -y @sylphx/anymd setup     # --dry-run to preview, --remove to undo
+```
+
+It is safe to run again. The sections below add it to one client by hand.
 
 Prefer Python or Docker? These run the same prebuilt binary, with no Node needed:
 
@@ -20,14 +32,6 @@ docker run -i --rm ghcr.io/sylphxai/anymd    # MCP server on stdio (amd64 and ar
 The Linux wheels and the image use glibc 2.17 or newer, so Alpine (musl) needs `cargo install anymd` instead.
 
 Prefer Cargo? `cargo install anymd` builds the same binary from [crates.io](https://crates.io/crates/anymd). It needs Rust 1.95+, CMake and a C++ compiler, and includes local doc-VLM OCR and bundled ASR. Run `anymd setup ocr` to install the pinned models explicitly; without setup, automatic OCR keeps using installed `tesseract`. Audio and video still use optional `ffmpeg`.
-
-To add anymd to every MCP client on your machine at once (Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf, Gemini CLI):
-
-```bash
-npx -y @sylphx/anymd setup     # --dry-run to preview, --remove to undo
-```
-
-It is safe to run again. The sections below add it to one client by hand.
 
 ## Claude Code
 

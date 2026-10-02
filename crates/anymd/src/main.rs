@@ -1,5 +1,5 @@
 use anymd::{
-    cli, discover_compat, http_transport, setup, source_access::SourceAccessPolicy, PdfReaderMcp,
+    cli, discover_compat, http_transport, pro, setup, source_access::SourceAccessPolicy, PdfReaderMcp,
     SERVER_VERSION,
 };
 use rmcp::transport::async_rw::AsyncRwTransport;
@@ -7,8 +7,14 @@ use rmcp::{ServerHandler, ServiceExt};
 
 fn main() -> anyhow::Result<()> {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
+    if arguments.first().map(String::as_str) == Some("__cite-check-worker") {
+        return anymd::cite_check::worker(&arguments[1..]).map_err(anyhow::Error::msg);
+    }
     if arguments.first().map(String::as_str) == Some("__ocr-vlm-worker") {
         return anymd::ocr_vlm::worker(&arguments[1..]).map_err(anyhow::Error::msg);
+    }
+    if arguments.first().map(String::as_str) == Some("__video-worker") {
+        return anymd::video_request::worker(&arguments[1..]).map_err(anyhow::Error::msg);
     }
     match cli::mode(&arguments) {
         cli::Mode::Doctor => {
@@ -20,6 +26,7 @@ fn main() -> anyhow::Result<()> {
             Ok(())
         }
         cli::Mode::Setup(arguments) => std::process::exit(setup::run(&arguments)),
+        cli::Mode::Pro(arguments) => std::process::exit(pro::run(&arguments)),
         cli::Mode::Cli(arguments) => {
             let policy = SourceAccessPolicy::from_process().map_err(anyhow::Error::msg)?;
             anymd_formats::cache::prune_images_daily();

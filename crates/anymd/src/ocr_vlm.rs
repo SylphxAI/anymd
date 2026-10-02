@@ -60,6 +60,10 @@ pub fn resolve_engine(
     }
 }
 
+pub(crate) fn model_revision() -> &'static str {
+    weights::REVISION
+}
+
 pub fn root() -> Result<PathBuf, String> {
     anymd_formats::cache::cache_dir()
         .map(|p| p.join("models/docvlm-v1"))

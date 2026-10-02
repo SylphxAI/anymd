@@ -71,10 +71,18 @@ fn netloc_of(uri: &ureq::http::Uri) -> String {
 /// A fresh, pool-free agent per redirect hop: each hop is its own validation
 /// and connection boundary. The URL keeps its hostname for Host and TLS SNI.
 fn hop_agent(netloc: String, addresses: Vec<SocketAddr>, tls: &TlsConfig) -> ureq::Agent {
+    hop_agent_timeout(netloc, addresses, tls, Duration::from_secs(TIMEOUT_SECS))
+}
+fn hop_agent_timeout(
+    netloc: String,
+    addresses: Vec<SocketAddr>,
+    tls: &TlsConfig,
+    timeout: Duration,
+) -> ureq::Agent {
     let config = Config::builder()
         // The 2.x `.timeout(30s)` was a deadline for the whole call, body
         // included; `timeout_global` is 3.x's name for exactly that.
-        .timeout_global(Some(Duration::from_secs(TIMEOUT_SECS)))
+        .timeout_global(Some(timeout))
         // No redirects: this module follows them itself, one validated hop at a time.
         .max_redirects(0)
         // The 2.x agent built with `.try_proxy_from_env(false)`, and 3.x turns
@@ -139,8 +147,31 @@ where
     R: DnsResolver,
     F: Fn(IpAddr) -> bool + Copy,
 {
+    fetch_url_with_deadline(
+        url,
+        resolver,
+        is_denied,
+        tls,
+        std::time::Instant::now() + Duration::from_secs(TIMEOUT_SECS),
+    )
+}
+fn fetch_url_with_deadline<R, F>(
+    url: &str,
+    resolver: &R,
+    is_denied: F,
+    tls: &TlsConfig,
+    deadline: std::time::Instant,
+) -> Result<FetchedUrl, String>
+where
+    R: DnsResolver,
+    F: Fn(IpAddr) -> bool + Copy,
+{
     let mut current = url.to_string();
     for _ in 0..=MAX_REDIRECTS {
+        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+        if remaining.is_zero() {
+            return Err("URL fetch deadline exceeded".into());
+        }
         let parsed = url::Url::parse(&current).map_err(|e| format!("Invalid URL: {e}"))?;
         if parsed.scheme() != "http" && parsed.scheme() != "https" {
             return Err("Only http(s) URLs are allowed.".into());
@@ -154,7 +185,12 @@ where
         let addresses = resolve_public_addrs_with(host, port, resolver, is_denied)?;
         let expected_netloc = format!("{host}:{port}");
 
-        let agent = hop_agent(expected_netloc, addresses, tls);
+        let agent = hop_agent_timeout(
+            expected_netloc,
+            addresses,
+            tls,
+            deadline.saturating_duration_since(std::time::Instant::now()),
+        );
 
         let response = agent
             .get(parsed.as_str())
@@ -247,6 +283,16 @@ pub fn fetch_url(url: &str) -> Result<FetchedUrl, String> {
         fetch_url_with(url, &SystemDnsResolver, |_| false, &tls)
     } else {
         fetch_url_with(url, &SystemDnsResolver, is_private_ip, &tls)
+    }
+}
+
+/// Explicit caller deadline, retaining DNS pinning and redirect validation.
+pub fn fetch_url_deadline(url: &str, deadline: std::time::Instant) -> Result<FetchedUrl, String> {
+    let tls = TlsConfig::default();
+    if env_allow_private_ips() {
+        fetch_url_with_deadline(url, &SystemDnsResolver, |_| false, &tls, deadline)
+    } else {
+        fetch_url_with_deadline(url, &SystemDnsResolver, is_private_ip, &tls, deadline)
     }
 }
 

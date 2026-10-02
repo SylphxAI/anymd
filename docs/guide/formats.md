@@ -1,3 +1,7 @@
+---
+description: "Every format anymd reads: PDF, Word, PowerPoint, Excel, EPUB, HTML, images with OCR, audio and video."
+---
+
 # Formats
 
 One `read` call handles every format below, detected from the file's bytes, not its name. Everything is parsed natively in Rust (zip/XML, calamine, html5ever): no Python, LibreOffice, or cloud service.

@@ -162,6 +162,21 @@ if (import.meta.main) {
   }
   const check = process.argv.includes('--check');
   const drift: string[] = [];
+  if (check) {
+    // The README is the npm landing page: npm resolves relative URLs against packages/anymd, so they 404.
+    const bad = read('README.md')
+      .split('\n')
+      .flatMap((line, i) =>
+        [...line.matchAll(/(?:src|href)="([^"]*)"|\]\(([^)\s]*)/g)]
+          .map((m) => m[1] ?? m[2] ?? '')
+          .filter((u) => u && !/^(https?:|#|mailto:)/.test(u))
+          .map((u) => `README.md:${i + 1} relative link ${u}`)
+      );
+    if (bad.length) {
+      console.error(`${bad.map((e) => `[render-copy] ${e}`).join('\n')}\n[render-copy] use absolute URLs in README.md`);
+      process.exit(1);
+    }
+  }
   for (const target of targets(product)) {
     const current = read(target.path);
     const next = target.render(current);

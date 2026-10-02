@@ -19,7 +19,11 @@ export default defineConfig({
   // toggle still lets readers choose light.
   appearance: 'dark',
   lastUpdated: true,
-  sitemap: { hostname: site },
+  sitemap: {
+    hostname: site,
+    // The post-purchase page is not a landing page.
+    transformItems: (items) => items.filter((item) => !item.url.includes('pro/thanks')),
+  },
 
   // Maintainer docs that are not part of the site.
   srcExclude: ['PUBLISH.md', 'vision.md', 'security/**'],
@@ -35,8 +39,9 @@ export default defineConfig({
     ['meta', { property: 'og:site_name', content: 'anymd' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:site', content: '@sylphxai' }],
-    ['meta', { property: 'og:image', content: 'https://sylphxai.github.io/anymd/og-image.png' }],
-    ['meta', { name: 'twitter:image', content: 'https://sylphxai.github.io/anymd/og-image.png' }],
+    ['meta', { property: 'og:image:alt', content: 'anymd: any file to clean Markdown for AI agents' }],
+    ['meta', { property: 'og:image:width', content: '1280' }],
+    ['meta', { property: 'og:image:height', content: '640' }],
     [
       'meta',
       {
@@ -57,11 +62,17 @@ export default defineConfig({
     const pageTitle =
       pageData.frontmatter.title ?? (pageData.title || `${product.name} — ${product.tagline}`);
     const pageDesc = pageData.frontmatter.description ?? product.description;
+    const isHome = pageData.relativePath === 'index.md';
+    const ogTitle = isHome ? pageTitle : `${pageTitle} | anymd`;
+    const image = pageData.frontmatter.image ?? `${site}og-image.png`;
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push(
       ['link', { rel: 'canonical', href: pageUrl }],
       ['meta', { property: 'og:url', content: pageUrl }],
-      ['meta', { property: 'og:title', content: pageTitle }],
+      ['meta', { property: 'og:title', content: ogTitle }],
+      ['meta', { name: 'twitter:title', content: ogTitle }],
+      ['meta', { property: 'og:image', content: image }],
+      ['meta', { name: 'twitter:image', content: image }],
       ['meta', { property: 'og:description', content: pageDesc }],
     );
   },
@@ -74,6 +85,7 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/getting-started', activeMatch: '^/guide/(?!benchmarks)' },
       { text: 'Benchmarks', link: '/guide/benchmarks' },
       { text: 'Playground', link: '/playground' },
+      { text: 'Pro', link: '/pro' },
       { text: 'GitHub', link: 'https://github.com/SylphxAI/anymd' },
       { text: 'npm', link: 'https://www.npmjs.com/package/@sylphx/anymd' },
     ],
@@ -84,8 +96,10 @@ export default defineConfig({
         items: [
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'MCP tools', link: '/guide/tools' },
+          { text: 'Cite-check', link: '/guide/cite-check' },
           { text: 'CLI', link: '/guide/cli' },
           { text: 'Python and loaders', link: '/guide/python' },
+          { text: 'Video timelines', link: '/guide/video-timeline' },
           { text: 'Formats', link: '/guide/formats' },
           { text: 'Benchmarks', link: '/guide/benchmarks' },
           { text: 'Migration', link: '/guide/migration' },
@@ -95,6 +109,10 @@ export default defineConfig({
       {
         text: 'Try it',
         items: [{ text: 'Playground', link: '/playground' }],
+      },
+      {
+        text: 'Pro',
+        items: [{ text: 'anymd Pro', link: '/pro' }],
       },
     ],
 
@@ -106,11 +124,6 @@ export default defineConfig({
     editLink: {
       pattern: 'https://github.com/SylphxAI/anymd/edit/main/docs/:path',
       text: 'Edit this page on GitHub',
-    },
-
-    footer: {
-      message: 'MIT licensed · local, no API key',
-      copyright: 'Copyright 2024–2026 Sylphx',
     },
 
     outline: { level: [2, 3] },

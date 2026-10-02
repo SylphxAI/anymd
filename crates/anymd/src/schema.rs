@@ -71,7 +71,7 @@ pub struct PdfSource {
     pub path: Option<String>,
     #[schemars(
         length(min = 1),
-        description = "URL of the PDF file. Provide exactly one of path or url (not both)."
+        description = "Explicit source URL. Provide exactly one of path or url (not both)."
     )]
     pub url: Option<String>,
     pub pages: Option<PageSpecifier>,
@@ -333,12 +333,12 @@ impl PdfEvidenceRegion {
 pub struct PdfEvidenceSource {
     #[schemars(
         length(min = 1),
-        description = "Path to the local PDF file. Provide exactly one of path or url (not both)."
+        description = "Path to a local source (PDF for PDF operations; media for video operations). Provide exactly one of path or url (not both)."
     )]
     pub path: Option<String>,
     #[schemars(
         length(min = 1),
-        description = "URL of the PDF file. Provide exactly one of path or url (not both)."
+        description = "Explicit source URL. Provide exactly one of path or url (not both)."
     )]
     pub url: Option<String>,
     pub pages: Option<PageSpecifier>,
@@ -528,6 +528,19 @@ mod provider_schema_compat_tests {
     use schemars::schema_for;
 
     #[test]
+    fn read_node_keeps_its_own_description() {
+        let schema = serde_json::to_value(schema_for!(ReadArgs)).unwrap();
+        let properties = &schema["properties"];
+        let node = properties["node"]["description"].as_str().unwrap_or("");
+        assert!(
+            node.contains("section id returned by outline"),
+            "{properties}"
+        );
+        let timeline = properties["timeline"]["description"].as_str().unwrap_or("");
+        assert!(timeline.contains("video"), "{properties}");
+        assert!(!timeline.contains("section id returned by outline"));
+    }
+    #[test]
     fn pdf_source_schema_omits_not_required_xor() {
         let schema = schema_for!(PdfSource);
         let json = serde_json::to_string(&schema).expect("serialize schema");
@@ -581,6 +594,10 @@ pub struct ReadArgs {
         description = "File path, http(s) URL, or directory. PDF, DOCX, PPTX, XLSX/XLS/ODS, CSV/TSV, EPUB, HTML, Markdown/text, images, audio/video, SRT/VTT. A directory returns the list of readable files."
     )]
     pub source: String,
+    #[schemars(
+        description = "Local video only: read this bounded playback window as deterministic timeline sections. end_ms is required; the window is half-open, at most ten minutes and twenty scenes."
+    )]
+    pub timeline: Option<crate::video_request::TimelineSelection>,
     /// Read a section id returned by outline; repeat node with a continuation cursor.
     pub node: Option<String>,
     #[schemars(
@@ -703,6 +720,12 @@ impl SearchArgs {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum InspectOperation {
+    /// Bounded local video timeline.
+    VideoTimeline,
+    /// Decode actual video frames at requested playback timestamps.
+    RenderFrame,
+    /// Deterministic quote and location support, not semantic truth.
+    CiteCheck,
     /// Page count, metadata, and per-page facts.
     Inspect,
     /// Render pages to PNG images.
@@ -719,9 +742,67 @@ pub enum InspectOperation {
     Compare,
 }
 
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CiteNormalization {
+    #[default]
+    None,
+    WhitespaceV1,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CiteBoundingBox {
+    pub left: f64,
+    pub bottom: f64,
+    pub right: f64,
+    pub top: f64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Citation {
+    pub id: Option<String>,
+    #[schemars(
+        length(min = 1, max = 4096),
+        description = "Nonempty quote, at most 4096 UTF-16 units; request total at most 64000 units."
+    )]
+    pub quote: String,
+    #[schemars(
+        range(min = 1),
+        description = "One-based physical PDF page, not a printed page label. At most 20 distinct pages per request."
+    )]
+    pub page: u32,
+    /// Bottom-left PDF coordinates, finite and with positive area. No padding.
+    pub bounding_box: CiteBoundingBox,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct InspectArgs {
+    #[schemars(
+        length(min = 1, max = 100),
+        description = "cite_check only: 1–100 quotes with required page and bounding_box; exactly one PDF source."
+    )]
+    pub citations: Option<Vec<Citation>>,
+    pub normalization: Option<CiteNormalization>,
     pub operation: InspectOperation,
+    #[schemars(
+        description = "video_timeline only (required there): half-open playback window with required end_ms, at most ten minutes and twenty detected-cut scenes. caption only samples one frame per scene through a user-configured local-command adapter."
+    )]
+    pub timeline: Option<crate::video_request::TimelineSelection>,
+    #[schemars(
+        description = "render_frame only: playback timestamps in integer milliseconds (at most twenty). Returns decoded frame metadata with the actual decoded timestamp."
+    )]
+    pub timestamps_ms: Option<Vec<u64>>,
+    #[schemars(
+        length(min = 64, max = 64),
+        description = "cite_check and video operations: fail if the admitted source's SHA-256 differs from this hexadecimal value."
+    )]
+    pub expected_source_sha256: Option<String>,
+    #[schemars(
+        description = "video_timeline only: also attach timed ASR cues from preinstalled local Qwen3-ASR weights. Never downloads models. Default false."
+    )]
+    pub transcript: Option<bool>,
     pub sources: Vec<PdfEvidenceSource>,
     #[schemars(
         description = "structure only: fast (default), quality, or research (adds safety, trust, accessibility)."
@@ -753,6 +834,10 @@ pub struct InspectArgs {
 /// Navigate a document without a model or vector index.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct OutlineArgs {
+    #[schemars(
+        description = "Local video only: outline this bounded playback window from metadata (cuts, chapters, subtitles). No ASR, OCR or captions run."
+    )]
+    pub timeline: Option<crate::video_request::TimelineSelection>,
     /// File path or http(s) URL.
     pub source: String,
     /// json (default) or tree.

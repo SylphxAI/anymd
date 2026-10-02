@@ -586,3 +586,94 @@
     margin: 56px 0;
   }
 }
+
+/* Pro landing: buy button, consent banner. */
+.pro-buy {
+  display: inline-block;
+  margin: 8px 0;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: var(--vp-c-brand-1);
+  color: var(--vp-c-bg) !important;
+  font-weight: 600;
+  text-decoration: none !important;
+}
+.pro-buy:hover { background: var(--vp-c-brand-2); }
+.pro-cookie-link { margin-top: 32px; font-size: 13px; }
+.pro-consent {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  background: var(--vp-c-bg-elv);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.35);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.pro-consent-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pro-consent button {
+  padding: 6px 14px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg-soft);
+  cursor: pointer;
+}
+.pro-consent button[aria-pressed='true'],
+.pro-consent button:first-child { border-color: var(--vp-c-brand-1); }
+
+/* Pro buy fallback note and trust line. */
+.pro-buy-note { display: block; margin-top: 8px; font-size: 13px; color: var(--vp-c-text-2); }
+.pro-trust { margin: 4px 0 16px; font-size: 13px; color: var(--vp-c-text-2); }
+
+/* Site footer: on every page, clear of the fixed sidebar. */
+.site-footer {
+  border-top: 1px solid var(--vp-c-divider);
+  padding: 32px 24px 40px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.site-footer-inner { max-width: 1152px; margin: 0 auto; }
+.site-footer-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 12px; }
+.site-footer a { color: var(--vp-c-text-1); text-decoration: underline; text-underline-offset: 2px; }
+.site-footer p { margin: 4px 0; }
+@media (min-width: 960px) {
+  .site-footer.has-sidebar { padding-left: calc(var(--vp-sidebar-width) + 32px); }
+}
+@media (min-width: 1440px) {
+  .site-footer.has-sidebar {
+    padding-left: calc((100% - (var(--vp-layout-max-width) - 64px)) / 2 + var(--vp-sidebar-width));
+  }
+}
+
+.hero-install { margin-top: 24px; max-width: 560px; }
+.hero-install-cmd {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 10px 10px 16px; border: 1px solid var(--vp-c-divider); border-radius: 10px;
+  background: var(--vp-code-block-bg); color: var(--vp-code-block-color);
+  font-family: var(--vp-font-family-mono); font-size: 14px;
+}
+.hero-install-cmd code { overflow-x: auto; white-space: nowrap; background: none; padding: 0; color: inherit; }
+.hero-install-prompt { color: var(--cit); }
+.hero-install-cmd button {
+  flex: none; padding: 6px 12px; border-radius: 6px; border: 1px solid #2c3a1c;
+  background: #151c0f; color: #eaf2dd; font-size: 13px; cursor: pointer;
+}
+.hero-install-note { margin: 8px 0 0; font-size: 13px; color: var(--vp-c-text-2); }
+.hero-proof { margin: 12px 0 0; font-size: 14px; font-weight: 600; color: var(--vp-c-text-1); }
+@media (max-width: 639px) {
+  .VPHomeHero .image { display: none; } /* puts the headline and install above the fold */
+  .hero-install { margin-left: auto; margin-right: auto; text-align: left; }
+}

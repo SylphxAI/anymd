@@ -1,3 +1,7 @@
+---
+description: "The four anymd MCP tools (read, outline, search, inspect), their arguments and example output."
+---
+
 # MCP tools
 
 anymd exposes four tools.
@@ -143,6 +147,7 @@ Go deeper on a PDF. `inspect` returns JSON, for the cases where an agent needs g
 
 | `operation` | What it does |
 |---|---|
+| `cite_check` | (anymd Pro) [Check a quoted passage at a page and bounding box](./cite-check), without a model or truth claim |
 | `inspect` | Page count, metadata, and per-page facts |
 | `render_page` | Render pages to PNG images |
 | `extract_regions` | Crop regions (bounding boxes) out of rendered pages |

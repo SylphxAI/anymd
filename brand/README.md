@@ -81,8 +81,8 @@ This folder is the source of truth for the anymd brand: every surface is a copy 
 | `ink` | `#0A0D07` | page ground; dark theme, the docs default |
 | `mark-ink` | `#0A0D0A` | the document in the mark |
 | `mark-fold` | `#2B3A05` | the folded corner in the mark |
-| `brand-text` | `#5C8A00` | links and accent text on the light ground; docs `--vp-c-brand-1` |
-| `brand-text-hover` | `#6FA000` | the same, hovered; docs `--vp-c-brand-2` |
+| `brand-text` | `#3F6100` | links and accent text on the light ground; docs `--vp-c-brand-1` |
+| `brand-text-hover` | `#4A7000` | the same, hovered; docs `--vp-c-brand-2` |
 | `brand-solid` | `#82B800` | borders and solid accents on the light ground; docs `--vp-c-brand-3` |
 | `brand-solid-dark` | `#86B321` | the ramp's darkest step on the dark ground; docs `--vp-c-brand-3` in the dark theme |
 

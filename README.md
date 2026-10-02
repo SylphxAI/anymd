@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/public/og-image.png" alt="anymd — any file → clean Markdown for AI agents" width="820" />
+<img src="https://raw.githubusercontent.com/SylphxAI/anymd/main/docs/public/og-image.png" alt="anymd — any file → clean Markdown for AI agents" width="820" />
 
 <h1 hidden>anymd</h1>
 
@@ -12,21 +12,25 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 [![downloads](https://img.shields.io/npm/dm/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
 [![stars](https://mark.sylphx.com/github/stars/SylphxAI/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://github.com/SylphxAI/anymd/stargazers)
 [![MCP registry](https://mark.sylphx.com/badge/MCP-io.github.SylphxAI%2Fanymd-c3f53c?style=flat-square&labelColor=0a0d07)](https://registry.modelcontextprotocol.io/v0/servers?search=anymd)
-[![license](https://mark.sylphx.com/badge/license-MIT-c3f53c?style=flat-square&labelColor=0a0d07)](LICENSE)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SylphxAI/anymd/badge)](https://scorecard.dev/viewer/?uri=github.com/SylphxAI/anymd)
-<!-- repomap:agent-ready -->[![agent-ready 93/100](https://mark.sylphx.com/badge/agent--ready-93%2F100-brightgreen?style=flat-square&labelColor=0a0d07)](https://github.com/SylphxAI/repomap#agent-readiness-score)<!-- /repomap:agent-ready -->
+[![license](https://mark.sylphx.com/badge/license-MIT-c3f53c?style=flat-square&labelColor=0a0d07)](https://github.com/SylphxAI/anymd/blob/main/LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SylphxAI/anymd/badge)](https://scorecard.dev/viewer/?uri=github.com/SylphxAI/anymd) <!-- repomap:agent-ready -->[![agent-ready 93/100](https://mark.sylphx.com/badge/agent--ready-93%2F100-brightgreen?style=flat-square&labelColor=0a0d07)](https://github.com/SylphxAI/repomap#agent-readiness-score)<!-- /repomap:agent-ready -->
 
-[Install](#install) · [Benchmarks](#benchmarks) · [Tools](#mcp-tools) · [CLI](#cli) · [Formats](#formats) · [Docs](https://sylphxai.github.io/anymd/)
+[Install](#install) · [Benchmarks](#benchmarks) · [Tools](#mcp-tools) · [CLI](#cli) · [Formats](#formats) · [Docs](https://sylphxai.github.io/anymd/) · [Pro](https://sylphxai.github.io/anymd/pro)
 
 <!-- generated:formerly -->
 <sub>Formerly **pdf-reader-mcp**. [Migrating from pdf-reader-mcp](https://sylphxai.github.io/anymd/guide/migration)</sub>
 <!-- /generated:formerly -->
 
-<img src="docs/public/demo.gif" alt="Real terminal session: anymd converts a PDF page with its table, searches a folder, reads a spreadsheet, then Claude Code answers from the PDF through the anymd MCP server" width="820" />
+<img src="https://raw.githubusercontent.com/SylphxAI/anymd/main/docs/public/demo.gif" alt="Real terminal session: anymd converts a PDF page with its table, searches a folder, reads a spreadsheet, then Claude Code answers from the PDF through the anymd MCP server" width="820" />
 
-<sub>A real, unedited terminal recording (asciinema + agg, <a href="bench/demo">script</a>). The last command is Claude Code answering from the PDF through the anymd MCP server.</sub>
+<sub>A real, unedited terminal recording (asciinema + agg, <a href="https://github.com/SylphxAI/anymd/tree/main/bench/demo">script</a>). The last command is Claude Code answering from the PDF through the anymd MCP server.</sub>
 
 </div>
+
+```bash
+npx -y @sylphx/anymd setup              # add anymd to every MCP client on this machine
+npx -y @sylphx/anymd report.pdf > report.md   # or convert from the shell
+```
 
 ## Why anymd
 
@@ -147,7 +151,7 @@ npm, pip and Docker ship a prebuilt binary, while `cargo install` compiles one o
 
 ## Benchmarks
 
-[AgentDocBench](docs/guide/benchmarks.md) is an open benchmark for document → Markdown conversion for agents: license-clean documents in 12 categories (math papers, two-column papers, financial tables, forms, scans, CJK, slides, spreadsheets, Word, EPUB, HTML), scored on verbatim sentences, text F1, reading order, and table cells, with time and output tokens. Every tool runs on the same kind of GitHub-hosted runner (4 CPUs):
+[AgentDocBench](https://sylphxai.github.io/anymd/guide/benchmarks) is an open benchmark for document → Markdown conversion for agents: license-clean documents in 12 categories (math papers, two-column papers, financial tables, forms, scans, CJK, slides, spreadsheets, Word, EPUB, HTML), scored on verbatim sentences, text F1, reading order, and table cells, with time and output tokens. Every tool runs on the same kind of GitHub-hosted runner (4 CPUs):
 
 <!-- headline:start -->
 
@@ -161,7 +165,7 @@ npm, pip and Docker ship a prebuilt binary, while `cargo install` compiles one o
 
 <!-- headline:end -->
 
-The generated leaderboard, per-category scores (including where anymd loses), and method are in the [benchmark guide](docs/guide/benchmarks.md). The corpus, ground truth, adapters, and raw results are in [`bench/`](bench/), and the [Benchmark workflow](.github/workflows/benchmark.yml) reruns everything; new tools can join with a single adapter file.
+The generated leaderboard, per-category scores (including where anymd loses), and method are in the [benchmark guide](https://sylphxai.github.io/anymd/guide/benchmarks). The corpus, ground truth, adapters, and raw results are in [`bench/`](https://github.com/SylphxAI/anymd/tree/main/bench), and the [Benchmark workflow](https://github.com/SylphxAI/anymd/blob/main/.github/workflows/benchmark.yml) reruns everything; new tools can join with a single adapter file.
 
 ## MCP tools
 
@@ -172,7 +176,7 @@ anymd exposes four tools.
 | **`outline`** | Navigate a heading tree, with node ids and unit/Markdown ranges | `source`, `format` (`json` · `tree`) |
 | **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `revisions` (`markup` · `accept` · `reject`), `transcript`, `download_asr_model` |
 | **`search`** | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto` · `literal` · `ranked`), `glob`, `max_results` |
-| **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect` |
+| **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect`, [`cite_check`](https://sylphxai.github.io/anymd/guide/cite-check) (quote and location support, [anymd Pro](https://sylphxai.github.io/anymd/pro)) |
 
 A `read` answer looks like this:
 
@@ -247,6 +251,10 @@ Run with no arguments from an MCP client (piped stdin), or as `anymd mcp`, and i
 
 For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped into lines by baseline, which tolerates super- and subscripts. Word spaces come from the gaps between glyphs, measured against the font size and adjusted for letter tracking. A column-aware XY cut finds gutters between running text. Tables come from drawn lines where a table has them (a missing line between two cells makes a merged cell) and from aligned columns of whitespace where it does not. Wrapped cell text stays in its cell, stacked header lines become one header, and a header over several columns is kept with each of them. Text a reader cannot see (invisible text, or text in the colour of the box behind it) is left out. Pages are processed in parallel and isolated from each other, so one malformed page never fails the whole document. The other formats are parsed natively in Rust (zip/XML, calamine, html5ever); no Python, LibreOffice, or cloud service is involved.
 
+## anymd Pro
+
+The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (US$29 once, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. [See anymd Pro](https://sylphxai.github.io/anymd/pro).
+
 ## Security
 
 - Local-first: documents never leave your machine unless you pass a URL, and even then only that URL is fetched.
@@ -255,7 +263,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 - Embedded images are written only to anymd's own cache directory (`ANYMD_CACHE_DIR`, else the platform cache), never next to the source document, and refused over 50 megapixels.
 - External tools (tesseract, ffprobe, ffmpeg) are optional. anymd runs them without a shell, with a timeout and an output cap.
 
-See [SECURITY.md](SECURITY.md) to report a vulnerability.
+See [SECURITY.md](https://github.com/SylphxAI/anymd/blob/main/SECURITY.md) to report a vulnerability.
 
 ## Also from Sylphx
 

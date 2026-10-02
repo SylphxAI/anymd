@@ -69,6 +69,49 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
+    run_captured(program, args, env, timeout, MAX_OUTPUT, MAX_OUTPUT, false)
+}
+
+/// Same execution owner with lower operation-specific caps. A truncated result
+/// is an error, never usable evidence. No separate child runner is introduced.
+pub(crate) fn run_bounded<I, S>(
+    program: &Path,
+    args: I,
+    timeout: Duration,
+    stdout_limit: u64,
+    stderr_limit: u64,
+) -> Result<ToolOutput, String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    if timeout.is_zero() || stdout_limit > MAX_OUTPUT || stderr_limit > MAX_OUTPUT {
+        return Err("expired deadline or invalid local tool output budget".into());
+    }
+    run_captured(
+        program,
+        args,
+        &[],
+        timeout,
+        stdout_limit,
+        stderr_limit,
+        true,
+    )
+}
+
+fn run_captured<I, S>(
+    program: &Path,
+    args: I,
+    env: &[(&str, &str)],
+    timeout: Duration,
+    stdout_limit: u64,
+    stderr_limit: u64,
+    reject_truncation: bool,
+) -> Result<ToolOutput, String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     let name = program
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -81,8 +124,8 @@ where
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("could not start {name}: {e}"))?;
-    let stdout = child.stdout.take().map(drain);
-    let stderr = child.stderr.take().map(drain);
+    let stdout = child.stdout.take().map(|r| drain(r, stdout_limit));
+    let stderr = child.stderr.take().map(|r| drain(r, stderr_limit));
     let status = match child.wait_timeout(timeout) {
         Ok(Some(status)) => status,
         Ok(None) => {
@@ -96,24 +139,50 @@ where
             return Err(format!("{name} failed: {e}"));
         }
     };
-    let collect = |handle: Option<std::thread::JoinHandle<Vec<u8>>>| {
-        handle.and_then(|h| h.join().ok()).unwrap_or_default()
+    let collect = |handle: Option<std::thread::JoinHandle<std::io::Result<Vec<u8>>>>| {
+        handle
+            .ok_or_else(|| format!("{name} missing captured pipe"))?
+            .join()
+            .map_err(|_| format!("{name} output reader failed"))?
+            .map_err(|e| format!("{name} output read failed: {e}"))
     };
+    let stdout = collect(stdout);
+    let stderr = collect(stderr);
+    let mut stdout = if reject_truncation {
+        stdout?
+    } else {
+        stdout.unwrap_or_default()
+    };
+    let mut stderr = if reject_truncation {
+        stderr?
+    } else {
+        stderr.unwrap_or_default()
+    };
+    if reject_truncation
+        && (stdout.len() as u64 > stdout_limit || stderr.len() as u64 > stderr_limit)
+    {
+        return Err(format!("{name} exceeded the operation output budget"));
+    }
+    stdout.truncate(stdout_limit as usize);
+    stderr.truncate(stderr_limit as usize);
     Ok(ToolOutput {
         success: status.success(),
-        stdout: collect(stdout),
-        stderr: collect(stderr),
+        stdout,
+        stderr,
     })
 }
 
-fn drain<R: Read + Send + 'static>(reader: R) -> std::thread::JoinHandle<Vec<u8>> {
+fn drain<R: Read + Send + 'static>(
+    reader: R,
+    maximum: u64,
+) -> std::thread::JoinHandle<std::io::Result<Vec<u8>>> {
     std::thread::spawn(move || {
         let mut buf = Vec::new();
-        let mut limited = reader.take(MAX_OUTPUT);
-        let _ = limited.read_to_end(&mut buf);
+        let mut limited = reader.take(maximum.saturating_add(1));
+        limited.read_to_end(&mut buf)?;
         // Keep draining past the cap so the child never blocks on a full pipe.
-        let _ = std::io::copy(&mut limited.into_inner(), &mut std::io::sink());
-        buf
+        std::io::copy(&mut limited.into_inner(), &mut std::io::sink())?;
+        Ok(buf)
     })
 }
 
@@ -133,6 +202,19 @@ pub(crate) fn temp_file(bytes: &[u8], suffix: &str) -> Result<tempfile::NamedTem
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bounded_capture_retains_overflow_marker_and_rejects_expired_before_spawn() {
+        let bytes = drain(std::io::Cursor::new(vec![1u8; 10]), 4)
+            .join()
+            .unwrap()
+            .unwrap();
+        assert_eq!(bytes.len(), 5);
+        let error = run_bounded(Path::new("not-executed"), ["unused"], Duration::ZERO, 4, 4)
+            .err()
+            .unwrap();
+        assert!(error.contains("expired"));
+    }
 
     #[test]
     fn missing_tool_is_none_and_timeouts_kill() {

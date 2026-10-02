@@ -1,3 +1,7 @@
+---
+description: "How anymd keeps documents local: URL fetch guards, directory limits and sandboxed external tools."
+---
+
 # Security
 
 ## Local-first

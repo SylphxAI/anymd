@@ -3,12 +3,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use base64::Engine;
 use anymd_core::render::{
     crop_pixels_for_bounding_box, crop_rendered_page_png_with_limit, BoundingBox, RenderDocument,
     DEFAULT_MAX_RENDER_OUTPUT_BYTES, DEFAULT_MAX_RENDER_PIXELS, DEFAULT_RENDER_SCALE,
 };
 use anymd_core::url_fetch::{cleanup_temp_file, fetch_url_to_temp_file};
+use base64::Engine;
 use rmcp::model::{CallToolResult, ContentBlock};
 use serde_json::{json, Value};
 
@@ -31,6 +31,7 @@ pub(crate) struct RequestWorkBudget {
     pub(crate) rendered_pages: usize,
     regions: usize,
     pub(crate) render_pixels: u64,
+    encoded_frame_bytes: u64,
     exhausted: Option<String>,
 }
 
@@ -64,6 +65,16 @@ impl RequestWorkBudget {
         }
         self.rendered_pages = rendered_pages;
         self.render_pixels = render_pixels;
+        Ok(())
+    }
+
+    /// Lower operation-specific bounds reuse this request's sticky work state.
+    pub(crate) fn charge_frame(&mut self, pixels: u64, bytes: u64) -> Result<(), String> {
+        self.charge_page(pixels)?;
+        self.encoded_frame_bytes = self.encoded_frame_bytes.saturating_add(bytes);
+        if self.render_pixels > 40_000_000 || self.encoded_frame_bytes > 32 * 1024 * 1024 {
+            return self.exhaust("video aggregate frame budget exceeded".into());
+        }
         Ok(())
     }
 
@@ -105,6 +116,7 @@ impl MaterializedSource {
 
 #[derive(Debug)]
 pub(crate) struct RenderedOcrPage {
+    pub(crate) pdf_to_pixel: [f64; 6],
     pub(crate) page: u32,
     pub(crate) png: Vec<u8>,
     pub(crate) evidence_id: String,
@@ -288,6 +300,7 @@ pub(crate) fn render_ocr_source(
                 )
                 .map_err(|error| error.message)?;
             pages.push(RenderedOcrPage {
+                pdf_to_pixel: rendered.pdf_to_pixel_transform(),
                 page: rendered.page as u32,
                 png: rendered.png,
                 evidence_id: format!(
