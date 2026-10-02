@@ -535,7 +535,10 @@ pub fn read(
 ) -> Result<CallToolResult, rmcp::ErrorData> {
     let (text, failed) = read_text(args, policy, &ReadRender::default())
         .map_err(|message| rmcp::ErrorData::invalid_params(message, None))?;
-    Ok(finish(text, failed))
+    // Missing VLM setup is guidance, not a failure: a normal result, like the
+    // Pro notice, so the agent relays it.
+    let setup_needed = failed && text.trim_end() == crate::ocr_vlm::SETUP_NOTICE;
+    Ok(finish(text, failed && !setup_needed))
 }
 
 /// How a read is rendered: the MCP tool uses the defaults; the CLI prints
@@ -655,6 +658,13 @@ pub fn read_text(
         ),
         Err(message) => failed(source, message),
     };
+    if read
+        .error
+        .as_deref()
+        .is_some_and(crate::ocr_vlm::is_setup_notice)
+    {
+        return Ok((format!("{}\n", crate::ocr_vlm::SETUP_NOTICE), true));
+    }
     let mut out = if render.front_matter || read.error.is_some() {
         front_matter(&read.header)
     } else {

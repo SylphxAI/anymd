@@ -394,6 +394,9 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
 }
 
 fn error_line(front_matter: &str) -> String {
+    if front_matter.trim_end() == crate::ocr_vlm::SETUP_NOTICE {
+        return format!("{}\n", crate::ocr_vlm::SETUP_NOTICE);
+    }
     front_matter
         .lines()
         .find_map(|line| line.strip_prefix("error: "))

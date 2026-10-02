@@ -224,7 +224,7 @@ anymd report.pdf > report.md                 # a file
 anymd deck.pptx notes.docx budget.xlsx        # several files, each with a header
 anymd https://example.com/article            # a web page (main content only)
 cat scan.png | anymd - --ocr                 # stdin, with OCR
-anymd setup ocr                             # explicitly install pinned local models (~2 GB)
+anymd setup ocr                             # one-time: install the OCR engine and pinned local models (~2 GB)
 anymd scan.png --ocr vlm                    # tables as Markdown, formulas as LaTeX
 anymd paper.pdf --pages 1-3 --max-tokens 4000
 anymd search "indemnification" contracts/ --glob '*.pdf'

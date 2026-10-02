@@ -612,7 +612,7 @@ pub struct ReadArgs {
     #[schemars(description = "Continue a previous read with the cursor from its last line.")]
     pub cursor: Option<String>,
     #[schemars(
-        description = "Local OCR: auto, vlm, or tesseract. Auto uses installed doc-VLM weights (setup ocr is explicit CPU opt-in), otherwise tesseract. No automatic downloads. Boolean false disables; true retains automatic OCR."
+        description = "Local OCR: auto, vlm, or tesseract. Auto uses the installed doc-VLM engine and weights (`anymd setup ocr` installs both, an explicit opt-in), otherwise tesseract. vlm without that setup returns a one-line setup notice. No automatic downloads. Boolean false disables; true retains automatic OCR."
     )]
     pub ocr: Option<crate::ocr_vlm::OcrSelection>,
     #[schemars(

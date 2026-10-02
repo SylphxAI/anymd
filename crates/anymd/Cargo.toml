@@ -20,8 +20,16 @@ path = "src/lib.rs"
 name = "anymd"
 path = "src/main.rs"
 
+[[bin]]
+name = "anymd-ocr-vlm"
+path = "src/bin/anymd-ocr-vlm.rs"
+required-features = ["ocr-vlm"]
+
+# The default build leaves the in-process VLM engine (candle, ~6 MB) out; VLM
+# OCR runs in the `anymd-ocr-vlm` companion that `anymd setup ocr` installs.
+# `--features ocr-vlm` builds the engine in, and builds the companion.
 [features]
-default = ["ocr-vlm"]
+default = []
 ocr-vlm = ["anymd-ocr-vlm/candle"]
 
 [dependencies]

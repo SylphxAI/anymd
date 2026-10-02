@@ -99,7 +99,7 @@ Known gap in this version: figures drawn as vector graphics (charts, diagrams ma
 
 ## Images
 
-Dimensions and EXIF (camera, date, GPS), plus local OCR. `anymd setup ocr` explicitly installs doc-VLM weights; automatic OCR otherwise uses installed tesseract without downloading anything. See [local OCR](./cli#local-document-ocr).
+Dimensions and EXIF (camera, date, GPS), plus local OCR. `anymd setup ocr` explicitly installs the doc-VLM engine and weights; automatic OCR otherwise uses installed tesseract without downloading anything. See [local OCR](./cli#local-document-ocr).
 
 ## Audio and video
 
