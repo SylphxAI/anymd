@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- Fix `read` returning nothing for searchable scanned PDFs. Their OCR text layer is drawn in rendering mode 3 (`3 Tr`, invisible text over the page image) and was dropped. It is now read with its position when it lies over a painted image on a page that images mostly cover (at least half of it). Invisible text elsewhere stays dropped, as before (#776): it is the hidden-text route for injecting instructions into agents. Invisible text that repeats visible text is still dropped as a duplicate, and clip-only text (mode 7) is still left out. Cite-check and region geometry already indexed invisible text with its location.
+- Fix `read` returning nothing for searchable scanned PDFs. Their OCR text layer is drawn in rendering mode 3 (`3 Tr`, invisible text over the page image) and was dropped. It is now read, with its position and a `<!-- text layer: invisible, over page image -->` marker, but only on a scanned page: fewer than 24 visible letters and digits, with scan-like images (both sides at least 48 px and at least 50 dpi, read from the image dictionary without decoding) covering at least half of the page, and the text lying over such an image. Invisible text anywhere else stays dropped (#776): it is how hidden instructions are slipped to agents. That now also holds for rotated text, which previously skipped the check. Invisible text that repeats visible text is dropped as a duplicate, and clip-only text (mode 7) is still left out. Cite-check and region geometry already indexed invisible text with its location.
 
 ## 8.4.0
 

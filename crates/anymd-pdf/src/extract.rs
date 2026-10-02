@@ -61,6 +61,8 @@ pub(crate) struct RawPage {
     pub(crate) area: f64,
     /// Embedded images kept for the output, placed in reading order.
     pub(crate) figures: Vec<crate::images::Figure>,
+    /// The page's text includes an invisible OCR text layer over a scan.
+    pub(crate) invisible_layer: bool,
 }
 
 /// What a text rendering mode puts on the page.
@@ -94,6 +96,8 @@ pub(crate) struct Collector {
     /// For each rotated glyph: its text direction, in quarter turns
     /// counter-clockwise (1, 2 or 3), or 0 for any other angle.
     turns: Vec<u8>,
+    /// For each rotated glyph: its ink and its page-space position.
+    rotated_paint: Vec<(Ink, (f64, f64))>,
 }
 
 /// A colour as RGB, when its colour space is a device one.
@@ -176,8 +180,9 @@ impl Collector {
         self.turns.clear();
     }
 
-    /// Whether painted images cover at least half of the page.
-    fn covered_by_images(&self) -> bool {
+    /// Whether scan-like images (as judged by `scan_like`) cover at least
+    /// half of the page. Image boxes are united, so overlaps count once.
+    fn covered_by_images(&self, scan_like: &dyn Fn(&Placement) -> bool) -> bool {
         let Some(media) = self.media else {
             return false;
         };
@@ -187,16 +192,37 @@ impl Collector {
         }
         let (px0, px1) = (media.llx.min(media.urx), media.llx.max(media.urx));
         let (py0, py1) = (media.lly.min(media.ury), media.lly.max(media.ury));
-        let covered: f64 = self
+        let boxes: Vec<[f64; 4]> = self
             .images
             .iter()
+            .filter(|image| image.bbox.iter().all(|v| v.is_finite()) && scan_like(image))
             .map(|image| {
                 let b = image.bbox;
-                let w = (b[2].min(px1) - b[0].max(px0)).max(0.0);
-                let h = (b[3].min(py1) - b[1].max(py0)).max(0.0);
-                w * h
+                [b[0].max(px0), b[1].max(py0), b[2].min(px1), b[3].min(py1)]
             })
-            .sum();
+            .filter(|b| b[2] > b[0] && b[3] > b[1])
+            .collect();
+        let mut xs: Vec<f64> = boxes.iter().flat_map(|b| [b[0], b[2]]).collect();
+        xs.sort_by(|a, b| a.total_cmp(b));
+        xs.dedup();
+        let mut covered = 0.0;
+        for strip in xs.windows(2) {
+            let mut spans: Vec<(f64, f64)> = boxes
+                .iter()
+                .filter(|b| b[0] <= strip[0] && b[2] >= strip[1])
+                .map(|b| (b[1], b[3]))
+                .collect();
+            spans.sort_by(|a, b| a.0.total_cmp(&b.0));
+            let (mut height, mut end) = (0.0, f64::NEG_INFINITY);
+            for (lo, hi) in spans {
+                let lo = lo.max(end);
+                if hi > lo {
+                    height += hi - lo;
+                }
+                end = end.max(hi);
+            }
+            covered += height * (strip[1] - strip[0]);
+        }
         covered >= area * 0.5
     }
 
@@ -204,13 +230,22 @@ impl Collector {
     /// text is how a PDF smuggles instructions to an agent. That covers
     /// clip-only text (mode 7), text in the same colour as the box it sits on
     /// (a table cell or coloured panel), and invisible text (mode 3), with one
-    /// exception: on a scanned page, whose images cover at least half of it,
-    /// mode-3 text lying over an image is the OCR text layer and is kept with
-    /// its position. There it is still dropped when it repeats visible text.
-    pub(crate) fn visible_glyphs(&mut self) -> Vec<Glyph> {
+    /// exception: on a scanned page, mode-3 text lying over a scan-like image
+    /// is the OCR text layer and is kept with its position. A page is scanned
+    /// when it has fewer than `SPARSE_PAGE_CHARS` visible letters and digits
+    /// and scan-like images (`scan_like`, judged from the image dictionary)
+    /// cover at least half of it; a page with real visible text, or only a
+    /// stretched tiny image, admits no invisible text. There the layer is
+    /// still dropped where it repeats visible text. Returns the glyphs and
+    /// whether any invisible-layer text was kept.
+    pub(crate) fn visible_glyphs(
+        &mut self,
+        scan_like: &dyn Fn(&Placement) -> bool,
+    ) -> (Vec<Glyph>, bool) {
         let glyphs = std::mem::take(&mut self.glyphs);
-        if self.glyph_paint.len() != glyphs.len() {
-            return glyphs;
+        if self.glyph_paint.len() != glyphs.len() || self.rotated_paint.len() != self.rotated.len()
+        {
+            return (glyphs, false);
         }
         let same = |a: &[f64; 3], b: &[f64; 3]| a.iter().zip(b).all(|(x, y)| (x - y).abs() < 0.06);
         // Only a glyph painted in some box's colour can be hidden by one, so
@@ -221,21 +256,14 @@ impl Collector {
                 fills.push(*fill);
             }
         }
-        let scanned = self.covered_by_images();
-        let over_image = |glyph: &Glyph| {
-            let (cx, cy) = ((glyph.x0 + glyph.x1) / 2.0, glyph.base + glyph.size * 0.3);
-            scanned
-                && self.images.iter().any(|image| {
-                    let b = image.bbox;
-                    cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]
-                })
-        };
-        let kept: Vec<bool> = glyphs
+        // Visible glyphs first: their letters decide whether the page is one
+        // that has a text layer of its own.
+        let mut kept: Vec<bool> = glyphs
             .iter()
             .zip(&self.glyph_paint)
             .map(|(glyph, (color, ink, when))| {
                 if *ink != Ink::Seen {
-                    return *ink == Ink::Invisible && over_image(glyph);
+                    return false;
                 }
                 let Some(color) = color else { return true };
                 if !fills.iter().any(|fill| same(fill, color)) {
@@ -248,6 +276,55 @@ impl Collector {
                 !under.is_some_and(|(_, fill, _)| same(fill, color))
             })
             .collect();
+        let native_alnum = glyphs
+            .iter()
+            .zip(&kept)
+            .filter(|(_, k)| **k)
+            .map(|(g, _)| g)
+            .chain(
+                self.rotated
+                    .iter()
+                    .zip(&self.rotated_paint)
+                    .filter(|(_, (ink, _))| *ink == Ink::Seen)
+                    .map(|(g, _)| g),
+            )
+            .flat_map(|g| g.text.chars())
+            .filter(|c| c.is_alphanumeric())
+            .count();
+        let scanned =
+            native_alnum < crate::images::SPARSE_PAGE_CHARS && self.covered_by_images(scan_like);
+        let over_image = |cx: f64, cy: f64| {
+            scanned
+                && self.images.iter().any(|image| {
+                    let b = image.bbox;
+                    scan_like(image) && cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]
+                })
+        };
+        for (i, glyph) in glyphs.iter().enumerate() {
+            if self.glyph_paint[i].1 == Ink::Invisible {
+                let (cx, cy) = ((glyph.x0 + glyph.x1) / 2.0, glyph.base + glyph.size * 0.3);
+                kept[i] = over_image(cx, cy);
+            }
+        }
+        let rotated_keep: Vec<bool> = self
+            .rotated_paint
+            .iter()
+            .map(|(ink, (x, y))| match ink {
+                Ink::Seen => true,
+                Ink::Invisible => over_image(*x, *y),
+                Ink::ClipOnly => false,
+            })
+            .collect();
+        let mut keep = rotated_keep.iter().copied();
+        self.rotated.retain(|_| keep.next().unwrap_or(false));
+        let mut keep = rotated_keep.iter().copied();
+        self.turns.retain(|_| keep.next().unwrap_or(false));
+        let mut keep = rotated_keep.iter().copied();
+        self.rotated_paint.retain(|_| keep.next().unwrap_or(false));
+        let rotated_layer = self
+            .rotated_paint
+            .iter()
+            .any(|(ink, _)| *ink == Ink::Invisible);
         // Invisible glyphs sitting on visible ones repeat them; keep only the
         // invisible text that stands alone.
         const CELL: f64 = 8.0;
@@ -283,12 +360,19 @@ impl Collector {
             .enumerate()
             .map(|(i, g)| !kept[i] || (self.glyph_paint[i].1 == Ink::Invisible && repeats(g)))
             .collect();
-        glyphs
+        let layer = rotated_layer
+            || self
+                .glyph_paint
+                .iter()
+                .zip(&drop)
+                .any(|((_, ink, _), d)| *ink == Ink::Invisible && !d);
+        let glyphs = glyphs
             .into_iter()
             .zip(drop)
             .filter(|(_, d)| !d)
             .map(|(glyph, _)| glyph)
-            .collect()
+            .collect();
+        (glyphs, layer)
     }
 }
 
@@ -527,6 +611,8 @@ impl OutputDev for Collector {
             };
             self.rotated.push(glyph);
             self.turns.push(turn);
+            self.rotated_paint
+                .push((self.paint.1, (trm.m31, trm.m32 + size * 0.3)));
         }
         Ok(())
     }
@@ -687,8 +773,14 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
         let outcome = catch_unwind(AssertUnwindSafe(|| {
             output_doc_page(doc, &mut collector, number)
         }));
+        let scan_like = |placement: &Placement| crate::images::is_scan_like(doc, placement);
+        let mut invisible_layer = false;
         let glyphs = match outcome {
-            Ok(Ok(())) => Ok(collector.visible_glyphs()),
+            Ok(Ok(())) => {
+                let (glyphs, layer) = collector.visible_glyphs(&scan_like);
+                invisible_layer = layer;
+                Ok(glyphs)
+            }
             Ok(Err(err)) => Err(format!("page {number}: text extraction failed ({err})")),
             Err(_) => Err(format!(
                 "page {number}: text extraction failed (malformed font or content)"
@@ -718,6 +810,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
             images: collector.images,
             area,
             figures: Vec::new(),
+            invisible_layer,
         }
     };
     if workers <= 1 {
@@ -762,6 +855,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
                 images: Vec::new(),
                 area: 0.0,
                 figures: Vec::new(),
+                invisible_layer: false,
             })
         })
         .collect()

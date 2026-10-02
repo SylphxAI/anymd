@@ -197,7 +197,16 @@ pub fn pdf_to_markdown_with_images(
     let mut laid_out = Vec::with_capacity(raw.len());
     for page in &raw {
         let blocks = match &page.glyphs {
-            Ok(glyphs) => layout_page(glyphs, page, body_size, &repeated),
+            Ok(glyphs) => {
+                let mut blocks = layout_page(glyphs, page, body_size, &repeated);
+                if page.invisible_layer {
+                    blocks.insert(
+                        0,
+                        Block::Comment("text layer: invisible, over page image".into()),
+                    );
+                }
+                blocks
+            }
             Err(message) => vec![Block::Comment(message.clone())],
         };
         for block in &blocks {
