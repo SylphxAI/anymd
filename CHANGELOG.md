@@ -1,8 +1,20 @@
 # Changelog
 
-## Unreleased
+## 8.5.1
+
+### Patch Changes
+
+- anymd now re-checks the OCR engine program (`anymd-ocr-vlm`) every time it starts to use it, not only when it is installed, so a changed or replaced file is caught before it runs. A brief "text file busy" error while the engine is being refreshed no longer fails the run; anymd retries it.
+
+- When OCR runs on a page or image and finds no text, the result now says `OCR found no text` instead of looking like a page that was never read.
+
+- `anymd pro buy [--no-browser] [--json]` opens the Pro page; in-terminal purchase turns on when the checkout service is live. `anymd pro activate` and `anymd pro status` are unchanged, and existing tokens and token files keep working (same key, `ANYMD_PRO_TOKEN`, and `<config dir>/anymd/pro-token`). The licence code now comes from `sylphx-mcp-kit` 0.6, so `anymd pro status` also shows where the token was read and warns before a licence with an expiry runs out.
+
+## 8.5.0
 
 ### Minor Changes
+
+- The default `anymd` binary is smaller: about 25 MB instead of 35 MB on Linux x64, with no change to anything it converts. The local VLM OCR engine moved out into its own small program, `anymd-ocr-vlm` (about 10 MB). `anymd setup ocr` downloads it in the same one-time step as the model weights; anymd checks a signature from a key built into anymd itself (bound to this exact version), downloads over HTTPS only, and checks the program's own version before installing it. `--ocr vlm` needs the same setup as before, and its output is unchanged. After an upgrade, anymd refreshes the 10 MB engine once by itself for anyone who already ran `anymd setup ocr`; the 2 GB model weights are never downloaded without asking. If you ask for VLM OCR before running `anymd setup ocr`, anymd says `VLM OCR needs a one-time setup: run `anymd setup ocr``; over MCP that is a normal reply rather than an error. Tesseract OCR and every other feature need no setup. Builds from source with `--features ocr-vlm` keep the engine inside the binary.
 
 - `read` now marks scanned PDF pages it could not read. A page with no text layer that images cover gets `<!-- page N: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->` after its page marker, the front matter gains `scanned_pages: [N, …]`, and a result made only of scans opens with a one-line hint, so agents can tell an empty page from an unread scan. Pages with text, and pages OCR reads, are unchanged.
 

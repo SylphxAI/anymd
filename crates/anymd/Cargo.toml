@@ -20,8 +20,16 @@ path = "src/lib.rs"
 name = "anymd"
 path = "src/main.rs"
 
+[[bin]]
+name = "anymd-ocr-vlm"
+path = "src/bin/anymd-ocr-vlm.rs"
+required-features = ["ocr-vlm"]
+
+# The default build leaves the in-process VLM engine (candle, ~6 MB) out; VLM
+# OCR runs in the `anymd-ocr-vlm` companion that `anymd setup ocr` installs.
+# `--features ocr-vlm` builds the engine in, and builds the companion.
 [features]
-default = ["ocr-vlm"]
+default = []
 ocr-vlm = ["anymd-ocr-vlm/candle"]
 
 [dependencies]
@@ -31,7 +39,6 @@ anyhow = "1"
 axum = "0.8"
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
-dirs = "6"
 ed25519-dalek = "2"
 command-group = { version = "5", features = ["with-tokio"] }
 anymd-core = { workspace = true }
@@ -45,7 +52,7 @@ serde_json = "1"
 sha2 = "0.10"
 subtle = "2"
 # Shared MCP setup, CLI hints and cache-root policy.
-sylphx-mcp-kit = "0.3"
+sylphx-mcp-kit = { version = "0.6.0", features = ["licence"] }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }
