@@ -46,7 +46,7 @@ pdf-extract = { package = "anymd-pdf-extract", path = "vendor/pdf-extract", vers
 adobe-cmap-parser = { package = "anymd-adobe-cmap-parser", path = "vendor/adobe-cmap-parser", version = "0.4.1" }
 
 [profile.release]
-lto = "thin"
+lto = "fat"
 codegen-units = 1
 strip = "symbols"
 panic = "unwind"

@@ -77,6 +77,8 @@ version = "0.2"
 
 [dependencies.image]
 version = "0.25.6"
+default-features = false
+features = ["png", "jpeg", "gif", "tiff", "bmp", "webp"]
 
 [dependencies.once_cell]
 version = "1.19"
