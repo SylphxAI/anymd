@@ -35,7 +35,7 @@ npx -y @sylphx/anymd report.pdf > report.md   # or convert from the shell
 ## Why anymd
 
 <!-- fast:start -->
-- **Fast.** Native Rust converts in parallel, page by page. On the 19 benchmark documents every tool converted, anymd takes **4.58 s** in total; docling 1,723.3 s (376×), markitdown 45.4 s (10×), marker 5,256.3 s (1,146×).
+- **Fast.** Native Rust converts in parallel, page by page. On the 38 benchmark documents, anymd takes **11.5 s** in total; docling 2,432.4 s (212×), markitdown 75.6 s (7×); marker converted 30 of them in 7,104.5 s, against anymd's 4.64 s on the same 30 (1,532×).
 <!-- fast:end -->
 - **Accurate.** A layout engine rebuilds words from glyph gaps, puts two-column papers in reading order, and recovers tables, including borderless ones. The text stays exactly as printed, with no glued words and no scrambled columns.
 - **Lean on tokens.** Pages come back as Markdown with `<!-- page 3 -->` citation anchors, a small front-matter header, and compact tables. A token budget and a cursor keep large documents within your agent's context.
