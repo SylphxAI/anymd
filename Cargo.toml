@@ -42,7 +42,7 @@ anymd-ocr-vlm = { path = "crates/anymd-ocr-vlm", version = "8.5.1" }
 anymd-core = { path = "crates/anymd-core", version = "8.5.1" }
 anymd-formats = { path = "crates/anymd-formats", version = "8.5.1" }
 anymd-pdf = { path = "crates/anymd-pdf", version = "8.5.1" }
-pdf-extract = { package = "anymd-pdf-extract", path = "vendor/pdf-extract", version = "0.12.2" }
+pdf-extract = { package = "anymd-pdf-extract", path = "vendor/pdf-extract", version = "0.12.3" }
 adobe-cmap-parser = { package = "anymd-adobe-cmap-parser", path = "vendor/adobe-cmap-parser", version = "0.4.1" }
 
 [profile.release]

@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-pdf-extract"
-version = "0.12.2"
+version = "0.12.3"
 dependencies = [
  "anymd-adobe-cmap-parser",
  "cff-parser",
