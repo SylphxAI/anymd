@@ -762,6 +762,15 @@ pub(crate) fn normalize_glyph_text(character: &str) -> String {
     out
 }
 
+/// Returns the workers' freed heap pages once the chunk is extracted.
+struct TrimOnDrop;
+
+impl Drop for TrimOnDrop {
+    fn drop(&mut self) {
+        crate::give_back_freed_memory();
+    }
+}
+
 pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
     let workers = std::thread::available_parallelism()
         .map(|n| n.get())
@@ -816,6 +825,7 @@ pub(crate) fn extract_pages(doc: &Document, selected: &[u32]) -> Vec<RawPage> {
     if workers <= 1 {
         return selected.iter().map(|&number| extract_one(number)).collect();
     }
+    let _trim = TrimOnDrop;
     let mut results: Vec<Option<RawPage>> = (0..selected.len()).map(|_| None).collect();
     std::thread::scope(|scope| {
         let handles: Vec<_> = (0..workers)
