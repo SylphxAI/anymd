@@ -1591,7 +1591,6 @@ impl<'a> Processor<'a> {
     // /Matrix; image XObjects are skipped instead of being parsed as content.
     #[allow(clippy::too_many_arguments)]
     fn process_stream_with_ctm(&mut self, doc: &'a Document, content: Vec<u8>, resources: &'a Dictionary, media_box: &MediaBox, output: &mut dyn OutputDev, page_num: u32, initial_ctm: Transform, depth: u32) -> Result<(), OutputError> {
-        let content = Content::decode(&content).unwrap();
         let mut gs: GraphicsState = GraphicsState {
             ts: TextState {
                 font: None,
@@ -1620,7 +1619,12 @@ impl<'a> Processor<'a> {
         let mut path = Path::new();
         let flip_ctm = Transform2D::row_major(1., 0., 0., -1., 0., media_box.ury - media_box.lly);
         dlog!("MediaBox {:?}", media_box);
-        for operation in &content.operations {
+        // anymd patch: decode the content stream in segments cut between
+        // operations, so a table page's tens of thousands of operations are
+        // never all held at once (see `content_segments`).
+        for segment in content_segments(&content) {
+        let segment = Content::decode(segment).unwrap();
+        for operation in &segment.operations {
             //dlog!("op: {:?}", operation);
 
             match operation.operator.as_ref() {
@@ -1906,7 +1910,7 @@ impl<'a> Processor<'a> {
                     path.ops.clear();
                 }
                 "BMC" | "BDC" => {
-                    mc_stack.push(operation);
+                    mc_stack.push(());
                 }
                 "EMC" => {
                     mc_stack.pop();
@@ -1935,8 +1939,108 @@ impl<'a> Processor<'a> {
 
             }
         }
+        }
         Ok(())
     }
+}
+
+/// Segments of a content stream, each ending after a complete operation, so
+/// that decoding them one by one gives the operations of the whole stream in
+/// the same order. Operands never reach across an operator, so a cut after
+/// an operator token outside any string, array or dictionary is exact. A
+/// stream with an inline image (`BI`) is cut no further, since its binary
+/// data cannot be scanned safely; the rest stays in one segment.
+fn content_segments(content: &[u8]) -> Vec<&[u8]> {
+    const SEGMENT_BYTES: usize = 32 * 1024;
+    fn space(b: u8) -> bool {
+        matches!(b, 0 | 9 | 10 | 12 | 13 | 32)
+    }
+    fn delimiter(b: u8) -> bool {
+        matches!(b, b'(' | b')' | b'<' | b'>' | b'[' | b']' | b'{' | b'}' | b'/' | b'%')
+    }
+    let mut segments = Vec::new();
+    if content.len() <= SEGMENT_BYTES {
+        segments.push(content);
+        return segments;
+    }
+    let mut start = 0;
+    let mut i = 0;
+    let mut depth = 0usize;
+    while i < content.len() {
+        let b = content[i];
+        if space(b) {
+            i += 1;
+        } else if b == b'%' {
+            while i < content.len() && content[i] != b'\n' && content[i] != b'\r' {
+                i += 1;
+            }
+        } else if b == b'(' {
+            let mut nesting = 0usize;
+            while i < content.len() {
+                match content[i] {
+                    b'\\' => i += 1,
+                    b'(' => nesting += 1,
+                    b')' => {
+                        nesting -= 1;
+                        if nesting == 0 {
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+                i += 1;
+            }
+            i += 1;
+        } else if b == b'<' {
+            if content.get(i + 1) == Some(&b'<') {
+                depth += 1;
+                i += 2;
+            } else {
+                while i < content.len() && content[i] != b'>' {
+                    i += 1;
+                }
+                i += 1;
+            }
+        } else if b == b'>' {
+            if content.get(i + 1) == Some(&b'>') {
+                depth = depth.saturating_sub(1);
+                i += 2;
+            } else {
+                i += 1;
+            }
+        } else if b == b'[' {
+            depth += 1;
+            i += 1;
+        } else if b == b']' {
+            depth = depth.saturating_sub(1);
+            i += 1;
+        } else if delimiter(b) {
+            // `/Name`, `)`, `{`, `}`.
+            i += 1;
+            if b == b'/' {
+                while i < content.len() && !space(content[i]) && !delimiter(content[i]) {
+                    i += 1;
+                }
+            }
+        } else {
+            let from = i;
+            while i < content.len() && !space(content[i]) && !delimiter(content[i]) {
+                i += 1;
+            }
+            let token = &content[from..i];
+            let keyword = (token[0].is_ascii_alphabetic() || token[0] == b'\'' || token[0] == b'"')
+                && !matches!(token, b"true" | b"false" | b"null");
+            if token == b"BI" {
+                break;
+            }
+            if keyword && depth == 0 && i - start >= SEGMENT_BYTES {
+                segments.push(&content[start..i]);
+                start = i;
+            }
+        }
+    }
+    segments.push(&content[start..]);
+    segments
 }
 
 
@@ -2487,4 +2591,49 @@ fn output_doc_inner<'a>(page_num: u32, object_id: ObjectId, doc: &'a Document, p
     p.process_stream(&doc, doc.get_page_content(object_id).unwrap(), resources, &media_box, output, page_num)?;
     output.end_page()?;
     Ok(())
+}
+
+#[cfg(test)]
+mod segment_tests {
+    use super::*;
+
+    fn operations(parts: &[&[u8]]) -> Vec<(String, usize)> {
+        parts
+            .iter()
+            .flat_map(|part| Content::decode(part).unwrap().operations)
+            .map(|op| (op.operator, op.operands.len()))
+            .collect()
+    }
+
+    #[test]
+    fn segments_hold_the_same_operations_as_the_whole_stream() {
+        let mut stream = Vec::new();
+        for i in 0..4000 {
+            stream.extend_from_slice(
+                format!(
+                    "q 1 0 0 1 {i} 5 cm BT /F1 9 Tf [(a\\)b (nested (paren)) ) -20 <4142>] TJ (x y) Tj ET\n% (comment\n/GS0 gs << /K [1 2] >> BDC EMC Q\n"
+                )
+                .as_bytes(),
+            );
+        }
+        let segments = content_segments(&stream);
+        assert!(segments.len() > 4, "{} segments", segments.len());
+        assert_eq!(segments.concat(), stream);
+        assert_eq!(operations(&segments), operations(&[&stream]));
+    }
+
+    #[test]
+    fn an_inline_image_stops_the_cutting() {
+        let mut stream = Vec::new();
+        for _ in 0..3000 {
+            stream.extend_from_slice(b"q 1 0 0 1 0 0 cm Q\n");
+        }
+        stream.extend_from_slice(b"BI /W 1 /H 1 /BPC 8 /CS /G ID \x01 EI\n");
+        for _ in 0..3000 {
+            stream.extend_from_slice(b"q Q\n");
+        }
+        let segments = content_segments(&stream);
+        assert_eq!(segments.concat(), stream);
+        assert_eq!(operations(&segments), operations(&[&stream]));
+    }
 }

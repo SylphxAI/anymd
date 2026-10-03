@@ -20,3 +20,6 @@ path = "src/lib.rs"
 flate2 = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }
 pdf-extract = { workspace = true }
+
+[target.'cfg(all(target_os = "linux", target_env = "gnu"))'.dependencies]
+libc = "0.2"

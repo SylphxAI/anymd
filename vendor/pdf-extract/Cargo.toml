@@ -5,7 +5,7 @@
 [package]
 edition = "2018"
 name = "anymd-pdf-extract"
-version = "0.12.2"
+version = "0.12.3"
 authors = ["Jeff Muizelaar <jmuizelaar@mozilla.com>", "Sylphx <contact@sylphx.com>"]
 build = false
 include = ["src/**/*", "README.md", "LICENSE"]

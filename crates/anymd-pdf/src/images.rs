@@ -100,13 +100,13 @@ fn int(doc: &Document, dict: &Dictionary, key: &[u8]) -> Option<i64> {
     entry(doc, dict, key)?.as_i64().ok()
 }
 
-fn image_stream(doc: &Document, id: ObjectId) -> Option<&Stream> {
+pub(crate) fn image_stream(doc: &Document, id: ObjectId) -> Option<&Stream> {
     let stream = doc.get_object(id).ok()?.as_stream().ok()?;
     let subtype = stream.dict.get(b"Subtype").ok()?.as_name().ok()?;
     (subtype == &b"Image"[..]).then_some(stream)
 }
 
-fn dims(doc: &Document, stream: &Stream) -> Option<(u32, u32)> {
+pub(crate) fn dims(doc: &Document, stream: &Stream) -> Option<(u32, u32)> {
     let width = u32::try_from(int(doc, &stream.dict, b"Width")?).ok()?;
     let height = u32::try_from(int(doc, &stream.dict, b"Height")?).ok()?;
     (width > 0 && height > 0).then_some((width, height))
@@ -206,6 +206,32 @@ pub fn repeated_images(doc: &Document) -> HashSet<u64> {
         .collect()
 }
 
+/// The lowest resolution, in pixels per inch over the placed area, at which
+/// an image can carry a scanned page.
+const MIN_SCAN_DPI: f64 = 50.0;
+
+/// Whether a placed image looks like a scan of a page: both sides at least
+/// `MIN_SIDE_PX` and at least `MIN_SCAN_DPI` over the placed area. Reads the
+/// image dictionary only and never decodes. A tiny image stretched over the
+/// page is not one.
+pub(crate) fn is_scan_like(doc: &Document, placement: &crate::extract::Placement) -> bool {
+    let Some(stream) = image_stream(doc, placement.object) else {
+        return false;
+    };
+    let Some((width, height)) = dims(doc, stream) else {
+        return false;
+    };
+    if width < MIN_SIDE_PX || height < MIN_SIDE_PX {
+        return false;
+    }
+    let b = placement.bbox;
+    let (w, h) = ((b[2] - b[0]).abs(), (b[3] - b[1]).abs());
+    w > 0.0
+        && h > 0.0
+        && f64::from(width) * 72.0 / w >= MIN_SCAN_DPI
+        && f64::from(height) * 72.0 / h >= MIN_SCAN_DPI
+}
+
 /// Export the images that matter on one page and place them.
 pub(crate) fn figures_for_page(
     doc: &Document,
@@ -220,7 +246,7 @@ pub(crate) fn figures_for_page(
             .filter(|c| c.is_alphanumeric())
             .count()
     });
-    let no_text_layer = letters < SPARSE_PAGE_CHARS;
+    let no_text_layer = letters < SPARSE_PAGE_CHARS || page.invisible_layer;
     let mut out: Vec<(Figure, PageImage)> = Vec::new();
     for placement in &page.images {
         let Some(stream) = image_stream(doc, placement.object) else {

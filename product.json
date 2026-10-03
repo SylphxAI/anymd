@@ -61,6 +61,11 @@
       "name": "readme-mark",
       "url": "https://github.com/SylphxAI/readme-mark",
       "description": "Beautiful README images from one URL: banners, badges, icons and stats cards."
+    },
+    {
+      "name": "Sylphx apps",
+      "url": "https://sylphx.com/apps",
+      "description": "Apps and tools from Sylphx."
     }
   ]
 }
