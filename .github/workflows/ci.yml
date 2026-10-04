@@ -3,6 +3,9 @@ name: CI
 on:
   workflow_dispatch:
   merge_group:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -310,11 +313,13 @@ jobs:
           path: coverage/
           retention-days: 3
 
-  # Queue-only: macOS and Windows run when a pull request enters the merge
-  # queue, so they gate the merge without doubling the pull request load. GitHub-hosted
-  # standard runners are free for public repositories (owner standards/dx.md).
+  # Post-merge verify: macOS and Windows run on the main push, not in the merge
+  # queue. GitHub-hosted macOS/Windows capacity can stay queued for hours and
+  # stall every merge behind it, so the queue gate uses Linux runners only (fast
+  # gate on the queue, full suite after merge: owner standards/dx.md). GitHub-hosted
+  # standard runners are free for public repositories.
   other-os:
-    if: github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     name: Test other OS
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -370,6 +375,33 @@ jobs:
       matrix:
         include:
           - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --release --locked -p anymd --target ${{ matrix.target }}
+      - name: Verify portable ASR CPU configuration
+        run: python3 scripts/check-native-cpu.py target/${{ matrix.target }}/release/build
+
+  # macOS and Windows release builds: pull requests and the main push, never the
+  # merge queue (see other-os above).
+  release-targets-hosted:
+    name: Release build (${{ matrix.target }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'merge_group'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
           - { runner: macos-latest, target: aarch64-apple-darwin }
           - { runner: macos-latest, target: x86_64-apple-darwin }
           - { runner: windows-latest, target: x86_64-pc-windows-msvc }
@@ -391,18 +423,18 @@ jobs:
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [changes, plain-language, identifiers, validate, docs, audit, rust, other-os, security-secrets, release-targets]
+    needs: [changes, plain-language, identifiers, validate, docs, audit, rust, other-os, security-secrets, release-targets, release-targets-hosted]
     runs-on: ubuntu-latest
     steps:
-      # Heavy jobs are skipped only for pull requests that touch no code; other-os runs only in the queue.
+      # Heavy jobs are skipped only for pull requests that touch no code; other-os runs only after merge; the macOS/Windows release builds skip in the queue.
       - name: Require every applicable gate
         env:
           RESULTS: ${{ toJSON(needs) }}
           CODE: ${{ needs.changes.outputs.code }}
         run: |
           echo "$RESULTS" | jq -e --arg code "$CODE" '
-            def heavy: ["validate","docs","audit","rust","release-targets"];
+            def heavy: ["validate","docs","audit","rust","release-targets","release-targets-hosted"];
             to_entries | all(.[];
               .value.result == "success"
-              or (.key == "other-os" and .value.result == "skipped")
+              or ((.key == "other-os" or .key == "release-targets-hosted") and .value.result == "skipped")
               or (.key as $k | .value.result as $r | (heavy | index($k)) != null and $code == "false" and $r == "skipped"))'
