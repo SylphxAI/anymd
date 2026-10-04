@@ -45,10 +45,10 @@ jobs:
         uses: SylphxAI/.github/.github/actions/identifiers@e4a5ea41cbcc87cd93914f89f0d7c3981c868bf9
 
   # A change that only touches documentation skips the heavy jobs; the required
-  # checks (ci-ok and every job name) still report. Documentation is the Markdown
-  # files at the repository root, everything under docs/ except the VitePress
-  # configuration (docs/.vitepress is imported by the test suite), LICENSE and
-  # the issue templates. Anything else counts as code, including Markdown under
+  # checks (ci-ok and every job name) still report. Documentation is Markdown
+  # files at the repository root or under docs/, LICENSE and the issue
+  # templates; any other file under docs/ (images, the VitePress configuration
+  # the test suite imports) is code. Anything else counts as code, including Markdown under
   # crates/, test/ and the other folders (test fixtures, agent definitions).
   # `docs` is true when a documentation file changed (the Build docs job checks
   # the site and the generated copy); `code` is true for anything else. The diff
@@ -82,7 +82,7 @@ jobs:
             *) printf 'code=true\ndocs=true\n' >> "$GITHUB_OUTPUT"; exit 0 ;;
           esac
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/changed.txt"
-          docs='^(docs/.+|[^/]+\.md|LICENSE|\.github/ISSUE_TEMPLATE/.+)$'
+          docs='^(docs/.+\.md|[^/]+\.md|LICENSE|\.github/ISSUE_TEMPLATE/.+)$'
           not_docs='^docs/\.vitepress/'
           # An empty diff, a path outside the documentation set or one the tests import is code.
           if [ ! -s "$RUNNER_TEMP/changed.txt" ] \
