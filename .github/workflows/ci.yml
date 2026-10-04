@@ -44,40 +44,59 @@ jobs:
       - name: Non-v7 ids on added lines (owner standards/identifiers.md)
         uses: SylphxAI/.github/.github/actions/identifiers@e4a5ea41cbcc87cd93914f89f0d7c3981c868bf9
 
-  # Pull requests that only touch these files skip the heavy jobs; the required
-  # checks (ci-ok and every job name) still report. docs/** is not listed
-  # because CI builds the docs.
+  # A change that only touches documentation skips the heavy jobs; the required
+  # checks (ci-ok and every job name) still report. Documentation is the Markdown
+  # files at the repository root, everything under docs/ except the VitePress
+  # configuration (docs/.vitepress is imported by the test suite), LICENSE and
+  # the issue templates. Anything else counts as code, including Markdown under
+  # crates/, test/ and the other folders (test fixtures, agent definitions).
+  # `docs` is true when a documentation file changed (the Build docs job checks
+  # the site and the generated copy); `code` is true for anything else. The diff
+  # is the pull request's own, or the merge group's, against its base; every
+  # other event (manual run) reports both true.
   changes:
     name: Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read
     outputs:
       code: ${{ steps.result.outputs.code }}
+      docs: ${{ steps.result.outputs.docs }}
     steps:
-      - name: Changed files that need the full CI
-        id: filter
-        if: github.event_name == 'pull_request'
-        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
+      - name: Checkout repository
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        uses: actions/checkout@v7
         with:
-          predicate-quantifier: every
-          filters: |
-            code:
-              - '**'
-              - '!LICENSE'
-              - '!CHANGELOG.md'
-              - '!CONTRIBUTING.md'
-              - '!SECURITY.md'
-              - '!.github/ISSUE_TEMPLATE/**'
+          persist-credentials: false
+          fetch-depth: 0
+          filter: blob:none
 
-      # Merge queue, manual and every other event always run everything.
       - name: Decide
         id: result
         env:
-          FILTERED: ${{ steps.filter.outputs.code }}
-        run: echo "code=${FILTERED:-true}" >> "$GITHUB_OUTPUT"
+          EVENT: ${{ github.event_name }}
+          QUEUE_BASE: ${{ github.event.merge_group.base_sha }}
+        run: |
+          case "$EVENT" in
+            pull_request) base=HEAD^1 ;;
+            merge_group) base=$QUEUE_BASE ;;
+            *) printf 'code=true\ndocs=true\n' >> "$GITHUB_OUTPUT"; exit 0 ;;
+          esac
+          git diff --name-only "$base" HEAD > "$RUNNER_TEMP/changed.txt"
+          docs='^(docs/.+|[^/]+\.md|LICENSE|\.github/ISSUE_TEMPLATE/.+)$'
+          not_docs='^docs/\.vitepress/'
+          # An empty diff, a path outside the documentation set or one the tests import is code.
+          if [ ! -s "$RUNNER_TEMP/changed.txt" ] \
+            || grep -qE "$not_docs" "$RUNNER_TEMP/changed.txt" \
+            || grep -qvE "$docs" "$RUNNER_TEMP/changed.txt"; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -qE '^(docs/|[^/]+\.md$)' "$RUNNER_TEMP/changed.txt"; then
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs=false" >> "$GITHUB_OUTPUT"
+          fi
 
   # Fast checks: none of these compile the Rust workspace.
   validate:
@@ -120,9 +139,6 @@ jobs:
       - name: Check Code Quality (Biome)
         run: bun run check
 
-      - name: Public copy matches product.json and benchmark results
-        run: bun run check:copy
-
       - name: Test Python API and wheel packaging without framework dependencies
         run: |
           python3 -m unittest discover -s packages/pypi/tests -v
@@ -149,7 +165,7 @@ jobs:
   docs:
     name: Build docs
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -175,6 +191,11 @@ jobs:
           else
             bun install --frozen-lockfile
           fi
+
+      # README.md and docs/index.md are generated from product.json, and the
+      # README's speed claim from the benchmark results.
+      - name: Public copy matches product.json and benchmark results
+        run: bun run check:copy
 
       - name: Build docs
         run: bun run docs:build
@@ -314,7 +335,8 @@ jobs:
   # queue, so they gate the merge without doubling the pull request load. GitHub-hosted
   # standard runners are free for public repositories (owner standards/dx.md).
   other-os:
-    if: github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch'
+    needs: changes
+    if: (github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch') && needs.changes.outputs.code != 'false'
     name: Test other OS
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -394,15 +416,18 @@ jobs:
     needs: [changes, plain-language, identifiers, validate, docs, audit, rust, other-os, security-secrets, release-targets]
     runs-on: ubuntu-latest
     steps:
-      # Heavy jobs are skipped only for pull requests that touch no code; other-os runs only in the queue.
+      # Heavy jobs are skipped only for changes that touch no code; other-os runs only in the queue.
       - name: Require every applicable gate
         env:
           RESULTS: ${{ toJSON(needs) }}
           CODE: ${{ needs.changes.outputs.code }}
+          DOCS: ${{ needs.changes.outputs.docs }}
         run: |
-          echo "$RESULTS" | jq -e --arg code "$CODE" '
-            def heavy: ["validate","docs","audit","rust","release-targets"];
+          # The docs job is skipped only when neither code nor documentation changed.
+          echo "$RESULTS" | jq -e --arg code "$CODE" --arg docs "$DOCS" '
+            def heavy: ["validate","audit","rust","release-targets"];
             to_entries | all(.[];
               .value.result == "success"
               or (.key == "other-os" and .value.result == "skipped")
-              or (.key as $k | .value.result as $r | (heavy | index($k)) != null and $code == "false" and $r == "skipped"))'
+              or (.key as $k | .value.result as $r | (heavy | index($k)) != null and $code == "false" and $r == "skipped")
+              or (.key == "docs" and .value.result == "skipped" and $code == "false" and $docs == "false"))'
