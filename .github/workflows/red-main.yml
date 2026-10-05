@@ -1,0 +1,60 @@
+name: Red main
+
+# The caller for the red-main handler (owner#809). When the verify workflow
+# fails on `main`, the change has already landed: the reusable handler in
+# SylphxAI/.github decides whether the failure is a flake - it files an issue
+# per failing unit and opens one pull request that marks each flaky unit in
+# its own source - or real, in which case it traces the culprit and opens one
+# revert pull request.
+#
+# This file decides nothing. Everything the handler does is gated on this
+# repository's own committed `sylphx.toml`: `[ci] merge = "optimistic"` lets
+# it act, and `[ci] on_red` picks `revert` or `notify`. A missing manifest is
+# a no-op, never consent.
+#
+# `workflow_dispatch` is how a classification is rehearsed without waiting for
+# a red main: with no event run, the handler takes the newest failed run of
+# the verify workflow on main.
+
+on:
+  workflow_run:
+    workflows: ["Verify"]
+    types: [completed]
+  workflow_dispatch:
+
+# The job's own token. It carries every Actions call (dispatch, runs,
+# artifacts) and the failure notice, in every mode; the handler never hands it
+# to pull-request-controlled code. With the builder App key (repositories in
+# the org that holds it) branch pushes and pull requests go through the App.
+# Without it (token mode) the handler notifies on this token: it comments on the
+# affected pull request; it never opens a pull request with it.
+permissions:
+  actions: write
+  checks: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  red-main:
+    name: Red main handler
+    # Only a failed run of the verify workflow on the trunk (the repository's
+    # default branch, `main` or `master` alike). A dispatch is always handled.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_branch == github.event.repository.default_branch)
+    uses: SylphxAI/.github/.github/workflows/red-main.yml@05ac6474b96425bcb4965addd025a93e061b66c4 # SylphxAI/.github main handler
+    # One secret, passed by name. The handler needs exactly the builder App's
+    # private key, and `secrets: inherit` would hand it every secret this
+    # repository holds. The handler reads it as
+    # `secrets.app-private-key || secrets.SYLPHX_BUILDER_PRIVATE_KEY`, so the
+    # org-wide name is the one to pass; its `app-id` input defaults to this
+    # repository's `vars.SYLPHX_BUILDER_APP_ID`.
+    secrets:
+      SYLPHX_BUILDER_PRIVATE_KEY: ${{ secrets.SYLPHX_BUILDER_PRIVATE_KEY }}
+    # A repository that keeps the App key in a GitHub environment (limited to
+    # the trunk and release tags) drops the `secrets:` block above and adds
+    # `environment: <name>` here: a `uses:` job cannot declare `environment:`,
+    # so the handler's own job enters it and reads the key from it.
+    with:
+      verify-workflow: verify.yml
