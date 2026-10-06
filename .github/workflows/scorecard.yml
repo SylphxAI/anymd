@@ -1,3 +1,4 @@
+# optimistic-merge: advisory
 name: scorecard
 
 # OpenSSF Scorecard: supply-chain checks on this public repository, published

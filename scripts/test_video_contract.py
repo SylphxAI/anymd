@@ -107,7 +107,7 @@ class SharedVideoContracts(unittest.TestCase):
         self.assertIn("&metadata_only, false, None", outline)
 
     def test_hosted_real_fixtures_are_explicit(self):
-        ci = (ROOT / ".github/workflows/ci.yml").read_text()
+        ci = (ROOT / ".github/workflows/verify.yml").read_text()
         self.assertIn("--test video_timeline -- --ignored", ci)
         self.assertIn("python3 scripts/video_api_fixture.py", ci)
         fixture = (ROOT / "scripts/video_api_fixture.py").read_text()

@@ -1,3 +1,4 @@
+# Merge-queue gate (docs/optimistic-merge.md): fast lanes only; the heavy suite is verify.yml.
 name: CI
 
 on:
@@ -6,10 +7,14 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened, ready_for_review]
 
 # Least privilege for GITHUB_TOKEN (CodeQL actions/missing-workflow-permissions).
 permissions:
   contents: read
+  actions: read
+  checks: read
+  pull-requests: read
 
 concurrency:
   # Fast Trunk: supersede obsolete runs of a pull request only; merge queue
@@ -18,6 +23,17 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Stop the line while the trunk's newest Verify run is red and its way back is in
+  # motion (docs/optimistic-merge.md). Merge groups only; ships in observe mode.
+  main-state:
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: SylphxAI/.github/.github/actions/main-red-gate@05ac6474b96425bcb4965addd025a93e061b66c4
+        with:
+          mode: observe
+
   plain-language:
     name: Plain language
     runs-on: ubuntu-latest
@@ -146,206 +162,6 @@ jobs:
           "$RUNNER_TEMP/asr-scoring/bin/pip" install jiwer==4.0.0 opencc-python-reimplemented==0.1.7 cn2an==0.5.24 kanjize==1.6.1
           "$RUNNER_TEMP/asr-scoring/bin/python" -m unittest discover -s bench-asr -p test_report.py
 
-  docs:
-    name: Build docs
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: '1.4.0'
-
-      - name: Cache Bun packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: |
-          if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
-            bun install
-          else
-            bun install --frozen-lockfile
-          fi
-
-      - name: Build docs
-        run: bun run docs:build
-
-  audit:
-    name: Audit Rust dependencies
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      # scripts/check-cargo-advisories.sh installs cargo-audit from source
-      # when it is missing; keep the binary between runs.
-      - name: Cache cargo-audit
-        uses: actions/cache@v6
-        with:
-          path: ~/.cargo/bin/cargo-audit
-          key: cargo-audit-0.22.2-${{ runner.os }}
-
-      - name: Audit Rust dependencies
-        run: bash scripts/check-cargo-advisories.sh
-
-  # The Rust workspace: package, build, fixtures, tests and coverage.
-  rust:
-    name: Build and test
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: '1.4.0'
-
-      - name: Cache Bun packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: |
-          if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
-            bun install
-          else
-            bun install --frozen-lockfile
-          fi
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust build
-        uses: Swatinem/rust-cache@v2
-
-      # Packages every publishable crate the way `cargo publish` does (builds each
-      # from its packed sources against the others), then keeps each under the
-      # crates.io limit of 10 MB.
-      - name: Package the crates for crates.io
-        run: |
-          cargo package --locked -p anymd-oar-ocr-vl -p anymd-adobe-cmap-parser -p anymd-pdf-extract -p anymd-pdf -p anymd-formats -p anymd-core -p anymd-ocr-vlm -p anymd
-          bash scripts/publish-crates.sh --list
-          oversized=$(find target/package -name '*.crate' -size +9M)
-          if [ -n "$oversized" ]; then echo "over 9 MB: $oversized" >&2; exit 1; fi
-          ls -l target/package/*.crate
-
-      - name: Build the anymd binary
-        run: bun run build
-
-      - name: Hosted real video core and MCP API fixtures
-        env:
-          ANYMD_BIN: ${{ github.workspace }}/target/release/anymd
-          # A real anymd Pro licence for CI (issued for ci@sylphx.com); the fixture
-          # also proves the release binary refuses Pro calls without one.
-          ANYMD_PRO_TOKEN_CI: ${{ secrets.ANYMD_PRO_TOKEN_CI }}
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
-          cargo test --locked -p anymd-formats --test video_timeline -- --ignored
-          python3 scripts/video_api_fixture.py
-
-      - name: Verify portable ASR CPU configuration
-        run: python3 scripts/check-native-cpu.py target/release/build
-
-      - name: Test installed Python wheel and optional framework adapters
-        run: |
-          python3 scripts/build-wheels.py --version 0.0.0 --out "${RUNNER_TEMP}/python-wheels" \
-            --binary "manylinux_2_17_x86_64=target/release/anymd"
-          python3 -m venv "${RUNNER_TEMP}/anymd-python"
-          "${RUNNER_TEMP}/anymd-python/bin/pip" install \
-            "${RUNNER_TEMP}/python-wheels/anymd-0.0.0-py3-none-manylinux_2_17_x86_64.whl[langchain,llamaindex]"
-          "${RUNNER_TEMP}/anymd-python/bin/python" -c \
-            'from anymd import convert; assert "<!-- page 1 -->" in convert("test/fixtures/sample.pdf").text'
-          ANYMD_BIN="$PWD/target/release/anymd" "${RUNNER_TEMP}/anymd-python/bin/python" \
-            -m unittest discover -s packages/pypi/tests -v
-
-      - name: Fetch Markdown regression corpus
-        run: bash scripts/fetch-markdown-corpus.sh "${RUNNER_TEMP}/markdown-corpus"
-
-      - name: Rust core tests
-        env:
-          ANYMD_CORPUS_DIR: ${{ runner.temp }}/markdown-corpus
-        run: bun run test:rust
-
-      # The docs playground runs anymd-pdf + anymd-formats in the browser; keep
-      # them free of native-only dependencies. (docs:build below degrades to a
-      # "not in this build" notice when the .wasm is absent.)
-      - name: Check WebAssembly build
-        run: |
-          rustup target add wasm32-unknown-unknown
-          cargo check -p anymd-wasm --target wasm32-unknown-unknown
-
-      - name: Run Tests and Check Coverage
-        env:
-          ANYMD_PRO_TOKEN: ${{ secrets.ANYMD_PRO_TOKEN_CI }}
-        run: bun run test:cov
-
-      - name: Upload coverage reports
-        if: ${{ github.event_name != 'merge_group' && !cancelled() && hashFiles('coverage/**') != '' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 3
-
-  # Queue-only: macOS and Windows run when a pull request enters the merge
-  # queue, so they gate the merge without doubling the pull request load. GitHub-hosted
-  # standard runners are free for public repositories (owner standards/dx.md).
-  other-os:
-    if: github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch'
-    name: Test other OS
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Rust workspace tests
-        run: cargo test --locked --workspace --no-fail-fast
-
-      - name: Build the anymd binary
-        run: cargo build --release --locked -p anymd
-
-      # The npm launcher (packages/anymd/bin/anymd.js) starts the native binary.
-      - name: Launcher smoke test
-        shell: bash
-        run: |
-          set -euo pipefail
-          node packages/anymd/bin/anymd.js version
-          node packages/anymd/bin/anymd.js test/fixtures/sample.pdf > sample.md
-          grep -q '<!-- page 1 -->' sample.md
-
   security-secrets:
     name: security:secrets
     runs-on: ubuntu-latest
@@ -357,52 +173,24 @@ jobs:
       - name: Secret scan (ADR-6 security:secrets)
         uses: SylphxAI/.github/.github/actions/secret-scan@main
 
-  # Validate builds Linux x64. Compile the actual product (not only the runtime
-  # probe) on the other release targets, without downloading model weights.
-  release-targets:
-    name: Release build (${{ matrix.target }})
+  # The full suite on a pull request that is ready; never in a merge group or a draft.
+  suite:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
-          - { runner: macos-latest, target: aarch64-apple-darwin }
-          - { runner: macos-latest, target: x86_64-apple-darwin }
-          - { runner: windows-latest, target: x86_64-pc-windows-msvc }
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
-      - name: Build release binary
-        run: cargo build --release --locked -p anymd --target ${{ matrix.target }}
-      - name: Verify portable ASR CPU configuration
-        run: python3 scripts/check-native-cpu.py target/${{ matrix.target }}/release/build
+    if: github.event_name != 'merge_group' && !github.event.pull_request.draft
+    uses: ./.github/workflows/verify.yml
+    with:
+      code: ${{ needs.changes.outputs.code }}
+    secrets: inherit
 
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [changes, plain-language, identifiers, validate, docs, audit, rust, other-os, security-secrets, release-targets]
+    needs: [main-state, changes, plain-language, identifiers, validate, security-secrets, suite]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      # Heavy jobs are skipped only for pull requests that touch no code; other-os runs only in the queue.
-      - name: Require every applicable gate
-        env:
-          RESULTS: ${{ toJSON(needs) }}
-          CODE: ${{ needs.changes.outputs.code }}
-        run: |
-          echo "$RESULTS" | jq -e --arg code "$CODE" '
-            def heavy: ["validate","docs","audit","rust","release-targets"];
-            to_entries | all(.[];
-              .value.result == "success"
-              or (.key == "other-os" and .value.result == "skipped")
-              or (.key as $k | .value.result as $r | (heavy | index($k)) != null and $code == "false" and $r == "skipped"))'
+      - uses: SylphxAI/.github/.github/actions/needs-pass@05ac6474b96425bcb4965addd025a93e061b66c4
+        with:
+          needs: ${{ toJSON(needs) }}
+          required: changes
+          required-unless-merge-group: ${{ github.event.pull_request.draft && ' ' || 'suite' }}

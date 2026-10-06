@@ -12,3 +12,7 @@ name = "web"
 type = "web"
 port = 80
 watch_paths = ["docs/**"]
+
+[ci]
+merge = "optimistic"
+on_red = "revert"
