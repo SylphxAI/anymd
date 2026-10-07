@@ -58,3 +58,6 @@ jobs:
     # so the handler's own job enters it and reads the key from it.
     with:
       verify-workflow: verify.yml
+      # verify.yml's workflow_dispatch takes no inputs; the handler's default
+      # lane-input (`lanes`) would make every candidate dispatch fail with 422.
+      lane-input: ""
