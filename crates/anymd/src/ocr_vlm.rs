@@ -75,7 +75,7 @@ pub fn root() -> Result<PathBuf, String> {
 
 /// The one-line message for a VLM request on a machine without the engine or
 /// weights. MCP returns it as a normal tool result, like the Pro notice.
-pub const SETUP_NOTICE: &str = "VLM OCR needs a one-time setup: run `anymd setup ocr`";
+pub const SETUP_NOTICE: &str = "VLM OCR needs a one-time setup: run `anymd setup ocr` to download the local OCR engine and ~2 GB of model weights, then retry this read with OCR enabled. Setup opts into the download; documents stay on this machine.";
 
 pub fn is_setup_notice(message: &str) -> bool {
     message.contains(SETUP_NOTICE)
@@ -833,7 +833,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         assert_eq!(
             worker_command_with(dir.path(), &no_refresh),
-            Err("VLM OCR needs a one-time setup: run `anymd setup ocr`".to_string())
+            Err(SETUP_NOTICE.to_string())
         );
         // Weights alone are not enough, and neither is a companion from another version.
         for file in weights::FILES {
