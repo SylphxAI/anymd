@@ -267,6 +267,123 @@ mod tests {
         assert_eq!(run_with(&policy(), &["status".into(), "x".into()]), 2);
     }
 
+    // Run the public CLI dispatcher in a separate process so its config directory
+    // and token environment cannot affect other licence tests.
+    #[cfg(target_os = "linux")]
+    #[test]
+    #[ignore = "helper for buy_loopback_contract"]
+    fn buy_loopback_child() {
+        let base = std::env::var("ANYMD_TEST_CHECKOUT").unwrap();
+        let public_key = public(&key(1));
+        let keys = [&*public_key];
+        let p = policy_with(&keys, Some(&base));
+        let expected: i32 = std::env::var("ANYMD_TEST_EXIT").unwrap().parse().unwrap();
+        assert_eq!(
+            run_with(&p, &["buy".into(), "--no-browser".into(), "--json".into()]),
+            expected
+        );
+        assert_eq!(p.current().is_some(), expected == 0);
+        assert_eq!(p.token_path().unwrap().exists(), expected == 0);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn buy_loopback_contract() {
+        use std::io::{BufRead, BufReader, Read, Write};
+        use std::net::TcpListener;
+        use std::process::Command;
+
+        for (signer, expected) in [(1, 0), (2, 1)] {
+            let config = tempfile::tempdir().unwrap();
+            let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+            let base = format!("http://{}", listener.local_addr().unwrap());
+            let claim = serde_json::json!({
+                "claim_id": "local-contract",
+                "browser_url": format!("{base}/buy/anymd"),
+                "poll_url": format!("{base}/api/v1/claims/local-contract"),
+                "expires_at": 4_000_000_000_000_i64,
+            });
+            let paid = serde_json::json!({
+                "status": "paid",
+                "licence_tokens": [{"token": token(&key(signer), PRO)}],
+            });
+            let server = std::thread::spawn(move || {
+                for (method, path, response) in [
+                    ("POST", "/api/v1/claims", claim),
+                    (
+                        "GET",
+                        "/api/v1/claims/local-contract",
+                        serde_json::json!({"status": "pending"}),
+                    ),
+                    ("GET", "/api/v1/claims/local-contract", paid),
+                ] {
+                    let (mut stream, _) = listener.accept().unwrap();
+                    stream
+                        .set_read_timeout(Some(std::time::Duration::from_secs(10)))
+                        .unwrap();
+                    let mut reader = BufReader::new(&mut stream);
+                    let mut line = String::new();
+                    reader.read_line(&mut line).unwrap();
+                    assert_eq!(line.trim(), format!("{method} {path} HTTP/1.1"));
+                    let mut length = 0;
+                    loop {
+                        line.clear();
+                        assert!(reader.read_line(&mut line).unwrap() > 0);
+                        if line == "\r\n" {
+                            break;
+                        }
+                        if let Some(value) =
+                            line.to_ascii_lowercase().strip_prefix("content-length:")
+                        {
+                            length = value.trim().parse::<usize>().unwrap();
+                        }
+                    }
+                    let mut body = vec![0; length];
+                    reader.read_exact(&mut body).unwrap();
+                    if method == "POST" {
+                        assert_eq!(
+                            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+                            serde_json::json!({"product": "anymd"})
+                        );
+                    }
+                    let body = response.to_string();
+                    write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).unwrap();
+                }
+            });
+            let output = Command::new("timeout")
+                .arg("30s")
+                .arg(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "pro::tests::buy_loopback_child",
+                    "--ignored",
+                    "--nocapture",
+                ])
+                .env("XDG_CONFIG_HOME", config.path())
+                .env("HOME", config.path())
+                .env_remove(TOKEN_ENV)
+                .env("ANYMD_TEST_CHECKOUT", &base)
+                .env("ANYMD_TEST_EXIT", expected.to_string())
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            server.join().unwrap();
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            assert!(stdout.contains("\"event\":\"claim\""));
+            assert!(stdout.contains(if expected == 0 {
+                "\"status\":\"paid\""
+            } else {
+                "\"status\":\"invalid\""
+            }));
+            assert!(!stdout.contains("\"token\":"));
+        }
+    }
+
     #[test]
     fn require_pro_message() {
         assert!(require_pro_with("Video evidence", true).is_ok());
