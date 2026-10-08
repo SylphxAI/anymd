@@ -247,6 +247,44 @@ This row measures anymd's scan and image path, which today is `tesseract` text r
 
 The dataset is licensed for research use only. We download it at run time, evaluate anymd, and publish our own score; nothing from the dataset is redistributed. The method, pins, and rerun command are in [`bench/omnidocbench`](https://github.com/SylphxAI/anymd/tree/main/bench/omnidocbench). The scores above are the evaluator's own summary (`run_summary.json`).
 
+## Image and video extraction
+
+Images and video require different extractors; there is no combined score.
+The image row below reuses the historical OmniDocBench v1.6 evaluation above,
+not a measurement of the current anymd OCR model. TeleOCR is the highest-scoring
+alternative in that v1.6 comparison ([upstream leaderboard](https://github.com/opendatalab/OmniDocBench#evaluation-results));
+its 96.91 is a published model-author result, not our same-run measurement.
+
+For video **embedded subtitles**, the reference alternative is direct FFmpeg:
+it retains every authored cue in these fixtures and is the extractor anymd itself
+uses. The video rows are new, same-run measurements of the published anymd 8.5.1
+CLI and FFmpeg 6.1.1. They do not measure visual scene understanding or speech
+recognition. [Speech-to-text](#speech-to-text) below is a separate audio benchmark.
+
+| Dataset | Samples | Metric | anymd | Alternative | Evidence |
+|---|---|---|---|---|---|
+| OmniDocBench v1.6 page images | 1,651 pages | Overall, higher is better | 21.4 (8.1.0, English tesseract) | TeleOCR 96.91 (author-reported) | [Image method and pins](https://github.com/SylphxAI/anymd/tree/main/bench/omnidocbench) |
+| MP4 mov_text subtitle fixtures | 4 clips / 12 cues | Exact text + start-second recall | 91.7% (11/12) | FFmpeg 100% (12/12) | [Raw video results](https://github.com/SylphxAI/anymd/blob/main/bench/media/results.json) |
+| Matroska SubRip subtitle fixtures | 4 clips / 12 cues | Exact text + start-second recall | 91.7% (11/12) | FFmpeg 100% (12/12) | [Raw video results](https://github.com/SylphxAI/anymd/blob/main/bench/media/results.json) |
+
+The video datasets are small, MIT-licensed, authored regression fixtures: English,
+multiline text, CJK and repeated captions, muxed into three-second black videos.
+They are not representative film or lecture datasets. At
+**2026-10-08T02:07:30Z**, both tools converted all eight clips successfully on the
+same Linux x86_64 Build lease. anymd retained 11 of 12 cues in each dataset,
+dropping the second identical caption at a different timestamp; FFmpeg retained
+all 12. Precision was 100% for both. anymd's rolling-caption cleanup causes this
+loss; it is not a transcription error.
+
+Total extraction time was **2.108 s vs 1.128 s** (anymd vs FFmpeg) for MP4 and
+**2.412 s vs 1.155 s** for Matroska. Each tool ran once per clip, sequentially;
+times include process startup, exclude fixture generation, and are not throughput
+guarantees. anymd also probes metadata and renders Markdown; direct FFmpeg only
+extracts subtitles. The [video benchmark method and rerun commands](https://github.com/SylphxAI/anymd/tree/main/bench/media)
+include exact versions, scoring rules, fixture text and all outputs. Cue end times,
+subsecond timestamps, frame OCR, metadata accuracy and audio transcription were
+not measured in these video rows.
+
 ## Reproduce
 
 ```bash

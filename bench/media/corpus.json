@@ -1,0 +1,14 @@
+{
+  "license": "MIT",
+  "description": "Authored subtitle fixtures, muxed into generated 3-second black videos. No downloaded media.",
+  "datasets": [
+    {"id": "mp4-mov-text", "extension": "mp4", "subtitle_codec": "mov_text"},
+    {"id": "matroska-subrip", "extension": "mkv", "subtitle_codec": "srt"}
+  ],
+  "cases": [
+    {"id": "english", "cues": ["A local converter reads this clip.", "The table contains seven rows.", "Keep the source timestamp."]},
+    {"id": "multiline", "cues": ["First line\nSecond line", "Numbers: 17, 42 and 900.", "Punctuation: question? answer!"]},
+    {"id": "cjk", "cues": ["圖像和影片保留來源。", "日本語の字幕を読みます。", "中文、English 和数字 123。"]},
+    {"id": "repeated", "cues": ["The same words are spoken again.", "The same words are spoken again.", "A different sentence ends the clip."]}
+  ]
+}

@@ -167,6 +167,24 @@ npm, pip and Docker ship a prebuilt binary, while `cargo install` compiles one o
 
 The generated leaderboard, per-category scores (including where anymd loses), and method are in the [benchmark guide](https://sylphxai.github.io/anymd/guide/benchmarks). The corpus, ground truth, adapters, and raw results are in [`bench/`](https://github.com/SylphxAI/anymd/tree/main/bench), and the [Benchmark workflow](https://github.com/SylphxAI/anymd/blob/main/.github/workflows/benchmark.yml) reruns everything; new tools can join with a single adapter file.
 
+### Image and video extraction
+
+[Image and video benchmarks](https://sylphxai.github.io/anymd/guide/benchmarks#image-and-video-extraction)
+cover page-image OCR and embedded video subtitles separately:
+
+| Dataset | anymd | Reference alternative |
+|---|---|---|
+| OmniDocBench v1.6 (1,651 page images), overall ↑ | 21.4 (8.1.0, English tesseract) | TeleOCR 96.91 (author-reported, not our same-run measurement) |
+| MP4 mov_text fixtures (4 clips, 12 cues), text/start recall ↑ | 91.7% (8.5.1, 11/12) | FFmpeg 100% (12/12) |
+| Matroska SubRip fixtures (4 clips, 12 cues), text/start recall ↑ | 91.7% (8.5.1, 11/12) | FFmpeg 100% (12/12) |
+
+The image score is historical, not a score for the current OCR model. The video
+scores were measured on 2026-10-08 using small authored regression datasets, not
+films or lectures; anymd drops a repeated caption at a different timestamp.
+They measure embedded subtitle extraction, **not visual understanding or ASR**.
+The guide links the alternative selection, limitations, timings, raw outputs and
+[reproduction harness](https://github.com/SylphxAI/anymd/tree/main/bench/media).
+
 ## MCP tools
 
 anymd exposes four tools.
