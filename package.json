@@ -37,7 +37,7 @@
     "vite": "^6.4.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.14",
+    "@biomejs/biome": "^2.5.15",
     "@types/node": "^26.6.3",
     "@types/pngjs": "^6.0.5",
     "markdown-it": "^15.0.2",
