@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.5.2
+
+### Patch Changes
+
+- Update the shared licence library to `sylphx-mcp-kit` 0.7.3, including its loopback checkout fix. A local checkout contract test covers claim creation, waiting for payment and saving a verified licence. `anymd pro buy` still opens the Pro page until the checkout service is enabled; existing licence tokens and file locations are unchanged.
+
 ## 8.5.1
 
 ### Patch Changes
