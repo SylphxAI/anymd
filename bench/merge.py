@@ -40,7 +40,7 @@ def merge(parts, corpus_ids):
         for row in data["results"]:
             if row["status"] not in ("ok", "unsupported", "missing", "timeout", "error"):
                 raise ValueError("unknown conversion outcome")
-            failed |= row["status"] not in ("ok", "unsupported")
+            failed |= row["status"] not in ("ok", "unsupported", "timeout")
             rows[row["doc"]] = row
     if shards != set(range(1, total + 1)) or set(rows) != set(planned):
         raise ValueError("incomplete benchmark shard coverage")

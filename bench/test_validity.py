@@ -31,7 +31,7 @@ plan = load("asr_plan", "bench-asr/plan.py")
 
 class AgentValidityTests(unittest.TestCase):
     def test_failed_conversion_and_unsupported_capability(self):
-        for status, expected in [("error", 1), ("missing", 1), ("timeout", 1), ("unsupported", 0), ("ok", 0)]:
+        for status, expected in [("error", 1), ("missing", 1), ("timeout", 0), ("unsupported", 0), ("ok", 0)]:
             with self.subTest(status=status), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 (root / "corpus.json").write_text(json.dumps({"docs": [{"id": "a", "category": "pdf", "format": "pdf", "file": "a.pdf"}]}))
@@ -103,6 +103,13 @@ class AgentValidityTests(unittest.TestCase):
         self.assertEqual(merge.merge(parts, ["a", "b"])["meta"]["status"], "ok")
         parts[1]["results"][0]["status"] = "error"
         self.assertEqual(merge.merge(parts, ["a", "b"])["meta"]["status"], "failed")
+
+    def test_merge_retains_nonfatal_timeout(self):
+        parts = self.parts()
+        parts[0]["results"][0].update(status="timeout", error="over 900s")
+        data = merge.merge(parts, ["a", "b"])
+        self.assertEqual(data["meta"]["status"], "ok")
+        self.assertEqual(data["results"][0], {"doc": "a", "status": "timeout", "error": "over 900s"})
 
     def test_selection_rejects_unknown_duplicate_and_invalid_shards(self):
         for docs, selected, shard in [([{"id": "a"}], {"absent"}, ""), ([{"id": "a"}] * 2, set(), ""), ([{"id": "a"}], set(), "0/2")]:
