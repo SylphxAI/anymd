@@ -48,7 +48,7 @@ Agents and people who have to point at a source and be believed: legal review, r
 
 ## Price
 
-**US$29 once, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Your licence token arrives by email, usually within a few hours.
+**US$29 once, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
 
 <ProBuy label="Buy anymd Pro" />
 
