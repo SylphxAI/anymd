@@ -21,7 +21,7 @@ describe('pro config', () => {
     expect(isPlaceholder(config.buyUrl)).toBe(false);
     const button = readFileSync(
       new URL('../docs/.vitepress/theme/components/ProBuy.vue', import.meta.url),
-      'utf8',
+      'utf8'
     );
     expect(button).toContain('const href = ref(buyUrl)');
     expect(button).not.toMatch(/buyMailto|buyReady|mailto:/);
