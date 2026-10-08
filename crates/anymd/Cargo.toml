@@ -52,7 +52,7 @@ serde_json = "1"
 sha2 = "0.10"
 subtle = "2"
 # Shared MCP setup, CLI hints and cache-root policy.
-sylphx-mcp-kit = { version = "0.6.0", features = ["licence"] }
+sylphx-mcp-kit = { version = "0.7.3", features = ["licence"] }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }
