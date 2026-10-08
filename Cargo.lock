@@ -145,7 +145,7 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "anymd"
-version = "8.5.1"
+version = "8.5.2"
 dependencies = [
  "anyhow",
  "anymd-core",
@@ -164,7 +164,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "subtle",
- "sylphx-mcp-kit 0.6.0",
+ "sylphx-mcp-kit",
  "tempfile",
  "tokio",
  "tokio-util",
@@ -182,7 +182,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-core"
-version = "8.5.1"
+version = "8.5.2"
 dependencies = [
  "anymd-pdf",
  "anymd-pdf-extract",
@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-formats"
-version = "8.5.1"
+version = "8.5.2"
 dependencies = [
  "calamine",
  "csv",
@@ -219,7 +219,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "sylphx-mcp-kit 0.3.3",
+ "sylphx-mcp-kit",
  "tempfile",
  "transcribe-cpp",
  "ureq",
@@ -256,7 +256,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-ocr-vlm"
-version = "8.5.1"
+version = "8.5.2"
 dependencies = [
  "anyhow",
  "anymd-oar-ocr-vl",
@@ -267,7 +267,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-pdf"
-version = "8.5.1"
+version = "8.5.2"
 dependencies = [
  "anymd-pdf-extract",
  "flate2",
@@ -294,7 +294,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-wasm"
-version = "8.5.1"
+version = "8.5.2"
 dependencies = [
  "anymd-formats",
  "anymd-pdf",
@@ -4437,20 +4437,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sylphx-mcp-kit"
-version = "0.3.3"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a507b8c1318bdcb240b4cd0d89f8f091b4b627abca8df8714abdd20e64e4ffb"
-dependencies = [
- "anyhow",
- "dirs",
- "serde_json",
-]
-
-[[package]]
-name = "sylphx-mcp-kit"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce1ce73cf4a50dfe8ca220339dba2afaa38fd5c1349a18b049c6a433de1b9ad6"
+checksum = "eb49f447a76d990f61820c1c51935b36dde37c128fe09075d01303b88f2b7336"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
