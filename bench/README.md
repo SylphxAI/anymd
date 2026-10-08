@@ -157,9 +157,12 @@ and its `agentdocbench-results` artifact holds the merged results JSON and every
 ## Run validity
 
 Each shard freezes its planned and expected document IDs before conversion. Supported
-conversion errors, timeouts and missing input files are written to the results JSON,
-then the runner exits nonzero. Adapter-declared unsupported formats remain explicit
-capability exclusions, not execution failures (their corpus score stays zero).
+conversion errors and missing input files are written to the results JSON, then the
+runner exits nonzero. A conversion exceeding the 900-second default timeout is recorded
+as `timeout` with a zero corpus score, but does not fail the runner or merge: slow tools
+still produce a leaderboard for the complete corpus. Adapter-declared unsupported
+formats remain explicit capability exclusions, not execution failures (their corpus
+score stays zero).
 
 The merge checks every planned shard and document exactly once. Missing, duplicate,
 unexpected or mixed-plan results invalidate the run; failed rows remain diagnostic

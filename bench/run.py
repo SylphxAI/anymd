@@ -150,7 +150,7 @@ def main():
         "shard": args.shard or "1/1",
         "planned_ids": [d["id"] for d in planned],
         "expected_ids": [d["id"] for d in docs],
-        "status": "failed" if any(r["status"] not in ("ok", "unsupported") for r in results) else "ok",
+        "status": "failed" if any(r["status"] not in ("ok", "unsupported", "timeout") for r in results) else "ok",
         "machine": f"{platform.system()} {platform.machine()}, {os.cpu_count()} CPUs",
         "runner": "github-hosted" if os.environ.get("GITHUB_ACTIONS") else "local",
         "run_url": (

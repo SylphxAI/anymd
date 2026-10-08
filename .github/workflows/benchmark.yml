@@ -32,8 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Test corpus downloader (offline)
-        run: python3 -m unittest discover -s bench -p test_fetch.py
+      - name: Test benchmark harness (offline)
+        run: python3 -m unittest discover -s bench -p 'test_*.py'
 
       - name: Cache corpus
         uses: actions/cache@v6
