@@ -214,11 +214,11 @@ pub(crate) fn scan_marker(page: u32, ocr_ran: bool) -> String {
         return format!("<!-- page {page}: scanned image; OCR found no text -->\n\n");
     }
     format!(
-        "<!-- page {page}: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->\n\n"
+        "<!-- page {page}: scanned image, no text layer; to enable local OCR, run `anymd setup ocr` (opts into downloading the OCR engine and ~2 GB of model weights), then retry with OCR enabled (`ocr: true` in MCP or `--ocr auto` in the CLI); documents stay on this machine -->\n\n"
     )
 }
 
-const SCAN_ALL_HINT: &str = "<!-- Every page shown is a scanned image with no text layer, so nothing was read; enable OCR: anymd setup ocr / ocr: true -->";
+const SCAN_ALL_HINT: &str = "<!-- Every page shown is a scanned image with no text layer, so nothing was read; to enable local OCR, run `anymd setup ocr` (opts into downloading the OCR engine and ~2 GB of model weights), then retry with OCR enabled (`ocr: true` in MCP or `--ocr auto` in the CLI); documents stay on this machine -->";
 
 const SCAN_ALL_OCR_HINT: &str =
     "<!-- Every page shown is a scanned image; OCR ran and found no text -->";
@@ -1454,7 +1454,7 @@ mod tests {
         let read = read_fixture("scanned-page.pdf", None);
         assert!(
             read.body.contains(
-                "<!-- page 1 -->\n\n<!-- page 1: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->"
+                "<!-- page 1 -->\n\n<!-- page 1: scanned image, no text layer; to enable local OCR, run `anymd setup ocr` (opts into downloading the OCR engine and ~2 GB of model weights), then retry with OCR enabled (`ocr: true` in MCP or `--ocr auto` in the CLI); documents stay on this machine -->"
             ),
             "{}",
             read.body

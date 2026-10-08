@@ -100,7 +100,7 @@ showing: pages 1-9
 
 ### Scanned pages
 
-A PDF page with no text layer that images cover is a scan. When OCR does not read it (not configured, or `ocr: false`), `read` says so instead of returning an empty page: the page marker is followed by `<!-- page 3: scanned image, no text layer; enable OCR to read it: anymd setup ocr / ocr: true -->`, the front matter lists `scanned_pages: [3, 5]` (page numbers shown in this response), and when every page shown is a scan the body opens with a one-line hint. Pages with text are unchanged, and a page that OCR reads gets no marker.
+A PDF page with no text layer that images cover is a scan. When OCR does not read it (not configured, or `ocr: false`), `read` says so instead of returning an empty page. The page marker explains how to enable local OCR: run `anymd setup ocr` to opt into downloading the OCR engine and ~2 GB of model weights, then retry with `ocr: true`. Documents stay on your machine; setting `ocr: true` alone does not download models. The front matter lists `scanned_pages: [3, 5]` (page numbers shown in this response), and when every page shown is a scan the body opens with the same guidance. Pages with text are unchanged, and a page that OCR reads gets no marker.
 
 ### Cursor and pagination
 
