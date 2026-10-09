@@ -23,10 +23,6 @@ export function isPlaceholder(value: string | undefined): boolean {
   return !value || /X{4}|PRO_PAYMENT_LINK/.test(value);
 }
 
-/** True once buyUrl is a real link. Until then the button is a purchase email, never a dead link. */
-export const buyReady = !isPlaceholder(config.buyUrl);
-export const buyMailto = 'mailto:hi@sylphx.com?subject=anymd%20Pro%20purchase';
-
 export function trackingEnabled(): boolean {
   return !isPlaceholder(config.ga4MeasurementId) || !isPlaceholder(config.adsConversionId);
 }

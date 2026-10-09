@@ -1,6 +1,6 @@
 ---
 title: Thank you for buying anymd Pro
-description: Your anymd Pro token is on its way.
+description: Your anymd Pro token is delivered instantly after payment.
 aside: false
 sidebar: false
 editLink: false
@@ -15,7 +15,7 @@ head:
 
 # Thank you for buying anymd Pro
 
-Your licence token is on its way by email, usually within a few hours. Check your spam folder if you do not see it.
+Your licence token is delivered instantly after payment on the checkout confirmation page. Copy it there, or use the licence link in your confirmation email to retrieve it. Check your spam folder if you do not see the email.
 
 ## Activate it
 
