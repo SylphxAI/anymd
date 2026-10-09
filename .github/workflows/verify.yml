@@ -156,6 +156,9 @@ jobs:
           ANYMD_BIN="$PWD/target/release/anymd" "${RUNNER_TEMP}/anymd-python/bin/python" \
             -m unittest discover -s packages/pypi/tests -v
 
+      - name: Test Markdown corpus downloader
+        run: python3 -I scripts/test_fetch_markdown_corpus.py
+
       - name: Fetch Markdown regression corpus
         run: bash scripts/fetch-markdown-corpus.sh "${RUNNER_TEMP}/markdown-corpus"
 
