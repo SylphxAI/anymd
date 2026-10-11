@@ -125,7 +125,7 @@ version = "0.8"
 features = ["html_reports"]
 
 [dev-dependencies.hayro]
-version = "0.8"
+version = "0.7"
 
 [dev-dependencies.tracing-subscriber]
 version = "0.3.20"

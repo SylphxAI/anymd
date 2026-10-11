@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Patch Changes
+
+- Update PDF rendering to hayro 0.8 while keeping the existing rounded-up pixel bounds, white background and page-to-pixel coordinates, including fractional page sizes.
+
 ## 8.5.2
 
 ### Patch Changes

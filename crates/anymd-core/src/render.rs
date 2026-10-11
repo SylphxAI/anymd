@@ -7,7 +7,8 @@ use hayro::hayro_interpret::hayro_syntax::page::Rotation;
 use hayro::hayro_interpret::hayro_syntax::{LoadPdfError, Pdf};
 use hayro::hayro_interpret::InterpreterSettings;
 use hayro::vello_cpu::color::palette::css::WHITE;
-use hayro::{render, RenderCache, RenderSettings};
+use hayro::vello_cpu::{Pixmap, RasterizerSettings, RenderContext, Resources, TargetInit};
+use hayro::{render_into, RenderCache, RenderSettings};
 use image::codecs::png::PngEncoder;
 use image::{ExtendedColorType, GenericImageView, ImageEncoder, ImageFormat, ImageReader, Limits};
 use serde::{Deserialize, Serialize};
@@ -301,16 +302,31 @@ impl RenderDocument {
             ))
         })?;
 
-        let pixmap = render(
+        let mut pdf_to_pixel = page.initial_transform(true).as_coeffs();
+        for coefficient in &mut pdf_to_pixel {
+            *coefficient *= f64::from(scale);
+        }
+
+        // hayro's scale-only helper truncates fractional dimensions. Keep the
+        // preflight's rounded-up viewport so allocation and PNG dimensions agree.
+        let mut context = RenderContext::new(viewport_width, viewport_height);
+        let transform = hayro::kurbo::Affine::new(pdf_to_pixel);
+        render_into(
             page,
             &RenderCache::new(),
             &InterpreterSettings::default(),
-            &RenderSettings {
-                x_scale: scale,
-                y_scale: scale,
-                width: Some(viewport_width),
-                height: Some(viewport_height),
-                bg_color: WHITE,
+            &RenderSettings::default(),
+            &mut context,
+            transform,
+        );
+        context.flush();
+        let mut pixmap = Pixmap::new(viewport_width, viewport_height);
+        context.render_with(
+            &mut pixmap,
+            &mut Resources::default(),
+            RasterizerSettings {
+                target_init: TargetInit::Clear(WHITE),
+                ..Default::default()
             },
         );
         let rgba = pixmap.data_as_u8_slice();
@@ -320,10 +336,6 @@ impl RenderDocument {
             ));
         }
         let png = encode_rgba_png_bounded(rgba, width, height, max_output_bytes)?;
-        let mut pdf_to_pixel = page.initial_transform(true).as_coeffs();
-        for coefficient in &mut pdf_to_pixel {
-            *coefficient *= f64::from(scale);
-        }
 
         Ok(RenderedPage {
             page: page_number,
@@ -865,6 +877,29 @@ mod tests {
             .as_bytes(),
         );
         pdf
+    }
+
+    #[test]
+    fn fractional_page_dimensions_keep_the_planned_white_viewport() {
+        let bytes = fixture_pdf_with_crop_box(0, Some("0 0 120.25 80.25"));
+        let document = RenderDocument::new(bytes).unwrap();
+        let planned = document.planned_render_pixel_count(1, 1.01).unwrap();
+        assert_eq!(planned, 122 * 82);
+        let rendered = document
+            .render_page(1, 1.01, planned, DEFAULT_MAX_RENDER_OUTPUT_BYTES)
+            .unwrap();
+        assert_eq!((rendered.width, rendered.height), (122, 82));
+        assert_eq!(rendered.pixel_count, planned);
+        let image = image::load_from_memory(&rendered.png).unwrap().to_rgba8();
+        assert_eq!(image.dimensions(), (122, 82));
+        assert_eq!(image.get_pixel(121, 81).0, [255, 255, 255, 255]);
+        assert_eq!(
+            document
+                .render_page(1, 1.01, planned - 1, DEFAULT_MAX_RENDER_OUTPUT_BYTES)
+                .unwrap_err()
+                .code,
+            RenderErrorCode::LimitExceeded
+        );
     }
 
     #[test]
