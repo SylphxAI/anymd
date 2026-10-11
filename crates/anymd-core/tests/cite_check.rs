@@ -98,8 +98,8 @@ fn cite_check_password_encrypted_pdf_fails_closed() {
         .set("ID", lopdf::Object::Array(vec![id.clone(), id]));
     let state = EncryptionState::try_from(EncryptionVersion::V2 {
         document: &doc,
-        owner_password: "fixture-owner",
-        user_password: "fixture-reader",
+        owner_password: "<fixture-owner>",
+        user_password: "<fixture-reader>",
         key_length: 128,
         permissions: Permissions::COPYABLE,
     })

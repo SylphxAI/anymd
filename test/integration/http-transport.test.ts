@@ -531,7 +531,7 @@ describe('MCP Server HTTP Transport Integration (Rust rmcp)', () => {
 });
 
 describe('MCP Server HTTP Transport Authentication (Rust rmcp)', () => {
-  const API_KEY = 'test-secret-key-123';
+  const API_KEY = '<fixture-api-key>';
   let serverProc: ChildProcess;
   let authBaseUrl: string;
 

@@ -2,7 +2,7 @@
 /**
  * One product version in every manifest the release reads: the main npm
  * package and its optional dependencies, the platform packages, the alias
- * packages and their pin on @sylphx/anymd, server.json, CITATION.cff, and the Cargo
+ * packages and their pin on @sylphx/anymd, server.json, the Claude plugin, CITATION.cff, and the Cargo
  * workspace (which the binary reports as its version).
  *
  *   bun scripts/set-version.ts 8.1.0   # set it everywhere, then refresh Cargo.lock
@@ -70,6 +70,13 @@ const manifests: Manifest[] = [
     set: (j, v) => {
       j.version = v;
       for (const p of j['packages'] as Json[]) p.version = v;
+    },
+  },
+  {
+    path: '.claude-plugin/plugin.json',
+    versions: (j) => [j.version],
+    set: (j, v) => {
+      j.version = v;
     },
   },
 ];
