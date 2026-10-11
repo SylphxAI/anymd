@@ -30,13 +30,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Test benchmark harness (offline)
         run: python3 -m unittest discover -s bench -p 'test_*.py'
 
       - name: Cache corpus
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: corpus
           key: agentdocbench-corpus-${{ hashFiles('bench/corpus.json') }}
@@ -45,20 +45,20 @@ jobs:
         run: python3 bench/fetch.py corpus
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
 
       - name: Build anymd
         run: cargo build --release -p anymd
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: corpus
           path: corpus/
           retention-days: 3
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: anymd-binary
           path: target/release/anymd
@@ -100,16 +100,16 @@ jobs:
         run: |
           if [ -z "$TOOLS" ] || [[ ",$TOOLS," == *",$TOOL,"* ]]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         if: steps.selected.outputs.run == 'true'
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: steps.selected.outputs.run == 'true'
         with:
           name: corpus
           path: corpus
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: steps.selected.outputs.run == 'true'
         with:
           name: anymd-binary
@@ -123,7 +123,7 @@ jobs:
           chmod +x anymd-bin/anymd
           echo "ANYMD_BIN=$PWD/anymd-bin/anymd" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         if: steps.selected.outputs.run == 'true'
         with:
           python-version: '3.12'
@@ -132,7 +132,7 @@ jobs:
 
       - name: Model cache
         if: steps.selected.outputs.run == 'true' && contains('docling marker unstructured', matrix.tool)
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ github.workspace }}/../model-cache
           key: agentdocbench-models-${{ matrix.tool }}-${{ hashFiles(format('bench/requirements/{0}.txt', matrix.tool)) }}
@@ -161,7 +161,7 @@ jobs:
           python bench/run.py --tool "$TOOL" --shard "$SHARD" --corpus corpus \
             --out "out/$name.json" --save-outputs "out/outputs/$TOOL"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: steps.selected.outputs.run == 'true' && always()
         with:
           name: results-${{ env.NAME }}
@@ -176,9 +176,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: results-*
           path: parts
@@ -200,7 +200,7 @@ jobs:
           [ "$selected" -gt 0 ] || { echo 'No supported benchmark tools selected' >&2; exit 1; }
           python3 bench/leaderboard.py --results current-results --print | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: agentdocbench-results
           path: |

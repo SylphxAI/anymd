@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - Update PDF rendering to hayro 0.8 while keeping the existing rounded-up pixel bounds, white background and page-to-pixel coordinates, including fractional page sizes.
+- Fix optional MCP arguments appearing in `required` in `tools/list`. Strict clients such as OpenCode can now omit `read`'s `transcript`, `download_asr_model`, `images` and `revisions`, and `search`'s `case_sensitive` and `whole_word`. Required arguments, nullable types, allowed values and limits are unchanged. Regression tests cover every listed tool and the legacy search schema. Thanks to [@lenucksi](https://github.com/lenucksi) for the detailed report and reproduction ([#881](https://github.com/SylphxAI/anymd/issues/881)).
 
 ## 8.5.2
 

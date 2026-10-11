@@ -58,3 +58,21 @@ that can reach the port. It is opt-in; the default transport is `stdio`.
   can read any PDF it has OS permission to open.
 - URL sources resolving to private/loopback addresses are blocked by default
   (SSRF guard). Set `MCP_PDF_ALLOW_PRIVATE_IPS=true` only in a trusted network.
+
+## Plugin supply-chain checks
+
+All remote GitHub Actions and reusable workflows are pinned to immutable commit
+SHAs. Dependabot proposes updates; the plugin contract test rejects mutable tags
+or branch references. The Claude plugin version is checked and updated by
+`scripts/set-version.ts` alongside the published package versions.
+
+The **Plugin source scan** workflow uses a pinned scanner action with read-only
+repository permissions. It scans source without running plugin commands, does not
+probe live services, and requires a score of at least 80 with no high or critical
+findings. Its JSON report is retained as a CI artifact so findings include file
+paths. Passing is evidence for review, not a guarantee that the tool is harmless.
+
+Authentication and encryption fixtures use visibly bracketed placeholders;
+redaction tests assemble synthetic detector inputs at runtime. These checks keep
+coverage of credential handling without storing secret-looking credentials or
+weakening the scanner's rules.

@@ -39,7 +39,7 @@ anyhow = "1"
 axum = "0.8"
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
-ed25519-dalek = "2"
+ed25519-dalek = "3"
 command-group = { version = "5", features = ["with-tokio"] }
 anymd-core = { workspace = true }
 anymd-formats = { workspace = true }
