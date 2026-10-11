@@ -23,11 +23,11 @@ jobs:
     env:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - name: Build changed binary
         run: |
           cargo build --release --locked -p anymd
@@ -47,7 +47,7 @@ jobs:
         run: |
           "${RUNNER_TEMP}/anymd-new" outline "${RUNNER_TEMP}/navigation-corpus/fed-h8.pdf" > "${RUNNER_TEMP}/outline-example.txt"
           "${RUNNER_TEMP}/anymd-new" outline "${RUNNER_TEMP}/navigation-corpus/fed-h8.pdf" --format json > "${RUNNER_TEMP}/outline-example.json"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: navigation-evidence

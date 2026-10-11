@@ -127,7 +127,7 @@ import { createUser } from './auth'
 // Create a new user with email validation
 const user = await createUser({
   email: 'user@example.com',
-  password: 'secure-password'
+  password: '<password>'
 })
 // Returns: { id: '123', email: 'user@example.com', createdAt: Date }
 ```

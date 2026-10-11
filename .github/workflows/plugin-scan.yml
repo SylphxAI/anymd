@@ -1,0 +1,47 @@
+name: Plugin source scan
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-scan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  scan:
+    name: Plugin source scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Scan source without executing plugin commands
+        uses: hashgraph-online/ai-plugin-scanner-action@caba2e96aa8ad2feb6cf6fca52442b52e22e779f
+        with:
+          plugin_dir: .
+          mode: scan
+          format: json
+          output: plugin-scan-report.json
+          min_score: '80'
+          fail_on_severity: high
+          trust_repository_policy: 'false'
+          online: 'false'
+          upload_sarif: 'false'
+          pr_comment: off
+      - name: Preserve rule-level findings
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: plugin-source-scan
+          path: plugin-scan-report.json
+          if-no-files-found: warn
+          retention-days: 7
