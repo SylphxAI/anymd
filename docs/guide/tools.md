@@ -13,6 +13,14 @@ anymd exposes four tools.
 | [`search`](#search) | Find text across files, folders, and URLs |
 | [`inspect`](#inspect) | Go deeper on a PDF: render pages, crop regions, OCR, JSON structure, compare |
 
+Only `source` is required for `read` and `outline`; only `query` is required for
+`search`; `inspect` requires `operation` and `sources`, with further arguments
+needed for the chosen operation as described below. Other options can be omitted
+to use their defaults. Nullable options do not need an explicit `null`, including
+`read`'s `transcript`, `download_asr_model`, `images` and `revisions`, and `search`'s
+`case_sensitive` and `whole_word`. The MCP input schemas reflect this distinction
+so clients can validate minimal calls before sending them.
+
 ## outline
 
 Get the document tree before reading a long document. PDF uses bookmarks when
