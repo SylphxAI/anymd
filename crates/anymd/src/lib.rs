@@ -814,6 +814,119 @@ mod tests {
         }
     }
 
+    // A strict client checks key presence before tools/call. Nullable values
+    // alone do not allow omission: required must agree with serde's decoder.
+    #[test]
+    fn tools_list_required_matches_argument_omission_for_every_tool() {
+        for tool in sanitized_tools(&PdfReaderMcp::new().tool_router) {
+            let schema = serde_json::to_value(&tool.input_schema).expect("schema json");
+            let (minimal, expected_required) = match tool.name.as_ref() {
+                "read" | "outline" => (serde_json::json!({"source": "report.pdf"}), vec!["source"]),
+                "search" => (serde_json::json!({"query": "needle"}), vec!["query"]),
+                "inspect" => (
+                    serde_json::json!({"operation": "inspect", "sources": [{"path": "report.pdf"}]}),
+                    vec!["operation", "sources"],
+                ),
+                other => panic!("add an omission contract for tool {other}"),
+            };
+            let mut required: Vec<_> = schema["required"]
+                .as_array()
+                .expect("required keys")
+                .iter()
+                .map(|key| key.as_str().expect("required key string"))
+                .collect();
+            required.sort_unstable();
+            assert_eq!(
+                required, expected_required,
+                "tool {} required keys",
+                tool.name
+            );
+            assert!(tool_arguments_decode(&tool.name, minimal.clone()));
+
+            for key in schema["properties"]
+                .as_object()
+                .expect("properties")
+                .keys()
+            {
+                let mut omitted = minimal.clone();
+                omitted
+                    .as_object_mut()
+                    .expect("arguments object")
+                    .remove(key);
+                let strict_client_accepts = required.iter().all(|key| omitted.get(*key).is_some());
+                assert_eq!(
+                    strict_client_accepts,
+                    tool_arguments_decode(&tool.name, omitted),
+                    "tool {} disagrees with strict client when {key} is omitted",
+                    tool.name
+                );
+            }
+        }
+    }
+
+    fn tool_arguments_decode(name: &str, value: Value) -> bool {
+        match name {
+            "read" => serde_json::from_value::<crate::schema::ReadArgs>(value).is_ok(),
+            "search" => serde_json::from_value::<crate::schema::SearchArgs>(value).is_ok(),
+            "outline" => serde_json::from_value::<crate::schema::OutlineArgs>(value).is_ok(),
+            "inspect" => serde_json::from_value::<crate::schema::InspectArgs>(value).is_ok(),
+            other => panic!("unknown tool {other}"),
+        }
+    }
+
+    #[test]
+    fn tools_list_optional_overrides_keep_types_enums_and_bounds() {
+        for tool in sanitized_tools(&PdfReaderMcp::new().tool_router) {
+            let schema = serde_json::to_value(&tool.input_schema).expect("schema json");
+            let properties = &schema["properties"];
+            match tool.name.as_ref() {
+                "read" => {
+                    for key in ["transcript", "download_asr_model"] {
+                        assert_eq!(
+                            properties[key]["type"],
+                            serde_json::json!(["boolean", "null"])
+                        );
+                    }
+                    assert_eq!(
+                        properties["images"]["type"],
+                        serde_json::json!(["string", "null"])
+                    );
+                    assert_eq!(
+                        properties["images"]["enum"],
+                        serde_json::json!(["refs", "none", null])
+                    );
+                    assert_eq!(
+                        properties["revisions"]["type"],
+                        serde_json::json!(["string", "null"])
+                    );
+                    assert_eq!(
+                        properties["revisions"]["enum"],
+                        serde_json::json!(["markup", "accept", "reject", null])
+                    );
+                    assert_eq!(properties["source"]["minLength"], 1);
+                    assert_eq!(properties["max_tokens"]["minimum"], 500);
+                }
+                "search" => {
+                    for key in ["case_sensitive", "whole_word"] {
+                        assert_eq!(
+                            properties[key]["type"],
+                            serde_json::json!(["boolean", "null"])
+                        );
+                    }
+                    assert_eq!(properties["query"]["minLength"], 1);
+                    assert_eq!(properties["max_results"]["minimum"], 1);
+                    assert_eq!(properties["max_results"]["maximum"], 500);
+                }
+                "inspect" => {
+                    assert_eq!(properties["scale"]["minimum"], 0.25);
+                    assert_eq!(properties["scale"]["maximum"], 4.0);
+                }
+                "outline" => {}
+                other => panic!("unknown tool {other}"),
+            }
+        }
+    }
+
     #[test]
     fn tools_list_strips_non_standard_schema_formats() {
         // Raw router schemas carry schemars annotations (uint32, uint64,
