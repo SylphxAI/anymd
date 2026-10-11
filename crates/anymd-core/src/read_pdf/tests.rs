@@ -206,7 +206,7 @@ fn encrypted_pdf_permissions_are_captured_before_blank_password_decrypt() {
         | Permissions::COPYABLE_FOR_ACCESSIBILITY;
     let state = EncryptionState::try_from(EncryptionVersion::V2 {
         document: &document,
-        owner_password: "catalog-test-owner",
+        owner_password: "<fixture-owner>",
         user_password: "",
         key_length: 128,
         permissions,

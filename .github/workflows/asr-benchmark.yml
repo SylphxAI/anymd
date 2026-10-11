@@ -44,7 +44,7 @@ jobs:
       datasets: ${{ steps.plan.outputs.datasets }}
       utts: ${{ steps.plan.outputs.utts }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
@@ -67,11 +67,11 @@ jobs:
       matrix:
         dataset: ${{ fromJSON(needs.plan.outputs.datasets) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
 
@@ -83,7 +83,7 @@ jobs:
       - name: Fetch the pinned sample
         run: python3 bench-asr/fetch_data.py "${{ matrix.dataset }}" "$RUNNER_TEMP/data" --utts "${{ needs.plan.outputs.utts }}"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: data-${{ matrix.dataset }}
           path: ${{ runner.temp }}/data
@@ -100,11 +100,11 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.builds) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
 
@@ -137,7 +137,7 @@ jobs:
           ls -la "$RUNNER_TEMP/tool"
           tar -C "$RUNNER_TEMP/tool" -czf "$RUNNER_TEMP/tool.tgz" .
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: tool-${{ matrix.tool }}-${{ matrix.osk }}
           path: ${{ runner.temp }}/tool.tgz
@@ -155,22 +155,22 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: data-${{ matrix.dataset }}
           path: ${{ runner.temp }}/data
 
       - name: Built tool
         if: startsWith(matrix.tool, 'build:')
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: tool-${{ matrix.tool_key }}-${{ matrix.osk }}
           path: ${{ runner.temp }}/tool-archive
@@ -207,7 +207,7 @@ jobs:
             --tool-dir "$RUNNER_TEMP/tool" --model "$model" ${aligner[@]+"${aligner[@]}"} \
             --limit "${{ matrix.limit }}" --lang-mode "${{ matrix.lang_mode }}" --label "${{ matrix.label }}" --job-id "${{ matrix.id }}"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: res-${{ matrix.id }}
@@ -240,11 +240,11 @@ jobs:
           - { runner: ubuntu-24.04-arm, crate: baseline }
           - { runner: windows-latest, crate: baseline }
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
         with:
           targets: ${{ matrix.target }}
 
@@ -262,7 +262,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/probe-out"
           echo "{\"crate\": \"${{ matrix.crate }}\", \"target\": \"${{ matrix.target }}\", \"bytes\": $bytes}" > "$RUNNER_TEMP/probe-out/probe.json"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: probe-${{ matrix.crate }}-${{ matrix.target }}
           path: ${{ runner.temp }}/probe-out/probe.json
@@ -275,22 +275,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
 
       - run: pip install jiwer opencc-python-reimplemented regex
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: res-*
           path: results
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: probe-*
           path: probes
@@ -315,7 +315,7 @@ jobs:
           cat report.md >> "$GITHUB_STEP_SUMMARY"
           exit "$rc"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: asr-report
           path: report.md

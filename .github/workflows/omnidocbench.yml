@@ -45,12 +45,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
       - run: python3 bench/omnidocbench/test_harness.py
       - run: cargo build --release -p anymd
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: anymd-binary
           path: target/release/anymd
@@ -66,9 +66,9 @@ jobs:
       matrix:
         shard: [1/32, 2/32, 3/32, 4/32, 5/32, 6/32, 7/32, 8/32, 9/32, 10/32, 11/32, 12/32, 13/32, 14/32, 15/32, 16/32, 17/32, 18/32, 19/32, 20/32, 21/32, 22/32, 23/32, 24/32, 25/32, 26/32, 27/32, 28/32, 29/32, 30/32, 31/32, 32/32]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: anymd-binary
           path: anymd-bin
@@ -95,7 +95,7 @@ jobs:
           python3 bench/omnidocbench/harness.py predict --shard "${{ matrix.shard }}" \
             --limit "$LIMIT" --workers 1 --timeout 620 --out "pred/${{ strategy.job-index }}"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: predictions-${{ strategy.job-index }}
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Validate prediction run
         env:
@@ -130,7 +130,7 @@ jobs:
             --run "$PREDICTIONS_RUN" --sha "$PREDICTIONS_SHA" --ocr "$ANYMD_OCR" \
             --limit "$LIMIT" --out source-provenance.json
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           github-token: ${{ github.token }}
           run-id: ${{ inputs.predictions_run || github.run_id }}
@@ -168,13 +168,13 @@ jobs:
           mkdir -p predictions
           find pred-parts -name '*.md' -exec cp -t predictions {} +
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: opendatalab/OmniDocBench
           ref: ${{ env.EVALUATOR_COMMIT }}
           path: evaluator
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.10'
 
@@ -220,7 +220,7 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: omnidocbench-results
