@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 
 pub const MAX_SOURCES_PER_REQUEST: usize = 32;
 
+// schema_with replaces schemars' Option type detection. Each field using these
+// nullable schemas also needs serde(default) so an omitted key stays optional
+// in the generated input schema, just as it is in the decoder (#881).
 fn option_bool_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
     // Keep Option semantics (nullable) while guaranteeing a boolean type keyword for tools/list.
     serde_json::from_value(serde_json::json!({
@@ -246,11 +249,13 @@ pub struct SearchPdfArgs {
         description = "Prefer faster text-index search (omit match geometry; ignored when OCR is enabled).",
         schema_with = "option_bool_schema"
     )]
+    #[serde(default)]
     pub prefer_speed: Option<bool>,
     #[schemars(
         description = "Return the detailed JSON result with match geometry and provenance instead of the compact Markdown list.",
         schema_with = "option_bool_schema"
     )]
+    #[serde(default)]
     pub detail: Option<bool>,
 }
 
@@ -527,6 +532,25 @@ mod provider_schema_compat_tests {
     use super::*;
     use schemars::schema_for;
 
+    // Legacy names are callable but are not included in tools/list.
+    #[test]
+    fn legacy_search_optional_overrides_are_not_required() {
+        let schema = serde_json::to_value(schema_for!(SearchPdfArgs)).expect("schema json");
+        assert_eq!(schema["required"], serde_json::json!(["sources", "query"]));
+        let args: SearchPdfArgs = serde_json::from_value(serde_json::json!({
+            "sources": [{"path": "report.pdf"}],
+            "query": "needle"
+        }))
+        .expect("optional search arguments can be omitted");
+        assert!(args.validate().is_ok());
+        for key in ["prefer_speed", "detail"] {
+            assert_eq!(
+                schema["properties"][key]["type"],
+                serde_json::json!(["boolean", "null"])
+            );
+        }
+    }
+
     #[test]
     fn read_node_keeps_its_own_description() {
         let schema = serde_json::to_value(schema_for!(ReadArgs)).unwrap();
@@ -619,22 +643,25 @@ pub struct ReadArgs {
         description = "Transcribe audio/video locally with bundled transcribe-cpp and Qwen3-ASR-1.7B Q8. Needs preinstalled SHA-256 pinned weights (~2.2 GB), unless download_asr_model is true. Audio stays local. Default false.",
         schema_with = "option_bool_schema"
     )]
+    #[serde(default)]
     pub transcript: Option<bool>,
     #[schemars(
         description = "Implies transcript. Downloads pinned Qwen3-ASR-1.7B Q8 weights (~2.2 GB) into the anymd cache. Downloads only when explicitly enabled. Legacy download_whisper_model is accepted as an alias. Default false.",
         schema_with = "option_bool_schema"
     )]
-    #[serde(alias = "download_whisper_model")]
+    #[serde(default, alias = "download_whisper_model")]
     pub download_asr_model: Option<bool>,
     #[schemars(
         description = "Images embedded inside PDFs, DOCX, PPTX and EPUB files. \"refs\" (default) saves each meaningful raster image once to the anymd cache and marks its place in the Markdown as ![caption](absolute path) plus an <!-- image: WxH, page N --> comment, so you can open the file yourself; logos, icons and repeated headers are skipped. \"none\" leaves images out. Standalone image files are not affected.",
         schema_with = "option_images_schema"
     )]
+    #[serde(default)]
     pub images: Option<String>,
     #[schemars(
         description = "Tracked changes and comments in Word (DOCX) files. \"markup\" (default) shows them as CriticMarkup: {++inserted++}, {--deleted--}, {~~old~>new~~}, {==commented==}{>>Author (date): comment<<}, each change followed by its author and date. \"accept\" gives the text with every change accepted and \"reject\" the text with every change rejected, both without comments. A document with no tracked changes or comments reads the same either way.",
         schema_with = "option_revisions_schema"
     )]
+    #[serde(default)]
     pub revisions: Option<String>,
 }
 
@@ -689,8 +716,10 @@ pub struct SearchArgs {
     )]
     pub glob: Option<String>,
     #[schemars(schema_with = "option_bool_schema")]
+    #[serde(default)]
     pub case_sensitive: Option<bool>,
     #[schemars(schema_with = "option_bool_schema")]
+    #[serde(default)]
     pub whole_word: Option<bool>,
     #[schemars(
         range(min = 1, max = 500),
