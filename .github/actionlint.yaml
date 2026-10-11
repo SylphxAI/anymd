@@ -1,8 +1,8 @@
 self-hosted-runner:
   labels:
     - sylphx-linux-standard
-    - sylphx-linux-control
-    - sylphx-linux-xlarge
+    - sylphx-linux-nano
+    - sylphx-linux-2xlarge
     - sylphx
     - macos
     - standard

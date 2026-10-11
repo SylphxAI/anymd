@@ -302,3 +302,8 @@ More from Sylphx: https://sylphx.com/open-source
 ## License
 
 MIT © [Sylphx](https://sylphx.com)
+
+## CI machine catalog
+
+CI selects the canonical machine catalog owned by [Cloud compute.ts](https://github.com/SylphxAI/cloud/blob/main/packages/contract/src/compute.ts): ordinary jobs retain `sylphx-linux-standard`, existing heavy xlarge jobs select `sylphx-linux-2xlarge`, and verdict jobs select `sylphx-linux-nano`. Merge-group priority is classified from the job event separately from machine size; no public `control` or `-merge` tier aliases remain. Resource quantities are not overridden here.
+
