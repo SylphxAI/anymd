@@ -1,2 +1,2 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-docling==2.130.0
+docling==2.132.0
