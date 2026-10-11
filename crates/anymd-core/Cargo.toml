@@ -20,7 +20,7 @@ path = "src/lib.rs"
 anymd-pdf = { workspace = true }
 base64 = "0.22"
 flate2 = "1"
-hayro = "0.7.1"
+hayro = "0.8.0"
 image = { version = "0.25", default-features = false, features = ["png"] }
 lopdf = { version = "0.42", default-features = false }
 pdf-extract = { workspace = true }
