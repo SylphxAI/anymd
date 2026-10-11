@@ -686,7 +686,7 @@ mod tests {
             assert_eq!(
                 result_text(&result),
                 format!(
-                    "[{{\"type\":\"text\",\"text\":\"{feature} is part of anymd Pro. Learn more and get it: https://sylphxai.github.io/anymd/pro\"}}]"
+                    "[{{\"type\":\"text\",\"text\":\"{feature} is part of anymd Pro: US$29 once for an offline licence. Buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pro\"}}]"
                 ),
                 "{operation}"
             );

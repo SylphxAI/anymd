@@ -18,7 +18,7 @@ use std::path::PathBuf;
 /// Trusted public keys (base64url raw Ed25519). A list so rotation is additive.
 pub const PRO_PUBLIC_KEYS: &[&str] = &["xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y"];
 
-/// Where Pro is explained and sold. The price lives on that page, not in the binary.
+/// Where Pro is explained and sold.
 pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pro";
 
 /// Env var holding the token (wins over the token file).
@@ -78,7 +78,7 @@ impl fmt::Display for ProRequired {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} is part of anymd Pro. Learn more and get it: {PRO_URL}",
+            "{} is part of anymd Pro: US$29 once for an offline licence. Buy it with `anymd pro buy`. Learn more: {PRO_URL}",
             self.feature
         )
     }
@@ -387,13 +387,15 @@ mod tests {
     #[test]
     fn require_pro_message() {
         assert!(require_pro_with("Video evidence", true).is_ok());
-        let message = require_pro_with("Cite-check", false)
-            .unwrap_err()
-            .to_string();
+        let required = require_pro_with("Cite-check", false).unwrap_err();
+        let message = required.to_string();
         assert_eq!(
             message,
-            "Cite-check is part of anymd Pro. Learn more and get it: https://sylphxai.github.io/anymd/pro"
+            "Cite-check is part of anymd Pro: US$29 once for an offline licence. Buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pro"
         );
-        assert!(!message.contains('$'));
+        let result = required_result(&required);
+        assert_eq!(result.is_error, Some(false));
+        assert_eq!(result.content.len(), 1);
+        assert_eq!(result.content[0].as_text().unwrap().text, message);
     }
 }
