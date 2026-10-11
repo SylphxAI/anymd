@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { productVersion, repoRoot } from './utils/cargoBinaries.js';
 
