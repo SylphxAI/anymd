@@ -80,7 +80,7 @@ Offline, and no account. Your licence is checked on your machine against a publi
 Yes. anymd stays MIT licensed. Reading, outlining, searching and inspecting documents, OCR, transcripts, the MCP server and the CLI stay free and ungated, and nothing that was free has moved to Pro. Ordinary `read` and `outline` of video (metadata, chapters, subtitles) are still free.
 
 **What happens without a licence?**
-A Pro operation returns a short message with a link to this page and does no work. Nothing else changes.
+A Pro operation returns a short message with the US$29 one-time price, `anymd pro buy` and a link to this page, and does no work. Nothing else changes.
 
 **Which version do I need?**
 anymd 8.4.0 or later. `anymd pro status` tells you whether Pro is active.
