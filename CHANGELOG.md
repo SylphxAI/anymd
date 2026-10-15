@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.5.4
+
+### Patch Changes
+
+- `anymd pro buy` now uses the live checkout service: it opens `buy.sylphx.com/buy/anymd` in your browser and saves the licence token it issues to this machine, instead of printing the Pro page. `--no-browser` and `--json` are unchanged, existing tokens and file locations are unchanged, and the Pro page plus the purchase command are still printed when the checkout cannot be reached.
+
 ## 8.5.3
 
 ### Patch Changes
