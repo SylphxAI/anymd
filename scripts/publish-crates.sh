@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Publish the anymd crates to crates.io in dependency order, skipping any
 # version that is already there, so a rerun finishes a half-done release.
-# Needs CARGO_REGISTRY_TOKEN. Pass --list to print the crates and versions only.
+# CARGO_REGISTRY_TOKEN is set by the release workflow from crates.io trusted
+# publishing (a short-lived OIDC token), never from a stored secret.
+# Pass --list to print the crates and versions only.
 set -euo pipefail
 
 # Dependency order: forks first, then the crates that use them, the binary last.
