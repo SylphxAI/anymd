@@ -24,10 +24,9 @@ pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pro";
 /// Env var holding the token (wins over the token file).
 pub const TOKEN_ENV: &str = "ANYMD_PRO_TOKEN";
 
-/// The shared Sylphx checkout service behind `anymd pro buy`.
-// set when oss-checkout serves /api/v1/claims on this host (and a Money sandbox token passes activate)
-#[allow(dead_code)]
-const CHECKOUT_BASE: &str = "https://buy.sylphx.com";
+/// The shared Sylphx checkout service behind `anymd pro buy`. Live: `buy`
+/// opens the device flow here, so the command never prints the Pro page.
+pub const CHECKOUT_BASE: &str = "https://buy.sylphx.com";
 
 /// anymd's licence policy. `require_product` is false because tokens issued
 /// before the generic flow carry no `product` field.
@@ -47,7 +46,9 @@ fn policy_with<'a>(keys: &'a [&'a str], checkout_base: Option<&'a str>) -> Licen
 }
 
 fn policy() -> LicencePolicy<'static> {
-    policy_with(PRO_PUBLIC_KEYS, None)
+    // The checkout service is live, so `buy` opens the device flow at
+    // [`CHECKOUT_BASE`] (and only falls back to [`PRO_URL`] if it cannot).
+    policy_with(PRO_PUBLIC_KEYS, Some(CHECKOUT_BASE))
 }
 
 pub type ProLicense = Licence;
@@ -254,8 +255,9 @@ mod tests {
             run_with(&policy_with(PRO_PUBLIC_KEYS, None), &["buy".into()]),
             0
         );
-        // The checkout service is not live yet: the production policy has none.
-        assert_eq!(policy().checkout_base, None);
+        // The checkout service is live: `buy` starts the device flow there.
+        assert_eq!(policy().checkout_base, Some(CHECKOUT_BASE));
+        assert_eq!(CHECKOUT_BASE, "https://buy.sylphx.com");
         // anymd sells one licence: pack and quantity flags are usage errors.
         for flag in ["--pack", "--qty", "--x"] {
             assert_eq!(

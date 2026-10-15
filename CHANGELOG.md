@@ -6,6 +6,7 @@
 
 - Update PDF rendering to hayro 0.8 while keeping the existing rounded-up pixel bounds, white background and page-to-pixel coordinates, including fractional page sizes.
 - Fix optional MCP arguments appearing in `required` in `tools/list`. Strict clients such as OpenCode can now omit `read`'s `transcript`, `download_asr_model`, `images` and `revisions`, and `search`'s `case_sensitive` and `whole_word`. Required arguments, nullable types, allowed values and limits are unchanged. Regression tests cover every listed tool and the legacy search schema. Thanks to [@lenucksi](https://github.com/lenucksi) for the detailed report and reproduction ([#881](https://github.com/SylphxAI/anymd/issues/881)).
+- `anymd pro buy` now uses the live checkout service: it opens `buy.sylphx.com/buy/anymd` in your browser and saves the licence token it issues to this machine, instead of printing the Pro page. `--no-browser` and `--json` are unchanged, existing tokens and file locations are unchanged, and the Pro page plus the purchase command are still printed when the checkout cannot be reached.
 
 ## 8.5.2
 
