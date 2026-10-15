@@ -52,7 +52,7 @@ Agents and people who have to point at a source and be believed: legal review, r
 
 <ProBuy label="Buy anymd Pro" />
 
-Buy from the terminal: `anymd pro buy` opens the Pro page; in-terminal purchase turns on when the checkout service is live.
+Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy. It prints the Pro page and the purchase command instead if the checkout cannot be reached.
 
 ## Activate
 
