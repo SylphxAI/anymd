@@ -1,0 +1,34 @@
+name: Ensure crates.io trusted publishers
+
+# One-shot: give every crate this repository publishes its crates.io trusted
+# publisher record, so the release workflow can mint a short-lived OIDC token
+# instead of reading a long-lived registry secret. Idempotent — a crate whose
+# record already exists is left alone. Run before the first release that relies
+# on trusted publishing, then the org CARGO_REGISTRY_TOKEN is revoked and no
+# workflow reads it again.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ensure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Ensure every publish-set crate has a trusted publisher
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+          crates="$(bash scripts/publish-crates.sh --list | awk '{printf " --crate %s", $1}')"
+          # shellcheck disable=SC2086
+          python3 -I scripts/ensure-trusted-publishers.py \
+            $crates \
+            --owner SylphxAI \
+            --repo anymd \
+            --workflow release.yml \
+            --environment crates-io
