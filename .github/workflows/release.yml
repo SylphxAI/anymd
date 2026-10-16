@@ -380,10 +380,11 @@ jobs:
 
   # Windows Package Manager. The release archive anymd-win32-x64-msvc.zip holds
   # anymd.exe at its root, which winget installs as a portable command.
-  # WINGET_TOKEN, passed by name, is a fine-grained PAT that can open pull
-  # requests on microsoft/winget-pkgs. Without it the job validates the
-  # manifest and skips the pull request, and the release is unaffected. A
-  # version already proposed is left alone, so every push to main is safe.
+  # The winget pull request needs WINGET_TOKEN, a fine-grained PAT that can open
+  # pull requests on microsoft/winget-pkgs. The submit step takes it under the
+  # name gh reads, and is skipped when the secret is absent. The manifest is
+  # still rendered and checked, and the release is unaffected. A version already
+  # proposed is left alone, so every push to main is safe.
   winget:
     needs: release
     if: needs.release.result == 'success'
@@ -391,6 +392,8 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+    outputs:
+      rendered: ${{ steps.rendered.outputs.rendered }}
     steps:
       - name: Checkout the manifest renderer
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -401,11 +404,56 @@ jobs:
             scripts/winget-submit.sh
             packages/anymd/package.json
 
-      - name: Render and submit the manifest
+      - name: Render the manifest
         env:
           GH_TOKEN: ${{ github.token }}
-          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: bash scripts/winget-submit.sh
+
+      - id: rendered
+        name: Record whether a manifest was rendered
+        run: |
+          if [ -s out/Sylphx.anymd.yaml ]; then echo "rendered=true" >> "$GITHUB_OUTPUT"
+          else echo "rendered=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Upload the manifest
+        if: steps.rendered.outputs.rendered == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: winget-manifest
+          path: out/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Opens the winget pull request. A job condition may read the repository
+  # secret, which a step condition may not. The secret is passed under the name
+  # gh reads, so the script never handles the credential. No secret, no manifest,
+  # no pull request, and the release is unaffected.
+  winget-submit:
+    needs: winget
+    if: needs.winget.outputs.rendered == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the submit script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/winget-submit.sh
+            packages/anymd/package.json
+
+      - name: Download the manifest
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: winget-manifest
+          path: out
+
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: bash scripts/winget-submit.sh submit
 
   # Platform wheels use this run's natives, or the matching tagged release's
   # verified trust pack when PyPI delivery is incomplete. No Rust rebuild.

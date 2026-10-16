@@ -41,12 +41,26 @@ test -s "out/${id}.locale.en-US.yaml"
 grep -q 'RelativeFilePath: anymd.exe' "out/${id}.installer.yaml"
 grep -q "PackageVersion: ${v}" "out/${id}.yaml"
 
-if [ -z "${WINGET_TOKEN:-}" ]; then
-  echo "::notice::WINGET_TOKEN is not set; the Sylphx.anymd manifest for ${v} was rendered and checked, and the winget pull request was skipped (the release is unaffected)."
+# Rendering stops here unless this is the submit step. The pull request needs a
+# token that can push to a fork of microsoft/winget-pkgs, and that token is
+# GH_TOKEN for that step alone. The anymd release was already read above with
+# the job's own token, so the two credentials never cross.
+if [ "${1:-}" != "submit" ]; then
+  echo "rendered and checked the Sylphx.anymd manifest for ${v}"
   exit 0
 fi
 
-export GH_TOKEN="$WINGET_TOKEN"
+if [ ! -s "out/${id}.yaml" ]; then
+  echo "no rendered manifest for ${v}; nothing to submit"
+  exit 0
+fi
+
+# The submit job passes its credential as GH_TOKEN. When that secret is absent
+# the variable is empty and there is nothing to submit with; the release stands.
+if [ -z "${GH_TOKEN:-}" ]; then
+  echo "::notice::no winget credential set; the manifest for ${v} was checked and the pull request was skipped"
+  exit 0
+fi
 
 existing="$(gh pr list --repo "$winget_repo" --state all --search "Sylphx.anymd ${v} in:title" --json number,state,title --jq '.[0].number // empty')"
 if [ -n "$existing" ]; then
