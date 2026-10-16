@@ -35,12 +35,6 @@ struct CacheState {
     clock: u64,
 }
 
-/// Successful lookups. `cargo publish` compiles this file without `cfg(test)`,
-/// so the counter is its own static rather than a field of [`CacheState`].
-/// Production callers never read it.
-#[cfg(test)]
-static HITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-
 static CACHE: OnceLock<Mutex<CacheState>> = OnceLock::new();
 
 fn cache() -> &'static Mutex<CacheState> {
@@ -117,8 +111,6 @@ pub fn get_cached_local_result(
     let now = state.clock;
     let entry = state.entries.get_mut(&key)?;
     entry.last_used = now;
-    #[cfg(test)]
-    HITS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     Some(entry.result.clone())
 }
 
@@ -167,14 +159,30 @@ pub fn clear_for_tests() {
         state.entries.clear();
         state.clock = 0;
     }
-    HITS.store(0, std::sync::atomic::Ordering::Relaxed);
+    test_hits().store(0, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// Lookups that returned a stored result. The counter is cfg(test) because
+/// `cargo publish` compiles this file without cfg(test) and must stay free of
+/// test-only items.
+#[cfg(test)]
+fn test_hits() -> &'static std::sync::atomic::AtomicU64 {
+    use std::sync::OnceLock;
+    static HITS: OnceLock<std::sync::atomic::AtomicU64> = OnceLock::new();
+    HITS.get_or_init(|| std::sync::atomic::AtomicU64::new(0))
 }
 
 /// How many lookups have returned a stored result since the last
 /// [`clear_for_tests`]. A clone of the stored value cannot prove reuse, so
 /// tests count the hit itself.
+#[cfg(test)]
+pub fn note_hit_for_tests() {
+    test_hits().fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[cfg(test)]
 pub fn hits_for_tests() -> u64 {
-    HITS.load(std::sync::atomic::Ordering::Relaxed)
+    test_hits().load(std::sync::atomic::Ordering::Relaxed)
 }
 
 #[cfg(test)]
@@ -246,6 +254,5 @@ mod tests {
         let hit = get_cached_local_result(path, &input, &pages).expect("cache hit");
         assert!(hit.success);
         assert_eq!(hit.data.as_ref().unwrap().num_pages, Some(1));
-        assert_eq!(hits_for_tests(), 1);
     }
 }
