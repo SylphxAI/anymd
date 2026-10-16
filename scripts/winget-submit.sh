@@ -74,7 +74,12 @@ owner="${WINGET_FORK_OWNER:-}"
 if [ -z "$owner" ]; then
   owner="$(gh api user --jq .login)"
 fi
-git -C "$work/winget-pkgs" push -q "https://x-access-token:${WINGET_TOKEN}@github.com/${owner}/winget-pkgs.git" "HEAD:anymd-${v}"
+# gh authenticates the push from GH_TOKEN, so the token is never written into a
+# remote URL or a command argument. The clone's origin is microsoft/winget-pkgs,
+# which this token cannot push to; the fork can.
+gh -R "${owner}/winget-pkgs" auth setup-git
+git -C "$work/winget-pkgs" remote add fork "https://github.com/${owner}/winget-pkgs.git"
+git -C "$work/winget-pkgs" push -q fork "HEAD:anymd-${v}"
 gh pr create --repo "$winget_repo" --head "${owner}:anymd-${v}" --base master \
   --title "New package: ${id} version ${v}" \
   --body "Adds the portable Windows build of anymd ${v} from the SylphxAI/anymd release. The archive contains anymd.exe at its root."
