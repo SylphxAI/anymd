@@ -54,8 +54,9 @@ export function packageIdentifier(publisher, name) {
 const SCHEMA = {
   version: "version",
   installer: "installer",
-  // The published schema URL lowercases this one word: aka.ms/winget-manifest.defaultlocale.1.12.0.schema.json
-  defaultLocale: "defaultlocale",
+  // The schema URL keeps this word's own casing. The winget validator reads the
+  // path segment after the dot as the manifest type and rejects it lowercased.
+  defaultLocale: "defaultLocale",
 };
 
 function header(kind) {
