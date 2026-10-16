@@ -27,7 +27,7 @@ pdf-extract = { workspace = true }
 regex = "1.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sha2 = "0.10"
+sha2 = "0.11"
 tempfile = "3.20.0"
 # The same two features ureq 2 was built with here: `tls` (rustls with
 # Mozilla's roots, `webpki-roots`) and `gzip`. ureq 3 names the backend
