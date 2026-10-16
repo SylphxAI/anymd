@@ -12,7 +12,7 @@ anymd turns any file into Markdown for AI agents: one Rust binary (`crates/anymd
 ## Hard lines
 
 - Documents stay local. Uploading them or calling a remote provider happens only when the caller selects one, because privacy is the product.
-- No hosted auth, billing, storage or tenancy state here, so the package stays a plain local tool.
+- No hosted auth, billing, storage or tenancy state here, so the package stays a plain local tool. The hosted mode of the same crates is Sylphx AI parse ([docs/guide/hosted.md](docs/guide/hosted.md)); it lives in the platform, not here.
 - Public MCP tool schemas are contracts. Version them and regression-test option and output shapes; the Rust server is their only authority.
 - Extraction and analysis outputs keep page, region and source provenance, so agents can cite them.
 - OCR, vision and region providers sit behind typed adapters that fail closed.

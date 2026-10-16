@@ -13,7 +13,8 @@ Agent and MCP users who need documents in context (PDF, Office, EPUB, HTML, imag
 - Local-first: documents are not uploaded and no remote provider is called unless the caller selects one.
 - One Rust binary (`crates/anymd`) is the MCP server and the CLI; the npm package is a launcher for it. The Rust server is the only authority for the public MCP tool schemas.
 - OCR, vision and region analysis run behind typed adapters that fail closed.
-- Out of scope: hosted accounts, billing, storage, tenancy, customer data retention, and product-specific model routing or provider secrets. A hosted document service would be a separate product.
+- Two modes of the same crates: the free, local mode is this repository (MIT, no account); the hosted, metered mode is [Sylphx AI parse](https://sylphx.com/ai), the platform service that imports `anymd-core`, `anymd-pdf` and `anymd-formats` at a pinned published version ([docs/guide/hosted.md](guide/hosted.md)). The hosted service's accounts, billing, storage, tenancy, retention and provider secrets stay out of this repository; the parser does not.
+- The public converter API of `anymd-core`, `anymd-pdf` and `anymd-formats` is semver-stable within a major version, so the hosted service's pin keeps working and moves forward deliberately.
 - Package names: `@sylphx/anymd` (bin `anymd`), platform packages `@sylphx/anymd-<platform>`, and the aliases `@sylphx/citra` and `@sylphx/pdf-reader-mcp` (formerly the product names) at the same version.
 
 ## Target metrics
