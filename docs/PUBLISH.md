@@ -29,7 +29,8 @@
    The shared npm release skips targets already published for that version.
    That does not prove crates.io or PyPI delivery is complete: their jobs can
    still recover missing delivery without a version bump, subject to the
-   source and trust checks below.
+   source and trust checks below. The `crates` job runs only on a manual
+   dispatch until crates.io trusted publishing is configured (see below).
 
 ## Native CPU portability
 
