@@ -892,6 +892,8 @@ fn read_local_pdf_filtered(
     {
         // Preserve the caller's source label (path or original display form).
         cached.source = source_label.to_string();
+        #[cfg(test)]
+        crate::read_result_cache::note_hit_for_tests();
         return Ok(cached);
     }
     let parsed = crate::cos_document::ParsedPdf::load(path, DEFAULT_MAX_FILE_BYTES)?;

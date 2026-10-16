@@ -5,7 +5,7 @@
   "description": "anymd repository tools: docs site, Biome, TypeScript tests over the Rust binary, and release scripts. The published packages are in packages/.",
   "homepage": "https://sylphxai.github.io/anymd/",
   "license": "MIT",
-  "packageManager": "bun@1.4.0",
+  "packageManager": "bun@1.4.3",
   "scripts": {
     "build": "cargo build --release -p anymd",
     "test": "bun test",
