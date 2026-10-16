@@ -58,8 +58,9 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
     };
     // Each word becomes evenly spaced glyphs, so the gaps between words are
     // the only gaps and word spaces are found as for a text PDF.
+    let words = attach_item_markers(words);
     let mut glyphs = Vec::new();
-    for word in words {
+    for word in &words {
         let chars: Vec<char> = word.text.chars().collect();
         if chars.is_empty() || !(word.x1 > word.x0) {
             continue;
@@ -119,6 +120,82 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
         .collect();
     let mut first_heading = None;
     render_blocks(&blocks, body, &heading_levels(&sizes), &mut first_heading)
+}
+
+/// A typed list prints its item number in the margin, so Tesseract returns
+/// it as its own word (`1.` beside `Scientific`). Joining it there puts the
+/// marker in the row's first cell instead of in a column of its own.
+///
+/// Only a marker of one or two digits, with its full stop, that sits within
+/// a word space of the next word qualifies. A number with more digits, a
+/// number that stands alone, and a marker far from the text stay put.
+fn attach_item_markers(words: &[PlacedWord]) -> Vec<PlacedWord> {
+    let mut absorbed = vec![None; words.len()];
+    for (index, marker) in words.iter().enumerate() {
+        if !is_item_marker(&marker.text) {
+            continue;
+        }
+        let marker_height = marker.bottom - marker.top;
+        if !(marker_height > 0.0) {
+            continue;
+        }
+        let Some(next_index) = words
+            .iter()
+            .enumerate()
+            .skip(index + 1)
+            .find_map(|(at, word)| {
+                (word.line == marker.line && word.x0 >= marker.x1 - marker_height * 0.3)
+                    .then_some(at)
+            })
+        else {
+            continue;
+        };
+        let next = &words[next_index];
+        let gap = next.x0 - marker.x1;
+        let same_row = (marker.top - next.top).abs() <= marker_height * 0.6;
+        let starts_word = next
+            .text
+            .chars()
+            .next()
+            .is_some_and(|ch| ch.is_alphabetic());
+        if same_row
+            && starts_word
+            && gap >= 0.0
+            && gap <= marker_height * 1.5
+            && absorbed[next_index].is_none()
+        {
+            absorbed[next_index] = Some(index);
+        }
+    }
+    words
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| !absorbed.contains(&Some(*index)))
+        .map(|(index, word)| {
+            let Some(marker_index) = absorbed[index] else {
+                return word.clone();
+            };
+            let marker = &words[marker_index];
+            PlacedWord {
+                x0: marker.x0.min(word.x0),
+                text: format!("{} {}", marker.text, word.text),
+                ..word.clone()
+            }
+        })
+        .collect()
+}
+
+/// `1.`, `12.`, also when Tesseract read the stop as a comma.
+fn is_item_marker(text: &str) -> bool {
+    let text = text.trim();
+    let Some(stop) = text.chars().last() else {
+        return false;
+    };
+    if stop != '.' && stop != ',' {
+        return false;
+    }
+    let digits = &text[..text.len() - stop.len_utf8()];
+    !digits.is_empty() && digits.len() <= 2 && digits.chars().all(|ch| ch.is_ascii_digit())
 }
 
 /// OCR often reads a typewritten full stop as a comma. A paragraph never

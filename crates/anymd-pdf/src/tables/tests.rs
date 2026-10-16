@@ -64,6 +64,45 @@ fn tables_of(lines: Vec<Vec<Segment>>) -> Vec<Vec<Vec<String>>> {
 }
 
 #[test]
+fn a_wrapped_label_joins_the_value_row_under_it() {
+    // "Advanced Vehicle" sits alone at the label's left edge; "Development"
+    // continues it beside the values. The sentence above ends with a colon.
+    let lines = vec![
+        line(&[("the following recommendations:", 90.0)], 760.0),
+        line(&[("1960 Program", 200.0), ("1961 Request", 420.0)], 730.0),
+        line(&[("2. Meteorology &", 72.0)], 710.0),
+        line(
+            &[
+                ("Communications", 72.0),
+                ("10.850", 200.0),
+                ("23.200", 420.0),
+            ],
+            698.0,
+        ),
+        line(&[("4. Advanced Vehicle", 72.0)], 660.0),
+        line(
+            &[("Development", 72.0), ("70.620", 200.0), ("138.300", 420.0)],
+            648.0,
+        ),
+    ];
+    let tables = tables_of(lines);
+    assert_eq!(tables.len(), 1, "{tables:?}");
+    let table = &tables[0];
+    assert!(
+        table
+            .iter()
+            .any(|row| row[0] == "2. Meteorology & Communications"),
+        "{table:?}"
+    );
+    assert!(
+        table
+            .iter()
+            .any(|row| row[0] == "4. Advanced Vehicle Development"),
+        "{table:?}"
+    );
+}
+
+#[test]
 fn numbers_years_and_leaders() {
     for number in ["$1,234.50", "(12.3)", "-0.5%", "12^a", "–7.7"] {
         assert!(is_numeric(number), "{number}");
