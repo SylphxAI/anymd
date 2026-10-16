@@ -137,6 +137,8 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 
 Python: `uvx anymd report.pdf > report.md` runs it once, `pip install anymd` installs it, and `uvx anymd mcp` starts the MCP server. The wheels carry the same prebuilt binary.
 
+Windows: `winget install Sylphx.anymd`. macOS and Linux: `brew install sylphxai/tap/anymd`. Scoop: `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket && scoop install anymd`.
+
 Docker (amd64 and arm64):
 
 ```bash

@@ -47,6 +47,29 @@ When redistributing a source build outside this checkout, set
 before building; Cargo's repository configuration is not inherited by downstream
 crates.io consumers.
 
+## winget, Homebrew and Scoop
+
+`release.yml` opts the shared mcp-kit workflow into Homebrew and Scoop
+(`homebrew: true`, `scoop: true`). That job writes `Formula/anymd.rb` to
+`SylphxAI/homebrew-tap` and `bucket/anymd.json` to `SylphxAI/scoop-bucket` with
+the `TAP_APP_ID` and `TAP_APP_PRIVATE_KEY` secrets, passed by name. When those
+secrets are absent the shared job logs a notice and skips; the release itself
+is unchanged. The install lines are `brew install sylphxai/tap/anymd` and
+`scoop install anymd` after `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket`.
+
+The shared workflow has no winget input, so the `winget` job in `release.yml`
+does it. It hashes the published `anymd-win32-x64-msvc.zip` (which contains
+`anymd.exe` at the archive root), renders the three `Sylphx.anymd` manifests
+with `scripts/winget-manifest.mjs`, and opens a pull request on
+`microsoft/winget-pkgs` under `manifests/s/Sylphx/anymd/<version>/`. The pull
+request needs `WINGET_TOKEN`, a fine-grained personal access token that can
+open pull requests on that repository, passed by name. Without the token the
+job still renders and checks the manifest, then skips the pull request. A
+version that already has an open or merged pull request is left alone, so a
+later push to main does not open a second one. winget's own validation merges
+the pull request; until it does, `winget install Sylphx.anymd` is not yet
+served by the community source.
+
 ## crates.io
 
 The `crates` job in `release.yml` runs after the release job succeeds and calls

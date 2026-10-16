@@ -10,7 +10,9 @@ name: release
 # `crates` job publishes the Rust crates to crates.io (`cargo install anymd`).
 # The `wheels` and `pypi` jobs publish platform wheels to PyPI (`pip install
 # anymd`, `uvx anymd`) and `image` pushes ghcr.io/sylphxai/anymd, both from the
-# release's native binaries. The `companion*` jobs build the VLM OCR engine
+# release's native binaries. The `winget` job opens a pull request on
+# microsoft/winget-pkgs so `winget install Sylphx.anymd` installs the portable
+# Windows binary from this release. The `companion*` jobs build the VLM OCR engine
 # (`anymd-ocr-vlm`, which `anymd setup ocr` downloads) per platform and attach
 # it with its checksum manifest to the GitHub release. The `trust` job then adds
 # an SBOM and SHA256SUMS to the GitHub release and signs every asset with a
@@ -48,6 +50,8 @@ jobs:
       mcpb: true
       homebrew: true
       scoop: true
+      # winget is published by the `winget` job below: the shared workflow has
+      # no winget input, and the Windows archive is already a portable zip.
       mcpb-icon: brand/app-icon/icon-512.png
       npm-package: '@sylphx/anymd'
       mcp-name: io.github.SylphxAI/anymd
@@ -373,6 +377,35 @@ jobs:
           set -euo pipefail
           gh release upload "v$V" "assets/anymd-$V.cdx.json" --clobber
           gh release upload "v$V" assets/SHA256SUMS --clobber
+
+  # Windows Package Manager. The release archive anymd-win32-x64-msvc.zip holds
+  # anymd.exe at its root, which winget installs as a portable command.
+  # WINGET_TOKEN, passed by name, is a fine-grained PAT that can open pull
+  # requests on microsoft/winget-pkgs. Without it the job validates the
+  # manifest and skips the pull request, and the release is unaffected. A
+  # version already proposed is left alone, so every push to main is safe.
+  winget:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the manifest renderer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/winget-manifest.mjs
+            scripts/winget-submit.sh
+            packages/anymd/package.json
+
+      - name: Render and submit the manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: bash scripts/winget-submit.sh
 
   # Platform wheels use this run's natives, or the matching tagged release's
   # verified trust pack when PyPI delivery is incomplete. No Rust rebuild.
