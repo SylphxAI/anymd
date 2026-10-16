@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const WIN_PLATFORM = "win32-x64-msvc";
-const MANIFEST_VERSION = "1.10.0";
+const MANIFEST_VERSION = "1.12.0";
 
 export function parseSums(text) {
   const sums = {};
@@ -54,8 +54,9 @@ export function packageIdentifier(publisher, name) {
 const SCHEMA = {
   version: "version",
   installer: "installer",
-  // The published schema URL lowercases this one word: aka.ms/winget-manifest.defaultlocale.1.10.0.schema.json
-  defaultLocale: "defaultlocale",
+  // The schema URL keeps this word's own casing. The winget validator reads the
+  // path segment after the dot as the manifest type and rejects it lowercased.
+  defaultLocale: "defaultLocale",
 };
 
 function header(kind) {
@@ -113,8 +114,6 @@ export function installerManifest(input) {
       "InstallerType: zip",
       "NestedInstallerType: portable",
       "UpgradeBehavior: uninstallPrevious",
-      "Commands:",
-      `  - ${m.name}`,
       "Installers:",
       "  - Architecture: x64",
       "    NestedInstallerFiles:",

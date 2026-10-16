@@ -48,14 +48,15 @@ test("installer points at the portable exe inside the release zip", () => {
   assert.match(text, /^NestedInstallerType: portable$/m);
   assert.match(text, /RelativeFilePath: anymd\.exe/);
   assert.match(text, /PortableCommandAlias: anymd/);
-  assert.match(text, /^Commands:\n {2}- anymd$/m);
+  assert.doesNotMatch(text, /^Commands:/m);
   assert.match(
     text,
     /InstallerUrl: https:\/\/github\.com\/SylphxAI\/anymd\/releases\/download\/v8\.5\.4\/anymd-win32-x64-msvc\.zip/,
   );
   assert.match(text, new RegExp(`InstallerSha256: ${"E".repeat(64)}`));
   assert.match(text, /^ManifestType: installer$/m);
-  assert.match(text, /^ManifestVersion: 1\.10\.0$/m);
+  assert.match(text, /^ManifestVersion: 1\.12\.0$/m);
+  assert.match(text, /winget-manifest\.installer\.1\.12\.0\.schema\.json/);
 });
 
 test("installer refuses a missing archive digest", () => {
@@ -73,6 +74,8 @@ test("a long description is shortened to the winget limit", () => {
 
 test("locale and version manifests name the package", () => {
   assert.match(versionManifest(input), /^DefaultLocale: en-US$/m);
+  assert.match(versionManifest(input), /winget-manifest\.version\.1\.12\.0\.schema\.json/);
+  assert.match(localeManifest(input), /winget-manifest\.defaultLocale\.1\.12\.0\.schema\.json/);
   const locale = localeManifest(input);
   assert.match(locale, /^Publisher: Sylphx$/m);
   assert.match(locale, /ShortDescription: "Any file to \\"clean\\" Markdown"/);
