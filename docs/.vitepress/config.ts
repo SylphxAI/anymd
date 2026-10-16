@@ -95,6 +95,7 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting started', link: '/guide/getting-started' },
+          { text: 'Local and hosted', link: '/guide/hosted' },
           { text: 'MCP tools', link: '/guide/tools' },
           { text: 'Cite-check', link: '/guide/cite-check' },
           { text: 'CLI', link: '/guide/cli' },

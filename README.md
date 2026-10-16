@@ -8,6 +8,10 @@
 PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.
 <!-- /generated:lead -->
 
+<!-- generated:hosted -->
+anymd is the free, local mode of the same crates that run [Sylphx AI parse](https://sylphx.com/ai), the hosted document-parse service: the same crates, hosted and metered per page for callers that want no local runtime.
+<!-- /generated:hosted -->
+
 [![npm](https://mark.sylphx.com/npm/v/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
 [![downloads](https://img.shields.io/npm/dm/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
 [![stars](https://mark.sylphx.com/github/stars/SylphxAI/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://github.com/SylphxAI/anymd/stargazers)
@@ -272,6 +276,17 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 ## anymd Pro
 
 The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (US$29 once, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. [Buy anymd Pro](https://buy.sylphx.com/buy/anymd) for instant delivery after payment: copy your licence token from the checkout confirmation page, or retrieve it through the emailed licence link. Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy. [See anymd Pro](https://sylphxai.github.io/anymd/pro).
+
+## Local and hosted
+
+anymd has two modes, and only one of them runs on your machine:
+
+- **Local (free, MIT, this repository).** The `anymd` binary, the MCP server, the CLI and the `anymd-core`, `anymd-pdf` and `anymd-formats` crates. It converts on your machine, uploads nothing, and needs no API key.
+- **Hosted ([Sylphx AI parse](https://sylphx.com/ai), metered).** The same crates, pinned at the published version and imported unchanged, serve document parsing for Sylphx AI callers that do not want a local runtime. The call is billed per page and needs a Sylphx AI account. This is the paid mode; there is no licence key and nothing in the local binary is gated by it.
+
+Sylphx AI parse is not a different parser and not a fork: the hosted service imports these crates, so a fix here reaches both modes and the two never drift into separate engines. Only the free local binary lives in this repository; the hosted service lives in the Sylphx platform.
+
+For importers, the `anymd-core`, `anymd-pdf` and `anymd-formats` crate APIs are stable within a major version: no breaking change ships without a major version bump, so the service's pinned version keeps working and is moved forward deliberately, never forced by a patch or minor release.
 
 ## Security
 

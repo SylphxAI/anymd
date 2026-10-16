@@ -32,6 +32,7 @@ type Product = {
   shortDescription: string;
   formats: string[];
   formerly: string;
+  hosted: { name: string; url: string; blurb: string };
   keywords: string[];
   alsoFrom: Array<{ name: string; url: string; description: string }>;
 };
@@ -60,6 +61,13 @@ const readmeFormerly = (p: Product) =>
 
 const docsFormerly = (p: Product) =>
   `<p class="cit-fine" style="text-align:center">Formerly <strong>${p.formerly}</strong>. See <a href="./guide/migration">Migration</a>.</p>`;
+
+// one line naming the hosted, metered mode of the same crates (free local mode is the default)
+const hostedLine = (p: Product) =>
+  `anymd is the free, local mode of the same crates that run [${p.hosted.name}](${p.hosted.url}), the hosted document-parse service: ${p.hosted.blurb}`;
+
+const docsHosted = (p: Product) =>
+  `<p class="cit-fine">anymd is the free, local mode of the same crates that run <a href="${p.hosted.url}">${p.hosted.name}</a>, the hosted document-parse service: ${p.hosted.blurb} See <a href="./guide/hosted">Local and hosted</a>.</p>`;
 
 const docsHero = (p: Product) =>
   [`  text: ${JSON.stringify(p.tagline)}`, `  tagline: ${JSON.stringify(subtitle(p))}`].join('\n');
@@ -94,6 +102,7 @@ export const targets = (p: Product): Target[] => [
     render: (t) =>
       [
         ['lead', subtitle(p)],
+        ['hosted', hostedLine(p)],
         ['formerly', readmeFormerly(p)],
         ['also-from', alsoFromList(p)],
       ].reduce((acc, [n, body]) => fillRegion(acc, n as string, body as string), t),
@@ -103,6 +112,7 @@ export const targets = (p: Product): Target[] => [
     render: (t) => {
       let out = fillRegion(t, 'hero', docsHero(p), true);
       out = fillRegion(out, 'formerly', docsFormerly(p));
+      out = fillRegion(out, 'hosted', docsHosted(p));
       return fillRegion(out, 'also-from', alsoFromList(p));
     },
   },
@@ -133,6 +143,7 @@ export const validate = (p: Product): string[] => {
   for (const f of p.formats) {
     if (!p.description.includes(f)) errors.push(`description does not mention format "${f}"`);
   }
+  if (!p.hosted?.name || !p.hosted.url) errors.push('product.json needs hosted.name and hosted.url');
   subtitle(p);
   return errors;
 };

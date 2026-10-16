@@ -65,6 +65,10 @@ features:
 <p class="cit-fine" style="text-align:center">Formerly <strong>pdf-reader-mcp</strong>. See <a href="./guide/migration">Migration</a>.</p>
 <!-- /generated:formerly -->
 
+<!-- generated:hosted -->
+<p class="cit-fine">anymd is the free, local mode of the same crates that run <a href="https://sylphx.com/ai">Sylphx AI parse</a>, the hosted document-parse service: the same crates, hosted and metered per page for callers that want no local runtime. See <a href="./guide/hosted">Local and hosted</a>.</p>
+<!-- /generated:hosted -->
+
 <video src="/demo.mp4" poster="/demo-poster.png" autoplay muted loop playsinline preload="metadata" width="820" style="display:block;margin:32px auto;max-width:100%;height:auto;border-radius:12px" aria-label="Real terminal session: anymd converts a PDF, searches a folder, reads a spreadsheet, and Claude Code answers through the anymd MCP server"></video>
 
 ## Quick start

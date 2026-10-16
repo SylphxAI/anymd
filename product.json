@@ -19,6 +19,11 @@
     "transcripts"
   ],
   "formerly": "pdf-reader-mcp",
+  "hosted": {
+    "name": "Sylphx AI parse",
+    "url": "https://sylphx.com/ai",
+    "blurb": "the same crates, hosted and metered per page for callers that want no local runtime."
+  },
   "keywords": [
     "markdown",
     "mcp",
