@@ -1252,34 +1252,101 @@ fn auto_detail_wins_over_profile() {
     assert_fast_twin(data);
 }
 
-#[test]
-fn warm_cache_speeds_up_identical_local_table_reads() {
-    crate::read_result_cache::clear_for_tests();
-    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../test/fixtures/differential/v3014-selectable-table-v1.pdf");
-    if !fixture.exists() {
-        return;
-    }
-    let input = ReadPdfInput {
+fn table_read_input(path: &std::path::Path) -> ReadPdfInput {
+    ReadPdfInput {
         sources: vec![ReadPdfSource {
-            path: Some(fixture.display().to_string()),
+            path: Some(path.display().to_string()),
             url: None,
             pages: None,
         }],
         include_tables: true,
         include_page_count: true,
         ..Default::default()
-    };
-    let t0 = std::time::Instant::now();
-    let first = read_pdf(&input).expect("first");
-    let first_ms = t0.elapsed().as_secs_f64() * 1000.0;
-    assert!(first.results[0].success);
-    let t1 = std::time::Instant::now();
-    let second = read_pdf(&input).expect("second");
-    let second_ms = t1.elapsed().as_secs_f64() * 1000.0;
-    assert!(second.results[0].success);
+    }
+}
+
+/// Tables and page count of one successful local read. Panics when the read
+/// did not succeed, so a cache miss that fails the parse is not mistaken for
+/// a hit.
+fn tables_and_pages(response: &ReadPdfResponse) -> (serde_json::Value, Option<u32>) {
+    let result = &response.results[0];
+    assert!(result.success, "read failed: {:?}", result.error);
+    let data = result.data.as_ref().expect("data");
+    (
+        data.tables.clone().unwrap_or_else(|| json!([])),
+        data.num_pages,
+    )
+}
+
+#[test]
+fn warm_cache_reuses_identical_local_table_reads() {
+    crate::read_result_cache::clear_for_tests();
+    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../test/fixtures/differential/v3014-selectable-table-v1.pdf");
+    if !fixture.exists() {
+        return;
+    }
+    let input = table_read_input(&fixture);
+    let first = tables_and_pages(&read_pdf(&input).expect("first"));
     assert!(
-        second_ms * 3.0 < first_ms || second_ms < 2.0,
-        "expected warm cache hit much faster: first={first_ms:.3}ms second={second_ms:.3}ms"
+        first.0.as_array().is_some_and(|tables| !tables.is_empty()),
+        "fixture must contain a selectable table"
     );
+    assert!(first.1.is_some(), "page count is part of the cached result");
+    assert_eq!(
+        crate::read_result_cache::hits_for_tests(),
+        0,
+        "the first read parses; it must not be a cache hit"
+    );
+
+    let second = tables_and_pages(&read_pdf(&input).expect("second"));
+    assert_eq!(second, first, "a warm read returns the same tables and pages");
+    assert_eq!(
+        crate::read_result_cache::hits_for_tests(),
+        1,
+        "the second identical read must reuse the stored result"
+    );
+}
+
+#[test]
+fn changed_local_pdf_misses_the_read_cache() {
+    crate::read_result_cache::clear_for_tests();
+    let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../test/fixtures/differential/v3014-selectable-table-v1.pdf");
+    let other = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../test/fixtures/sample.pdf");
+    if !source.is_file() || !other.is_file() {
+        return;
+    }
+    let dir = tempfile::tempdir().expect("tempdir");
+    let fixture = dir.path().join("table.pdf");
+    std::fs::copy(&source, &fixture).expect("copy");
+    let input = table_read_input(&fixture);
+    let first = tables_and_pages(&read_pdf(&input).expect("first"));
+
+    // mtime and size are both in the cache key. Copying a different PDF
+    // changes the bytes and, on a coarse Windows timestamp, may not change
+    // mtime, so the timestamp is moved forward as well.
+    std::fs::copy(&other, &fixture).expect("replace");
+    std::fs::File::options()
+        .write(true)
+        .open(&fixture)
+        .and_then(|file| {
+            file.set_modified(std::time::SystemTime::now() + std::time::Duration::from_secs(5))
+        })
+        .expect("touch");
+
+    let changed = tables_and_pages(&read_pdf(&input).expect("changed"));
+    assert_ne!(
+        changed, first,
+        "replacing the file must return that file's tables, not the cached ones"
+    );
+    assert_eq!(
+        crate::read_result_cache::hits_for_tests(),
+        0,
+        "a changed file must not reuse the stored result"
+    );
+
+    let again = tables_and_pages(&read_pdf(&input).expect("again"));
+    assert_eq!(again, changed, "the replacement is cached on its own");
+    assert_eq!(crate::read_result_cache::hits_for_tests(), 1);
 }

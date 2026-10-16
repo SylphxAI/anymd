@@ -33,6 +33,10 @@ struct CacheEntry {
 struct CacheState {
     entries: HashMap<String, CacheEntry>,
     clock: u64,
+    /// Successful lookups. Test-only evidence that `read_pdf` reused a stored
+    /// result instead of parsing again; production callers never read it.
+    #[cfg(test)]
+    hits: u64,
 }
 
 static CACHE: OnceLock<Mutex<CacheState>> = OnceLock::new();
@@ -111,6 +115,10 @@ pub fn get_cached_local_result(
     let now = state.clock;
     let entry = state.entries.get_mut(&key)?;
     entry.last_used = now;
+    #[cfg(test)]
+    {
+        state.hits = state.hits.saturating_add(1);
+    }
     Some(entry.result.clone())
 }
 
@@ -158,7 +166,15 @@ pub fn clear_for_tests() {
     if let Ok(mut state) = cache().lock() {
         state.entries.clear();
         state.clock = 0;
+        state.hits = 0;
     }
+}
+
+/// How many lookups have returned a stored result since the last
+/// [`clear_for_tests`]. A clone of the stored value cannot prove reuse, so
+/// tests count the hit itself.
+pub fn hits_for_tests() -> u64 {
+    cache().lock().map(|state| state.hits).unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -230,5 +246,6 @@ mod tests {
         let hit = get_cached_local_result(path, &input, &pages).expect("cache hit");
         assert!(hit.success);
         assert_eq!(hit.data.as_ref().unwrap().num_pages, Some(1));
+        assert_eq!(hits_for_tests(), 1);
     }
 }
