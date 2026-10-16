@@ -188,6 +188,8 @@ jobs:
           fetch-depth: 0 # full history for the new-commit range
       - name: Secret scan (ADR-6 security:secrets)
         uses: SylphxAI/.github/.github/actions/secret-scan@da18ca4ebeeb7509019e3aac3f10763e0352b2d7
+        with:
+          config-path: .gitleaks.toml
 
   # The full suite on a pull request that is ready; never in a merge group or a draft.
   suite:
