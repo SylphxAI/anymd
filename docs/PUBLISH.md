@@ -50,8 +50,8 @@ crates.io consumers.
 
 The `crates` job in `release.yml` runs after the release job succeeds and calls
 `scripts/publish-crates.sh`, which publishes the eight crates in dependency order
-(the three forks, `anymd-pdf`, `anymd-formats`, `anymd-core`, `anymd-ocr-vlm`, `anymd`) with the
-organization secret `CARGO_REGISTRY_TOKEN`, and skips any version already on
+(the three forks, `anymd-pdf`, `anymd-formats`, `anymd-core`, `anymd-ocr-vlm`, `anymd`) with a
+short-lived crates.io trusted-publishing token, and skips any version already on
 crates.io. `set-version.ts` moves the workspace version and the internal
 `version` pins together; the forks have their own versions
 (`anymd-pdf-extract` 0.12.2, `anymd-adobe-cmap-parser` 0.4.1, `anymd-oar-ocr-vl` 0.9.2), and their
@@ -61,7 +61,29 @@ with its crates.io package (sources, manifest, README and license), without
 compiling. A changed payload must have a new version and a matching workspace
 pin; registry errors fail the check. CI packs every crate on each pull request
 (`cargo package` for each crate) and fails a package over 9 MB (the limit is 10 MB).
-The token needs the scopes `publish-new` and `publish-update`.
+
+crates.io mints a trusted-publishing credential only for a crate that already has a
+trusted-publisher record, so the record comes first. `release.yml` trusts
+`release.yml` in `SylphxAI/anymd` with environment `crates-io`; the
+dispatch-only `ensure-trusted-publishers.yml` creates that record for every crate
+in `scripts/publish-crates.sh --list` through a `CARGO_REGISTRY_TOKEN` that
+carries the trusted-publishing scope, and reads each record back. The tool is
+idempotent, so a repeat dispatch leaves an existing record alone and prints it as
+`present`. Until every crate in that list has its record, the `crates` job runs
+only when `release.yml` is dispatched by hand, because on a push it would fail
+before publishing anything. To finish the setup:
+
+1. Merge this change to `main`. The push-triggered run skips `crates` and the
+   rest of the release is unaffected.
+2. Dispatch `ensure-trusted-publishers.yml`. It reads `CARGO_REGISTRY_TOKEN` and
+   prints `crate: trusted publisher created` or `present` per crate, a non-zero
+   exit if any crate failed.
+3. Revoke the setup credential and remove the repository entry. No workflow
+   reads it after this point: `release.yml` mints its own short-lived
+   credential from the records, and the setup workflow fails with a message
+   naming the missing scope rather than skipping silently.
+4. Release as usual. A missing record fails `crates` loudly, before anything is
+   published, so a release never half-publishes the set.
 
 ## npm trusted publishing
 
