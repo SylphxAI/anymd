@@ -159,6 +159,30 @@ pub fn clear_for_tests() {
         state.entries.clear();
         state.clock = 0;
     }
+    test_hits().store(0, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// Lookups that returned a stored result. The counter is cfg(test) because
+/// `cargo publish` compiles this file without cfg(test) and must stay free of
+/// test-only items.
+#[cfg(test)]
+fn test_hits() -> &'static std::sync::atomic::AtomicU64 {
+    use std::sync::OnceLock;
+    static HITS: OnceLock<std::sync::atomic::AtomicU64> = OnceLock::new();
+    HITS.get_or_init(|| std::sync::atomic::AtomicU64::new(0))
+}
+
+/// How many lookups have returned a stored result since the last
+/// [`clear_for_tests`]. A clone of the stored value cannot prove reuse, so
+/// tests count the hit itself.
+#[cfg(test)]
+pub fn note_hit_for_tests() {
+    test_hits().fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[cfg(test)]
+pub fn hits_for_tests() -> u64 {
+    test_hits().load(std::sync::atomic::Ordering::Relaxed)
 }
 
 #[cfg(test)]
