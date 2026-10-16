@@ -10,7 +10,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const WIN_KEY = "win32-x64-msvc";
+const WIN_PLATFORM = "win32-x64-msvc";
 const MANIFEST_VERSION = "1.10.0";
 
 export function parseSums(text) {
@@ -71,7 +71,7 @@ function meta(input) {
     throw new Error("--name, --version and --repo owner/repo are required");
   }
   if (!publisher) throw new Error("--publisher is required");
-  const file = `${name}-${WIN_KEY}.zip`;
+  const file = `${name}-${WIN_PLATFORM}.zip`;
   const sha = sums[file];
   if (!sha) throw new Error(`no SHA-256 for ${file}`);
   return {
