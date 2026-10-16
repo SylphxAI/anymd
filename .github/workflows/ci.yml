@@ -60,6 +60,22 @@ jobs:
       - name: Non-v7 ids on added lines (owner standards/identifiers.md)
         uses: SylphxAI/.github/.github/actions/identifiers@e4a5ea41cbcc87cd93914f89f0d7c3981c868bf9
 
+  chat-senders:
+    name: Chat senders
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Added lines send chat through Notify
+        uses: SylphxAI/.github/.github/actions/chat-senders@5cfd55a41435cca8e4b7caf6506faf04ca08d200
+        with:
+          mode: fail
+
   # Pull requests that only touch these files skip the heavy jobs; the required
   # checks (ci-ok and every job name) still report. docs/** is not listed
   # because CI builds the docs.
@@ -202,7 +218,7 @@ jobs:
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [main-state, changes, plain-language, identifiers, validate, security-secrets, suite, stack]
+    needs: [main-state, changes, plain-language, identifiers, chat-senders, validate, security-secrets, suite, stack]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
