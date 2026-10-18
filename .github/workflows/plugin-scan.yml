@@ -25,7 +25,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Scan source without executing plugin commands
-        uses: hashgraph-online/ai-plugin-scanner-action@caba2e96aa8ad2feb6cf6fca52442b52e22e779f
+        uses: hashgraph-online/ai-plugin-scanner-action@1fb7eef6f7387abd0512e91ee8f336ac8bf07c95
         with:
           plugin_dir: .
           mode: scan
