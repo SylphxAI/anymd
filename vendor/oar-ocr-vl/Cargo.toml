@@ -73,7 +73,7 @@ version = "0.11.0"
 version = "2"
 
 [dependencies.html-escape]
-version = "0.2"
+version = "0.3"
 
 [dependencies.image]
 version = "0.25.6"
