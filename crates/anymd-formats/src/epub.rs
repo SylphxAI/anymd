@@ -45,8 +45,9 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     .or_else(|| {
         archive
             .file_names()
+            .filter_map(|name| name.ok())
             .find(|n| n.to_ascii_lowercase().ends_with(".opf"))
-            .map(str::to_string)
+            .map(|name| name.to_string())
     })
     .ok_or_else(|| ConvertError::Invalid("EPUB has no package document (OPF)".into()))?;
     let opf = read_entry(&mut archive, &opf_path)?;
@@ -322,8 +323,9 @@ fn read_entry_bytes(
         // Some producers get case wrong; fall back to a case-insensitive match.
         archive
             .file_names()
+            .filter_map(|name| name.ok())
             .find(|n| n.eq_ignore_ascii_case(name))
-            .map(str::to_string)
+            .map(|name| name.to_string())
             .ok_or_else(|| ConvertError::Invalid(format!("EPUB entry {name} is missing")))?
     };
     let entry = archive
