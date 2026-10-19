@@ -210,7 +210,10 @@ tests. Neither these checks nor the examples download models.
 
 PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
 workflow `release.yml`, environment `pypi`. That publisher must be registered
-on PyPI before OIDC token exchange can succeed. After registration, a fresh
+on PyPI before OIDC token exchange can succeed. As of 2026-10-19 the `anymd`
+project does not exist on PyPI and no publisher is registered there, so the
+`pypi` job stays skipped; the wheel `README.md` tells readers where the Python
+route really is until then. After registration, a fresh
 recovery run can build missing wheels under the exact-tag checks above and
 pass them through the existing CLI/API smoke tests and OIDC `pypi` job. The
 publisher skips files already present; neither publisher registration nor a

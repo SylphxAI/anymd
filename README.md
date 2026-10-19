@@ -135,7 +135,7 @@ Any client that speaks MCP over stdio: command `npx`, args `["-y", "@sylphx/anym
 npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
 ```
 
-Python: `uvx anymd report.pdf > report.md` runs it once, `pip install anymd` installs it, and `uvx anymd mcp` starts the MCP server. The wheels carry the same prebuilt binary.
+Python wheels carry the same prebuilt binary and are on PyPI as `anymd` from the first release after publication.
 
 Windows: `winget install Sylphx.anymd`. macOS and Linux: `brew install sylphxai/tap/anymd`. Scoop: `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket && scoop install anymd`.
 
