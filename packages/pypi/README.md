@@ -4,6 +4,10 @@ Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HT
 
 This package carries the native `anymd` binary for your platform, so there is nothing else to install.
 
+This package publishes on PyPI with the release it belongs to. Until that
+release is out, `pip install anymd` and `uvx anymd` fetch nothing (`anymd` is
+not a PyPI project yet); use `npx -y @sylphx/anymd` in the meantime.
+
 ```bash
 uvx anymd report.pdf > report.md     # run once, no install
 pip install anymd                    # or install it
@@ -15,8 +19,6 @@ Run it as an MCP server (stdio):
 ```bash
 uvx anymd mcp
 ```
-
-Add it to every MCP client on your machine with `uvx anymd setup`.
 
 ## Python API
 
