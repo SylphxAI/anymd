@@ -327,6 +327,17 @@ fn note_subtitle_gap(timeline: &mut timeline::Timeline, reason: String) {
     };
 }
 
+/// Read one media sidecar under the allowlist: admitted first, then opened.
+fn sidecar_text(
+    source: &Path,
+    extension: &str,
+    policy: &SourceAccessPolicy,
+) -> Result<String, String> {
+    let sidecar = source.with_extension(extension);
+    policy.admit_path(&sidecar.to_string_lossy())?;
+    load_sidecar(&sidecar, policy)
+}
+
 /// Read one sidecar; every failure is a reason string, not a request error.
 fn load_sidecar(path: &Path, policy: &SourceAccessPolicy) -> Result<String, String> {
     let admitted = policy.admit_path(&path.to_string_lossy())?;
@@ -413,11 +424,8 @@ fn request(
     let mut sidecars = vec![];
     if !crate::document::is_url(source) && timestamps.is_none() {
         for extension in ["srt", "vtt"] {
-            let sidecar = Path::new(source).with_extension(extension);
-            if sidecar.exists() {
-                let text = load_sidecar(&sidecar, policy);
-                sidecars.push((extension.into(), text));
-            }
+            let text = sidecar_text(Path::new(source), extension, policy);
+            sidecars.push((extension.into(), text));
         }
     }
     let work = Work {
@@ -677,6 +685,27 @@ mod tests {
         assert_eq!(subtitles.status, timeline::Status::Partial);
         let text = subtitles.reason.as_deref().unwrap();
         assert!(text.contains("subtitle file srt") && text.contains("subtitle file vtt"));
+    }
+    #[test]
+    fn a_sidecar_outside_the_allowlist_is_refused() {
+        let cwd = tempfile::tempdir().unwrap();
+        let allowed = tempfile::tempdir().unwrap();
+        let allowed_media = allowed.path().join("movie.mp4");
+        std::fs::write(&allowed_media, b"not a video").unwrap();
+        std::fs::write(allowed.path().join("movie.srt"), "WEBVTT\n").unwrap();
+        let policy =
+            SourceAccessPolicy::restricted_for_test(cwd.path().to_path_buf(), allowed.path())
+                .unwrap();
+        let admitted = load_sidecar(&allowed_media.with_extension("srt"), &policy);
+        assert_eq!(admitted.unwrap(), "WEBVTT\n");
+        // A sibling outside the allowlist stays unreadable, admitted or not.
+        let outside = cwd.path().join("outside");
+        std::fs::create_dir(&outside).unwrap();
+        std::fs::write(outside.join("movie.srt"), "WEBVTT\n").unwrap();
+        let probe = sidecar_text(&outside.join("movie.mp4"), "srt", &policy);
+        assert!(probe.unwrap_err().contains("Access denied"));
+        let direct = load_sidecar(&outside.join("movie.srt"), &policy);
+        assert!(direct.unwrap_err().contains("Access denied"));
     }
     #[test]
     fn sidecar_errors_keep_the_worse_status_and_earlier_reasons() {
