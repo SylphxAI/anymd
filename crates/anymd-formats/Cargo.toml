@@ -20,9 +20,9 @@ path = "src/lib.rs"
 sylphx-mcp-kit = { version = "0.7.3", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-zip = { version = "8", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 quick-xml = "0.42"
-calamine = { version = "0.36", features = ["dates"] }
+calamine = { version = "0.37", features = ["dates"] }
 csv = "1.4"
 scraper = "0.27"
 ego-tree = "0.11"
@@ -48,5 +48,5 @@ native = ["dep:tempfile", "dep:wait-timeout", "dep:ureq", "dep:sha2", "dep:trans
 
 [dev-dependencies]
 tempfile = "3.20"
-rust_xlsxwriter = { version = "0.99", default-features = false }
+rust_xlsxwriter = { version = "0.100", default-features = false }
 image = { version = "0.25", default-features = false, features = ["png"] }

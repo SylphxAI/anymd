@@ -34,7 +34,11 @@ impl<'a> Package<'a> {
         let archive = zip::ZipArchive::new(Cursor::new(bytes))
             .map_err(|e| invalid(format!("not a valid {kind} file: {e}")))?;
         check_limits(&archive)?;
-        let names = archive.file_names().map(str::to_string).collect();
+        let names = archive
+            .file_names()
+            .filter_map(|name| name.ok())
+            .map(|name| name.to_string())
+            .collect();
         Ok(Self { archive, names })
     }
 
@@ -164,7 +168,7 @@ pub(crate) fn guard_zip(bytes: &[u8]) -> Result<(), ConvertError> {
         if file.size() > MAX_ENTRY_BYTES {
             return Err(invalid(format!(
                 "{} is larger than {MAX_ENTRY_BYTES} bytes uncompressed",
-                file.name()
+                file.name().unwrap_or_else(|_| "<unnamed>".into())
             )));
         }
     }
@@ -554,7 +558,7 @@ impl Inline {
             text: text.to_string(),
             bold,
             italic,
-            link: link.map(str::to_string),
+            link: link.map(|name| name.to_string()),
         });
     }
 
