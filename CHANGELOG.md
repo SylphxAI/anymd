@@ -7,6 +7,13 @@
 - Name the hosted, metered mode of the same crates: **Sylphx AI parse** serves the `anymd-core`, `anymd-pdf` and `anymd-formats` crates at a pinned published version for callers that want no local runtime, billed per page. The local `anymd` binary stays free and MIT and keeps every feature. Vision and the "Local and hosted" page now record this instead of saying a hosted service would be a separate product.
 - Record the crate API policy: the public converter API of `anymd-core`, `anymd-pdf` and `anymd-formats` is semver-stable within a major version. A patch release fixes behaviour without changing the public API, a minor release adds API without breaking one, and a breaking change ships only in a major version — so the hosted service's pinned version keeps working and is moved forward deliberately.
 
+## 8.5.5
+
+### Patch Changes
+
+- With `--allow-dir` or `MCP_PDF_ALLOWED_DIRS` set, every tool now refuses a local path outside those directories before opening it. `pdf_compare` was the one entrypoint that reached the comparison without that check; it now applies the same check as `read`, `search` and `inspect`, and a comparison of files inside the allowed directories is unchanged. A video subtitle sidecar is admitted before it is read.
+- Dependencies: zip 9.0.5, calamine 0.37, chacha20 0.10.2. No behaviour change.
+
 ## 8.5.4
 
 ### Patch Changes
