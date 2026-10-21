@@ -16,6 +16,11 @@ categories = ["parsing", "text-processing"]
 [lib]
 path = "src/lib.rs"
 
+[package.metadata.cargo-machete]
+# `mcp_kit::cache` in src/cache.rs (the library name differs from the
+# package), and the exif crate is imported as `exif`.
+ignored = ["sylphx-mcp-kit", "kamadak-exif"]
+
 [dependencies]
 sylphx-mcp-kit = { version = "0.7.3", default-features = false }
 serde = { version = "1.0", features = ["derive"] }

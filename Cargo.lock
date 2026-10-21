@@ -296,6 +296,7 @@ dependencies = [
 name = "anymd-wasm"
 version = "8.5.5"
 dependencies = [
+ "anymd-core",
  "anymd-formats",
  "anymd-pdf",
  "serde_json",

@@ -15,6 +15,8 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+# No `native`: a browser fetches no URL, so the socket and TLS stack stay out.
+anymd-core = { path = "../anymd-core", default-features = false }
 anymd-pdf = { path = "../anymd-pdf" }
 # No `native`: no helper binaries (tesseract, ffprobe, whisper) in a browser.
 anymd-formats = { path = "../anymd-formats", default-features = false }

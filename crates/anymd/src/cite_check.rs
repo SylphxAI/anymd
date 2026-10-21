@@ -104,7 +104,7 @@ pub(crate) async fn inspect(
     // worker, so independent cite-check workers cannot evade server admission.
     // A busy OCR owner still permits native positives to be checked.
     let permit = if args.ocr.is_some() {
-        crate::ocr_evidence::OcrRequestPermit::acquire().ok()
+        crate::ocr_evidence::acquire_ocr_permit().ok()
     } else {
         None
     };

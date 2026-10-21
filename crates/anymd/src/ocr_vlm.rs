@@ -513,9 +513,9 @@ pub(crate) struct OcrRequest {
 impl OcrRequest {
     pub(crate) fn acquire() -> Result<Self, String> {
         Ok(Self {
-            permit: crate::ocr_evidence::OcrRequestPermit::acquire()?,
+            permit: crate::ocr_evidence::acquire_ocr_permit()?,
             deadline: std::time::Instant::now()
-                + std::time::Duration::from_millis(crate::ocr_evidence::MAX_REQUEST_OCR_TIMEOUT_MS),
+                + std::time::Duration::from_millis(crate::provider_budget::MAX_REQUEST_TIMEOUT_MS),
             failed: None,
         })
     }

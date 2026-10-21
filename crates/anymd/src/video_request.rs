@@ -441,7 +441,7 @@ fn request(
     let mut input = tempfile::NamedTempFile::new().map_err(|e| e.to_string())?;
     serde_json::to_writer(&mut input, &work).map_err(|e| e.to_string())?;
     let _permit = if ocr.is_some() {
-        Some(crate::ocr_evidence::OcrRequestPermit::acquire()?)
+        Some(crate::ocr_evidence::acquire_ocr_permit()?)
     } else {
         None
     };

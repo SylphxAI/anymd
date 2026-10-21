@@ -5,7 +5,7 @@ anymd turns any file into Markdown for AI agents: one Rust binary (`crates/anymd
 ## Layout
 
 - `crates/anymd`: MCP server on rmcp (stdio and Streamable HTTP), the CLI, `setup` and `version`.
-- `crates/anymd-core`, `anymd-pdf`, `anymd-formats`: conversion, published to crates.io. `anymd-wasm`: the docs playground.
+- `crates/anymd-core`, `anymd-pdf`, `anymd-formats`: conversion, published to crates.io. `anymd-wasm`: the docs playground. Rules both the CLI and the browser need are stated once in `anymd-core` (`pages`, `fusion_util`, `text_rules`), and provider request budgets once in `anymd` (`provider_budget`, `pdf_evidence_common`).
 - `packages/anymd`: the npm launcher, which runs the matching `packages/npm/<platform>` binary. `packages/aliases/*` are the `@sylphx/citra` and `@sylphx/pdf-reader-mcp` aliases.
 - `test/`: TypeScript tests that spawn the built binary over MCP. `bench/`: AgentDocBench. `brand/`: brand masters.
 
