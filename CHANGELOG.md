@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Patch Changes
+
+- State each shared rule once. The `pages` selector, the two-decimal ratio, the UTF-16 length, the warning list and the token estimate and front-matter quoting that the CLI and the browser both use now live in `anymd-core` (`pages`, `fusion_util`, `text_rules`), and the provider concurrency slot and request budget that OCR and region analysis both enforce live in `anymd` (`provider_budget`, with `pdf_evidence_common` for the shared argument parsing, truncation and tool result). Messages, limits, accepted page specifications and outputs are unchanged. The WASM build links `anymd-core` for these rules.
+- The browser build no longer links a socket: `anymd-core`'s URL fetcher is behind its `native` feature (on by default), so the playground keeps its formats (a browser opens no URL), and a build without it refuses a `url` source with a message instead of failing to link.
+- Remove the unused `tool_routes` module and the unused `assert_host_not_private` export from `anymd-core`.
+- Dependency declarations now match their use: the package renames `sylphx-mcp-kit` (imported as `mcp_kit`), `kamadak-exif` (imported as `exif`), the vendored OCR crate's feature-only `candle-transformers` and the vendored PDF fork's not-yet-used `postscript` are declared to `cargo machete`, so the unused-dependency census reports no false edges.
+
 ### Documentation
 
 - Record how published advisories are kept: every published advisory gets a CVE ID from GitHub as CNA, and one vulnerability is published once ([docs/security/advisories.md](docs/security/advisories.md)). GHSA-xrc8-gj3q-m8vm is the canonical record for the `pdf_compare` allowlist bypass; GHSA-f8xf-6vpc-6hpj is its duplicate and says so.

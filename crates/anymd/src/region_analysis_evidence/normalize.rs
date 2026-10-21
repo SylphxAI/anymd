@@ -2,22 +2,7 @@
 
 use super::*;
 
-pub(super) fn truncate_utf16(text: &str, maximum: usize) -> (String, bool) {
-    let mut units = 0usize;
-    let mut end = text.len();
-    for (index, character) in text.char_indices() {
-        let next = units + character.len_utf16();
-        if next > maximum {
-            end = index;
-            break;
-        }
-        units = next;
-    }
-    (
-        text[..end].to_string(),
-        text.encode_utf16().count() > maximum,
-    )
-}
+use crate::pdf_evidence_common::truncate_utf16;
 
 pub(super) fn normalized_string(value: Option<&Value>, maximum: usize) -> Option<String> {
     let trimmed = value?.as_str()?.trim();

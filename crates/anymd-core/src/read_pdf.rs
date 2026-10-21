@@ -8,7 +8,10 @@ use serde_json::{json, Value};
 use crate::text_index::{
     extract_pdf_text_from_document, PdfInfo, TextIndexError, TextIndexErrorCode,
 };
-use crate::url_fetch::{cleanup_temp_file, fetch_url_to_temp_file};
+use crate::url_fetch::{
+    cleanup_source_temp_file as cleanup_temp_file,
+    url_source_to_temp_file as fetch_url_to_temp_file,
+};
 use crate::{HashError, ENGINE_NAME, ENGINE_VERSION};
 
 mod pages;
@@ -219,6 +222,12 @@ impl ReadPdfError {
     }
 }
 
+impl crate::pages::PageSpecError for ReadPdfError {
+    fn invalid_params(message: impl Into<String>) -> Self {
+        Self::invalid_params(message)
+    }
+}
+
 impl From<HashError> for ReadPdfError {
     fn from(error: HashError) -> Self {
         match error.code {
@@ -242,7 +251,6 @@ impl From<TextIndexError> for ReadPdfError {
 }
 
 const DEFAULT_MAX_FILE_BYTES: u64 = 256 * 1024 * 1024;
-const MAX_SELECTED_PAGES: usize = 10_001;
 
 fn validate_source(source: &ReadPdfSource) -> Result<(), ReadPdfError> {
     let has_path = source.path.as_ref().is_some_and(|value| !value.is_empty());
@@ -926,7 +934,7 @@ fn read_local_pdf_filtered(
     }
     pdf_info.is_linearized = parsed.is_linearized;
     let total_pages = parsed.pages.len().max(1) as u32;
-    let explicit_pages = parse_page_spec(pages_spec)?;
+    let explicit_pages = crate::pages::parse_page_spec::<ReadPdfError>(pages_spec, true)?;
     let auto_pages = if explicit_pages.is_none()
         && auto_enabled(input)
         && input.auto_detail.as_deref().unwrap_or("balanced") != "full"
@@ -1116,7 +1124,7 @@ pub fn read_pdf(input: &ReadPdfInput) -> Result<ReadPdfResponse, ReadPdfError> {
         }
     }
     for source in &input.sources {
-        parse_page_spec(&source.pages)?;
+        crate::pages::parse_page_spec::<ReadPdfError>(&source.pages, true)?;
     }
 
     let mut results = Vec::new();
@@ -1176,4 +1184,3 @@ pub fn read_pdf_from_value(input: &Value) -> Result<ReadPdfResponse, ReadPdfErro
 
 #[cfg(test)]
 mod tests;
-

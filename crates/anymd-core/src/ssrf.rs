@@ -137,14 +137,6 @@ where
     Ok(addresses)
 }
 
-pub(crate) fn resolve_public_addrs(host: &str, port: u16) -> Result<Vec<SocketAddr>, String> {
-    resolve_public_addrs_with(host, port, &SystemDnsResolver, is_private_ip)
-}
-
-pub fn assert_host_not_private(host: &str) -> Result<(), String> {
-    resolve_public_addrs(host, 0).map(|_| ())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -7,6 +7,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+use crate::fusion_util::{append_unique_warning, remove_stub_warning, round_ratio, utf16_len};
 use crate::read_pdf::{rebuild_structured_outputs, ReadPdfResponse};
 
 pub const OCR_STUB_WARNING: &str = "include_ocr_text_layer: provider execution is owned by anymd; pdf-reader-core omits ocr_text_layer until a normalized provider outcome is fused.";
@@ -56,30 +57,6 @@ pub struct SourceOcrOutcome {
     pub pages: Vec<OcrPage>,
     pub warnings: Vec<String>,
     pub error: Option<String>,
-}
-
-fn utf16_len(value: &str) -> usize {
-    value.encode_utf16().count()
-}
-
-fn round_ratio(value: f64) -> f64 {
-    (value * 100.0).round() / 100.0
-}
-
-fn append_unique_warning(warnings: &mut Option<Vec<String>>, warning: String) {
-    let values = warnings.get_or_insert_with(Vec::new);
-    if !values.contains(&warning) {
-        values.push(warning);
-    }
-}
-
-fn remove_stub_warning(warnings: &mut Option<Vec<String>>) {
-    if let Some(values) = warnings {
-        values.retain(|warning| warning != OCR_STUB_WARNING);
-        if values.is_empty() {
-            *warnings = None;
-        }
-    }
 }
 
 fn fuse_document_map(map: &mut Value, _candidate_pages: &[u32], pages: &[OcrPage]) {
@@ -162,7 +139,7 @@ pub fn fuse_ocr_outcomes(response: &mut ReadPdfResponse, outcomes: Vec<SourceOcr
         let Some(data) = result.data.as_mut().filter(|_| result.success) else {
             continue;
         };
-        remove_stub_warning(&mut data.warnings);
+        remove_stub_warning(&mut data.warnings, OCR_STUB_WARNING);
         data.ocr_text_layer = None;
 
         if let Some(error) = outcome.error {

@@ -12,14 +12,15 @@ pub mod outline;
 mod page_selection;
 pub mod pdf_compare;
 pub mod pdf_evidence;
+mod pdf_evidence_common;
 pub mod pro;
+mod provider_budget;
 pub mod read_pdf;
 mod region_analysis_evidence;
 pub mod schema;
 pub mod search;
 pub mod setup;
 pub mod source_access;
-pub mod tool_routes;
 pub mod video_evidence;
 pub mod video_request;
 mod visual_evidence;
@@ -849,11 +850,7 @@ mod tests {
             );
             assert!(tool_arguments_decode(&tool.name, minimal.clone()));
 
-            for key in schema["properties"]
-                .as_object()
-                .expect("properties")
-                .keys()
-            {
+            for key in schema["properties"].as_object().expect("properties").keys() {
                 let mut omitted = minimal.clone();
                 omitted
                     .as_object_mut()

@@ -11,6 +11,7 @@
 
 use serde_json::{json, Map, Value};
 
+use crate::fusion_util::{append_unique_warning, remove_stub_warning};
 use crate::read_pdf::ReadPdfResponse;
 
 pub const VISUAL_STUB_WARNING: &str =
@@ -31,22 +32,6 @@ pub struct SourceVisualOutcome {
     pub warnings: Vec<String>,
     /// Soft source-local provider failure message (without the public wrapper).
     pub error: Option<String>,
-}
-
-fn append_unique_warning(warnings: &mut Option<Vec<String>>, warning: String) {
-    let values = warnings.get_or_insert_with(Vec::new);
-    if !values.contains(&warning) {
-        values.push(warning);
-    }
-}
-
-fn remove_stub_warning(warnings: &mut Option<Vec<String>>) {
-    if let Some(values) = warnings {
-        values.retain(|warning| warning != VISUAL_STUB_WARNING);
-        if values.is_empty() {
-            *warnings = None;
-        }
-    }
 }
 
 fn insert_layer_after(layers: &mut Vec<Value>, layer: &str, after: &str) {
@@ -196,7 +181,7 @@ pub fn fuse_visual_outcomes(response: &mut ReadPdfResponse, outcomes: Vec<Source
         };
 
         if outcome.provider_ready {
-            remove_stub_warning(&mut data.warnings);
+            remove_stub_warning(&mut data.warnings, VISUAL_STUB_WARNING);
         }
 
         data.visual_enrichments = None;

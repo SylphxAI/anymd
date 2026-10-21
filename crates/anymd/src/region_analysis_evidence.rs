@@ -2,15 +2,20 @@
 
 use std::env;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
-use rmcp::model::{CallToolResult, ContentBlock};
+use rmcp::model::CallToolResult;
 use serde_json::{json, Map, Value};
 use tempfile::TempDir;
 
 use crate::command_provider::{self, CommandInvocation, CommandRunError};
-use crate::schema::PdfEvidenceArgs;
+use crate::pdf_evidence_common::{
+    error_result, json_result as text_result, parse_pdf_evidence_args,
+};
+use crate::provider_budget::{
+    ProviderRequestBudget, ProviderRequestPermit, MAX_CONCURRENT_PROVIDER_REQUESTS,
+    MAX_REQUEST_OUTPUT_CHARS, MAX_REQUEST_PROVIDER_BYTES, MAX_REQUEST_TIMEOUT_MS,
+};
 use crate::visual_evidence;
 
 mod normalize;
@@ -39,84 +44,35 @@ const DEFAULT_OLLAMA_URL: &str = "http://127.0.0.1:11434/api/generate";
 const DEFAULT_LMSTUDIO_URL: &str = "http://127.0.0.1:1234/v1/chat/completions";
 const DEFAULT_LLAMACPP_URL: &str = "http://127.0.0.1:8080/v1/chat/completions";
 const MAX_SOURCES_PER_REQUEST: usize = 32;
-const MAX_REQUEST_TIMEOUT_MS: u64 = 600_000;
-const MAX_REQUEST_OUTPUT_CHARS: usize = 2_000_000;
-const MAX_REQUEST_PROVIDER_BYTES: usize = 16 * 1024 * 1024;
-const MAX_CONCURRENT_REQUESTS: usize = 2;
-static ACTIVE_REQUESTS: AtomicUsize = AtomicUsize::new(0);
-
-#[derive(Debug)]
-struct RequestPermit;
-
-impl RequestPermit {
-    fn acquire() -> Result<Self, String> {
-        ACTIVE_REQUESTS
-            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |active| {
-                (active < MAX_CONCURRENT_REQUESTS).then_some(active + 1)
-            })
-            .map(|_| Self)
-            .map_err(|_| {
-                format!(
-                    "Region analysis provider concurrency limit of {MAX_CONCURRENT_REQUESTS} active requests reached; retry later."
-                )
-            })
+/// A refusal in the region-analysis tool's words, given what the budget refused.
+fn refusal(what: &str) -> String {
+    match what {
+        "provider output limit" => format!(
+            "Request exceeds region analysis provider output limit of {MAX_REQUEST_PROVIDER_BYTES} bytes."
+        ),
+        "output limit" => format!(
+            "Request exceeds region analysis output limit of {MAX_REQUEST_OUTPUT_CHARS} characters."
+        ),
+        other => format!("Request region analysis {other}."),
     }
 }
 
-impl Drop for RequestPermit {
-    fn drop(&mut self) {
-        ACTIVE_REQUESTS.fetch_sub(1, Ordering::Release);
-    }
+/// What every region-analysis request refuses with once its time is up.
+fn timeout_refusal() -> String {
+    format!(
+        "Request exceeds region analysis provider time limit of {MAX_REQUEST_TIMEOUT_MS} milliseconds."
+    )
 }
 
-#[derive(Default)]
-struct RequestBudget {
-    provider_bytes: usize,
-    output_chars: usize,
-    exhausted: Option<String>,
-}
+type RequestPermit = ProviderRequestPermit;
+type RequestBudget = ProviderRequestBudget;
 
-impl RequestBudget {
-    fn ensure_available(&self) -> Result<(), String> {
-        self.exhausted.clone().map_or(Ok(()), Err)
-    }
-
-    fn exhaust(&mut self, message: String) -> Result<(), String> {
-        self.exhausted = Some(message.clone());
-        Err(message)
-    }
-
-    fn charge(&mut self, provider_bytes: usize, output_chars: usize) -> Result<(), String> {
-        self.ensure_available()?;
-        self.provider_bytes = match self.provider_bytes.checked_add(provider_bytes) {
-            Some(value) => value,
-            None => {
-                return self.exhaust("Request region analysis provider byte count overflow.".into())
-            }
-        };
-        if self.provider_bytes > MAX_REQUEST_PROVIDER_BYTES {
-            return self.exhaust(format!(
-                "Request exceeds region analysis provider output limit of {MAX_REQUEST_PROVIDER_BYTES} bytes."
-            ));
-        }
-        self.output_chars = match self.output_chars.checked_add(output_chars) {
-            Some(value) => value,
-            None => {
-                return self
-                    .exhaust("Request region analysis output character count overflow.".into())
-            }
-        };
-        if self.output_chars > MAX_REQUEST_OUTPUT_CHARS {
-            return self.exhaust(format!(
-                "Request exceeds region analysis output limit of {MAX_REQUEST_OUTPUT_CHARS} characters."
-            ));
-        }
-        Ok(())
-    }
-
-    fn charge_failed_provider(&mut self, provider_bytes: usize) -> Result<(), String> {
-        self.charge(provider_bytes, 0)
-    }
+fn acquire_permit() -> Result<RequestPermit, String> {
+    ProviderRequestPermit::acquire(|| {
+        format!(
+            "Region analysis provider concurrency limit of {MAX_CONCURRENT_PROVIDER_REQUESTS} active requests reached; retry later."
+        )
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -147,15 +103,6 @@ impl ProviderConfig {
             Self::Http { .. } => "external-http",
         }
     }
-}
-
-fn parse_args(value: &Value) -> Result<PdfEvidenceArgs, rmcp::ErrorData> {
-    let args: PdfEvidenceArgs = serde_json::from_value(value.clone()).map_err(|error| {
-        rmcp::ErrorData::invalid_params(format!("Invalid pdf_evidence arguments: {error}"), None)
-    })?;
-    args.validate()
-        .map_err(|message| rmcp::ErrorData::invalid_params(message, None))?;
-    Ok(args)
 }
 
 fn js_number(value: f64) -> String {
@@ -458,19 +405,6 @@ fn run_provider(
     }
 }
 
-fn text_result(payload: Value) -> CallToolResult {
-    let text = serde_json::to_string_pretty(&payload).unwrap_or_else(|_| payload.to_string());
-    {
-        let mut result = CallToolResult::structured(payload);
-        result.content = vec![ContentBlock::text(text)];
-        result
-    }
-}
-
-fn error_result(message: String) -> CallToolResult {
-    CallToolResult::error(vec![ContentBlock::text(message)])
-}
-
 /// True when a valid region-analysis provider is configured (command, HTTP, or preset).
 pub(crate) fn command_provider_ready() -> bool {
     provider_config().is_ok()
@@ -515,7 +449,7 @@ pub(crate) fn analyze_visual_candidates_for_sources(
     let mut outcomes = Vec::with_capacity(sources.len());
 
     // Shared concurrency permit for the whole request, matching analyze_regions.
-    let _permit = match RequestPermit::acquire() {
+    let _permit = match acquire_permit() {
         Ok(permit) => permit,
         Err(message) => {
             return sources
@@ -683,9 +617,7 @@ pub(crate) fn analyze_visual_candidates_for_sources(
                 )
                 .unwrap_or(u64::MAX);
                 if remaining_ms == 0 {
-                    return Err(format!(
-                        "Request exceeds region analysis provider time limit of {MAX_REQUEST_TIMEOUT_MS} milliseconds."
-                    ));
+                    return Err(timeout_refusal());
                 }
                 let stdout = match run_provider(
                     &config,
@@ -698,14 +630,14 @@ pub(crate) fn analyze_visual_candidates_for_sources(
                 ) {
                     Ok(stdout) => stdout,
                     Err(error) => {
-                        request_budget.charge_failed_provider(error.charge_bytes)?;
+                        request_budget.charge_failed_provider(error.charge_bytes, refusal)?;
                         return Err(error.message);
                     }
                 };
                 let mut normalized = normalize_output(&stdout, max_output_chars);
                 let output_chars = serde_json::to_string(&normalized)
                     .map_or(0, |value| value.encode_utf16().count());
-                request_budget.charge(stdout.len(), output_chars)?;
+                request_budget.charge(stdout.len(), output_chars, refusal)?;
 
                 let region_id = region["region_id"].as_str().unwrap_or("").to_string();
                 let candidate = candidates_by_id.get(&region_id).copied();
@@ -811,7 +743,7 @@ pub(crate) fn analyze_visual_candidates_for_sources(
 }
 
 pub fn analyze_regions(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let args = parse_args(&value)?;
+    let args = parse_pdf_evidence_args(&value)?;
     if args.sources.len() > MAX_SOURCES_PER_REQUEST {
         return Err(rmcp::ErrorData::invalid_params(
             format!("pdf_evidence accepts at most {MAX_SOURCES_PER_REQUEST} sources per request."),
@@ -831,7 +763,7 @@ pub fn analyze_regions(value: Value) -> Result<CallToolResult, rmcp::ErrorData> 
             )))
         }
     };
-    let _permit = match RequestPermit::acquire() {
+    let _permit = match acquire_permit() {
         Ok(permit) => permit,
         Err(message) => {
             return Ok(error_result(format!(
@@ -892,7 +824,7 @@ pub fn analyze_regions(value: Value) -> Result<CallToolResult, rmcp::ErrorData> 
                 )
                 .unwrap_or(u64::MAX);
                 if remaining_ms == 0 {
-                    return Err(format!("Request exceeds region analysis provider time limit of {MAX_REQUEST_TIMEOUT_MS} milliseconds."));
+                    return Err(timeout_refusal());
                 }
                 let stdout = match run_provider(
                     &config,
@@ -905,14 +837,14 @@ pub fn analyze_regions(value: Value) -> Result<CallToolResult, rmcp::ErrorData> 
                 ) {
                     Ok(stdout) => stdout,
                     Err(error) => {
-                        request_budget.charge_failed_provider(error.charge_bytes)?;
+                        request_budget.charge_failed_provider(error.charge_bytes, refusal)?;
                         return Err(error.message);
                     }
                 };
                 let mut normalized = normalize_output(&stdout, max_output_chars);
                 let output_chars = serde_json::to_string(&normalized)
                     .map_or(0, |value| value.encode_utf16().count());
-                request_budget.charge(stdout.len(), output_chars)?;
+                request_budget.charge(stdout.len(), output_chars, refusal)?;
                 normalized["region_id"] = region["region_id"].clone();
                 normalized["page"] = region["page"].clone();
                 normalized["provider"] = json!(config.provider_label());
@@ -1159,8 +1091,10 @@ mod tests {
     #[test]
     fn request_budget_exhaustion_is_sticky() {
         let mut budget = RequestBudget::default();
-        budget.charge(MAX_REQUEST_PROVIDER_BYTES - 1, 0).unwrap();
-        assert!(budget.charge(2, 0).unwrap_err().contains("bytes"));
+        budget
+            .charge(MAX_REQUEST_PROVIDER_BYTES - 1, 0, refusal)
+            .unwrap();
+        assert!(budget.charge(2, 0, refusal).unwrap_err().contains("bytes"));
         assert!(budget.ensure_available().unwrap_err().contains("bytes"));
     }
 }
