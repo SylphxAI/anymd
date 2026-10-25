@@ -53,5 +53,5 @@ native = ["dep:tempfile", "dep:wait-timeout", "dep:ureq", "dep:sha2", "dep:trans
 
 [dev-dependencies]
 tempfile = "3.20"
-rust_xlsxwriter = { version = "0.100", default-features = false }
+rust_xlsxwriter = { version = "0.101", default-features = false }
 image = { version = "0.25", default-features = false, features = ["png"] }
