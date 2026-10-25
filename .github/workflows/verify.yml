@@ -113,7 +113,7 @@ jobs:
         uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
 
       - name: Cache Rust build
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
 
       # Packages every publishable crate the way `cargo publish` does (builds each
       # from its packed sources against the others), then keeps each under the
@@ -206,7 +206,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
 
       - name: Rust workspace tests
         run: cargo test --locked --workspace --no-fail-fast
@@ -245,7 +245,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
         with:
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
         with:
           key: ${{ matrix.target }}
       - name: Build release binary
