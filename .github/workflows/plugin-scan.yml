@@ -24,6 +24,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Exclude generated upstream engine runtime
+        # The pinned Keel runtime is generated output, not plugin source. Its
+        # public checkout-session placeholder is not a credential. Keep the
+        # product sources and generated HTML in this security scan.
+        run: rm -rf docs/storefront/prebuilt/_keel
       - name: Scan source without executing plugin commands
         uses: hashgraph-online/ai-plugin-scanner-action@caba2e96aa8ad2feb6cf6fca52442b52e22e779f
         with:

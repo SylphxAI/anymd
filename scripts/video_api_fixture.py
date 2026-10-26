@@ -35,7 +35,7 @@ def assert_pro_gate(binary, env, source):
                 assert not result.get("isError"), result
                 assert "structuredContent" not in result, result
                 text = " ".join(item.get("text", "") for item in result["content"])
-                assert "anymd Pro" in text and "https://sylphxai.github.io/anymd/pro" in text, text
+                assert "anymd Pro" in text and "https://sylphxai.github.io/anymd/pricing" in text, text
                 return
     finally:
         process.kill()

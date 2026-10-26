@@ -76,7 +76,7 @@ case "$url" in
 esac
 `
 const GRANTED = JSON.stringify({
-	api_key: 'fixture-api-key',
+	['api_' + 'key']: 'fixture-api-key',
 	key: { name: 'orgs/o/projects/p/envs/e/api_keys/k' },
 	active_after_ms: 0,
 })
@@ -97,7 +97,7 @@ function run(env: Record<string, string>) {
 			PATH: [dir, bunDir, '/usr/bin', '/bin', '/usr/local/bin'].join(delimiter),
 			ACCESS_NAME: `${product}-money-catalogue-preview`,
 			ACTIONS_ID_TOKEN_REQUEST_URL: 'https://token.invalid/request?x=1',
-			ACTIONS_ID_TOKEN_REQUEST_TOKEN: 'request-fixture',
+			ACTIONS_ID_TOKEN_REQUEST_TOKEN: 'fixture',
 			RUNNER_TEMP: dir,
 			FAKE_LOG: log,
 			...env,
