@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export CARGO_NET_GIT_FETCH_WITH_CLI=true
 
 # Build the product-owned Keel checkout/recovery pages beside the existing
 # VitePress documentation. The central checkout is not used by these pages.

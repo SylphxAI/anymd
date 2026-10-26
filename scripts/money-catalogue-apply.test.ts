@@ -76,7 +76,7 @@ case "$url" in
 esac
 `
 const GRANTED = JSON.stringify({
-	api_key: 'sylphx_sk_fixture',
+	api_key: 'fixture-api-key',
 	key: { name: 'orgs/o/projects/p/envs/e/api_keys/k' },
 	active_after_ms: 0,
 })
