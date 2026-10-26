@@ -1,0 +1,70 @@
+name: Money catalogue
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'config/money-catalogue.json'
+      - 'scripts/money-catalogue-apply.sh'
+      - 'scripts/money-catalogue-apply.test.ts'
+      - '.github/workflows/money-catalogue.yml'
+  pull_request:
+    paths:
+      - 'config/money-catalogue.json'
+      - 'scripts/money-catalogue-apply.sh'
+      - 'scripts/money-catalogue-apply.test.ts'
+      - '.github/workflows/money-catalogue.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: money-catalogue
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Offline contract tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: '1.4.3'
+      - run: bun test scripts/money-catalogue-apply.test.ts
+
+  preview:
+    name: Apply to preview
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ACCESS_NAME: anymd-money-catalogue-preview
+      SYNC_FAILURE_NONFATAL: '1'
+      STRIPE_TEST_RESTRICTED_KEY: ${{ secrets.STRIPE_TEST_RESTRICTED_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/money-catalogue-apply.sh
+
+  production:
+    name: Apply to production
+    needs: preview
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ACCESS_NAME: anymd-money-catalogue-production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/money-catalogue-apply.sh

@@ -57,7 +57,7 @@ sha2 = "0.10"
 subtle = "2"
 # Shared MCP setup, CLI hints and cache-root policy. The macros call the
 # package as `mcp_kit`, so only `cargo-machete` cannot see the use.
-sylphx-mcp-kit = { version = "0.7.3", features = ["licence"] }
+sylphx-mcp-kit = { version = "0.8.1", features = ["licence"] }
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }

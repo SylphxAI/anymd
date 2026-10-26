@@ -4691,20 +4691,24 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sylphx-mcp-kit"
-version = "0.7.3"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb49f447a76d990f61820c1c51935b36dde37c128fe09075d01303b88f2b7336"
+checksum = "51a47c6c7504c66981df626f8d4f10ca3b112c7e0ef07b273fe3c0f17ce5b783"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
  "dirs",
  "ed25519-dalek 2.2.0",
+ "fs2",
+ "getrandom 0.2.17",
  "rmcp",
  "serde",
  "serde_json",
+ "tempfile",
  "tokio",
  "toml_edit",
  "ureq",
+ "url",
 ]
 
 [[package]]

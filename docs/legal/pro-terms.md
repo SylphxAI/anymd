@@ -20,7 +20,7 @@ A licence token that unlocks the anymd Pro operations in anymd 8.4.0 and later: 
 
 ## Price and payment
 
-US$29, paid once, including any VAT or sales tax we must charge. No subscription. Payment is processed by Stripe; we never see your card number.
+The current price shown at checkout, paid once, including any VAT or sales tax we must charge. No subscription. Payment is processed by Stripe; we never see your card number.
 
 ## Your licence
 

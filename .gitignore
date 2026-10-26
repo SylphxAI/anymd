@@ -8,6 +8,8 @@ coverage/
 # VitePress
 docs/.vitepress/cache
 docs/.vitepress/dist
+# Generated from crates/anymd/src/money_docs.toml by scripts/build-storefront.sh
+docs/storefront/docs.toml
 
 # Test Reports
 test-report.junit.xml

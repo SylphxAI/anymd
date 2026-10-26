@@ -17,15 +17,17 @@ describe('pro config', () => {
   });
 
   test('the Buy button links to the anymd product checkout', () => {
-    expect(config.buyUrl).toBe('https://buy.sylphx.com/buy/anymd');
+    expect(config.buyUrl).toBe('https://sylphxai.github.io/anymd/pricing');
     expect(isPlaceholder(config.buyUrl)).toBe(false);
     const button = readFileSync(
       new URL('../docs/.vitepress/theme/components/ProBuy.vue', import.meta.url),
       'utf8'
     );
     expect(button).toContain('const href = ref(buyUrl)');
+    expect(button).toContain('target="_self"');
     expect(button).not.toMatch(/buyMailto|buyReady|mailto:/);
-    expect(button).toContain('US$29 once');
+    expect(button).toContain("label ?? 'Buy anymd Pro'");
+    expect(button).not.toContain('US$29');
   });
 
   test('purchase copy promises instant on-page delivery, not an emailed token', () => {

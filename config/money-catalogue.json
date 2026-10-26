@@ -1,0 +1,43 @@
+{
+  "spec": {
+    "features": [
+      {
+        "key": "anymd_pro",
+        "display_name": "anymd Pro",
+        "kind": "boolean"
+      }
+    ],
+    "products": [
+      {
+        "key": "anymd_pro",
+        "display_name": "anymd Pro",
+        "features": {
+          "anymd_pro": "true"
+        },
+        "licence": {
+          "scheme": "sylphx-offline-ed25519-v1",
+          "plan": "pro",
+          "token_product": "anymd",
+          "key": "anymd-pro",
+          "term": {
+            "unit": "calendar_years",
+            "count": 100
+          }
+        },
+        "prices": [
+          {
+            "key": "anymd_pro",
+            "default_currency": "USD",
+            "tax_behavior": "inclusive",
+            "unit_amounts": {
+              "USD": "2900",
+              "GBP": "2400",
+              "EUR": "2700",
+              "HKD": "22800"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
