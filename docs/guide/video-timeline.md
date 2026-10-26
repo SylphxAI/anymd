@@ -1,6 +1,6 @@
 # Video timelines and frames
 
-> **anymd Pro.** Video evidence is part of [anymd Pro](/pro) (US$29 once). The anymd core stays free and open source. Without a licence the operation returns a short message with the link and does no work.
+> **anymd Pro.** Video evidence is part of [anymd Pro](/pro) with a one-time offline licence; see current pricing. The anymd core stays free and open source. Without a licence the operation returns a short message with the link and does no work.
 
 Use `inspect` for a bounded, ordered video timeline or an on-demand decoded
 frame. `read` projects the same timeline as document sections; `outline`

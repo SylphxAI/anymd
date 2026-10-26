@@ -54,7 +54,7 @@ npx -y @sylphx/anymd report.pdf > report.md
 Node 18+ is the only requirement; npm installs the native binary for your
 platform. Source is MIT: https://github.com/SylphxAI/anymd
 
-There is a paid add-on, anymd Pro (US$29 once, offline licence), that adds
+There is a paid add-on, anymd Pro (one-time offline licence), that adds
 verifiable video frames (timestamps and SHA-256 per frame) and cite-check (it
 proves a quote is on the page and at the spot it claims). The core — reading,
 outlining, searching, inspecting, OCR, transcripts, the MCP server and the CLI

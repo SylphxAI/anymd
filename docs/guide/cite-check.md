@@ -1,6 +1,6 @@
 # Check a PDF citation
 
-> **anymd Pro.** Cite-check is part of [anymd Pro](/pro) (US$29 once). The anymd core stays free and open source. Without a licence the operation returns a short message with the link and does no work.
+> **anymd Pro.** Cite-check is part of [anymd Pro](/pro) with a one-time offline licence; see current pricing. The anymd core stays free and open source. Without a licence the operation returns a short message with the link and does no work.
 
 `inspect` with `operation: "cite_check"` checks whether a quote occurs in extracted evidence inside a physical page and bounding box. It checks **quote/location support in extracted evidence; not semantic truth or independent confirmation of OCR accuracy**. A verified result is not proof that the statement is true, or that OCR read the source correctly.
 

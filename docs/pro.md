@@ -1,7 +1,7 @@
 ---
 title: "anymd Pro: verifiable video evidence and cite-check for AI agents"
 titleTemplate: false
-description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline checks that a quote is on the page it cites. US$29 once, works offline.
+description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline checks that a quote is on the page it cites. Current one-time pricing from Money, works offline.
 image: https://sylphxai.github.io/anymd/og-pro.png
 aside: false
 sidebar: false
@@ -13,11 +13,11 @@ next: false
 
 # Let your agent show its evidence
 
-**anymd Pro** adds two things to the free anymd MCP server: exact video frames your agent can cite, and **cite-check**, which proves a quote is on the page and at the spot it claims. Everything runs on your machine.
+**anymd Pro** adds two things to the free anymd MCP server: exact video frames your agent can cite, and **cite-check**, which proves a quote is on the page and at the spot it claims. Everything runs on your machine. <a href="https://sylphxai.github.io/anymd/pricing" target="_self">See current pricing</a>.
 
 <ProBuy />
 
-<p class="pro-trust">US$29 once, including any applicable tax · licence never expires · works offline, no account · <a href="/anymd/legal/pro-terms">Terms</a></p>
+<p class="pro-trust">Current one-time price and tax are shown on the <a href="https://sylphxai.github.io/anymd/pricing" target="_self">pricing page</a> · licence never expires · works offline, no account · <a href="/anymd/legal/pro-terms">Terms</a></p>
 
 Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
 
@@ -48,7 +48,7 @@ Agents and people who have to point at a source and be believed: legal review, r
 
 ## Price
 
-**US$29 once, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
+**Current one-time price, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
 
 <ProBuy label="Buy anymd Pro" />
 
@@ -80,7 +80,7 @@ Offline, and no account. Your licence is checked on your machine against a publi
 Yes. anymd stays MIT licensed. Reading, outlining, searching and inspecting documents, OCR, transcripts, the MCP server and the CLI stay free and ungated, and nothing that was free has moved to Pro. Ordinary `read` and `outline` of video (metadata, chapters, subtitles) are still free.
 
 **What happens without a licence?**
-A Pro operation returns a short message with the US$29 one-time price, `anymd pro buy` and a link to this page, and does no work. Nothing else changes.
+A Pro operation returns a short message with the current one-time price, `anymd pro buy` and a link to this page, and does no work. Nothing else changes.
 
 **Which version do I need?**
 anymd 8.4.0 or later. `anymd pro status` tells you whether Pro is active.
