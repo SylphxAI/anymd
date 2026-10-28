@@ -257,7 +257,7 @@ its 96.91 is a published model-author result, not our same-run measurement.
 
 For video **embedded subtitles**, the reference alternative is direct FFmpeg:
 it retains every authored cue in these fixtures and is the extractor anymd itself
-uses. The video rows are new, same-run measurements of the published anymd 8.5.1
+uses. The video rows are historical, same-run measurements of the published anymd 8.5.1
 CLI and FFmpeg 6.1.1. They do not measure visual scene understanding or speech
 recognition. [Speech-to-text](#speech-to-text) below is a separate audio benchmark.
 
@@ -273,8 +273,19 @@ They are not representative film or lecture datasets. At
 **2026-10-08T02:07:30Z**, both tools converted all eight clips successfully on the
 same Linux x86_64 Build lease. anymd retained 11 of 12 cues in each dataset,
 dropping the second identical caption at a different timestamp; FFmpeg retained
-all 12. Precision was 100% for both. anymd's rolling-caption cleanup causes this
+all 12. Precision was 100% for both. That version's rolling-caption cleanup caused this
 loss; it is not a transcription error.
+
+These dated results are not relabelled when subtitle rendering changes. The
+[subtitle fidelity regression](https://github.com/SylphxAI/anymd/blob/main/scripts/subtitle_fidelity.py)
+reruns the same authored corpus through the built CLI and MCP `read`, plus separate
+sidecar and edge-case fixtures. The native integration test writes a commit/hash
+receipt next to its tested binary; that is a correctness check, not a new timing
+benchmark. To keep a separate receipt, run:
+
+```bash
+python3 scripts/subtitle_fidelity.py --binary target/release/anymd --receipt target/subtitle-fidelity.json
+```
 
 Total extraction time was **2.108 s vs 1.128 s** (anymd vs FFmpeg) for MP4 and
 **2.412 s vs 1.155 s** for Matroska. Each tool ran once per clip, sequentially;
