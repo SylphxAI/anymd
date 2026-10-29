@@ -9,6 +9,18 @@ import urllib.parse
 import urllib.request
 
 API = "https://api.sylphx.com/v1/"
+DENIALS = (
+    "key_malformed", "key_bad_checksum", "key_unknown", "key_revoked", "key_expired",
+    "key_wrong_mode", "missing_scope", "service_not_enabled", "not_entitled",
+    "policy_denied", "resource_not_allowed", "key_not_yet_propagated", "access_snapshot_stale",
+)
+
+
+def refusal_reason(problem):
+    # Only fixed verifier codes leave the response body. Never log a supplied
+    # detail, arbitrary processor error, buyer address, or credential.
+    detail = problem.get("detail", problem.get("message", ""))
+    return next((code for code in DENIALS if "(" + code + ")" in str(detail)), "unclassified")
 
 
 def request(url, token=None, body=None):
@@ -25,7 +37,8 @@ def request(url, token=None, body=None):
         response = error
     with response:
         data = response.read()
-        return response.status, json.loads(data) if data else {}, response.headers.get("x-request-id")
+        return (response.status, json.loads(data) if data else {},
+                response.headers.get("sylphx-request-id") or response.headers.get("x-request-id"))
 
 
 def require(condition, message):
@@ -70,11 +83,15 @@ def main():
         receipt["exchanges"].append({"status": status, "request_id": request_id,
                                      "key": metadata["name"], "principal": principal,
                                      "expires_at": result["expires_at"]})
+        print(json.dumps(dict(receipt, stage="exchanged"), sort_keys=True), flush=True)
         # Honor the issuer's published propagation bound; no retry or new mint.
         time.sleep(result.get("active_after_ms", 0) / 1000)
-        status, _, request_id = request(API + expected + "/price_catalogs/default", key)
-        require(status == 200, "Own catalogue read failed: HTTP " + str(status))
+        status, problem, request_id = request(API + expected + "/price_catalogs/default", key)
         receipt["own_environment_read"] = {"status": status, "request_id": request_id}
+        if status != 200:
+            receipt["own_environment_read"]["reason"] = refusal_reason(problem)
+            print(json.dumps(dict(receipt, stage="own_read_refused"), sort_keys=True), flush=True)
+        require(status == 200, "Own catalogue read failed: HTTP " + str(status))
         status, _, request_id = request(API + wrong_env + "/price_catalogs/default", key)
         require(status in (403, 404), "Cross-environment catalogue read was admitted")
         receipt["cross_environment_refusal"] = {"status": status, "request_id": request_id}
