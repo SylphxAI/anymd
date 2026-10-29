@@ -110,6 +110,14 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Tasks',
+        items: [
+          { text: 'Extract a video frame', link: '/tasks/extract-video-frame' },
+          { text: 'Build a video timeline', link: '/tasks/build-video-timeline' },
+          { text: 'Check a PDF citation', link: '/tasks/check-pdf-citation' },
+        ],
+      },
+      {
         text: 'Try it',
         items: [{ text: 'Playground', link: '/playground' }],
       },
