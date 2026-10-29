@@ -54,7 +54,9 @@ describe('BOM documents on the real CLI and MCP read surfaces', () => {
       for (const encoding of encodings) {
         const source = join(directory, `${encoding}.${extension}`);
         writeFileSync(source, encode(isHtml ? html : text, encoding));
-        const cli = spawnSync(resolveServerPath(), [source, '--front-matter'], { encoding: 'utf8' });
+        const cli = spawnSync(resolveServerPath(), [source, '--front-matter'], {
+          encoding: 'utf8',
+        });
         expect(cli.status).toBe(0);
         const mcp = parseToolPayload(await callTool(proc, id++, 'read', { source }));
         expect(mcp.isError).toBe(false);
