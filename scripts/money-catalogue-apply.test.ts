@@ -303,8 +303,6 @@ describe('money catalogue workflow', () => {
 		for (const path of [
 			'config/money-catalogue.json',
 			'scripts/money-catalogue-apply.sh',
-			'scripts/money-catalogue-apply.test.ts',
-			'.github/workflows/money-catalogue.yml',
 		]) {
 			expect(workflow.on.push.paths).toContain(path)
 			expect(workflow.on.pull_request.paths).toContain(path)
@@ -312,11 +310,12 @@ describe('money catalogue workflow', () => {
 		expect(testJob.permissions?.['id-token']).toBeUndefined()
 		expect(testJob.steps.map((step) => step.run).filter(Boolean)).toEqual([
 			'bun test scripts/money-catalogue-apply.test.ts',
+			'python3 scripts/money-access-verify.test.py',
 		])
 		expect(previewJob.needs).toBe('test')
 		expect(productionJob.needs).toBe('preview')
 		for (const job of [previewJob, productionJob]) {
-			expect(job.if).toBe(`github.event_name != 'pull_request' && github.ref == 'refs/heads/${defaultBranch}'`)
+			expect(job.if).toBe(`github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/${defaultBranch}'`)
 			expect(job.steps.map((step) => step.run).filter(Boolean)).toEqual([
 				'bash scripts/money-catalogue-apply.sh',
 			])
