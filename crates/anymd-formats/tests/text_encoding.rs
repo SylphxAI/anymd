@@ -122,6 +122,7 @@ fn bom_precedes_ambiguous_audio_sync_but_not_binary_formats() {
         detect(Some(Path::new("binary.txt")), b"\xef\xbb\xbf\x80\x81\0\x01"),
         None
     );
+    assert_eq!(detect(Some(Path::new("binary.txt")), b"A\xc2"), None);
     for bytes in encodings("\0\u{1}\u{2}").into_iter().skip(2) {
         assert!(convert(Format::Text, &bytes, &Options::default()).is_err());
         assert!(html::convert(&bytes, &Options::default()).is_err());

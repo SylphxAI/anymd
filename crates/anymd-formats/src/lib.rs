@@ -272,8 +272,9 @@ pub fn detect(path: Option<&Path>, head: &[u8]) -> Option<Format> {
             if text_format(&prefix) == Format::Html {
                 Some(Format::Html)
             } else if std::str::from_utf8(head).is_ok()
-                || std::str::from_utf8(head)
-                    .is_err_and(|error| error.error_len().is_none() && error.valid_up_to() > 0)
+                || (head.len() == 8192
+                    && std::str::from_utf8(head)
+                        .is_err_and(|error| error.error_len().is_none() && error.valid_up_to() > 0))
             {
                 Some(Format::Text)
             } else {
