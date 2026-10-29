@@ -1,17 +1,21 @@
 //! CSV/TSV → a Markdown table, capped so agents do not drown in rows.
 
+use std::borrow::Cow;
+
 use crate::{markdown_table, ConvertError, Converted, Options, Section};
 
 /// Data rows kept per table (the header row is extra).
 pub(crate) const MAX_ROWS: usize = 2000;
 
 pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Converted, ConvertError> {
-    let bytes = bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(bytes);
+    // Decode before parsing: delimiters, quotes and newlines are code points,
+    // not individual bytes in a UTF-16 export.
+    let bytes = decode(bytes)?;
     let mut reader = ::csv::ReaderBuilder::new()
         .has_headers(false)
         .flexible(true)
         .delimiter(delimiter)
-        .from_reader(bytes);
+        .from_reader(bytes.as_ref());
     let mut table = CappedTable::default();
     for record in reader.byte_records() {
         let record =
@@ -41,6 +45,43 @@ pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Conver
         }],
         metadata: Vec::new(),
     })
+}
+
+/// Borrow UTF-8 input as before; strictly decode BOM-marked UTF-16. Validate
+/// the whole input, including rows past the display cap, without a second
+/// allocation for UTF-16 code units or silently replacing invalid surrogates.
+fn decode(bytes: &[u8]) -> Result<Cow<'_, [u8]>, ConvertError> {
+    let (little_endian, encoding) = if bytes.starts_with(&[0xFF, 0xFE]) {
+        (true, "UTF-16LE")
+    } else if bytes.starts_with(&[0xFE, 0xFF]) {
+        (false, "UTF-16BE")
+    } else {
+        return Ok(Cow::Borrowed(
+            bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(bytes),
+        ));
+    };
+    let invalid = |reason| {
+        ConvertError::Invalid(format!(
+            "malformed {encoding} delimited text: {reason}; re-export as valid {encoding} with a BOM or UTF-8"
+        ))
+    };
+    let payload = &bytes[2..];
+    if payload.len() % 2 != 0 {
+        return Err(invalid("incomplete two-byte code unit (odd byte count)"));
+    }
+    let units = payload.chunks_exact(2).map(|pair| {
+        let pair = [pair[0], pair[1]];
+        if little_endian {
+            u16::from_le_bytes(pair)
+        } else {
+            u16::from_be_bytes(pair)
+        }
+    });
+    let mut text = String::with_capacity(payload.len());
+    for character in char::decode_utf16(units) {
+        text.push(character.map_err(|_| invalid("unpaired surrogate"))?);
+    }
+    Ok(Cow::Owned(text.into_bytes()))
 }
 
 /// Rows destined for one Markdown table: blank rows dropped, blank edge columns
@@ -136,8 +177,114 @@ mod tests {
     }
 
     #[test]
-    fn empty_and_binary_input() {
+    fn empty_input() {
         assert_eq!(md("", b','), "");
-        assert!(convert(&[0xff, 0xfe, 0x00, b',', 0x80], b',', &Options::default()).is_ok());
+        for bytes in [vec![0xEF, 0xBB, 0xBF], vec![0xFF, 0xFE], vec![0xFE, 0xFF]] {
+            assert_eq!(
+                convert(&bytes, b',', &Options::default()).unwrap().sections[0].markdown,
+                ""
+            );
+        }
+    }
+
+    fn utf16(input: &str, little_endian: bool) -> Vec<u8> {
+        let mut bytes = if little_endian {
+            vec![0xFF, 0xFE]
+        } else {
+            vec![0xFE, 0xFF]
+        };
+        for unit in input.encode_utf16() {
+            bytes.extend(if little_endian {
+                unit.to_le_bytes()
+            } else {
+                unit.to_be_bytes()
+            });
+        }
+        bytes
+    }
+
+    fn assert_encodings(input: &str, delimiter: u8, expected: &str) {
+        for bytes in [
+            input.as_bytes().to_vec(),
+            format!("\u{feff}{input}").into_bytes(),
+            utf16(input, true),
+            utf16(input, false),
+        ] {
+            let out = convert(&bytes, delimiter, &Options::default()).unwrap();
+            assert_eq!(out.sections[0].markdown, expected);
+            assert!(!out.sections[0].markdown.contains(['\0', '\u{fffd}']));
+        }
+    }
+
+    #[test]
+    fn same_cells_across_encodings_and_delimiters() {
+        for delimiter in [b',', b'\t'] {
+            let d = char::from(delimiter);
+            assert_encodings(
+                &format!("name{d}city\r\nAlice{d}Hong Kong\r\n陳小明{d}香港\r\n"),
+                delimiter,
+                "|name|city|\n|-|-|\n|Alice|Hong Kong|\n|陳小明|香港|\n",
+            );
+            assert_encodings(
+                &format!("{d}name{d}note{d}city{d}\r\n{d}\"陳小明😀{d}A\"{d}\"says \"\"hi\"\"\r\nline\"{d}香港|港{d}\r\n{d}{d}{d}{d}\r\n{d}Alice{d}short\r\n"),
+                delimiter,
+                &format!("|name|note|city|\n|-|-|-|\n|陳小明😀{d}A|says \"hi\" line|香港\\|港|\n|Alice|short||\n"),
+            );
+        }
+    }
+
+    #[test]
+    fn malformed_utf16_is_an_actionable_error_and_next_conversion_works() {
+        for little_endian in [true, false] {
+            for delimiter in [b',', b'\t'] {
+                for units in [
+                    vec![0xD800],
+                    vec![0xDC00],
+                    vec![0xD800, 0x0041],
+                    vec![0xDC00, 0xD800],
+                ] {
+                    let mut bytes = utf16("name\r\n", little_endian);
+                    for unit in units {
+                        bytes.extend(if little_endian {
+                            u16::to_le_bytes(unit)
+                        } else {
+                            u16::to_be_bytes(unit)
+                        });
+                    }
+                    let error = convert(&bytes, delimiter, &Options::default())
+                        .unwrap_err()
+                        .to_string();
+                    assert!(error.contains("unpaired surrogate"), "{error}");
+                    assert!(error.contains("re-export"), "{error}");
+                    assert!(!md("name\nAlice\n", delimiter).is_empty());
+                }
+                let mut odd = utf16("name\r\nAlice\r\n", little_endian);
+                odd.push(0x41);
+                let error = convert(&odd, delimiter, &Options::default())
+                    .unwrap_err()
+                    .to_string();
+                assert!(error.contains("odd byte count"), "{error}");
+                assert!(error.contains("re-export"), "{error}");
+            }
+        }
+    }
+
+    #[test]
+    fn encoded_row_cap_counts_only_nonempty_rows_and_validates_the_tail() {
+        let input = format!("a,b\r\n{}", "1,2\r\n,,\r\n".repeat(MAX_ROWS + 3));
+        let expected = format!(
+            "|a|b|\n|-|-|\n{}\n… 3 more rows\n",
+            "|1|2|\n".repeat(MAX_ROWS)
+        );
+        assert_encodings(&input, b',', &expected);
+        for little_endian in [true, false] {
+            let mut bytes = utf16(&input, little_endian);
+            bytes.extend(if little_endian {
+                0xD800u16.to_le_bytes()
+            } else {
+                0xD800u16.to_be_bytes()
+            });
+            assert!(convert(&bytes, b',', &Options::default()).is_err());
+        }
     }
 }
