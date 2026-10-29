@@ -34,6 +34,9 @@ When an agent summarises a deposition video, an earnings call, a lecture or a co
 
 [How video timelines work](/guide/video-timeline)
 
+Try it locally: [extract a video frame](/tasks/extract-video-frame) or
+[build a video timeline](/tasks/build-video-timeline), with free and Pro examples.
+
 ### Cite-check
 
 - `inspect` with `cite_check` takes a PDF and a list of citations (quote, page, bounding box) and returns one verdict each: `verified_exact`, `verified_normalized`, `unmatched` or `insufficient_evidence`.
@@ -41,6 +44,9 @@ When an agent summarises a deposition video, an earnings call, a lecture or a co
 - A verified result proves the quote is **at that location in the document**. It does not prove the statement is true, and it does not vouch for OCR accuracy.
 
 [How cite-check works](/guide/cite-check)
+
+Try it locally: [check a PDF citation](/tasks/check-pdf-citation), starting with
+a generated one-page PDF and a free text search.
 
 ### Who it is for
 
