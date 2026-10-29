@@ -12,6 +12,11 @@ spec.loader.exec_module(verify)
 
 
 class AccessVerification(unittest.TestCase):
+    def test_refusal_diagnostic_excludes_arbitrary_response_content(self):
+        problem = {"detail": "The key was refused (key_not_yet_propagated). private-fixture"}
+        self.assertEqual(verify.refusal_reason(problem), "key_not_yet_propagated")
+        self.assertEqual(verify.refusal_reason({"message": "private-fixture"}), "unclassified")
+
     def run_verification(self, *, changed_principal=False, refused=False, escape=False):
         home = "orgs/example/projects/project/envs/preview"
         env = {"ACCESS_NAME": "catalogue-preview", "EXPECTED_ENVIRONMENT": home,
