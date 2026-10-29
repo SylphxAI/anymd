@@ -228,7 +228,7 @@ pub fn detect(path: Option<&Path>, head: &[u8]) -> Option<Format> {
     // FF FE is both a UTF-16LE BOM and a possible MPEG sync prefix. Resolve
     // BOM-marked text before the loose media probe, without overriding known
     // binary signatures or explicit binary formats (e.g. a real Layer I MP3).
-    if encoding::has_bom(head) && !mpeg_layer_one_frames(head) {
+    if encoding::has_utf16_bom(head) && !mpeg_layer_one_frames(head) {
         let bom_format = match ext.as_deref() {
             Some("html" | "htm" | "xhtml") => Some(Format::Html),
             Some("csv") => Some(Format::Csv),

@@ -107,7 +107,11 @@ describe('BOM documents on the real CLI and MCP read surfaces', () => {
   }
 
   test('binary data does not become text because of a BOM or file suffix', async () => {
-    for (const bytes of [Buffer.from([0x80, 0x81, 0, 1]), encode('\0\u0001\u0002', 'utf16le')]) {
+    for (const bytes of [
+      Buffer.from([0x80, 0x81, 0, 1]),
+      Buffer.from([0xef, 0xbb, 0xbf, 0x80, 0x81, 0, 1]),
+      encode('\0\u0001\u0002', 'utf16le'),
+    ]) {
       const source = join(directory, `binary-${id}.txt`);
       writeFileSync(source, bytes);
       expect(spawnSync(resolveServerPath(), [source]).status).not.toBe(0);

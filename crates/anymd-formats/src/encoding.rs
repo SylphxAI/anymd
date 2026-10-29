@@ -4,10 +4,8 @@ use std::borrow::Cow;
 
 use crate::ConvertError;
 
-pub(crate) fn has_bom(bytes: &[u8]) -> bool {
-    bytes.starts_with(&[0xFF, 0xFE])
-        || bytes.starts_with(&[0xFE, 0xFF])
-        || bytes.starts_with(&[0xEF, 0xBB, 0xBF])
+pub(crate) fn has_utf16_bom(bytes: &[u8]) -> bool {
+    bytes.starts_with(&[0xFF, 0xFE]) || bytes.starts_with(&[0xFE, 0xFF])
 }
 
 /// Borrow UTF-8 input as before; strictly decode BOM-marked UTF-16. Validate
