@@ -1,0 +1,18 @@
+/* Manual-copy feedback for the temporary VitePress clipboard adapter. */
+.vp-doc div[class*='language-'] > .fenced-copy-status {
+  display: block;
+  padding: 8px 24px;
+  color: var(--vp-c-text-1);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.vp-doc div[class*='language-'] > .fenced-copy-status-success {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

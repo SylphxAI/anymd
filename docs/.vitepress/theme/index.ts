@@ -1,6 +1,8 @@
+import { h, onMounted, onUnmounted } from 'vue';
+import { installFencedCodeCopy } from './fenced-code-copy';
+import './fenced-code-copy.css';
 import DefaultTheme from 'vitepress/theme';
 import type { Theme } from 'vitepress';
-import { h } from 'vue';
 import HeroInstall from './components/HeroInstall.vue';
 import Playground from './components/Playground.vue';
 import ProBuy from './components/ProBuy.vue';
@@ -15,6 +17,13 @@ import './custom.css';
  */
 const theme: Theme = {
   extends: DefaultTheme,
+  setup() {
+    let dispose: (() => void) | undefined;
+    onMounted(() => {
+      dispose = installFencedCodeCopy();
+    });
+    onUnmounted(() => dispose?.());
+  },
   Layout: () =>
     h(DefaultTheme.Layout, null, {
       'home-hero-actions-after': () => h(HeroInstall),
