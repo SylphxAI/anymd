@@ -1,0 +1,67 @@
+# architecture-ratchet-v2
+# model-alias-ratchet-v1
+# stack-rule-adopted-v1 architecture/C1/privileged-branch
+# stack-rule-adopted-v1 architecture/C2/provider-bypass
+# stack-rule-adopted-v1 architecture/C3/bundled-method
+# stack-rule-adopted-v1 architecture/C3/downstream-config
+# stack-rule-adopted-v1 architecture/C3/downstream-import
+# stack-rule-adopted-v1 architecture/C4/competing-default
+# stack-rule-adopted-v1 architecture/C4/undeclared-setting
+# stack-rule-adopted-v1 architecture/C5/cron-progress
+# stack-rule-adopted-v1 architecture/C5/idle-floor
+# stack-rule-adopted-v1 architecture/C5/polling-loop
+# stack-rule-adopted-v1 architecture/C5/polling-timer
+# stack-rule-adopted-v1 architecture/C6/retired-route
+# stack-rule-adopted-v1 architecture/C6/unexplained-suppression
+# stack-rule-adopted-v1 architecture/C7/failure-only-verdict
+# stack-rule-adopted-v1 architecture/C7/merge-only-completion
+# stack-rule-adopted-v1 model-pin
+architecture C1 privileged-branch crates/anymd-core/src/ssrf.rs 56ea2d1fbf596d8e2320199edc6c2d16a1dea0fafcda48b6ffe137847e5e074e 1
+architecture C4 undeclared-setting crates/anymd-core/src/url_fetch.rs 8ffae6b5e4e926c2df6ab7634c1c8c6eab8e7f26dd01826c903d0b662a623169 1
+architecture C4 undeclared-setting crates/anymd-ocr-vlm/bench/measure.py d0ab763d652389370565bdd64c256cd4308d2d953728f4d665e39bf265ea6474 1
+architecture C4 undeclared-setting crates/anymd/src/document.rs 6ea1ddae04ea02bb6854641d4deff3752ac4048a36463661bb2ac46d28dc43e2 1
+architecture C4 undeclared-setting crates/anymd/src/document.rs 70f3b21e0d0cb0e7fd9e75d663c145e66454592605fa193da39cad7ce304abfc 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 015b5fc09ccd2a9d562f57d15b58376cb6a831bd35b30fad7d81ff5c2fc774ca 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 4044f932a4526d7204196507fc574ce0716e4e0189f9c7c3abfba773b11d7e9f 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 4ad64f295daeeeeb519ab09eb6dc8bf32ca3e56a51ff340557e73d5f771a7138 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 6158378c075737a1ae36b5bf73f5458e1de11baa9d114ddf653f1b8a85ba311b 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 6beca580e1e17366042152c0936dd92beeb37ea8381b63257e96e906c86e4e7b 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 7aa23c1ecc227bb1dad375ef954199844d3241b9a0ffd4b3399a4ff2525769b3 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 91006e2f8aff95b8c1010545185726efe00622fffc2e62ff1de5436de6dadc56 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 9410996b8ffd76bb408049241840c5c73be3ec3bd86e1ce4264f4ebd9ec16e71 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs a03edd5fada213be82e5d8edb5a0537e5c99976e86042faa8a426d29805f4eb3 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs b34a39de6fefb4e7764b4a5eab9b2ea5479631f1615b6ccdcf935775c58bbfd9 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs b50862515c55a6b5b061936d85d1611ab8a9343f523b76f9ef63cf113e04b2de 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs c5940fac64db353e098a8e7af2828703950e6af612ad6f23c30190d98f31c536 1
+architecture C4 undeclared-setting crates/anymd/src/http_transport.rs eaca5b563a1398e02804be6db4860518a2b9c447ec8dc93925f14b732b7edb95 1
+architecture C4 undeclared-setting crates/anymd/src/ocr_vlm.rs 5311536c62b68a7aef7ee103dd13edade953e3fb073771638e33a1cb3ca5a68f 1
+architecture C4 undeclared-setting crates/anymd/src/ocr_vlm.rs cb2b0b9894f8150af46442679382ed4fbfee206edb6f31a48c815f19ae5b3a69 1
+architecture C4 undeclared-setting packages/anymd/bin/anymd.js 51a8d9ce3b4ef64c1e8a10bcead9354e47cc6df777b9aaaf753a5239447340c3 1
+architecture C4 undeclared-setting scripts/money-access-verify.py 828bca5856d8ca8ed6a2db1c23a9e1849d2018cd31f9f99db479b6aa8090a148 1
+architecture C4 undeclared-setting scripts/money-access-verify.py 968a11cf5eaf3d77969d83ef07584bd29e6f604ea28b814659b39ab415cfd5eb 1
+architecture C5 polling-loop bench/demo/record.sh 5fc2b0b94ad3743997e0a1bb49e0fc23cada5c984bc25a29f5d91f67cd2ae4f9 1
+architecture C5 polling-loop crates/anymd-core/src/search_pdf.rs 26243c33c5b6d8704ba77912ddca23160e0dbfc7dd1da2a026b178c9506e438d 1
+architecture C5 polling-loop crates/anymd-ocr-vlm/bench/measure.py 680924697cd98fdff44bb30dee6ed1dbbdd3061134d80e4cdd63275ece509f7b 1
+architecture C5 polling-loop crates/anymd-ocr-vlm/bench/measure.py c66cafbb678b1ed46d06520110a9bb77d81a501e96483f158ee65a036a3c2184 1
+architecture C5 polling-loop crates/anymd/src/main.rs ec7d06f003c99927e005017370a756881453844fed1504b17609be7e4ff62bbf 1
+architecture C5 polling-loop crates/anymd/src/ocr_vlm.rs a1057b178f2b5a8eba7cbbf1ffee0e841d74f33d32df08c9331e4b510c18ec2d 1
+architecture C5 polling-loop crates/anymd/src/pdf_evidence.rs ddcf03e76e5a75eae3c21fa4611a2861e5eb048a73a702f707866bf428ed82b2 1
+architecture C5 polling-loop crates/anymd/src/provider_budget.rs fb7e718da36adb5843629f69165bd6d75ad183c51f9aad2eeeaa1c62654af131 1
+architecture C6 unexplained-suppression bench-asr/run_engine.py 44ff7476fbc5ed134de2fab1d9d76e3f4a775cc817753ff395a2ae3b3ea29653 1
+architecture C6 unexplained-suppression bench/fetch.py 529ae00e08405c9f9002307cd33af692875b5a06b3b266c04ed62cffd3da2c8f 1
+architecture C6 unexplained-suppression bench/fetch.py c3aa582968bab1c269930ddf5a8d2c986e620e7d5c3cefa90cf4373b645799ee 1
+architecture C6 unexplained-suppression bench/run.py 247809b406852a13b635718e91e9e7cdefbd050733cdb488444fb60eddb41a8d 1
+architecture C6 unexplained-suppression bench/run.py 44a68058b5f83659239ae9a0c19de3630f8fcbaacc2f5cf0b7582abfe4aff56b 1
+architecture C6 unexplained-suppression bench/run.py 84f098b604f9f6216c2929c8f1e4f70b29a42db755440ac8069b982d6304be93 1
+architecture C6 unexplained-suppression bench/run.py cb1a1de149bc6d9e264c6d0c74bcc5b0cc31667b0d62f978d54584f7e24cdbf3 1
+architecture C6 unexplained-suppression crates/anymd-core/src/cos_document.rs 4298db5f2a238e692501abe1e8fcc17d60f22b011e8d676be1fe59618af0decd 1
+architecture C6 unexplained-suppression crates/anymd-core/src/cos_document.rs e6c477d630571740d677d46bef81f4f2da0e1ab1928d2bf383965f27ce2e7a52 1
+architecture C6 unexplained-suppression crates/anymd-core/src/document_twin/document_map.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 1
+architecture C6 unexplained-suppression crates/anymd-core/src/form_attachment_signals.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 1
+architecture C6 unexplained-suppression crates/anymd-core/src/structure_signals.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 1
+architecture C6 unexplained-suppression crates/anymd-core/src/text_index/cite_check.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 1
+architecture C6 unexplained-suppression crates/anymd-core/src/text_index/search.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 1
+architecture C6 unexplained-suppression crates/anymd-core/src/text_index/search.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 2
+architecture C7 failure-only-verdict .github/workflows/release.yml 7a1229133f8a7f2e3755a15bfa4edcaab793866e4a6743c599d36ba9794737b7 1
+model-pin bench-asr/pins.json whisper-large-v3-turbo 1
+model-pin bench-asr/plan.py whisper-large-v3-turbo 1
