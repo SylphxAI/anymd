@@ -101,3 +101,17 @@ Pro is digital content delivered immediately: at checkout you ask us to supply i
 Sylphx Limited, a company registered in England and Wales (company number 16438428). See the [anymd Pro terms](/legal/pro-terms) and [Privacy](/legal/privacy).
 
 <ProTracking page="pro" />
+
+## Money signer trust and test activation
+
+The offline production policy accepts the historical seller key and the current
+live Money signer. Key rotation adds trust without invalidating sold licences;
+signature, plan, product and expiry checks still apply.
+
+For a Money TEST grant, use `anymd pro --test status` or
+`anymd pro --test activate <token>`. This explicit policy trusts only the test
+signer, reports `Pro (TEST)`, reads `ANYMD_TEST_PRO_TOKEN`, and stores activations
+in `test-pro-token` beside the production `pro-token` file. The ordinary CLI
+and MCP Pro operations use production trust and never consume that test file
+or variable. Test mode does not start a purchase or establish a paid production
+licence. Keep real tokens out of shell history and logs.
