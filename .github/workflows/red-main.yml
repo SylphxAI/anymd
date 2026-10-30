@@ -50,7 +50,7 @@ jobs:
       issues: write
       pull-requests: write
       id-token: write
-    uses: SylphxAI/.github/.github/workflows/red-main.yml@083eff31aa012b3a24d5601abfc524ad461b2394 # main
+    uses: SylphxAI/.github/.github/workflows/red-main.yml@a41b5ad2784fddd9854cafd216e16e104bd30d60 # main
     # One secret, passed by name. The handler needs exactly the builder App's
     # private key, and `secrets: inherit` would hand it every secret this
     # repository holds. The handler reads it as
