@@ -30,7 +30,7 @@ jobs:
         # product sources and generated HTML in this security scan.
         run: rm -rf docs/storefront/prebuilt/_keel
       - name: Scan source without executing plugin commands
-        uses: hashgraph-online/ai-plugin-scanner-action@caba2e96aa8ad2feb6cf6fca52442b52e22e779f
+        uses: hashgraph-online/ai-plugin-scanner-action@8db741c699f3554e9c7f4947e8954f9190332e6b
         with:
           plugin_dir: .
           mode: scan
