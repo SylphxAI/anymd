@@ -26,7 +26,7 @@ pub(crate) fn invalid(message: impl std::fmt::Display) -> ConvertError {
 /// A zip container with entry-count and inflated-size limits enforced.
 pub(crate) struct Package<'a> {
     archive: zip::ZipArchive<Cursor<&'a [u8]>>,
-    names: Vec<String>,
+    names: HashMap<String, String>,
 }
 
 impl<'a> Package<'a> {
@@ -34,23 +34,24 @@ impl<'a> Package<'a> {
         let archive = zip::ZipArchive::new(Cursor::new(bytes))
             .map_err(|e| invalid(format!("not a valid {kind} file: {e}")))?;
         check_limits(&archive)?;
-        let names = archive
-            .file_names()
-            .filter_map(|name| name.ok())
-            .map(|name| name.to_string())
-            .collect();
+        let mut names = HashMap::with_capacity(archive.len());
+        for name in archive.file_names().filter_map(|name| name.ok()) {
+            // Keep the same first fallback when an archive has case variants.
+            names
+                .entry(name.to_ascii_lowercase())
+                .or_insert_with(|| name.to_string());
+        }
         Ok(Self { archive, names })
     }
 
     fn resolve_name(&self, name: &str) -> Option<String> {
         let name = name.trim_start_matches('/');
-        if self.names.iter().any(|n| n == name) {
+        // ZIP already indexes exact names. Optional parts are often absent, so
+        // index the ASCII case fallback too rather than scanning every entry.
+        if self.archive.index_for_name(name).is_some() {
             return Some(name.to_string());
         }
-        self.names
-            .iter()
-            .find(|n| n.eq_ignore_ascii_case(name))
-            .cloned()
+        self.names.get(&name.to_ascii_lowercase()).cloned()
     }
 
     pub(crate) fn has(&self, name: &str) -> bool {
@@ -898,6 +899,44 @@ impl ListIndent {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn package_lookup_preserves_exact_names_and_ascii_fallback() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let mut archive = zip::ZipWriter::new(Cursor::new(Vec::new()));
+        for (name, bytes) in [
+            ("word/document.xml", b"lower".as_slice()),
+            ("WORD/DOCUMENT.XML", b"upper".as_slice()),
+            ("word/Styles.xml", b"styles".as_slice()),
+            ("word/\u{c4}.xml", b"unicode".as_slice()),
+        ] {
+            archive
+                .start_file(name, SimpleFileOptions::default())
+                .unwrap();
+            archive.write_all(bytes).unwrap();
+        }
+        let bytes = archive.finish().unwrap().into_inner();
+        let mut package = Package::open(&bytes, "DOCX").unwrap();
+        for (name, expected) in [
+            ("word/document.xml", b"lower".as_slice()),
+            ("/WORD/DOCUMENT.XML", b"upper".as_slice()),
+            ("/WORD/styles.XML", b"styles".as_slice()),
+            ("WORD/\u{c4}.XML", b"unicode".as_slice()),
+        ] {
+            assert!(package.has(name));
+            assert_eq!(package.read(name).unwrap().as_deref(), Some(expected));
+        }
+        for missing in ["word/missing.xml", "word/\u{e4}.xml"] {
+            assert!(!package.has(missing));
+            assert_eq!(package.read(missing).unwrap(), None);
+        }
+        assert!(matches!(
+            Package::open(b"not a zip", "DOCX"),
+            Err(ConvertError::Invalid(_))
+        ));
+    }
 
     #[test]
     fn resolves_relative_targets() {
