@@ -41,7 +41,7 @@
     "@types/bun": "^1.4.4",
     "@types/node": "^26.6.4",
     "@types/pngjs": "^6.0.5",
-    "markdown-it": "^15.0.2",
+    "markdown-it": "^15.0.3",
     "pngjs": "^7.0.0",
     "typescript": "^7.0.2",
     "vitepress": "^1.6.4"
