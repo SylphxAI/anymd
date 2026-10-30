@@ -71,7 +71,13 @@ fn successful_conversion_replaces_output() {
 #[test]
 fn end_of_options_allows_dash_prefixed_paths_and_literal_help_flags() {
     let directory = tempfile::tempdir().unwrap();
-    for source in ["-notes.txt", "--help", "--version"] {
+    for source in [
+        "-notes.txt",
+        "--help",
+        "--version",
+        "--allow-dir",
+        "--allow-dir=notes.txt",
+    ] {
         std::fs::write(directory.path().join(source), "Literal document\n").unwrap();
         let result = cli(directory.path(), &["--", source]);
         assert!(result.status.success(), "{result:?}");
