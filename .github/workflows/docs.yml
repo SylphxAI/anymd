@@ -42,7 +42,7 @@ jobs:
 
       # Must match the `wasm-bindgen` crate pinned in crates/anymd-wasm/Cargo.toml.
       - name: Install wasm-bindgen CLI
-        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe
+        uses: taiki-e/install-action@a4d3f3f761dcd95cce1b72cb61cb6d1963438177
         with:
           tool: wasm-bindgen@0.2.126
 
