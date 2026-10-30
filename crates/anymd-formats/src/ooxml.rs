@@ -26,7 +26,8 @@ pub(crate) fn invalid(message: impl std::fmt::Display) -> ConvertError {
 /// A zip container with entry-count and inflated-size limits enforced.
 pub(crate) struct Package<'a> {
     archive: zip::ZipArchive<Cursor<&'a [u8]>>,
-    names: HashMap<String, String>,
+    names: HashSet<String>,
+    folded_names: HashMap<String, String>,
 }
 
 impl<'a> Package<'a> {
@@ -34,24 +35,31 @@ impl<'a> Package<'a> {
         let archive = zip::ZipArchive::new(Cursor::new(bytes))
             .map_err(|e| invalid(format!("not a valid {kind} file: {e}")))?;
         check_limits(&archive)?;
-        let mut names = HashMap::with_capacity(archive.len());
+        let mut names = HashSet::with_capacity(archive.len());
+        let mut folded_names = HashMap::with_capacity(archive.len());
         for name in archive.file_names().filter_map(|name| name.ok()) {
             // Keep the same first fallback when an archive has case variants.
-            names
+            folded_names
                 .entry(name.to_ascii_lowercase())
                 .or_insert_with(|| name.to_string());
+            names.insert(name.to_string());
         }
-        Ok(Self { archive, names })
+        Ok(Self {
+            archive,
+            names,
+            folded_names,
+        })
     }
 
     fn resolve_name(&self, name: &str) -> Option<String> {
         let name = name.trim_start_matches('/');
-        // ZIP already indexes exact names. Optional parts are often absent, so
-        // index the ASCII case fallback too rather than scanning every entry.
-        if self.archive.index_for_name(name).is_some() {
+        // Use decoded names for exact precedence, including CP437 ZIP entries;
+        // ZIP's own index uses raw bytes. Missing optional parts use the folded
+        // index too, without scanning every archive entry.
+        if self.names.contains(name) {
             return Some(name.to_string());
         }
-        self.names.get(&name.to_ascii_lowercase()).cloned()
+        self.folded_names.get(&name.to_ascii_lowercase()).cloned()
     }
 
     pub(crate) fn has(&self, name: &str) -> bool {
@@ -900,24 +908,28 @@ impl ListIndent {
 mod tests {
     use super::*;
 
-    #[test]
-    fn package_lookup_preserves_exact_names_and_ascii_fallback() {
+    fn zip_entries(entries: &[(&str, &[u8])]) -> Vec<u8> {
         use std::io::Write;
         use zip::write::SimpleFileOptions;
 
         let mut archive = zip::ZipWriter::new(Cursor::new(Vec::new()));
-        for (name, bytes) in [
-            ("word/document.xml", b"lower".as_slice()),
-            ("WORD/DOCUMENT.XML", b"upper".as_slice()),
-            ("word/Styles.xml", b"styles".as_slice()),
-            ("word/\u{c4}.xml", b"unicode".as_slice()),
-        ] {
+        for (name, bytes) in entries {
             archive
                 .start_file(name, SimpleFileOptions::default())
                 .unwrap();
             archive.write_all(bytes).unwrap();
         }
-        let bytes = archive.finish().unwrap().into_inner();
+        archive.finish().unwrap().into_inner()
+    }
+
+    #[test]
+    fn package_lookup_preserves_exact_names_and_ascii_fallback() {
+        let bytes = zip_entries(&[
+            ("word/document.xml", b"lower".as_slice()),
+            ("WORD/DOCUMENT.XML", b"upper".as_slice()),
+            ("word/Styles.xml", b"styles".as_slice()),
+            ("word/\u{c4}.xml", b"unicode".as_slice()),
+        ]);
         let mut package = Package::open(&bytes, "DOCX").unwrap();
         for (name, expected) in [
             ("word/document.xml", b"lower".as_slice()),
@@ -935,6 +947,27 @@ mod tests {
         assert!(matches!(
             Package::open(b"not a zip", "DOCX"),
             Err(ConvertError::Invalid(_))
+        ));
+    }
+
+    #[test]
+    fn decoded_exact_name_does_not_fall_through_to_a_case_variant() {
+        let mut bytes = zip_entries(&[("WORD/\u{c4}.xml", b"fallback"), ("word/X.xml", b"exact")]);
+        // CP437 encodes Ä as 0x8e. Replace the one-byte ASCII placeholder in
+        // both ZIP name fields without changing header lengths or file data.
+        let placeholder = b"word/X.xml";
+        for index in 0..=bytes.len() - placeholder.len() {
+            if &bytes[index..index + placeholder.len()] == placeholder {
+                bytes[index + 5] = 0x8e;
+            }
+        }
+        let mut package = Package::open(&bytes, "DOCX").unwrap();
+        assert!(package.has("word/\u{c4}.xml"));
+        // Preserve the original error: zip's by_name uses raw UTF-8 bytes and
+        // cannot read the decoded CP437 exact name. Another part must not win.
+        assert!(matches!(
+            package.read("word/\u{c4}.xml"),
+            Err(ConvertError::Invalid(message)) if message.starts_with("cannot read word/Ä.xml:")
         ));
     }
 
