@@ -58,3 +58,8 @@ architecture C7 failure-only-verdict .github/workflows/release.yml 7a1229133f8a7
 model-pin bench-asr/pins.json whisper-large-v3-turbo 1
 model-pin bench-asr/plan.py whisper-large-v3-turbo 1
 # stack-rule-adopted-v1 architecture/C1/cache-economy
+# force-push-ratchet-v1
+# stack-rule-adopted-v1 architecture/C1/deal-randomness
+# stack-rule-adopted-v1 architecture/C2/tenant-read-functions
+# stack-rule-adopted-v1 force-push
+# stack-rule-adopted-v1 model-selector

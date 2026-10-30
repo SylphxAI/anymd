@@ -256,12 +256,17 @@ jobs:
 
   # The marker. Named exactly `verified`; never a required check.
   verified:
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: read
     name: verified
     if: always()
     needs: [docs, audit, rust, other-os, release-targets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: SylphxAI/.github/.github/actions/needs-pass@4dcc910606d7624150d2004f2dd970eb570de30e # main
+      - uses: SylphxAI/.github/.github/actions/needs-pass@054710a09ce85a2e0edbc14599bd00df0db879be # main
         with:
           needs: ${{ toJSON(needs) }}
