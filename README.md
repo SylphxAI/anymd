@@ -137,7 +137,7 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 
 Python wheels carry the same prebuilt binary and are on PyPI as `anymd` from the first release after publication.
 
-Windows: `winget install Sylphx.anymd`. macOS and Linux: `brew install sylphxai/tap/anymd`. Scoop: `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket && scoop install anymd`.
+Use npm on Windows, macOS and Linux. Homebrew and Scoop entries are not yet available in the Sylphx tap and bucket.
 
 Docker (amd64 and arm64):
 
