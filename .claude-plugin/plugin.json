@@ -1,6 +1,6 @@
 {
   "name": "anymd",
-  "version": "8.5.5",
+  "version": "8.5.6",
   "description": "Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video. Local Rust MCP server, no API key.",
   "author": {
     "name": "Sylphx",

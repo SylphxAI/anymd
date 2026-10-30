@@ -16,7 +16,24 @@ use std::fmt;
 use std::path::PathBuf;
 
 /// Trusted public keys (base64url raw Ed25519). A list so rotation is additive.
-pub const PRO_PUBLIC_KEYS: &[&str] = &["xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y"];
+pub const PRO_PUBLIC_KEYS: &[&str] = &[
+    // Preserve every historical licence when Money rotates its signer.
+    "xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y",
+    "zYLCVWNwA6w-EI4z-Z1HNYsKkZj1c3JrZtewsGVjUiM",
+];
+
+/// Money test signers are separate: they never unlock ordinary Pro operations.
+const TEST_PUBLIC_KEYS: &[&str] = &["PEdpVC-uXLyTfAcYDWXh-FoP9vRE12eb4Fax9OZ4QT8"];
+
+fn test_policy() -> LicencePolicy<'static> {
+    LicencePolicy {
+        public_keys: TEST_PUBLIC_KEYS,
+        env_var: "ANYMD_TEST_PRO_TOKEN",
+        file_name: "test-pro-token",
+        tier: "Pro (TEST)",
+        ..policy_with(TEST_PUBLIC_KEYS)
+    }
+}
 
 /// Where Pro is explained and sold.
 pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pricing";
@@ -112,6 +129,17 @@ pub fn required_result(required: &ProRequired) -> rmcp::model::CallToolResult {
 
 /// `anymd pro status | activate <token> | buy`; returns the exit code.
 pub fn run(arguments: &[String]) -> i32 {
+    if arguments.first().is_some_and(|arg| arg == "--test") {
+        let arguments = &arguments[1..];
+        if !matches!(
+            arguments.first().map(String::as_str),
+            Some("status" | "activate")
+        ) {
+            eprintln!("usage: anymd pro --test status | anymd pro --test activate <token>");
+            return 2;
+        }
+        return run_with(&test_policy(), None, arguments);
+    }
     let checkout = arguments
         .first()
         .filter(|command| command.as_str() == "buy")
@@ -204,6 +232,45 @@ mod tests {
     }
 
     #[test]
+    fn test_activation_is_separate_from_production() {
+        let production = policy();
+        let test = test_policy();
+        assert!(test
+            .public_keys
+            .iter()
+            .all(|key| !production.public_keys.contains(key)));
+        assert_ne!(production.env_var, test.env_var);
+        assert_ne!(production.file_name, test.file_name);
+        assert!(test.tier.contains("TEST"));
+        assert_eq!(run(&["--test".into(), "buy".into()]), 2);
+        // Rotation accepts both an old and new signer, never an unrelated one.
+        let (old, new, other) = (key(21), key(22), key(23));
+        let (old_public, new_public) = (public(&old), public(&new));
+        let keys = [old_public.as_str(), new_public.as_str()];
+        for signer in [&old, &new] {
+            assert!(verify_token_with(&token(signer, PRO), &keys).is_ok());
+            assert_eq!(
+                verify_token_with(
+                    &token(signer, r#"{"plan":"pro","issuedAt":1,"product":"foreign"}"#),
+                    &keys
+                ),
+                Err(LicenseError::WrongProduct)
+            );
+            assert_eq!(
+                verify_token_with(
+                    &token(signer, r#"{"plan":"pro","issuedAt":1,"expiresAt":1}"#),
+                    &keys
+                ),
+                Err(LicenseError::Expired)
+            );
+        }
+        assert_eq!(
+            verify_token_with(&token(&other, PRO), &keys),
+            Err(LicenseError::BadSignature)
+        );
+    }
+
+    #[test]
     fn bad_signature() {
         let (k, other) = (key(1), key(2));
         assert_eq!(
@@ -259,7 +326,10 @@ mod tests {
         assert_eq!(p.public_keys, PRO_PUBLIC_KEYS);
         assert_eq!(
             PRO_PUBLIC_KEYS,
-            &["xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y"]
+            &[
+                "xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y",
+                "zYLCVWNwA6w-EI4z-Z1HNYsKkZj1c3JrZtewsGVjUiM",
+            ]
         );
         assert_eq!(p.env_var, "ANYMD_PRO_TOKEN");
         assert_eq!(p.upgrade_url, PRO_URL);
