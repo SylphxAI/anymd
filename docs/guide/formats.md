@@ -66,6 +66,11 @@ One section per slide in deck order: titles, bullets, tables, chart data, speake
 
 `.xlsx`, `.xls`, `.ods`, CSV, and TSV. One Markdown table per sheet, dates as ISO strings, capped at 2,000 rows per sheet. `pages` selects sheets.
 
+Spreadsheet formulas use the results saved by the spreadsheet application;
+anymd does not calculate formulas. A formula without a saved result appears
+as an empty cell. Recalculate and save the workbook in your spreadsheet
+application before converting it if results are missing.
+
 CSV and TSV accept UTF-8 (with or without a BOM) and UTF-16LE or UTF-16BE with a BOM, with no encoding option needed. The CLI, MCP server, and browser playground decode them locally before parsing quoted cells. Malformed BOM-marked UTF-16 returns an error asking you to re-export the file, rather than replacing damaged text. Blank rows and empty edge columns are omitted; rows beyond the cap are counted below the table.
 
 ## EPUB

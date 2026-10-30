@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.5.7
+
+### Patch Changes
+
+- Preserve the `--output` file when any input fails to convert, including runs with a mix of valid and invalid inputs. A failed conversion no longer replaces an earlier report with empty or partial output.
+- Accept `--` before input paths, so names starting with `-` can be converted and filenames such as `--help` are read literally. Keep the setup client list beside its command in `--help`.
+
+### Documentation
+
+- Clarify output preservation and shell redirection, and mark the Python package as awaiting PyPI publication instead of offering unavailable `pip` and `uvx` installs.
+
 ## 8.5.6
 
 ### Patch Changes

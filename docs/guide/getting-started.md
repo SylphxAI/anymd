@@ -20,16 +20,18 @@ npx -y @sylphx/anymd setup     # --dry-run to preview, --remove to undo
 
 It is safe to run again. The sections below add it to one client by hand.
 
-Prefer Python or Docker? These run the same prebuilt binary, with no Node needed:
+Prefer Docker? It runs the same prebuilt binary, with no Node needed:
 
 ```bash
-uvx anymd report.pdf > report.md         # run once; or: pip install anymd
-uvx anymd mcp                            # the MCP server, for clients that take a command
 docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
 docker run -i --rm ghcr.io/sylphxai/anymd    # MCP server on stdio (amd64 and arm64)
 ```
 
-The Linux wheels and the image use glibc 2.17 or newer, so Alpine (musl) needs `cargo install anymd` instead.
+The image uses glibc 2.17 or newer, so Alpine (musl) needs `cargo install anymd` instead.
+
+Python wheels and a [Python API](python.md) are prepared in this repository but
+are not published to PyPI yet. Use npm or Docker until publication; `pip install
+anymd` and `uvx anymd` do not currently install this project.
 
 On Windows, `winget install Sylphx.anymd` installs the same prebuilt binary. On macOS and Linux, `brew install sylphxai/tap/anymd`. With Scoop, add `https://github.com/SylphxAI/scoop-bucket` and run `scoop install anymd`.
 
@@ -101,7 +103,7 @@ To keep the server inside one folder, add `--allow-dir`:
 
 ```bash
 npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
-# or: uvx anymd <file> · pip install anymd · docker run ghcr.io/sylphxai/anymd <file>
+# or: docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd <file>
 anymd report.pdf > report.md
 ```
 

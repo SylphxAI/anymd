@@ -4,12 +4,19 @@ description: "Use anymd from Python, with LangChain and LlamaIndex loaders, with
 
 # Python API and document loaders
 
+::: warning Not yet published to PyPI
+The Python package is prepared in this repository, but `anymd` is not currently
+available on PyPI. `pip install anymd` and `uvx anymd` cannot install this project
+yet. Use the [npm CLI or Docker image](getting-started.md) for conversion today.
+The examples below describe the API included in the source for future wheels.
+:::
+
 The platform wheel contains the native CLI and a thin Python API. Conversion
 runs in the same Rust binary as the CLI; Python does not implement a converter.
 The base package uses only the Python standard library (Python 3.8 or newer).
 
-anymd 8.3.0 platform wheels include this API. Older CLI-only wheels do not
-provide these imports.
+The source includes this API from anymd 8.3.0. A platform wheel must include
+the API to provide these imports; an older CLI-only wheel does not.
 
 ## Convert one document
 
