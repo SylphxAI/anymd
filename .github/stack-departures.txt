@@ -39,14 +39,6 @@ architecture C4 undeclared-setting crates/anymd/src/ocr_vlm.rs cb2b0b9894f8150af
 architecture C4 undeclared-setting packages/anymd/bin/anymd.js 51a8d9ce3b4ef64c1e8a10bcead9354e47cc6df777b9aaaf753a5239447340c3 1
 architecture C4 undeclared-setting scripts/money-access-verify.py 828bca5856d8ca8ed6a2db1c23a9e1849d2018cd31f9f99db479b6aa8090a148 1
 architecture C4 undeclared-setting scripts/money-access-verify.py 968a11cf5eaf3d77969d83ef07584bd29e6f604ea28b814659b39ab415cfd5eb 1
-architecture C5 polling-loop bench/demo/record.sh 5fc2b0b94ad3743997e0a1bb49e0fc23cada5c984bc25a29f5d91f67cd2ae4f9 1
-architecture C5 polling-loop crates/anymd-core/src/search_pdf.rs 26243c33c5b6d8704ba77912ddca23160e0dbfc7dd1da2a026b178c9506e438d 1
-architecture C5 polling-loop crates/anymd-ocr-vlm/bench/measure.py 680924697cd98fdff44bb30dee6ed1dbbdd3061134d80e4cdd63275ece509f7b 1
-architecture C5 polling-loop crates/anymd-ocr-vlm/bench/measure.py c66cafbb678b1ed46d06520110a9bb77d81a501e96483f158ee65a036a3c2184 1
-architecture C5 polling-loop crates/anymd/src/main.rs ec7d06f003c99927e005017370a756881453844fed1504b17609be7e4ff62bbf 1
-architecture C5 polling-loop crates/anymd/src/ocr_vlm.rs a1057b178f2b5a8eba7cbbf1ffee0e841d74f33d32df08c9331e4b510c18ec2d 1
-architecture C5 polling-loop crates/anymd/src/pdf_evidence.rs ddcf03e76e5a75eae3c21fa4611a2861e5eb048a73a702f707866bf428ed82b2 1
-architecture C5 polling-loop crates/anymd/src/provider_budget.rs fb7e718da36adb5843629f69165bd6d75ad183c51f9aad2eeeaa1c62654af131 1
 architecture C6 unexplained-suppression bench-asr/run_engine.py 44ff7476fbc5ed134de2fab1d9d76e3f4a775cc817753ff395a2ae3b3ea29653 1
 architecture C6 unexplained-suppression bench/fetch.py 529ae00e08405c9f9002307cd33af692875b5a06b3b266c04ed62cffd3da2c8f 1
 architecture C6 unexplained-suppression bench/fetch.py c3aa582968bab1c269930ddf5a8d2c986e620e7d5c3cefa90cf4373b645799ee 1
@@ -65,3 +57,4 @@ architecture C6 unexplained-suppression crates/anymd-core/src/text_index/search.
 architecture C7 failure-only-verdict .github/workflows/release.yml 7a1229133f8a7f2e3755a15bfa4edcaab793866e4a6743c599d36ba9794737b7 1
 model-pin bench-asr/pins.json whisper-large-v3-turbo 1
 model-pin bench-asr/plan.py whisper-large-v3-turbo 1
+# stack-rule-adopted-v1 architecture/C1/cache-economy
