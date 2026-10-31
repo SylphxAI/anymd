@@ -1,4 +1,8 @@
 /* Manual-copy feedback for the temporary VitePress clipboard adapter. */
+.vp-doc div[class*='language-'] > span.lang {
+  right: 64px;
+}
+
 .vp-doc div[class*='language-'] > .fenced-copy-status {
   display: block;
   padding: 8px 24px;
