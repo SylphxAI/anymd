@@ -94,7 +94,9 @@ export function installFencedCodeCopy(): () => void {
           status.classList.add('fenced-copy-status-success');
         } else {
           window.getSelection()?.selectAllChildren(code);
-          status.textContent = 'Copy blocked. Press ⌘C / Ctrl+C.';
+          status.textContent = window.matchMedia('(pointer: coarse)').matches
+            ? 'Copy blocked: press and hold the highlighted text to copy.'
+            : 'Copy blocked. Press ⌘C / Ctrl+C.';
         }
         timers.set(
           button,
