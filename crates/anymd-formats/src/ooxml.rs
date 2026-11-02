@@ -53,9 +53,9 @@ impl<'a> Package<'a> {
 
     fn resolve_name(&self, name: &str) -> Option<String> {
         let name = name.trim_start_matches('/');
-        // Use decoded names for exact precedence, including CP437 ZIP entries;
-        // ZIP's own index uses raw bytes. Missing optional parts use the folded
-        // index too, without scanning every archive entry.
+        // Use decoded names for exact precedence, including CP437 ZIP entries.
+        // Missing optional parts use the folded index too, without scanning
+        // every archive entry.
         if self.names.contains(name) {
             return Some(name.to_string());
         }
@@ -963,12 +963,12 @@ mod tests {
         }
         let mut package = Package::open(&bytes, "DOCX").unwrap();
         assert!(package.has("word/\u{c4}.xml"));
-        // Preserve the original error: zip's by_name uses raw UTF-8 bytes and
-        // cannot read the decoded CP437 exact name. Another part must not win.
-        assert!(matches!(
-            package.read("word/\u{c4}.xml"),
-            Err(ConvertError::Invalid(message)) if message.starts_with("cannot read word/Ä.xml:")
-        ));
+        // zip 9.1 resolves decoded CP437 names. Read the exact entry, not the
+        // differently cased fallback, when both names are present.
+        assert_eq!(
+            package.read("word/\u{c4}.xml").unwrap().as_deref(),
+            Some(b"exact".as_slice())
+        );
     }
 
     #[test]

@@ -963,12 +963,11 @@ mod tests {
     }
 
     #[test]
-    fn test_bf16_probe_detects_incomplete_backend() {
-        // Candle's CPU backend lacks BF16 matmul, so the probe must report
-        // false — the same signal a pre-Ampere CUDA device produces. (The CPU
-        // path never reaches the probe in select_dtype; supports_bf16() short
-        // circuits it to F32.)
-        assert!(!bf16_works(&Device::Cpu));
+    fn test_bf16_probe_accepts_supported_cpu_kernels() {
+        // Candle 0.11.1 implements CPU BF16 matmul by widening to F32 and
+        // narrowing the result. The probe must accept these working kernels;
+        // select_dtype still selects F32 for CPU, independently of the probe.
+        assert!(bf16_works(&Device::Cpu));
     }
 
     #[test]
