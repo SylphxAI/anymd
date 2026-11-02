@@ -53,8 +53,9 @@ After the shared release job succeeds, `release.yml` runs the mcp-kit
 `package-managers` action in a top-level caller job on public `main` pushes.
 It renders `Formula/anymd.rb` in `SylphxAI/homebrew-tap` and
 `bucket/anymd.json` in `SylphxAI/scoop-bucket` from the exact version's released
-archives. Each destination changes through its normal pull request, checks
-and merge queue; the job verifies the merged bytes before succeeding.
+archives. Each destination changes through its normal pull request and repository rules,
+including a merge queue where configured; the job verifies the merged bytes
+before succeeding.
 
 The source CI identity is `anymd-package-managers`; its destination-only Broker
 policy has the same name. Access exchanges the caller job's OIDC identity and
@@ -64,6 +65,11 @@ Missing authority fails the job instead of silently skipping either channel.
 An unchanged version still reconciles both destinations, without rebuilding or
 republishing existing npm packages or release assets. Repeating delivery reuses
 an existing publication pull request or verifies the already-current manifest.
+The pinned shared publisher also handles a new pull request becoming clean while
+GitHub is enabling auto-merge: it reads the exact head and state again before one
+ordinary merge request. Changed heads, blocked or closed requests, authorization
+failures and a refused recovery remain failures; no administrator override is
+used.
 
 Install with `brew install sylphxai/tap/anymd`, or run
 `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` followed by
