@@ -83,6 +83,7 @@ jobs:
           name: anymd
           version: ${{ steps.version.outputs.value }}
           package-json: packages/anymd/package.json
+          description: Convert files to Markdown for AI agents
           trust-policy: orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/trust_policies/anymd-package-managers
           ci-name: anymd-package-managers
           homebrew-tap: SylphxAI/homebrew-tap

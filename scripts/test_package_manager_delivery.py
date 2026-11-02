@@ -43,6 +43,14 @@ class PackageManagerDelivery(unittest.TestCase):
         self.assertIn("name: anymd", self.managers)
         self.assertNotIn("8.5.", self.managers)
 
+    def test_channel_description_fits_homebrew_instead_of_the_long_npm_description(self):
+        description = re.search(r"^          description: (.+)$", self.managers, re.M)
+        self.assertIsNotNone(description)
+        value = description.group(1)
+        self.assertLessEqual(len(value), 80)
+        self.assertTrue(value.isascii())
+        self.assertFalse(value.endswith("."))
+
     def test_both_destinations_use_the_declared_source_identity(self):
         for expected in (
             "ci-name: anymd-package-managers",
