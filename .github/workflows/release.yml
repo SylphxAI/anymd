@@ -32,7 +32,7 @@ concurrency:
 
 jobs:
   release:
-    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@88381cc3c4569df51af49612a94b27a72523067e # v0.8.8
+    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@6b3259ce5005cdf70a392f5377b6b4d5139472c4 # v0.8.9
     # packages: write is only used by the kit's optional GHCR image job, which
     # anymd skips; GitHub still checks every called job's permissions.
     permissions:
@@ -40,7 +40,7 @@ jobs:
       id-token: write
       packages: write
     with:
-      kit-ref: 88381cc3c4569df51af49612a94b27a72523067e
+      kit-ref: 6b3259ce5005cdf70a392f5377b6b4d5139472c4
       name: anymd
       cargo-package: anymd
       # MCP Bundle (.mcpb) for Claude Desktop, attached to the GitHub release.
@@ -78,7 +78,7 @@ jobs:
         run: |
           echo "value=$(node -p 'require("./packages/anymd/package.json").version')" >> "$GITHUB_OUTPUT"
       # Missing Access or Broker authority must fail, never skip enabled channels.
-      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@88381cc3c4569df51af49612a94b27a72523067e # v0.8.8
+      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@6b3259ce5005cdf70a392f5377b6b4d5139472c4 # v0.8.9
         with:
           name: anymd
           version: ${{ steps.version.outputs.value }}
