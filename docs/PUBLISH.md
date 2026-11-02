@@ -49,13 +49,25 @@ crates.io consumers.
 
 ## winget, Homebrew and Scoop
 
-`release.yml` opts the shared mcp-kit workflow into Homebrew and Scoop
-(`homebrew: true`, `scoop: true`). That job writes `Formula/anymd.rb` to
-`SylphxAI/homebrew-tap` and `bucket/anymd.json` to `SylphxAI/scoop-bucket` with
-the `TAP_APP_ID` and `TAP_APP_PRIVATE_KEY` secrets, passed by name. When those
-secrets are absent the shared job logs a notice and skips; the release itself
-is unchanged. The install lines are `brew install sylphxai/tap/anymd` and
-`scoop install anymd` after `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket`.
+After the shared release job succeeds, `release.yml` runs the mcp-kit
+`package-managers` action in a top-level caller job on public `main` pushes.
+It renders `Formula/anymd.rb` in `SylphxAI/homebrew-tap` and
+`bucket/anymd.json` in `SylphxAI/scoop-bucket` from the exact version's released
+archives. Each destination changes through its normal pull request, checks
+and merge queue; the job verifies the merged bytes before succeeding.
+
+The source CI identity is `anymd-package-managers`; its destination-only Broker
+policy has the same name. Access exchanges the caller job's OIDC identity and
+Broker issues separate destination-scoped tokens. The App signing key stays in
+Broker, and no tap or bucket secrets are passed to the reusable workflow.
+Missing authority fails the job instead of silently skipping either channel.
+An unchanged version still reconciles both destinations, without rebuilding or
+republishing existing npm packages or release assets. Repeating delivery reuses
+an existing publication pull request or verifies the already-current manifest.
+
+Install with `brew install sylphxai/tap/anymd`, or run
+`scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` followed by
+`scoop install anymd`.
 
 The shared workflow has no winget input, so the `winget` job in `release.yml`
 does it. It hashes the published `anymd-win32-x64-msvc.zip` (which contains
