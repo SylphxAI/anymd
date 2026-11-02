@@ -530,12 +530,14 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-  # PyPI trusted publishing (OIDC, no token): the publisher is registered on
-  # PyPI for project anymd, owner SylphxAI, repo anymd, workflow release.yml,
-  # environment pypi. Versions already on PyPI are skipped.
+  # PyPI trusted publishing (OIDC, no token) requires a publisher for project
+  # anymd, owner SylphxAI, repo anymd, workflow release.yml, environment pypi.
+  # Recovery can build wheels after release ancestors skip. Override their
+  # implicit success() gate, but never publish failed or cancelled wheel work.
+  # Complete versions are skipped by the wheel probe; missing authority fails.
   pypi:
     needs: wheels
-    if: needs.wheels.outputs.built == 'true'
+    if: always() && !cancelled() && needs.wheels.result == 'success' && needs.wheels.outputs.built == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: pypi
