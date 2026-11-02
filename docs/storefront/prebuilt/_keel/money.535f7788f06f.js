@@ -459,6 +459,10 @@ async function hydrateCatalog(
         );
         return false;
       }
+      allowedOptions.set(optionSelectorValue(configured), {
+        ...configured,
+        currency_code: currency.toUpperCase(),
+      });
     }
     if (priceSelect) {
       for (const optionEl of priceSelect.querySelectorAll("option")) {
@@ -786,6 +790,7 @@ export async function mountCheckout(root) {
         optionSelectorValue(option),
         option.key,
         option.quantity,
+        option.currency_code,
         buyerEmail.toLowerCase(),
         config.consent_version,
         config.consent_text,
@@ -815,6 +820,7 @@ export async function mountCheckout(root) {
           product: config.product,
           price: option.key,
           quantity: option.quantity,
+          currency_code: option.currency_code,
           buyer_email: buyerEmail,
           consent: {
             terms_accepted: true,
