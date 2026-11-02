@@ -230,7 +230,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-oar-ocr-vl"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "candle-core",
  "candle-flash-attn",
