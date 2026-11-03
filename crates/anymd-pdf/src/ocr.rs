@@ -58,8 +58,9 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
     };
     // Each word becomes evenly spaced glyphs, so the gaps between words are
     // the only gaps and word spaces are found as for a text PDF.
+    let words = attach_item_markers(words);
     let mut glyphs = Vec::new();
-    for word in words {
+    for word in &words {
         let chars: Vec<char> = word.text.chars().collect();
         if chars.is_empty() || !(word.x1 > word.x0) {
             continue;
@@ -119,6 +120,131 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
         .collect();
     let mut first_heading = None;
     render_blocks(&blocks, body, &heading_levels(&sizes), &mut first_heading)
+}
+
+/// A typed list prints its item number in the margin, so Tesseract returns
+/// it as its own word (`1.` beside `Scientific`). Joining it there puts the
+/// marker in the row's first cell instead of in a column of its own.
+///
+/// Only a marker of one or two digits, with its full stop, that sits within
+/// a word space of the next word qualifies. A number with more digits, a
+/// number that stands alone, and a marker far from the text stay put.
+fn attach_item_markers(words: &[PlacedWord]) -> Vec<PlacedWord> {
+    let mut absorbed = vec![None; words.len()];
+    let mut removed = vec![false; words.len()];
+    // Compare neighbors in geometric order rather than scanning every word
+    // for every marker. The caller need not supply words in reading order.
+    let mut order: Vec<usize> = (0..words.len()).collect();
+    order.sort_by(|&left, &right| {
+        words[left]
+            .line
+            .cmp(&words[right].line)
+            .then_with(|| words[left].x0.total_cmp(&words[right].x0))
+    });
+    for pair in order.windows(2) {
+        let index = pair[0];
+        let next_index = pair[1];
+        let marker = &words[index];
+        let next = &words[next_index];
+        if marker.line != next.line || !is_item_marker(&marker.text) {
+            continue;
+        }
+        let marker_height = marker.bottom - marker.top;
+        if !(marker_height > 0.0) {
+            continue;
+        }
+        let gap = next.x0 - marker.x1;
+        let same_row = (marker.top - next.top).abs() <= marker_height * 0.6;
+        let starts_word = next
+            .text
+            .chars()
+            .next()
+            .is_some_and(|ch| ch.is_alphabetic());
+        if same_row
+            && starts_word
+            && gap >= 0.0
+            && gap <= marker_height * 1.5
+            && absorbed[next_index].is_none()
+        {
+            absorbed[next_index] = Some(index);
+            removed[index] = true;
+        }
+    }
+    words
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| !removed[*index])
+        .map(|(index, word)| {
+            let Some(marker_index) = absorbed[index] else {
+                return word.clone();
+            };
+            let marker = &words[marker_index];
+            PlacedWord {
+                x0: marker.x0.min(word.x0),
+                text: format!("{} {}", marker.text, word.text),
+                ..word.clone()
+            }
+        })
+        .collect()
+}
+
+/// `1.`, `12.`, also when Tesseract read the stop as a comma.
+fn is_item_marker(text: &str) -> bool {
+    let text = text.trim();
+    let Some(stop) = text.chars().last() else {
+        return false;
+    };
+    if stop != '.' && stop != ',' {
+        return false;
+    }
+    let digits = &text[..text.len() - stop.len_utf8()];
+    !digits.is_empty() && digits.len() <= 2 && digits.chars().all(|ch| ch.is_ascii_digit())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn word(text: &str, x0: f64, line: u64) -> PlacedWord {
+        PlacedWord {
+            x0,
+            x1: x0 + 10.0,
+            top: 20.0,
+            bottom: 30.0,
+            line,
+            text: text.into(),
+        }
+    }
+
+    #[test]
+    fn item_markers_join_the_nearest_label_in_geometric_order() {
+        let words = vec![word("Science", 25.0, 1), word("12,", 0.0, 1)];
+        let joined = attach_item_markers(&words);
+        assert_eq!(joined.len(), 1);
+        assert_eq!(joined[0].text, "12, Science");
+        assert_eq!(joined[0].x0, 0.0);
+        assert_eq!(joined[0].x1, 35.0);
+    }
+
+    #[test]
+    fn item_markers_leave_numbers_distant_words_and_other_lines_alone() {
+        let cases = [
+            vec![word("1.", 0.0, 1)],
+            vec![word("100.", 0.0, 1), word("Science", 20.0, 1)],
+            vec![word("1.", 0.0, 1), word("100", 20.0, 1)],
+            vec![word("1.", 0.0, 1), word("Science", 40.0, 1)],
+            vec![word("1.", 0.0, 1), word("Science", 20.0, 2)],
+            vec![word("1.", 0.0, 1), word("Science", 5.0, 1)],
+            vec![
+                word("1.", 0.0, 1),
+                word("100", 12.0, 1),
+                word("Science", 20.0, 1),
+            ],
+        ];
+        for words in cases {
+            assert_eq!(attach_item_markers(&words), words);
+        }
+    }
 }
 
 /// OCR often reads a typewritten full stop as a comma. A paragraph never

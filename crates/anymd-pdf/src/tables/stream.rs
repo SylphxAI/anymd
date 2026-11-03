@@ -143,7 +143,12 @@ fn append(cell: &mut String, text: &str) {
 
 /// Build a table (or recognise side-by-side prose) from rows that each have
 /// several aligned segments. `rules` are the page's ruling lines.
-pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f64) -> Stream {
+pub(crate) fn stream_table(
+    rows: &[Vec<Segment>],
+    rules: &[Rule],
+    word_space: f64,
+    ocr: bool,
+) -> Stream {
     let size = median(rows.iter().flatten().map(|s| s.size).collect()).unwrap_or(10.0);
     // A column gap is clearly wider than a word space: half the font size,
     // or more where the page's own word spaces are wide (typewriter text).
@@ -284,6 +289,19 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
         .filter(|pair| ruled_between(&pair[0], &pair[1]))
         .count();
 
+    let table_left = lines
+        .iter()
+        .filter_map(|line| {
+            line.cells
+                .iter()
+                .position(|cell| !cell.is_empty())
+                .filter(|&column| {
+                    (0..width).any(|other| other != column && is_numeric(&line.cells[other]))
+                })
+        })
+        .min()
+        .unwrap_or(0);
+
     // Merge continuation lines into the row above.
     let mut merged: Vec<Line> = Vec::with_capacity(lines.len());
     for (index, line) in lines.into_iter().enumerate() {
@@ -341,12 +359,32 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
             && !prev.cells[0].is_empty()
             && !any_number
             && (starts_lower(first) || ends_open(&prev.cells[0]));
+        // A label set on its own line, with the rest of the label and the
+        // values on the line below: "Advanced Vehicle" over "Development
+        // 70.620 ...". It starts where the table's labels start. A heading
+        // that closes with a stop, and a line of prose above the table, do
+        // not.
+        let prev_left = (0..width).find(|&column| !prev.cells[column].is_empty());
+        let label_continues = ocr
+            && prev_filled == [0]
+            && !prev_number
+            && !first.is_empty()
+            && any_number
+            && prev_left == Some(table_left)
+            && !prev.cells[0].ends_with(['.', ':', ';', '?', '!']);
         // Rows separated by rules: text between two rules that reads on is
         // one row (a group of value rows between rules is not).
         let same_band = separated_rows >= 2
             && !any_number
             && (filled.iter().filter(|&&c| c > 0).count() < prev_values || reads_on);
-        if continues_cells || centred_label || label_head || item_head || label_tail || same_band {
+        if continues_cells
+            || centred_label
+            || label_head
+            || item_head
+            || label_tail
+            || label_continues
+            || same_band
+        {
             for (c, text) in line.cells.iter().enumerate() {
                 append(&mut prev.cells[c], text);
             }

@@ -33,6 +33,7 @@ scraper = "0.27"
 ego-tree = "0.11"
 url = "2.5"
 imagesize = "0.15"
+image = { version = "0.25", default-features = false, features = ["png"] }
 kamadak-exif = "0.6"
 tempfile = { version = "3.20", optional = true }
 wait-timeout = { version = "0.2", optional = true }
@@ -54,4 +55,3 @@ native = ["dep:tempfile", "dep:wait-timeout", "dep:ureq", "dep:sha2", "dep:trans
 [dev-dependencies]
 tempfile = "3.20"
 rust_xlsxwriter = { version = "0.100", default-features = false }
-image = { version = "0.25", default-features = false, features = ["png"] }

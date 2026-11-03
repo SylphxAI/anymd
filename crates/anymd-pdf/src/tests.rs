@@ -328,6 +328,29 @@ fn ocr_columns_of_numbers_become_a_table() {
 }
 
 #[test]
+fn an_item_marker_joins_the_label_beside_it() {
+    // The marker sits in the margin, a word space from the label, and the
+    // values keep their own columns. "100" is not a marker and stays a cell.
+    let mut words = Vec::new();
+    for (i, (marker, label, value)) in [
+        ("1.", "Scientific", "97.720"),
+        ("2.", "Meteorology", "10.850"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let top = 400.0 + i as f64 * 60.0;
+        words.push(word(marker, 200.0, top, i as u64));
+        words.push(word(label, 280.0, top, i as u64));
+        words.push(word(value, 900.0, top, i as u64));
+    }
+    let markdown = crate::words_to_markdown(&words, 3300.0, 72.0 / 300.0);
+    assert!(markdown.contains("|1. Scientific|97.720|"), "{markdown}");
+    assert!(markdown.contains("|2. Meteorology|10.850|"), "{markdown}");
+    assert!(!markdown.contains("|1.|"), "{markdown}");
+}
+
+#[test]
 fn text_painted_like_its_background_is_dropped() {
     use pdf_extract::{ColorSpace, OutputDev, Path as PdfPath, PathOp, Transform};
     let mut collector = Collector::default();
