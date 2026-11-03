@@ -143,7 +143,12 @@ fn append(cell: &mut String, text: &str) {
 
 /// Build a table (or recognise side-by-side prose) from rows that each have
 /// several aligned segments. `rules` are the page's ruling lines.
-pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f64) -> Stream {
+pub(crate) fn stream_table(
+    rows: &[Vec<Segment>],
+    rules: &[Rule],
+    word_space: f64,
+    ocr: bool,
+) -> Stream {
     let size = median(rows.iter().flatten().map(|s| s.size).collect()).unwrap_or(10.0);
     // A column gap is clearly wider than a word space: half the font size,
     // or more where the page's own word spaces are wide (typewriter text).
@@ -360,7 +365,8 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
         // that closes with a stop, and a line of prose above the table, do
         // not.
         let prev_left = (0..width).find(|&column| !prev.cells[column].is_empty());
-        let label_continues = prev_filled == [0]
+        let label_continues = ocr
+            && prev_filled == [0]
             && !prev_number
             && !first.is_empty()
             && any_number

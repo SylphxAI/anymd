@@ -215,6 +215,8 @@ pub(crate) struct PageTables {
     pub(crate) rules: Vec<Rule>,
     /// The page's typical word space, in font sizes.
     pub(crate) word_space: f64,
+    /// OCR word boxes need extra recovery for labels split across lines.
+    pub(crate) ocr: bool,
 }
 
 impl PageTables {
@@ -224,6 +226,7 @@ impl PageTables {
             found: Vec::new(),
             rules: Vec::new(),
             word_space: 0.25,
+            ocr: false,
         }
     }
 }
@@ -301,6 +304,7 @@ pub(crate) fn layout_page(
         found,
         rules: page.rules.clone(),
         word_space: spaces.get(spaces.len() / 2).copied().unwrap_or(0.25),
+        ocr: page.ocr,
     };
     let mut blocks = Vec::new();
     for region in reading_regions(segments, body, 0) {
@@ -481,6 +485,7 @@ pub(crate) fn region_blocks(
                                 found: Vec::new(),
                                 rules: tables.rules.clone(),
                                 word_space: tables.word_space,
+                                ocr: tables.ocr,
                             };
                             for region in reading_regions(segments, body, 0) {
                                 region_blocks(region, body, &mut inner, blocks);
@@ -558,11 +563,13 @@ pub(crate) fn region_blocks(
                         // first wrapped label then aligns with the next
                         // value row, not with the header's first cell.
                         let at_left = (row[0].x0 - left).abs() <= size * 1.5
-                            || tight_below
+                            || tables.ocr
+                                && tight_below
                                 && next.is_some_and(|next| {
                                     (row[0].x0 - next[0].x0).abs() <= size * 1.5
                                 });
                         row.len() == 1
+                            && row[0].table.is_none()
                             && row[0].chars() <= 40
                             && at_left
                             && (bottom_of(&rows[r - 1]) - row[0].top <= size * 0.45 || tight_below)
@@ -584,7 +591,12 @@ pub(crate) fn region_blocks(
             }
             if multi >= 2 {
                 let start = header_lines_above(&rows, index, end, &marks);
-                let found = stream_table(&rows[start..end], &tables.rules, tables.word_space);
+                let found = stream_table(
+                    &rows[start..end],
+                    &tables.rules,
+                    tables.word_space,
+                    tables.ocr,
+                );
                 if found != Stream::Nothing {
                     if start < index {
                         let (_, len) = marks[marks.len() - (index - start)];

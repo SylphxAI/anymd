@@ -1,7 +1,7 @@
 use crate::blocks::{region_blocks, Block, PageTables};
 use crate::extract::{Glyph, Rule};
 use crate::rows::{segments_of_row, Segment};
-use crate::tables::ruled::{ruled_tables, Ruled};
+use crate::tables::ruled::{ruled_tables, Ruled, RuledTable};
 use crate::tables::{is_numeric, is_year, strip_leaders, Cell, Grid};
 
 const SIZE: f64 = 9.0;
@@ -47,11 +47,17 @@ fn line(cells: &[(&str, f64)], base: f64) -> Vec<Segment> {
 
 /// The tables `region_blocks` makes from these lines.
 fn tables_of(lines: Vec<Vec<Segment>>) -> Vec<Vec<Vec<String>>> {
+    tables_with_source(lines, false)
+}
+
+fn tables_with_source(lines: Vec<Vec<Segment>>, ocr: bool) -> Vec<Vec<Vec<String>>> {
     let mut blocks = Vec::new();
+    let mut page = PageTables::none();
+    page.ocr = ocr;
     region_blocks(
         lines.into_iter().flatten().collect(),
         SIZE,
-        &mut PageTables::none(),
+        &mut page,
         &mut blocks,
     );
     blocks
@@ -85,7 +91,7 @@ fn a_wrapped_label_joins_the_value_row_under_it() {
             648.0,
         ),
     ];
-    let tables = tables_of(lines);
+    let tables = tables_with_source(lines, true);
     assert_eq!(tables.len(), 1, "{tables:?}");
     let table = &tables[0];
     assert!(
@@ -107,6 +113,84 @@ fn a_wrapped_label_joins_the_value_row_under_it() {
             .any(|row| row[0] == "4. Advanced Vehicle Development"),
         "{table:?}"
     );
+}
+
+#[test]
+fn text_layer_group_labels_remain_separate_from_the_next_value_row() {
+    let tables = tables_of(vec![
+        line(&[("Period", 72.0), ("CPI", 200.0), ("PPI", 260.0)], 700.0),
+        line(&[("114 年", 72.0), ("1.66", 200.0), ("2.14", 260.0)], 686.0),
+        line(
+            &[("第 4 季", 72.0), ("1.32", 200.0), ("2.31", 260.0)],
+            672.0,
+        ),
+        line(&[("115 年", 72.0)], 660.0),
+        line(
+            &[("第 1 季", 72.0), ("1.23", 200.0), ("2.21", 260.0)],
+            648.0,
+        ),
+    ]);
+    assert_eq!(tables.len(), 1, "{tables:?}");
+    let rows = &tables[0];
+    assert!(
+        rows.iter().any(|row| row == &["115 年", "", ""]),
+        "{rows:?}"
+    );
+    assert!(
+        rows.iter().any(|row| row == &["第 1 季", "1.23", "2.21"]),
+        "{rows:?}"
+    );
+}
+
+#[test]
+fn a_ruled_form_below_a_stream_table_keeps_its_contents() {
+    for ocr in [false, true] {
+        let mut lines = vec![
+            line(&[("Tax", 200.0), ("Amount", 420.0)], 700.0),
+            line(&[("Withholding", 200.0), ("4(c) $", 420.0)], 686.0),
+            line(&[("", 72.0)], 674.0),
+            line(&[("Employers Only", 72.0), ("Employer name", 240.0)], 660.0),
+        ];
+        // A form section is represented by an empty placeholder, not a
+        // wrapped label. The adjacent text must not swallow its contents.
+        let mut placeholder = line(&[("placeholder", 72.0)], 674.0).remove(0);
+        placeholder.text.clear();
+        placeholder.words.clear();
+        placeholder.table = Some(0);
+        lines[2] = vec![placeholder];
+        let mut tables = PageTables::none();
+        tables.ocr = ocr;
+        tables.found = vec![Some(RuledTable {
+            x0: 72.0,
+            x1: 480.0,
+            top: 681.0,
+            bottom: 665.0,
+            content: Ruled::Table {
+                caption: None,
+                grid: Grid {
+                    header_rows: 0,
+                    cells: vec![vec![Some(Cell {
+                        text: "Employee signature and date".into(),
+                        cols: 1,
+                        rows: 1,
+                    })]],
+                },
+            },
+        })];
+        let mut blocks = Vec::new();
+        region_blocks(
+            lines.into_iter().flatten().collect(),
+            SIZE,
+            &mut tables,
+            &mut blocks,
+        );
+        assert!(
+            blocks.iter().any(|block| matches!(block, Block::Table(rows)
+                if rows.iter().flatten().any(|cell| cell == "Employee signature and date"))),
+            "ocr={ocr}: {blocks:?}"
+        );
+        assert!(tables.found[0].is_none(), "ocr={ocr}");
+    }
 }
 
 #[test]
