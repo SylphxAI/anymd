@@ -10,7 +10,9 @@ name: release
 # `crates` job publishes the Rust crates to crates.io (`cargo install anymd`).
 # The `wheels` and `pypi` jobs publish platform wheels to PyPI (`pip install
 # anymd`, `uvx anymd`) and `image` pushes ghcr.io/sylphxai/anymd, both from the
-# release's native binaries. The `companion*` jobs build the VLM OCR engine
+# release's native binaries. The `winget` job opens a pull request on
+# microsoft/winget-pkgs so `winget install Sylphx.anymd` installs the portable
+# Windows binary from this release. The `companion*` jobs build the VLM OCR engine
 # (`anymd-ocr-vlm`, which `anymd setup ocr` downloads) per platform and attach
 # it with its checksum manifest to the GitHub release. The `trust` job then adds
 # an SBOM and SHA256SUMS to the GitHub release and signs every asset with a
@@ -30,24 +32,21 @@ concurrency:
 
 jobs:
   release:
-    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@5da4b0376fbbfd114056ccfb888fb98cf202bba5
+    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@af0ad67cb4b7ea17212cd4cd48640ab8e60e96df # v0.8.10
     # packages: write is only used by the kit's optional GHCR image job, which
     # anymd skips; GitHub still checks every called job's permissions.
     permissions:
       contents: write
       id-token: write
       packages: write
-    # Only the tap/bucket publisher credentials reach the shared workflow.
-    secrets:
-      TAP_APP_ID: ${{ secrets.TAP_APP_ID }}
-      TAP_APP_PRIVATE_KEY: ${{ secrets.TAP_APP_PRIVATE_KEY }}
     with:
+      kit-ref: af0ad67cb4b7ea17212cd4cd48640ab8e60e96df
       name: anymd
       cargo-package: anymd
       # MCP Bundle (.mcpb) for Claude Desktop, attached to the GitHub release.
       mcpb: true
-      homebrew: true
-      scoop: true
+      # winget is published by the `winget` job below: the shared workflow has
+      # no winget input, and the Windows archive is already a portable zip.
       mcpb-icon: brand/app-icon/icon-512.png
       npm-package: '@sylphx/anymd'
       mcp-name: io.github.SylphxAI/anymd
@@ -60,6 +59,35 @@ jobs:
         grep -q '<!-- page 1 -->' sample.md
         npx -y "@sylphx/citra@$V" version
         npx -y "@sylphx/pdf-reader-mcp@$V" version
+
+  # The caller job supplies the source workflow identity, not a reusable job.
+  # This also reconciles an existing release without republishing its packages.
+  package-managers:
+    needs: release
+    if: github.repository_visibility == 'public' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - id: version
+        run: |
+          echo "value=$(node -p 'require("./packages/anymd/package.json").version')" >> "$GITHUB_OUTPUT"
+      # Missing Access or Broker authority must fail, never skip enabled channels.
+      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@af0ad67cb4b7ea17212cd4cd48640ab8e60e96df # v0.8.10
+        with:
+          name: anymd
+          version: ${{ steps.version.outputs.value }}
+          package-json: packages/anymd/package.json
+          description: Convert files to Markdown for AI agents
+          trust-policy: orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/trust_policies/anymd-package-managers
+          ci-name: anymd-package-managers
+          homebrew-tap: SylphxAI/homebrew-tap
+          scoop-bucket: SylphxAI/scoop-bucket
 
   # crates.io takes no git or path-only dependencies, so the two patched
   # upstream forks and the internal crates are published first, in order
@@ -373,6 +401,83 @@ jobs:
           set -euo pipefail
           gh release upload "v$V" "assets/anymd-$V.cdx.json" --clobber
           gh release upload "v$V" assets/SHA256SUMS --clobber
+
+  # Windows Package Manager. The release archive anymd-win32-x64-msvc.zip holds
+  # anymd.exe at its root, which winget installs as a portable command.
+  # The winget pull request needs WINGET_TOKEN, a fine-grained PAT that can open
+  # pull requests on microsoft/winget-pkgs. The submit step takes it under the
+  # name gh reads, and is skipped when the secret is absent. The manifest is
+  # still rendered and checked, and the release is unaffected. A version already
+  # proposed is left alone, so every push to main is safe.
+  winget:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      rendered: ${{ steps.rendered.outputs.rendered }}
+    steps:
+      - name: Checkout the manifest renderer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/winget-manifest.mjs
+            scripts/winget-submit.sh
+            packages/anymd/package.json
+
+      - name: Render the manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/winget-submit.sh
+
+      - id: rendered
+        name: Record whether a manifest was rendered
+        run: |
+          if [ -s out/Sylphx.anymd.yaml ]; then echo "rendered=true" >> "$GITHUB_OUTPUT"
+          else echo "rendered=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Upload the manifest
+        if: steps.rendered.outputs.rendered == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: winget-manifest
+          path: out/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Opens the winget pull request. A job condition may read the repository
+  # secret, which a step condition may not. The secret is passed under the name
+  # gh reads, so the script never handles the credential. No secret, no manifest,
+  # no pull request, and the release is unaffected.
+  winget-submit:
+    needs: winget
+    if: needs.winget.outputs.rendered == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the submit script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/winget-submit.sh
+            packages/anymd/package.json
+
+      - name: Download the manifest
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: winget-manifest
+          path: out
+
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: bash scripts/winget-submit.sh submit
 
   # Platform wheels use this run's natives, or the matching tagged release's
   # verified trust pack when PyPI delivery is incomplete. No Rust rebuild.

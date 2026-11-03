@@ -12,14 +12,15 @@ pub mod outline;
 mod page_selection;
 pub mod pdf_compare;
 pub mod pdf_evidence;
+mod pdf_evidence_common;
 pub mod pro;
+mod provider_budget;
 pub mod read_pdf;
 mod region_analysis_evidence;
 pub mod schema;
 pub mod search;
 pub mod setup;
 pub mod source_access;
-pub mod tool_routes;
 pub mod video_evidence;
 pub mod video_request;
 mod visual_evidence;
@@ -308,6 +309,12 @@ impl PdfReaderMcp {
         Parameters(args): Parameters<ComparePdfArgs>,
     ) -> Result<rmcp::model::CallToolResult, ErrorData> {
         args.validate()
+            .map_err(|message| ErrorData::invalid_params(message, None))?;
+        self.source_access
+            .admit_path(&args.before)
+            .map_err(|message| ErrorData::invalid_params(message, None))?;
+        self.source_access
+            .admit_path(&args.after)
             .map_err(|message| ErrorData::invalid_params(message, None))?;
         let value = serde_json::to_value(args).map_err(|error| {
             ErrorData::invalid_params(format!("Failed to encode pdf_compare args: {error}"), None)
@@ -686,7 +693,7 @@ mod tests {
             assert_eq!(
                 result_text(&result),
                 format!(
-                    "[{{\"type\":\"text\",\"text\":\"{feature} is part of anymd Pro: US$29 once for an offline licence. Buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pro\"}}]"
+                    "[{{\"type\":\"text\",\"text\":\"{feature} is part of anymd Pro with a one-time offline licence. See current pricing or buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pricing\"}}]"
                 ),
                 "{operation}"
             );
@@ -843,11 +850,7 @@ mod tests {
             );
             assert!(tool_arguments_decode(&tool.name, minimal.clone()));
 
-            for key in schema["properties"]
-                .as_object()
-                .expect("properties")
-                .keys()
-            {
+            for key in schema["properties"].as_object().expect("properties").keys() {
                 let mut omitted = minimal.clone();
                 omitted
                     .as_object_mut()
@@ -1281,5 +1284,125 @@ mod tests {
             .await
             .expect_err("pdf_evidence must reject outside path");
         assert!(evidence_error.message.contains("Access denied"));
+    }
+
+    fn allowed_sample(temp: &tempfile::TempDir) -> std::path::PathBuf {
+        let allowed = temp.path().join("allowed");
+        std::fs::create_dir(&allowed).expect("allowed root");
+        let sample = allowed.join("sample.pdf");
+        std::fs::copy(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../test/fixtures/sample.pdf"),
+            &sample,
+        )
+        .expect("copy fixture");
+        sample
+    }
+
+    fn outside_sample() -> std::path::PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test/fixtures/sample.pdf")
+            .canonicalize()
+            .expect("outside fixture")
+    }
+
+    #[tokio::test]
+    async fn every_dispatched_tool_refuses_a_path_outside_the_allowlist() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let allowed = temp.path().join("allowed");
+        let sample = allowed_sample(&temp);
+        let second = {
+            let mut path = sample.clone();
+            path.set_file_name("second.pdf");
+            std::fs::copy(&sample, &path).expect("copy second fixture");
+            path
+        };
+        let outside = outside_sample();
+        let policy = crate::source_access::SourceAccessPolicy::restricted_for_test(
+            temp.path().to_path_buf(),
+            &allowed,
+        )
+        .expect("restricted policy");
+        let server = PdfReaderMcp::with_source_access(policy);
+        fn request(name: &str, arguments: &Value) -> rmcp::model::CallToolRequestParams {
+            rmcp::model::CallToolRequestParams::new(name.to_string())
+                .with_arguments(arguments.as_object().cloned().unwrap_or_default())
+        }
+        async fn denied(server: &PdfReaderMcp, name: &str, arguments: Value) -> String {
+            match server.call_legacy(&request(name, &arguments)).await {
+                Some(Err(error)) => error.message.to_string(),
+                Some(Ok(_)) => panic!("{name} served a path outside the allowlist"),
+                None => panic!("{name} is not dispatched to a tool entrypoint"),
+            }
+        }
+        async fn served(server: &PdfReaderMcp, name: &str, arguments: Value) -> Value {
+            let result = server
+                .call_legacy(&request(name, &arguments))
+                .await
+                .unwrap_or_else(|| panic!("{name} is not dispatched to a tool entrypoint"))
+                .unwrap_or_else(|error| panic!("{name} rejected an allowed path: {error}"));
+            result.structured_content.unwrap_or(Value::Null)
+        }
+
+        for name in ["read_pdf", "search_pdf", "pdf_evidence", "pdf_compare"] {
+            assert!(
+                crate::LEGACY_TOOL_NAMES.contains(&name),
+                "{name} must stay dispatched"
+            );
+        }
+
+        let message = denied(
+            &server,
+            "pdf_compare",
+            serde_json::json!({"before": outside, "after": sample}),
+        )
+        .await;
+        assert!(message.contains("Access denied"), "{message}");
+        let message = denied(
+            &server,
+            "pdf_compare",
+            serde_json::json!({"before": sample, "after": outside}),
+        )
+        .await;
+        assert!(message.contains("Access denied"), "{message}");
+        // The current compare entrypoint honours the same boundary.
+        let inspect = server
+            .inspect(Parameters(inspect_args(
+                "compare",
+                serde_json::json!({"sources": [{"path": outside}, {"path": sample}]}),
+            )))
+            .await
+            .expect_err("inspect compare must reject outside path");
+        assert!(inspect.message.contains("Access denied"));
+
+        denied(
+            &server,
+            "read_pdf",
+            serde_json::json!({"sources": [{"path": outside}]}),
+        )
+        .await;
+        denied(
+            &server,
+            "search_pdf",
+            serde_json::json!({"sources": [{"path": outside}], "query": "needle"}),
+        )
+        .await;
+        denied(
+            &server,
+            "pdf_evidence",
+            serde_json::json!({"operation": "inspect", "sources": [{"path": outside}]}),
+        )
+        .await;
+
+        // An allowed pair stays reachable.
+        let body = served(
+            &server,
+            "pdf_compare",
+            serde_json::json!({"before": sample, "after": second, "max_file_bytes": 1048576}),
+        )
+        .await;
+        assert!(
+            body.get("error").is_none(),
+            "pdf_compare reported an error for an allowed pair: {body}"
+        );
     }
 }

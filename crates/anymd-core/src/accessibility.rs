@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use serde_json::{json, Value};
 
 use crate::document_twin::PageText;
+use crate::fusion_util::round_ratio;
 
 const ISSUE_TYPES: [&str; 11] = [
     "mark_info_missing",
@@ -381,9 +382,6 @@ fn grade(score: i64) -> &'static str {
     } else {
         "weak"
     }
-}
-fn round_ratio(value: f64) -> f64 {
-    (value * 100.0).round() / 100.0
 }
 fn mark_bool(value: Option<&Value>, key: &str) -> Option<bool> {
     value

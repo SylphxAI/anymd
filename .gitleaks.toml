@@ -1,0 +1,9 @@
+title = "anymd secret scan"
+
+# The Windows release archive is named anymd-win32-x64-msvc.zip. gitleaks reads a
+# variable that holds that platform triple as a generic API key. The triple is
+# not a credential, and no real key contains it.
+[[allowlists]]
+description = "Go platform triple used to name the Windows release archive"
+regexTarget = "secret"
+regexes = ['''win32-x64-msvc''']

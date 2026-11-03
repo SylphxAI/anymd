@@ -1,0 +1,20 @@
+/* Layout of the docs template. Colours come from the site theme's variables. */
+#docs-root { min-height: 100vh; display: flex; flex-direction: column; }
+#docs-header { display: flex; align-items: center; gap: 1rem; padding: .75rem 1.5rem; border-bottom: 1px solid var(--keel-color-outline, #8884); }
+#docs-body { display: grid; grid-template-columns: 16rem minmax(0, 1fr) 14rem; gap: 2rem; padding: 1.5rem; max-width: 90rem; width: 100%; margin: 0 auto; box-sizing: border-box; flex: 1; }
+#docs-nav, #docs-toc { position: sticky; top: 1rem; align-self: start; max-height: calc(100vh - 2rem); overflow-y: auto; font-size: .9rem; }
+#docs-nav ul, #docs-toc ul { list-style: none; margin: 0; padding: 0; }
+#docs-nav ul ul { padding-left: 1rem; }
+#docs-nav li, #docs-toc li { margin: .25rem 0; }
+#docs-nav a, #docs-toc a, #docs-pager a { text-decoration: none; }
+#docs-nav a[aria-current="true"] { font-weight: 700; }
+#docs-toc .toc-3 { padding-left: .75rem; }
+#docs-toc .toc-4, #docs-toc .toc-5, #docs-toc .toc-6 { padding-left: 1.5rem; }
+#docs-article { min-width: 0; max-width: 48rem; }
+#docs-article img { max-width: 100%; height: auto; }
+#docs-article pre { overflow-x: auto; }
+#docs-article table { display: block; overflow-x: auto; }
+#docs-pager { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--keel-color-outline, #8884); }
+#docs-edit { display: block; margin-top: 2rem; font-size: .85rem; }
+@media (max-width: 1100px) { #docs-body { grid-template-columns: 16rem minmax(0, 1fr); } #docs-toc { display: none; } }
+@media (max-width: 760px) { #docs-body { grid-template-columns: minmax(0, 1fr); } #docs-nav { position: static; max-height: none; } }

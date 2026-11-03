@@ -1,0 +1,14 @@
+# cargo-audit input.
+#
+# These zip advisories reach this tree only through candle-core 0.11 (via the
+# vendored OCR engine crate), which reads npz and pth archive entries in
+# memory. It never calls `ZipArchive::extract` or `extract_unwrapped_root_dir`,
+# so the functions RUSTSEC-2026-0367, -0368 and -0369 describe are
+# unreachable from any code this workspace builds. Everything else is audited.
+[advisories]
+ignore = [
+    # zip 8.6.0 reached only via candle-core; remove when candle-core moves to zip >= 9.
+    "RUSTSEC-2026-0367",
+    "RUSTSEC-2026-0368",
+    "RUSTSEC-2026-0369",
+]

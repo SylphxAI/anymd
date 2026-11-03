@@ -11,26 +11,39 @@
 //! var, file name, URLs). The token format and file location are unchanged, so
 //! tokens issued before the move keep working.
 
-use mcp_kit::licence::{self, Licence, LicenceError, LicencePolicy};
+use mcp_kit::licence::{self, Licence, LicenceError, LicencePolicy, MoneyCheckout};
 use std::fmt;
 use std::path::PathBuf;
 
 /// Trusted public keys (base64url raw Ed25519). A list so rotation is additive.
-pub const PRO_PUBLIC_KEYS: &[&str] = &["xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y"];
+pub const PRO_PUBLIC_KEYS: &[&str] = &[
+    // Preserve every historical licence when Money rotates its signer.
+    "xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y",
+    "zYLCVWNwA6w-EI4z-Z1HNYsKkZj1c3JrZtewsGVjUiM",
+];
+
+/// Money test signers are separate: they never unlock ordinary Pro operations.
+const TEST_PUBLIC_KEYS: &[&str] = &["PEdpVC-uXLyTfAcYDWXh-FoP9vRE12eb4Fax9OZ4QT8"];
+
+fn test_policy() -> LicencePolicy<'static> {
+    LicencePolicy {
+        public_keys: TEST_PUBLIC_KEYS,
+        env_var: "ANYMD_TEST_PRO_TOKEN",
+        file_name: "test-pro-token",
+        tier: "Pro (TEST)",
+        ..policy_with(TEST_PUBLIC_KEYS)
+    }
+}
 
 /// Where Pro is explained and sold.
-pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pro";
+pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pricing";
 
 /// Env var holding the token (wins over the token file).
 pub const TOKEN_ENV: &str = "ANYMD_PRO_TOKEN";
 
-/// The shared Sylphx checkout service behind `anymd pro buy`. Live: `buy`
-/// opens the device flow here, so the command never prints the Pro page.
-pub const CHECKOUT_BASE: &str = "https://buy.sylphx.com";
-
 /// anymd's licence policy. `require_product` is false because tokens issued
 /// before the generic flow carry no `product` field.
-fn policy_with<'a>(keys: &'a [&'a str], checkout_base: Option<&'a str>) -> LicencePolicy<'a> {
+fn policy_with<'a>(keys: &'a [&'a str]) -> LicencePolicy<'a> {
     LicencePolicy {
         product: "anymd",
         require_product: false,
@@ -41,14 +54,17 @@ fn policy_with<'a>(keys: &'a [&'a str], checkout_base: Option<&'a str>) -> Licen
         file_name: "pro-token",
         upgrade_url: PRO_URL,
         tier: "Pro",
-        checkout_base,
+        checkout_base: None,
     }
 }
 
 fn policy() -> LicencePolicy<'static> {
-    // The checkout service is live, so `buy` opens the device flow at
-    // [`CHECKOUT_BASE`] (and only falls back to [`PRO_URL`] if it cannot).
-    policy_with(PRO_PUBLIC_KEYS, Some(CHECKOUT_BASE))
+    policy_with(PRO_PUBLIC_KEYS)
+}
+
+fn checkout() -> MoneyCheckout {
+    MoneyCheckout::from_docs_toml(include_str!("money_docs.toml"), "pro")
+        .expect("anymd's embedded Keel Money configuration must be valid")
 }
 
 pub type ProLicense = Licence;
@@ -79,7 +95,7 @@ impl fmt::Display for ProRequired {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} is part of anymd Pro: US$29 once for an offline licence. Buy it with `anymd pro buy`. Learn more: {PRO_URL}",
+            "{} is part of anymd Pro with a one-time offline licence. See current pricing or buy it with `anymd pro buy`. Learn more: {PRO_URL}",
             self.feature
         )
     }
@@ -111,28 +127,62 @@ pub fn required_result(required: &ProRequired) -> rmcp::model::CallToolResult {
     )])
 }
 
-/// `anymd pro status | activate <token> | buy [--no-browser] [--json]`;
-/// returns the exit code.
+/// `anymd pro status | activate <token> | buy`; returns the exit code.
 pub fn run(arguments: &[String]) -> i32 {
-    run_with(&policy(), arguments)
+    if arguments.first().is_some_and(|arg| arg == "--test") {
+        let arguments = &arguments[1..];
+        if !matches!(
+            arguments.first().map(String::as_str),
+            Some("status" | "activate")
+        ) {
+            eprintln!("usage: anymd pro --test status | anymd pro --test activate <token>");
+            return 2;
+        }
+        return run_with(&test_policy(), None, arguments);
+    }
+    let checkout = arguments
+        .first()
+        .filter(|command| command.as_str() == "buy")
+        .map(|_| checkout());
+    run_with(&policy(), checkout.as_ref(), arguments)
 }
 
-fn run_with(policy: &LicencePolicy, arguments: &[String]) -> i32 {
+fn valid_buy_args(arguments: &[String]) -> bool {
+    let mut index = 0;
+    while index < arguments.len() {
+        match arguments[index].as_str() {
+            "--no-browser" | "--json" | "--accept-terms" => index += 1,
+            "--email" => {
+                if arguments.get(index + 1).is_none_or(|v| v.starts_with("--")) {
+                    return false;
+                }
+                index += 2;
+            }
+            // anymd sells one licence; seat packs and quantities do not apply.
+            "--pack" | "--qty" => return false,
+            _ => return false,
+        }
+    }
+    true
+}
+
+fn run_with(policy: &LicencePolicy, checkout: Option<&MoneyCheckout>, arguments: &[String]) -> i32 {
     let ok = match arguments.first().map(String::as_str) {
         Some("status") => arguments.len() == 1,
         Some("activate") => arguments.len() == 2,
-        Some("buy") => arguments[1..]
-            .iter()
-            .all(|a| a == "--no-browser" || a == "--json"),
+        Some("buy") => valid_buy_args(&arguments[1..]),
         _ => false,
     };
     if !ok {
         eprintln!(
-            "usage: anymd pro status | anymd pro activate <token> | anymd pro buy [--no-browser] [--json]"
+            "usage: anymd pro status | anymd pro activate <token> | anymd pro buy [--email <address>] [--accept-terms] [--no-browser] [--json]"
         );
         return 2;
     }
-    licence::run_cli(policy, arguments)
+    match checkout {
+        Some(checkout) => licence::run_money_cli(policy, checkout, arguments),
+        None => licence::run_cli(policy, arguments),
+    }
 }
 
 #[cfg(test)]
@@ -143,7 +193,7 @@ mod tests {
     use ed25519_dalek::{Signer, SigningKey};
 
     fn verify_token_with(token: &str, keys: &[&str]) -> Result<ProLicense, LicenseError> {
-        policy_with(keys, None).verify(token)
+        policy_with(keys).verify(token)
     }
 
     fn key(seed: u8) -> SigningKey {
@@ -179,6 +229,45 @@ mod tests {
         )
         .unwrap();
         assert_eq!(l.email, None);
+    }
+
+    #[test]
+    fn test_activation_is_separate_from_production() {
+        let production = policy();
+        let test = test_policy();
+        assert!(test
+            .public_keys
+            .iter()
+            .all(|key| !production.public_keys.contains(key)));
+        assert_ne!(production.env_var, test.env_var);
+        assert_ne!(production.file_name, test.file_name);
+        assert!(test.tier.contains("TEST"));
+        assert_eq!(run(&["--test".into(), "buy".into()]), 2);
+        // Rotation accepts both an old and new signer, never an unrelated one.
+        let (old, new, other) = (key(21), key(22), key(23));
+        let (old_public, new_public) = (public(&old), public(&new));
+        let keys = [old_public.as_str(), new_public.as_str()];
+        for signer in [&old, &new] {
+            assert!(verify_token_with(&token(signer, PRO), &keys).is_ok());
+            assert_eq!(
+                verify_token_with(
+                    &token(signer, r#"{"plan":"pro","issuedAt":1,"product":"foreign"}"#),
+                    &keys
+                ),
+                Err(LicenseError::WrongProduct)
+            );
+            assert_eq!(
+                verify_token_with(
+                    &token(signer, r#"{"plan":"pro","issuedAt":1,"expiresAt":1}"#),
+                    &keys
+                ),
+                Err(LicenseError::Expired)
+            );
+        }
+        assert_eq!(
+            verify_token_with(&token(&other, PRO), &keys),
+            Err(LicenseError::BadSignature)
+        );
     }
 
     #[test]
@@ -237,7 +326,10 @@ mod tests {
         assert_eq!(p.public_keys, PRO_PUBLIC_KEYS);
         assert_eq!(
             PRO_PUBLIC_KEYS,
-            &["xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y"]
+            &[
+                "xO9jSvEq5nsVPMk9x62Egr0_n5WPpWCF8yCYmrwzH3Y",
+                "zYLCVWNwA6w-EI4z-Z1HNYsKkZj1c3JrZtewsGVjUiM",
+            ]
         );
         assert_eq!(p.env_var, "ANYMD_PRO_TOKEN");
         assert_eq!(p.upgrade_url, PRO_URL);
@@ -252,21 +344,33 @@ mod tests {
     fn buy_wiring() {
         // No checkout service: `buy` points at the upgrade page and succeeds.
         assert_eq!(
-            run_with(&policy_with(PRO_PUBLIC_KEYS, None), &["buy".into()]),
+            run_with(&policy_with(PRO_PUBLIC_KEYS), None, &["buy".into()]),
             0
         );
-        // The checkout service is live: `buy` starts the device flow there.
-        assert_eq!(policy().checkout_base, Some(CHECKOUT_BASE));
-        assert_eq!(CHECKOUT_BASE, "https://buy.sylphx.com");
+        // The legacy central claims service is no longer wired into the product.
+        assert_eq!(policy().checkout_base, None);
+        let money = checkout();
+        assert_eq!(money.product, "anymd_pro");
+        assert_eq!(money.prices.len(), 1);
+        assert_eq!(money.prices[0].key, "anymd_pro");
+        assert_eq!(money.prices[0].quantity, 1);
+        assert!(money.publishable_key.starts_with("sylphx_pk_"));
         // anymd sells one licence: pack and quantity flags are usage errors.
         for flag in ["--pack", "--qty", "--x"] {
             assert_eq!(
-                run_with(&policy(), &["buy".into(), flag.into(), "1".into()]),
+                run_with(
+                    &policy(),
+                    Some(&checkout()),
+                    &["buy".into(), flag.into(), "1".into()]
+                ),
                 2
             );
         }
-        assert_eq!(run_with(&policy(), &[]), 2);
-        assert_eq!(run_with(&policy(), &["status".into(), "x".into()]), 2);
+        assert_eq!(run_with(&policy(), Some(&checkout()), &[]), 2);
+        assert_eq!(
+            run_with(&policy(), Some(&checkout()), &["status".into(), "x".into()]),
+            2
+        );
     }
 
     // Run the public CLI dispatcher in a separate process so its config directory
@@ -278,10 +382,23 @@ mod tests {
         let base = std::env::var("ANYMD_TEST_CHECKOUT").unwrap();
         let public_key = public(&key(1));
         let keys = [&*public_key];
-        let p = policy_with(&keys, Some(&base));
+        let p = policy_with(&keys);
+        let mut money = checkout();
+        money.api_origin = base;
         let expected: i32 = std::env::var("ANYMD_TEST_EXIT").unwrap().parse().unwrap();
         assert_eq!(
-            run_with(&p, &["buy".into(), "--no-browser".into(), "--json".into()]),
+            run_with(
+                &p,
+                Some(&money),
+                &[
+                    "buy".into(),
+                    "--no-browser".into(),
+                    "--json".into(),
+                    "--email".into(),
+                    "buyer@example.test".into(),
+                    "--accept-terms".into(),
+                ]
+            ),
             expected
         );
         assert_eq!(p.current().is_some(), expected == 0);
@@ -299,25 +416,37 @@ mod tests {
             let config = tempfile::tempdir().unwrap();
             let listener = TcpListener::bind("127.0.0.1:0").unwrap();
             let base = format!("http://{}", listener.local_addr().unwrap());
-            let claim = serde_json::json!({
-                "claim_id": "local-contract",
-                "browser_url": format!("{base}/buy/anymd"),
-                "poll_url": format!("{base}/api/v1/claims/local-contract"),
-                "expires_at": 4_000_000_000_000_i64,
+            let parent = "orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/projects/prj_fs013ejakyn22t4bsvrvyj0f2x1pgq/envs/env_fs01p2f389mwmm2xsm1nmvcst69vgd";
+            let created = serde_json::json!({
+                "processor_session_id": "cs_test_localcontract123",
+                "url": "https://pay.example.test/anymd",
+                "claim_secret": "clm_local_contract",
             });
+            let pending = serde_json::json!({"details": [{"reason": "purchase_pending"}]});
             let paid = serde_json::json!({
-                "status": "paid",
+                "paid": true,
                 "licence_tokens": [{"token": token(&key(signer), PRO)}],
             });
             let server = std::thread::spawn(move || {
-                for (method, path, response) in [
-                    ("POST", "/api/v1/claims", claim),
+                for (method, path, status, response) in [
                     (
-                        "GET",
-                        "/api/v1/claims/local-contract",
-                        serde_json::json!({"status": "pending"}),
+                        "POST",
+                        format!("/v1/money/{parent}/checkout_sessions:clientCreate"),
+                        200,
+                        created,
                     ),
-                    ("GET", "/api/v1/claims/local-contract", paid),
+                    (
+                        "POST",
+                        "/v1/money/checkout_sessions:redeem".to_string(),
+                        412,
+                        pending,
+                    ),
+                    (
+                        "POST",
+                        "/v1/money/checkout_sessions:redeem".to_string(),
+                        200,
+                        paid,
+                    ),
                 ] {
                     let (mut stream, _) = listener.accept().unwrap();
                     stream
@@ -342,14 +471,19 @@ mod tests {
                     }
                     let mut body = vec![0; length];
                     reader.read_exact(&mut body).unwrap();
-                    if method == "POST" {
-                        assert_eq!(
-                            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
-                            serde_json::json!({"product": "anymd"})
-                        );
+                    let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                    if path.ends_with(":clientCreate") {
+                        assert_eq!(body["product"], "anymd_pro");
+                        assert_eq!(body["price"], "anymd_pro");
+                        assert_eq!(body["quantity"], 1);
+                        assert_eq!(body["buyer_email"], "buyer@example.test");
+                        assert_eq!(body["consent"]["terms_accepted"], true);
+                    } else {
+                        assert_eq!(body["checkout_session"], "cs_test_localcontract123");
+                        assert_eq!(body["claim_secret"], "clm_local_contract");
                     }
                     let body = response.to_string();
-                    write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).unwrap();
+                    write!(stream, "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).unwrap();
                 }
             });
             let output = Command::new("timeout")
@@ -376,7 +510,7 @@ mod tests {
             );
             server.join().unwrap();
             let stdout = String::from_utf8_lossy(&output.stdout);
-            assert!(stdout.contains("\"event\":\"claim\""));
+            assert!(stdout.contains("\"event\":\"checkout\""));
             assert!(stdout.contains(if expected == 0 {
                 "\"status\":\"paid\""
             } else {
@@ -393,7 +527,7 @@ mod tests {
         let message = required.to_string();
         assert_eq!(
             message,
-            "Cite-check is part of anymd Pro: US$29 once for an offline licence. Buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pro"
+            "Cite-check is part of anymd Pro with a one-time offline licence. See current pricing or buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pricing"
         );
         let result = required_result(&required);
         assert_eq!(result.is_error, Some(false));

@@ -12,6 +12,8 @@ const site = 'https://sylphxai.github.io/anymd/';
 export default defineConfig({
   base: '/anymd/',
   cleanUrls: true,
+  // Keel emits this static route after VitePress has checked the docs.
+  ignoreDeadLinks: [/^\/recover$/],
   title: 'anymd',
   description: product.description,
 
@@ -26,7 +28,7 @@ export default defineConfig({
   },
 
   // Maintainer docs that are not part of the site.
-  srcExclude: ['PUBLISH.md', 'vision.md', 'security/**'],
+  srcExclude: ['PUBLISH.md', 'vision.md', 'security/**', 'storefront/**'],
   vite: {
     build: {
       target: 'esnext',
@@ -105,6 +107,14 @@ export default defineConfig({
           { text: 'Benchmarks', link: '/guide/benchmarks' },
           { text: 'Migration', link: '/guide/migration' },
           { text: 'Security', link: '/guide/security' },
+        ],
+      },
+      {
+        text: 'Tasks',
+        items: [
+          { text: 'Extract a video frame', link: '/tasks/extract-video-frame' },
+          { text: 'Build a video timeline', link: '/tasks/build-video-timeline' },
+          { text: 'Check a PDF citation', link: '/tasks/check-pdf-citation' },
         ],
       },
       {

@@ -135,7 +135,13 @@ Any client that speaks MCP over stdio: command `npx`, args `["-y", "@sylphx/anym
 npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
 ```
 
-Python: `uvx anymd report.pdf > report.md` runs it once, `pip install anymd` installs it, and `uvx anymd mcp` starts the MCP server. The wheels carry the same prebuilt binary.
+Python wheels carry the same prebuilt binary and are on PyPI as `anymd` from the first release after publication.
+
+Use npm on Windows, macOS and Linux. On macOS and Linux, Homebrew is also available:
+
+```bash
+brew install sylphxai/tap/anymd
+```
 
 Docker (amd64 and arm64):
 
@@ -275,7 +281,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 
 ## anymd Pro
 
-The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (US$29 once, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. [Buy anymd Pro](https://buy.sylphx.com/buy/anymd) for instant delivery after payment: copy your licence token from the checkout confirmation page, or retrieve it through the emailed licence link. Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy. [See anymd Pro](https://sylphxai.github.io/anymd/pro).
+The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (current one-time price, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. [Buy anymd Pro](https://sylphxai.github.io/anymd/pricing) for instant delivery after payment: copy your licence token from the checkout confirmation page, or [recover it](https://sylphxai.github.io/anymd/recover) through the product's recovery page. Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy. [See anymd Pro](https://sylphxai.github.io/anymd/pro).
 
 ## Local and hosted
 

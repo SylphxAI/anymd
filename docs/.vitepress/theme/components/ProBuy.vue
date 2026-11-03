@@ -26,6 +26,6 @@ onUnmounted(() => window.removeEventListener('anymd-pro-consent', refresh));
 
 <template>
   <span class="pro-buy-wrap">
-    <a class="pro-buy" :href="href" rel="noopener" @click="trackBeginCheckout()">{{ label ?? 'Buy anymd Pro, US$29 once' }}</a>
+    <a class="pro-buy" :href="href" target="_self" rel="noopener" @click="trackBeginCheckout()">{{ label ?? 'Buy anymd Pro' }}</a>
   </span>
 </template>

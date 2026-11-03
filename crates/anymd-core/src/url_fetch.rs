@@ -1,110 +1,122 @@
 //! HTTP(S) PDF body fetch with DNS-pinned SSRF protection per redirect hop.
 
 use std::fs;
+#[cfg(feature = "native")]
 use std::io::{self, Read, Write};
+#[cfg(feature = "native")]
 use std::net::{IpAddr, SocketAddr};
 use std::path::{Path, PathBuf};
+#[cfg(feature = "native")]
 use std::time::Duration;
 
+#[cfg(feature = "native")]
 use ureq::config::Config;
+#[cfg(feature = "native")]
 use ureq::tls::TlsConfig;
+#[cfg(feature = "native")]
 use ureq::unversioned::resolver::{ResolvedSocketAddrs, Resolver};
+#[cfg(feature = "native")]
 use ureq::unversioned::transport::{DefaultConnector, NextTimeout};
 
+#[cfg(feature = "native")]
 use crate::ssrf::{is_private_ip, resolve_public_addrs_with, DnsResolver, SystemDnsResolver};
 
+#[cfg(feature = "native")]
 const MAX_REDIRECTS: usize = 5;
+#[cfg(feature = "native")]
 const MAX_BYTES: u64 = 256 * 1024 * 1024;
+#[cfg(feature = "native")]
 const TIMEOUT_SECS: u64 = 30;
 
-#[derive(Debug, Clone)]
-struct PinnedResolver {
-    expected_netloc: String,
-    addresses: Vec<SocketAddr>,
-}
+#[cfg(feature = "native")]
+mod client {
+    use super::*;
 
-impl Resolver for PinnedResolver {
-    fn resolve(
-        &self,
-        uri: &ureq::http::Uri,
-        _config: &Config,
-        _timeout: NextTimeout,
-    ) -> Result<ResolvedSocketAddrs, ureq::Error> {
-        let netloc = netloc_of(uri);
-        if netloc != self.expected_netloc {
-            return Err(ureq::Error::Io(io::Error::new(
-                io::ErrorKind::PermissionDenied,
-                format!(
-                    "refusing unvalidated network target '{netloc}' (expected '{}')",
-                    self.expected_netloc
-                ),
-            )));
-        }
-        let mut resolved = self.empty();
-        for address in &self.addresses {
-            // The answer is a fixed-size array; keep the addresses that fit.
-            if resolved.try_push(*address).is_err() {
-                break;
+    #[derive(Debug, Clone)]
+    pub(crate) struct PinnedResolver {
+        pub(crate) expected_netloc: String,
+        pub(crate) addresses: Vec<SocketAddr>,
+    }
+
+    impl Resolver for PinnedResolver {
+        fn resolve(
+            &self,
+            uri: &ureq::http::Uri,
+            _config: &Config,
+            _timeout: NextTimeout,
+        ) -> Result<ResolvedSocketAddrs, ureq::Error> {
+            let netloc = netloc_of(uri);
+            if netloc != self.expected_netloc {
+                return Err(ureq::Error::Io(io::Error::new(
+                    io::ErrorKind::PermissionDenied,
+                    format!(
+                        "refusing unvalidated network target '{netloc}' (expected '{}')",
+                        self.expected_netloc
+                    ),
+                )));
             }
+            let mut resolved = self.empty();
+            for address in &self.addresses {
+                // The answer is a fixed-size array; keep the addresses that fit.
+                if resolved.try_push(*address).is_err() {
+                    break;
+                }
+            }
+            if resolved.is_empty() {
+                return Err(ureq::Error::HostNotFound);
+            }
+            Ok(resolved)
         }
-        if resolved.is_empty() {
-            return Err(ureq::Error::HostNotFound);
+    }
+
+    /// `host:port` for a request URI, filling in the scheme's default port.
+    pub(super) fn netloc_of(uri: &ureq::http::Uri) -> String {
+        let port = uri.port_u16().or_else(|| match uri.scheme_str() {
+            Some("http") => Some(80),
+            Some("https") => Some(443),
+            _ => None,
+        });
+        match (uri.host(), port) {
+            (Some(host), Some(port)) => format!("{host}:{port}"),
+            // Missing a host or a port cannot match any validated target.
+            _ => String::new(),
         }
-        Ok(resolved)
+    }
+
+    /// A fresh, pool-free agent per redirect hop: each hop is its own validation
+    /// and connection boundary. The URL keeps its hostname for Host and TLS SNI.
+    pub(crate) fn hop_agent_timeout(
+        netloc: String,
+        addresses: Vec<SocketAddr>,
+        tls: &TlsConfig,
+        timeout: Duration,
+    ) -> ureq::Agent {
+        let config = Config::builder()
+            // The 2.x `.timeout(30s)` was a deadline for the whole call, body
+            // included; `timeout_global` is 3.x's name for exactly that.
+            .timeout_global(Some(timeout))
+            // No redirects: this module follows them itself, one validated hop at a time.
+            .max_redirects(0)
+            // The 2.x agent built with `.try_proxy_from_env(false)`, and 3.x turns
+            // the environment proxy on by default. Keep it off: the address this
+            // agent connects to is the one `PinnedResolver` validated, and a proxy
+            // would move the connection to a peer that no check here describes.
+            .proxy(None)
+            .max_idle_connections(0)
+            .max_idle_connections_per_host(0)
+            .tls_config(tls.clone())
+            .build();
+        ureq::Agent::with_parts(
+            config,
+            DefaultConnector::default(),
+            PinnedResolver {
+                expected_netloc: netloc,
+                addresses,
+            },
+        )
     }
 }
 
-/// `host:port` for a request URI, filling in the scheme's default port.
-fn netloc_of(uri: &ureq::http::Uri) -> String {
-    let port = uri.port_u16().or_else(|| match uri.scheme_str() {
-        Some("http") => Some(80),
-        Some("https") => Some(443),
-        _ => None,
-    });
-    match (uri.host(), port) {
-        (Some(host), Some(port)) => format!("{host}:{port}"),
-        // Missing a host or a port cannot match any validated target.
-        _ => String::new(),
-    }
-}
-
-/// A fresh, pool-free agent per redirect hop: each hop is its own validation
-/// and connection boundary. The URL keeps its hostname for Host and TLS SNI.
-fn hop_agent(netloc: String, addresses: Vec<SocketAddr>, tls: &TlsConfig) -> ureq::Agent {
-    hop_agent_timeout(netloc, addresses, tls, Duration::from_secs(TIMEOUT_SECS))
-}
-fn hop_agent_timeout(
-    netloc: String,
-    addresses: Vec<SocketAddr>,
-    tls: &TlsConfig,
-    timeout: Duration,
-) -> ureq::Agent {
-    let config = Config::builder()
-        // The 2.x `.timeout(30s)` was a deadline for the whole call, body
-        // included; `timeout_global` is 3.x's name for exactly that.
-        .timeout_global(Some(timeout))
-        // No redirects: this module follows them itself, one validated hop at a time.
-        .max_redirects(0)
-        // The 2.x agent built with `.try_proxy_from_env(false)`, and 3.x turns
-        // the environment proxy on by default. Keep it off: the address this
-        // agent connects to is the one `PinnedResolver` validated, and a proxy
-        // would move the connection to a peer that no check here describes.
-        .proxy(None)
-        .max_idle_connections(0)
-        .max_idle_connections_per_host(0)
-        .tls_config(tls.clone())
-        .build();
-    ureq::Agent::with_parts(
-        config,
-        DefaultConnector::default(),
-        PinnedResolver {
-            expected_netloc: netloc,
-            addresses,
-        },
-    )
-}
-
-/// A fetched HTTP(S) body with the response facts a converter needs.
 #[derive(Debug, Clone)]
 pub struct FetchedUrl {
     pub bytes: Vec<u8>,
@@ -113,144 +125,155 @@ pub struct FetchedUrl {
     pub final_url: String,
 }
 
-fn fetch_url_to_temp_file_with<R, F>(
-    url: &str,
-    resolver: &R,
-    is_denied: F,
-    tls: &TlsConfig,
-) -> Result<PathBuf, String>
-where
-    R: DnsResolver,
-    F: Fn(IpAddr) -> bool + Copy,
-{
-    let fetched = fetch_url_with(url, resolver, is_denied, tls)?;
-    let mut file = tempfile::Builder::new()
-        .prefix("pdf-reader-mcp-")
-        .suffix(".pdf")
-        .tempfile()
-        .map_err(|e| format!("secure temp file: {e}"))?;
-    file.write_all(&fetched.bytes)
-        .map_err(|e| format!("temp write: {e}"))?;
-    let (_file, path) = file
-        .keep()
-        .map_err(|e| format!("persist secure temp file: {}", e.error))?;
-    Ok(path)
-}
+#[cfg(feature = "native")]
+mod fetch {
+    use super::*;
 
-fn fetch_url_with<R, F>(
-    url: &str,
-    resolver: &R,
-    is_denied: F,
-    tls: &TlsConfig,
-) -> Result<FetchedUrl, String>
-where
-    R: DnsResolver,
-    F: Fn(IpAddr) -> bool + Copy,
-{
-    fetch_url_with_deadline(
-        url,
-        resolver,
-        is_denied,
-        tls,
-        std::time::Instant::now() + Duration::from_secs(TIMEOUT_SECS),
-    )
-}
-fn fetch_url_with_deadline<R, F>(
-    url: &str,
-    resolver: &R,
-    is_denied: F,
-    tls: &TlsConfig,
-    deadline: std::time::Instant,
-) -> Result<FetchedUrl, String>
-where
-    R: DnsResolver,
-    F: Fn(IpAddr) -> bool + Copy,
-{
-    let mut current = url.to_string();
-    for _ in 0..=MAX_REDIRECTS {
-        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
-        if remaining.is_zero() {
-            return Err("URL fetch deadline exceeded".into());
-        }
-        let parsed = url::Url::parse(&current).map_err(|e| format!("Invalid URL: {e}"))?;
-        if parsed.scheme() != "http" && parsed.scheme() != "https" {
-            return Err("Only http(s) URLs are allowed.".into());
-        }
-        let host = parsed
-            .host_str()
-            .ok_or_else(|| "URL host is required.".to_string())?;
-        let port = parsed
-            .port_or_known_default()
-            .ok_or_else(|| "URL port could not be determined.".to_string())?;
-        let addresses = resolve_public_addrs_with(host, port, resolver, is_denied)?;
-        let expected_netloc = format!("{host}:{port}");
-
-        let agent = hop_agent_timeout(
-            expected_netloc,
-            addresses,
-            tls,
-            deadline.saturating_duration_since(std::time::Instant::now()),
-        );
-
-        let response = agent
-            .get(parsed.as_str())
-            .header(
-                "User-Agent",
-                concat!(
-                    "anymd/",
-                    env!("CARGO_PKG_VERSION"),
-                    " (+https://github.com/SylphxAI/anymd)"
-                ),
-            )
-            .header("Accept", "*/*")
-            .call()
-            .map_err(|e| format!("URL fetch failed: {e}"))?;
-
-        let status = response.status().as_u16();
-        if (300..400).contains(&status) {
-            let location = response
-                .headers()
-                .get("location")
-                .and_then(|value| value.to_str().ok())
-                .ok_or_else(|| "Redirect without Location header.".to_string())?
-                .to_string();
-            current = parsed
-                .join(&location)
-                .map_err(|e| format!("Invalid redirect URL: {e}"))?
-                .to_string();
-            continue;
-        }
-        if !(200..300).contains(&status) {
-            return Err(format!("URL fetch returned HTTP {status}."));
-        }
-
-        let content_type = response
-            .headers()
-            .get("content-type")
-            .and_then(|value| value.to_str().ok())
-            .map(str::to_string);
-        let final_url = parsed.to_string();
-        let mut reader = response.into_body().into_reader().take(MAX_BYTES + 1);
-        let mut bytes = Vec::new();
-        std::io::copy(&mut reader, &mut bytes)
-            .map_err(|e| format!("Failed to read URL body: {e}"))?;
-        if bytes.len() as u64 > MAX_BYTES {
-            return Err(format!(
-                "URL body exceeds maximum size of {MAX_BYTES} bytes."
-            ));
-        }
-        if bytes.is_empty() {
-            return Err("URL body is empty.".into());
-        }
-        return Ok(FetchedUrl {
-            bytes,
-            content_type,
-            final_url,
-        });
+    pub(super) fn fetch_url_to_temp_file_with<R, F>(
+        url: &str,
+        resolver: &R,
+        is_denied: F,
+        tls: &TlsConfig,
+    ) -> Result<PathBuf, String>
+    where
+        R: DnsResolver,
+        F: Fn(IpAddr) -> bool + Copy,
+    {
+        let fetched = fetch_url_with(url, resolver, is_denied, tls)?;
+        let mut file = tempfile::Builder::new()
+            .prefix("pdf-reader-mcp-")
+            .suffix(".pdf")
+            .tempfile()
+            .map_err(|e| format!("secure temp file: {e}"))?;
+        file.write_all(&fetched.bytes)
+            .map_err(|e| format!("temp write: {e}"))?;
+        let (_file, path) = file
+            .keep()
+            .map_err(|e| format!("persist secure temp file: {}", e.error))?;
+        Ok(path)
     }
-    Err(format!("Too many redirects (>{MAX_REDIRECTS})."))
+
+    pub(crate) fn fetch_url_with<R, F>(
+        url: &str,
+        resolver: &R,
+        is_denied: F,
+        tls: &TlsConfig,
+    ) -> Result<FetchedUrl, String>
+    where
+        R: DnsResolver,
+        F: Fn(IpAddr) -> bool + Copy,
+    {
+        fetch_url_with_deadline(
+            url,
+            resolver,
+            is_denied,
+            tls,
+            std::time::Instant::now() + Duration::from_secs(TIMEOUT_SECS),
+        )
+    }
+    pub(crate) fn fetch_url_with_deadline<R, F>(
+        url: &str,
+        resolver: &R,
+        is_denied: F,
+        tls: &TlsConfig,
+        deadline: std::time::Instant,
+    ) -> Result<FetchedUrl, String>
+    where
+        R: DnsResolver,
+        F: Fn(IpAddr) -> bool + Copy,
+    {
+        let mut current = url.to_string();
+        for _ in 0..=MAX_REDIRECTS {
+            let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+            if remaining.is_zero() {
+                return Err("URL fetch deadline exceeded".into());
+            }
+            let parsed = url::Url::parse(&current).map_err(|e| format!("Invalid URL: {e}"))?;
+            if parsed.scheme() != "http" && parsed.scheme() != "https" {
+                return Err("Only http(s) URLs are allowed.".into());
+            }
+            let host = parsed
+                .host_str()
+                .ok_or_else(|| "URL host is required.".to_string())?;
+            let port = parsed
+                .port_or_known_default()
+                .ok_or_else(|| "URL port could not be determined.".to_string())?;
+            let addresses = resolve_public_addrs_with(host, port, resolver, is_denied)?;
+            let expected_netloc = format!("{host}:{port}");
+
+            let agent = hop_agent_timeout(
+                expected_netloc,
+                addresses,
+                tls,
+                deadline.saturating_duration_since(std::time::Instant::now()),
+            );
+
+            let response = agent
+                .get(parsed.as_str())
+                .header(
+                    "User-Agent",
+                    concat!(
+                        "anymd/",
+                        env!("CARGO_PKG_VERSION"),
+                        " (+https://github.com/SylphxAI/anymd)"
+                    ),
+                )
+                .header("Accept", "*/*")
+                .call()
+                .map_err(|e| format!("URL fetch failed: {e}"))?;
+
+            let status = response.status().as_u16();
+            if (300..400).contains(&status) {
+                let location = response
+                    .headers()
+                    .get("location")
+                    .and_then(|value| value.to_str().ok())
+                    .ok_or_else(|| "Redirect without Location header.".to_string())?
+                    .to_string();
+                current = parsed
+                    .join(&location)
+                    .map_err(|e| format!("Invalid redirect URL: {e}"))?
+                    .to_string();
+                continue;
+            }
+            if !(200..300).contains(&status) {
+                return Err(format!("URL fetch returned HTTP {status}."));
+            }
+
+            let content_type = response
+                .headers()
+                .get("content-type")
+                .and_then(|value| value.to_str().ok())
+                .map(str::to_string);
+            let final_url = parsed.to_string();
+            let mut reader = response.into_body().into_reader().take(MAX_BYTES + 1);
+            let mut bytes = Vec::new();
+            std::io::copy(&mut reader, &mut bytes)
+                .map_err(|e| format!("Failed to read URL body: {e}"))?;
+            if bytes.len() as u64 > MAX_BYTES {
+                return Err(format!(
+                    "URL body exceeds maximum size of {MAX_BYTES} bytes."
+                ));
+            }
+            if bytes.is_empty() {
+                return Err("URL body is empty.".into());
+            }
+            return Ok(FetchedUrl {
+                bytes,
+                content_type,
+                final_url,
+            });
+        }
+        Err(format!("Too many redirects (>{MAX_REDIRECTS})."))
+    }
 }
 
+#[cfg(feature = "native")]
+use crate::url_fetch::client::hop_agent_timeout;
+#[cfg(feature = "native")]
+use fetch::{fetch_url_to_temp_file_with, fetch_url_with, fetch_url_with_deadline};
+
+#[cfg(feature = "native")]
 fn env_allow_private_ips() -> bool {
     match std::env::var("MCP_PDF_ALLOW_PRIVATE_IPS") {
         Ok(value) => {
@@ -261,39 +284,71 @@ fn env_allow_private_ips() -> bool {
     }
 }
 
-/// Fetch a URL PDF body into a temporary file.
-///
-/// By default non-public addresses are rejected. Set
-/// `MCP_PDF_ALLOW_PRIVATE_IPS=true` to match the TypeScript LKG opt-in that
-/// permits loopback/private fetches for local fixtures and trusted networks.
-pub fn fetch_url_to_temp_file(url: &str) -> Result<PathBuf, String> {
-    let tls = TlsConfig::default();
-    if env_allow_private_ips() {
-        fetch_url_to_temp_file_with(url, &SystemDnsResolver, |_| false, &tls)
-    } else {
-        fetch_url_to_temp_file_with(url, &SystemDnsResolver, is_private_ip, &tls)
+/// What a converter asks of a URL source, in every build: fetch it to a local
+/// file, then remove it. In the browser the fetch refuses instead of pretending
+/// it can reach the network.
+pub fn url_source_to_temp_file(url: &str) -> Result<PathBuf, String> {
+    #[cfg(feature = "native")]
+    {
+        fetch_url_to_temp_file(url)
+    }
+    #[cfg(not(feature = "native"))]
+    {
+        Err(format!(
+            "URL sources need the native anymd build; this build cannot fetch {url}."
+        ))
     }
 }
 
-/// Fetch a URL body into memory with the same SSRF guard as
-/// [`fetch_url_to_temp_file`] (every redirect hop is re-validated and pinned).
-pub fn fetch_url(url: &str) -> Result<FetchedUrl, String> {
-    let tls = TlsConfig::default();
-    if env_allow_private_ips() {
-        fetch_url_with(url, &SystemDnsResolver, |_| false, &tls)
-    } else {
-        fetch_url_with(url, &SystemDnsResolver, is_private_ip, &tls)
+#[cfg(feature = "native")]
+mod entry {
+    use super::*;
+
+    /// Fetch a URL PDF body into a temporary file.
+    ///
+    /// By default non-public addresses are rejected. Set
+    /// `MCP_PDF_ALLOW_PRIVATE_IPS=true` to match the TypeScript LKG opt-in that
+    /// permits loopback/private fetches for local fixtures and trusted networks.
+    pub fn fetch_url_to_temp_file(url: &str) -> Result<PathBuf, String> {
+        let tls = TlsConfig::default();
+        if env_allow_private_ips() {
+            fetch_url_to_temp_file_with(url, &SystemDnsResolver, |_| false, &tls)
+        } else {
+            fetch_url_to_temp_file_with(url, &SystemDnsResolver, is_private_ip, &tls)
+        }
+    }
+
+    /// Fetch a URL body into memory with the same SSRF guard as
+    /// [`fetch_url_to_temp_file`] (every redirect hop is re-validated and pinned).
+    pub fn fetch_url(url: &str) -> Result<FetchedUrl, String> {
+        let tls = TlsConfig::default();
+        if env_allow_private_ips() {
+            fetch_url_with(url, &SystemDnsResolver, |_| false, &tls)
+        } else {
+            fetch_url_with(url, &SystemDnsResolver, is_private_ip, &tls)
+        }
+    }
+
+    /// Explicit caller deadline, retaining DNS pinning and redirect validation.
+    pub fn fetch_url_deadline(
+        url: &str,
+        deadline: std::time::Instant,
+    ) -> Result<FetchedUrl, String> {
+        let tls = TlsConfig::default();
+        if env_allow_private_ips() {
+            fetch_url_with_deadline(url, &SystemDnsResolver, |_| false, &tls, deadline)
+        } else {
+            fetch_url_with_deadline(url, &SystemDnsResolver, is_private_ip, &tls, deadline)
+        }
     }
 }
 
-/// Explicit caller deadline, retaining DNS pinning and redirect validation.
-pub fn fetch_url_deadline(url: &str, deadline: std::time::Instant) -> Result<FetchedUrl, String> {
-    let tls = TlsConfig::default();
-    if env_allow_private_ips() {
-        fetch_url_with_deadline(url, &SystemDnsResolver, |_| false, &tls, deadline)
-    } else {
-        fetch_url_with_deadline(url, &SystemDnsResolver, is_private_ip, &tls, deadline)
-    }
+#[cfg(feature = "native")]
+pub use entry::{fetch_url, fetch_url_deadline, fetch_url_to_temp_file};
+
+/// Removes a file [`url_source_to_temp_file`] or another fetch wrote.
+pub fn cleanup_source_temp_file(path: &Path) {
+    cleanup_temp_file(path);
 }
 
 pub fn cleanup_temp_file(path: &Path) {
@@ -303,6 +358,10 @@ pub fn cleanup_temp_file(path: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "native")]
+    use crate::url_fetch::client::PinnedResolver;
+    #[cfg(feature = "native")]
+    use fetch::fetch_url_with;
     use std::collections::HashMap;
     use std::net::{Ipv4Addr, TcpListener};
     use std::sync::atomic::{AtomicUsize, Ordering};

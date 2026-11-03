@@ -47,6 +47,47 @@ When redistributing a source build outside this checkout, set
 before building; Cargo's repository configuration is not inherited by downstream
 crates.io consumers.
 
+## winget, Homebrew and Scoop
+
+After the shared release job succeeds, `release.yml` runs the mcp-kit
+`package-managers` action in a top-level caller job on public `main` pushes.
+It renders `Formula/anymd.rb` in `SylphxAI/homebrew-tap` and
+`bucket/anymd.json` in `SylphxAI/scoop-bucket` from the exact version's released
+archives. Each destination changes through its normal pull request and repository rules,
+including a merge queue where configured; the job verifies the merged bytes
+before succeeding.
+
+The source CI identity is `anymd-package-managers`; its destination-only Broker
+policy has the same name. Access exchanges the caller job's OIDC identity and
+Broker issues separate destination-scoped tokens. The App signing key stays in
+Broker, and no tap or bucket secrets are passed to the reusable workflow.
+Missing authority fails the job instead of silently skipping either channel.
+An unchanged version still reconciles both destinations, without rebuilding or
+republishing existing npm packages or release assets. Repeating delivery reuses
+an existing publication pull request or verifies the already-current manifest.
+The pinned shared publisher also handles a new pull request becoming clean while
+GitHub is enabling auto-merge: it reads the exact head and state again before one
+ordinary merge request. Changed heads, blocked or closed requests, authorization
+failures and a refused recovery remain failures; no administrator override is
+used.
+
+Install with `brew install sylphxai/tap/anymd`, or run
+`scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` followed by
+`scoop install anymd`.
+
+The shared workflow has no winget input, so the `winget` job in `release.yml`
+does it. It hashes the published `anymd-win32-x64-msvc.zip` (which contains
+`anymd.exe` at the archive root), renders the three `Sylphx.anymd` manifests
+with `scripts/winget-manifest.mjs`, and opens a pull request on
+`microsoft/winget-pkgs` under `manifests/s/Sylphx/anymd/<version>/`. The pull
+request needs `WINGET_TOKEN`, a fine-grained personal access token that can
+open pull requests on that repository, passed by name. Without the token the
+job still renders and checks the manifest, then skips the pull request. A
+version that already has an open or merged pull request is left alone, so a
+later push to main does not open a second one. winget's own validation merges
+the pull request; until it does, `winget install Sylphx.anymd` is not yet
+served by the community source.
+
 ## crates.io
 
 The `crates` job in `release.yml` runs after the release job succeeds and calls
@@ -187,7 +228,12 @@ tests. Neither these checks nor the examples download models.
 
 PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
 workflow `release.yml`, environment `pypi`. That publisher must be registered
-on PyPI before OIDC token exchange can succeed. After registration, a fresh
+on PyPI before OIDC token exchange can succeed. As of 2026-10-30 the `anymd`
+project does not exist on PyPI. The `pypi` job runs when the wheels job builds
+artifacts; the 8.5.6 release failed with `invalid-publisher` because PyPI found
+no publisher matching those claims. Register the publisher on PyPI before
+retrying publication. The user install pages mark Python publication as pending.
+After registration, a fresh
 recovery run can build missing wheels under the exact-tag checks above and
 pass them through the existing CLI/API smoke tests and OIDC `pypi` job. The
 publisher skips files already present; neither publisher registration nor a

@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-crispasr = { git = "https://github.com/CrispStrobe/CrispASR", tag = "v0.8.38" }
+crispasr = { git = "https://github.com/CrispStrobe/CrispASR", tag = "v0.8.43" }
 
 [profile.release]
 opt-level = 3
