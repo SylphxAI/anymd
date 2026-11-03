@@ -9,7 +9,10 @@ use crate::text_index::{
     search_literal_text_bounded, search_pdf_text_pages, TextIndexError, TextIndexErrorCode,
     TEXT_INDEX_ROUTE,
 };
-use crate::url_fetch::{cleanup_temp_file, fetch_url_to_temp_file};
+use crate::url_fetch::{
+    cleanup_source_temp_file as cleanup_temp_file,
+    url_source_to_temp_file as fetch_url_to_temp_file,
+};
 use crate::{SourceOcrOutcome, ENGINE_NAME, ENGINE_VERSION};
 
 pub const SEARCH_PDF_ROUTE: &str = TEXT_INDEX_ROUTE;
@@ -18,7 +21,6 @@ const DEFAULT_MAX_FILE_BYTES: u64 = 256 * 1024 * 1024;
 const DEFAULT_MAX_PAGES: u32 = 100;
 const DEFAULT_MAX_MATCHES: u32 = 50;
 const DEFAULT_CONTEXT_CHARS: u32 = 120;
-const MAX_SELECTED_PAGES: usize = 10_001;
 const MAX_OCR_SEARCH_WORDS: usize = 250_000;
 const MAX_OCR_SEARCH_UTF16_UNITS: usize = 2_000_000;
 
@@ -80,6 +82,12 @@ impl SearchPdfError {
     }
 }
 
+impl crate::pages::PageSpecError for SearchPdfError {
+    fn invalid_params(message: impl Into<String>) -> Self {
+        Self::invalid_params(message)
+    }
+}
+
 impl From<TextIndexError> for SearchPdfError {
     fn from(error: TextIndexError) -> Self {
         match error.code {
@@ -113,96 +121,6 @@ fn source_label(source: &SearchPdfSource) -> String {
         .clone()
         .or_else(|| source.url.clone())
         .unwrap_or_else(|| "unknown".into())
-}
-
-fn parse_page_filter(pages_spec: &Option<Value>) -> Result<Option<Vec<u32>>, SearchPdfError> {
-    let Some(spec) = pages_spec else {
-        return Ok(None);
-    };
-    let mut wanted = Vec::new();
-    if let Some(arr) = spec.as_array() {
-        if arr.is_empty() {
-            return Err(SearchPdfError::invalid_params(
-                "Page specification resulted in an empty set of pages.",
-            ));
-        }
-        for value in arr {
-            let page = value
-                .as_u64()
-                .filter(|page| *page > 0 && *page <= u64::from(u32::MAX));
-            let Some(page) = page else {
-                return Err(SearchPdfError::invalid_params(
-                    "Page numbers in array must be positive integers.",
-                ));
-            };
-            wanted.push(page as u32);
-            if wanted.len() > MAX_SELECTED_PAGES {
-                return Err(SearchPdfError::invalid_params(
-                    "Page specification exceeds the maximum of 10001 selected pages.",
-                ));
-            }
-        }
-    } else if let Some(ranges) = spec.as_str() {
-        for raw_part in ranges.split(',') {
-            let part = raw_part.trim();
-            if part.contains('-') {
-                let mut segments = part.split('-');
-                let start_text = segments.next().unwrap_or_default();
-                let end_text = segments.next().unwrap_or_default();
-                let start = parse_ts_positive_page(start_text);
-                let end = if end_text.is_empty() {
-                    start.map(|page| page.saturating_add(10_000))
-                } else {
-                    parse_ts_positive_page(end_text)
-                };
-                let (Some(start), Some(end)) = (start, end) else {
-                    return Err(SearchPdfError::invalid_params(format!(
-                        "Invalid page range values: {part}"
-                    )));
-                };
-                if start > end {
-                    return Err(SearchPdfError::invalid_params(format!(
-                        "Invalid page range values: {part}"
-                    )));
-                }
-                wanted.extend(start..=end.min(start.saturating_add(10_000)));
-            } else {
-                let Some(page) = parse_ts_positive_page(part) else {
-                    return Err(SearchPdfError::invalid_params(format!(
-                        "Invalid page number: {part}"
-                    )));
-                };
-                wanted.push(page);
-            }
-            if wanted.len() > MAX_SELECTED_PAGES {
-                return Err(SearchPdfError::invalid_params(
-                    "Page specification exceeds the maximum of 10001 selected pages.",
-                ));
-            }
-        }
-    } else {
-        return Err(SearchPdfError::invalid_params(
-            "Page specification must be a non-empty range string or array of positive integers.",
-        ));
-    }
-    wanted.sort_unstable();
-    wanted.dedup();
-    if wanted.is_empty() {
-        return Err(SearchPdfError::invalid_params(
-            "Page specification resulted in an empty set of pages.",
-        ));
-    }
-    Ok(Some(wanted))
-}
-
-fn parse_ts_positive_page(value: &str) -> Option<u32> {
-    let value = value.trim_start();
-    let value = value.strip_prefix('+').unwrap_or(value);
-    let digits: String = value.chars().take_while(char::is_ascii_digit).collect();
-    (!digits.is_empty())
-        .then(|| digits.parse::<u32>().ok())
-        .flatten()
-        .filter(|page| *page > 0)
 }
 
 pub fn search_pdf(input: &SearchPdfInput) -> Result<SearchPdfResponse, SearchPdfError> {
@@ -247,7 +165,7 @@ pub fn search_pdf(input: &SearchPdfInput) -> Result<SearchPdfResponse, SearchPdf
 
     for source in &input.sources {
         validate_source(source)?;
-        parse_page_filter(&source.pages)?;
+        crate::pages::parse_page_spec::<SearchPdfError>(&source.pages, false)?;
     }
 
     let case_sensitive = input.case_sensitive.unwrap_or(false);
@@ -287,7 +205,7 @@ pub fn search_pdf(input: &SearchPdfInput) -> Result<SearchPdfResponse, SearchPdf
             }
         };
 
-        let page_filter = parse_page_filter(&source.pages)?;
+        let page_filter = crate::pages::parse_page_spec::<SearchPdfError>(&source.pages, false)?;
         match search_pdf_text_pages(
             path.as_path(),
             DEFAULT_MAX_FILE_BYTES,
@@ -843,11 +761,13 @@ mod tests {
             json!([]),
             json!([1, 0]),
         ] {
-            let error = parse_page_filter(&Some(pages)).expect_err("invalid page spec");
+            let error = crate::pages::parse_page_spec::<SearchPdfError>(&Some(pages), false)
+                .expect_err("invalid page spec");
             assert_eq!(error.code, SearchPdfErrorCode::InvalidParams);
         }
         assert_eq!(
-            parse_page_filter(&Some(json!("1x"))).expect("TS parseInt-compatible page"),
+            crate::pages::parse_page_spec::<SearchPdfError>(&Some(json!("1x")), false)
+                .expect("TS parseInt-compatible page"),
             Some(vec![1])
         );
     }
@@ -880,19 +800,21 @@ mod tests {
 
     #[test]
     fn page_ranges_use_only_the_exact_second_hyphen_segment_like_ts() {
-        let open = parse_page_filter(&Some(json!("1--5")))
+        let open = crate::pages::parse_page_spec::<SearchPdfError>(&Some(json!("1--5")), false)
             .expect("TS treats an empty second segment as open")
             .expect("page filter");
-        assert_eq!(open.len(), MAX_SELECTED_PAGES);
+        assert_eq!(open.len(), crate::pages::MAX_SELECTED_PAGES);
         assert_eq!(open.first(), Some(&1));
         assert_eq!(open.last(), Some(&10_001));
         assert_eq!(
-            parse_page_filter(&Some(json!("1-2-999"))).expect("third segment ignored"),
+            crate::pages::parse_page_spec::<SearchPdfError>(&Some(json!("1-2-999")), false)
+                .expect("third segment ignored"),
             Some(vec![1, 2])
         );
-        let whitespace_open = parse_page_filter(&Some(json!("1-   ")))
-            .expect("TS trims the whole range part before splitting")
-            .expect("page filter");
+        let whitespace_open =
+            crate::pages::parse_page_spec::<SearchPdfError>(&Some(json!("1-   ")), false)
+                .expect("TS trims the whole range part before splitting")
+                .expect("page filter");
         assert_eq!(whitespace_open, open);
     }
 

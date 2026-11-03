@@ -1,16 +1,21 @@
 //! Optional command-provider OCR over the bounded pure-Rust page renderer.
 
 use std::env;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use anymd_core::{OcrPage, SourceOcrOutcome};
-use rmcp::model::{CallToolResult, ContentBlock};
+use rmcp::model::CallToolResult;
 use serde_json::{json, Value};
 use tempfile::TempDir;
 
 use crate::command_provider::{self, CommandInvocation, CommandRunError};
-use crate::schema::PdfEvidenceArgs;
+use crate::pdf_evidence_common::{
+    error_result, json_result as text_result, parse_pdf_evidence_args, truncate_utf16,
+};
+use crate::provider_budget::{
+    ProviderRequestBudget, ProviderRequestPermit, MAX_CONCURRENT_PROVIDER_REQUESTS,
+    MAX_REQUEST_OUTPUT_CHARS, MAX_REQUEST_PROVIDER_BYTES, MAX_REQUEST_TIMEOUT_MS,
+};
 use crate::visual_evidence;
 use crate::visual_evidence::{MaterializedSource, OcrRenderRequest, RequestWorkBudget};
 
@@ -20,79 +25,39 @@ const OCR_COMMAND_ENV: &str = "MCP_PDF_OCR_COMMAND";
 const OCR_ARGS_ENV: &str = "MCP_PDF_OCR_ARGS_JSON";
 const OCR_PRESET_ENV: &str = "MCP_PDF_OCR_PRESET";
 const MAX_SOURCES_PER_REQUEST: usize = 32;
-pub(crate) const MAX_REQUEST_OCR_TIMEOUT_MS: u64 = 600_000;
-const MAX_REQUEST_OCR_OUTPUT_CHARS: usize = 2_000_000;
-const MAX_REQUEST_OCR_PROVIDER_BYTES: usize = 16 * 1024 * 1024;
-const MAX_CONCURRENT_OCR_REQUESTS: usize = 2;
-static ACTIVE_OCR_REQUESTS: AtomicUsize = AtomicUsize::new(0);
-
-#[derive(Debug)]
-pub(crate) struct OcrRequestPermit;
-
-impl OcrRequestPermit {
-    pub(crate) fn acquire() -> Result<Self, String> {
-        ACTIVE_OCR_REQUESTS
-            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |active| {
-                (active < MAX_CONCURRENT_OCR_REQUESTS).then_some(active + 1)
-            })
-            .map(|_| Self)
-            .map_err(|_| {
-                format!(
-                    "OCR provider concurrency limit of {MAX_CONCURRENT_OCR_REQUESTS} active requests reached; retry later."
-                )
-            })
-    }
-}
-
-impl Drop for OcrRequestPermit {
-    fn drop(&mut self) {
-        ACTIVE_OCR_REQUESTS.fetch_sub(1, Ordering::Release);
-    }
-}
-
-#[derive(Default)]
-struct RequestOcrBudget {
-    output_chars: usize,
-    provider_bytes: usize,
-    exhausted: Option<String>,
-}
-
-impl RequestOcrBudget {
-    fn ensure_available(&self) -> Result<(), String> {
-        self.exhausted.clone().map_or(Ok(()), Err)
-    }
-
-    fn exhaust(&mut self, message: String) -> Result<(), String> {
-        self.exhausted = Some(message.clone());
-        Err(message)
-    }
-
-    fn charge(&mut self, provider_bytes: usize, output_chars: usize) -> Result<(), String> {
-        self.ensure_available()?;
-        let Some(next_provider_bytes) = self.provider_bytes.checked_add(provider_bytes) else {
-            return self.exhaust("Request OCR provider byte count overflow.".to_string());
-        };
-        self.provider_bytes = next_provider_bytes;
-        if self.provider_bytes > MAX_REQUEST_OCR_PROVIDER_BYTES {
-            return self.exhaust(format!(
-                "Request exceeds OCR provider output limit of {MAX_REQUEST_OCR_PROVIDER_BYTES} bytes."
-            ));
+/// A refusal in the OCR tool's words, given what the budget refused.
+fn refusal(what: &str) -> String {
+    match what {
+        "provider output limit" => format!(
+            "Request exceeds OCR provider output limit of {MAX_REQUEST_PROVIDER_BYTES} bytes."
+        ),
+        "output limit" => {
+            format!("Request exceeds OCR output limit of {MAX_REQUEST_OUTPUT_CHARS} characters.")
         }
-        let Some(next_output_chars) = self.output_chars.checked_add(output_chars) else {
-            return self.exhaust("Request OCR output character count overflow.".to_string());
-        };
-        self.output_chars = next_output_chars;
-        if self.output_chars > MAX_REQUEST_OCR_OUTPUT_CHARS {
-            return self.exhaust(format!(
-                "Request exceeds OCR output limit of {MAX_REQUEST_OCR_OUTPUT_CHARS} characters."
-            ));
-        }
-        Ok(())
+        other => format!("Request {other}."),
     }
+}
 
-    fn charge_failed_provider(&mut self, provider_bytes: usize) -> Result<(), String> {
-        self.charge(provider_bytes, 0)
-    }
+/// What every OCR request refuses with once its time is up.
+pub(crate) fn timeout_refusal() -> String {
+    format!("Request exceeds OCR provider time limit of {MAX_REQUEST_TIMEOUT_MS} milliseconds.")
+}
+
+type RequestOcrBudget = ProviderRequestBudget;
+/// The OCR tool's concurrency slot: one shared process-wide provider budget.
+pub(crate) type OcrRequestPermit = ProviderRequestPermit;
+
+/// The one admission call every OCR-path caller uses.
+pub(crate) fn acquire_ocr_permit() -> Result<OcrRequestPermit, String> {
+    acquire_permit()
+}
+
+fn acquire_permit() -> Result<OcrRequestPermit, String> {
+    ProviderRequestPermit::acquire(|| {
+        format!(
+            "OCR provider concurrency limit of {MAX_CONCURRENT_PROVIDER_REQUESTS} active requests reached; retry later."
+        )
+    })
 }
 
 fn admit_read_ocr_source(
@@ -103,9 +68,7 @@ fn admit_read_ocr_source(
     request_budget.ensure_available()?;
     render_budget.ensure_available()?;
     if Instant::now() >= request_deadline {
-        return render_budget.exhaust(format!(
-            "Request exceeds OCR provider time limit of {MAX_REQUEST_OCR_TIMEOUT_MS} milliseconds."
-        ));
+        return render_budget.exhaust(timeout_refusal());
     }
     Ok(())
 }
@@ -159,15 +122,6 @@ impl ProviderConfig {
         }
         output["provenance"] = json!(provenance);
     }
-}
-
-fn parse_args(value: &Value) -> Result<PdfEvidenceArgs, rmcp::ErrorData> {
-    let args: PdfEvidenceArgs = serde_json::from_value(value.clone()).map_err(|error| {
-        rmcp::ErrorData::invalid_params(format!("Invalid pdf_evidence arguments: {error}"), None)
-    })?;
-    args.validate()
-        .map_err(|message| rmcp::ErrorData::invalid_params(message, None))?;
-    Ok(args)
 }
 
 fn provider_config_from(
@@ -387,23 +341,6 @@ fn normalize_words(value: &Value, scale: f64) -> Option<Vec<Value>> {
         })
         .collect::<Vec<_>>();
     (!words.is_empty()).then_some(words)
-}
-
-fn truncate_utf16(text: &str, maximum: usize) -> (String, bool) {
-    let mut units = 0usize;
-    let mut end = text.len();
-    for (index, character) in text.char_indices() {
-        let next = units + character.len_utf16();
-        if next > maximum {
-            end = index;
-            break;
-        }
-        units = next;
-    }
-    (
-        text[..end].to_string(),
-        text.encode_utf16().count() > maximum,
-    )
 }
 
 fn parse_finite_number(value: Option<&str>) -> Option<f64> {
@@ -761,7 +698,7 @@ pub(crate) fn run_read_ocr(
                 .collect()
         }
     };
-    let _permit = match OcrRequestPermit::acquire() {
+    let _permit = match acquire_permit() {
         Ok(permit) => permit,
         Err(error) => {
             return sources
@@ -778,16 +715,14 @@ pub(crate) fn run_read_ocr(
 
     let request_deadline = options
         .deadline
-        .unwrap_or_else(|| Instant::now() + Duration::from_millis(MAX_REQUEST_OCR_TIMEOUT_MS));
+        .unwrap_or_else(|| Instant::now() + Duration::from_millis(MAX_REQUEST_TIMEOUT_MS));
     let mut request_budget = RequestOcrBudget::default();
     let mut render_budget = RequestWorkBudget::default();
     let languages = Vec::new();
     sources
         .iter()
         .map(|(source, candidate_pages)| {
-            let deadline_error = format!(
-                "Request exceeds OCR provider time limit of {MAX_REQUEST_OCR_TIMEOUT_MS} milliseconds."
-            );
+            let deadline_error = timeout_refusal();
             if let Err(error) =
                 admit_read_ocr_source(&request_budget, &mut render_budget, request_deadline)
             {
@@ -823,7 +758,11 @@ pub(crate) fn run_read_ocr(
                 if let Err(error) = request_budget.ensure_available() {
                     return SourceOcrOutcome {
                         source_index: rendered.source_index,
-                        pages: if options.exact_geometry { pages } else { Vec::new() },
+                        pages: if options.exact_geometry {
+                            pages
+                        } else {
+                            Vec::new()
+                        },
                         warnings: rendered.warnings,
                         error: Some(error),
                     };
@@ -837,11 +776,13 @@ pub(crate) fn run_read_ocr(
                 if remaining_ms == 0 {
                     return SourceOcrOutcome {
                         source_index: rendered.source_index,
-                        pages: if options.exact_geometry { pages } else { Vec::new() },
+                        pages: if options.exact_geometry {
+                            pages
+                        } else {
+                            Vec::new()
+                        },
                         warnings: rendered.warnings,
-                        error: Some(format!(
-                            "Request exceeds OCR provider time limit of {MAX_REQUEST_OCR_TIMEOUT_MS} milliseconds."
-                        )),
+                        error: Some(timeout_refusal()),
                     };
                 }
                 let stdout = match run_provider(
@@ -855,10 +796,14 @@ pub(crate) fn run_read_ocr(
                 ) {
                     Ok(stdout) => stdout,
                     Err(error) => {
-                        let _ = request_budget.charge_failed_provider(error.charge_bytes);
+                        let _ = request_budget.charge_failed_provider(error.charge_bytes, refusal);
                         return SourceOcrOutcome {
                             source_index: rendered.source_index,
-                            pages: if options.exact_geometry { pages } else { Vec::new() },
+                            pages: if options.exact_geometry {
+                                pages
+                            } else {
+                                Vec::new()
+                            },
                             warnings: rendered.warnings,
                             error: Some(error.message),
                         };
@@ -873,21 +818,38 @@ pub(crate) fn run_read_ocr(
                     Some(f64::from(page.height)),
                 );
                 if options.exact_geometry {
-                    restore_render_geometry(&mut normalized, page.pdf_to_pixel, page.scale, page.height);
+                    restore_render_geometry(
+                        &mut normalized,
+                        page.pdf_to_pixel,
+                        page.scale,
+                        page.height,
+                    );
                 }
                 let output_chars = normalized["text"]
                     .as_str()
                     .map_or(0, |text| text.encode_utf16().count());
-                if let Err(error) = request_budget.charge(stdout.len(), output_chars) {
+                if let Err(error) = request_budget.charge(stdout.len(), output_chars, refusal) {
                     return SourceOcrOutcome {
                         source_index: rendered.source_index,
-                        pages: if options.exact_geometry { pages } else { Vec::new() },
+                        pages: if options.exact_geometry {
+                            pages
+                        } else {
+                            Vec::new()
+                        },
                         warnings: rendered.warnings,
                         error: Some(error),
                     };
                 }
                 normalized["page"] = json!(page.page);
-                normalized["provider"] = json!(if config.args_template.first().is_some_and(|a| a == "__ocr-vlm-worker") { "candle" } else { "command" });
+                normalized["provider"] = json!(if config
+                    .args_template
+                    .first()
+                    .is_some_and(|a| a == "__ocr-vlm-worker")
+                {
+                    "candle"
+                } else {
+                    "command"
+                });
                 normalized["source_render_evidence_id"] = json!(page.evidence_id);
                 normalized["source_render_scale"] = json!(page.scale);
                 normalized["source_render_width"] = json!(page.width);
@@ -898,9 +860,15 @@ pub(crate) fn run_read_ocr(
                     Err(error) => {
                         return SourceOcrOutcome {
                             source_index: rendered.source_index,
-                            pages: if options.exact_geometry { pages } else { Vec::new() },
+                            pages: if options.exact_geometry {
+                                pages
+                            } else {
+                                Vec::new()
+                            },
                             warnings: rendered.warnings,
-                            error: Some(format!("Failed to normalize OCR provider output: {error}")),
+                            error: Some(format!(
+                                "Failed to normalize OCR provider output: {error}"
+                            )),
                         }
                     }
                 }
@@ -915,21 +883,8 @@ pub(crate) fn run_read_ocr(
         .collect()
 }
 
-fn text_result(payload: Value) -> CallToolResult {
-    let text = serde_json::to_string_pretty(&payload).unwrap_or_else(|_| payload.to_string());
-    {
-        let mut result = CallToolResult::structured(payload);
-        result.content = vec![ContentBlock::text(text)];
-        result
-    }
-}
-
-fn error_result(message: String) -> CallToolResult {
-    CallToolResult::error(vec![ContentBlock::text(message)])
-}
-
 pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
-    let args = parse_args(&value)?;
+    let args = parse_pdf_evidence_args(&value)?;
     if args.sources.len() > MAX_SOURCES_PER_REQUEST {
         return Err(rmcp::ErrorData::invalid_params(
             format!("pdf_evidence accepts at most {MAX_SOURCES_PER_REQUEST} sources per request."),
@@ -947,7 +902,7 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
             )))
         }
     };
-    let _permit = match OcrRequestPermit::acquire() {
+    let _permit = match acquire_permit() {
         Ok(permit) => permit,
         Err(message) => {
             return Ok(error_result(format!(
@@ -966,7 +921,7 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
         .map_or(DEFAULT_MAX_OUTPUT_CHARS, |value| value as usize);
     let languages_provided = args.languages.is_some();
     let languages = args.languages.unwrap_or_default();
-    let request_deadline = Instant::now() + Duration::from_millis(MAX_REQUEST_OCR_TIMEOUT_MS);
+    let request_deadline = Instant::now() + Duration::from_millis(MAX_REQUEST_TIMEOUT_MS);
     let mut request_budget = RequestOcrBudget::default();
     let mut render_input = value;
     render_input["operation"] = json!("render_page");
@@ -1014,9 +969,7 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
                 )
                 .unwrap_or(u64::MAX);
                 if remaining_ms == 0 {
-                    return Err(format!(
-                        "Request exceeds OCR provider time limit of {MAX_REQUEST_OCR_TIMEOUT_MS} milliseconds."
-                    ));
+                    return Err(timeout_refusal());
                 }
                 let stdout = match run_provider(
                     &config,
@@ -1029,7 +982,7 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
                 ) {
                     Ok(stdout) => stdout,
                     Err(error) => {
-                        request_budget.charge_failed_provider(error.charge_bytes)?;
+                        request_budget.charge_failed_provider(error.charge_bytes, refusal)?;
                         return Err(error.message);
                     }
                 };
@@ -1044,7 +997,7 @@ pub fn ocr_pages(value: Value) -> Result<CallToolResult, rmcp::ErrorData> {
                 let output_chars = normalized["text"]
                     .as_str()
                     .map_or(0, |text| text.encode_utf16().count());
-                request_budget.charge(stdout.len(), output_chars)?;
+                request_budget.charge(stdout.len(), output_chars, refusal)?;
                 normalized["page"] = json!(page_number);
                 normalized["provider"] = json!(if config
                     .args_template
@@ -1312,21 +1265,22 @@ mod tests {
         let mut budget = RequestOcrBudget::default();
         budget
             .charge(
-                MAX_REQUEST_OCR_PROVIDER_BYTES - 1,
-                MAX_REQUEST_OCR_OUTPUT_CHARS - 1,
+                MAX_REQUEST_PROVIDER_BYTES - 1,
+                MAX_REQUEST_OUTPUT_CHARS - 1,
+                refusal,
             )
             .expect("within budget");
         assert!(budget
-            .charge(2, 0)
+            .charge(2, 0, refusal)
             .expect_err("byte overflow")
             .contains("bytes"));
 
         let mut budget = RequestOcrBudget::default();
         budget
-            .charge(0, MAX_REQUEST_OCR_OUTPUT_CHARS - 1)
+            .charge(0, MAX_REQUEST_OUTPUT_CHARS - 1, refusal)
             .expect("within budget");
         assert!(budget
-            .charge(0, 2)
+            .charge(0, 2, refusal)
             .expect_err("character overflow")
             .contains("characters"));
         assert!(budget
@@ -1339,7 +1293,7 @@ mod tests {
     fn exhausted_provider_budget_blocks_later_render_and_provider_effects() {
         let mut request_budget = RequestOcrBudget::default();
         request_budget
-            .charge(0, MAX_REQUEST_OCR_OUTPUT_CHARS + 1)
+            .charge(0, MAX_REQUEST_OUTPUT_CHARS + 1, refusal)
             .expect_err("exhaust provider budget");
         let mut render_budget = RequestWorkBudget::default();
         let mut sentinel_invocations = 0usize;
@@ -1378,15 +1332,15 @@ mod tests {
             })
             .is_err());
         assert_eq!(later_workers, 0);
-        let second = OcrRequestPermit::acquire().expect("second permit");
-        assert!(OcrRequestPermit::acquire()
+        let second = acquire_permit().expect("second permit");
+        assert!(acquire_permit()
             .expect_err("third request rejected")
             .contains("concurrency limit"));
         drop(first);
-        let replacement = OcrRequestPermit::acquire().expect("released slot is reusable");
+        let replacement = acquire_permit().expect("released slot is reusable");
         drop(second);
         drop(replacement);
-        assert_eq!(ACTIVE_OCR_REQUESTS.load(Ordering::Acquire), 0);
+        assert_eq!(crate::provider_budget::active_requests(), 0);
     }
 }
 

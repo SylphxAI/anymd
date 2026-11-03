@@ -1,6 +1,5 @@
-//! Page selection for read_pdf: page specs, even sampling and filtering extracted pages.
-
-use super::*;
+//! Page selection for read_pdf: even sampling and joining extracted pages; the
+//! `pages` specification itself is parsed once in `crate::pages`.
 
 pub(super) fn join_page_text(pages: &[crate::document_twin::PageText]) -> String {
     pages
@@ -9,96 +8,6 @@ pub(super) fn join_page_text(pages: &[crate::document_twin::PageText]) -> String
         .filter(|page| !page.is_empty())
         .collect::<Vec<_>>()
         .join("\n\n")
-}
-
-pub(super) fn parse_page_spec(pages_spec: &Option<Value>) -> Result<Option<Vec<u32>>, ReadPdfError> {
-    let Some(spec) = pages_spec else {
-        return Ok(None);
-    };
-    let mut wanted = Vec::new();
-    if let Some(arr) = spec.as_array() {
-        if arr.is_empty() {
-            return Err(ReadPdfError::invalid_params(
-                "Page specification resulted in an empty set of pages.",
-            ));
-        }
-        for value in arr {
-            let page = value
-                .as_u64()
-                .filter(|page| *page > 0 && *page <= u64::from(u32::MAX));
-            let Some(page) = page else {
-                return Err(ReadPdfError::invalid_params(
-                    "Page numbers in array must be positive integers.",
-                ));
-            };
-            wanted.push(page as u32);
-            if wanted.len() > MAX_SELECTED_PAGES {
-                return Err(ReadPdfError::invalid_params(
-                    "Page specification exceeds the maximum of 10001 selected pages.",
-                ));
-            }
-        }
-    } else if let Some(ranges) = spec.as_str() {
-        if ranges.is_empty() {
-            return Err(ReadPdfError::invalid_params("Invalid page number: "));
-        }
-        for raw_part in ranges.split(',') {
-            let part = raw_part.trim();
-            if let Some((start_text, end_text)) = part.split_once('-') {
-                let start = parse_ts_positive_page(start_text);
-                let end = if end_text.trim().is_empty() {
-                    start.map(|page| page.saturating_add(10_000))
-                } else {
-                    parse_ts_positive_page(end_text)
-                };
-                let (Some(start), Some(end)) = (start, end) else {
-                    return Err(ReadPdfError::invalid_params(format!(
-                        "Invalid page range values: {part}"
-                    )));
-                };
-                if start > end {
-                    return Err(ReadPdfError::invalid_params(format!(
-                        "Invalid page range values: {part}"
-                    )));
-                }
-                wanted.extend(start..=end.min(start.saturating_add(10_000)));
-            } else {
-                let Some(page) = parse_ts_positive_page(part) else {
-                    return Err(ReadPdfError::invalid_params(format!(
-                        "Invalid page number: {part}"
-                    )));
-                };
-                wanted.push(page);
-            }
-            if wanted.len() > MAX_SELECTED_PAGES {
-                return Err(ReadPdfError::invalid_params(
-                    "Page specification exceeds the maximum of 10001 selected pages.",
-                ));
-            }
-        }
-    } else {
-        return Err(ReadPdfError::invalid_params(
-            "Page specification must be a non-empty range string or array of positive integers.",
-        ));
-    }
-    wanted.sort_unstable();
-    wanted.dedup();
-    if wanted.is_empty() {
-        return Err(ReadPdfError::invalid_params(
-            "Page specification resulted in an empty set of pages.",
-        ));
-    }
-    Ok(Some(wanted))
-}
-
-pub(super) fn parse_ts_positive_page(value: &str) -> Option<u32> {
-    let value = value.trim_start();
-    let value = value.strip_prefix('+').unwrap_or(value);
-    let digits: String = value.chars().take_while(char::is_ascii_digit).collect();
-    (!digits.is_empty())
-        .then(|| digits.parse::<u32>().ok())
-        .flatten()
-        .filter(|page| *page > 0)
 }
 
 pub(super) fn evenly_sample_pages(total_pages: u32, max_samples: u32) -> Vec<u32> {

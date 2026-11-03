@@ -10,6 +10,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use serde_json::{json, Value};
 
+use crate::fusion_util::round_ratio;
 use crate::ocr_fusion::OcrPage;
 
 const Y_TOLERANCE: f64 = 5.0;
@@ -86,10 +87,6 @@ struct Region {
 
 fn cmp_f64(left: f64, right: f64) -> Ordering {
     left.partial_cmp(&right).unwrap_or(Ordering::Equal)
-}
-
-fn round_ratio(value: f64) -> f64 {
-    (value * 100.0).round() / 100.0
 }
 
 fn merge_boxes(boxes: impl IntoIterator<Item = Box2d>) -> Option<Box2d> {

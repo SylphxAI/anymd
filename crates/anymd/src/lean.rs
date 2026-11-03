@@ -25,38 +25,8 @@ pub const DEFAULT_MAX_TOKENS: usize = 20_000;
 pub const MIN_MAX_TOKENS: usize = 500;
 pub const MAX_MAX_TOKENS: usize = 1_000_000;
 
-/// Cheap, slightly conservative estimate of LLM tokens (calibrated on o200k).
-pub fn estimate_tokens(text: &str) -> usize {
-    let mut tokens = 0usize;
-    let mut chars = text.chars().peekable();
-    while let Some(ch) = chars.next() {
-        if ch.is_ascii_alphabetic() {
-            let mut run: usize = 1;
-            while chars.peek().is_some_and(char::is_ascii_alphabetic) {
-                chars.next();
-                run += 1;
-            }
-            tokens += run.div_ceil(5);
-        } else if ch.is_ascii_digit() {
-            let mut run: usize = 1;
-            while chars.peek().is_some_and(char::is_ascii_digit) {
-                chars.next();
-                run += 1;
-            }
-            tokens += run.div_ceil(3);
-        } else if ch.is_whitespace() {
-            let mut run: usize = 1;
-            while chars.peek().is_some_and(|c| c.is_whitespace()) {
-                chars.next();
-                run += 1;
-            }
-            tokens += usize::from(run >= 3);
-        } else {
-            tokens += 1;
-        }
-    }
-    tokens
-}
+pub use anymd_core::text_rules::estimate_tokens;
+
 const PAGE_CHUNK: usize = 12;
 const OUTLINE_LIMIT: usize = 60;
 
@@ -148,19 +118,7 @@ pub fn search_wants_legacy(args: &SearchPdfArgs) -> bool {
     args.include_ocr_text_layer == Some(true) || args.detail == Some(true)
 }
 
-fn yaml_value(value: &str) -> String {
-    let single_line = value.replace(['\r', '\n'], " ");
-    let needs_quotes = single_line.contains(": ")
-        || single_line.starts_with([
-            '"', '\'', '[', '{', '#', '&', '*', '!', '|', '>', '%', '@', '`', '-', '?',
-        ])
-        || single_line.ends_with(':');
-    if needs_quotes {
-        serde_json::to_string(&single_line).unwrap_or(single_line)
-    } else {
-        single_line
-    }
-}
+use anymd_core::text_rules::yaml_value;
 
 fn describe_pages(pages: &[u32]) -> String {
     let mut parts = Vec::new();

@@ -457,7 +457,7 @@ fn rejects_invalid_auto_detail() {
         "auto_detail": "garbage"
     }))
     .expect_err("invalid auto_detail");
-    assert_eq!(err.code, ReadPdfErrorCode::InvalidParams);
+    assert_eq!(err.code, crate::read_pdf::ReadPdfErrorCode::InvalidParams);
 }
 
 #[test]
@@ -469,11 +469,14 @@ fn rejects_invalid_page_specifications_instead_of_falling_back_to_all_pages() {
         json!([]),
         json!([1, 0]),
     ] {
-        let error = parse_page_spec(&Some(pages)).expect_err("invalid page spec");
-        assert_eq!(error.code, ReadPdfErrorCode::InvalidParams);
+        let error =
+            crate::pages::parse_page_spec::<crate::read_pdf::ReadPdfError>(&Some(pages), true)
+                .expect_err("invalid page spec");
+        assert_eq!(error.code, crate::read_pdf::ReadPdfErrorCode::InvalidParams);
     }
     assert_eq!(
-        parse_page_spec(&Some(json!("1x"))).expect("TS parseInt-compatible page"),
+        crate::pages::parse_page_spec::<crate::read_pdf::ReadPdfError>(&Some(json!("1x")), true)
+            .expect("TS parseInt-compatible page"),
         Some(vec![1])
     );
 }
@@ -1300,7 +1303,10 @@ fn warm_cache_reuses_identical_local_table_reads() {
     );
 
     let second = tables_and_pages(&read_pdf(&input).expect("second"));
-    assert_eq!(second, first, "a warm read returns the same tables and pages");
+    assert_eq!(
+        second, first,
+        "a warm read returns the same tables and pages"
+    );
     assert_eq!(
         crate::read_result_cache::hits_for_tests(),
         1,

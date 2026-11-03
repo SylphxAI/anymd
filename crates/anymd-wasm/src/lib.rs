@@ -50,31 +50,10 @@ pub fn convert_detailed(bytes: &[u8], filename: &str) -> Result<String, JsError>
     Ok(value.to_string())
 }
 
-/// Cheap, slightly conservative LLM token estimate (the CLI's heuristic).
+/// The Markdown's token estimate: the same rule the CLI applies.
 #[wasm_bindgen(js_name = estimateTokens)]
 pub fn estimate_tokens(text: &str) -> usize {
-    let mut tokens = 0usize;
-    let mut chars = text.chars().peekable();
-    while let Some(ch) = chars.next() {
-        let mut run_of = |pred: fn(&char) -> bool| {
-            let mut run: usize = 1;
-            while chars.peek().is_some_and(pred) {
-                chars.next();
-                run += 1;
-            }
-            run
-        };
-        if ch.is_ascii_alphabetic() {
-            tokens += run_of(char::is_ascii_alphabetic).div_ceil(5);
-        } else if ch.is_ascii_digit() {
-            tokens += run_of(char::is_ascii_digit).div_ceil(3);
-        } else if ch.is_whitespace() {
-            tokens += usize::from(run_of(|c| c.is_whitespace()) >= 3);
-        } else {
-            tokens += 1;
-        }
-    }
-    tokens
+    anymd_core::text_rules::estimate_tokens(text)
 }
 
 /// anymd version this module was built from.
@@ -242,19 +221,7 @@ The anymd CLI can OCR them with a local `tesseract`. -->\n\n",
     out.trim_end().to_string() + "\n"
 }
 
-fn yaml_value(value: &str) -> String {
-    let single_line = value.replace(['\r', '\n'], " ");
-    let needs_quotes = single_line.contains(": ")
-        || single_line.starts_with([
-            '"', '\'', '[', '{', '#', '&', '*', '!', '|', '>', '%', '@', '`', '-', '?',
-        ])
-        || single_line.ends_with(':');
-    if needs_quotes {
-        serde_json::to_string(&single_line).unwrap_or(single_line)
-    } else {
-        single_line
-    }
-}
+use anymd_core::text_rules::yaml_value;
 
 #[cfg(test)]
 mod tests {
@@ -276,6 +243,38 @@ mod tests {
     fn csv_is_a_table() {
         let out = convert_markdown(b"a,b\n1,2\n", "t.csv").unwrap();
         assert!(out.contains("|a|b|"), "{out}");
+    }
+
+    #[test]
+    fn delimited_encodings_and_errors_reach_the_browser_entry() {
+        for (name, delimiter) in [("t.csv", ','), ("t.tsv", '\t')] {
+            let text = format!(
+                "name{delimiter}city\r\nAlice{delimiter}Hong Kong\r\n陳小明😀{delimiter}香港\r\n"
+            );
+            let expected = convert_markdown(text.as_bytes(), name).unwrap();
+            assert!(expected.contains("|name|city|\n|-|-|\n|Alice|Hong Kong|\n|陳小明😀|香港|\n"));
+            let mut encodings = vec![format!("\u{feff}{text}").into_bytes()];
+            for little_endian in [true, false] {
+                let mut bytes = Vec::new();
+                for unit in format!("\u{feff}{text}").encode_utf16() {
+                    bytes.extend(if little_endian {
+                        unit.to_le_bytes()
+                    } else {
+                        unit.to_be_bytes()
+                    });
+                }
+                encodings.push(bytes);
+            }
+            for bytes in encodings {
+                assert_eq!(convert_markdown(&bytes, name).unwrap(), expected);
+            }
+            for bytes in [&[0xFF, 0xFE, 0x41][..], &[0xFE, 0xFF, 0xD8, 0x00][..]] {
+                assert!(convert_markdown(bytes, name)
+                    .unwrap_err()
+                    .contains("re-export"));
+                assert_eq!(convert_markdown(text.as_bytes(), name).unwrap(), expected);
+            }
+        }
     }
 
     #[test]

@@ -32,24 +32,19 @@ concurrency:
 
 jobs:
   release:
-    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@5da4b0376fbbfd114056ccfb888fb98cf202bba5
+    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@af0ad67cb4b7ea17212cd4cd48640ab8e60e96df # v0.8.10
     # packages: write is only used by the kit's optional GHCR image job, which
     # anymd skips; GitHub still checks every called job's permissions.
     permissions:
       contents: write
       id-token: write
       packages: write
-    # Only the tap/bucket publisher credentials reach the shared workflow.
-    secrets:
-      TAP_APP_ID: ${{ secrets.TAP_APP_ID }}
-      TAP_APP_PRIVATE_KEY: ${{ secrets.TAP_APP_PRIVATE_KEY }}
     with:
+      kit-ref: af0ad67cb4b7ea17212cd4cd48640ab8e60e96df
       name: anymd
       cargo-package: anymd
       # MCP Bundle (.mcpb) for Claude Desktop, attached to the GitHub release.
       mcpb: true
-      homebrew: true
-      scoop: true
       # winget is published by the `winget` job below: the shared workflow has
       # no winget input, and the Windows archive is already a portable zip.
       mcpb-icon: brand/app-icon/icon-512.png
@@ -64,6 +59,35 @@ jobs:
         grep -q '<!-- page 1 -->' sample.md
         npx -y "@sylphx/citra@$V" version
         npx -y "@sylphx/pdf-reader-mcp@$V" version
+
+  # The caller job supplies the source workflow identity, not a reusable job.
+  # This also reconciles an existing release without republishing its packages.
+  package-managers:
+    needs: release
+    if: github.repository_visibility == 'public' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - id: version
+        run: |
+          echo "value=$(node -p 'require("./packages/anymd/package.json").version')" >> "$GITHUB_OUTPUT"
+      # Missing Access or Broker authority must fail, never skip enabled channels.
+      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@af0ad67cb4b7ea17212cd4cd48640ab8e60e96df # v0.8.10
+        with:
+          name: anymd
+          version: ${{ steps.version.outputs.value }}
+          package-json: packages/anymd/package.json
+          description: Convert files to Markdown for AI agents
+          trust-policy: orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/trust_policies/anymd-package-managers
+          ci-name: anymd-package-managers
+          homebrew-tap: SylphxAI/homebrew-tap
+          scoop-bucket: SylphxAI/scoop-bucket
 
   # crates.io takes no git or path-only dependencies, so the two patched
   # upstream forks and the internal crates are published first, in order

@@ -19,9 +19,9 @@ Usage:
   anymd mcp [--allow-dir=<path>]...   Run the MCP server on stdio
                                       (also the default when stdin is piped and no file is given)
   anymd setup [--dry-run] [--remove]  Add anymd to the MCP clients on this machine
-  anymd pro status | buy | activate <token> Show, buy or activate an anymd Pro licence
                                       (Claude Code, Codex, Cursor, VS Code, Claude Desktop,
                                       Windsurf, Gemini CLI); --remove undoes it
+  anymd pro status | buy | activate <token> Show, buy or activate an anymd Pro licence
   anymd doctor                        Print version and optional tool availability
   anymd version                       Print the version
 
@@ -56,6 +56,7 @@ Search options:
 
   -h, --help               Show this help
   -V, --version            Show the version
+      --                   Treat all following arguments as input paths
 
 Formats: PDF, DOCX, PPTX, XLSX/XLS/ODS, CSV/TSV, EPUB, HTML and web URLs, Markdown/text,
 images (metadata + OCR), audio/video (metadata, chapters, subtitles), SRT/VTT.";
@@ -134,6 +135,10 @@ fn parse(arguments: &[String]) -> Result<Parsed, String> {
     };
     let mut iter = arguments.iter().peekable();
     while let Some(argument) = iter.next() {
+        if argument == "--" {
+            parsed.inputs.extend(iter.cloned());
+            break;
+        }
         let (flag, inline) = match argument.split_once('=') {
             Some((flag, value)) if flag.starts_with("--") => (flag, Some(value.to_string())),
             _ => (argument.as_str(), None),
@@ -252,11 +257,12 @@ fn stdin_to_temp() -> Result<tempfile::NamedTempFile, String> {
 
 /// Run the CLI; returns the process exit code.
 pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
-    if arguments.iter().any(|a| a == "-h" || a == "--help") || arguments.is_empty() {
+    let options = || arguments.iter().take_while(|a| a.as_str() != "--");
+    if options().any(|a| a == "-h" || a == "--help") || arguments.is_empty() {
         println!("{USAGE}");
         return if arguments.is_empty() { 2 } else { 0 };
     }
-    if arguments.iter().any(|a| a == "-V" || a == "--version") {
+    if options().any(|a| a == "-V" || a == "--version") {
         println!("anymd {}", crate::SERVER_VERSION);
         return 0;
     }
@@ -378,6 +384,12 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
         }
         (out, any_failed)
     };
+    if failed {
+        if let Some(path) = &parsed.output {
+            eprintln!("anymd: not writing {path}: conversion failed");
+            return 1;
+        }
+    }
     let written = match &parsed.output {
         Some(path) => {
             std::fs::write(path, text.as_bytes()).map_err(|error| format!("{path}: {error}"))

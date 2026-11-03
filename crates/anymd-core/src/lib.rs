@@ -5,14 +5,16 @@ mod catalog_signals;
 mod cos_document;
 pub mod document_twin;
 mod form_attachment_signals;
+mod fusion_util;
 mod image_signals;
 pub use anymd_pdf as markdown_layout;
+pub mod compare_pdf;
 pub mod ocr_fusion;
 pub mod ocr_tables;
 pub mod page_cache;
 mod page_signals;
+mod pages;
 mod pdfjs_text;
-pub mod compare_pdf;
 pub mod read_pdf;
 mod read_result_cache;
 pub mod render;
@@ -20,11 +22,12 @@ pub mod search_pdf;
 pub mod ssrf;
 mod structure_signals;
 pub mod text_index;
+pub mod text_rules;
 pub mod url_fetch;
 pub mod visual_candidates;
 pub mod visual_fusion;
 
-pub use ssrf::{assert_host_not_private, is_private_ip};
+pub use ssrf::is_private_ip;
 
 pub fn inspect_structure_tree_presence(
     path: &Path,
@@ -104,8 +107,10 @@ pub fn inspect_document_signal_presence(
     ))
 }
 
+pub use compare_pdf::{
+    compare_pdf, compare_pdf_from_value, ComparePdfError, ComparePdfInput, ComparePdfResponse,
+};
 pub use ocr_fusion::{fuse_ocr_outcomes, OcrPage, OcrWord, SourceOcrOutcome, OCR_STUB_WARNING};
-pub use compare_pdf::{compare_pdf, compare_pdf_from_value, ComparePdfError, ComparePdfInput, ComparePdfResponse};
 pub use read_pdf::{
     read_pdf, read_pdf_from_value, ReadPdfError, ReadPdfErrorCode, ReadPdfInput, ReadPdfResponse,
     ReadPdfSource, ReadPdfSourceResult, READ_PDF_ROUTE,

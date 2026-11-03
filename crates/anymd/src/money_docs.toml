@@ -1,0 +1,37 @@
+title = "anymd Pro"
+description = "Verifiable video evidence and cite-check for AI agents, with an offline licence."
+base_path = "/anymd"
+origin = "https://sylphxai.github.io"
+lang = "en"
+host = "github-pages"
+include = ["pricing.md", "recover.md"]
+edit_url = "https://github.com/SylphxAI/anymd/edit/main/docs/storefront/{path}"
+toc_max_level = 3
+
+[money]
+api_origin = "https://api.sylphx.com"
+parent = "orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/projects/prj_fs013ejakyn22t4bsvrvyj0f2x1pgq/envs/env_fs01p2f389mwmm2xsm1nmvcst69vgd"
+publishable_key = "sylphx_pk_live_fs011xLNdWAaf61LbUtF"
+
+[money.trader]
+name = "Sylphx Limited"
+contact = "hi@sylphx.com"
+address = "128 City Road, London EC1V 2NX, United Kingdom"
+
+[money.offers.pro]
+product = "anymd_pro"
+token_product = "anymd"
+title = "Buy anymd Pro"
+description = "Exact video frames with timestamps and hashes, and offline cite-check. Current one-time price comes from the live Money catalogue."
+consent_version = "waiver-v1"
+consent_text = "I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground."
+success_url = "https://sylphxai.github.io/anymd/pricing?session_id={CHECKOUT_SESSION_ID}"
+cancel_url = "https://sylphxai.github.io/anymd/pricing?checkout=cancelled"
+recovery_url = "https://sylphxai.github.io/anymd/recover"
+cta_label = "Buy anymd Pro"
+recovery_label = "Email my licence recovery link"
+
+[[money.offers.pro.prices]]
+key = "anymd_pro"
+label = "1 licence"
+quantity = 1

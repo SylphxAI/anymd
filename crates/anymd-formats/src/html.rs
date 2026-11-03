@@ -16,7 +16,7 @@ use crate::{ConvertError, Converted, Options, Section};
 const MAX_DEPTH: usize = 256;
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
-    let text = decode(bytes);
+    let text = crate::encoding::text(bytes, "HTML")?;
     let doc = Html::parse_document(&expand_self_closing(&text));
     let head = head_facts(&doc);
     let base = resolve_base(options.base_url.as_deref(), head.base_href.as_deref());
@@ -120,11 +120,6 @@ fn expand_self_closing(text: &str) -> std::borrow::Cow<'_, str> {
     }
     out.push_str(&text[copied..]);
     std::borrow::Cow::Owned(out)
-}
-
-fn decode(bytes: &[u8]) -> String {
-    let bytes = bytes.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(bytes);
-    String::from_utf8_lossy(bytes).into_owned()
 }
 
 #[derive(Default)]

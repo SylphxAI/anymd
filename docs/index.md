@@ -83,7 +83,7 @@ Other clients (Codex, Cursor, VS Code, Claude Desktop, and more) are in [Getting
 
 ## Need proof, not just text?
 
-[anymd Pro](/pro) lets your agent cite exact video frames and verify that a quote is on the page it claims. US$29 once, works offline. The core stays free and MIT licensed.
+[anymd Pro](/pro) lets your agent cite exact video frames and verify that a quote is on the page it claims. One-time pricing, works offline. The core stays free and MIT licensed.
 
 ## Also from Sylphx
 

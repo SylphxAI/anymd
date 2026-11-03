@@ -23,7 +23,7 @@
     "render:copy": "bun scripts/render-copy.ts",
     "inspector": "npx @modelcontextprotocol/inspector node packages/anymd/bin/anymd.js mcp",
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:build": "vitepress build docs && bash scripts/build-storefront.sh",
     "docs:preview": "vitepress preview docs",
     "perf:installed-footprint": "bun scripts/perf/measure-installed-footprint.ts"
   },
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
+    "@types/bun": "^1.4.4",
     "@types/node": "^26.6.4",
     "@types/pngjs": "^6.0.5",
     "markdown-it": "^15.0.2",

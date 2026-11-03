@@ -4,7 +4,7 @@ description: "Convert files to Markdown and search folders from the terminal wit
 
 # CLI
 
-The same binary is a command-line converter, like MarkItDown but much faster. Install it with `npm install -g @sylphx/anymd`, or run it once with `npx -y @sylphx/anymd <file>`. From Python, `uvx anymd <file>` or `pip install anymd`; with Docker, `docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd <file>`. On Windows, `winget install Sylphx.anymd`. On macOS and Linux, `brew install sylphxai/tap/anymd`. With Scoop, `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` and then `scoop install anymd`.
+The same binary is a command-line converter, like MarkItDown but much faster. Install it with `npm install -g @sylphx/anymd`, or run it once with `npx -y @sylphx/anymd <file>`. From Python, the `anymd` wheels carry the same binary once they are published to PyPI (the [Python page](python.md) says when); with Docker, `docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd <file>`. On Windows, `winget install Sylphx.anymd`. On macOS and Linux, `brew install sylphxai/tap/anymd`. With Scoop, `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` and then `scoop install anymd`.
 
 ```bash
 anymd report.pdf > report.md                 # a file
@@ -54,7 +54,7 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 |---|---|
 | `--node <id>` | Read the section from `outline`; repeat it with `--cursor` to continue |
 | `-p, --pages <spec>` | Pages, slides, sheets, or chapters, e.g. `1-5,8` |
-| `-o, --output <file>` | Write to a file instead of stdout |
+| `-o, --output <file>` | Write to a file instead of stdout; leave it untouched if any input fails |
 | `--max-tokens <n>` | Stop at a token budget and print a cursor. The CLI has no budget unless you set one. |
 | `--cursor <cursor>` | Continue from a cursor |
 | `--ocr [auto\|vlm\|tesseract]` / `--no-ocr` | Select local OCR or disable it. Plain `--ocr` remains automatic. |
@@ -81,8 +81,15 @@ With no file arguments and a piped stdin (which is how MCP clients launch it), `
 | `--allow-dir=<path>` | Confine file access to this directory (repeatable). See [Security](./security). |
 | `-h, --help` | Show help |
 | `-V, --version` | Show the version |
+| `--` | Treat all following arguments as input paths, including names starting with `-` |
 
 ## Exit codes
+
+If any input fails, `--output` leaves an existing file untouched and does not
+create a new file. Without `--output`, successful inputs still print to stdout
+when another input fails. Shell redirection (`> report.md`) is controlled by
+your shell and can truncate the file before anymd runs; use `--output report.md`
+to preserve it when conversion fails.
 
 | Code | Meaning |
 |---|---|
