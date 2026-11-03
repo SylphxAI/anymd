@@ -257,8 +257,19 @@ pub fn restore_decimal_commas(words: &mut [OcrWord], image: &[u8]) {
         return;
     };
     let gray = image.to_luma8();
-    for word in words {
-        if !word_has_numeric_comma(&word.text) {
+    // A trailing comma between two numbers can separate a day from a
+    // year. A faint tail is not enough evidence to rewrite that boundary.
+    // Tesseract's TSV words arrive in line/reading order.
+    for index in 0..words.len() {
+        let word = &words[index];
+        let number_boundary = word.text.ends_with(',')
+            && words.get(index + 1).is_some_and(|next| {
+                next.line == word.line
+                    && !next.text.is_empty()
+                    && next.text.bytes().all(|ch| ch.is_ascii_digit())
+            });
+        let word = &mut words[index];
+        if number_boundary || !word_has_numeric_comma(&word.text) {
             continue;
         }
         if let Some(text) = decimals_from_ink(&gray, word) {
@@ -789,6 +800,37 @@ mod tests {
         for text in ["1.2,345", "1,000.50", "1,2", ",123", "1234,567", "1,,000"] {
             assert!(!word_has_numeric_comma(text), "{text}");
         }
+    }
+
+    #[test]
+    fn a_trailing_comma_before_another_number_is_not_a_decimal() {
+        // Even when a faint comma's tail looks like a dot, the boundary
+        // between a day and a separate year must remain unchanged.
+        let image = strip(
+            120,
+            60,
+            &[(4, 4, 20, 36), (28, 4, 50, 36), (58, 26, 72, 38)],
+        );
+        let mut out = Cursor::new(Vec::new());
+        image.write_to(&mut out, ::image::ImageFormat::Png).unwrap();
+        let bytes = out.into_inner();
+        assert_eq!(
+            decimals_from_ink(&image, &boxed("14,", 120, 40)).as_deref(),
+            Some("14.")
+        );
+        let mut words = vec![boxed("14,", 120, 40), boxed("1957", 120, 40)];
+        restore_decimal_commas(&mut words, &bytes);
+        assert_eq!(words[0].text, "14,");
+
+        // A word on the next line cannot make this a numeric boundary.
+        words[1].line.2 += 1;
+        restore_decimal_commas(&mut words, &bytes);
+        assert_eq!(words[0].text, "14.");
+
+        // A list marker followed by a label can still be read from ink.
+        words = vec![boxed("3,", 120, 40), boxed("Keep", 120, 40)];
+        restore_decimal_commas(&mut words, &bytes);
+        assert_eq!(words[0].text, "3.");
     }
 
     #[test]
