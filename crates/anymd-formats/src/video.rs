@@ -11,7 +11,7 @@ use std::time::Duration;
 use serde_json::Value;
 
 use crate::asr;
-use crate::{ConvertError, Converted, Options, Section, tool};
+use crate::{tool, ConvertError, Converted, Options, Section};
 
 /// Bounded, opt-in video evidence; legacy conversion is unchanged.
 #[cfg(feature = "native")]
@@ -426,11 +426,12 @@ fn describe_stream(stream: &Value, cover: bool) -> Option<String> {
 
 fn extract_subtitles(path: &Path) -> Result<String, String> {
     let ffmpeg = tool::find("ffmpeg").ok_or("needs ffmpeg installed")?;
-    let args: [&std::ffi::OsStr; 14] = [
+    let args: [&std::ffi::OsStr; 15] = [
         "-nostdin".as_ref(),
         "-hide_banner".as_ref(),
         "-loglevel".as_ref(),
         "error".as_ref(),
+        "-copyts".as_ref(),
         "-i".as_ref(),
         path.as_os_str(),
         "-map".as_ref(),
@@ -961,17 +962,32 @@ fn render_transcript(cues: &[TranscriptCue]) -> String {
 // ---------------------------------------------------------------------------
 // Subtitles
 
-/// SRT or WebVTT text → one `[mm:ss] text` line per cue, markup stripped and
-/// rolling-caption repeats removed. Non-subtitle text comes back trimmed.
+/// SRT or WebVTT text → one timestamped line per nonempty cue, markup stripped.
+/// Cues are source evidence: repeated or overlapping text is not deduplicated.
+/// Non-subtitle text comes back trimmed.
 pub fn subtitles_to_markdown(text: &str) -> String {
     let text = text
         .trim_start_matches('\u{feff}')
         .replace("\r\n", "\n")
         .replace('\r', "\n");
     let mut cues: Vec<(u64, String)> = Vec::new();
-    let mut previous: Vec<String> = Vec::new();
-    for block in text.split("\n\n") {
-        let lines: Vec<&str> = block.lines().collect();
+    let mut timed = false;
+    let webvtt = text.starts_with("WEBVTT");
+    let lines: Vec<&str> = text.lines().collect();
+    for lines in lines.split(|line| line.trim().is_empty()) {
+        // These WebVTT blocks are metadata, even if they contain a timing line.
+        if webvtt
+            && lines.first().is_some_and(|line| {
+                *line == "NOTE"
+                    || line.starts_with("NOTE ")
+                    || line.starts_with("NOTE\t")
+                    || *line == "STYLE"
+                    || *line == "REGION"
+                    || line.starts_with("WEBVTT")
+            })
+        {
+            continue;
+        }
         let Some(timing_index) = lines.iter().position(|l| l.contains("-->")) else {
             continue;
         };
@@ -982,26 +998,17 @@ pub fn subtitles_to_markdown(text: &str) -> String {
         else {
             continue;
         };
+        timed = true;
         let cue_lines: Vec<String> = lines[timing_index + 1..]
             .iter()
             .map(|l| clean_cue_line(l))
             .filter(|l| !l.is_empty())
             .collect();
-        // Rolling captions repeat the previous cue's lines; keep only what is new.
-        let fresh: Vec<String> = cue_lines
-            .iter()
-            .filter(|l| !previous.contains(l))
-            .cloned()
-            .collect();
         if !cue_lines.is_empty() {
-            previous = cue_lines;
+            cues.push((start, cue_lines.join(" ")));
         }
-        if fresh.is_empty() {
-            continue;
-        }
-        cues.push((start, fresh.join(" ")));
     }
-    if cues.is_empty() {
+    if !timed {
         return text.trim().to_string();
     }
     render_cues(&cues)
@@ -1010,7 +1017,26 @@ pub fn subtitles_to_markdown(text: &str) -> String {
 fn render_cues(cues: &[(u64, String)]) -> String {
     let long = cues.iter().any(|(ms, _)| *ms >= 3_600_000);
     cues.iter()
-        .map(|(ms, text)| format!("[{}] {text}", timestamp(*ms as f64 / 1000.0, long)))
+        .map(|(ms, text)| {
+            // Keep source milliseconds in integer arithmetic, not a float
+            // round-trip or the whole-second media-metadata formatter.
+            let seconds = ms / 1000;
+            let clock = if long {
+                format!(
+                    "{:02}:{:02}:{:02}",
+                    seconds / 3600,
+                    seconds / 60 % 60,
+                    seconds % 60
+                )
+            } else {
+                format!("{:02}:{:02}", seconds / 60, seconds % 60)
+            };
+            if ms % 1000 == 0 {
+                format!("[{clock}] {text}")
+            } else {
+                format!("[{clock}.{:03}] {text}", ms % 1000)
+            }
+        })
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -1162,18 +1188,69 @@ mod tests {
         let srt = "\u{feff}1\r\n00:00:01,500 --> 00:00:03,000\r\n<i>Hello</i>\r\nthere\r\n\r\n2\r\n00:01:02,000 --> 00:01:04,000\r\n{\\an8}General &amp; Kenobi\r\n\r\n";
         assert_eq!(
             subtitles_to_markdown(srt),
-            "[00:01] Hello there\n[01:02] General & Kenobi"
+            "[00:01.500] Hello there\n[01:02] General & Kenobi"
         );
     }
 
     #[test]
-    fn vtt_voices_rolling_captions_and_hours() {
+    fn vtt_voices_repeated_captions_and_hours() {
         let vtt = "WEBVTT\nKind: captions\n\nNOTE a comment\n\n00:00.000 --> 00:02.000\n<v Roger Bingham>We are here\n\n\
                    00:02.000 --> 00:04.000 align:start\nwe are here\nand now more\n\n\
                    00:04.000 --> 00:06.000\nand now more\n\n01:00:00.000 --> 01:00:01.000\n<c.yellow>late</c>";
         assert_eq!(
             subtitles_to_markdown(vtt),
-            "[00:00:00] Roger Bingham: We are here\n[00:00:02] we are here and now more\n[01:00:00] late"
+            "[00:00:00] Roger Bingham: We are here\n[00:00:02] we are here and now more\n[00:00:04] and now more\n[01:00:00] late"
+        );
+    }
+
+    #[test]
+    fn every_authored_cue_and_line_survives_at_its_source_start() {
+        // The first two cues overlap; later identical text is still evidence.
+        let srt = "1\n00:00:00,125 --> 00:00:02,000\n<i>Again</i>\n\n\
+                   2\n00:00:01,250 --> 00:00:03,000\nAgain\nAgain\nnew line\n\n\
+                   3\n00:00:04,005 --> 00:00:05,000\nAgain\n\n\
+                   4\n00:00:06,000 --> 00:00:07,000\n<c>你好，世界</c>\n\n\
+                   5\n00:00:07,000 --> 00:00:08,000\n你好，世界\n\n\
+                   6\n00:00:07,000 --> 00:00:09,000\n你好，世界\n";
+        assert_eq!(subtitles_to_markdown(srt), "[00:00.125] Again\n[00:01.250] Again Again new line\n[00:04.005] Again\n[00:06] 你好，世界\n[00:07] 你好，世界\n[00:07] 你好，世界");
+    }
+
+    #[test]
+    fn vtt_preserves_voice_markup_cleanup_and_repeated_multiline_text() {
+        let vtt = "WEBVTT\n\nfirst\n00:00.100 --> 00:02.000\n<v.speaker Alice><b>Hi &amp; bye</b></v>\n你好\n\n\
+                   second\n00:01.200 --> 00:03.000 align:start\n<v Alice>Hi &amp; bye</v>\n你好\n你好\n\n\
+                   third\n01:02:03.456 --> 01:02:04.000\n{\\an8}<i>late &lt;cue&gt;</i>\n";
+        assert_eq!(subtitles_to_markdown(vtt), "[00:00:00.100] Alice: Hi & bye 你好\n[00:00:01.200] Alice: Hi & bye 你好 你好\n[01:02:03.456] late <cue>");
+    }
+
+    #[test]
+    fn empty_timed_cues_do_not_fall_back_to_subtitle_syntax() {
+        assert_eq!(
+            subtitles_to_markdown("1\n00:00:00,000 --> 00:00:01,000\n<i></i>\n"),
+            ""
+        );
+        assert_eq!(
+            subtitles_to_markdown("  ordinary text\r\nnext line  "),
+            "ordinary text\nnext line"
+        );
+    }
+
+    #[test]
+    fn whitespace_separators_and_vtt_comments_do_not_add_or_drop_cues() {
+        let vtt = "WEBVTT\n\nNOTE not a cue\n00:09.000 --> 00:10.000\ncomment text\n\n\
+                   00:00.000 --> 00:02.000\nsame\n \t\n\
+                   00:01.000 --> 00:03.000\nsame\n";
+        assert_eq!(subtitles_to_markdown(vtt), "[00:00] same\n[00:01] same");
+    }
+
+    #[test]
+    fn cue_source_order_is_not_sorted_or_merged() {
+        let srt = "1\n00:00:02,000 --> 00:00:04,000\nsame\n\n\
+                   2\n00:00:01,000 --> 00:00:03,000\nsame\n\n\
+                   3\n00:00:01,000 --> 00:00:03,000\nsame\n";
+        assert_eq!(
+            subtitles_to_markdown(srt),
+            "[00:02] same\n[00:01] same\n[00:01] same"
         );
     }
 
@@ -1322,7 +1399,7 @@ mod tests {
             .map(|s| s.label.as_str())
             .collect();
         assert_eq!(labels, ["media", "subtitles", "subtitles (clip.en.srt)"]);
-        assert_eq!(converted.sections[1].markdown, "[00:00] Hi there");
+        assert_eq!(converted.sections[1].markdown, "[00:00.100] Hi there");
         assert_eq!(converted.sections[2].markdown, "[00:00] Sidecar line");
 
         // Bytes only (no path): probed through a temp file.
