@@ -16,7 +16,7 @@ money_checkout: pro
 
 **anymd Pro** adds two things to the free anymd MCP server: exact video frames your agent can cite, and **cite-check**, which proves a quote is on the page and at the spot it claims. Everything runs on your machine.
 
-Current one-time price and tax are shown below · licence never expires · works offline, no account · [Terms](https://sylphxai.github.io/anymd/legal/pro-terms)
+Current one-time price and tax are shown below · 100-year licence · works offline, no account · [Terms](https://sylphxai.github.io/anymd/legal/pro-terms)
 
 Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
 
