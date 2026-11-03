@@ -1,7 +1,5 @@
 //! CSV/TSV → a Markdown table, capped so agents do not drown in rows.
 
-use std::borrow::Cow;
-
 use crate::{markdown_table, ConvertError, Converted, Options, Section};
 
 /// Data rows kept per table (the header row is extra).
@@ -10,7 +8,7 @@ pub(crate) const MAX_ROWS: usize = 2000;
 pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Converted, ConvertError> {
     // Decode before parsing: delimiters, quotes and newlines are code points,
     // not individual bytes in a UTF-16 export.
-    let bytes = decode(bytes)?;
+    let bytes = crate::encoding::decode(bytes, "delimited text")?;
     let mut reader = ::csv::ReaderBuilder::new()
         .has_headers(false)
         .flexible(true)
@@ -45,43 +43,6 @@ pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Conver
         }],
         metadata: Vec::new(),
     })
-}
-
-/// Borrow UTF-8 input as before; strictly decode BOM-marked UTF-16. Validate
-/// the whole input, including rows past the display cap, without a second
-/// allocation for UTF-16 code units or silently replacing invalid surrogates.
-fn decode(bytes: &[u8]) -> Result<Cow<'_, [u8]>, ConvertError> {
-    let (little_endian, encoding) = if bytes.starts_with(&[0xFF, 0xFE]) {
-        (true, "UTF-16LE")
-    } else if bytes.starts_with(&[0xFE, 0xFF]) {
-        (false, "UTF-16BE")
-    } else {
-        return Ok(Cow::Borrowed(
-            bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(bytes),
-        ));
-    };
-    let invalid = |reason| {
-        ConvertError::Invalid(format!(
-            "malformed {encoding} delimited text: {reason}; re-export as valid {encoding} with a BOM or UTF-8"
-        ))
-    };
-    let payload = &bytes[2..];
-    if payload.len() % 2 != 0 {
-        return Err(invalid("incomplete two-byte code unit (odd byte count)"));
-    }
-    let units = payload.chunks_exact(2).map(|pair| {
-        let pair = [pair[0], pair[1]];
-        if little_endian {
-            u16::from_le_bytes(pair)
-        } else {
-            u16::from_be_bytes(pair)
-        }
-    });
-    let mut text = String::with_capacity(payload.len());
-    for character in char::decode_utf16(units) {
-        text.push(character.map_err(|_| invalid("unpaired surrogate"))?);
-    }
-    Ok(Cow::Owned(text.into_bytes()))
 }
 
 /// Rows destined for one Markdown table: blank rows dropped, blank edge columns
