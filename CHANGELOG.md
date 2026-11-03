@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.5.9
+
+### Patch Changes
+
+- Release the UTF-16 fixes from 8.5.8 with a complete native package set. The Linux x64 npm package for 8.5.8 remained staged and unavailable; this release uses a new version without replacing it.
+- Use portable archive recovery for existing native packages on Windows.
+
 ## 8.5.8
 
 ### Patch Changes
