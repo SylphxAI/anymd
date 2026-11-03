@@ -229,10 +229,14 @@ tests. Neither these checks nor the examples download models.
 PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
 workflow `release.yml`, environment `pypi`. That publisher must be registered
 on PyPI before OIDC token exchange can succeed. As of 2026-10-30 the `anymd`
-project does not exist on PyPI. The `pypi` job runs when the wheels job builds
-artifacts; the 8.5.6 release failed with `invalid-publisher` because PyPI found
-no publisher matching those claims. Register the publisher on PyPI before
-retrying publication. The user install pages mark Python publication as pending.
+project does not exist on PyPI. The `pypi` job runs after the wheels job succeeds
+and builds artifacts, including exact-tag recovery on an ordinary push to `main` after
+upstream release jobs skip. It explicitly overrides skipped-ancestor propagation
+without publishing after failed wheels or workflow cancellation. A complete
+version is a no-op; missing or invalid publisher authority fails the job rather
+than silently skipping it. The 8.5.6 release failed with `invalid-publisher`
+because PyPI found no publisher matching those claims. Register the publisher on
+PyPI before retrying publication. The user install pages mark Python publication as pending.
 After registration, a fresh
 recovery run can build missing wheels under the exact-tag checks above and
 pass them through the existing CLI/API smoke tests and OIDC `pypi` job. The
