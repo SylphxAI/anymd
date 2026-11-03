@@ -276,31 +276,13 @@ pub fn restore_decimal_commas(words: &mut [OcrWord], image: &[u8]) {
 /// digits (`1,`), which is how a typed `1.` comes back. A comma after a
 /// word, and a number with several groups (`1,000,000`), are left alone.
 fn word_has_numeric_comma(text: &str) -> bool {
-    let chars: Vec<char> = text.chars().collect();
-    if !chars
-        .iter()
-        .all(|ch| ch.is_ascii_digit() || *ch == ',' || *ch == '.')
-    {
+    let Some((before, after)) = text.split_once(',') else {
         return false;
-    }
-    let commas: Vec<usize> = chars
-        .iter()
-        .enumerate()
-        .filter_map(|(index, ch)| (*ch == ',').then_some(index))
-        .collect();
-    if commas.len() != 1 {
-        return false;
-    }
-    let index = commas[0];
-    let before = chars[..index]
-        .iter()
-        .filter(|ch| ch.is_ascii_digit())
-        .count();
-    let after = chars[index + 1..]
-        .iter()
-        .filter(|ch| ch.is_ascii_digit())
-        .count();
-    (1..=3).contains(&before) && (after == 3 || after == 0 && before <= 3)
+    };
+    (1..=3).contains(&before.len())
+        && before.bytes().all(|ch| ch.is_ascii_digit())
+        && (after.is_empty() || after.len() == 3)
+        && after.bytes().all(|ch| ch.is_ascii_digit())
 }
 
 /// Replace a number's commas with periods where the mark does not hang
@@ -804,6 +786,23 @@ mod tests {
         assert!(word_has_numeric_comma("14,"));
         assert!(word_has_numeric_comma("1,000"));
         assert!(word_has_numeric_comma("1,"));
+        for text in ["1.2,345", "1,000.50", "1,2", ",123", "1234,567", "1,,000"] {
+            assert!(!word_has_numeric_comma(text), "{text}");
+        }
+    }
+
+    #[test]
+    fn decimal_recovery_leaves_unreadable_images_and_boxes_unchanged() {
+        let mut words = vec![boxed("124,966", 120, 40)];
+        let original = words.clone();
+        restore_decimal_commas(&mut words, b"not an image");
+        assert_eq!(words, original);
+        let image = png(1, 1);
+        words[0].left = u32::MAX;
+        words[0].top = u32::MAX;
+        let original = words.clone();
+        restore_decimal_commas(&mut words, &image);
+        assert_eq!(words, original);
     }
 
     #[test]

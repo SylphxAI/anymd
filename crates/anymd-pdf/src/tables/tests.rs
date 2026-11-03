@@ -91,7 +91,14 @@ fn a_wrapped_label_joins_the_value_row_under_it() {
     assert!(
         table
             .iter()
-            .any(|row| row[0] == "2. Meteorology & Communications"),
+            .flatten()
+            .all(|cell| !cell.contains("recommendations")),
+        "{table:?}"
+    );
+    assert!(
+        table
+            .iter()
+            .any(|row| row == &["2. Meteorology & Communications", "10.850", "23.200"]),
         "{table:?}"
     );
     assert!(

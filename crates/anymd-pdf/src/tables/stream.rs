@@ -284,6 +284,19 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
         .filter(|pair| ruled_between(&pair[0], &pair[1]))
         .count();
 
+    let table_left = lines
+        .iter()
+        .filter_map(|line| {
+            line.cells
+                .iter()
+                .position(|cell| !cell.is_empty())
+                .filter(|&column| {
+                    (0..width).any(|other| other != column && is_numeric(&line.cells[other]))
+                })
+        })
+        .min()
+        .unwrap_or(0);
+
     // Merge continuation lines into the row above.
     let mut merged: Vec<Line> = Vec::with_capacity(lines.len());
     for (index, line) in lines.into_iter().enumerate() {
@@ -346,18 +359,6 @@ pub(crate) fn stream_table(rows: &[Vec<Segment>], rules: &[Rule], word_space: f6
         // 70.620 ...". It starts where the table's labels start. A heading
         // that closes with a stop, and a line of prose above the table, do
         // not.
-        let table_left = lines
-            .iter()
-            .filter_map(|line| {
-                line.cells
-                    .iter()
-                    .position(|cell| !cell.is_empty())
-                    .filter(|&column| {
-                        (0..width).any(|other| other != column && is_numeric(&line.cells[other]))
-                    })
-            })
-            .min()
-            .unwrap_or(0);
         let prev_left = (0..width).find(|&column| !prev.cells[column].is_empty());
         let label_continues = prev_filled == [0]
             && !prev_number

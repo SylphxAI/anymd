@@ -551,12 +551,20 @@ pub(crate) fn region_blocks(
                     let label_line = |r: usize| {
                         let row = &rows[r];
                         let size = row[0].size;
-                        let tight_below = rows.get(r + 1).is_some_and(|next| {
-                            is_multi(next) && bottom_of(row) - next[0].top <= size * 0.45
-                        });
+                        let next = rows.get(r + 1).filter(|next| is_multi(next));
+                        let tight_below =
+                            next.is_some_and(|next| bottom_of(row) - next[0].top <= size * 0.45);
+                        // A header may leave the label column empty. The
+                        // first wrapped label then aligns with the next
+                        // value row, not with the header's first cell.
+                        let at_left = (row[0].x0 - left).abs() <= size * 1.5
+                            || tight_below
+                                && next.is_some_and(|next| {
+                                    (row[0].x0 - next[0].x0).abs() <= size * 1.5
+                                });
                         row.len() == 1
                             && row[0].chars() <= 40
-                            && (row[0].x0 - left).abs() <= size * 1.5
+                            && at_left
                             && (bottom_of(&rows[r - 1]) - row[0].top <= size * 0.45 || tight_below)
                     };
                     let ahead = (end..rows.len().min(end + 4))

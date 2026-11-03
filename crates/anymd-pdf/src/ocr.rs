@@ -131,26 +131,28 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
 /// number that stands alone, and a marker far from the text stay put.
 fn attach_item_markers(words: &[PlacedWord]) -> Vec<PlacedWord> {
     let mut absorbed = vec![None; words.len()];
-    for (index, marker) in words.iter().enumerate() {
-        if !is_item_marker(&marker.text) {
+    let mut removed = vec![false; words.len()];
+    // Compare neighbors in geometric order rather than scanning every word
+    // for every marker. The caller need not supply words in reading order.
+    let mut order: Vec<usize> = (0..words.len()).collect();
+    order.sort_by(|&left, &right| {
+        words[left]
+            .line
+            .cmp(&words[right].line)
+            .then_with(|| words[left].x0.total_cmp(&words[right].x0))
+    });
+    for pair in order.windows(2) {
+        let index = pair[0];
+        let next_index = pair[1];
+        let marker = &words[index];
+        let next = &words[next_index];
+        if marker.line != next.line || !is_item_marker(&marker.text) {
             continue;
         }
         let marker_height = marker.bottom - marker.top;
         if !(marker_height > 0.0) {
             continue;
         }
-        let Some(next_index) = words
-            .iter()
-            .enumerate()
-            .skip(index + 1)
-            .find_map(|(at, word)| {
-                (word.line == marker.line && word.x0 >= marker.x1 - marker_height * 0.3)
-                    .then_some(at)
-            })
-        else {
-            continue;
-        };
-        let next = &words[next_index];
         let gap = next.x0 - marker.x1;
         let same_row = (marker.top - next.top).abs() <= marker_height * 0.6;
         let starts_word = next
@@ -165,12 +167,13 @@ fn attach_item_markers(words: &[PlacedWord]) -> Vec<PlacedWord> {
             && absorbed[next_index].is_none()
         {
             absorbed[next_index] = Some(index);
+            removed[index] = true;
         }
     }
     words
         .iter()
         .enumerate()
-        .filter(|(index, _)| !absorbed.contains(&Some(*index)))
+        .filter(|(index, _)| !removed[*index])
         .map(|(index, word)| {
             let Some(marker_index) = absorbed[index] else {
                 return word.clone();
@@ -196,6 +199,52 @@ fn is_item_marker(text: &str) -> bool {
     }
     let digits = &text[..text.len() - stop.len_utf8()];
     !digits.is_empty() && digits.len() <= 2 && digits.chars().all(|ch| ch.is_ascii_digit())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn word(text: &str, x0: f64, line: u64) -> PlacedWord {
+        PlacedWord {
+            x0,
+            x1: x0 + 10.0,
+            top: 20.0,
+            bottom: 30.0,
+            line,
+            text: text.into(),
+        }
+    }
+
+    #[test]
+    fn item_markers_join_the_nearest_label_in_geometric_order() {
+        let words = vec![word("Science", 25.0, 1), word("12,", 0.0, 1)];
+        let joined = attach_item_markers(&words);
+        assert_eq!(joined.len(), 1);
+        assert_eq!(joined[0].text, "12, Science");
+        assert_eq!(joined[0].x0, 0.0);
+        assert_eq!(joined[0].x1, 35.0);
+    }
+
+    #[test]
+    fn item_markers_leave_numbers_distant_words_and_other_lines_alone() {
+        let cases = [
+            vec![word("1.", 0.0, 1)],
+            vec![word("100.", 0.0, 1), word("Science", 20.0, 1)],
+            vec![word("1.", 0.0, 1), word("100", 20.0, 1)],
+            vec![word("1.", 0.0, 1), word("Science", 40.0, 1)],
+            vec![word("1.", 0.0, 1), word("Science", 20.0, 2)],
+            vec![word("1.", 0.0, 1), word("Science", 5.0, 1)],
+            vec![
+                word("1.", 0.0, 1),
+                word("100", 12.0, 1),
+                word("Science", 20.0, 1),
+            ],
+        ];
+        for words in cases {
+            assert_eq!(attach_item_markers(&words), words);
+        }
+    }
 }
 
 /// OCR often reads a typewritten full stop as a comma. A paragraph never
