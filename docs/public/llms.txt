@@ -1,0 +1,27 @@
+# anymd
+
+> Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.
+
+anymd is a Rust command-line tool and Model Context Protocol (MCP) server published by Sylphx (`https://sylphx.com`). It converts documents, slides, spreadsheets, e-books, web pages, images, and audio/video files into clean, structured Markdown locally on your machine with no API key required.
+
+## Install and Setup
+
+- npm: `npx -y @sylphx/anymd setup --client cursor,claude,codex`
+- Cargo: `cargo install anymd`
+- Homebrew: `brew install sylphxai/tap/anymd`
+
+## Documentation
+
+- [Home](https://sylphxai.github.io/anymd/)
+- [Getting started](https://sylphxai.github.io/anymd/guide/getting-started)
+- [Local and hosted](https://sylphxai.github.io/anymd/guide/hosted)
+- [MCP tools](https://sylphxai.github.io/anymd/guide/tools)
+- [Cite-check](https://sylphxai.github.io/anymd/guide/cite-check)
+- [CLI reference](https://sylphxai.github.io/anymd/guide/cli)
+- [Python and loaders](https://sylphxai.github.io/anymd/guide/python)
+- [Video timelines](https://sylphxai.github.io/anymd/guide/video-timeline)
+- [Supported formats](https://sylphxai.github.io/anymd/guide/formats)
+- [Benchmarks](https://sylphxai.github.io/anymd/guide/benchmarks)
+- [Playground](https://sylphxai.github.io/anymd/playground)
+- [anymd Pro](https://sylphxai.github.io/anymd/pro)
+- [GitHub repository](https://github.com/SylphxAI/anymd)

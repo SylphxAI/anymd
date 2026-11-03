@@ -55,6 +55,42 @@ export default defineConfig({
     ['meta', { name: 'robots', content: 'index, follow' }],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/anymd/favicon.svg' }],
     ['link', { rel: 'icon', href: '/anymd/favicon.ico', sizes: '16x16 32x32 48x48' }],
+    [
+      'script',
+      { type: 'application/ld+json' },
+      JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'Organization',
+            name: 'Sylphx',
+            legalName: 'Sylphx Limited',
+            url: 'https://sylphx.com',
+            sameAs: ['https://github.com/SylphxAI', 'https://sylphx.com'],
+          },
+          {
+            '@type': 'WebSite',
+            name: 'anymd',
+            url: site,
+            description: product.description,
+          },
+          {
+            '@type': 'SoftwareApplication',
+            name: 'anymd',
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'macOS, Linux, Windows',
+            url: site,
+            downloadUrl: 'https://www.npmjs.com/package/@sylphx/anymd',
+            description: product.description,
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+            },
+          },
+        ],
+      }),
+    ],
   ],
 
   // Each page names its own URL, so search engines index every page, not just the home page.
