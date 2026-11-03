@@ -1,8 +1,35 @@
 # Changelog
 
-## Unreleased
+## 8.5.9
 
 ### Patch Changes
+
+- Release the UTF-16 fixes from 8.5.8 with a complete native package set. The Linux x64 npm package for 8.5.8 remained staged and unavailable; this release uses a new version without replacing it.
+- Use portable archive recovery for existing native packages on Windows.
+
+## 8.5.8
+
+### Patch Changes
+
+- Read BOM-marked UTF-16LE and UTF-16BE text, Markdown and HTML without mistaking text for MP3 audio. Preserve Unicode text, headings and tables, and reject malformed UTF-16 with a clear re-export hint.
+- Share strict BOM decoding with CSV and TSV while preserving binary and media detection.
+
+## 8.5.7
+
+### Patch Changes
+
+- Preserve the `--output` file when any input fails to convert, including runs with a mix of valid and invalid inputs. A failed conversion no longer replaces an earlier report with empty or partial output.
+- Accept `--` before input paths, so names starting with `-` can be converted and filenames such as `--help` are read literally. Keep the setup client list beside its command in `--help`.
+
+### Documentation
+
+- Clarify output preservation and shell redirection, and mark the Python package as awaiting PyPI publication instead of offering unavailable `pip` and `uvx` installs.
+
+## 8.5.6
+
+### Patch Changes
+
+- Accept the current production Money licence signer alongside the historical key. Explicit `pro --test` activation uses separate test trust and storage, keeping test grants out of ordinary CLI/MCP Pro operations.
 
 - State each shared rule once. The `pages` selector, the two-decimal ratio, the UTF-16 length, the warning list and the token estimate and front-matter quoting that the CLI and the browser both use now live in `anymd-core` (`pages`, `fusion_util`, `text_rules`), and the provider concurrency slot and request budget that OCR and region analysis both enforce live in `anymd` (`provider_budget`, with `pdf_evidence_common` for the shared argument parsing, truncation and tool result). Messages, limits, accepted page specifications and outputs are unchanged. The WASM build links `anymd-core` for these rules.
 - The browser build no longer links a socket: `anymd-core`'s URL fetcher is behind its `native` feature (on by default), so the playground keeps its formats (a browser opens no URL), and a build without it refuses a `url` source with a message instead of failing to link.

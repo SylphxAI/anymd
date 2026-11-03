@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import { withBase } from 'vitepress';
+import { useClipboard } from '../composables/useClipboard';
 
 type Status = 'loading' | 'ready' | 'busy' | 'unavailable';
 
@@ -27,7 +28,9 @@ const error = ref('');
 const result = shallowRef<Result | null>(null);
 const tab = ref<'rendered' | 'raw'>('rendered');
 const dragging = ref(false);
-const copied = ref(false);
+const { state: copyState, copy: write, reset: resetCopy } = useClipboard();
+const manual = ref<HTMLTextAreaElement | null>(null);
+watch(result, resetCopy);
 const renderer = shallowRef<Renderer | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
@@ -165,9 +168,13 @@ const pieces = computed(() => {
 
 async function copy() {
   if (!result.value) return;
-  await navigator.clipboard.writeText(result.value.markdown);
-  copied.value = true;
-  setTimeout(() => (copied.value = false), 1500);
+  await write(result.value.markdown);
+  if (copyState.value === 'failed') {
+    tab.value = 'raw';
+    await nextTick();
+    manual.value?.focus();
+    manual.value?.select();
+  }
 }
 
 function download() {
@@ -240,9 +247,10 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
         <button role="tab" data-testid="tab-rendered" :aria-selected="tab === 'rendered'" :class="{ on: tab === 'rendered' }" @click="tab = 'rendered'">Rendered</button>
         <button role="tab" data-testid="tab-raw" :aria-selected="tab === 'raw'" :class="{ on: tab === 'raw' }" @click="tab = 'raw'">Markdown</button>
         <span class="pg-spacer" />
-        <button class="pg-btn" @click="copy">{{ copied ? 'Copied' : 'Copy' }}</button>
+        <button type="button" class="pg-btn" :disabled="copyState === 'copying'" @click="copy">{{ copyState === 'copied' ? 'Copied' : copyState === 'copying' ? 'Copying…' : copyState === 'failed' ? 'Retry copy' : 'Copy' }}</button>
         <button class="pg-btn" @click="download">Download .md</button>
       </div>
+      <p class="pg-copy-status" role="status">{{ copyState === 'copied' ? 'Markdown copied.' : copyState === 'failed' ? 'Copy failed. Copy the selected Markdown manually, download it, or retry.' : '' }}</p>
       <div v-if="tab === 'rendered'" class="pg-rendered vp-doc">
         <table v-if="frontMatter.entries.length" class="pg-front">
           <tr v-for="[key, value] in frontMatter.entries" :key="key">
@@ -255,6 +263,7 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
           <div v-html="piece.html" />
         </template>
       </div>
+      <textarea v-else-if="copyState === 'failed'" ref="manual" class="pg-raw pg-copy-manual" readonly :value="result.markdown" aria-label="Markdown to copy manually" rows="12" @focus="manual?.select()" />
       <pre v-else class="pg-raw" data-testid="raw">{{ result.markdown }}</pre>
     </section>
   </div>
@@ -284,6 +293,9 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
 .pg-btn:hover:not(:disabled) { background: var(--vp-c-brand-soft); }
 .pg-btn:disabled { opacity: .45; cursor: not-allowed; }
 .pg-error { color: var(--vp-c-danger-1); font-size: .9rem; }
+.pg-copy-status:empty { display: none; }
+.pg-copy-status { padding: 10px 16px; margin: 0; font-size: .9rem; }
+.pg-copy-manual { display: block; width: 100%; resize: vertical; border: 1px solid var(--vp-c-brand-1); }
 .pg-out { border: 1px solid var(--vp-c-divider); border-radius: var(--cit-radius, 14px); overflow: hidden; }
 .pg-stats {
   display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 16px; font-size: .85rem;

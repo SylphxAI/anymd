@@ -1,5 +1,9 @@
 # Video timelines and frames
 
+Start with a runnable task: [extract a video frame](/tasks/extract-video-frame)
+or [build a video timeline](/tasks/build-video-timeline). Both compare a free
+container read with the Pro operation using the released npm package.
+
 > **anymd Pro.** Video evidence is part of [anymd Pro](/pro) with a one-time offline licence; see current pricing. The anymd core stays free and open source. Without a licence the operation returns a short message with the link and does no work.
 
 Use `inspect` for a bounded, ordered video timeline or an on-demand decoded

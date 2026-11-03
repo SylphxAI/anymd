@@ -303,22 +303,10 @@ impl DeformableAttention {
                 ))
             })
             .map_err(|e| infer_err("deformable weight permute", e))?;
-        // Fold (levels, points) into one axis and reduce a rank-3 view. The
-        // natural `sum(4).sum(3)` over the rank-6 product is wrong on Metal:
-        // candle's strided reduce mis-indexes any non-final axis of a rank>=5
-        // tensor (issue #177).
         let blended = sampled
             .broadcast_mul(&weights)
-            .and_then(|t| t.contiguous())
-            .and_then(|t| {
-                t.reshape((
-                    batch * self.num_heads * num_queries,
-                    self.num_levels * self.num_points,
-                    head_dim,
-                ))
-            })
-            .and_then(|t| t.sum(1))
-            .and_then(|t| t.reshape((batch, self.num_heads, num_queries, head_dim)))
+            .and_then(|t| t.sum(4))
+            .and_then(|t| t.sum(3))
             .map_err(|e| infer_err("deformable blend", e))?;
 
         let output = blended
@@ -785,10 +773,9 @@ pub(super) fn inverse_sigmoid(x: &Tensor) -> Result<Tensor, Error> {
 mod tests {
     use candle_core::{Device, Tensor};
 
-    /// The folded rank-3 reduction must equal the rank-6 `sum(4).sum(3)` form
-    /// it stands in for.
+    /// The direct blend keeps the same values as the former folded reference.
     #[test]
-    fn folded_blend_matches_rank6_reduction() -> candle_core::Result<()> {
+    fn rank6_blend_matches_folded_reference() -> candle_core::Result<()> {
         let device = Device::Cpu;
         let (batch, heads, queries, levels, points, head_dim) = (1, 8, 12, 3, 4, 32);
 
@@ -823,11 +810,11 @@ mod tests {
         Ok(())
     }
 
-    /// Fails once candle's Metal rank>=5 reduce agrees with CPU, which is the
-    /// signal to drop the fold in `DeformableAttention::forward`.
+    /// Candle 0.11.1 fixes high-rank strided reduction. Keep CPU parity for the
+    /// rank-5 case and the direct rank-6 blend used by deformable attention.
     #[cfg(all(feature = "metal", target_os = "macos"))]
     #[test]
-    fn metal_rank5_strided_reduce_is_still_broken() -> candle_core::Result<()> {
+    fn metal_high_rank_strided_reduce_matches_cpu() -> candle_core::Result<()> {
         let Ok(metal) = Device::new_metal(0) else {
             return Ok(());
         };
@@ -843,26 +830,26 @@ mod tests {
                 .to_scalar::<f32>()
         };
 
-        // Reducing axis 3 of a rank-5 tensor: still broken upstream.
-        let broken = max_diff(&cpu_t.sum(3)?, &metal_t.sum(3)?)?;
-
-        // The folded rank-3 equivalent agrees with CPU.
-        let fold = |t: &Tensor| -> candle_core::Result<Tensor> {
-            t.contiguous()?.reshape((2 * 3 * 4, 5, 6))?.sum(1)
-        };
-        let folded = max_diff(&fold(&cpu_t)?, &fold(&metal_t)?)?;
+        let rank5 = max_diff(&cpu_t.sum(3)?, &metal_t.sum(3)?)?;
         assert!(
-            folded < 1e-4,
-            "folded rank-3 reduction should match CPU, diverged by {folded}"
+            rank5 < 1e-4,
+            "Metal rank-5 reduction should match CPU, diverged by {rank5}"
         );
 
-        // Asserted, not just logged: cargo swallows output from passing tests,
-        // so a note here would never reach anyone. Failing is the point — when
-        // candle fixes the kernel this test says so and the fold can go.
+        let cpu_sampled = Tensor::randn(0f32, 1f32, (1, 8, 12, 3, 4, 32), &Device::Cpu)?;
+        let cpu_weights = Tensor::randn(0f32, 1f32, (1, 8, 12, 3, 4, 1), &Device::Cpu)?;
+        let metal_sampled = cpu_sampled.to_device(&metal)?;
+        let metal_weights = cpu_weights.to_device(&metal)?;
+        let rank6 = max_diff(
+            &cpu_sampled.broadcast_mul(&cpu_weights)?.sum(4)?.sum(3)?,
+            &metal_sampled
+                .broadcast_mul(&metal_weights)?
+                .sum(4)?
+                .sum(3)?,
+        )?;
         assert!(
-            broken >= 1e-4,
-            "candle's Metal rank-5 strided reduce now matches CPU (max diff {broken}); \
-             the fold in DeformableAttention::forward can be simplified"
+            rank6 < 1e-4,
+            "Metal rank-6 blend should match CPU, diverged by {rank6}"
         );
         Ok(())
     }

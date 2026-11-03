@@ -17,7 +17,7 @@ next: false
 
 <ProBuy />
 
-<p class="pro-trust">Current one-time price and tax are shown on the <a href="https://sylphxai.github.io/anymd/pricing" target="_self">pricing page</a> · licence never expires · works offline, no account · <a href="/anymd/legal/pro-terms">Terms</a></p>
+<p class="pro-trust">Current one-time price and tax are shown on the <a href="https://sylphxai.github.io/anymd/pricing" target="_self">pricing page</a> · 100-year licence · works offline, no account · <a href="/anymd/legal/pro-terms">Terms</a></p>
 
 Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
 
@@ -34,6 +34,9 @@ When an agent summarises a deposition video, an earnings call, a lecture or a co
 
 [How video timelines work](/guide/video-timeline)
 
+Try it locally: [extract a video frame](/tasks/extract-video-frame) or
+[build a video timeline](/tasks/build-video-timeline), with free and Pro examples.
+
 ### Cite-check
 
 - `inspect` with `cite_check` takes a PDF and a list of citations (quote, page, bounding box) and returns one verdict each: `verified_exact`, `verified_normalized`, `unmatched` or `insufficient_evidence`.
@@ -42,13 +45,16 @@ When an agent summarises a deposition video, an earnings call, a lecture or a co
 
 [How cite-check works](/guide/cite-check)
 
+Try it locally: [check a PDF citation](/tasks/check-pdf-citation), starting with
+a generated one-page PDF and a free text search.
+
 ### Who it is for
 
 Agents and people who have to point at a source and be believed: legal review, research, finance and media work.
 
 ## Price
 
-**Current one-time price, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
+**Current one-time price, including any applicable tax.** No subscription. One licence per person, valid for 100 years, with future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
 
 <ProBuy label="Buy anymd Pro" />
 
@@ -95,3 +101,17 @@ Pro is digital content delivered immediately: at checkout you ask us to supply i
 Sylphx Limited, a company registered in England and Wales (company number 16438428). See the [anymd Pro terms](/legal/pro-terms) and [Privacy](/legal/privacy).
 
 <ProTracking page="pro" />
+
+## Money signer trust and test activation
+
+The offline production policy accepts the historical seller key and the current
+live Money signer. Key rotation adds trust without invalidating sold licences;
+signature, plan, product and expiry checks still apply.
+
+For a Money TEST grant, use `anymd pro --test status` or
+`anymd pro --test activate <token>`. This explicit policy trusts only the test
+signer, reports `Pro (TEST)`, reads `ANYMD_TEST_PRO_TOKEN`, and stores activations
+in `test-pro-token` beside the production `pro-token` file. The ordinary CLI
+and MCP Pro operations use production trust and never consume that test file
+or variable. Test mode does not start a purchase or establish a paid production
+licence. Keep real tokens out of shell history and logs.

@@ -49,6 +49,9 @@ impl SourceAccessPolicy {
         let mut index = 0;
         while index < args.len() {
             let argument = args[index].to_string_lossy();
+            if argument == "--" {
+                break;
+            }
             if argument == "--allow-dir" {
                 index += 1;
                 let value = args.get(index).ok_or_else(|| {

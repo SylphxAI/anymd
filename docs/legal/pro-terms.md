@@ -10,7 +10,7 @@ next: false
 
 # anymd Pro terms
 
-Updated 2026-10-01. These terms apply when you buy anymd Pro. The free anymd software stays under the MIT licence; these terms cover only the Pro licence.
+Updated 2026-11-03. These terms apply when you buy anymd Pro. The free anymd software stays under the MIT licence; these terms cover only the Pro licence.
 
 **Seller:** Sylphx Limited, a company registered in England and Wales (company number 16438428). Registered office: 128 City Road, London EC1V 2NX. hi@sylphx.com · +44 333 335 7935.
 
@@ -25,7 +25,7 @@ The current price shown at checkout, paid once, including any VAT or sales tax w
 ## Your licence
 
 - The licence is for one person. A company may buy one licence for each person who uses Pro.
-- It does not expire, and it works with future anymd releases that include the Pro operations.
+- The licence lasts for 100 calendar years from the date it is issued. It works with future anymd releases that include the Pro operations.
 - Do not share, publish or resell your token. We may stop issuing tokens to anyone who does.
 - The Pro operations are part of the anymd binary, which stays under the MIT licence; the token is what licenses you to use the Pro operations.
 

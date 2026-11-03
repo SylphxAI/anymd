@@ -181,6 +181,7 @@ jobs:
         run: bun run test:cov
 
       - name: Upload coverage reports
+        continue-on-error: true
         if: ${{ !cancelled() && hashFiles('coverage/**') != '' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
@@ -255,12 +256,17 @@ jobs:
 
   # The marker. Named exactly `verified`; never a required check.
   verified:
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: read
     name: verified
     if: always()
     needs: [docs, audit, rust, other-os, release-targets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: SylphxAI/.github/.github/actions/needs-pass@05ac6474b96425bcb4965addd025a93e061b66c4
+      - uses: SylphxAI/.github/.github/actions/needs-pass@067656cfe8f8d1ff888aa9c70e442b75372dea8d # main
         with:
           needs: ${{ toJSON(needs) }}

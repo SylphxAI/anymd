@@ -246,6 +246,38 @@ mod tests {
     }
 
     #[test]
+    fn delimited_encodings_and_errors_reach_the_browser_entry() {
+        for (name, delimiter) in [("t.csv", ','), ("t.tsv", '\t')] {
+            let text = format!(
+                "name{delimiter}city\r\nAlice{delimiter}Hong Kong\r\n陳小明😀{delimiter}香港\r\n"
+            );
+            let expected = convert_markdown(text.as_bytes(), name).unwrap();
+            assert!(expected.contains("|name|city|\n|-|-|\n|Alice|Hong Kong|\n|陳小明😀|香港|\n"));
+            let mut encodings = vec![format!("\u{feff}{text}").into_bytes()];
+            for little_endian in [true, false] {
+                let mut bytes = Vec::new();
+                for unit in format!("\u{feff}{text}").encode_utf16() {
+                    bytes.extend(if little_endian {
+                        unit.to_le_bytes()
+                    } else {
+                        unit.to_be_bytes()
+                    });
+                }
+                encodings.push(bytes);
+            }
+            for bytes in encodings {
+                assert_eq!(convert_markdown(&bytes, name).unwrap(), expected);
+            }
+            for bytes in [&[0xFF, 0xFE, 0x41][..], &[0xFE, 0xFF, 0xD8, 0x00][..]] {
+                assert!(convert_markdown(bytes, name)
+                    .unwrap_err()
+                    .contains("re-export"));
+                assert_eq!(convert_markdown(text.as_bytes(), name).unwrap(), expected);
+            }
+        }
+    }
+
+    #[test]
     fn garbage_is_an_error() {
         assert!(convert_markdown(&[0u8, 159, 146, 150, 0, 1], "x.bin").is_err());
     }
