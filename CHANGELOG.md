@@ -1,5 +1,19 @@
 # Changelog
 
+## 8.5.9
+
+### Patch Changes
+
+- Release the UTF-16 fixes from 8.5.8 with a complete native package set. The Linux x64 npm package for 8.5.8 remained staged and unavailable; this release uses a new version without replacing it.
+- Use portable archive recovery for existing native packages on Windows.
+
+## 8.5.8
+
+### Patch Changes
+
+- Read BOM-marked UTF-16LE and UTF-16BE text, Markdown and HTML without mistaking text for MP3 audio. Preserve Unicode text, headings and tables, and reject malformed UTF-16 with a clear re-export hint.
+- Share strict BOM decoding with CSV and TSV while preserving binary and media detection.
+
 ## 8.5.7
 
 ### Patch Changes

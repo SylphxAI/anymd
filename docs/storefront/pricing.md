@@ -16,7 +16,7 @@ money_checkout: pro
 
 **anymd Pro** adds two things to the free anymd MCP server: exact video frames your agent can cite, and **cite-check**, which proves a quote is on the page and at the spot it claims. Everything runs on your machine.
 
-Current one-time price and tax are shown below · licence never expires · works offline, no account · [Terms](https://sylphxai.github.io/anymd/legal/pro-terms)
+Current one-time price and tax are shown below · 100-year licence · works offline, no account · [Terms](https://sylphxai.github.io/anymd/legal/pro-terms)
 
 Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
 
@@ -47,7 +47,7 @@ Agents and people who have to point at a source and be believed: legal review, r
 
 ## Price
 
-**Current one-time price, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
+**Current one-time price, including any applicable tax.** No subscription. One licence per person, valid for 100 years, with future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
 
 Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy. It prints the Pro page and the purchase command instead if the checkout cannot be reached.
 

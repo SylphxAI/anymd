@@ -17,7 +17,7 @@ next: false
 
 <ProBuy />
 
-<p class="pro-trust">Current one-time price and tax are shown on the <a href="https://sylphxai.github.io/anymd/pricing" target="_self">pricing page</a> · licence never expires · works offline, no account · <a href="/anymd/legal/pro-terms">Terms</a></p>
+<p class="pro-trust">Current one-time price and tax are shown on the <a href="https://sylphxai.github.io/anymd/pricing" target="_self">pricing page</a> · 100-year licence · works offline, no account · <a href="/anymd/legal/pro-terms">Terms</a></p>
 
 Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
 
@@ -54,7 +54,7 @@ Agents and people who have to point at a source and be believed: legal review, r
 
 ## Price
 
-**Current one-time price, including any applicable tax.** No subscription. One licence per person, no expiry, future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
+**Current one-time price, including any applicable tax.** No subscription. One licence per person, valid for 100 years, with future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
 
 <ProBuy label="Buy anymd Pro" />
 
