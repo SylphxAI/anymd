@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-transcribe-cpp = { version = "=0.2.4", default-features = false }
+transcribe-cpp = { version = "=0.4.0", default-features = false }
 
 [profile.release]
 opt-level = 3
