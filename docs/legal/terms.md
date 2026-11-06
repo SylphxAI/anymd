@@ -12,7 +12,7 @@ next: false
 
 Updated 2026-10-01.
 
-The anymd website and the anymd software are provided by **Sylphx Limited**, a company registered in England and Wales (company number 16438428). Registered office: 128 City Road, London EC1V 2NX. Email hi@sylphx.com, phone +44 333 335 7935.
+The anymd website and the anymd software are provided by **Sylphx Limited**, a company registered in England and Wales (company number 16438428). Registered office: 128 City Road, London EC1V 2NX. Email hi@sylphx.com, phone +44 7537 188 188.
 
 ## The free software
 
@@ -36,4 +36,4 @@ These terms are governed by the law of England and Wales, and its courts have ju
 
 ## Contact
 
-hi@sylphx.com · +44 333 335 7935 · Sylphx Limited, 128 City Road, London EC1V 2NX.
+hi@sylphx.com · +44 7537 188 188 · Sylphx Limited, 128 City Road, London EC1V 2NX.

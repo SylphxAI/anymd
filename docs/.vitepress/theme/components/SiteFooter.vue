@@ -21,7 +21,7 @@ const { hasSidebar } = useSidebar();
       <p>
         © 2024–2026 Sylphx Limited. Registered in England and Wales, company number 16438428.
         Registered office: 128 City Road, London EC1V 2NX. Phone:
-        <a href="tel:+443333357935">+44 333 335 7935</a>.
+        <a href="tel:+447537188188">+44 7537 188 188</a>.
       </p>
     </div>
   </footer>

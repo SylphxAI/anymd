@@ -12,7 +12,7 @@ next: false
 
 Updated 2026-11-03. These terms apply when you buy anymd Pro. The free anymd software stays under the MIT licence; these terms cover only the Pro licence.
 
-**Seller:** Sylphx Limited, a company registered in England and Wales (company number 16438428). Registered office: 128 City Road, London EC1V 2NX. hi@sylphx.com · +44 333 335 7935.
+**Seller:** Sylphx Limited, a company registered in England and Wales (company number 16438428). Registered office: 128 City Road, London EC1V 2NX. hi@sylphx.com · +44 7537 188 188.
 
 ## What you buy
 
