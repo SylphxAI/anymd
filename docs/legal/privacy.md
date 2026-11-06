@@ -12,7 +12,7 @@ next: false
 
 Updated 2026-10-01.
 
-**Sylphx Limited** (company number 16438428, registered in England and Wales, registered office 128 City Road, London EC1V 2NX) is the controller for the personal data described here. Contact: hi@sylphx.com, +44 333 335 7935.
+**Sylphx Limited** (company number 16438428, registered in England and Wales, registered office 128 City Road, London EC1V 2NX) is the controller for the personal data described here. Contact: hi@sylphx.com, +44 7537 188 188.
 
 ## The anymd software
 
