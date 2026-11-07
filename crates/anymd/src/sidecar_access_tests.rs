@@ -109,6 +109,8 @@ async fn media_sidecars_follow_source_policy() {
             .await
             .unwrap();
         assert_ne!(outline.is_error, Some(true));
+        let tree: serde_json::Value =
+            serde_json::from_str(&outline.content[0].as_text().unwrap().text).unwrap();
         let outline = serde_json::to_string(&outline).unwrap();
         for (tool, output) in [("read", &read), ("outline", &outline)] {
             assert!(
@@ -118,14 +120,15 @@ async fn media_sidecars_follow_source_policy() {
             if case == "outside" {
                 assert!(!output.contains("outside.en.srt"), "{tool}: {output}");
                 assert!(!output.contains("outside.fr.vtt"), "{tool}: {output}");
-            } else {
-                assert!(
-                    output.contains(&format!("{case}.en.srt")),
-                    "{tool}: {output}"
-                );
             }
         }
+        assert_eq!(
+            tree["nodes"][0]["to"],
+            if case == "outside" { 1 } else { 2 },
+            "outline must contain exactly the admitted units: {tree}"
+        );
         if case != "outside" {
+            assert!(read.contains(&format!("{case}.en.srt")), "{read}");
             assert!(read.contains("[00:00] Allowed subtitle line"), "{read}");
         }
     }
