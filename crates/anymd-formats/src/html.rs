@@ -314,10 +314,10 @@ impl Blocks {
         self.bytes = self.bytes.saturating_add(block.len());
         let separators = self.blocks.len().saturating_mul(2);
         if self.bytes.saturating_add(separators) > crate::limits::MAX_OUTPUT_BYTES {
-            self.failure = Some(ConvertError::LimitExceeded {
-                resource: "output",
-                limit: crate::limits::MAX_OUTPUT_BYTES,
-            });
+            self.failure = Some(ConvertError::limit(
+                "output",
+                crate::limits::MAX_OUTPUT_BYTES,
+            ));
         } else {
             self.blocks.push(block);
         }
@@ -918,10 +918,10 @@ fn render_list(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, depth: usize) -> String {
         };
         bytes = bytes.saturating_add(added);
         if bytes.saturating_sub(1) > crate::limits::MAX_OUTPUT_BYTES {
-            *ctx.failure.borrow_mut() = Some(ConvertError::LimitExceeded {
-                resource: "output",
-                limit: crate::limits::MAX_OUTPUT_BYTES,
-            });
+            *ctx.failure.borrow_mut() = Some(ConvertError::limit(
+                "output",
+                crate::limits::MAX_OUTPUT_BYTES,
+            ));
             return String::new();
         }
     }

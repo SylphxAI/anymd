@@ -483,7 +483,9 @@ fn wrap_markers(pieces: &mut [Piece]) {
             .unwrap_or(pieces.len());
         let before = start.checked_sub(1).map(|at| format(&pieces[at]));
         let after = pieces.get(end).map(format);
-        if let Some(around) = before.filter(|f| *f != (false, false, None) && Some(f) == after.as_ref()) {
+        if let Some(around) =
+            before.filter(|f| *f != (false, false, None) && Some(f) == after.as_ref())
+        {
             joined[start..end].fill(Some(around));
         }
         start = end;
@@ -495,7 +497,9 @@ fn wrap_markers(pieces: &mut [Piece]) {
         .filter_map(|(piece, _)| piece.marker)
         .collect();
     for (piece, around) in pieces.iter_mut().zip(joined) {
-        if let Some((bold, italic, link)) = around.filter(|_| piece.marker.is_some_and(|id| !refused.contains(&id))) {
+        if let Some((bold, italic, link)) =
+            around.filter(|_| piece.marker.is_some_and(|id| !refused.contains(&id)))
+        {
             piece.bold = bold;
             piece.italic = italic;
             piece.link = link;
@@ -615,22 +619,64 @@ pub(crate) fn splice(
     }
 }
 
+/// Exact post-splice length, without building the combined Markdown. Keep the
+/// same continuation rules as `splice`, including removed/merged delimiters.
+pub(crate) fn splice_len(
+    out: &str,
+    separator: &str,
+    prefix: &str,
+    body: &str,
+    change: Option<&Change>,
+    space: bool,
+) -> usize {
+    let Some((mark, by)) = change else {
+        return out
+            .len()
+            .saturating_add(separator.len())
+            .saturating_add(prefix.len())
+            .saturating_add(body.len());
+    };
+    let (open, close) = mark.delimiters();
+    let by = by.as_deref().map(note).unwrap_or_default();
+    let end = format!("{close}{by}");
+    let start = out
+        .strip_suffix(end.as_str())
+        .map_or_else(|| out.len().saturating_add(open.len()), str::len);
+    let continues = body.strip_prefix(open).filter(|rest| {
+        rest.find(close)
+            .is_some_and(|at| rest[at + close.len()..].starts_with(by.as_str()))
+    });
+    start
+        .saturating_add(separator.len())
+        .saturating_add(prefix.len())
+        .saturating_add(continues.map_or_else(
+            || {
+                end.len()
+                    .saturating_add(usize::from(space))
+                    .saturating_add(body.len())
+            },
+            str::len,
+        ))
+}
+
 /// The change a rendered part is wholly inside, with its attribution:
 /// `{--gone--}{>>Ana<<}` is `(Deletion, Some("Ana"))`. Document text is
 /// escaped, so the first closer after the opener is the span's own.
 fn whole_change(part: &str) -> Option<Change> {
-    [Mark::Insertion, Mark::Deletion].into_iter().find_map(|mark| {
-        let (open, close) = mark.delimiters();
-        let inner = part.strip_prefix(open)?;
-        let after = &inner[inner.find(close)? + close.len()..];
-        match after {
-            "" => Some((mark, None)),
-            _ => {
-                let by = after.strip_prefix("{>>")?.strip_suffix("<<}")?;
-                (!by.contains("<<}")).then(|| (mark, Some(by.to_string())))
+    [Mark::Insertion, Mark::Deletion]
+        .into_iter()
+        .find_map(|mark| {
+            let (open, close) = mark.delimiters();
+            let inner = part.strip_prefix(open)?;
+            let after = &inner[inner.find(close)? + close.len()..];
+            match after {
+                "" => Some((mark, None)),
+                _ => {
+                    let by = after.strip_prefix("{>>")?.strip_suffix("<<}")?;
+                    (!by.contains("<<}")).then(|| (mark, Some(by.to_string())))
+                }
             }
-        }
-    })
+        })
 }
 
 /// Joins parts that sit side by side, such as the cells of a flattened
@@ -655,31 +701,87 @@ pub(crate) type Part = (String, Option<Change>, (bool, bool));
 /// Joins paragraphs, each paired with the tracked change on the paragraph mark
 /// that ends it. A blank paragraph drops the pending change: its own break stays.
 pub(crate) fn join_marked(parts: Vec<Part>, separator: &str) -> String {
-    let mut out = String::new();
-    let mut pending = None;
-    let mut trailing = false;
-    // The first paragraph, while it is the only one and wholly one change.
-    let mut first = None;
-    for (part, mark, (leading, ends_in_space)) in parts {
-        if part.trim().is_empty() {
-            pending = None;
-            continue;
-        }
-        if out.is_empty() {
-            first = whole_change(&part);
-            out = part;
-        } else {
-            // A break with no change of its own goes with a paragraph that is
-            // wholly one change, which leaves no stray break once resolved.
-            let first = first.take();
-            let change = pending.take().or_else(|| whole_change(&part)).or(first);
-            let space = trailing || leading;
-            splice(&mut out, separator, "", &part, change.as_ref(), space);
-        }
-        pending = mark;
-        trailing = ends_in_space;
+    let mut joined = Marked::new(separator, usize::MAX);
+    for part in parts {
+        // An unlimited join cannot refuse.
+        joined.push(part).expect("unlimited paragraph join");
     }
-    out
+    joined.finish()
+}
+
+/// Incremental paragraph join: refuses before extending its retained output.
+/// DOCX definitions share their remaining allowance with the body, rather than
+/// collecting an independently capped definitions vector and joining it later.
+pub(crate) struct Marked<'a> {
+    out: String,
+    separator: &'a str,
+    limit: usize,
+    pending: Option<Change>,
+    trailing: bool,
+    first: Option<Change>,
+}
+
+impl<'a> Marked<'a> {
+    pub(crate) fn new(separator: &'a str, limit: usize) -> Self {
+        Self {
+            out: String::new(),
+            separator,
+            limit,
+            pending: None,
+            trailing: false,
+            first: None,
+        }
+    }
+
+    pub(crate) fn push(
+        &mut self,
+        (part, mark, (leading, ends_in_space)): Part,
+    ) -> Result<(), crate::ConvertError> {
+        if part.trim().is_empty() {
+            self.pending = None;
+            return Ok(());
+        }
+        if self.out.is_empty() {
+            if part.len() > self.limit {
+                return Err(crate::ConvertError::limit(
+                    "output",
+                    crate::limits::MAX_OUTPUT_BYTES,
+                ));
+            }
+            self.first = whole_change(&part);
+            self.out = part;
+        } else {
+            let first = self.first.take();
+            let change = self
+                .pending
+                .take()
+                .or_else(|| whole_change(&part))
+                .or(first);
+            let space = self.trailing || leading;
+            if splice_len(&self.out, self.separator, "", &part, change.as_ref(), space) > self.limit
+            {
+                return Err(crate::ConvertError::limit(
+                    "output",
+                    crate::limits::MAX_OUTPUT_BYTES,
+                ));
+            }
+            splice(
+                &mut self.out,
+                self.separator,
+                "",
+                &part,
+                change.as_ref(),
+                space,
+            );
+        }
+        self.pending = mark;
+        self.trailing = ends_in_space;
+        Ok(())
+    }
+
+    pub(crate) fn finish(self) -> String {
+        self.out
+    }
 }
 
 #[cfg(test)]
@@ -718,6 +820,24 @@ mod tests {
             "+" => Ins,
             "-" => Del,
             _ => Hl,
+        }
+    }
+
+    #[test]
+    fn bounded_join_refuses_before_extending_and_counts_marked_separators() {
+        let mut joined = Marked::new(" ", 5);
+        joined.push(("abc".into(), None, (false, false))).unwrap();
+        assert!(joined.push(("de".into(), None, (false, false))).is_err());
+        assert_eq!(joined.finish(), "abc");
+        for change in [None, Some((Ins, None)), Some((Del, Some("Author".into())))] {
+            for before in ["a", "{++a++}", "{--a--}{>>Author<<}"] {
+                for after in ["b", "{++b++}", "{--b--}{>>Author<<}"] {
+                    let size = splice_len(before, "\n\n", "# ", after, change.as_ref(), true);
+                    let mut out = before.to_string();
+                    splice(&mut out, "\n\n", "# ", after, change.as_ref(), true);
+                    assert_eq!(size, out.len());
+                }
+            }
         }
     }
 
@@ -1092,7 +1212,13 @@ mod tests {
         );
         // Not at the end, or not a change: left as it is.
         assert_eq!(
-            joined(&[("t", "a "), ("open", "+"), ("t", "b"), ("close", "+"), ("t", " c")]),
+            joined(&[
+                ("t", "a "),
+                ("open", "+"),
+                ("t", "b"),
+                ("close", "+"),
+                ("t", " c")
+            ]),
             "a {++b++} c"
         );
         assert_eq!(
@@ -1113,7 +1239,10 @@ mod tests {
             ("Para".to_string(), None, bare),
             ("{++Added para++}{>>Ana<<}".to_string(), None, bare),
         ];
-        assert_eq!(join_marked(parts, "<br>"), "Para{++<br>Added para++}{>>Ana<<}");
+        assert_eq!(
+            join_marked(parts, "<br>"),
+            "Para{++<br>Added para++}{>>Ana<<}"
+        );
         let parts = vec![
             ("{--Gone--}".to_string(), None, bare),
             ("Kept".to_string(), None, bare),
@@ -1312,7 +1441,10 @@ mod tests {
             format!("{{--gone; --}}{by}kept{{++; new++}}")
         );
         // Text around the change keeps the separator outside it.
-        assert_eq!(joined(&["a {--b--}", "c {++d++} e"]), "a {--b--}; c {++d++} e");
+        assert_eq!(
+            joined(&["a {--b--}", "c {++d++} e"]),
+            "a {--b--}; c {++d++} e"
+        );
     }
 
     #[test]

@@ -54,15 +54,30 @@ impl<'a> Package<'a> {
         })
     }
 
-    /// Measure every actual entry before handing a ZIP to a third-party parser.
-    pub(crate) fn preflight(&mut self) -> Result<HashMap<String, usize>, ConvertError> {
-        let names: Vec<String> = self.names.iter().cloned().collect();
-        let mut sizes = HashMap::new();
-        for name in names {
-            let bytes = self.read(&name)?.unwrap_or_default();
-            sizes.insert(name, bytes.len());
+    /// Measure actual inflation, indexed by compressed payload offset rather
+    /// than case-sensitive names or workbook-specific relationship grammars.
+    pub(crate) fn preflight(
+        &mut self,
+    ) -> Result<std::collections::BTreeMap<u64, (u64, usize)>, ConvertError> {
+        let mut entries = std::collections::BTreeMap::new();
+        for index in 0..self.archive.len() {
+            let file = self
+                .archive
+                .by_index(index)
+                .map_err(|e| invalid(format!("cannot read spreadsheet entry: {e}")))?;
+            let start = file
+                .data_start()
+                .ok_or_else(|| invalid("spreadsheet entry has no payload offset"))?;
+            let end = start.saturating_add(file.compressed_size());
+            let bytes = self.limits.read(file.take(MAX_ENTRY_BYTES + 1))?;
+            if bytes.len() as u64 > MAX_ENTRY_BYTES {
+                return Err(invalid(
+                    "spreadsheet entry exceeds its uncompressed size limit",
+                ));
+            }
+            entries.insert(start, (end, bytes.len()));
         }
-        Ok(sizes)
+        Ok(entries)
     }
 
     fn resolve_name(&self, name: &str) -> Option<String> {
@@ -814,6 +829,7 @@ impl Media {
 
 /// Join Markdown blocks: list items stay tight, everything else gets a blank line.
 pub(crate) struct Blocks {
+    limit: usize,
     failure: Option<ConvertError>,
     out: String,
     last_was_list: bool,
@@ -825,7 +841,12 @@ pub(crate) struct Blocks {
 
 impl Blocks {
     pub(crate) fn new() -> Self {
+        Self::with_limit(crate::limits::MAX_OUTPUT_BYTES)
+    }
+
+    pub(crate) fn with_limit(limit: usize) -> Self {
         Self {
+            limit,
             out: String::new(),
             failure: None,
             last_was_list: false,
@@ -865,29 +886,28 @@ impl Blocks {
         if body.trim().is_empty() {
             return;
         }
-        // Reserve the separator and CriticMarkup delimiters before appending.
-        let size = self
-            .out
-            .len()
-            .saturating_add(prefix.len())
-            .saturating_add(body.len());
-        if size > crate::limits::MAX_OUTPUT_BYTES {
-            self.failure = Some(ConvertError::LimitExceeded {
-                resource: "output",
-                limit: crate::limits::MAX_OUTPUT_BYTES,
-            });
+        let change = self.separator.take();
+        let separator = if is_list && self.last_was_list {
+            "\n"
+        } else {
+            "\n\n"
+        };
+        let size = if self.out.is_empty() {
+            prefix.len().saturating_add(body.len())
+        } else {
+            critic::splice_len(&self.out, separator, prefix, body, change.as_ref(), space)
+        };
+        if size > self.limit {
+            self.failure = Some(ConvertError::limit(
+                "output",
+                crate::limits::MAX_OUTPUT_BYTES,
+            ));
             return;
         }
-        let change = self.separator.take();
         if self.out.is_empty() {
             self.out.push_str(prefix);
             self.out.push_str(body);
         } else {
-            let separator = if is_list && self.last_was_list {
-                "\n"
-            } else {
-                "\n\n"
-            };
             critic::splice(
                 &mut self.out,
                 separator,
@@ -897,7 +917,6 @@ impl Blocks {
                 space,
             );
         }
-        self.failure = crate::limits::check_output(&self.out).err();
         self.last_was_list = is_list;
         self.trailing_space = trailing;
     }

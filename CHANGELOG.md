@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.5.10
+
+### Patch Changes
+
+- Stop non-PDF conversion at 256 MiB of Markdown and ZIP-based conversion at 512 MiB of cumulative inflated input. Repeated EPUB chapters, slides and worksheet aliases count again; DOCX body, comments, footnotes and endnotes share one output ceiling. Resource-limit errors preserve the existing `ConvertError` variants and expose typed detail through `limit_exceeded()`.
+- Apply source-access rules before media sidecars are discovered or opened. Restricted callers cannot read subtitles or sibling media outside their allowed directories, and unrestricted local conversion is unchanged.
+
 ## 8.5.9
 
 ### Patch Changes

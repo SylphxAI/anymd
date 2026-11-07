@@ -164,26 +164,61 @@ impl Revisions {
     }
 }
 
+/// A cumulative conversion ceiling which stopped a document.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ConversionLimit {
+    pub resource: &'static str,
+    pub limit: usize,
+}
+
+impl std::fmt::Display for ConversionLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "conversion {} exceeds {} bytes",
+            self.resource, self.limit
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConvertError {
-    /// Conversion stopped at a cumulative resource ceiling.
-    LimitExceeded {
-        resource: &'static str,
-        limit: usize,
-    },
-    /// The bytes are not a valid instance of the format.
+    /// The bytes are not a valid instance of the format, or exceed its resource ceilings.
     Invalid(String),
     /// The format needs a tool or feature that is not available here.
     Unsupported(String),
+}
+
+impl ConvertError {
+    pub(crate) fn limit(resource: &'static str, limit: usize) -> Self {
+        Self::Invalid(ConversionLimit { resource, limit }.to_string())
+    }
+
+    /// Typed detail for a canonical resource-ceiling diagnostic.
+    /// Existing exhaustive matches on this enum remain source-compatible.
+    pub fn limit_exceeded(&self) -> Option<ConversionLimit> {
+        let Self::Invalid(message) = self else {
+            return None;
+        };
+        let rest = message.strip_prefix("conversion ")?;
+        let (resource, limit) = rest.split_once(" exceeds ")?;
+        let resource = match resource {
+            "output" => "output",
+            "inflated input" => "inflated input",
+            _ => return None,
+        };
+        let detail = ConversionLimit {
+            resource,
+            limit: limit.strip_suffix(" bytes")?.parse().ok()?,
+        };
+        (detail.to_string() == *message).then_some(detail)
+    }
 }
 
 impl std::fmt::Display for ConvertError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Invalid(message) | Self::Unsupported(message) => f.write_str(message),
-            Self::LimitExceeded { resource, limit } => {
-                write!(f, "conversion {resource} exceeds {limit} bytes")
-            }
         }
     }
 }
@@ -450,10 +485,7 @@ fn render_markdown_table(
             .saturating_mul(rows.len())
             .saturating_add(width.saturating_mul(2).saturating_add(2));
         if minimum > limit {
-            return Err(ConvertError::LimitExceeded {
-                resource: "output",
-                limit,
-            });
+            return Err(ConvertError::limit("output", limit));
         }
     }
     for (index, row) in rows.iter().enumerate() {
@@ -463,10 +495,7 @@ fn render_markdown_table(
             let cell = table_cell(row.get(column).map(String::as_str).unwrap_or(""));
             if let Some(limit) = limit {
                 if cell.len() > limit.saturating_sub(out.len()) {
-                    return Err(ConvertError::LimitExceeded {
-                        resource: "output",
-                        limit,
-                    });
+                    return Err(ConvertError::limit("output", limit));
                 }
             }
             out.push_str(&cell);
