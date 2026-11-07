@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::images::{self, ImageStore};
 use crate::ooxml::{self, Blocks, Element, Inline, ListIndent, Media, Package, Rels};
-use crate::{markdown_table, ConvertError, Converted, Options, Section};
+use crate::{ConvertError, Converted, Options, Section, markdown_table};
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
     let mut package = Package::open(bytes, "PPTX")?;
@@ -561,9 +561,11 @@ fn chart_markdown(space: &Element) -> String {
     if names.is_empty() || count == 0 {
         return heading;
     }
-    let mut rows = vec![std::iter::once("Category".to_string())
-        .chain(names)
-        .collect::<Vec<_>>()];
+    let mut rows = vec![
+        std::iter::once("Category".to_string())
+            .chain(names)
+            .collect::<Vec<_>>(),
+    ];
     for idx in 0..count.min(2000) {
         let mut row = vec![categories.get(&idx).cloned().unwrap_or_default()];
         row.extend(
@@ -603,6 +605,50 @@ mod tests {
             writer.write_all(body.as_bytes()).unwrap();
         }
         writer.finish().unwrap().into_inner()
+    }
+
+    fn repeated_deck(text_bytes: usize, repeats: usize) -> Vec<u8> {
+        zip(&[
+            (
+                "ppt/presentation.xml".into(),
+                format!(
+                    "<p:presentation {NS}><p:sldIdLst>{}</p:sldIdLst></p:presentation>",
+                    "<p:sldId r:id='rId1'/>".repeat(repeats)
+                ),
+            ),
+            (
+                "ppt/_rels/presentation.xml.rels".into(),
+                rels(&[("rId1", "slide", "slides/slide1.xml")]),
+            ),
+            (
+                "ppt/slides/slide1.xml".into(),
+                format!(
+                    "<p:sld {NS}><p:cSld><p:spTree><p:sp><p:txBody><a:p><a:r><a:t>{}</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>",
+                    "a".repeat(text_bytes)
+                ),
+            ),
+        ])
+    }
+
+    #[test]
+    fn cumulative_output_limit() {
+        let bytes = repeated_deck(64 * 1024, 257);
+        let error = match convert(&bytes, &Options::default()) {
+            Err(error) => error,
+            Ok(converted) => panic!(
+                "conversion exceeded the ceiling: {} input bytes produced {} Markdown bytes",
+                bytes.len(),
+                converted
+                    .sections
+                    .iter()
+                    .map(|s| s.markdown.len())
+                    .sum::<usize>()
+            ),
+        };
+        assert_eq!(
+            error.to_string(),
+            "conversion output exceeds 16777216 bytes"
+        );
     }
 
     fn rels(entries: &[(&str, &str, &str)]) -> String {
