@@ -6,7 +6,7 @@ use crate::schema::{PdfEvidenceSource, PdfSource};
 
 const ALLOWED_DIRS_ENV: &str = "MCP_PDF_ALLOWED_DIRS";
 
-/// Filesystem admission policy for caller-supplied PDF paths.
+/// Filesystem admission policy for caller-supplied and derived source paths.
 ///
 /// URL-backed temporary files are materialized after this boundary and are not
 /// caller-supplied paths. With no configured roots, historical unrestricted
@@ -190,6 +190,15 @@ impl SourceAccessPolicy {
         })?;
         *path = Some(admitted.to_string());
         Ok(())
+    }
+}
+
+impl anymd_formats::SourceAccess for SourceAccessPolicy {
+    fn admit_path(&self, path: &Path) -> Result<PathBuf, String> {
+        let path = path
+            .to_str()
+            .ok_or("Access denied: path does not have a valid UTF-8 representation.")?;
+        SourceAccessPolicy::admit_path(self, path).map(PathBuf::from)
     }
 }
 
