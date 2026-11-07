@@ -21,6 +21,23 @@ fn encodings(text: &str) -> Vec<Vec<u8>> {
     ]
 }
 
+// External callers can construct every public option without a default tail.
+// Adding even a private policy field would break this supported API.
+#[test]
+fn public_options_literal_remains_source_compatible() {
+    let options = Options {
+        base_url: None,
+        ocr: false,
+        transcript: false,
+        download_asr_model: false,
+        path: None,
+        images: None,
+        revisions: anymd_formats::Revisions::Markup,
+    };
+    let converted = convert(Format::Text, b"Caller-owned text", &options).unwrap();
+    assert_eq!(converted.sections[0].markdown, "Caller-owned text");
+}
+
 #[test]
 fn same_text_and_html_structure_in_every_encoding() {
     for (extension, text, format) in [

@@ -104,6 +104,21 @@ pub struct Converted {
     pub metadata: Vec<(String, String)>,
 }
 
+/// Admission for additional local files discovered while converting a source.
+/// Implementations return the path to open, or refuse without reading its content.
+pub trait SourceAccess: std::fmt::Debug + Send + Sync {
+    fn admit_path(&self, path: &Path) -> Result<std::path::PathBuf, String>;
+}
+
+#[derive(Debug)]
+struct UnrestrictedSourceAccess;
+
+impl SourceAccess for UnrestrictedSourceAccess {
+    fn admit_path(&self, path: &Path) -> Result<std::path::PathBuf, String> {
+        Ok(path.to_path_buf())
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Options {
     /// Base URL for resolving relative links (HTML fetched from a URL).
@@ -346,6 +361,17 @@ fn sniff_zip(head: &[u8]) -> Option<Format> {
 
 /// Convert a non-PDF input. PDF is handled by the PDF engine, not this crate.
 pub fn convert(format: Format, bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
+    convert_with_source_access(format, bytes, options, &UnrestrictedSourceAccess)
+}
+
+/// Convert with the caller's admission policy for additional local source files.
+/// A refused auxiliary file is skipped without reading its content.
+pub fn convert_with_source_access(
+    format: Format,
+    bytes: &[u8],
+    options: &Options,
+    source_access: &dyn SourceAccess,
+) -> Result<Converted, ConvertError> {
     let converted = match format {
         Format::Docx => docx::convert(bytes, options),
         Format::Pptx => pptx::convert(bytes, options),
@@ -355,7 +381,7 @@ pub fn convert(format: Format, bytes: &[u8], options: &Options) -> Result<Conver
         Format::Epub => epub::convert(bytes, options),
         Format::Html => html::convert(bytes, options),
         Format::Image => image::convert(bytes, options),
-        Format::Video => video::convert(bytes, options),
+        Format::Video => video::convert_with_source_access(bytes, options, source_access),
         Format::Text => Ok(Converted {
             outline: Vec::new(),
             format: "text".into(),
