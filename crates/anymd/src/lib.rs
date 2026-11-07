@@ -1406,3 +1406,6 @@ mod tests {
         );
     }
 }
+
+#[cfg(all(test, unix))]
+mod sidecar_access_tests;

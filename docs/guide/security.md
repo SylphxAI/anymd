@@ -32,7 +32,7 @@ claude mcp add anymd -- npx -y @sylphx/anymd --allow-dir=$HOME/docs --allow-dir=
 }
 ```
 
-Paths outside the allowed directories, including ones reached through symlinks, are refused.
+Paths outside the allowed directories, including ones reached through symlinks, are refused. The same check applies to subtitle files discovered next to audio or video: a refused subtitle is skipped, never read as a fallback. Symlinks whose resolved targets remain inside an allowed directory are permitted.
 
 ## HTTP transport
 

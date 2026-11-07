@@ -103,6 +103,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             name,
             bytes.len() as u64,
             given_path,
+            options,
             if cfg!(feature = "native") {
                 "_Install ffmpeg (`ffprobe`) to report duration, streams, chapters, and subtitles._"
             } else {
@@ -135,6 +136,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
                 name,
                 bytes.len() as u64,
                 given_path,
+                options,
                 &format!("_ffprobe could not read this file: {error}_"),
             ));
         }
@@ -177,7 +179,13 @@ fn probe(ffprobe: &Path, path: &Path) -> Result<Value, String> {
     }
 }
 
-fn basic(container: &str, size: u64, path: Option<&Path>, note: &str) -> Converted {
+fn basic(
+    container: &str,
+    size: u64,
+    path: Option<&Path>,
+    options: &Options,
+    note: &str,
+) -> Converted {
     let facts = vec![
         ("container".to_string(), container.to_string()),
         ("file size".to_string(), crate::image::human_bytes(size)),
@@ -189,7 +197,7 @@ fn basic(container: &str, size: u64, path: Option<&Path>, note: &str) -> Convert
         label: "media".into(),
         markdown,
     }];
-    sections.extend(sidecar_sections(path));
+    sections.extend(sidecar_sections(path, options));
     Converted {
         outline: Vec::new(),
         format: "video".into(),
@@ -321,7 +329,7 @@ fn render_probe(
             }
         }
     }
-    extra_sections.extend(sidecar_sections(given_path));
+    extra_sections.extend(sidecar_sections(given_path, options));
 
     if has_audio {
         if options.transcript {
@@ -453,7 +461,7 @@ fn extract_subtitles(path: &Path) -> Result<String, String> {
 }
 
 /// `movie.srt`, `movie.vtt`, `movie.en.srt`… next to the media file.
-fn sidecar_sections(path: Option<&Path>) -> Vec<Section> {
+fn sidecar_sections(path: Option<&Path>, options: &Options) -> Vec<Section> {
     let Some(path) = path else { return Vec::new() };
     let (Some(dir), Some(stem)) = (path.parent(), path.file_stem().and_then(|s| s.to_str())) else {
         return Vec::new();
@@ -466,7 +474,7 @@ fn sidecar_sections(path: Option<&Path>) -> Vec<Section> {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return Vec::new();
     };
-    let mut sidecars: Vec<PathBuf> = entries
+    let mut sidecars: Vec<(PathBuf, PathBuf)> = entries
         .flatten()
         .map(|e| e.path())
         .filter(|p| {
@@ -476,16 +484,34 @@ fn sidecar_sections(path: Option<&Path>) -> Vec<Section> {
             let lower = name.to_ascii_lowercase();
             (lower.ends_with(".srt") || lower.ends_with(".vtt"))
                 && (name.starts_with(&format!("{stem}.")))
-                && p.metadata()
-                    .is_ok_and(|m| m.is_file() && m.len() <= MAX_SIDECAR_BYTES)
+        })
+        .filter_map(|path| {
+            // Keep the sibling name for provenance, but open only the admitted
+            // path. A refusal must never fall back to the discovered path.
+            let admitted = match &options.source_access {
+                Some(policy) => policy.admit_path(&path).ok()?,
+                None => path.clone(),
+            };
+            admitted
+                .metadata()
+                .is_ok_and(|m| m.is_file() && m.len() <= MAX_SIDECAR_BYTES)
+                .then_some((path, admitted))
         })
         .collect();
     sidecars.sort();
     sidecars
         .into_iter()
         .take(4)
-        .filter_map(|p| {
-            let text = std::fs::read(&p).ok()?;
+        .filter_map(|(p, admitted)| {
+            use std::io::Read;
+            let file = std::fs::File::open(admitted).ok()?;
+            let mut text = Vec::new();
+            file.take(MAX_SIDECAR_BYTES + 1)
+                .read_to_end(&mut text)
+                .ok()?;
+            if text.len() as u64 > MAX_SIDECAR_BYTES {
+                return None;
+            }
             let markdown = subtitles_to_markdown(&String::from_utf8_lossy(&text));
             let name = p.file_name()?.to_string_lossy().into_owned();
             (!markdown.is_empty()).then(|| Section {

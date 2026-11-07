@@ -103,6 +103,12 @@ pub struct Converted {
     pub metadata: Vec<(String, String)>,
 }
 
+/// Admission for additional local files discovered while converting a source.
+/// Implementations return the path to open, or refuse without reading its content.
+pub trait SourceAccess: std::fmt::Debug + Send + Sync {
+    fn admit_path(&self, path: &Path) -> Result<std::path::PathBuf, String>;
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Options {
     /// Base URL for resolving relative links (HTML fetched from a URL).
@@ -116,6 +122,9 @@ pub struct Options {
     pub download_asr_model: bool,
     /// Source path when the input came from disk (video/ffprobe needs a path).
     pub path: Option<std::path::PathBuf>,
+    /// Apply the caller's filesystem policy to discovered subtitle files.
+    /// `None` preserves unrestricted access for standalone converters.
+    pub source_access: Option<std::sync::Arc<dyn SourceAccess>>,
     /// Export images embedded in DOCX, PPTX and EPUB files into this store and
     /// mark them in the Markdown. `None` keeps the alt-text-only form.
     pub images: Option<images::ImageStore>,

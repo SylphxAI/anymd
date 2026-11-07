@@ -316,6 +316,7 @@ impl Opened {
                 &head,
                 &anymd_formats::Options {
                     path: Some(path.clone()),
+                    source_access: Some(Arc::new(policy.clone())),
                     transcript: options.transcript,
                     download_asr_model: options.download_asr_model,
                     ..Default::default()
@@ -886,6 +887,7 @@ fn convert_other(
             path,
             images: options.images.clone(),
             revisions: options.revisions,
+            ..Default::default()
         },
     )?;
     if vlm {
