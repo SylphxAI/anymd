@@ -18,7 +18,7 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
         let mut package = Package::open(bytes, "spreadsheet")?;
         let sizes = package.preflight()?;
         let main = package.main_part("xl/workbook.xml")?;
-        if main.ends_with(".xml") && main.starts_with("xl/") {
+        if main.ends_with(".xml") {
             let rels = package.rels(&main)?;
             if let Some(workbook) = package.xml(&main)? {
                 if let Some(sheets) = workbook.child("sheets") {
@@ -29,7 +29,18 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
                         ) {
                             sheet_bytes.insert(
                                 name.to_string(),
-                                sizes.get(&rel.target).copied().unwrap_or(0),
+                                sizes
+                                    .get(&rel.target)
+                                    .copied()
+                                    .or_else(|| {
+                                        sizes
+                                            .iter()
+                                            .find(|(name, _)| {
+                                                name.eq_ignore_ascii_case(&rel.target)
+                                            })
+                                            .map(|(_, size)| *size)
+                                    })
+                                    .unwrap_or(0),
                             );
                         }
                     }

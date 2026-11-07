@@ -74,6 +74,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         options.images.as_ref(),
         &std::collections::HashSet::new(),
     );
+    package.limits.check()?;
     let mut writer = Writer {
         failure: None,
         rels: &rels,

@@ -609,7 +609,14 @@ fn render_block(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, out: &mut Blocks, depth:
 
 fn render_inline_children(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, buf: &mut String, depth: usize) {
     for child in node.children() {
+        if ctx.failure.borrow().is_some() {
+            break;
+        }
         render_inline(child, ctx, buf, depth + 1);
+        if let Err(error) = crate::limits::check_output(buf) {
+            *ctx.failure.borrow_mut() = Some(error);
+            break;
+        }
     }
 }
 
@@ -854,7 +861,13 @@ fn render_list(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, depth: usize) -> String {
         .and_then(|s| s.trim().parse().ok())
         .unwrap_or(1);
     let mut items: Vec<String> = Vec::new();
+    let mut bytes = 0usize;
     for child in node.children() {
+        if ctx.failure.borrow().is_some() {
+            break;
+        }
+        let previous = items.last().map_or(0, String::len);
+        let count = items.len();
         if is_dropped(child, ctx) {
             continue;
         }
@@ -897,6 +910,19 @@ fn render_list(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, depth: usize) -> String {
                     items.push(indent_item("- ", &content));
                 }
             }
+        }
+        let added = if items.len() > count {
+            items.last().map_or(0, String::len).saturating_add(1)
+        } else {
+            items.last().map_or(0, String::len).saturating_sub(previous)
+        };
+        bytes = bytes.saturating_add(added);
+        if bytes.saturating_sub(1) > crate::limits::MAX_OUTPUT_BYTES {
+            *ctx.failure.borrow_mut() = Some(ConvertError::LimitExceeded {
+                resource: "output",
+                limit: crate::limits::MAX_OUTPUT_BYTES,
+            });
+            return String::new();
         }
     }
     items.join("\n")

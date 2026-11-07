@@ -233,6 +233,7 @@ fn render_slide(
     }
 
     let media = Media::load(package, &rels, images.store, images.repeated);
+    package.limits.check()?;
     let context = Context {
         failure: RefCell::new(None),
         rels: &rels,
@@ -401,6 +402,9 @@ impl Context<'_> {
         let mut list = ListIndent::default();
         let mut counters: [Option<u32>; 9] = [None; 9];
         for p in body.children_named("p") {
+            if blocks.is_full() {
+                break;
+            }
             let inline = self.paragraph(p);
             if inline.is_blank() {
                 continue;

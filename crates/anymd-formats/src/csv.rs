@@ -127,6 +127,18 @@ mod tests {
     }
 
     #[test]
+    fn ragged_padding_is_refused_before_materializing_it() {
+        let input = format!("{}v\n{}", "v,".repeat(140_000), "v\n".repeat(2000));
+        assert_eq!(
+            crate::convert(crate::Format::Csv, input.as_bytes(), &Options::default()),
+            Err(ConvertError::LimitExceeded {
+                resource: "output",
+                limit: crate::limits::MAX_OUTPUT_BYTES
+            })
+        );
+    }
+
+    #[test]
     fn quoting_pipes_and_ragged_rows() {
         let input = "\u{feff}name,note,amount\n\"Smith, J\",\"says \"\"hi\"\"\",1\nA|B,\"multi\nline\",2,extra\n,,\n";
         assert_eq!(

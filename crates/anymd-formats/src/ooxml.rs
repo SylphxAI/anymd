@@ -616,6 +616,9 @@ impl Inline {
                 }
                 _ => out.push_str(&render_emphasis(group, emphasis)),
             }
+            if out.len() > crate::limits::MAX_OUTPUT_BYTES {
+                break;
+            }
             index = end;
         }
         tidy_inline(&out)
