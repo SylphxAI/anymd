@@ -11,6 +11,7 @@ pub const MAX_INFLATED_BYTES: usize = 512 * 1024 * 1024;
 
 pub(crate) struct Limits {
     output_limit: usize,
+    inflated_limit: usize,
     inflated: usize,
     output: usize,
     // Optional metadata/media reads may ignore malformed data, but never a limit.
@@ -21,6 +22,7 @@ impl Default for Limits {
     fn default() -> Self {
         Self {
             output_limit: MAX_OUTPUT_BYTES,
+            inflated_limit: MAX_INFLATED_BYTES,
             inflated: 0,
             output: 0,
             failure: None,
@@ -37,6 +39,14 @@ impl Limits {
         }
     }
 
+    #[cfg(test)]
+    pub(crate) fn with_inflated_limit(inflated_limit: usize) -> Self {
+        Self {
+            inflated_limit,
+            ..Self::default()
+        }
+    }
+
     pub(crate) fn check(&self) -> Result<(), ConvertError> {
         self.failure.clone().map_or(Ok(()), Err)
     }
@@ -46,7 +56,7 @@ impl Limits {
         let (used, limit, resource) = if output {
             (&mut self.output, self.output_limit, "output")
         } else {
-            (&mut self.inflated, MAX_INFLATED_BYTES, "inflated input")
+            (&mut self.inflated, self.inflated_limit, "inflated input")
         };
         if bytes > limit.saturating_sub(*used) {
             let error = ConvertError::LimitExceeded { resource, limit };

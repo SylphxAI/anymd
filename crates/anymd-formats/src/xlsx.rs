@@ -11,14 +11,21 @@ use crate::ooxml::{self, Package};
 use crate::{ConvertError, Converted, Options, Section};
 
 pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertError> {
-    let mut limits = Limits::default();
+    convert_with_limits(bytes, Limits::default())
+}
+
+fn convert_with_limits(bytes: &[u8], mut limits: Limits) -> Result<Converted, ConvertError> {
     let mut sheet_bytes = HashMap::new();
     let (title, metadata) = if bytes.starts_with(b"PK\x03\x04") {
         ooxml::guard_zip(bytes)?;
         let mut package = Package::open(bytes, "spreadsheet")?;
+        package.limits = limits;
         let sizes = package.preflight()?;
+        let largest = sizes.values().copied().max().unwrap_or(0);
         let main = package.main_part("xl/workbook.xml")?;
         if main.ends_with(".xml") {
+            // Unknown parser paths get a measured upper bound, never zero.
+            sheet_bytes.insert(String::new(), largest);
             let rels = package.rels(&main)?;
             if let Some(workbook) = package.xml(&main)? {
                 if let Some(sheets) = workbook.child("sheets") {
@@ -27,8 +34,7 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
                             sheet.attr("name"),
                             sheet.rel_attr("id").and_then(|id| rels.get(id)),
                         ) {
-                            sheet_bytes.insert(
-                                name.to_string(),
+                            sheet_bytes.entry(name.to_string()).or_insert_with(|| {
                                 sizes
                                     .get(&rel.target)
                                     .copied()
@@ -40,8 +46,9 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
                                             })
                                             .map(|(_, size)| *size)
                                     })
-                                    .unwrap_or(0),
-                            );
+                                    .filter(|size| *size > 0)
+                                    .unwrap_or(largest)
+                            });
                         }
                     }
                 }
@@ -85,7 +92,13 @@ fn sheets(
         .map_err(|e| ooxml::invalid(format!("not a readable spreadsheet: {e}")))?;
     let mut sections = Vec::new();
     for name in workbook.sheet_names() {
-        limits.inflated(sheet_bytes.get(&name).copied().unwrap_or(0))?;
+        limits.inflated(
+            sheet_bytes
+                .get(&name)
+                .or_else(|| sheet_bytes.get(""))
+                .copied()
+                .unwrap_or(0),
+        )?;
         let markdown = match workbook.worksheet_range(&name) {
             Ok(range) => {
                 let mut table = CappedTable::default();
@@ -231,6 +244,52 @@ mod tests {
         assert_eq!(out.sections[1].markdown, "## Empty\n\n(empty sheet)\n");
         let big = &out.sections[2].markdown;
         assert!(big.ends_with("|2000|\n\n… 100 more rows\n"), "{big}");
+    }
+
+    #[test]
+    fn repeated_worksheet_reads_share_the_inflation_ceiling() {
+        use std::io::{Read, Write};
+        use zip::write::SimpleFileOptions;
+        let mut workbook = Workbook::new();
+        workbook.add_worksheet().write_string(0, 0, "a").unwrap();
+        let original = workbook.save_to_buffer().unwrap();
+        let mut source = zip::ZipArchive::new(Cursor::new(&original)).unwrap();
+        let mut target = zip::ZipWriter::new(Cursor::new(Vec::new()));
+        for index in 0..source.len() {
+            let mut entry = source.by_index(index).unwrap();
+            let name = entry.name().unwrap().to_string();
+            let mut content = String::new();
+            entry.read_to_string(&mut content).unwrap();
+            if name == "xl/workbook.xml" {
+                let (before, rest) = content.split_once("<sheets>").unwrap();
+                let (_, after) = rest.split_once("</sheets>").unwrap();
+                let sheets: String = (0..257)
+                    .map(|n| format!("<sheet name='Part{n}' sheetId='{}' r:id='rId1'/>", n + 1))
+                    .collect();
+                content = format!("{before}<sheets>{sheets}</sheets>{after}");
+            } else if name == "xl/worksheets/sheet1.xml" {
+                content = content.replace(
+                    "</worksheet>",
+                    &format!("<!--{}--></worksheet>", "a".repeat(64 * 1024)),
+                );
+            }
+            target
+                .start_file(
+                    name,
+                    SimpleFileOptions::default()
+                        .compression_method(zip::CompressionMethod::Deflated),
+                )
+                .unwrap();
+            target.write_all(content.as_bytes()).unwrap();
+        }
+        let bytes = target.finish().unwrap().into_inner();
+        assert_eq!(
+            convert_with_limits(&bytes, Limits::with_inflated_limit(16 * 1024 * 1024)),
+            Err(ConvertError::LimitExceeded {
+                resource: "inflated input",
+                limit: 16 * 1024 * 1024
+            })
+        );
     }
 
     #[test]
