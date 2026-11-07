@@ -192,6 +192,7 @@ jobs:
           key: conversion-limits
       - name: Check bounded conversion and chapter controls
         run: |
+          cargo test --locked -p anymd-formats --no-default-features --test office_samples conversion_envelope -- --nocapture
           cargo test --locked -p anymd-formats --no-default-features --lib pptx::tests
           cargo test --locked -p anymd-formats --no-default-features --lib epub::tests
 
