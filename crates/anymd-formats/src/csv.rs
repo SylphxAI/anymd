@@ -70,10 +70,10 @@ impl CappedTable {
                 .bytes
                 .saturating_add(row.iter().map(String::len).sum::<usize>());
             if self.bytes > crate::limits::MAX_OUTPUT_BYTES {
-                return Err(ConvertError::LimitExceeded {
-                    resource: "output",
-                    limit: crate::limits::MAX_OUTPUT_BYTES,
-                });
+                return Err(ConvertError::limit(
+                    "output",
+                    crate::limits::MAX_OUTPUT_BYTES,
+                ));
             }
             self.rows.push(row);
         }
@@ -131,10 +131,10 @@ mod tests {
         let input = format!("{}v\n{}", "v,".repeat(140_000), "v\n".repeat(2000));
         assert_eq!(
             crate::convert(crate::Format::Csv, input.as_bytes(), &Options::default()),
-            Err(ConvertError::LimitExceeded {
-                resource: "output",
-                limit: crate::limits::MAX_OUTPUT_BYTES
-            })
+            Err(ConvertError::limit(
+                "output",
+                crate::limits::MAX_OUTPUT_BYTES
+            ))
         );
     }
 

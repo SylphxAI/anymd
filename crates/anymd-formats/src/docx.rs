@@ -9,6 +9,14 @@ use crate::revise;
 use crate::{bounded_markdown_table, ConvertError, Converted, Options, Revisions, Section};
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
+    convert_with_output_limit(bytes, options, crate::limits::MAX_OUTPUT_BYTES)
+}
+
+fn convert_with_output_limit(
+    bytes: &[u8],
+    options: &Options,
+    output_limit: usize,
+) -> Result<Converted, ConvertError> {
     let mut package = Package::open(bytes, "DOCX")?;
     let main = package.main_part("word/document.xml")?;
     let document = package
@@ -117,19 +125,24 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             .values()
             .any(|note| has_markup(note, &writer.comments));
     let body = document.child("body").unwrap_or(&document);
-    let mut blocks = Blocks::new();
+    // Reserve the final newline before any body or definition is retained.
+    let mut blocks = Blocks::with_limit(output_limit.saturating_sub(1));
     let mut list = ListIndent::default();
     writer.blocks(body, &mut blocks, &mut list);
     // Notes of ranges that ended after the last paragraph.
     let trailing = writer.take_notes();
     blocks.push(&trailing, false);
 
+    if let Some(error) = writer.failure.take() {
+        return Err(error);
+    }
+    let mut markdown = blocks.finish()?;
+
     // Footnotes and endnotes, numbered in reference order. A comment range the
     // body never closed does not run on into them.
     writer.open_comments.clear();
     let mut index = 0;
-    let mut defs = Vec::new();
-    let mut definition_bytes = 0usize;
+    let mut has_definitions = false;
     while index < writer.note_refs.len() {
         let key = writer.note_refs[index].clone();
         // A note whose reference was inserted or deleted was inserted or
@@ -141,38 +154,45 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         };
         let around = std::mem::replace(&mut writer.revisions, changes);
         writer.lead = Some(format!("[^{index}]: "));
-        let parts = note
-            .children_named("p")
-            .map(|p| {
-                let inline = writer.paragraph_inline(p).0.into_inline();
-                (
-                    inline.render(true).replace('\n', " "),
-                    paragraph_mark(p),
-                    inline.edges(),
-                )
-            })
-            .collect();
+        // A first definition needs two separating newlines; subsequent ones
+        // need one. The final document newline was reserved above. There is no
+        // second output budget for notes, regardless of their source part.
+        let separator = if has_definitions { "\n" } else { "\n\n" };
+        let remaining = output_limit
+            .saturating_sub(markdown.len())
+            .saturating_sub(separator.len() + 1);
+        let mut definition = critic::Marked::new(" ", remaining);
+        for p in note.children_named("p") {
+            let inline = writer.paragraph_inline(p).0.into_inline();
+            definition.push((
+                inline.render(true).replace('\n', " "),
+                paragraph_mark(p),
+                inline.edges(),
+            ))?;
+        }
         writer.revisions = around;
+        if let Some(error) = writer.failure.take() {
+            return Err(error);
+        }
         // Still set: no paragraph had text, so there is no note.
         if writer.lead.take().is_none() {
-            let definition = critic::join_marked(parts, " ");
-            definition_bytes = definition_bytes.saturating_add(definition.len() + 1);
-            if definition_bytes > crate::limits::MAX_OUTPUT_BYTES {
-                return Err(ConvertError::LimitExceeded {
-                    resource: "output",
-                    limit: crate::limits::MAX_OUTPUT_BYTES,
-                });
+            let definition = definition.finish();
+            if markdown
+                .len()
+                .saturating_add(separator.len())
+                .saturating_add(definition.len())
+                .saturating_add(1)
+                > output_limit
+            {
+                return Err(ConvertError::limit(
+                    "output",
+                    crate::limits::MAX_OUTPUT_BYTES,
+                ));
             }
-            defs.push(definition);
+            markdown.push_str(separator);
+            markdown.push_str(&definition);
+            has_definitions = true;
         }
-    }
-    if let Some(error) = writer.failure.take() {
-        return Err(error);
-    }
-    let mut markdown = blocks.finish()?;
-    if !defs.is_empty() {
-        markdown.push_str("\n\n");
-        markdown.push_str(&defs.join("\n"));
     }
     if !markdown.is_empty() {
         markdown.push('\n');
@@ -1344,6 +1364,96 @@ mod tests {
 
     fn r(text: &str) -> String {
         format!(r#"<w:r><w:t xml:space="preserve">{text}</w:t></w:r>"#)
+    }
+
+    #[test]
+    fn body_and_all_definition_parts_share_one_output_ceiling() {
+        let body = p(
+            "",
+            &format!(
+                "{}<w:r><w:footnoteReference w:id='1'/><w:endnoteReference w:id='2'/></w:r>{}",
+                r(&"a".repeat(64)),
+                reference("0")
+            ),
+        );
+        let footnotes = format!(
+            "<w:footnotes {W}><w:footnote w:id='1'>{}</w:footnote></w:footnotes>",
+            p("", &r(&"f".repeat(40)))
+        );
+        let endnotes = format!(
+            "<w:endnotes {W}><w:endnote w:id='2'>{}</w:endnote></w:endnotes>",
+            p("", &r(&"e".repeat(40)))
+        );
+        let comments = comments(&[("0", "", "", &p("", &r(&"c".repeat(16))))]);
+        let bytes = docx(
+            &body,
+            &[
+                ("word/footnotes.xml", &footnotes),
+                ("word/endnotes.xml", &endnotes),
+                ("word/comments.xml", &comments),
+            ],
+        );
+        let expected = format!(
+            "{}[^1][^2]{{>>{}<<}}\n\n[^1]: {}\n[^2]: {}\n",
+            "a".repeat(64),
+            "c".repeat(16),
+            "f".repeat(40),
+            "e".repeat(40)
+        );
+        assert_eq!(md(&bytes), expected);
+        assert_eq!(
+            convert_with_output_limit(&bytes, &Options::default(), expected.len())
+                .unwrap()
+                .sections[0]
+                .markdown,
+            expected
+        );
+        assert_eq!(
+            convert_with_output_limit(&bytes, &Options::default(), expected.len() - 1)
+                .unwrap_err()
+                .limit_exceeded(),
+            Some(crate::ConversionLimit {
+                resource: "output",
+                limit: crate::limits::MAX_OUTPUT_BYTES
+            })
+        );
+        // Body (including the comment) and definitions each fit independently;
+        // the old two-budget implementation would retain their oversized sum.
+        assert_eq!(
+            convert_with_output_limit(&bytes, &Options::default(), 128)
+                .unwrap_err()
+                .limit_exceeded()
+                .unwrap()
+                .resource,
+            "output"
+        );
+    }
+
+    #[test]
+    fn a_large_body_cannot_get_a_second_budget_for_footnotes() {
+        let body = p(
+            "",
+            &format!(
+                "{}<w:r><w:footnoteReference w:id='1'/></w:r>",
+                r(&"a".repeat(80))
+            ),
+        );
+        let notes = format!(
+            "<w:footnotes {W}><w:footnote w:id='1'>{}{}</w:footnote></w:footnotes>",
+            p("", &r(&"b".repeat(40))),
+            p("", &r(&"c".repeat(40)))
+        );
+        let bytes = docx(&body, &[("word/footnotes.xml", &notes)]);
+        assert_eq!(
+            convert_with_output_limit(&bytes, &Options::default(), 128)
+                .unwrap_err()
+                .limit_exceeded()
+                .unwrap()
+                .resource,
+            "output"
+        );
+        let bytes = docx(&p("", &r(&"a".repeat(80))), &[]);
+        assert!(convert_with_output_limit(&bytes, &Options::default(), 128).is_ok());
     }
 
     #[test]

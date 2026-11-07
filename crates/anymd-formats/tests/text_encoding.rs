@@ -200,3 +200,37 @@ fn detection_head_can_end_mid_codepoint_without_corrupting_conversion() {
         }
     }
 }
+
+// Downstream exhaustive matches are a public API contract too. Do not add a
+// resource-limit enum variant (or non_exhaustive) in a patch release.
+#[test]
+fn public_convert_error_exhaustive_match_remains_source_compatible() {
+    fn message(error: anymd_formats::ConvertError) -> String {
+        match error {
+            anymd_formats::ConvertError::Invalid(message) => message,
+            anymd_formats::ConvertError::Unsupported(message) => message,
+        }
+    }
+    assert_eq!(
+        message(anymd_formats::ConvertError::Invalid("invalid".into())),
+        "invalid"
+    );
+    assert_eq!(
+        message(anymd_formats::ConvertError::Unsupported(
+            "unsupported".into()
+        )),
+        "unsupported"
+    );
+    let error =
+        anymd_formats::ConvertError::Invalid("conversion output exceeds 268435456 bytes".into());
+    assert_eq!(
+        error.limit_exceeded(),
+        Some(anymd_formats::ConversionLimit {
+            resource: "output",
+            limit: 268_435_456
+        })
+    );
+    assert!(anymd_formats::ConvertError::Invalid("not a limit".into())
+        .limit_exceeded()
+        .is_none());
+}

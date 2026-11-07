@@ -192,7 +192,8 @@ jobs:
           key: conversion-limits
       - name: Check bounded conversion and chapter controls
         run: |
-          cargo test --locked -p anymd-formats --no-default-features --test office_samples conversion_envelope -- --nocapture
+          cargo test --locked -p anymd-formats --no-default-features --test office_samples -- --nocapture
+          cargo test --locked -p anymd-formats --no-default-features --test text_encoding public_
           for module in limits ooxml epub pptx docx html csv xlsx; do
             cargo test --locked -p anymd-formats --no-default-features --lib "$module::tests"
           done

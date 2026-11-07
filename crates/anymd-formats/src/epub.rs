@@ -692,10 +692,7 @@ pub(crate) mod tests {
         let error = crate::convert(crate::Format::Epub, &epub, &Options::default()).unwrap_err();
         assert_eq!(
             error,
-            ConvertError::LimitExceeded {
-                resource: "output",
-                limit: crate::limits::MAX_OUTPUT_BYTES
-            }
+            ConvertError::limit("output", crate::limits::MAX_OUTPUT_BYTES)
         );
         println!(
             "PRODUCTION_BOUND input={} elapsed={:?} error={error}",

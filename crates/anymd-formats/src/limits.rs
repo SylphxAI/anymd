@@ -59,7 +59,7 @@ impl Limits {
             (&mut self.inflated, self.inflated_limit, "inflated input")
         };
         if bytes > limit.saturating_sub(*used) {
-            let error = ConvertError::LimitExceeded { resource, limit };
+            let error = ConvertError::limit(resource, limit);
             self.failure = Some(error.clone());
             return Err(error);
         }
@@ -110,10 +110,7 @@ mod tests {
         let mut limits = Limits::default();
         limits.charge(MAX_INFLATED_BYTES - 1, false).unwrap();
         limits.charge(1, false).unwrap();
-        let error = ConvertError::LimitExceeded {
-            resource: "inflated input",
-            limit: MAX_INFLATED_BYTES,
-        };
+        let error = ConvertError::limit("inflated input", MAX_INFLATED_BYTES);
         assert_eq!(limits.charge(1, false), Err(error.clone()));
         assert_eq!(limits.read(&b""[..]), Err(error.clone()));
         assert_eq!(limits.check(), Err(error));
@@ -123,10 +120,7 @@ mod tests {
         limits.output("a").unwrap();
         assert_eq!(
             limits.output("b"),
-            Err(ConvertError::LimitExceeded {
-                resource: "output",
-                limit: MAX_OUTPUT_BYTES,
-            })
+            Err(ConvertError::limit("output", MAX_OUTPUT_BYTES))
         );
     }
 
@@ -135,12 +129,9 @@ mod tests {
         let mut limits = Limits::default();
         limits.charge(MAX_INFLATED_BYTES - 3, false).unwrap();
         assert_eq!(limits.read(&b"ab"[..]).unwrap(), b"ab");
-        assert!(matches!(
+        assert_eq!(
             limits.read(&b"ab"[..]),
-            Err(ConvertError::LimitExceeded {
-                resource: "inflated input",
-                ..
-            })
-        ));
+            Err(ConvertError::limit("inflated input", MAX_INFLATED_BYTES))
+        );
     }
 }
