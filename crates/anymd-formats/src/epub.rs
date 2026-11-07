@@ -4,12 +4,13 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::io::{Cursor, Read};
 
-use quick_xml::Reader;
 use quick_xml::events::Event;
+use quick_xml::Reader;
 use zip::ZipArchive;
 
-use crate::html::{RenderOptions, render_html};
+use crate::html::{render_html, RenderOptions};
 use crate::images::{self, Embed, ImageStore};
+use crate::limits::Limits;
 use crate::{ConvertError, Converted, Options, Section};
 
 const MAX_ENTRIES: usize = 10_000;
@@ -17,6 +18,14 @@ const MAX_TOTAL_UNCOMPRESSED: u64 = 200 * 1024 * 1024;
 const MAX_ENTRY_BYTES: u64 = 50 * 1024 * 1024;
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
+    convert_with_limits(bytes, options, crate::limits::Limits::default())
+}
+
+fn convert_with_limits(
+    bytes: &[u8],
+    options: &Options,
+    limits: crate::limits::Limits,
+) -> Result<Converted, ConvertError> {
     let mut archive = ZipArchive::new(Cursor::new(bytes))
         .map_err(|e| ConvertError::Invalid(format!("not a valid EPUB zip: {e}")))?;
     if archive.len() > MAX_ENTRIES {
@@ -38,12 +47,17 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         )));
     }
 
+    let mut archive = Archive {
+        zip: archive,
+        limits,
+    };
     let opf_path = match read_entry(&mut archive, "META-INF/container.xml") {
         Ok(container) => rootfile_path(&container),
         Err(_) => None,
     }
     .or_else(|| {
         archive
+            .zip
             .file_names()
             .filter_map(|name| name.ok())
             .find(|n| n.to_ascii_lowercase().ends_with(".opf"))
@@ -54,8 +68,8 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     let package = parse_opf(&opf)?;
     let opf_dir = opf_path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
 
-    // Chapters in reading order: the archive path of each and its XHTML.
-    let mut chapters: Vec<(String, String)> = Vec::new();
+    // Retain paths, not one inflated copy per spine reference.
+    let mut chapters: Vec<String> = Vec::new();
     for idref in &package.spine {
         let Some(item) = package.manifest.get(idref) else {
             continue;
@@ -69,10 +83,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             opf_dir,
             &percent_decode(item.href.split('#').next().unwrap_or("")),
         );
-        let Ok(xhtml) = read_entry(&mut archive, &path) else {
-            continue;
-        };
-        chapters.push((path, xhtml));
+        chapters.push(path);
     }
 
     let store = options.images.as_ref();
@@ -82,9 +93,18 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         Some(_) => repeated_pictures(&archive, &chapters),
         None => HashSet::new(),
     };
+    archive.borrow().limits.check()?;
     let mut sections = Vec::new();
     let mut section_paths = Vec::new();
-    for (path, xhtml) in &chapters {
+    for path in &chapters {
+        let result = read_entry(&mut archive.borrow_mut(), path);
+        let xhtml = match result {
+            Ok(xhtml) => xhtml,
+            Err(_) => {
+                archive.borrow().limits.check()?;
+                continue;
+            }
+        };
         let number = sections.len() + 1;
         let place = format!("chapter {number}");
         let dir = path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
@@ -99,7 +119,8 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             select_main: false,
             images: store.map(|_| decide),
         };
-        let markdown = render_html(xhtml, &render);
+        let markdown = render_html(&xhtml, &render)?;
+        archive.borrow_mut().limits.output(&markdown)?;
         if !has_text(&markdown) && !markdown.contains("<!-- image:") {
             continue;
         }
@@ -115,6 +136,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     }
 
     let outline = native_outline(&archive, &package, opf_dir, &section_paths);
+    archive.borrow().limits.check()?;
     let mut metadata = Vec::new();
     if !package.creators.is_empty() {
         metadata.push(("author".to_string(), package.creators.join("; ")));
@@ -307,21 +329,20 @@ fn native_outline(
     Vec::new()
 }
 
-fn read_entry(archive: &mut ZipArchive<Cursor<&[u8]>>, name: &str) -> Result<String, ConvertError> {
+fn read_entry(archive: &mut Archive<'_>, name: &str) -> Result<String, ConvertError> {
     let buf = read_entry_bytes(archive, name)?;
     let buf = buf.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(&buf);
     Ok(String::from_utf8_lossy(buf).into_owned())
 }
 
-fn read_entry_bytes(
-    archive: &mut ZipArchive<Cursor<&[u8]>>,
-    name: &str,
-) -> Result<Vec<u8>, ConvertError> {
-    let resolved = if archive.index_for_name(name).is_some() {
+fn read_entry_bytes(archive: &mut Archive<'_>, name: &str) -> Result<Vec<u8>, ConvertError> {
+    archive.limits.check()?;
+    let resolved = if archive.zip.index_for_name(name).is_some() {
         name.to_string()
     } else {
         // Some producers get case wrong; fall back to a case-insensitive match.
         archive
+            .zip
             .file_names()
             .filter_map(|name| name.ok())
             .find(|n| n.eq_ignore_ascii_case(name))
@@ -329,13 +350,10 @@ fn read_entry_bytes(
             .ok_or_else(|| ConvertError::Invalid(format!("EPUB entry {name} is missing")))?
     };
     let entry = archive
+        .zip
         .by_name(&resolved)
         .map_err(|e| ConvertError::Invalid(format!("EPUB entry {name}: {e}")))?;
-    let mut buf = Vec::new();
-    entry
-        .take(MAX_ENTRY_BYTES + 1)
-        .read_to_end(&mut buf)
-        .map_err(|e| ConvertError::Invalid(format!("EPUB entry {name}: {e}")))?;
+    let buf = archive.limits.read(entry.take(MAX_ENTRY_BYTES + 1))?;
     if buf.len() as u64 > MAX_ENTRY_BYTES {
         return Err(ConvertError::Invalid(format!(
             "EPUB entry {name} is too large"
@@ -344,7 +362,12 @@ fn read_entry_bytes(
     Ok(buf)
 }
 
-type SharedArchive<'a> = RefCell<ZipArchive<Cursor<&'a [u8]>>>;
+struct Archive<'a> {
+    zip: ZipArchive<Cursor<&'a [u8]>>,
+    limits: Limits,
+}
+
+type SharedArchive<'a> = RefCell<Archive<'a>>;
 
 /// The bytes of the image an `<img src>` in a chapter in `dir` names.
 fn chapter_bytes(archive: &SharedArchive<'_>, dir: &str, src: &str) -> Option<Vec<u8>> {
@@ -372,9 +395,19 @@ fn chapter_image(
 }
 
 /// Pictures that appear in three or more chapters: ornaments and publisher marks.
-fn repeated_pictures(archive: &SharedArchive<'_>, chapters: &[(String, String)]) -> HashSet<u64> {
+fn repeated_pictures(archive: &SharedArchive<'_>, chapters: &[String]) -> HashSet<u64> {
     let mut counts: HashMap<u64, usize> = HashMap::new();
-    for (path, xhtml) in chapters {
+    for path in chapters {
+        let result = read_entry(&mut archive.borrow_mut(), path);
+        let xhtml = match result {
+            Ok(xhtml) => xhtml,
+            Err(_) => {
+                if archive.borrow().limits.check().is_err() {
+                    break;
+                }
+                continue;
+            }
+        };
         let dir = path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
         let found = RefCell::new(HashSet::new());
         let collect = |src: &str, _alt: &str| {
@@ -390,7 +423,13 @@ fn repeated_pictures(archive: &SharedArchive<'_>, chapters: &[(String, String)])
             select_main: false,
             images: Some(collect),
         };
-        render_html(xhtml, &render);
+        // Prepass reads share the same cumulative container accounting.
+        if render_html(&xhtml, &render).is_err() {
+            break;
+        }
+        if archive.borrow().limits.check().is_err() {
+            break;
+        }
         for key in found.into_inner() {
             *counts.entry(key).or_default() += 1;
         }
@@ -623,7 +662,11 @@ pub(crate) mod tests {
     #[test]
     fn cumulative_output_limit() {
         let epub = repeated_book(64 * 1024, 257);
-        let error = match convert(&epub, &Options::default()) {
+        let error = match convert_with_limits(
+            &epub,
+            &Options::default(),
+            crate::limits::Limits::with_output_limit(16 * 1024 * 1024),
+        ) {
             Err(error) => error,
             Ok(converted) => panic!(
                 "conversion exceeded the ceiling: {} input bytes produced {} Markdown bytes",
@@ -639,6 +682,62 @@ pub(crate) mod tests {
             error.to_string(),
             "conversion output exceeds 16777216 bytes"
         );
+    }
+
+    #[test]
+    #[ignore = "measured separately in the conversion limits CI job"]
+    fn production_cumulative_output_limit() {
+        let epub = repeated_book(64 * 1024, 4097);
+        let started = std::time::Instant::now();
+        let error = crate::convert(crate::Format::Epub, &epub, &Options::default()).unwrap_err();
+        assert_eq!(
+            error,
+            ConvertError::LimitExceeded {
+                resource: "output",
+                limit: crate::limits::MAX_OUTPUT_BYTES
+            }
+        );
+        println!(
+            "PRODUCTION_BOUND input={} elapsed={:?} error={error}",
+            epub.len(),
+            started.elapsed()
+        );
+    }
+
+    #[test]
+    fn large_distinct_chapters_keep_their_bytes() {
+        let text = "a".repeat(1024 * 1024);
+        let mut manifest = String::new();
+        let mut spine = String::new();
+        let mut chapters = Vec::new();
+        for n in 0..32 {
+            manifest.push_str(&format!(
+                "<item id='c{n}' href='c{n}.xhtml' media-type='application/xhtml+xml'/>"
+            ));
+            spine.push_str(&format!("<itemref idref='c{n}'/>"));
+            chapters.push((format!("OEBPS/c{n}.xhtml"), format!("<p>{n} {text}</p>")));
+        }
+        let opf =
+            format!("<package><manifest>{manifest}</manifest><spine>{spine}</spine></package>");
+        let mut files = vec![
+            ("META-INF/container.xml", CONTAINER),
+            ("OEBPS/content.opf", &opf),
+        ];
+        files.extend(
+            chapters
+                .iter()
+                .map(|(name, body)| (name.as_str(), body.as_str())),
+        );
+        let converted = crate::convert(
+            crate::Format::Epub,
+            &build_epub(&files),
+            &Options::default(),
+        )
+        .unwrap();
+        assert_eq!(converted.sections.len(), 32);
+        for (n, section) in converted.sections.iter().enumerate() {
+            assert_eq!(section.markdown, format!("{n} {text}"));
+        }
     }
 
     #[test]

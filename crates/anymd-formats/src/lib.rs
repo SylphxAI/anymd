@@ -15,6 +15,7 @@ pub mod epub;
 pub mod html;
 pub mod image;
 pub mod images;
+pub mod limits;
 pub mod pptx;
 mod revise;
 #[cfg(feature = "native")]
@@ -150,6 +151,11 @@ impl Revisions {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConvertError {
+    /// Conversion stopped at a cumulative resource ceiling.
+    LimitExceeded {
+        resource: &'static str,
+        limit: usize,
+    },
     /// The bytes are not a valid instance of the format.
     Invalid(String),
     /// The format needs a tool or feature that is not available here.
@@ -160,6 +166,9 @@ impl std::fmt::Display for ConvertError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Invalid(message) | Self::Unsupported(message) => f.write_str(message),
+            Self::LimitExceeded { resource, limit } => {
+                write!(f, "conversion {resource} exceeds {limit} bytes")
+            }
         }
     }
 }
@@ -337,7 +346,7 @@ fn sniff_zip(head: &[u8]) -> Option<Format> {
 
 /// Convert a non-PDF input. PDF is handled by the PDF engine, not this crate.
 pub fn convert(format: Format, bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
-    match format {
+    let converted = match format {
         Format::Docx => docx::convert(bytes, options),
         Format::Pptx => pptx::convert(bytes, options),
         Format::Xlsx => xlsx::convert(bytes, options),
@@ -370,7 +379,12 @@ pub fn convert(format: Format, bytes: &[u8], options: &Options) -> Result<Conver
         Format::Pdf => Err(ConvertError::Unsupported(
             "PDF is converted by the PDF engine, not anymd-formats".into(),
         )),
+    }?;
+    let mut limits = limits::Limits::default();
+    for section in &converted.sections {
+        limits.output(&section.markdown)?;
     }
+    Ok(converted)
 }
 
 /// Escape a table cell for a Markdown pipe table.
@@ -386,18 +400,50 @@ pub fn table_cell(value: &str) -> String {
 
 /// Render rows as a Markdown pipe table; the first row is the header.
 pub fn markdown_table(rows: &[Vec<String>]) -> String {
+    render_markdown_table(rows, None).expect("unlimited table")
+}
+
+pub(crate) fn bounded_markdown_table(rows: &[Vec<String>]) -> Result<String, ConvertError> {
+    render_markdown_table(rows, Some(limits::MAX_OUTPUT_BYTES))
+}
+
+fn render_markdown_table(
+    rows: &[Vec<String>],
+    limit: Option<usize>,
+) -> Result<String, ConvertError> {
     let width = rows.iter().map(Vec::len).max().unwrap_or(0);
     if width == 0 {
-        return String::new();
+        return Ok(String::new());
     }
     let mut out = String::new();
+    // A ragged table can expand quadratically through empty-cell padding.
+    // Refuse that expansion before iterating over the missing cells.
+    if let Some(limit) = limit {
+        let minimum = width
+            .saturating_add(2)
+            .saturating_mul(rows.len())
+            .saturating_add(width.saturating_mul(2).saturating_add(2));
+        if minimum > limit {
+            return Err(ConvertError::LimitExceeded {
+                resource: "output",
+                limit,
+            });
+        }
+    }
     for (index, row) in rows.iter().enumerate() {
         // Compact pipe tables: padding spaces cost ~20% more tokens.
         out.push('|');
         for column in 0..width {
-            out.push_str(&table_cell(
-                row.get(column).map(String::as_str).unwrap_or(""),
-            ));
+            let cell = table_cell(row.get(column).map(String::as_str).unwrap_or(""));
+            if let Some(limit) = limit {
+                if cell.len() > limit.saturating_sub(out.len()) {
+                    return Err(ConvertError::LimitExceeded {
+                        resource: "output",
+                        limit,
+                    });
+                }
+            }
+            out.push_str(&cell);
             out.push('|');
         }
         out.push('\n');
@@ -409,5 +455,8 @@ pub fn markdown_table(rows: &[Vec<String>]) -> String {
             out.push('\n');
         }
     }
-    out
+    if limit.is_some() {
+        limits::check_output(&out)?;
+    }
+    Ok(out)
 }

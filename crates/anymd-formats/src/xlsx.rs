@@ -1,5 +1,7 @@
 //! XLSX/XLS/XLSB/ODS → Markdown: one table per sheet via calamine.
 
+use crate::limits::Limits;
+use std::collections::HashMap;
 use std::io::Cursor;
 
 use calamine::{Data, Reader};
@@ -9,18 +11,51 @@ use crate::ooxml::{self, Package};
 use crate::{ConvertError, Converted, Options, Section};
 
 pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertError> {
+    let mut limits = Limits::default();
+    let mut sheet_bytes = HashMap::new();
     let (title, metadata) = if bytes.starts_with(b"PK\x03\x04") {
         ooxml::guard_zip(bytes)?;
-        match Package::open(bytes, "spreadsheet") {
-            Ok(mut package) => ooxml::core_properties(&mut package),
-            Err(_) => (None, Vec::new()),
+        let mut package = Package::open(bytes, "spreadsheet")?;
+        let sizes = package.preflight()?;
+        let main = package.main_part("xl/workbook.xml")?;
+        if main.ends_with(".xml") && main.starts_with("xl/") {
+            let rels = package.rels(&main)?;
+            if let Some(workbook) = package.xml(&main)? {
+                if let Some(sheets) = workbook.child("sheets") {
+                    for sheet in sheets.children_named("sheet") {
+                        if let (Some(name), Some(rel)) = (
+                            sheet.attr("name"),
+                            sheet.rel_attr("id").and_then(|id| rels.get(id)),
+                        ) {
+                            sheet_bytes.insert(
+                                name.to_string(),
+                                sizes.get(&rel.target).copied().unwrap_or(0),
+                            );
+                        }
+                    }
+                }
+            }
         }
+        // Reserve the parser's initialization reads (shared strings, styles,
+        // workbook metadata). Each worksheet is charged before its own read.
+        let initialization = sizes
+            .iter()
+            .filter(|(name, _)| !name.starts_with("xl/worksheets/"))
+            .map(|(_, bytes)| *bytes)
+            .sum::<usize>();
+        package.limits.inflated(initialization)?;
+        let properties = ooxml::core_properties(&mut package);
+        package.limits.check()?;
+        limits = package.limits;
+        properties
     } else {
         (None, Vec::new())
     };
     // calamine is third-party parsing of hostile input: contain any panic.
-    let sections = std::panic::catch_unwind(|| sheets(bytes))
-        .map_err(|_| ooxml::invalid("spreadsheet parser failed on malformed input"))??;
+    let sections = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        sheets(bytes, &mut limits, &sheet_bytes)
+    }))
+    .map_err(|_| ooxml::invalid("spreadsheet parser failed on malformed input"))??;
     Ok(Converted {
         outline: Vec::new(),
         format: "xlsx".into(),
@@ -30,11 +65,16 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
     })
 }
 
-fn sheets(bytes: &[u8]) -> Result<Vec<Section>, ConvertError> {
+fn sheets(
+    bytes: &[u8],
+    limits: &mut Limits,
+    sheet_bytes: &HashMap<String, usize>,
+) -> Result<Vec<Section>, ConvertError> {
     let mut workbook = calamine::open_workbook_auto_from_rs(Cursor::new(bytes))
         .map_err(|e| ooxml::invalid(format!("not a readable spreadsheet: {e}")))?;
     let mut sections = Vec::new();
     for name in workbook.sheet_names() {
+        limits.inflated(sheet_bytes.get(&name).copied().unwrap_or(0))?;
         let markdown = match workbook.worksheet_range(&name) {
             Ok(range) => {
                 let mut table = CappedTable::default();
@@ -45,10 +85,10 @@ fn sheets(bytes: &[u8]) -> Result<Vec<Section>, ConvertError> {
                                 .any(|c| !matches!(c, Data::Empty) && !cell(c).trim().is_empty()),
                         );
                     } else {
-                        table.push(row.iter().map(cell).collect());
+                        table.push(row.iter().map(cell).collect())?;
                     }
                 }
-                table.finish()
+                table.finish()?
             }
             // Chart sheets and dialog sheets have no cell grid.
             Err(_) => String::new(),
@@ -69,6 +109,7 @@ fn sheets(bytes: &[u8]) -> Result<Vec<Section>, ConvertError> {
         } else {
             format!("## {name}\n\n{markdown}")
         };
+        limits.output(&markdown)?;
         sections.push(Section {
             label: format!("sheet {name}"),
             markdown,
@@ -179,6 +220,25 @@ mod tests {
         assert_eq!(out.sections[1].markdown, "## Empty\n\n(empty sheet)\n");
         let big = &out.sections[2].markdown;
         assert!(big.ends_with("|2000|\n\n… 100 more rows\n"), "{big}");
+    }
+
+    #[test]
+    fn large_sheet_keeps_its_cells() {
+        let mut workbook = Workbook::new();
+        let sheet = workbook.add_worksheet();
+        let text = "a".repeat(32_760);
+        for row in 0..1025 {
+            sheet.write_string(row, 0, &text).unwrap();
+        }
+        let out = crate::convert(
+            crate::Format::Xlsx,
+            &workbook.save_to_buffer().unwrap(),
+            &Options::default(),
+        )
+        .unwrap();
+        let markdown = &out.sections[0].markdown;
+        assert!(markdown.len() > 32 * 1024 * 1024);
+        assert_eq!(markdown.matches(&text).count(), 1025);
     }
 
     #[test]

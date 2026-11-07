@@ -193,8 +193,14 @@ jobs:
       - name: Check bounded conversion and chapter controls
         run: |
           cargo test --locked -p anymd-formats --no-default-features --test office_samples conversion_envelope -- --nocapture
-          cargo test --locked -p anymd-formats --no-default-features --lib pptx::tests
-          cargo test --locked -p anymd-formats --no-default-features --lib epub::tests
+          cargo test --locked -p anymd-formats --no-default-features --lib
+      - name: Measure the production conversion ceiling
+        run: |
+          cargo test --locked -p anymd-formats --no-default-features --lib --no-run --message-format=json > /tmp/conversion-tests.json
+          binary=$(python3 -c 'import json; print(next(x["executable"] for line in open("/tmp/conversion-tests.json") if (x := json.loads(line)).get("executable") and x.get("profile", {}).get("test")))')
+          /usr/bin/time -v "$binary" epub::tests::production_cumulative_output_limit --exact --ignored --nocapture
+      - name: Check production library compilation
+        run: cargo check --locked -p anymd-formats --no-default-features
 
   security-secrets:
     name: security:secrets

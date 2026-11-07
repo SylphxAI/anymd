@@ -5,6 +5,8 @@
 //! class, relative-URL resolution, and pipe tables built from block-level
 //! cells, which a generic rule set does not give.
 
+use std::cell::RefCell;
+
 use ego_tree::NodeRef;
 use scraper::{Html, Node};
 use url::Url;
@@ -28,7 +30,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             select_main: true,
             images: None,
         },
-    );
+    )?;
     let mut metadata = Vec::new();
     if let Some(description) = head.description {
         metadata.push(("description".to_string(), description));
@@ -65,7 +67,7 @@ pub(crate) struct RenderOptions<'a> {
 }
 
 /// Markdown for an already-decoded HTML/XHTML document.
-pub(crate) fn render_html(text: &str, options: &RenderOptions<'_>) -> String {
+pub(crate) fn render_html(text: &str, options: &RenderOptions<'_>) -> Result<String, ConvertError> {
     render_document(&Html::parse_document(&expand_self_closing(text)), options)
 }
 
@@ -190,7 +192,7 @@ fn resolve_base(base_url: Option<&str>, base_href: Option<&str>) -> Option<Url> 
     }
 }
 
-fn render_document(doc: &Html, options: &RenderOptions<'_>) -> String {
+fn render_document(doc: &Html, options: &RenderOptions<'_>) -> Result<String, ConvertError> {
     let root = doc.tree.root();
     let body = root
         .descendants()
@@ -202,13 +204,19 @@ fn render_document(doc: &Html, options: &RenderOptions<'_>) -> String {
         body
     };
     let ctx = Ctx {
+        failure: RefCell::new(None),
         options,
         root_text: text_len(content).max(1),
         root: content.id(),
     };
     let mut out = Blocks::default();
     render_block(content, &ctx, &mut out, 0);
-    tidy(&out.finish("\n\n"))
+    if let Some(error) = ctx.failure.into_inner() {
+        return Err(error);
+    }
+    let markdown = tidy(&out.finish("\n\n")?);
+    crate::limits::check_output(&markdown)?;
+    Ok(markdown)
 }
 
 // ---------------------------------------------------------------------------
@@ -269,6 +277,7 @@ fn select_main(body: NodeRef<'_, Node>) -> NodeRef<'_, Node> {
 // Rendering
 
 struct Ctx<'a> {
+    failure: RefCell<Option<ConvertError>>,
     options: &'a RenderOptions<'a>,
     root_text: usize,
     root: ego_tree::NodeId,
@@ -278,6 +287,8 @@ struct Ctx<'a> {
 struct Blocks {
     blocks: Vec<String>,
     inline: String,
+    bytes: usize,
+    failure: Option<ConvertError>,
 }
 
 impl Blocks {
@@ -285,21 +296,47 @@ impl Blocks {
         let paragraph = finish_inline(&self.inline);
         self.inline.clear();
         if !paragraph.is_empty() {
-            self.blocks.push(paragraph);
+            self.push_checked(paragraph);
         }
     }
 
     fn push(&mut self, block: String) {
         self.flush();
         if !block.trim().is_empty() {
+            self.push_checked(block);
+        }
+    }
+
+    fn push_checked(&mut self, block: String) {
+        if self.failure.is_some() {
+            return;
+        }
+        self.bytes = self.bytes.saturating_add(block.len());
+        let separators = self.blocks.len().saturating_mul(2);
+        if self.bytes.saturating_add(separators) > crate::limits::MAX_OUTPUT_BYTES {
+            self.failure = Some(ConvertError::LimitExceeded {
+                resource: "output",
+                limit: crate::limits::MAX_OUTPUT_BYTES,
+            });
+        } else {
             self.blocks.push(block);
         }
     }
 
-    fn finish(mut self, separator: &str) -> String {
+    fn finish(mut self, separator: &str) -> Result<String, ConvertError> {
         self.flush();
-        self.blocks.join(separator)
+        if let Some(error) = self.failure {
+            return Err(error);
+        }
+        Ok(self.blocks.join(separator))
     }
+}
+
+fn finish_blocks(blocks: Blocks, separator: &str, ctx: &Ctx<'_>) -> String {
+    blocks.finish(separator).unwrap_or_else(|error| {
+        *ctx.failure.borrow_mut() = Some(error);
+        String::new()
+    })
 }
 
 fn element_name<'a>(node: NodeRef<'a, Node>) -> Option<&'a str> {
@@ -482,6 +519,9 @@ fn render_children(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, out: &mut Blocks, dep
 }
 
 fn render_block(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, out: &mut Blocks, depth: usize) {
+    if out.failure.is_some() || ctx.failure.borrow().is_some() {
+        return;
+    }
     match node.value() {
         Node::Text(text) => {
             push_text(&mut out.inline, text);
@@ -521,7 +561,7 @@ fn render_block(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, out: &mut Blocks, depth:
         "blockquote" => {
             let mut inner = Blocks::default();
             render_children(node, ctx, &mut inner, depth);
-            let inner = inner.finish("\n\n");
+            let inner = finish_blocks(inner, "\n\n", ctx);
             let quoted = inner
                 .lines()
                 .map(|line| {
@@ -822,7 +862,7 @@ fn render_list(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, depth: usize) -> String {
             Some("li") => {
                 let mut inner = Blocks::default();
                 render_children(child, ctx, &mut inner, depth + 1);
-                let content = inner.finish("\n");
+                let content = finish_blocks(inner, "\n", ctx);
                 if content.trim().is_empty() {
                     continue;
                 }
@@ -852,7 +892,7 @@ fn render_list(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, depth: usize) -> String {
             _ => {
                 let mut inner = Blocks::default();
                 render_block(child, ctx, &mut inner, depth + 1);
-                let content = inner.finish("\n");
+                let content = finish_blocks(inner, "\n", ctx);
                 if !content.trim().is_empty() {
                     items.push(indent_item("- ", &content));
                 }
@@ -975,7 +1015,7 @@ fn render_table(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, out: &mut Blocks, depth:
                 all_th &= name == "th";
                 let mut inner = Blocks::default();
                 render_children(cell, ctx, &mut inner, depth + 2);
-                cells.push(cell_text(&inner.finish("\n")));
+                cells.push(cell_text(&finish_blocks(inner, "\n", ctx)));
                 let span: usize = cell
                     .value()
                     .as_element()
@@ -1011,8 +1051,10 @@ fn render_table(node: NodeRef<'_, Node>, ctx: &Ctx<'_>, out: &mut Blocks, depth:
     if !caption.is_empty() {
         out.push(caption);
     }
-    let table = crate::markdown_table(&rows);
-    out.push(table.trim_end().to_string());
+    match crate::bounded_markdown_table(&rows) {
+        Ok(table) => out.push(table.trim_end().to_string()),
+        Err(error) => *ctx.failure.borrow_mut() = Some(error),
+    }
 }
 
 /// Flatten block content into one table cell; list items become a comma list.
@@ -1271,8 +1313,10 @@ mod tests {
 
     #[test]
     fn tables_become_pipe_tables() {
-        let md = md("<table><caption>Scores</caption><thead><tr><th>Name</th><th>Score</th></tr></thead>\
-             <tbody><tr><td>Ann <b>A</b></td><td>1|2</td></tr><tr><td colspan=2>total</td></tr></tbody></table>");
+        let md = md(
+            "<table><caption>Scores</caption><thead><tr><th>Name</th><th>Score</th></tr></thead>\
+             <tbody><tr><td>Ann <b>A</b></td><td>1|2</td></tr><tr><td colspan=2>total</td></tr></tbody></table>",
+        );
         assert_eq!(
             md,
             "Scores\n\n|Name|Score|\n|-|-|\n|Ann **A**|1\\|2|\n|total||"
@@ -1321,7 +1365,9 @@ mod tests {
 
     #[test]
     fn xhtml_self_closing_anchors_do_not_swallow_content() {
-        let md = md("<?xml version='1.0'?><html><body><h2><a id=\"c1\"/>One<br/>Two</h2><p>A</p><p>B<span class='x'/></p></body></html>");
+        let md = md(
+            "<?xml version='1.0'?><html><body><h2><a id=\"c1\"/>One<br/>Two</h2><p>A</p><p>B<span class='x'/></p></body></html>",
+        );
         assert_eq!(md, "## One Two\n\nA\n\nB");
     }
 

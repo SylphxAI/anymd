@@ -44,7 +44,38 @@ stdio is the default. `MCP_TRANSPORT=http` serves MCP on `MCP_HTTP_HOST:MCP_HTTP
 
 ## Parsing untrusted files
 
-Every format is parsed in Rust. PDF pages are processed in isolation, so one malformed page cannot take down the whole document, and resource limits bound page count, rendered pixels, and output size.
+Every format is parsed in Rust. Resource ceilings are separate from the response budget: `read` still defaults to 20,000 tokens and returns a continuation cursor for longer documents. A response budget does not refuse an otherwise valid book or deck.
+
+### Conversion ceilings
+
+Non-PDF conversion has a fixed **256 MiB (268,435,456 bytes) of Markdown** ceiling, summed across sections. EPUB, DOCX and PPTX also have a fixed **512 MiB (536,870,912 bytes) of cumulative inflated input** ceiling. Every container read counts again, including repeated chapter or slide references, image discovery, images and optional metadata. Conversion stops with the typed `ConvertError::LimitExceeded`, for example `conversion output exceeds 268435456 bytes`; it does not return a partial document. No caller option raises these ceilings, including CLI conversion without a response budget.
+
+| Format | Enforcement |
+| --- | --- |
+| EPUB | Chapters are read and rendered one at a time; cumulative input and Markdown are checked before retaining another chapter. Image-discovery reads use the same counter. Existing limits of 10,000 ZIP entries, 200 MiB declared total inflation and 50 MiB per entry remain. |
+| DOCX / PPTX | Shared ZIP accounting counts repeated part and media reads. Block writers and table rendering stop at the Markdown ceiling; PPTX sums output across slides. Existing limits of 10,000 ZIP entries and 200 MiB per entry remain. |
+| XLSX | A preflight inflates and measures actual ZIP entries under the input ceiling before calamine opens them. Initialization bytes are reserved and each worksheet target is charged again before parsing, including repeated references. Each sheet's rendered table is checked, and Markdown is summed across sheets. |
+| XLS / XLSB / ODS | Markdown is summed across sheets. ZIP-based variants have the same measured preflight; their parser's internal reads and allocations are not instrumented. |
+| HTML / CSV / TSV | Block and table rendering check the Markdown ceiling, including ragged-table padding. CSV/TSV and spreadsheet tables still keep at most 2,000 data rows plus the header. |
+| Text / subtitles / images / audio / video | The non-PDF result is checked against the Markdown ceiling. This final check is not an early-stop guarantee for these converters. External helpers also have their own timeout and captured-output caps. |
+| PDF | Separate page-oriented limits apply. Raster rendering defaults to 20 selected pages, 16,000,000 pixels per page and 64 MiB encoded output per page. These are not a document-wide Markdown ceiling. |
+
+Repeated spine items and slide references are preserved in reading order, not deduplicated. Distinct content is never silently dropped to satisfy a ceiling. Output below the ceilings retains the existing formatting, response truncation, totals and paging behavior.
+
+These are byte-accounting ceilings, not a process-memory limit: input buffers, XML trees, spreadsheet ranges and parser scratch allocations can use additional memory. For fully untrusted input, use an operating-system memory and CPU limit as well.
+
+### Sizing basis
+
+CI measured all 74 checked-in EPUB, PPTX, DOCX and XLSX documents in `test/fixtures`, `bench/files` and the format fixtures on 2026-11-07, before the accounting change. The largest rendered / unique inflated sizes in bytes were:
+
+| Format | Markdown | Inflated ZIP entries | Largest file |
+| --- | ---: | ---: | --- |
+| DOCX | 16,923 | 397,786 | `bench/files/docx-hhs-market-research.docx` |
+| EPUB | 238 | 3,725 | `bench/files/epub-markitdown.epub` |
+| PPTX | 169 | 6,059 | `test/fixtures/slides.pptx` |
+| XLSX | 1,261 | 47,082 | `bench/files/sheet-ers-crop-insurance.xlsx` |
+
+This corpus is small; it does not establish a maximum size for real-world books or workbooks. The ceilings provide more than 15,000 times the measured Markdown maximum and more than 1,300 times the measured unique inflation maximum. Additional generated EPUB, PPTX and XLSX controls keep more than 32 MiB of content, leaving roughly eight times that output headroom. CI also exercises a refusal through the public converter at the real production ceiling and reports elapsed time and peak resident memory.
 
 ## Reporting a vulnerability
 
