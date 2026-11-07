@@ -1,6 +1,6 @@
 //! CSV/TSV → a Markdown table, capped so agents do not drown in rows.
 
-use crate::{markdown_table, ConvertError, Converted, Options, Section};
+use crate::{bounded_markdown_table, ConvertError, Converted, Options, Section};
 
 /// Data rows kept per table (the header row is extra).
 pub(crate) const MAX_ROWS: usize = 2000;
@@ -30,7 +30,7 @@ pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Conver
                     .iter()
                     .map(|f| String::from_utf8_lossy(f).into_owned())
                     .collect(),
-            );
+            )?;
         }
     }
     Ok(Converted {
@@ -39,7 +39,7 @@ pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Conver
         title: None,
         sections: vec![Section {
             label: "table".into(),
-            markdown: table.finish(),
+            markdown: table.finish()?,
         }],
         metadata: Vec::new(),
     })
@@ -51,6 +51,7 @@ pub fn convert(bytes: &[u8], delimiter: u8, _options: &Options) -> Result<Conver
 pub(crate) struct CappedTable {
     rows: Vec<Vec<String>>,
     more: usize,
+    bytes: usize,
 }
 
 impl CappedTable {
@@ -58,15 +59,25 @@ impl CappedTable {
         self.rows.len() > MAX_ROWS
     }
 
-    pub(crate) fn push(&mut self, row: Vec<String>) {
+    pub(crate) fn push(&mut self, row: Vec<String>) -> Result<(), ConvertError> {
         if row.iter().all(|c| c.trim().is_empty()) {
-            return;
+            return Ok(());
         }
         if self.is_full() {
             self.more += 1;
         } else {
+            self.bytes = self
+                .bytes
+                .saturating_add(row.iter().map(String::len).sum::<usize>());
+            if self.bytes > crate::limits::MAX_OUTPUT_BYTES {
+                return Err(ConvertError::LimitExceeded {
+                    resource: "output",
+                    limit: crate::limits::MAX_OUTPUT_BYTES,
+                });
+            }
             self.rows.push(row);
         }
+        Ok(())
     }
 
     /// Count a row past the cap without materialising it.
@@ -76,7 +87,7 @@ impl CappedTable {
         }
     }
 
-    pub(crate) fn finish(mut self) -> String {
+    pub(crate) fn finish(mut self) -> Result<String, ConvertError> {
         let used = |c: usize, rows: &[Vec<String>]| {
             rows.iter()
                 .any(|r| r.get(c).is_some_and(|v| !v.trim().is_empty()))
@@ -88,17 +99,18 @@ impl CappedTable {
             .find(|&c| used(c, &self.rows))
             .map_or(0, |c| c + 1);
         if last <= first {
-            return String::new();
+            return Ok(String::new());
         }
         for row in &mut self.rows {
             row.truncate(last);
             row.drain(..first.min(row.len()));
         }
-        let mut out = markdown_table(&self.rows);
+        let mut out = bounded_markdown_table(&self.rows)?;
         if self.more > 0 {
             out.push_str(&format!("\n… {} more rows\n", self.more));
         }
-        out
+        crate::limits::check_output(&out)?;
+        Ok(out)
     }
 }
 
@@ -112,6 +124,18 @@ mod tests {
             .sections[0]
             .markdown
             .clone()
+    }
+
+    #[test]
+    fn ragged_padding_is_refused_before_materializing_it() {
+        let input = format!("{}v\n{}", "v,".repeat(140_000), "v\n".repeat(2000));
+        assert_eq!(
+            crate::convert(crate::Format::Csv, input.as_bytes(), &Options::default()),
+            Err(ConvertError::LimitExceeded {
+                resource: "output",
+                limit: crate::limits::MAX_OUTPUT_BYTES
+            })
+        );
     }
 
     #[test]

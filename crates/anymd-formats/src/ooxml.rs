@@ -10,6 +10,7 @@ use quick_xml::Reader;
 
 use crate::critic::{self, Change};
 use crate::images::{self, Embed, ImageStore};
+use crate::limits::Limits;
 use crate::ConvertError;
 
 /// Largest uncompressed zip entry we will inflate.
@@ -25,6 +26,7 @@ pub(crate) fn invalid(message: impl std::fmt::Display) -> ConvertError {
 
 /// A zip container with entry-count and inflated-size limits enforced.
 pub(crate) struct Package<'a> {
+    pub(crate) limits: Limits,
     archive: zip::ZipArchive<Cursor<&'a [u8]>>,
     names: HashSet<String>,
     folded_names: HashMap<String, String>,
@@ -45,10 +47,22 @@ impl<'a> Package<'a> {
             names.insert(name.to_string());
         }
         Ok(Self {
+            limits: Limits::default(),
             archive,
             names,
             folded_names,
         })
+    }
+
+    /// Measure every actual entry before handing a ZIP to a third-party parser.
+    pub(crate) fn preflight(&mut self) -> Result<HashMap<String, usize>, ConvertError> {
+        let names: Vec<String> = self.names.iter().cloned().collect();
+        let mut sizes = HashMap::new();
+        for name in names {
+            let bytes = self.read(&name)?.unwrap_or_default();
+            sizes.insert(name, bytes.len());
+        }
+        Ok(sizes)
     }
 
     fn resolve_name(&self, name: &str) -> Option<String> {
@@ -68,6 +82,7 @@ impl<'a> Package<'a> {
 
     /// Read one entry, or `None` when it does not exist.
     pub(crate) fn read(&mut self, name: &str) -> Result<Option<Vec<u8>>, ConvertError> {
+        self.limits.check()?;
         let Some(name) = self.resolve_name(name) else {
             return Ok(None);
         };
@@ -80,11 +95,8 @@ impl<'a> Package<'a> {
                 "{name} is larger than {MAX_ENTRY_BYTES} bytes uncompressed"
             )));
         }
-        let mut out = Vec::with_capacity(file.size().min(16 * 1024 * 1024) as usize);
-        // The header size can lie; bound the actual inflated stream too.
-        file.take(MAX_ENTRY_BYTES + 1)
-            .read_to_end(&mut out)
-            .map_err(|e| invalid(format!("cannot inflate {name}: {e}")))?;
+        // Count actual inflated bytes, including repeated optional reads.
+        let out = self.limits.read(file.take(MAX_ENTRY_BYTES + 1))?;
         if out.len() as u64 > MAX_ENTRY_BYTES {
             return Err(invalid(format!(
                 "{name} is larger than {MAX_ENTRY_BYTES} bytes uncompressed"
@@ -604,6 +616,9 @@ impl Inline {
                 }
                 _ => out.push_str(&render_emphasis(group, emphasis)),
             }
+            if out.len() > crate::limits::MAX_OUTPUT_BYTES {
+                break;
+            }
             index = end;
         }
         tidy_inline(&out)
@@ -799,6 +814,7 @@ impl Media {
 
 /// Join Markdown blocks: list items stay tight, everything else gets a blank line.
 pub(crate) struct Blocks {
+    failure: Option<ConvertError>,
     out: String,
     last_was_list: bool,
     /// A tracked change on the break before the next block.
@@ -811,6 +827,7 @@ impl Blocks {
     pub(crate) fn new() -> Self {
         Self {
             out: String::new(),
+            failure: None,
             last_was_list: false,
             separator: None,
             trailing_space: false,
@@ -840,9 +857,25 @@ impl Blocks {
         is_list: bool,
         (leading, trailing): (bool, bool),
     ) {
+        if self.is_full() {
+            return;
+        }
         let space = self.trailing_space || leading;
         let body = body.trim_end();
         if body.trim().is_empty() {
+            return;
+        }
+        // Reserve the separator and CriticMarkup delimiters before appending.
+        let size = self
+            .out
+            .len()
+            .saturating_add(prefix.len())
+            .saturating_add(body.len());
+        if size > crate::limits::MAX_OUTPUT_BYTES {
+            self.failure = Some(ConvertError::LimitExceeded {
+                resource: "output",
+                limit: crate::limits::MAX_OUTPUT_BYTES,
+            });
             return;
         }
         let change = self.separator.take();
@@ -864,6 +897,7 @@ impl Blocks {
                 space,
             );
         }
+        self.failure = crate::limits::check_output(&self.out).err();
         self.last_was_list = is_list;
         self.trailing_space = trailing;
     }
@@ -874,8 +908,12 @@ impl Blocks {
         self.separator = change;
     }
 
-    pub(crate) fn finish(self) -> String {
-        self.out
+    pub(crate) fn is_full(&self) -> bool {
+        self.failure.is_some()
+    }
+
+    pub(crate) fn finish(self) -> Result<String, ConvertError> {
+        self.failure.map_or(Ok(self.out), Err)
     }
 }
 

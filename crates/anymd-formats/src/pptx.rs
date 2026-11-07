@@ -1,14 +1,24 @@
 //! PPTX → Markdown: one section per slide in presentation order, with titles,
 //! bullet levels, tables, chart data, image alt text, and speaker notes.
 
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
 use crate::images::{self, ImageStore};
 use crate::ooxml::{self, Blocks, Element, Inline, ListIndent, Media, Package, Rels};
-use crate::{markdown_table, ConvertError, Converted, Options, Section};
+use crate::{bounded_markdown_table, ConvertError, Converted, Options, Section};
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
+    convert_with_limits(bytes, options, crate::limits::Limits::default())
+}
+
+fn convert_with_limits(
+    bytes: &[u8],
+    options: &Options,
+    limits: crate::limits::Limits,
+) -> Result<Converted, ConvertError> {
     let mut package = Package::open(bytes, "PPTX")?;
+    package.limits = limits;
     let main = package.main_part("ppt/presentation.xml")?;
     let presentation = package
         .xml(&main)?
@@ -44,6 +54,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     let mut sections = Vec::with_capacity(slides.len());
     let mut layouts: HashMap<String, Positions> = HashMap::new();
     for (index, path) in slides.iter().enumerate() {
+        package.limits.check()?;
         let markdown = match package.xml(path)? {
             Some(slide) => {
                 let images = SlideImages {
@@ -55,11 +66,13 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             }
             None => String::new(),
         };
+        package.limits.output(&markdown)?;
         sections.push(Section {
             label: format!("slide {}", index + 1),
             markdown,
         });
     }
+    package.limits.check()?;
     Ok(Converted {
         outline: Vec::new(),
         format: "pptx".into(),
@@ -81,6 +94,9 @@ fn repeated_pictures(package: &mut Package<'_>, slides: &[String]) -> HashSet<u6
     let mut keys: HashMap<String, Option<u64>> = HashMap::new();
     let mut counts: HashMap<u64, usize> = HashMap::new();
     for path in slides {
+        if package.limits.check().is_err() {
+            break;
+        }
         let Some(slide) = package.xml(path).ok().flatten() else {
             continue;
         };
@@ -217,7 +233,9 @@ fn render_slide(
     }
 
     let media = Media::load(package, &rels, images.store, images.repeated);
+    package.limits.check()?;
     let context = Context {
+        failure: RefCell::new(None),
         rels: &rels,
         positions: &positions,
         charts: &charts,
@@ -238,7 +256,11 @@ fn render_slide(
             }
         }
     }
-    let mut markdown = blocks.finish();
+    package.limits.check()?;
+    if let Some(error) = context.failure.into_inner() {
+        return Err(error);
+    }
+    let mut markdown = blocks.finish()?;
     if !markdown.is_empty() {
         markdown.push('\n');
     }
@@ -246,6 +268,7 @@ fn render_slide(
 }
 
 struct Context<'a> {
+    failure: RefCell<Option<ConvertError>>,
     rels: &'a Rels,
     positions: &'a Positions,
     charts: &'a HashMap<String, Element>,
@@ -277,6 +300,9 @@ impl Context<'_> {
             )
         });
         for item in items {
+            if blocks.is_full() || self.failure.borrow().is_some() {
+                break;
+            }
             self.shape(item.element, item.title, blocks);
         }
     }
@@ -346,7 +372,10 @@ impl Context<'_> {
                         .and_then(|id| self.rels.get(id))
                         .map(|r| r.target.as_str());
                     if let Some(root) = target.and_then(|t| self.charts.get(t)) {
-                        blocks.push(&chart_markdown(root), false);
+                        match chart_markdown(root) {
+                            Ok(markdown) => blocks.push(&markdown, false),
+                            Err(error) => *self.failure.borrow_mut() = Some(error),
+                        }
                     }
                 }
             }
@@ -373,6 +402,9 @@ impl Context<'_> {
         let mut list = ListIndent::default();
         let mut counters: [Option<u32>; 9] = [None; 9];
         for p in body.children_named("p") {
+            if blocks.is_full() {
+                break;
+            }
             let inline = self.paragraph(p);
             if inline.is_blank() {
                 continue;
@@ -468,7 +500,10 @@ impl Context<'_> {
             rows.push(row);
         }
         rows.retain(|r| r.iter().any(|c| !c.trim().is_empty()));
-        markdown_table(&rows)
+        bounded_markdown_table(&rows).unwrap_or_else(|error| {
+            *self.failure.borrow_mut() = Some(error);
+            String::new()
+        })
     }
 }
 
@@ -489,6 +524,7 @@ fn offset(shape: &Element) -> Option<(i64, i64)> {
 
 fn notes_text(notes: &Element, rels: &Rels) -> String {
     let context = Context {
+        failure: RefCell::new(None),
         rels,
         positions: &Positions::default(),
         charts: &HashMap::new(),
@@ -518,7 +554,7 @@ fn notes_text(notes: &Element, rels: &Rels) -> String {
 }
 
 /// A chart's cached series data as a heading plus a Markdown table.
-fn chart_markdown(space: &Element) -> String {
+fn chart_markdown(space: &Element) -> Result<String, ConvertError> {
     let chart = space.child("chart").unwrap_or(space);
     let title = chart
         .child("title")
@@ -559,7 +595,7 @@ fn chart_markdown(space: &Element) -> String {
     }
     let heading = format!("### Chart: {}", title.as_deref().unwrap_or("untitled"));
     if names.is_empty() || count == 0 {
-        return heading;
+        return Ok(heading);
     }
     let mut rows = vec![std::iter::once("Category".to_string())
         .chain(names)
@@ -573,7 +609,10 @@ fn chart_markdown(space: &Element) -> String {
         );
         rows.push(row);
     }
-    format!("{heading}\n\n{}", markdown_table(&rows).trim_end())
+    Ok(format!(
+        "{heading}\n\n{}",
+        bounded_markdown_table(&rows)?.trim_end()
+    ))
 }
 
 fn points(data: &Element) -> Vec<(usize, String)> {
@@ -603,6 +642,69 @@ mod tests {
             writer.write_all(body.as_bytes()).unwrap();
         }
         writer.finish().unwrap().into_inner()
+    }
+
+    fn repeated_deck(text_bytes: usize, repeats: usize) -> Vec<u8> {
+        zip(&[
+            (
+                "ppt/presentation.xml".into(),
+                format!(
+                    "<p:presentation {NS}><p:sldIdLst>{}</p:sldIdLst></p:presentation>",
+                    "<p:sldId r:id='rId1'/>".repeat(repeats)
+                ),
+            ),
+            (
+                "ppt/_rels/presentation.xml.rels".into(),
+                rels(&[("rId1", "slide", "slides/slide1.xml")]),
+            ),
+            (
+                "ppt/slides/slide1.xml".into(),
+                format!(
+                    "<p:sld {NS}><p:cSld><p:spTree><p:sp><p:txBody><a:p><a:r><a:t>{}</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>",
+                    "a".repeat(text_bytes)
+                ),
+            ),
+        ])
+    }
+
+    #[test]
+    fn cumulative_output_limit() {
+        let bytes = repeated_deck(64 * 1024, 257);
+        let error = match convert_with_limits(
+            &bytes,
+            &Options::default(),
+            crate::limits::Limits::with_output_limit(16 * 1024 * 1024),
+        ) {
+            Err(error) => error,
+            Ok(converted) => panic!(
+                "conversion exceeded the ceiling: {} input bytes produced {} Markdown bytes",
+                bytes.len(),
+                converted
+                    .sections
+                    .iter()
+                    .map(|s| s.markdown.len())
+                    .sum::<usize>()
+            ),
+        };
+        assert_eq!(
+            error.to_string(),
+            "conversion output exceeds 16777216 bytes"
+        );
+    }
+
+    #[test]
+    fn large_deck_keeps_repeated_slides() {
+        let converted = crate::convert(
+            crate::Format::Pptx,
+            &repeated_deck(1024 * 1024, 32),
+            &Options::default(),
+        )
+        .unwrap();
+        assert_eq!(converted.sections.len(), 32);
+        let expected = format!("{}\n", "a".repeat(1024 * 1024));
+        for section in converted.sections {
+            assert_eq!(section.markdown, expected);
+        }
     }
 
     fn rels(entries: &[(&str, &str, &str)]) -> String {
@@ -716,11 +818,11 @@ mod tests {
     #[test]
     fn chart_series_render_as_table() {
         let chart = Element::default();
-        assert_eq!(chart_markdown(&chart), "### Chart: untitled");
+        assert_eq!(chart_markdown(&chart).unwrap(), "### Chart: untitled");
         let xml = br#"<c:chartSpace xmlns:c="c" xmlns:a="a"><c:chart><c:title><c:tx><c:rich><a:p><a:r><a:t>Revenue</a:t></a:r></a:p></c:rich></c:tx></c:title><c:plotArea><c:barChart><c:ser><c:tx><c:strRef><c:strCache><c:pt idx="0"><c:v>2025</c:v></c:pt></c:strCache></c:strRef></c:tx><c:cat><c:strRef><c:strCache><c:pt idx="0"><c:v>Q1</c:v></c:pt><c:pt idx="1"><c:v>Q2</c:v></c:pt></c:strCache></c:strRef></c:cat><c:val><c:numRef><c:numCache><c:pt idx="0"><c:v>10</c:v></c:pt><c:pt idx="1"><c:v>12.5</c:v></c:pt></c:numCache></c:numRef></c:val></c:ser></c:barChart></c:plotArea></c:chart></c:chartSpace>"#;
         let root = ooxml::parse_xml(xml).unwrap();
         assert_eq!(
-            chart_markdown(&root),
+            chart_markdown(&root).unwrap(),
             "### Chart: Revenue\n\n|Category|2025|\n|-|-|\n|Q1|10|\n|Q2|12.5|"
         );
     }

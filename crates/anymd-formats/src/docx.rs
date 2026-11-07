@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use crate::critic::{self, Change, Critic, Mark};
 use crate::ooxml::{self, Blocks, Element, ListIndent, Media, Package, Rels};
 use crate::revise;
-use crate::{markdown_table, ConvertError, Converted, Options, Revisions, Section};
+use crate::{bounded_markdown_table, ConvertError, Converted, Options, Revisions, Section};
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
     let mut package = Package::open(bytes, "DOCX")?;
@@ -74,7 +74,9 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         options.images.as_ref(),
         &std::collections::HashSet::new(),
     );
+    package.limits.check()?;
     let mut writer = Writer {
+        failure: None,
         rels: &rels,
         media,
         styles,
@@ -127,6 +129,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     writer.open_comments.clear();
     let mut index = 0;
     let mut defs = Vec::new();
+    let mut definition_bytes = 0usize;
     while index < writer.note_refs.len() {
         let key = writer.note_refs[index].clone();
         // A note whose reference was inserted or deleted was inserted or
@@ -152,10 +155,21 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         writer.revisions = around;
         // Still set: no paragraph had text, so there is no note.
         if writer.lead.take().is_none() {
-            defs.push(critic::join_marked(parts, " "));
+            let definition = critic::join_marked(parts, " ");
+            definition_bytes = definition_bytes.saturating_add(definition.len() + 1);
+            if definition_bytes > crate::limits::MAX_OUTPUT_BYTES {
+                return Err(ConvertError::LimitExceeded {
+                    resource: "output",
+                    limit: crate::limits::MAX_OUTPUT_BYTES,
+                });
+            }
+            defs.push(definition);
         }
     }
-    let mut markdown = blocks.finish();
+    if let Some(error) = writer.failure.take() {
+        return Err(error);
+    }
+    let mut markdown = blocks.finish()?;
     if !defs.is_empty() {
         markdown.push_str("\n\n");
         markdown.push_str(&defs.join("\n"));
@@ -164,6 +178,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         markdown.push('\n');
     }
 
+    package.limits.output(&markdown)?;
     Ok(Converted {
         outline: Vec::new(),
         format: "docx".into(),
@@ -473,6 +488,7 @@ fn comment_note(author: Option<&str>, date: Option<&str>, text: &str) -> String 
 }
 
 struct Writer<'a> {
+    failure: Option<ConvertError>,
     rels: &'a Rels,
     media: Media,
     styles: Styles,
@@ -525,6 +541,9 @@ impl Writer<'_> {
 
     fn blocks(&mut self, container: &Element, blocks: &mut Blocks, list: &mut ListIndent) {
         for child in container.elements() {
+            if blocks.is_full() || self.failure.is_some() {
+                break;
+            }
             match child.local() {
                 "p" => self.paragraph(child, blocks, list),
                 "tbl" => {
@@ -894,7 +913,13 @@ impl Writer<'_> {
             let mut blocks = Blocks::new();
             let mut list = ListIndent::default();
             self.blocks(content, &mut blocks, &mut list);
-            extra.push(blocks.finish());
+            match blocks.finish() {
+                Ok(text) => extra.push(text),
+                Err(error) => {
+                    self.failure = Some(error);
+                    break;
+                }
+            }
         }
         self.open_comments = open_comments;
         if let Some(doc_pr) = drawing.find("docPr") {
@@ -951,7 +976,10 @@ impl Writer<'_> {
         for row in &mut rows {
             row.truncate(width);
         }
-        markdown_table(&rows)
+        bounded_markdown_table(&rows).unwrap_or_else(|error| {
+            self.failure = Some(error);
+            String::new()
+        })
     }
 
     /// A cell's paragraphs joined with `<br>`, inside the tracked changes of its
@@ -2245,7 +2273,13 @@ mod tests {
                 );
             }
         }
-        let body = p("", &format!("{}<w:del><w:r><w:delText>Old</w:delText><w:drawing>{content}</w:drawing></w:r></w:del>", r("Keep ")));
+        let body = p(
+            "",
+            &format!(
+                "{}<w:del><w:r><w:delText>Old</w:delText><w:drawing>{content}</w:drawing></w:r></w:del>",
+                r("Keep ")
+            ),
+        );
         assert_eq!(
             md(&docx(&body, &[("word/numbering.xml", &numbering)])),
             format!("Keep {{--Old--}}\n\n{expected}")

@@ -1646,6 +1646,48 @@ mod tests {
     }
 
     #[test]
+    fn default_budget_still_pages_a_large_converted_document() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("book.html");
+        std::fs::write(
+            &path,
+            format!(
+                "<html><body><p>{}</p></body></html>",
+                "chapter text ".repeat(100_000)
+            ),
+        )
+        .unwrap();
+        let mut args: ReadArgs =
+            serde_json::from_value(serde_json::json!({ "source": path.display().to_string() }))
+                .unwrap();
+        let policy = SourceAccessPolicy::unrestricted();
+        let result = read(&args, &policy).unwrap();
+        assert_ne!(result.is_error, Some(true));
+        let first = text_of(&result);
+        assert!(first.contains("Stopped at the 20000-token budget"));
+        let cursor = first
+            .split("Continue with cursor: \"")
+            .nth(1)
+            .unwrap()
+            .split('"')
+            .next()
+            .unwrap();
+        args.cursor = Some(cursor.to_string());
+        let result = read(&args, &policy).unwrap();
+        assert_ne!(result.is_error, Some(true));
+        let second = text_of(&result);
+        assert!(second.contains("chapter text"));
+        let next = second
+            .split("Continue with cursor: \"")
+            .nth(1)
+            .unwrap()
+            .split('"')
+            .next()
+            .unwrap();
+        assert_ne!(cursor, next);
+    }
+
+    #[test]
     fn read_lists_a_directory() {
         let dir = fixture_dir();
         let args = ReadArgs {

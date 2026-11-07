@@ -178,6 +178,32 @@ jobs:
           "$RUNNER_TEMP/asr-scoring/bin/pip" install jiwer==4.0.0 opencc-python-reimplemented==0.1.7 cn2an==0.5.24 kanjize==1.6.1
           "$RUNNER_TEMP/asr-scoring/bin/python" -m unittest discover -s bench-asr -p test_report.py
 
+  conversion-limits:
+    name: Conversion limits
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: conversion-limits
+      - name: Check bounded conversion and chapter controls
+        run: |
+          cargo test --locked -p anymd-formats --no-default-features --test office_samples conversion_envelope -- --nocapture
+          for module in limits ooxml epub pptx docx html csv xlsx; do
+            cargo test --locked -p anymd-formats --no-default-features --lib "$module::tests"
+          done
+      - name: Measure the production conversion ceiling
+        run: |
+          cargo test --locked -p anymd-formats --no-default-features --lib --no-run --message-format=json > /tmp/conversion-tests.json
+          binary=$(python3 -c 'import json; print(next(x["executable"] for line in open("/tmp/conversion-tests.json") if (x := json.loads(line)).get("executable") and x.get("profile", {}).get("test")))')
+          /usr/bin/time -v "$binary" epub::tests::production_cumulative_output_limit --exact --ignored --nocapture
+      - name: Check production library compilation
+        run: cargo check --locked -p anymd-formats --no-default-features
+
   security-secrets:
     name: security:secrets
     runs-on: ubuntu-latest
@@ -220,7 +246,7 @@ jobs:
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [main-state, changes, plain-language, identifiers, chat-senders, validate, security-secrets, suite, stack]
+    needs: [main-state, changes, plain-language, identifiers, chat-senders, validate, security-secrets, conversion-limits, suite, stack]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
