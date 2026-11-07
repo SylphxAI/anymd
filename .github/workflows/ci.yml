@@ -194,6 +194,7 @@ jobs:
         run: |
           cargo test --locked -p anymd-formats --no-default-features --test office_samples -- --nocapture
           cargo test --locked -p anymd-formats --no-default-features --test text_encoding public_
+          cargo test --locked -p anymd-formats --no-default-features --lib archive_validation::
           for module in limits ooxml epub pptx docx html csv xlsx; do
             cargo test --locked -p anymd-formats --no-default-features --lib "$module::tests"
           done

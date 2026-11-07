@@ -2,14 +2,13 @@
 
 use crate::limits::Limits;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::rc::Rc;
 
 use calamine::{Data, Reader};
 
 use crate::csv::CappedTable;
-use crate::ooxml::{self, Package};
+use crate::ooxml::{self, EntryInflation, Package};
 use crate::{ConvertError, Converted, Options, Section};
 
 pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertError> {
@@ -17,7 +16,7 @@ pub fn convert(bytes: &[u8], _options: &Options) -> Result<Converted, ConvertErr
 }
 
 fn convert_with_limits(bytes: &[u8], mut limits: Limits) -> Result<Converted, ConvertError> {
-    let mut entries = BTreeMap::new();
+    let mut entries = Vec::new();
     let (title, metadata) = if zip::ZipArchive::new(Cursor::new(bytes)).is_ok() {
         ooxml::guard_zip(bytes)?;
         let mut package = Package::open(bytes, "spreadsheet")?;
@@ -60,9 +59,9 @@ fn convert_with_limits(bytes: &[u8], mut limits: Limits) -> Result<Converted, Co
 #[derive(Clone)]
 struct AccountedInput<'a> {
     cursor: Cursor<&'a [u8]>,
-    entries: Rc<BTreeMap<u64, (u64, usize)>>,
+    entries: Rc<Vec<EntryInflation>>,
     limits: Rc<RefCell<Limits>>,
-    active: Option<u64>,
+    active: Option<usize>,
 }
 
 impl Read for AccountedInput<'_> {
@@ -73,30 +72,39 @@ impl Read for AccountedInput<'_> {
             return Ok(0);
         }
         let position = self.cursor.position();
-        let entry = self
+        let next = self
             .entries
-            .range(..=position)
-            .next_back()
-            .filter(|(_, (end, _))| position < *end);
-        if let Some((&start, &(_, inflated))) = entry {
-            if self.active != Some(start) {
-                limits.inflated(inflated).map_err(std::io::Error::other)?;
-                self.active = Some(start);
+            .partition_point(|entry| entry.start <= position);
+        let entry = next
+            .checked_sub(1)
+            .map(|index| &self.entries[index])
+            .filter(|entry| position < entry.end);
+        let boundary = if let Some(entry) = entry {
+            if self.active != Some(entry.index) {
+                limits
+                    .inflated(entry.inflated)
+                    .map_err(std::io::Error::other)?;
+                self.active = Some(entry.index);
             }
+            Some(entry.end)
         } else {
             self.active = None;
-        }
-        self.cursor.read(buf)
+            self.entries.get(next).map(|entry| entry.start)
+        };
+        // Do not let a read that starts in a header cross into an uncharged
+        // payload, or let one entry's read consume the following entry.
+        let count = boundary.map_or(buf.len(), |end| {
+            buf.len()
+                .min(usize::try_from(end - position).unwrap_or(usize::MAX))
+        });
+        self.cursor.read(&mut buf[..count])
     }
 }
 
 impl Seek for AccountedInput<'_> {
     fn seek(&mut self, position: SeekFrom) -> std::io::Result<u64> {
-        let before = self.cursor.position();
         let after = self.cursor.seek(position)?;
-        if before != after {
-            self.active = None;
-        }
+        self.active = None;
         Ok(after)
     }
 }
@@ -242,6 +250,59 @@ mod tests {
             big.write_number(row, 0, f64::from(row)).unwrap();
         }
         workbook.save_to_buffer().unwrap()
+    }
+
+    #[test]
+    fn payload_boundary_reads_and_reopens_are_always_charged() {
+        let bytes = b"headPAYgapPAY";
+        let limits = Rc::new(RefCell::new(Limits::with_inflated_limit(17)));
+        let mut input = AccountedInput {
+            cursor: Cursor::new(bytes.as_slice()),
+            entries: Rc::new(vec![
+                EntryInflation {
+                    index: 0,
+                    start: 4,
+                    end: 7,
+                    inflated: 7,
+                },
+                EntryInflation {
+                    index: 1,
+                    start: 10,
+                    end: 13,
+                    inflated: 11,
+                },
+            ]),
+            limits: Rc::clone(&limits),
+            active: None,
+        };
+        let mut buf = [0; 64];
+        assert_eq!(input.read(&mut buf).unwrap(), 4);
+        assert_eq!(&buf[..4], b"head");
+        assert_eq!(input.read(&mut buf).unwrap(), 3);
+        assert_eq!(&buf[..3], b"PAY");
+        assert_eq!(input.read(&mut buf).unwrap(), 3);
+        let error = input.read(&mut buf).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            ConvertError::limit("inflated input", 17).to_string()
+        );
+        assert_eq!(
+            limits.borrow().check(),
+            Err(ConvertError::limit("inflated input", 17))
+        );
+
+        let limits = Rc::new(RefCell::new(Limits::with_inflated_limit(13)));
+        input.limits = Rc::clone(&limits);
+        input.seek(SeekFrom::Start(4)).unwrap();
+        assert_eq!(input.read(&mut []).unwrap(), 0);
+        assert_eq!(input.read(&mut buf[..1]).unwrap(), 1);
+        let mut reopened = input.clone();
+        reopened.seek(SeekFrom::Start(4)).unwrap();
+        assert!(reopened.read(&mut buf[..1]).is_err());
+        assert_eq!(
+            limits.borrow().check(),
+            Err(ConvertError::limit("inflated input", 13))
+        );
     }
 
     #[test]

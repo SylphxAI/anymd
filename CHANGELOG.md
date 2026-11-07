@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Patch Changes
+
+- Apply stricter archive entry validation.
+
 ## 8.5.10
 
 ### Patch Changes

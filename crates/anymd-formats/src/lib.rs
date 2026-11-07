@@ -78,6 +78,8 @@ pub mod asr;
 pub mod video;
 pub mod xlsx;
 
+#[cfg(test)]
+mod archive_validation;
 mod ooxml;
 
 use std::path::Path;

@@ -28,6 +28,7 @@ fn convert_with_limits(
 ) -> Result<Converted, ConvertError> {
     let mut archive = ZipArchive::new(Cursor::new(bytes))
         .map_err(|e| ConvertError::Invalid(format!("not a valid EPUB zip: {e}")))?;
+    crate::ooxml::validate_archive(bytes, &mut archive)?;
     if archive.len() > MAX_ENTRIES {
         return Err(ConvertError::Invalid(format!(
             "EPUB has {} entries (limit {MAX_ENTRIES})",
