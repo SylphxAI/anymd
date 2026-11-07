@@ -311,16 +311,16 @@ impl Opened {
         let format = anymd_formats::detect(Some(&path), &head)
             .ok_or_else(|| format!("{spec}: unrecognized file type"))?;
         if format == Format::Video {
-            let converted = anymd_formats::convert(
+            let converted = anymd_formats::convert_with_source_access(
                 format,
                 &head,
                 &anymd_formats::Options {
                     path: Some(path.clone()),
-                    source_access: Some(Arc::new(policy.clone())),
                     transcript: options.transcript,
                     download_asr_model: options.download_asr_model,
                     ..Default::default()
                 },
+                policy,
             )
             .map_err(|error| format!("{spec}: {error}"))?;
             return Ok(Self::from_converted(spec, format, converted, options));
@@ -887,7 +887,6 @@ fn convert_other(
             path,
             images: options.images.clone(),
             revisions: options.revisions,
-            ..Default::default()
         },
     )?;
     if vlm {

@@ -93,6 +93,15 @@ fn container(head: &[u8]) -> Option<(&'static str, &'static str)> {
 }
 
 pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertError> {
+    convert_with_source_access(bytes, options, &crate::UnrestrictedSourceAccess)
+}
+
+/// Convert media while admitting every discovered subtitle through the caller.
+pub fn convert_with_source_access(
+    bytes: &[u8],
+    options: &Options,
+    source_access: &dyn crate::SourceAccess,
+) -> Result<Converted, ConvertError> {
     let sniffed = container(bytes);
     let given_path = options.path.as_deref().filter(|p| p.is_file());
 
@@ -103,7 +112,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             name,
             bytes.len() as u64,
             given_path,
-            options,
+            source_access,
             if cfg!(feature = "native") {
                 "_Install ffmpeg (`ffprobe`) to report duration, streams, chapters, and subtitles._"
             } else {
@@ -136,7 +145,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
                 name,
                 bytes.len() as u64,
                 given_path,
-                options,
+                source_access,
                 &format!("_ffprobe could not read this file: {error}_"),
             ));
         }
@@ -147,6 +156,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
         given_path,
         sniffed.map(|(n, _)| n),
         options,
+        source_access,
     ))
 }
 
@@ -183,7 +193,7 @@ fn basic(
     container: &str,
     size: u64,
     path: Option<&Path>,
-    options: &Options,
+    source_access: &dyn crate::SourceAccess,
     note: &str,
 ) -> Converted {
     let facts = vec![
@@ -197,7 +207,7 @@ fn basic(
         label: "media".into(),
         markdown,
     }];
-    sections.extend(sidecar_sections(path, options));
+    sections.extend(sidecar_sections(path, source_access));
     Converted {
         outline: Vec::new(),
         format: "video".into(),
@@ -213,6 +223,7 @@ fn render_probe(
     given_path: Option<&Path>,
     sniffed: Option<&str>,
     options: &Options,
+    source_access: &dyn crate::SourceAccess,
 ) -> Converted {
     let format = probe.get("format").cloned().unwrap_or(Value::Null);
     let tag = |key: &str| tag_value(format.get("tags"), key);
@@ -329,7 +340,7 @@ fn render_probe(
             }
         }
     }
-    extra_sections.extend(sidecar_sections(given_path, options));
+    extra_sections.extend(sidecar_sections(given_path, source_access));
 
     if has_audio {
         if options.transcript {
@@ -461,7 +472,7 @@ fn extract_subtitles(path: &Path) -> Result<String, String> {
 }
 
 /// `movie.srt`, `movie.vtt`, `movie.en.srt`… next to the media file.
-fn sidecar_sections(path: Option<&Path>, options: &Options) -> Vec<Section> {
+fn sidecar_sections(path: Option<&Path>, source_access: &dyn crate::SourceAccess) -> Vec<Section> {
     let Some(path) = path else { return Vec::new() };
     let (Some(dir), Some(stem)) = (path.parent(), path.file_stem().and_then(|s| s.to_str())) else {
         return Vec::new();
@@ -488,10 +499,7 @@ fn sidecar_sections(path: Option<&Path>, options: &Options) -> Vec<Section> {
         .filter_map(|path| {
             // Keep the sibling name for provenance, but open only the admitted
             // path. A refusal must never fall back to the discovered path.
-            let admitted = match &options.source_access {
-                Some(policy) => policy.admit_path(&path).ok()?,
-                None => path.clone(),
-            };
+            let admitted = source_access.admit_path(&path).ok()?;
             admitted
                 .metadata()
                 .is_ok_and(|m| m.is_file() && m.len() <= MAX_SIDECAR_BYTES)
