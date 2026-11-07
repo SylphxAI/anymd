@@ -53,7 +53,7 @@ rmcp = { version = "3.1.2", features = ["server", "macros", "schemars", "transpo
 schemars = { version = "1", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sha2 = "0.10"
+sha2 = "0.11"
 subtle = "2"
 # Shared MCP setup, CLI hints and cache-root policy. The macros call the
 # package as `mcp_kit`, so only `cargo-machete` cannot see the use.
