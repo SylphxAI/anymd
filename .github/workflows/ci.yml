@@ -191,7 +191,7 @@ jobs:
         with:
           key: conversion-limits
       - name: Check bounded conversion and chapter controls
-        run: cargo test --locked -p anymd-formats --no-default-features --lib epub::tests::
+        run: cargo test --locked -p anymd-formats --no-default-features --lib epub::tests
 
   security-secrets:
     name: security:secrets
