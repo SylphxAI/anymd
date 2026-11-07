@@ -4,11 +4,11 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::io::{Cursor, Read};
 
-use quick_xml::events::Event;
 use quick_xml::Reader;
+use quick_xml::events::Event;
 use zip::ZipArchive;
 
-use crate::html::{render_html, RenderOptions};
+use crate::html::{RenderOptions, render_html};
 use crate::images::{self, Embed, ImageStore};
 use crate::{ConvertError, Converted, Options, Section};
 
@@ -607,6 +607,58 @@ pub(crate) mod tests {
 
     const CONTAINER: &str = r#"<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>"#;
 
+    fn repeated_book(chapter_bytes: usize, repeats: usize) -> Vec<u8> {
+        let opf = format!(
+            "<package><manifest><item id='c' href='c.xhtml' media-type='application/xhtml+xml'/></manifest><spine>{}</spine></package>",
+            "<itemref idref='c'/>".repeat(repeats)
+        );
+        let chapter = format!("<p>{}</p>", "a".repeat(chapter_bytes));
+        build_epub(&[
+            ("META-INF/container.xml", CONTAINER),
+            ("OEBPS/content.opf", &opf),
+            ("OEBPS/c.xhtml", &chapter),
+        ])
+    }
+
+    #[test]
+    fn cumulative_output_limit() {
+        let epub = repeated_book(64 * 1024, 257);
+        let error = match convert(&epub, &Options::default()) {
+            Err(error) => error,
+            Ok(converted) => panic!(
+                "conversion exceeded the ceiling: {} input bytes produced {} Markdown bytes",
+                epub.len(),
+                converted
+                    .sections
+                    .iter()
+                    .map(|s| s.markdown.len())
+                    .sum::<usize>()
+            ),
+        };
+        assert_eq!(
+            error.to_string(),
+            "conversion output exceeds 16777216 bytes"
+        );
+    }
+
+    #[test]
+    fn repeated_chapter_control() {
+        let converted = convert(&repeated_book(5, 2), &Options::default()).unwrap();
+        assert_eq!(
+            converted.sections,
+            vec![
+                Section {
+                    label: "chapter 1".into(),
+                    markdown: "aaaaa".into()
+                },
+                Section {
+                    label: "chapter 2".into(),
+                    markdown: "aaaaa".into()
+                },
+            ]
+        );
+    }
+
     const OPF: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -629,10 +681,22 @@ pub(crate) mod tests {
         let epub = build_epub(&[
             ("META-INF/container.xml", CONTAINER),
             ("OEBPS/content.opf", OPF),
-            ("OEBPS/nav.xhtml", "<html><body><nav><ol><li><a href='text/c2.xhtml'>Two</a></li></ol></nav></body></html>"),
-            ("OEBPS/text/cover.xhtml", "<html><body><img src='../img/cover.jpg' alt='Cover'/></body></html>"),
-            ("OEBPS/text/chapter 1.xhtml", "<html><head><title>Book</title></head><body><h1>The Road</h1><p>It was <em>long</em>. See <a href='c2.xhtml#n1'>note</a>.</p></body></html>"),
-            ("OEBPS/text/c2.xhtml", "<html><body><h2>Before</h2><p>First &amp; foremost.</p></body></html>"),
+            (
+                "OEBPS/nav.xhtml",
+                "<html><body><nav><ol><li><a href='text/c2.xhtml'>Two</a></li></ol></nav></body></html>",
+            ),
+            (
+                "OEBPS/text/cover.xhtml",
+                "<html><body><img src='../img/cover.jpg' alt='Cover'/></body></html>",
+            ),
+            (
+                "OEBPS/text/chapter 1.xhtml",
+                "<html><head><title>Book</title></head><body><h1>The Road</h1><p>It was <em>long</em>. See <a href='c2.xhtml#n1'>note</a>.</p></body></html>",
+            ),
+            (
+                "OEBPS/text/c2.xhtml",
+                "<html><body><h2>Before</h2><p>First &amp; foremost.</p></body></html>",
+            ),
         ]);
         let converted = convert(&epub, &Options::default()).unwrap();
         assert_eq!(converted.format, "epub");
