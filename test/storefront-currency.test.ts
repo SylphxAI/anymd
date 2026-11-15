@@ -458,4 +458,174 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
     });
     expect(sessionMap.get('anymd_pro_purchase_cs_test_sf_999')).toBe('1');
   });
+
+  test('storefront script purges _ga* cookies on Reject and on initial none consent across pricing and recover', () => {
+    const recoverHtml = readFileSync(new URL('recover.html', prebuilt), 'utf8');
+    for (const [pageName, pageHtml, pathname] of [
+      ['pricing', html, '/anymd/pricing'],
+      ['recover', recoverHtml, '/anymd/recover'],
+    ] as const) {
+      const scriptMatch = pageHtml.match(/<script data-anymd-ga4="1">([\s\S]*?)<\/script>/);
+      if (!scriptMatch) throw new Error(`Missing data-anymd-ga4 script in ${pageName}.html`);
+      const scriptBody = scriptMatch[1];
+
+      type CookieEntry = { name: string; value: string; domain: string; path: string };
+      const entries = new Map<string, CookieEntry>();
+      const seed = (name: string, value: string, domain = '', path = '/') => {
+        entries.set(`${name}\0${domain}\0${path}`, { name, value, domain, path });
+      };
+      const writeCookie = (raw: string) => {
+        const parts = raw.split(';').map((p) => p.trim());
+        const [nv, ...attrs] = parts;
+        const eq = nv.indexOf('=');
+        if (eq === -1) return;
+        const name = nv.slice(0, eq).trim();
+        const value = nv.slice(eq + 1).trim();
+        let domain = '';
+        let path = '/';
+        let expired = false;
+        for (const attr of attrs) {
+          const [kRaw, vRaw = ''] = attr.split('=');
+          const k = kRaw.trim().toLowerCase();
+          const v = vRaw.trim();
+          if (k === 'domain') domain = v.toLowerCase();
+          if (k === 'path') path = v;
+          if (k === 'max-age' && Number(v) <= 0) expired = true;
+          if (k === 'expires' && Date.parse(v) <= 0) expired = true;
+        }
+        const key = `${name}\0${domain}\0${path}`;
+        if (expired) {
+          entries.delete(key);
+        } else {
+          entries.set(key, { name, value, domain, path });
+        }
+      };
+      const readCookie = () =>
+        Array.from(entries.values())
+          .map((c) => `${c.name}=${c.value}`)
+          .join('; ');
+
+      const mountPage = (initialConsent?: string) => {
+        const localMap = new Map<string, string>();
+        if (initialConsent) localMap.set('anymd_pro_consent', initialConsent);
+        const sessionMap = new Map<string, string>();
+        const consentBtnAttrs = new Map<string, Map<string, string>>([
+          [
+            'all',
+            new Map([
+              ['data-anymd-consent', 'all'],
+              ['aria-pressed', 'false'],
+            ]),
+          ],
+          [
+            'analytics',
+            new Map([
+              ['data-anymd-consent', 'analytics'],
+              ['aria-pressed', 'false'],
+            ]),
+          ],
+          [
+            'none',
+            new Map([
+              ['data-anymd-consent', 'none'],
+              ['aria-pressed', 'false'],
+            ]),
+          ],
+        ]);
+        const consentBtnHandlers = new Map<string, () => void>();
+        const buttons = Array.from(consentBtnAttrs.entries()).map(([choice, attrs]) => ({
+          getAttribute: (k: string) => attrs.get(k) ?? null,
+          setAttribute: (k: string, v: string) => attrs.set(k, v),
+          addEventListener: (_type: string, fn: () => void) => consentBtnHandlers.set(choice, fn),
+        }));
+        const banner = { hidden: true, querySelectorAll: () => buttons };
+        const dataLayer: unknown[] = [];
+        const win: Record<string, unknown> = { dataLayer };
+        const doc = {
+          get cookie() {
+            return readCookie();
+          },
+          set cookie(v: string) {
+            writeCookie(v);
+          },
+          getElementById: (id: string) => (id === 'anymd-sf-consent' ? banner : null),
+          querySelector: () => null,
+          createElement: () => ({ async: false, src: '' }),
+          head: { appendChild: () => {} },
+          addEventListener: () => {},
+        };
+        class MockEl {}
+        runInNewContext(scriptBody, {
+          URL,
+          URLSearchParams,
+          Element: MockEl,
+          window: win,
+          document: doc,
+          location: {
+            origin: 'https://sylphxai.github.io',
+            hostname: 'sylphxai.github.io',
+            pathname,
+            search: '',
+            href: `https://sylphxai.github.io${pathname}`,
+          },
+          localStorage: {
+            getItem: (k: string) => localMap.get(k) ?? null,
+            setItem: (k: string, v: string) => localMap.set(k, v),
+          },
+          sessionStorage: {
+            getItem: (k: string) => sessionMap.get(k) ?? null,
+            setItem: (k: string, v: string) => sessionMap.set(k, v),
+          },
+        });
+        return { localMap, consentBtnHandlers, dataLayer, win, doc };
+      };
+
+      // 1. Accept -> simulated GA cookies -> Reject clears all GA cookies immediately.
+      entries.clear();
+      const session = mountPage();
+      session.consentBtnHandlers.get('all')?.();
+      expect(session.localMap.get('anymd_pro_consent')).toBe('all');
+      seed('_ga', 'GA1.1.111.222', '.sylphxai.github.io', '/');
+      seed('_ga_R4TD2Z8RR7', 'GS2.1.s111', '.sylphxai.github.io', '/');
+      seed('_gid', 'GA1.2.333', '', '/anymd');
+      seed('_gat_gtag_G_R4TD2Z8RR7', '1', 'sylphxai.github.io', '/anymd/');
+      seed('session_pref', 'keep', '', '/');
+
+      session.consentBtnHandlers.get('none')?.();
+      expect(session.localMap.get('anymd_pro_consent')).toBe('none');
+      expect(session.win['ga-disable-G-R4TD2Z8RR7']).toBe(true);
+      const calls = session.dataLayer.map((args) => Array.from(args as ArrayLike<unknown>));
+      expect(calls[calls.length - 1]).toEqual([
+        'consent',
+        'update',
+        {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          analytics_storage: 'denied',
+        },
+      ]);
+      expect(session.doc.cookie).toBe('session_pref=keep');
+
+      // 2. Initial load with stored consent 'none' purges pre-existing GA cookies.
+      seed('_ga', 'GA1.1.stale', '.sylphxai.github.io', '/');
+      seed('_ga_R4TD2Z8RR7', 'GS2.1.stale', '.sylphxai.github.io', '/');
+      const noneSession = mountPage('none');
+      expect(noneSession.win['ga-disable-G-R4TD2Z8RR7']).toBe(true);
+      expect(noneSession.doc.cookie).toBe('session_pref=keep');
+    }
+  });
+
+  test('storefront CSS overrides Keel font variables so __keel_absent_alias_ui never resolves on body', () => {
+    const recoverHtml = readFileSync(new URL('recover.html', prebuilt), 'utf8');
+    for (const pageHtml of [html, recoverHtml]) {
+      const styleMatch = pageHtml.match(/<style data-anymd-storefront>([\s\S]*?)<\/style>/);
+      if (!styleMatch) throw new Error('Missing <style data-anymd-storefront>');
+      const css = styleMatch[1];
+      expect(css).toContain('--keel-font-ui: var(--sf-sans);');
+      expect(css).toContain('--keel-asset-font-ui: var(--sf-sans);');
+      expect(css).toContain('font-family: var(--sf-sans);');
+      expect(css).not.toContain('__keel_absent_alias_ui');
+    }
+  });
 });

@@ -233,6 +233,98 @@ export function _resetTrackingForTests(): void {
   gtag = null;
 }
 
+function isAnalyticsCookieName(name: string): boolean {
+  return name === '_ga' || name.startsWith('_ga_') || name === '_gid' || name.startsWith('_gat');
+}
+
+function analyticsCookieNames(): string[] {
+  if (typeof document === 'undefined' || typeof document.cookie !== 'string' || !document.cookie) {
+    return [];
+  }
+  const names = new Set<string>();
+  for (const part of document.cookie.split(';')) {
+    const eq = part.indexOf('=');
+    const name = (eq === -1 ? part : part.slice(0, eq)).trim();
+    if (name && isAnalyticsCookieName(name)) {
+      names.add(name);
+    }
+  }
+  return Array.from(names);
+}
+
+function currentHostname(): string {
+  if (typeof location === 'undefined') return '';
+  if (typeof location.hostname === 'string' && location.hostname) {
+    return location.hostname;
+  }
+  try {
+    if (typeof location.origin === 'string' && location.origin && location.origin !== 'null') {
+      return new URL(location.origin).hostname;
+    }
+  } catch {
+    // Ignore malformed origins in partial test stubs.
+  }
+  return '';
+}
+
+function cookieDomains(hostname: string): string[] {
+  const domains = new Set<string>(['']);
+  const host = hostname.trim();
+  if (!host) return Array.from(domains);
+  domains.add(host);
+  if (host.includes('.')) domains.add(`.${host}`);
+  const isIp = /^\d+(?:\.\d+){3}$/.test(host) || host.includes(':');
+  if (!isIp) {
+    const parts = host.split('.').filter(Boolean);
+    for (let i = 1; i < parts.length - 1; i++) {
+      const suffix = parts.slice(i).join('.');
+      domains.add(suffix);
+      domains.add(`.${suffix}`);
+    }
+  }
+  return Array.from(domains);
+}
+
+function cookiePaths(): string[] {
+  const paths = new Set<string>(['/', '/anymd', '/anymd/']);
+  if (typeof location !== 'undefined' && typeof location.pathname === 'string') {
+    const path = location.pathname;
+    if (path.startsWith('/')) {
+      paths.add(path);
+      const dir = path.replace(/\/[^/]*$/, '/');
+      if (dir) paths.add(dir);
+    }
+  }
+  return Array.from(paths);
+}
+
+function setGaDisable(disabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  const w = window as unknown as Record<string, unknown>;
+  for (const id of [proConfig.ga4MeasurementId, proConfig.adsConversionId]) {
+    if (id && !isPlaceholder(id)) {
+      w[`ga-disable-${id}`] = disabled;
+    }
+  }
+}
+
+/** Expires Google Analytics cookies across site paths and host/domain variants. */
+export function purgeAnalyticsCookies(): void {
+  const names = analyticsCookieNames();
+  if (names.length === 0 || typeof document === 'undefined') return;
+  const domains = cookieDomains(currentHostname());
+  const paths = cookiePaths();
+  const expired = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0';
+  for (const name of names) {
+    for (const path of paths) {
+      for (const domain of domains) {
+        const domainAttr = domain ? `; domain=${domain}` : '';
+        document.cookie = `${name}=; ${expired}; path=${path}${domainAttr}`;
+      }
+    }
+  }
+}
+
 function sanitizedPageLocation(): string | undefined {
   if (typeof location === 'undefined') return undefined;
   if (location.search.includes('session_id=') || location.search.includes('recovery_token=')) {
@@ -244,7 +336,14 @@ function sanitizedPageLocation(): string | undefined {
 /** Loads gtag strictly after opt-in consent. Fail-closed: zero scripts or beacons pre-consent. */
 export function loadTags(page: TrackingPage = 'docs'): boolean {
   const choice = savedChoice();
-  if (!trackingEnabled() || !hasAnalyticsConsent(choice)) return false;
+  if (!trackingEnabled() || !hasAnalyticsConsent(choice)) {
+    if (choice === 'none' || !trackingEnabled()) {
+      setGaDisable(true);
+      purgeAnalyticsCookies();
+    }
+    return false;
+  }
+  setGaDisable(false);
   if (gtag) return true;
   if (typeof window === 'undefined' || typeof document === 'undefined') return false;
   const ga4 = proConfig.ga4MeasurementId ?? '';
@@ -302,6 +401,7 @@ export function trackPageView(pageLocation?: string): void {
 export function updateConsent(choice: Choice, page: TrackingPage = 'docs'): void {
   saveChoice(choice);
   if (hasAnalyticsConsent(choice)) {
+    setGaDisable(false);
     if (!gtag) {
       loadTags(page);
     } else {
@@ -309,7 +409,9 @@ export function updateConsent(choice: Choice, page: TrackingPage = 'docs'): void
     }
     return;
   }
+  setGaDisable(true);
   gtag?.('consent', 'update', ALL_DENIED);
+  purgeAnalyticsCookies();
 }
 
 export function trackBeginCheckout(checkoutTrigger = 'pro_buy_cta'): void {

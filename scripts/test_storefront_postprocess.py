@@ -34,6 +34,8 @@ class StorefrontPostprocessTest(unittest.TestCase):
         self.assertIn('data-anymd-storefront="1"', once)
         self.assertIn('class="anymd-sf-nav"', once)
         self.assertIn('<style data-anymd-storefront>', once)
+        self.assertIn("--keel-font-ui: var(--sf-sans);", once)
+        self.assertIn("--keel-asset-font-ui: var(--sf-sans);", once)
         self.assertNotIn('<nav id="docs-nav"', once)
         self.assertIn(
             '<meta property="og:image" content="https://sylphxai.github.io/anymd/og-pro.png">',
@@ -56,6 +58,8 @@ class StorefrontPostprocessTest(unittest.TestCase):
         self.assertIn('<div id="docs-root" data-anymd-storefront="1"', once)
         self.assertIn('class="anymd-sf-nav"', once)
         self.assertIn('<style data-anymd-storefront>', once)
+        self.assertIn("--keel-font-ui: var(--sf-sans);", once)
+        self.assertIn("--keel-asset-font-ui: var(--sf-sans);", once)
         self.assertNotIn('<nav id="docs-nav"', once)
         self.assertNotIn("Money", once)
 

@@ -12,6 +12,7 @@ import {
   isPricingHref,
   loadTags,
   mergedAttribution,
+  purgeAnalyticsCookies,
   PURCHASE_STORAGE_PREFIX,
   persistAttribution,
   STORE_KEY,
@@ -314,6 +315,148 @@ describe('purchase attribution', () => {
       Object.defineProperty(globalThis, 'sessionStorage', {
         configurable: true,
         value: prevStorage,
+      });
+    }
+  });
+
+  test('withdrawing consent to Reject purges _ga* cookies across paths and domains on VitePress routes', () => {
+    type CookieEntry = { name: string; value: string; domain: string; path: string };
+    const entries = new Map<string, CookieEntry>();
+    const seed = (name: string, value: string, domain = '', path = '/') => {
+      entries.set(`${name}\0${domain}\0${path}`, { name, value, domain, path });
+    };
+    const writeCookie = (raw: string) => {
+      const parts = raw.split(';').map((p) => p.trim());
+      const [nv, ...attrs] = parts;
+      const eq = nv.indexOf('=');
+      if (eq === -1) return;
+      const name = nv.slice(0, eq).trim();
+      const value = nv.slice(eq + 1).trim();
+      let domain = '';
+      let path = '/';
+      let expired = false;
+      for (const attr of attrs) {
+        const [kRaw, vRaw = ''] = attr.split('=');
+        const k = kRaw.trim().toLowerCase();
+        const v = vRaw.trim();
+        if (k === 'domain') domain = v.toLowerCase();
+        if (k === 'path') path = v;
+        if (k === 'max-age' && Number(v) <= 0) expired = true;
+        if (k === 'expires' && Date.parse(v) <= 0) expired = true;
+      }
+      const key = `${name}\0${domain}\0${path}`;
+      if (expired) {
+        entries.delete(key);
+      } else {
+        entries.set(key, { name, value, domain, path });
+      }
+    };
+    const readCookie = () =>
+      Array.from(entries.values())
+        .map((c) => `${c.name}=${c.value}`)
+        .join('; ');
+
+    const localMap = new Map<string, string>();
+    const sessionMap = new Map<string, string>();
+    const dataLayer: unknown[] = [];
+
+    const prevWindow = (globalThis as Record<string, unknown>).window;
+    const prevDocument = (globalThis as Record<string, unknown>).document;
+    const prevLocation = (globalThis as Record<string, unknown>).location;
+    const prevLocal = globalThis.localStorage;
+    const prevSession = globalThis.sessionStorage;
+
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => localMap.get(k) ?? null,
+        setItem: (k: string, v: string) => localMap.set(k, v),
+      },
+    });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => sessionMap.get(k) ?? null,
+        setItem: (k: string, v: string) => sessionMap.set(k, v),
+      },
+    });
+    Object.defineProperty(globalThis, 'location', {
+      configurable: true,
+      value: {
+        origin: 'https://sylphxai.github.io',
+        hostname: 'sylphxai.github.io',
+        pathname: '/anymd/pro',
+        search: '',
+        href: 'https://sylphxai.github.io/anymd/pro',
+      },
+    });
+    const winObj: Record<string, unknown> = { dataLayer };
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: winObj,
+    });
+    const docObj = {
+      get cookie() {
+        return readCookie();
+      },
+      set cookie(v: string) {
+        writeCookie(v);
+      },
+      querySelector: () => null,
+      createElement: () => ({ async: false, src: '' }),
+      head: { appendChild: () => {} },
+    };
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      value: docObj,
+    });
+
+    try {
+      _resetTrackingForTests();
+      updateConsent('all', 'pro');
+      seed('_ga', 'GA1.1.123.456', '.sylphxai.github.io', '/');
+      seed('_ga_R4TD2Z8RR7', 'GS2.1.s123', '.sylphxai.github.io', '/');
+      seed('_gid', 'GA1.2.999', '', '/anymd/');
+      seed('_gat_gtag_G_R4TD2Z8RR7', '1', 'sylphxai.github.io', '/anymd');
+      seed('theme_pref', 'dark', '', '/');
+      expect(docObj.cookie).toContain('_ga_R4TD2Z8RR7=GS2.1.s123');
+
+      updateConsent('none', 'pro');
+      expect(localMap.get(STORE_KEY)).toBe('none');
+      expect(winObj['ga-disable-G-R4TD2Z8RR7']).toBe(true);
+      const calls = dataLayer.map((args) => Array.from(args as ArrayLike<unknown>));
+      expect(calls[calls.length - 1]).toEqual([
+        'consent',
+        'update',
+        {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          analytics_storage: 'denied',
+        },
+      ]);
+      expect(docObj.cookie).toBe('theme_pref=dark');
+
+      // Initial load with stored 'none' consent also purges any leftover _ga* cookies.
+      _resetTrackingForTests();
+      seed('_ga', 'GA1.1.stale', '.sylphxai.github.io', '/');
+      seed('_ga_R4TD2Z8RR7', 'GS2.1.stale', '.sylphxai.github.io', '/');
+      expect(loadTags('docs')).toBe(false);
+      expect(docObj.cookie).toBe('theme_pref=dark');
+
+      // Direct helper works cleanly when analytics are disabled.
+      seed('_ga', 'GA1.1.disabled', '', '/');
+      purgeAnalyticsCookies();
+      expect(docObj.cookie).toBe('theme_pref=dark');
+    } finally {
+      _resetTrackingForTests();
+      Object.defineProperty(globalThis, 'window', { configurable: true, value: prevWindow });
+      Object.defineProperty(globalThis, 'document', { configurable: true, value: prevDocument });
+      Object.defineProperty(globalThis, 'location', { configurable: true, value: prevLocation });
+      Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: prevLocal });
+      Object.defineProperty(globalThis, 'sessionStorage', {
+        configurable: true,
+        value: prevSession,
       });
     }
   });

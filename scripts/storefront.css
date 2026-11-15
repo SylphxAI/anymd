@@ -31,6 +31,8 @@
   --keel-link: var(--sf-link);
   --keel-link-hover: #2d4600;
   --keel-focus-ring-color: var(--sf-link);
+  --keel-font-ui: var(--sf-sans);
+  --keel-asset-font-ui: var(--sf-sans);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,6 +67,7 @@
 
 html {
   background: var(--sf-paper);
+  font-family: var(--sf-sans);
   scroll-padding-top: 84px;
 }
 
