@@ -64,6 +64,11 @@ describe('pro config', () => {
     expect(vpConfig).not.toContain("link: '/pro'");
     expect(vpConfig).toContain("url: 'pricing'");
     expect(vpConfig).toContain('isAccessibleForFree: false');
+    expect(vpConfig).toContain('/use-cases/pdf-and-office-to-markdown-mcp');
+    expect(vpConfig).toContain('/use-cases/verifiable-video-and-cite-check-ai-agents');
+
+    const proMd = readFileSync(new URL('../docs/pro.md', import.meta.url), 'utf8');
+    expect(proMd).not.toContain('Money');
   });
 
   test('purchase copy promises instant on-page delivery, not an emailed token', () => {
@@ -173,6 +178,14 @@ describe('purchase attribution', () => {
         wbraid: 'wb_new',
         utm_source: 'google',
       });
+      expect(
+        appendAttributionToUrl(
+          'https://sylphxai.github.io/anymd/pricing?entry_surface=seo_verifiable-video-and-cite-check-ai-agents',
+          { gclid: 'g_persist', entry_surface: 'older_surface_ignored' }
+        )
+      ).toBe(
+        'https://sylphxai.github.io/anymd/pricing?entry_surface=seo_verifiable-video-and-cite-check-ai-agents&gclid=g_persist'
+      );
     } finally {
       Object.defineProperty(globalThis, 'sessionStorage', {
         configurable: true,
