@@ -7,7 +7,7 @@ export CARGO_NET_GIT_FETCH_WITH_CLI=true
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-KEEL_REV="${KEEL_REV:-98674c1416cb5a419d1f6d4553d08b3d721e27c3}"
+KEEL_REV="${KEEL_REV:-cad61baf67606dc9845ce168b60361addf763706}"
 CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
 CARGO_BIN="${CARGO_BIN:-cargo}"
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/anymd-keel-target-${KEEL_REV:0:12}}"

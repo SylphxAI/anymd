@@ -53,6 +53,7 @@ async function mount(
     getAttribute: () => null,
   };
   const root = {
+    dispatchEvent: () => true,
     hasAttribute: (name: string) => attributes.has(name),
     setAttribute: (name: string, value: string) => attributes.set(name, value),
     getAttribute: (name: string) => attributes.get(name) ?? null,
@@ -72,10 +73,21 @@ async function mount(
       return null;
     },
   };
+  class MockCustomEvent<T = unknown> {
+    type: string;
+    detail: T | undefined;
+    bubbles: boolean;
+    constructor(type: string, init?: { bubbles?: boolean; detail?: T }) {
+      this.type = type;
+      this.bubbles = Boolean(init?.bubbles);
+      this.detail = init?.detail;
+    }
+  }
   const sandbox = {
     URL,
     URLSearchParams,
     TextEncoder,
+    CustomEvent: MockCustomEvent,
     crypto: webcrypto,
     window: {
       location: {
@@ -218,7 +230,15 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
     expect(html).not.toContain('Money');
     expect(html).toContain('One-time 100-year offline licence');
     const recoverHtml = readFileSync(new URL('recover.html', prebuilt), 'utf8');
+    expect(html).toContain('Apple Pay · Google Pay · Link');
+    expect(html).toContain('anymd-wallet-trust');
+    expect(html).toContain('data-anymd-ga4="1"');
+    expect(html).toContain('G-R4TD2Z8RR7');
+    expect(html).not.toContain('src="https://www.googletagmanager.com');
     expect(recoverHtml).not.toContain('Money');
+    expect(recoverHtml).toContain('data-anymd-ga4="1"');
+    expect(recoverHtml).toContain('G-R4TD2Z8RR7');
+    expect(recoverHtml).not.toContain('src="https://www.googletagmanager.com');
   });
 
   test('money runtime forwards click IDs and UTMs into metadata and return URLs', async () => {
@@ -291,5 +311,151 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
     });
     expect(request.body.success_url).toContain('gclid=from_pro_page');
     expect(request.body.success_url).toContain('fbclid=fb_from_pro');
+  });
+
+  test('storefront GA4 script stays fail-closed pre-consent and tracks page_view, begin_checkout, and deduped purchase post-consent', () => {
+    const scriptMatch = html.match(/<script data-anymd-ga4="1">([\s\S]*?)<\/script>/);
+    if (!scriptMatch) throw new Error('Missing data-anymd-ga4 script in pricing.html');
+    const scriptBody = scriptMatch[1];
+
+    const localMap = new Map<string, string>();
+    const sessionMap = new Map<string, string>([
+      ['anymd_pro_attribution', JSON.stringify({ entry_surface: 'seo_video-evidence' })],
+    ]);
+    const appendedSrcs: string[] = [];
+    const docListeners = new Map<string, Array<(ev: unknown) => void>>();
+    const consentBtnAttrs = new Map<string, Map<string, string>>([
+      [
+        'all',
+        new Map([
+          ['data-anymd-consent', 'all'],
+          ['aria-pressed', 'false'],
+        ]),
+      ],
+      [
+        'analytics',
+        new Map([
+          ['data-anymd-consent', 'analytics'],
+          ['aria-pressed', 'false'],
+        ]),
+      ],
+      [
+        'none',
+        new Map([
+          ['data-anymd-consent', 'none'],
+          ['aria-pressed', 'false'],
+        ]),
+      ],
+    ]);
+    const consentBtnHandlers = new Map<string, () => void>();
+    const buttons = Array.from(consentBtnAttrs.entries()).map(([choice, attrs]) => ({
+      getAttribute: (k: string) => attrs.get(k) ?? null,
+      setAttribute: (k: string, v: string) => attrs.set(k, v),
+      addEventListener: (_type: string, fn: () => void) => consentBtnHandlers.set(choice, fn),
+    }));
+    const banner = {
+      hidden: true,
+      querySelectorAll: () => buttons,
+    };
+    const dataLayer: unknown[] = [];
+    const win: Record<string, unknown> = { dataLayer };
+    const doc = {
+      getElementById: (id: string) => (id === 'anymd-sf-consent' ? banner : null),
+      querySelector: (sel: string) =>
+        sel === '[data-keel-money-field="price"]' ? { value: 'pro_single' } : null,
+      createElement: () => ({ async: false, src: '' }),
+      head: { appendChild: (node: { src: string }) => appendedSrcs.push(node.src) },
+      addEventListener: (type: string, fn: (ev: unknown) => void) => {
+        const list = docListeners.get(type) ?? [];
+        list.push(fn);
+        docListeners.set(type, list);
+      },
+    };
+    class MockEl {
+      getAttribute(k: string) {
+        return k === 'data-keel-money-form' ? 'checkout' : null;
+      }
+      closest() {
+        return null;
+      }
+    }
+    const checkoutForm = new MockEl();
+
+    runInNewContext(scriptBody, {
+      URLSearchParams,
+      Element: MockEl,
+      window: win,
+      document: doc,
+      location: {
+        origin: 'https://sylphxai.github.io',
+        pathname: '/anymd/pricing',
+        search: '',
+        href: 'https://sylphxai.github.io/anymd/pricing',
+      },
+      localStorage: {
+        getItem: (k: string) => localMap.get(k) ?? null,
+        setItem: (k: string, v: string) => localMap.set(k, v),
+      },
+      sessionStorage: {
+        getItem: (k: string) => sessionMap.get(k) ?? null,
+        setItem: (k: string, v: string) => sessionMap.set(k, v),
+      },
+    });
+
+    // Pre-consent: zero gtag script, zero events even if checkout submits or payment succeeds
+    expect(banner.hidden).toBe(false);
+    expect(appendedSrcs).toHaveLength(0);
+    expect(dataLayer).toHaveLength(0);
+    for (const fn of docListeners.get('submit') ?? []) fn({ target: checkoutForm });
+    expect(dataLayer).toHaveLength(0);
+
+    // Grant analytics consent
+    consentBtnHandlers.get('analytics')?.();
+    expect(banner.hidden).toBe(true);
+    expect(localMap.get('anymd_pro_consent')).toBe('analytics');
+    expect(appendedSrcs).toEqual(['https://www.googletagmanager.com/gtag/js?id=G-R4TD2Z8RR7']);
+
+    for (const fn of docListeners.get('submit') ?? []) fn({ target: checkoutForm });
+    const paidEvent = {
+      detail: { status: 'succeeded', receipt: { Store: { store: 'web', data: 'cs_test_sf_999' } } },
+    };
+    for (const fn of docListeners.get('keel:money:purchase') ?? []) fn(paidEvent);
+    for (const fn of docListeners.get('keel:money:purchase') ?? []) fn(paidEvent);
+
+    const calls = dataLayer.map((args) => Array.from(args as ArrayLike<unknown>));
+    const pageViews = calls.filter((c) => c[0] === 'event' && c[1] === 'page_view');
+    const beginCheckouts = calls.filter((c) => c[0] === 'event' && c[1] === 'begin_checkout');
+    const purchases = calls.filter((c) => c[0] === 'event' && c[1] === 'purchase');
+
+    expect(pageViews).toHaveLength(1);
+    expect(pageViews[0]?.[2]).toMatchObject({
+      send_to: 'G-R4TD2Z8RR7',
+      entry_surface: 'seo_video-evidence',
+      plan: 'pro',
+      plan_sku: 'anymd_pro',
+      billing_interval: 'one_time',
+      option: 'pro_single',
+      checkout_trigger: 'page_view',
+    });
+    expect(beginCheckouts).toHaveLength(1);
+    expect(beginCheckouts[0]?.[2]).toMatchObject({
+      entry_surface: 'seo_video-evidence',
+      plan: 'pro',
+      plan_sku: 'anymd_pro',
+      billing_interval: 'one_time',
+      option: 'pro_single',
+      checkout_trigger: 'pricing_checkout_form',
+    });
+    expect(purchases).toHaveLength(1);
+    expect(purchases[0]?.[2]).toMatchObject({
+      transaction_id: 'cs_test_sf_999',
+      entry_surface: 'seo_video-evidence',
+      plan: 'pro',
+      plan_sku: 'anymd_pro',
+      billing_interval: 'one_time',
+      option: 'pro_single',
+      checkout_trigger: 'stripe_redirect',
+    });
+    expect(sessionMap.get('anymd_pro_purchase_cs_test_sf_999')).toBe('1');
   });
 });
