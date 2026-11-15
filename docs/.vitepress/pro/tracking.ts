@@ -2,11 +2,13 @@
  * Pro landing tracking and attribution forwarding.
  * Preserves inbound ad click IDs (gclid, gbraid, wbraid, fbclid) and UTM
  * parameters across /pro, docs navigation, /pricing, and checkout requests.
- * Optional GA4 / Google Ads tags only load when non-placeholder IDs are set.
+ * Default-deny fail-closed GA4 / Google Ads tags: zero gtag scripts or
+ * beacons fire until explicit analytics consent is granted.
  */
 import config from './config.json';
 
 export type Choice = 'all' | 'analytics' | 'none';
+export type TrackingPage = 'docs' | 'pro' | 'thanks';
 type Gtag = (...args: unknown[]) => void;
 type ConsentState = Record<string, string>;
 type ProConfig = {
@@ -30,14 +32,17 @@ export const UTM_KEYS = [
 export const ATTRIBUTION_KEYS = [...CLICK_ID_KEYS, ...UTM_KEYS, 'entry_surface'] as const;
 export type AttributionMap = Record<string, string>;
 
-const STORE_KEY = 'anymd_pro_consent';
+export const STORE_KEY = 'anymd_pro_consent';
 export const ATTRIBUTION_STORAGE_KEY = 'anymd_pro_attribution';
+export const PURCHASE_STORAGE_PREFIX = 'anymd_pro_purchase_';
 const MAX_ATTRIBUTION_VALUE_LENGTH = 500;
 const CLICK_ID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
-const REGIONS = [
-  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV',
-  'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH',
-];
+const ALL_DENIED: ConsentState = {
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  analytics_storage: 'denied',
+};
 
 export const buyUrl: string = proConfig.buyUrl;
 
@@ -72,6 +77,10 @@ export function savedChoice(): Choice | null {
 
 export function saveChoice(choice: Choice): void {
   storageSet('local', STORE_KEY, choice);
+}
+
+export function hasAnalyticsConsent(choice: Choice | null = savedChoice()): boolean {
+  return choice === 'all' || choice === 'analytics';
 }
 
 export function consentState(choice: Choice): ConsentState {
@@ -137,7 +146,6 @@ export function persistAttribution(search: string): AttributionMap {
   return merged;
 }
 
-/** Validated Google click id from query params, or ''. */
 export function clickId(search: string): string {
   return extractAttribution(search).gclid ?? '';
 }
@@ -204,16 +212,45 @@ export function buyHref(attributionOrClickId: AttributionMap | string = ''): str
   return appendAttributionToUrl(buyUrl, attributionOrClickId);
 }
 
+export function eventDimensions(checkoutTrigger: string, search = typeof location !== 'undefined' ? location.search : ''): Record<string, string> {
+  const attr = mergedAttribution(search);
+  const path = typeof location !== 'undefined' ? location.pathname : '';
+  const fallbackSurface = path.includes('/pro') ? 'docs_pro' : path.includes('/pricing') ? 'pricing_page' : 'docs';
+  return {
+    entry_surface: attr.entry_surface || fallbackSurface,
+    plan: 'pro',
+    plan_sku: 'anymd_pro',
+    billing_interval: 'one_time',
+    option: 'anymd_pro',
+    checkout_trigger: checkoutTrigger,
+  };
+}
+
 let gtag: Gtag | null = null;
 
-/** Loads gtag once. Returns false (and does nothing) while ids are placeholders. */
-export function loadTags(page: 'pro' | 'thanks'): boolean {
+/** Test helper only: resets module-level gtag handle. */
+export function _resetTrackingForTests(): void {
+  gtag = null;
+}
+
+function sanitizedPageLocation(): string | undefined {
+  if (typeof location === 'undefined') return undefined;
+  if (location.search.includes('session_id=') || location.search.includes('recovery_token=')) {
+    return location.origin + location.pathname;
+  }
+  return undefined;
+}
+
+/** Loads gtag strictly after opt-in consent. Fail-closed: zero scripts or beacons pre-consent. */
+export function loadTags(page: TrackingPage = 'docs'): boolean {
+  const choice = savedChoice();
+  if (!trackingEnabled() || !hasAnalyticsConsent(choice)) return false;
   if (gtag) return true;
-  if (!trackingEnabled()) return false;
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false;
   const ga4 = proConfig.ga4MeasurementId ?? '';
   const ads = proConfig.adsConversionId ?? '';
   const useGa = !isPlaceholder(ga4);
-  const w = window as unknown as { dataLayer: unknown[] };
+  const w = window as unknown as { dataLayer: unknown[]; gtag?: Gtag };
   w.dataLayer = w.dataLayer || [];
   const g: Gtag = function () {
     // gtag.js reads the arguments object, not an array.
@@ -221,57 +258,87 @@ export function loadTags(page: 'pro' | 'thanks'): boolean {
     w.dataLayer.push(arguments);
   };
   gtag = g;
-  // Defaults go first, before any config call. Region rule first, then the global default.
-  g('consent', 'default', { ...consentState('none'), region: REGIONS, wait_for_update: 500 });
-  g('consent', 'default', consentState('all'));
-  const saved = savedChoice();
-  if (saved) g('consent', 'update', consentState(saved));
+  w.gtag = g;
+  g('consent', 'default', { ...ALL_DENIED, wait_for_update: 500 });
+  g('consent', 'update', consentState(choice as Choice));
   g('set', 'ads_data_redaction', true);
   g('js', new Date());
-  const params: Record<string, unknown> = { send_page_view: true };
-  // The thanks URL carries a Stripe session id: report the path only.
-  if (page === 'thanks') params.page_location = location.origin + location.pathname;
-  if (useGa && ga4) g('config', ga4, params);
-  if (!isPlaceholder(ads) && ads) {
-    g('config', ads, page === 'thanks' ? { page_location: params.page_location } : {});
+  const safeLoc = page === 'thanks' ? (location.origin + location.pathname) : sanitizedPageLocation();
+  const cfgParams: Record<string, unknown> = { send_page_view: false };
+  if (safeLoc) cfgParams.page_location = safeLoc;
+  if (useGa && ga4) {
+    g('config', ga4, cfgParams);
+    g('event', 'page_view', {
+      send_to: ga4,
+      ...eventDimensions('page_view'),
+      ...(safeLoc ? { page_location: safeLoc } : {}),
+    });
   }
-  const s = document.createElement('script');
-  s.async = true;
-  s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(useGa ? ga4 : ads)}`;
-  document.head.appendChild(s);
+  if (!isPlaceholder(ads) && ads) {
+    g('config', ads, safeLoc ? { page_location: safeLoc } : {});
+  }
+  const tagId = encodeURIComponent(useGa ? ga4 : ads);
+  const src = `https://www.googletagmanager.com/gtag/js?id=${tagId}`;
+  if (!document.querySelector(`script[src="${src}"]`)) {
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = src;
+    document.head.appendChild(s);
+  }
   return true;
 }
 
-export function updateConsent(choice: Choice): void {
-  saveChoice(choice);
-  gtag?.('consent', 'update', consentState(choice));
+export function trackPageView(pageLocation?: string): void {
+  if (!gtag || !hasAnalyticsConsent()) return;
+  const payload: Record<string, unknown> = {
+    send_to: proConfig.ga4MeasurementId,
+    ...eventDimensions('page_view'),
+  };
+  const safeLoc = pageLocation ?? sanitizedPageLocation();
+  if (safeLoc) payload.page_location = safeLoc;
+  gtag('event', 'page_view', payload);
 }
 
-export function trackBeginCheckout(): void {
-  gtag?.('event', 'begin_checkout', {
+export function updateConsent(choice: Choice, page: TrackingPage = 'docs'): void {
+  saveChoice(choice);
+  if (hasAnalyticsConsent(choice)) {
+    if (!gtag) {
+      loadTags(page);
+    } else {
+      gtag('consent', 'update', consentState(choice));
+    }
+    return;
+  }
+  gtag?.('consent', 'update', ALL_DENIED);
+}
+
+export function trackBeginCheckout(checkoutTrigger = 'pro_buy_cta'): void {
+  if (!gtag || !hasAnalyticsConsent()) return;
+  gtag('event', 'begin_checkout', {
     currency: 'USD',
     value: PRO_VALUE,
+    ...eventDimensions(checkoutTrigger),
     items: [{ item_id: 'anymd_pro', item_name: 'anymd Pro', price: PRO_VALUE, quantity: 1 }],
     transport_type: 'beacon',
   });
 }
 
-/** Stripe session id from the redirect, or '' (a reload or direct visit never counts as a purchase). */
 export function transactionId(search: string): string {
   const id = new URLSearchParams(search).get('session_id') ?? '';
   return /^cs_[A-Za-z0-9_]+$/.test(id) ? id : '';
 }
 
-/** Fires `purchase` once per Stripe session id per browser session; nothing without one. Returns the id. */
 export function trackPurchase(search: string): string {
   const id = transactionId(search);
   if (!id) return '';
-  const key = `anymd_pro_purchase_${id}`;
-  if (!gtag || storageGet('session', key)) return id;
+  if (!gtag || !hasAnalyticsConsent()) return id;
+  const key = `${PURCHASE_STORAGE_PREFIX}${id}`;
+  if (storageGet('session', key)) return id;
   storageSet('session', key, '1');
   const base = { transaction_id: id, value: PRO_VALUE, currency: 'USD' };
   gtag('event', 'purchase', {
     ...base,
+    ...eventDimensions('stripe_redirect', search),
     items: [{ item_id: 'anymd_pro', price: PRO_VALUE, quantity: 1 }],
   });
   if (!isPlaceholder(proConfig.purchaseSendTo) && proConfig.purchaseSendTo) {

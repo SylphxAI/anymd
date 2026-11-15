@@ -100,7 +100,6 @@ Pro is digital content delivered immediately: at checkout you ask us to supply i
 **Who sells it?**
 Sylphx Limited, a company registered in England and Wales (company number 16438428). See the [anymd Pro terms](/legal/pro-terms) and [Privacy](/legal/privacy).
 
-<ProTracking page="pro" />
 
 ## Signer trust and test activation
 

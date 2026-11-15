@@ -90,6 +90,70 @@ STOREFRONT_STYLE = """<style data-anymd-storefront>
   font-size: 0.875rem;
   color: var(--keel-color-on-surface-variant, #93a0b5);
 }
+.anymd-submit-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+.anymd-wallet-trust {
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: var(--keel-color-on-surface-variant, #93a0b5);
+}
+.anymd-sf-cookie-wrap {
+  margin-left: auto;
+}
+.anymd-sf-cookie-link {
+  color: var(--keel-color-on-surface-variant, #93a0b5);
+  font-size: 0.82rem;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.anymd-sf-consent {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  z-index: 120;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 55rem;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border: 1px solid rgba(140, 170, 220, 0.25);
+  border-radius: 10px;
+  background: var(--keel-color-surface, #121826);
+  color: var(--keel-color-on-surface, #e6edf7);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+.anymd-sf-consent[hidden] { display: none; }
+.anymd-sf-consent a { color: #c3f53c; }
+.anymd-sf-consent-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.anymd-sf-consent button {
+  padding: 6px 14px;
+  border: 1px solid rgba(140, 170, 220, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+}
+.anymd-sf-consent button[aria-pressed="true"] {
+  border-color: #c3f53c;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .anymd-submit-wrap { align-items: flex-start; }
+  .anymd-sf-cookie-wrap { margin-left: 0; }
+}
 </style>"""
 
 STOREFRONT_NAV = (
@@ -259,6 +323,243 @@ def parse_frontmatter(md_path: Path) -> dict[str, str]:
     return result
 
 
+def parse_ga4_measurement_id(config_json: Path) -> str:
+    """Read non-placeholder ga4MeasurementId from pro/config.json."""
+    if not config_json.is_file():
+        return ""
+    try:
+        data = json.loads(config_json.read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    ga4 = data.get("ga4MeasurementId")
+    if not isinstance(ga4, str):
+        return ""
+    ga4 = ga4.strip()
+    if not ga4 or "XXXX" in ga4:
+        return ""
+    return ga4
+
+
+def _build_ga4_storefront_snippet(ga4_id: str) -> str:
+    """Build default-deny consent-gated GA4 script + cookie controls for prebuilt pages."""
+    safe_id = json.dumps(ga4_id)
+    return f"""<div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
+  <span>
+    This page uses Google Analytics measurement when enabled to see how people find us and improve checkout. Depending on your choice, Google may set cookies and process identifiers such as your IP address. We never send your name or email. Sylphx Limited is the controller.
+    <a href="/anymd/legal/privacy">Privacy</a>
+  </span>
+  <span class="anymd-sf-consent-actions">
+    <button type="button" data-anymd-consent="all" aria-pressed="false">Accept all</button>
+    <button type="button" data-anymd-consent="analytics" aria-pressed="false">Analytics only</button>
+    <button type="button" data-anymd-consent="none" aria-pressed="false">Reject</button>
+  </span>
+</div>
+<script data-anymd-ga4="1">
+(() => {{
+  const GA4_ID = {safe_id};
+  if (!GA4_ID) return;
+  const STORE_KEY = "anymd_pro_consent";
+  const ATTR_KEY = "anymd_pro_attribution";
+  const PURCHASE_PREFIX = "anymd_pro_purchase_";
+  const ALL_DENIED = {{
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+    analytics_storage: "denied",
+  }};
+  let gtagLoaded = false;
+  let lastPaidSessionId = "";
+
+  function readConsent() {{
+    try {{
+      const v = localStorage.getItem(STORE_KEY);
+      return v === "all" || v === "analytics" || v === "none" ? v : null;
+    }} catch {{ return null; }}
+  }}
+  function saveConsent(choice) {{
+    try {{ localStorage.setItem(STORE_KEY, choice); }} catch {{}}
+  }}
+  function hasConsent(choice = readConsent()) {{
+    return choice === "all" || choice === "analytics";
+  }}
+  function readEntrySurface() {{
+    try {{
+      const q = new URLSearchParams(location.search).get("entry_surface");
+      if (q && q.trim()) return q.trim();
+      const raw = sessionStorage.getItem(ATTR_KEY);
+      if (raw) {{
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.entry_surface === "string" && parsed.entry_surface.trim()) {{
+          return parsed.entry_surface.trim();
+        }}
+      }}
+    }} catch {{}}
+    return location.pathname.includes("/recover") ? "recover_page" : "pricing_page";
+  }}
+  function readOption() {{
+    const sel = document.querySelector('[data-keel-money-field="price"]');
+    return sel && typeof sel.value === "string" && sel.value.trim() ? sel.value.trim() : "anymd_pro";
+  }}
+  function dimensions(trigger) {{
+    return {{
+      entry_surface: readEntrySurface(),
+      plan: "pro",
+      plan_sku: "anymd_pro",
+      billing_interval: "one_time",
+      option: readOption(),
+      checkout_trigger: trigger,
+    }};
+  }}
+  function sanitizedPageLocation() {{
+    const s = location.search || "";
+    if (s.includes("session_id=") || s.includes("recovery_token=")) {{
+      return location.origin + location.pathname;
+    }}
+    return location.href;
+  }}
+  function consentPayload(choice) {{
+    const ad = choice === "all" ? "granted" : "denied";
+    return {{
+      ad_storage: ad,
+      ad_user_data: ad,
+      ad_personalization: ad,
+      analytics_storage: choice === "none" ? "denied" : "granted",
+    }};
+  }}
+  function ensureGtag(choice) {{
+    if (!hasConsent(choice)) return false;
+    window.dataLayer = window.dataLayer || [];
+    if (typeof window.gtag !== "function") {{
+      window.gtag = function () {{ window.dataLayer.push(arguments); }};
+    }}
+    if (gtagLoaded) {{
+      window.gtag("consent", "update", consentPayload(choice));
+      return true;
+    }}
+    gtagLoaded = true;
+    window.gtag("consent", "default", {{ ...ALL_DENIED, wait_for_update: 500 }});
+    window.gtag("consent", "update", consentPayload(choice));
+    window.gtag("set", "ads_data_redaction", true);
+    window.gtag("js", new Date());
+    window.gtag("config", GA4_ID, {{
+      send_page_view: false,
+      page_location: sanitizedPageLocation(),
+    }});
+    window.gtag("event", "page_view", {{
+      send_to: GA4_ID,
+      ...dimensions("page_view"),
+      page_location: sanitizedPageLocation(),
+    }});
+    const src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(GA4_ID);
+    if (!document.querySelector('script[src="' + src + '"]')) {{
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = src;
+      document.head.appendChild(s);
+    }}
+    return true;
+  }}
+  function emitPurchase(sessionId) {{
+    if (!sessionId || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return;
+    lastPaidSessionId = sessionId;
+    if (!ensureGtag(readConsent())) return;
+    const key = PURCHASE_PREFIX + sessionId;
+    try {{
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    }} catch {{}}
+    window.gtag("event", "purchase", {{
+      transaction_id: sessionId,
+      value: 29,
+      currency: "USD",
+      ...dimensions("stripe_redirect"),
+      items: [{{ item_id: "anymd_pro", price: 29, quantity: 1 }}],
+    }});
+  }}
+
+  const banner = document.getElementById("anymd-sf-consent");
+  function syncBanner(forceOpen) {{
+    const choice = readConsent();
+    if (banner) {{
+      banner.hidden = forceOpen ? false : choice !== null;
+      for (const btn of banner.querySelectorAll("button[data-anymd-consent]")) {{
+        btn.setAttribute("aria-pressed", btn.getAttribute("data-anymd-consent") === choice ? "true" : "false");
+      }}
+    }}
+  }}
+  if (banner) {{
+    for (const btn of banner.querySelectorAll("button[data-anymd-consent]")) {{
+      btn.addEventListener("click", () => {{
+        const choice = btn.getAttribute("data-anymd-consent");
+        if (choice !== "all" && choice !== "analytics" && choice !== "none") return;
+        saveConsent(choice);
+        syncBanner(false);
+        if (hasConsent(choice)) {{
+          ensureGtag(choice);
+          if (lastPaidSessionId) emitPurchase(lastPaidSessionId);
+        }} else if (typeof window.gtag === "function") {{
+          window.gtag("consent", "update", ALL_DENIED);
+        }}
+      }});
+    }}
+  }}
+  document.addEventListener("click", (ev) => {{
+    const t = ev.target;
+    if (t instanceof Element && t.closest("[data-anymd-open-cookie]")) {{
+      ev.preventDefault();
+      syncBanner(true);
+    }}
+  }});
+  document.addEventListener("submit", (ev) => {{
+    const form = ev.target;
+    if (!(form instanceof Element) || form.getAttribute("data-keel-money-form") !== "checkout") return;
+    if (!ensureGtag(readConsent())) return;
+    window.gtag("event", "begin_checkout", {{
+      currency: "USD",
+      value: 29,
+      ...dimensions("pricing_checkout_form"),
+      items: [{{ item_id: "anymd_pro", item_name: "anymd Pro", price: 29, quantity: 1 }}],
+      transport_type: "beacon",
+    }});
+  }}, true);
+  document.addEventListener("keel:money:purchase", (ev) => {{
+    const detail = ev && ev.detail;
+    if (!detail || detail.status !== "succeeded") return;
+    const tx = (detail.receipt && detail.receipt.Store && detail.receipt.Store.data)
+      || new URLSearchParams(location.search).get("session_id")
+      || new URLSearchParams(location.search).get("checkout_session")
+      || "";
+    emitPurchase(tx);
+  }});
+
+  syncBanner(false);
+  ensureGtag(readConsent());
+}})();
+</script>"""
+
+
+def inject_storefront_ga4(html_text: str, ga4_id: str) -> str:
+    """Inject default-deny consent-gated GA4 + cookie settings link cleanly without static gtag scripts."""
+    if not ga4_id or 'data-anymd-ga4="1"' in html_text:
+        return html_text
+    cookie_btn = '<span class="anymd-sf-cookie-wrap"><button type="button" class="anymd-sf-cookie-link" data-anymd-open-cookie="1">Cookie settings and Your Privacy Choices</button></span>'
+    if "data-anymd-open-cookie" not in html_text:
+        if 'id="storefront-footer-inner"' in html_text:
+            footer_inner = extract_balanced_tag(html_text, '<div id="storefront-footer-inner"', "div")
+            if footer_inner is not None:
+                inner_html, s, e = footer_inner
+                html_text = html_text[:s] + inner_html[:-len("</div>")] + cookie_btn + "</div>" + html_text[e:]
+        elif '<footer id="docs-footer"' in html_text:
+            footer = extract_balanced_tag(html_text, '<footer id="docs-footer"', "footer")
+            if footer is not None:
+                f_html, s, e = footer
+                html_text = html_text[:s] + f_html[:-len("</footer>")] + f"<p>{cookie_btn}</p></footer>" + html_text[e:]
+    snippet = _build_ga4_storefront_snippet(ga4_id)
+    if "</body>" in html_text:
+        html_text = html_text.replace("</body>", f"{snippet}\n</body>", 1)
+    return html_text
+
+
 def parse_offer_description(docs_toml: Path) -> str:
     """Read [money.offers.pro] description from docs.toml if present."""
     if not docs_toml.is_file():
@@ -328,6 +629,7 @@ def postprocess_pricing_html(
     html_text: str,
     frontmatter: dict[str, str],
     offer_description: str | None = None,
+    ga4_id: str = "",
 ) -> str:
     """Apply SEO metadata, JSON-LD, and above-the-fold storefront layout fixes."""
     og_image = frontmatter.get("image") or DEFAULT_OG_IMAGE
@@ -486,13 +788,26 @@ def postprocess_pricing_html(
                     + html_text[e:]
                 )
 
-    return _replace_offer_description(html_text, resolved_offer)
+    if "anymd-wallet-trust" not in html_text:
+        submit_pat = re.compile(
+            r'(<button\s+id="money-checkout-pricing-submit"[^>]*>.*?</button>)',
+            re.DOTALL,
+        )
+        html_text = submit_pat.sub(
+            lambda m: f'<div class="anymd-submit-wrap">{m.group(1)}<span class="anymd-wallet-trust">Apple Pay · Google Pay · Link</span></div>',
+            html_text,
+            count=1,
+        )
+
+    html_text = _replace_offer_description(html_text, resolved_offer)
+    return inject_storefront_ga4(html_text, ga4_id)
 
 
 def postprocess_recover_html(
     html_text: str,
     frontmatter: dict[str, str],
     offer_description: str | None = None,
+    ga4_id: str = "",
 ) -> str:
     """Apply black-box copy and SEO metadata cleanup to recover.html."""
     description = frontmatter.get("description") or DEFAULT_RECOVER_DESCRIPTION
@@ -512,7 +827,10 @@ def postprocess_recover_html(
         "If a paid licence exists, Money sends",
         "If a paid licence exists, we send",
     )
-    return _replace_offer_description(html_text, resolved_offer)
+    if '<style data-anymd-storefront>' not in html_text and "</head>" in html_text:
+        html_text = html_text.replace("</head>", f"{STOREFRONT_STYLE}\n</head>", 1)
+    html_text = _replace_offer_description(html_text, resolved_offer)
+    return inject_storefront_ga4(html_text, ga4_id)
 
 
 def postprocess_money_js(js_text: str) -> str:
@@ -538,11 +856,12 @@ def postprocess_dir(output_dir: Path, pricing_md: Path) -> None:
     """Post-process pricing.html, recover.html, and _keel/money.*.js in output_dir."""
     storefront_dir = pricing_md.parent
     offer_description = parse_offer_description(storefront_dir / "docs.toml")
+    ga4_id = parse_ga4_measurement_id(storefront_dir.parent / ".vitepress" / "pro" / "config.json")
     frontmatter = parse_frontmatter(pricing_md) if pricing_md.is_file() else {}
     pricing_html_path = output_dir / "pricing.html"
     if pricing_html_path.is_file():
         updated_html = postprocess_pricing_html(
-            pricing_html_path.read_text(encoding="utf-8"), frontmatter, offer_description
+            pricing_html_path.read_text(encoding="utf-8"), frontmatter, offer_description, ga4_id
         )
         pricing_html_path.write_text(updated_html, encoding="utf-8")
 
@@ -551,7 +870,7 @@ def postprocess_dir(output_dir: Path, pricing_md: Path) -> None:
     recover_html_path = output_dir / "recover.html"
     if recover_html_path.is_file():
         updated_recover = postprocess_recover_html(
-            recover_html_path.read_text(encoding="utf-8"), recover_fm, offer_description
+            recover_html_path.read_text(encoding="utf-8"), recover_fm, offer_description, ga4_id
         )
         recover_html_path.write_text(updated_recover, encoding="utf-8")
 

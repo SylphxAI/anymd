@@ -1,3 +1,41 @@
+// A status uses ordinary theme roles; only the view owns its readiness.
+// The first canvas must have presented, not merely mounted or started.
+for (const status of document.querySelectorAll("[data-keel-embed-status]")) {
+  const view = document.getElementById(status.getAttribute("data-keel-embed-status"));
+  if (!view?.hasAttribute("data-keel-embed")) continue;
+  const liveClass = status.getAttribute("data-keel-embed-live-class");
+  const liveRole = status.getAttribute("data-keel-embed-live-role");
+  if (!liveClass || !liveRole) continue;
+  const idleClass = [...status.classList].find((name) => name.startsWith("keel-surface-"));
+  const idleRole = status.getAttribute("data-keel-surface");
+  const sync = () => {
+    const canvas = view.querySelector("canvas");
+    const live = view.getAttribute("data-keel-embed-state") === "live"
+      && !!canvas?.hasAttribute("data-keel-ready");
+    if (idleClass && idleClass !== liveClass) status.classList.toggle(idleClass, !live);
+    status.classList.toggle(liveClass, live || idleClass === liveClass);
+    const role = live ? liveRole : idleRole;
+    if (role === null) {
+      if (status.hasAttribute("data-keel-surface")) status.removeAttribute("data-keel-surface");
+    } else if (status.getAttribute("data-keel-surface") !== role) {
+      status.setAttribute("data-keel-surface", role);
+    }
+  };
+  const observer = new MutationObserver(sync);
+  observer.observe(view, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["data-keel-embed-state", "data-keel-ready"],
+  });
+  // A hydrated patch can restate the idle class. Keep this binding authoritative
+  // without discarding the node's own generated classes or unrelated attributes.
+  observer.observe(status, {
+    attributes: true,
+    attributeFilter: ["class", "data-keel-surface"],
+  });
+  sync();
+}
 // Keel engine views: start each [data-keel-embed] scene once the reader first
 // interacts with the page (moves the pointer, touches, scrolls or presses a
 // key) and the view is near the viewport. Until then the poster shows: a page

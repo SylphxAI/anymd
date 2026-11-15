@@ -72,7 +72,7 @@ const theme: Theme = {
   Layout: () =>
     h(DefaultTheme.Layout, null, {
       'home-hero-actions-after': () => h(HeroInstall),
-      'layout-bottom': () => h(SiteFooter),
+      'layout-bottom': () => [h(SiteFooter), h(ProTracking)],
     }),
   enhanceApp({ app }) {
     app.component('Playground', Playground);
