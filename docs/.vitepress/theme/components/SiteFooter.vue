@@ -17,6 +17,7 @@ const { hasSidebar } = useSidebar();
         <a href="https://github.com/SylphxAI/anymd/security/policy">Security</a>
         <a href="https://sylphx.com">Sylphx</a>
       </nav>
+      <div id="cookie-settings-footer"></div>
       <p>anymd is free and open source under the MIT licence. Runs on your machine, no API key.</p>
       <p>
         © 2024–2026 Sylphx Limited. Registered in England and Wales, company number 16438428.
