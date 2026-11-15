@@ -17,135 +17,934 @@
 <link rel="stylesheet" href="/anymd/_docs/docs.css">
 <script type="module" src="/anymd/_keel/money.a5ef5f2b3f97.js"></script>
 <style data-anymd-storefront>
-#docs-root[data-anymd-storefront="1"] #docs-header {
+/* Product presentation over verified, pinned Keel output. No remote assets. */
+:root {
+  color-scheme: light dark;
+  --sf-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sf-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sf-paper: #fbfcf8;
+  --sf-card: #ffffff;
+  --sf-wash: #f1f5e9;
+  --sf-ink: #101408;
+  --sf-muted: #414b38;
+  --sf-subtle: #6b7564;
+  --sf-line: #dce3d1;
+  --sf-accent: #c3f53c;
+  --sf-accent-deep: #9fd21c;
+  --sf-accent-ink: #243503;
+  --sf-link: #3f6100;
+  --sf-code-bg: #ffffff;
+  --sf-code-string: #2b5200;
+  --sf-code-inline-bg: rgba(195, 245, 60, 0.14);
+  --sf-shadow: 0 1px 2px rgba(16, 20, 8, 0.06), 0 14px 36px -14px rgba(16, 20, 8, 0.14);
+
+  --keel-canvas: var(--sf-paper);
+  --keel-color-background: var(--sf-paper);
+  --keel-color-surface: var(--sf-card);
+  --keel-color-surface-high: var(--sf-wash);
+  --keel-color-on-surface: var(--sf-ink);
+  --keel-color-on-surface-variant: var(--sf-muted);
+  --keel-color-primary: var(--sf-link);
+  --keel-color-on-primary: var(--sf-paper);
+  --keel-color-outline: var(--sf-line);
+  --keel-link: var(--sf-link);
+  --keel-link-hover: #2d4600;
+  --keel-focus-ring-color: var(--sf-link);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sf-paper: #0a0d07;
+    --sf-card: #12170d;
+    --sf-wash: #151c0f;
+    --sf-ink: #eaf2dd;
+    --sf-muted: #aebb9e;
+    --sf-subtle: #88957c;
+    --sf-line: #27321c;
+    --sf-link: #c3f53c;
+    --sf-code-bg: #070a04;
+    --sf-code-string: #c3f53c;
+    --sf-code-inline-bg: rgba(195, 245, 60, 0.08);
+    --sf-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 18px 44px -16px rgba(0, 0, 0, 0.85);
+
+    --keel-canvas: var(--sf-paper);
+    --keel-color-background: var(--sf-paper);
+    --keel-color-surface: var(--sf-card);
+    --keel-color-surface-high: var(--sf-wash);
+    --keel-color-on-surface: var(--sf-ink);
+    --keel-color-on-surface-variant: var(--sf-muted);
+    --keel-color-primary: var(--sf-accent);
+    --keel-color-on-primary: var(--sf-accent-ink);
+    --keel-color-outline: var(--sf-line);
+    --keel-link: var(--sf-accent);
+    --keel-link-hover: var(--sf-accent-deep);
+    --keel-focus-ring-color: var(--sf-accent);
+  }
+}
+
+html {
+  background: var(--sf-paper);
+  scroll-padding-top: 84px;
+}
+
+body {
+  margin: 0;
+  background: var(--sf-paper);
+  color: var(--sf-ink);
+  font-family: var(--sf-sans);
+}
+
+#keel-static-root {
+  padding: 0;
+  background: var(--sf-paper);
+  color: var(--sf-ink);
+}
+
+#storefront-root[data-anymd-storefront],
+#docs-root[data-anymd-storefront],
+.anymd-sf-consent {
+  font-family: var(--sf-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--sf-ink);
+  background: var(--sf-paper);
+}
+
+[data-anymd-storefront] *,
+.anymd-sf-consent * {
+  box-sizing: border-box;
+}
+
+[data-anymd-storefront] :where(h1, h2, h3, h4, strong, th) {
+  color: var(--sf-ink);
+}
+
+[data-anymd-storefront] :where(p, li, td, label, legend, em, span:not(pre span, code span)) {
+  color: inherit;
+  font-family: inherit;
+}
+
+[data-anymd-storefront] a,
+[data-anymd-storefront] a span:not(pre span, code span) {
+  color: var(--sf-link);
+  text-underline-offset: 3px;
+}
+
+[data-anymd-storefront] :is(button, input, select, summary, a):focus-visible,
+.anymd-sf-consent :is(button, a):focus-visible {
+  outline: 2px solid var(--sf-link);
+  outline-offset: 3px;
+}
+
+/* Consent banner — sits cleanly in flow at top of page, 0px when hidden. */
+.anymd-sf-consent {
+  position: relative;
+  z-index: 25;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 16px max(32px, calc((100vw - 1152px) / 2));
   display: flex;
   flex-wrap: wrap;
+  gap: 14px 24px;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-  max-width: 68rem;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0.9rem 1.5rem;
+  border: 0;
+  border-bottom: 1px solid var(--sf-line);
+  border-radius: 0;
+  background: var(--sf-wash);
+  color: var(--sf-ink);
+  font-size: 13.5px;
+  line-height: 1.55;
+  box-shadow: none;
 }
-#docs-root[data-anymd-storefront="1"] .anymd-sf-nav {
+
+.anymd-sf-consent[hidden] {
+  display: none !important;
+}
+
+.anymd-sf-consent > span:first-child {
+  flex: 1 1 540px;
+  max-width: 720px;
+  color: var(--sf-muted);
+}
+
+.anymd-sf-consent a {
+  color: var(--sf-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.anymd-sf-consent-actions {
+  display: flex;
+  flex: 1 1 320px;
+  max-width: 420px;
+  gap: 8px;
+}
+
+.anymd-sf-consent button {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--sf-line);
+  border-radius: 6px;
+  background: var(--sf-card);
+  color: var(--sf-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.anymd-sf-consent button:hover,
+.anymd-sf-consent button[aria-pressed="true"] {
+  border-color: var(--sf-link);
+}
+
+/* Header & storefront navigation */
+#storefront-header,
+#docs-root[data-anymd-storefront] #docs-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--sf-line);
+  background: var(--sf-paper);
+}
+
+#storefront-header-inner,
+#docs-root[data-anymd-storefront] #docs-header {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  min-height: 64px;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+#storefront-header-inner {
+  border-bottom: 0;
+}
+
+#storefront-brand,
+#docs-root[data-anymd-storefront] #docs-header #docs-home {
+  color: var(--sf-ink);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+}
+
+#storefront-brand span {
+  color: var(--sf-ink);
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
+
+
+.anymd-sf-nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1.25rem;
-  font-size: 0.92rem;
+  gap: 2px 20px;
 }
-#docs-root[data-anymd-storefront="1"] .anymd-sf-nav a {
-  color: var(--keel-color-on-surface-variant, #93a0b5);
-  text-decoration: none;
-}
-#docs-root[data-anymd-storefront="1"] .anymd-sf-nav a:hover {
-  color: #c3f53c;
-}
-#docs-root[data-anymd-storefront="1"] #docs-body {
-  display: block;
-  max-width: 52rem;
-  margin: 0 auto;
-  padding: 1.75rem 1.5rem 3rem;
-}
-#docs-root[data-anymd-storefront="1"] #docs-article {
-  max-width: 100%;
-}
-#docs-root[data-anymd-storefront="1"] #money-checkout-pricing {
-  margin: 1.5rem 0 2.5rem;
-  padding: 1.5rem;
-  border: 1px solid rgba(195, 245, 60, 0.35);
-  border-radius: 14px;
-  background: var(--keel-color-surface, #121826);
-}
-#docs-root[data-anymd-storefront="1"] #money-checkout-pricing-submit {
-  background: #c3f53c;
-  color: #0a0d07;
-  font-weight: 700;
-  border-color: #c3f53c;
-}
-#docs-root[data-anymd-storefront="1"] #money-checkout-pricing-submit[disabled] {
-  opacity: 0.65;
-}
-#docs-root[data-anymd-storefront="1"] #docs-footer {
-  max-width: 52rem;
-  margin: 0 auto;
-  padding: 1.5rem;
-  border-top: 1px solid var(--keel-color-outline, rgba(140, 170, 220, 0.14));
-  font-size: 0.875rem;
-  color: var(--keel-color-on-surface-variant, #93a0b5);
-}
-.anymd-submit-wrap {
+
+[data-anymd-storefront] .anymd-sf-nav a {
+  color: var(--sf-muted);
+  min-height: 44px;
   display: inline-flex;
+  align-items: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+[data-anymd-storefront] .anymd-sf-nav a:hover,
+[data-anymd-storefront] .anymd-sf-nav a[aria-current="page"] {
+  color: var(--sf-link);
+}
+
+/* Main /pricing layout: 2-column hero + checkout, full-width editorial sections below */
+#storefront-main {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 56px 0 88px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 56px 56px;
+  align-items: start;
+}
+
+#storefront-main > * {
+  min-width: 0;
+}
+
+#storefront-hero {
+  display: block;
+  padding: 8px 0 0;
+  background: none;
+}
+
+#storefront-hero::before {
+  content: "ANYMD PRO · OFFLINE LICENCE";
+  display: block;
+  margin: 0 0 18px;
+  font-family: var(--sf-mono);
+  font-size: 11.5px;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--sf-link);
+}
+
+#storefront-hero h1 {
+  max-width: 13ch;
+  font-size: clamp(36px, 4vw, 54px);
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  font-weight: 750;
+  margin: 0 0 24px;
+  color: var(--sf-ink);
+}
+
+#storefront-lead {
+  display: block;
+  color: var(--sf-muted);
+  font-size: 16.5px;
+  line-height: 1.7;
+  max-width: 48ch;
+}
+
+#storefront-lead p {
+  margin: 0 0 16px;
+  font-size: inherit;
+}
+
+#storefront-lead strong {
+  color: var(--sf-ink);
+  font-weight: 650;
+}
+
+#storefront-hero + #storefront-offers {
+  margin-top: 0;
+}
+
+#storefront-offers,
+#storefront-companion {
+  display: block;
+  padding: 0;
+  width: 100%;
+}
+
+/* Inline code & pre blocks */
+[data-anymd-storefront] code:not(pre code) {
+  border-radius: 5px;
+  background: var(--sf-code-inline-bg);
+  color: var(--sf-link);
+  border: 1px solid var(--sf-line);
+  font-family: var(--sf-mono);
+  font-size: 0.85em;
+  padding: 2px 6px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+[data-anymd-storefront] code:not(pre code) span {
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+#storefront-root[data-anymd-storefront] pre,
+#docs-root[data-anymd-storefront] #docs-article pre {
+  margin: 12px 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--sf-line);
+  background: var(--sf-code-bg);
+  color: var(--sf-ink);
+  font-family: var(--sf-mono);
+  font-size: 13.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+}
+
+#storefront-root[data-anymd-storefront] pre code,
+#docs-root[data-anymd-storefront] #docs-article pre code,
+#storefront-root[data-anymd-storefront] pre span,
+#docs-root[data-anymd-storefront] #docs-article pre span {
+  font-family: var(--sf-mono);
+  font-size: inherit;
+  background: transparent;
+  color: var(--sf-ink);
+}
+
+#storefront-root[data-anymd-storefront] pre .keel-code-plain,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-plain { color: var(--sf-ink); }
+#storefront-root[data-anymd-storefront] pre .keel-code-comment,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-comment { color: var(--sf-subtle); }
+#storefront-root[data-anymd-storefront] pre .keel-code-keyword,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-keyword { color: var(--sf-link); font-weight: 650; }
+#storefront-root[data-anymd-storefront] pre .keel-code-function,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-function { color: var(--sf-ink); }
+#storefront-root[data-anymd-storefront] pre .keel-code-string,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-string { color: var(--sf-code-string); }
+
+/* Elevated checkout & recovery card */
+#storefront-root .sf-money-checkout,
+#docs-root[data-anymd-storefront] .sf-money-checkout {
+  display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
+  gap: 18px;
+  background: var(--sf-card);
+  color: var(--sf-ink);
+  border: 1px solid var(--sf-line);
+  border-top: 4px solid var(--sf-accent);
+  border-radius: 16px;
+  box-shadow: var(--sf-shadow);
+  padding: 28px;
+  margin: 0;
 }
+
+[data-anymd-storefront] .sf-money-checkout h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--sf-ink);
+}
+
+[data-anymd-storefront] .sf-money-checkout p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sf-muted);
+}
+
+[data-anymd-storefront] .sf-money-checkout form[data-keel-money-form="checkout"],
+[data-anymd-storefront] .sf-money-checkout form[data-keel-money-form="recover"] {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(form, [id$="-checkout-fields"], [id$="-checkout-inputs"], [id$="-recover-fields"]) {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(label, legend, [id$=".label"]) {
+  color: var(--sf-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-consent-text"] {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--sf-muted);
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(input[type="email"], input[type="text"], select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 13px;
+  border: 1px solid var(--sf-line);
+  border-radius: 8px;
+  background: var(--sf-paper);
+  color: var(--sf-ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(input[type="email"], input[type="text"], select):focus-visible {
+  border-color: var(--sf-link);
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-consent-row"] {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+[data-anymd-storefront] .sf-money-checkout .keel-surface-checkbox,
+[data-anymd-storefront] .sf-money-checkout input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  flex: none;
+  margin-top: 2px;
+}
+
+[data-anymd-storefront] .sf-money-checkout .sf-checkout-action,
+[data-anymd-storefront] .sf-money-checkout [id$="-checkout-action"] {
+  padding: 16px 0 0;
+  border-left: 0;
+  border-top: 1px solid var(--sf-line);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-price-summary"] {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+[data-anymd-storefront] .sf-money-checkout .sf-selected-caption {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sf-subtle);
+}
+
+[data-anymd-storefront] .sf-money-checkout .sf-selected-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sf-ink);
+}
+
+[data-anymd-storefront] .sf-money-checkout button {
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--sf-line);
+  background: var(--sf-wash);
+  color: var(--sf-ink);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#money-checkout-pricing-submit,
+#money-checkout-recover-recover-submit {
+  width: 100%;
+  background: var(--sf-accent);
+  color: var(--sf-accent-ink);
+  border-color: var(--sf-accent);
+}
+
+#money-checkout-pricing-submit:hover:not(:disabled),
+#money-checkout-recover-recover-submit:hover:not(:disabled) {
+  background: var(--sf-accent-deep);
+  border-color: var(--sf-accent-deep);
+}
+
+[data-anymd-storefront] .sf-money-checkout button:disabled,
+[data-anymd-storefront] .sf-money-checkout button[aria-disabled="true"] {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+[data-anymd-storefront] .sf-money-checkout [hidden] {
+  display: none !important;
+}
+
+.anymd-submit-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  width: 100%;
+}
+
 .anymd-wallet-trust {
-  font-size: 0.78rem;
-  letter-spacing: 0.01em;
-  color: var(--keel-color-on-surface-variant, #93a0b5);
+  font-size: 12px;
+  text-align: center;
+  color: var(--sf-subtle);
 }
+
+[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure {
+  border: 0;
+  border-top: 1px solid var(--sf-line);
+  border-radius: 0;
+  background: transparent;
+  padding-top: 10px;
+}
+
+[data-anymd-storefront] .sf-money-checkout summary {
+  height: auto;
+  min-height: 44px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sf-link);
+}
+
+[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > div {
+  padding: 12px 0 0;
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-trader"] {
+  font-size: 12px;
+  color: var(--sf-subtle);
+}
+
+#money-checkout-recover [data-keel-money-status] {
+  order: -4;
+}
+
+#money-checkout-recover [data-keel-money-panel="redeem"] {
+  order: -3;
+}
+
+#money-checkout-recover form[data-keel-money-form="recover"] {
+  order: -2;
+  padding-top: 0;
+  padding-bottom: 22px;
+  border-top: 0;
+  border-bottom: 1px solid var(--sf-line);
+}
+
+#money-checkout-recover form[data-keel-money-form="recover"] [id$="recovery-email.label"] {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sf-ink);
+}
+
+/* Below-the-fold sections on /pricing */
+#storefront-main > section:not(#storefront-hero) {
+  grid-column: 1 / -1;
+}
+
+#storefront-main > section[id^="storefront-sec-"] {
+  padding-top: 40px;
+  border-top: 1px solid var(--sf-line);
+  gap: 20px;
+}
+
+#storefront-main h2 {
+  margin: 0;
+  color: var(--sf-ink);
+  font-size: clamp(24px, 2.5vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+#storefront-main h3 {
+  margin: 0 0 12px;
+  color: var(--sf-ink);
+  font-size: 18px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+#storefront-main .sf-section-lead,
+#storefront-main .sf-section-lead p {
+  color: var(--sf-muted);
+  font-size: 16.5px;
+  line-height: 1.65;
+  max-width: 62ch;
+}
+
+#storefront-main .sf-bento-grid[data-columns="3"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+#storefront-main .sf-bento-card {
+  padding: 24px;
+  background: var(--sf-wash);
+  border: 1px solid var(--sf-line);
+  border-radius: 14px;
+  color: var(--sf-muted);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+#storefront-main .sf-bento-card ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 15px;
+  color: var(--sf-muted);
+}
+
+#storefront-main .sf-bento-card li + li {
+  margin-top: 10px;
+}
+
+#storefront-main .sf-bento-card p {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--sf-muted);
+}
+
+#storefront-main .sf-bento-card p:last-child {
+  margin-bottom: 0;
+}
+
+#storefront-main .sf-bento-card strong {
+  color: var(--sf-ink);
+  font-weight: 650;
+}
+
+#storefront-main .sf-prose-section .sf-section-body {
+  max-width: 72ch;
+  color: var(--sf-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+#storefront-main .sf-prose-section p {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+#storefront-main .sf-prose-section p:last-child {
+  margin-bottom: 0;
+}
+
+#storefront-sec-3 p strong {
+  display: block;
+  margin-top: 22px;
+  margin-bottom: 4px;
+  color: var(--sf-ink);
+  font-weight: 650;
+}
+
+#storefront-sec-3 p:first-child strong {
+  margin-top: 0;
+}
+
+/* /recover 2-column layout */
+#docs-root[data-anymd-storefront] #docs-body {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 56px 0 88px;
+  display: block;
+}
+
+#docs-root[data-anymd-storefront] #docs-main,
+#docs-root[data-anymd-storefront] #docs-article {
+  max-width: none;
+  padding: 0;
+}
+
+#docs-root[data-anymd-storefront] #doc-with-checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+#docs-root[data-anymd-storefront] #doc {
+  min-width: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--sf-muted);
+}
+
+#docs-root[data-anymd-storefront] #doc h1 {
+  margin: 0 0 24px;
+  max-width: 13ch;
+  font-size: clamp(34px, 3.8vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  font-weight: 750;
+  color: var(--sf-ink);
+}
+
+#docs-root[data-anymd-storefront] #doc p {
+  margin: 0 0 16px;
+  color: var(--sf-muted);
+  font-size: 16px;
+}
+
+/* Footer */
+#storefront-footer {
+  background: var(--sf-paper);
+  border-top: 1px solid var(--sf-line);
+}
+
+#storefront-footer-inner,
+#docs-root[data-anymd-storefront] #docs-footer {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 28px 0 36px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--sf-muted);
+  font-size: 13px;
+}
+
+#docs-root[data-anymd-storefront] #docs-footer {
+  border-top: 1px solid var(--sf-line);
+}
+
+.anymd-sf-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  align-items: center;
+}
+
+[data-anymd-storefront] .anymd-sf-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--sf-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .anymd-sf-cookie-wrap {
   margin-left: auto;
 }
+
 .anymd-sf-cookie-link {
-  color: var(--keel-color-on-surface-variant, #93a0b5);
-  font-size: 0.82rem;
-  text-decoration: underline;
   background: none;
+  color: var(--sf-ink);
   border: 0;
-  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 44px;
+  padding: 6px 0;
   cursor: pointer;
 }
-.anymd-sf-consent {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  left: 16px;
-  z-index: 120;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 55rem;
-  margin: 0 auto;
-  padding: 14px 16px;
-  border: 1px solid rgba(140, 170, 220, 0.25);
-  border-radius: 10px;
-  background: var(--keel-color-surface, #121826);
-  color: var(--keel-color-on-surface, #e6edf7);
-  box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
-  font-size: 0.84rem;
-  line-height: 1.5;
+
+@media (max-width: 960px) {
+  .anymd-sf-consent {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  #storefront-main,
+  #docs-root[data-anymd-storefront] #doc-with-checkout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  #storefront-hero h1,
+  #docs-root[data-anymd-storefront] #doc h1 {
+    max-width: 16ch;
+  }
+
+  #storefront-main .sf-bento-grid[data-columns="3"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
-.anymd-sf-consent[hidden] { display: none; }
-.anymd-sf-consent a { color: #c3f53c; }
-.anymd-sf-consent-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.anymd-sf-consent button {
-  padding: 6px 14px;
-  border: 1px solid rgba(140, 170, 220, 0.3);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  color: inherit;
-  cursor: pointer;
-}
-.anymd-sf-consent button[aria-pressed="true"] {
-  border-color: #c3f53c;
-  font-weight: 600;
-}
+
 @media (max-width: 640px) {
-  .anymd-submit-wrap { align-items: flex-start; }
-  .anymd-sf-cookie-wrap { margin-left: 0; }
+  #storefront-header-inner,
+  #docs-root[data-anymd-storefront] #docs-header {
+    width: calc(100% - 40px);
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding: 10px 0;
+  }
+
+  .anymd-sf-nav {
+    gap: 0 16px;
+  }
+
+  #storefront-main,
+  #docs-root[data-anymd-storefront] #docs-body {
+    width: calc(100% - 40px);
+    padding: 36px 0 64px;
+  }
+
+  #storefront-hero {
+    padding: 0;
+  }
+
+  #storefront-hero h1 {
+    font-size: 38px;
+  }
+
+  #docs-root[data-anymd-storefront] #doc h1 {
+    font-size: 34px;
+  }
+
+  #storefront-root .sf-money-checkout,
+  #docs-root[data-anymd-storefront] .sf-money-checkout {
+    padding: 20px;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  #storefront-footer-inner,
+  #docs-root[data-anymd-storefront] #docs-footer {
+    width: calc(100% - 40px);
+    padding: 24px 0 32px;
+  }
+
+  .anymd-sf-cookie-wrap {
+    margin-left: 0;
+  }
+
+  .anymd-sf-consent {
+    padding: 14px 20px;
+  }
+
+  .anymd-sf-consent-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    max-width: none;
+  }
+
+  .anymd-sf-consent button {
+    padding: 8px 6px;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 </style>
 </head>
 <body>
 <a id="keel-skip-link" class="skip" href="#docs-main">Skip to main content</a>
-<div id="keel-static-root" data-keel-path="/recover"><div id="docs-root" data-keel-layout="stack" data-keel-surface="component:RouteView" class="k121cbb96911a"><header id="docs-header" data-keel-layout="stack" class="kad391fe046f7"><a id="docs-home" data-keel-surface="nav-link" class="keel-surface-nav-link k033481162ad8" href="/anymd/">anymd Pro</a></header><div id="docs-body" data-keel-layout="row" class="k84da60f30064"><nav id="docs-nav" data-keel-layout="stack" class="kad391fe046f7" aria-label="Documentation"><ul id="docs-nav-list-0" data-keel-layout="stack" class="kad391fe046f7"><li id="docs-nav-item-1" data-keel-layout="stack" class="kad391fe046f7"><a id="docs-nav-link-1" data-keel-surface="nav-link" class="keel-surface-nav-link k033481162ad8" href="/anymd/pricing">anymd Pro: verifiable video evidence and cite-check for AI agents</a></li><li id="docs-nav-item-2" data-keel-layout="stack" class="kad391fe046f7"><a id="docs-nav-link-2" data-keel-surface="nav-link" class="keel-surface-nav-link k033481162ad8" aria-current="page" href="/anymd/recover">Recover your anymd Pro licence</a></li></ul></nav><main id="docs-main" data-keel-layout="stack" class="kad391fe046f7" tabindex="-1"><article id="docs-article" data-keel-layout="stack" class="kad391fe046f7"><div id="doc-with-checkout" data-keel-layout="stack" class="k121cbb96911a"><div id="doc" data-keel-layout="stack" class="kb442e8ff1cd8"><h1 id="recover-your-anymd-pro-licence" class="kae9c38236f01">Recover your anymd Pro licence</h1><p id="doc-1" class="k3e7c2a82e5eb"><span id="doc-2" class="k3a76103d07ce">Enter </span><span id="doc-3" class="k3a76103d07ce">the </span><span id="doc-4" class="k3a76103d07ce">email </span><span id="doc-5" class="k3a76103d07ce">address </span><span id="doc-6" class="k3a76103d07ce">used </span><span id="doc-7" class="k3a76103d07ce">at </span><span id="doc-8" class="k3a76103d07ce">checkout. </span><span id="doc-9" class="k3a76103d07ce">If </span><span id="doc-10" class="k3a76103d07ce">a </span><span id="doc-11" class="k3a76103d07ce">paid </span><span id="doc-12" class="k3a76103d07ce">licence </span><span id="doc-13" class="k3a76103d07ce">exists, </span><span id="doc-14" class="k3a76103d07ce">we </span><span id="doc-15" class="k3a76103d07ce">send</span><span id="doc-16" class="k3a76103d07ce"> </span><span id="doc-17" class="k3a76103d07ce">an </span><span id="doc-18" class="k3a76103d07ce">expiring </span><span id="doc-19" class="k3a76103d07ce">recovery </span><span id="doc-20" class="k3a76103d07ce">link. </span><span id="doc-21" class="k3a76103d07ce">The </span><span id="doc-22" class="k3a76103d07ce">response </span><span id="doc-23" class="k3a76103d07ce">never </span><span id="doc-24" class="k3a76103d07ce">says </span><span id="doc-25" class="k3a76103d07ce">whether </span><span id="doc-26" class="k3a76103d07ce">that </span><span id="doc-27" class="k3a76103d07ce">address </span><span id="doc-28" class="k3a76103d07ce">has </span><span id="doc-29" class="k3a76103d07ce">a</span><span id="doc-30" class="k3a76103d07ce"> </span><span id="doc-31" class="k3a76103d07ce">purchase, </span><span id="doc-32" class="k3a76103d07ce">and </span><span id="doc-33" class="k3a76103d07ce">no </span><span id="doc-34" class="k3a76103d07ce">licence </span><span id="doc-35" class="k3a76103d07ce">token </span><span id="doc-36" class="k3a76103d07ce">is </span><span id="doc-37" class="k3a76103d07ce">shown </span><span id="doc-38" class="k3a76103d07ce">to </span><span id="doc-39" class="k3a76103d07ce">an </span><span id="doc-40" class="k3a76103d07ce">unverified </span><span id="doc-41" class="k3a76103d07ce">browser.</span></p><p id="doc-42" class="k3e7c2a82e5eb"><span id="doc-43" class="k3a76103d07ce">Open </span><span id="doc-44" class="k3a76103d07ce">the </span><span id="doc-45" class="k3a76103d07ce">recovery </span><span id="doc-46" class="k3a76103d07ce">link </span><span id="doc-47" class="k3a76103d07ce">within </span><span id="doc-48" class="k3a76103d07ce">one </span><span id="doc-49" class="k3a76103d07ce">hour </span><span id="doc-50" class="k3a76103d07ce">to </span><span id="doc-51" class="k3a76103d07ce">view </span><span id="doc-52" class="k3a76103d07ce">and </span><span id="doc-53" class="k3a76103d07ce">copy </span><span id="doc-54" class="k3a76103d07ce">your </span><span id="doc-55" class="k3a76103d07ce">licence </span><span id="doc-56" class="k3a76103d07ce">token,</span><span id="doc-57" class="k3a76103d07ce"> </span><span id="doc-58" class="k3a76103d07ce">then </span><span id="doc-59" class="k3a76103d07ce">activate </span><span id="doc-60" class="k3a76103d07ce">it </span><span id="doc-61" class="k3a76103d07ce">on </span><span id="doc-62" class="k3a76103d07ce">your </span><span id="doc-63" class="k3a76103d07ce">machine:</span></p><pre id="doc-69" data-keel-surface="code-block" class="keel-surface-code-block k1133b25d6e88"><code id="doc-68" class="language-sh kf814e013ad0f"><span id="doc-64" class="keel-code-function k01133a73d68a">anymd pro activate </span><span id="doc-65" class="keel-code-string ka2552093ef0f">'&lt;your token&gt;'</span><span id="doc-66" class="k033481162ad8">
-</span><span id="doc-67" class="keel-code-function k01133a73d68a">anymd pro status</span></code></pre><p id="doc-70" class="k3e7c2a82e5eb"><span id="doc-71" class="k3a76103d07ce">For </span><span id="doc-72" class="k3a76103d07ce">an </span><span id="doc-73" class="k3a76103d07ce">MCP </span><span id="doc-74" class="k3a76103d07ce">server </span><span id="doc-75" class="k3a76103d07ce">or </span><span id="doc-76" class="k3a76103d07ce">CI, </span><span id="doc-77" class="k3a76103d07ce">set </span><code id="doc-79" class="kf814e013ad0f"><span id="doc-78" class="k2b7048198c30">ANYMD_PRO_TOKEN</span></code><span id="doc-80" class="k3a76103d07ce"> instead. </span><span id="doc-81" class="k3a76103d07ce">Existing </span><span id="doc-82" class="k3a76103d07ce">licences </span><span id="doc-83" class="k3a76103d07ce">keep</span><span id="doc-84" class="k3a76103d07ce"> </span><span id="doc-85" class="k3a76103d07ce">their </span><span id="doc-86" class="k3a76103d07ce">original </span><span id="doc-87" class="k3a76103d07ce">product, </span><span id="doc-88" class="k3a76103d07ce">plan, </span><span id="doc-89" class="k3a76103d07ce">seats </span><span id="doc-90" class="k3a76103d07ce">and </span><span id="doc-91" class="k3a76103d07ce">expiry. </span><span id="doc-92" class="k3a76103d07ce">Do </span><span id="doc-93" class="k3a76103d07ce">not </span><span id="doc-94" class="k3a76103d07ce">share </span><span id="doc-95" class="k3a76103d07ce">a </span><span id="doc-96" class="k3a76103d07ce">licence </span><span id="doc-97" class="k3a76103d07ce">token </span><span id="doc-98" class="k3a76103d07ce">or</span><span id="doc-99" class="k3a76103d07ce"> </span><span id="doc-100" class="k3a76103d07ce">recovery </span><span id="doc-101" class="k3a76103d07ce">link </span><span id="doc-102" class="k3a76103d07ce">in </span><span id="doc-103" class="k3a76103d07ce">a </span><span id="doc-104" class="k3a76103d07ce">public </span><span id="doc-105" class="k3a76103d07ce">issue, </span><span id="doc-106" class="k3a76103d07ce">log </span><span id="doc-107" class="k3a76103d07ce">or </span><span id="doc-108" class="k3a76103d07ce">repository.</span></p></div><section id="money-checkout-recover" data-keel-layout="stack" data-keel-surface="card" class="sf-money-checkout keel-surface-card k5872f9872dcc" data-keel-money-checkout="{&quot;api_origin&quot;:&quot;https://api.sylphx.com&quot;,&quot;parent&quot;:&quot;orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/projects/prj_fs013ejakyn22t4bsvrvyj0f2x1pgq/envs/env_fs01p2f389mwmm2xsm1nmvcst69vgd&quot;,&quot;publishable_key&quot;:&quot;sylphx_pk_live_fs011xLNdWAaf61LbUtF&quot;,&quot;product&quot;:&quot;anymd_pro&quot;,&quot;token_product&quot;:&quot;anymd&quot;,&quot;title&quot;:&quot;Buy anymd Pro&quot;,&quot;description&quot;:&quot;Exact video frames with timestamps and hashes, and offline cite-check. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.&quot;,&quot;checkout_enabled&quot;:true,&quot;prices&quot;:[{&quot;key&quot;:&quot;anymd_pro&quot;,&quot;label&quot;:&quot;1 licence&quot;,&quot;quantity&quot;:1}],&quot;consent_version&quot;:&quot;waiver-v1&quot;,&quot;consent_text&quot;:&quot;I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.&quot;,&quot;success_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?session_id={CHECKOUT_SESSION_ID}&quot;,&quot;cancel_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?checkout=cancelled&quot;,&quot;recovery_url&quot;:&quot;https://sylphxai.github.io/anymd/recover&quot;,&quot;cta_label&quot;:&quot;Buy anymd Pro&quot;,&quot;recovery_label&quot;:&quot;Email my licence recovery link&quot;,&quot;trader&quot;:{&quot;name&quot;:&quot;Sylphx Limited&quot;,&quot;contact&quot;:&quot;hi@sylphx.com&quot;,&quot;address&quot;:&quot;128 City Road, London EC1V 2NX, United Kingdom&quot;}}" data-keel-money-state="idle" data-keel-money-catalog-ready="0" data-keel-money-product="anymd_pro"><h2 id="money-checkout-recover-title" class="sf-money-title k4c8f7d8a78d0">Buy anymd Pro</h2><p id="money-checkout-recover-description" class="sf-money-description kf814e013ad0f"><span id="money-checkout-recover-description-text" class="kdbdb37d6917b">Exact video frames with timestamps and hashes, and offline cite-check. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.</span></p><span id="money-checkout-recover-status" role="status" class="sf-money-status k4c35fb7aaf4d" data-keel-money-status="" aria-live="polite"></span><section id="money-checkout-recover-redeem" data-keel-layout="stack" data-keel-surface="card" class="sf-redeem-panel keel-surface-card k44658c4e353f" data-keel-money-panel="redeem"><pre id="money-checkout-recover-licence-token" data-keel-surface="code-block" class="sf-licence-token keel-surface-code-block kf814e013ad0f" hidden data-keel-money-licence-token=""></pre><div id="money-checkout-recover-redeem-actions" data-keel-layout="wrap" class="sf-redeem-actions kb0a5708679d3"><button id="money-checkout-recover-copy-token" role="button" data-keel-surface="btn-outline" class="sf-redeem-btn sf-redeem-btn-secondary keel-surface-btn-outline kf814e013ad0f" hidden data-keel-money-copy-token="">Copy licence key</button><button id="money-checkout-recover-activate-browser" role="button" data-keel-surface="btn-primary" class="sf-redeem-btn sf-redeem-btn-primary keel-surface-btn-primary kf814e013ad0f" hidden data-keel-money-activate-browser="">Activate in this browser</button></div></section><form id="money-checkout-recover-checkout-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="checkout" action="#" method="post"><div id="money-checkout-recover-checkout-fields" data-keel-layout="row" class="sf-checkout-grid k2409d931d8de"><div id="money-checkout-recover-checkout-inputs" data-keel-layout="stack" class="sf-checkout-inputs kb442e8ff1cd8"><div id="money-checkout-recover-price-field" data-keel-layout="stack" class="sf-price-select-field k121cbb96911a"><label id="money-checkout-recover-price-label" data-keel-layout="stack" class="kad391fe046f7"><span id="money-checkout-recover-price-title" class="k033481162ad8">Plan</span></label><select id="money-checkout-recover-price" role="combobox" class="kf814e013ad0f" data-keel-money-field="price" name="price" required aria-label="Plan or pack"><option id="money-checkout-recover-price-0" class="kf814e013ad0f" data-keel-price-key="anymd_pro" data-keel-quantity="1" data-keel-label="1 licence" value="anymd_pro:1" selected>1 licence</option></select></div><div id="money-checkout-recover-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-recover-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-recover-email.label" class="k55fdcae23bba">Email address</span><input id="money-checkout-recover-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-recover-email.label" aria-invalid="false" aria-busy="false"></div></div><label id="money-checkout-recover-consent-label" data-keel-layout="stack" class="sf-consent-row kad391fe046f7"><div id="money-checkout-recover-consent-row" data-keel-layout="row" class="kbe6065d37d69"><input id="money-checkout-recover-consent" role="checkbox" data-keel-surface="checkbox" class="keel-surface-checkbox kf814e013ad0f" data-keel-money-field="consent" data-keel-money-consent-version="waiver-v1" name="consent" type="checkbox" required value="waiver-v1" aria-label="I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground."><span id="money-checkout-recover-consent-text" class="k033481162ad8">I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.</span></div></label></div><div id="money-checkout-recover-checkout-action" data-keel-layout="stack" class="sf-checkout-action k0aafa862fef3"><div id="money-checkout-recover-price-summary" data-keel-layout="stack" class="sf-selected-summary k121cbb96911a"><span id="money-checkout-recover-selected-caption" class="sf-selected-caption kdbdb37d6917b">Selected plan</span><span id="money-checkout-recover-price-display" class="sf-selected-value k033481162ad8" data-keel-money-price-display="">1 licence</span></div><button id="money-checkout-recover-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="checkout" data-keel-state="disabled" aria-disabled="true" disabled="">Buy anymd Pro</button></div></div></form><form id="money-checkout-recover-recover-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="recover" action="#" method="post"><div id="money-checkout-recover-recover-fields" data-keel-layout="stack" class="k0aafa862fef3"><div id="money-checkout-recover-recovery-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-recover-recovery-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-recover-recovery-email.label" class="k55fdcae23bba">Purchased before? Recover your licence key</span><input id="money-checkout-recover-recovery-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="recovery-email" name="recovery_email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-recover-recovery-email.label" aria-invalid="false" aria-busy="false"></div></div><button id="money-checkout-recover-recover-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="recover">Email my licence recovery link</button></div></form><p id="money-checkout-recover-trader" class="sf-trader-line kf814e013ad0f" data-keel-money-trader=""><span id="money-checkout-recover-trader-text" class="kdbdb37d6917b">Sylphx Limited · hi@sylphx.com · 128 City Road, London EC1V 2NX, United Kingdom</span></p></section></div><a id="docs-edit" data-keel-surface="nav-link" class="keel-surface-nav-link k033481162ad8" href="https://github.com/SylphxAI/anymd/edit/main/docs/storefront/recover.md">Edit this page</a><nav id="docs-pager" data-keel-layout="stack" class="kad391fe046f7" aria-label="Previous and next page"><a id="docs-prev" data-keel-surface="nav-link" class="keel-surface-nav-link k033481162ad8" href="/anymd/pricing">← anymd Pro: verifiable video evidence and cite-check for AI agents</a></nav></article></main></div><footer id="docs-footer" data-keel-layout="stack" class="kad391fe046f7"><p><span class="anymd-sf-cookie-wrap"><button type="button" class="anymd-sf-cookie-link" data-anymd-open-cookie="1">Cookie settings and Your Privacy Choices</button></span></p></footer></div></div>
-<div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
+<div id="keel-static-root" data-keel-path="/recover"><div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
   <span>
     This page uses Google Analytics measurement when enabled to see how people find us and improve checkout. Depending on your choice, Google may set cookies and process identifiers such as your IP address. We never send your name or email. Sylphx Limited is the controller.
     <a href="/anymd/legal/privacy">Privacy</a>
@@ -155,7 +954,8 @@
     <button type="button" data-anymd-consent="analytics" aria-pressed="false">Analytics only</button>
     <button type="button" data-anymd-consent="none" aria-pressed="false">Reject</button>
   </span>
-</div>
+</div><div id="docs-root" data-anymd-storefront="1" data-keel-layout="stack" data-keel-surface="component:RouteView" class="k121cbb96911a"><header id="docs-header" data-keel-layout="stack" class="kad391fe046f7"><a id="docs-home" data-keel-surface="nav-link" class="keel-surface-nav-link k033481162ad8" href="/anymd/">anymd Pro</a><nav class="anymd-sf-nav" aria-label="Storefront navigation"><a href="/anymd/">Home</a><a href="/anymd/guide/getting-started">Docs</a><a href="/anymd/playground">Playground</a><a href="/anymd/pricing">Pricing</a><a href="/anymd/recover" aria-current="page">Recover licence</a><a href="https://github.com/SylphxAI/anymd">GitHub</a></nav></header><div id="docs-body" data-keel-layout="row" class="k84da60f30064"><main id="docs-main" data-keel-layout="stack" class="kad391fe046f7" tabindex="-1"><article id="docs-article" data-keel-layout="stack" class="kad391fe046f7"><div id="doc-with-checkout" data-keel-layout="stack" class="k121cbb96911a"><div id="doc" data-keel-layout="stack" class="kb442e8ff1cd8"><h1 id="recover-your-anymd-pro-licence" class="kae9c38236f01">Recover your anymd Pro licence</h1><p id="doc-1" class="k3e7c2a82e5eb"><span id="doc-2" class="k3a76103d07ce">Enter </span><span id="doc-3" class="k3a76103d07ce">the </span><span id="doc-4" class="k3a76103d07ce">email </span><span id="doc-5" class="k3a76103d07ce">address </span><span id="doc-6" class="k3a76103d07ce">used </span><span id="doc-7" class="k3a76103d07ce">at </span><span id="doc-8" class="k3a76103d07ce">checkout. </span><span id="doc-9" class="k3a76103d07ce">If </span><span id="doc-10" class="k3a76103d07ce">a </span><span id="doc-11" class="k3a76103d07ce">paid </span><span id="doc-12" class="k3a76103d07ce">licence </span><span id="doc-13" class="k3a76103d07ce">exists, </span><span id="doc-14" class="k3a76103d07ce">we </span><span id="doc-15" class="k3a76103d07ce">send</span><span id="doc-16" class="k3a76103d07ce"> </span><span id="doc-17" class="k3a76103d07ce">an </span><span id="doc-18" class="k3a76103d07ce">expiring </span><span id="doc-19" class="k3a76103d07ce">recovery </span><span id="doc-20" class="k3a76103d07ce">link. </span><span id="doc-21" class="k3a76103d07ce">The </span><span id="doc-22" class="k3a76103d07ce">response </span><span id="doc-23" class="k3a76103d07ce">never </span><span id="doc-24" class="k3a76103d07ce">says </span><span id="doc-25" class="k3a76103d07ce">whether </span><span id="doc-26" class="k3a76103d07ce">that </span><span id="doc-27" class="k3a76103d07ce">address </span><span id="doc-28" class="k3a76103d07ce">has </span><span id="doc-29" class="k3a76103d07ce">a</span><span id="doc-30" class="k3a76103d07ce"> </span><span id="doc-31" class="k3a76103d07ce">purchase, </span><span id="doc-32" class="k3a76103d07ce">and </span><span id="doc-33" class="k3a76103d07ce">no </span><span id="doc-34" class="k3a76103d07ce">licence </span><span id="doc-35" class="k3a76103d07ce">token </span><span id="doc-36" class="k3a76103d07ce">is </span><span id="doc-37" class="k3a76103d07ce">shown </span><span id="doc-38" class="k3a76103d07ce">to </span><span id="doc-39" class="k3a76103d07ce">an </span><span id="doc-40" class="k3a76103d07ce">unverified </span><span id="doc-41" class="k3a76103d07ce">browser.</span></p><p id="doc-42" class="k3e7c2a82e5eb"><span id="doc-43" class="k3a76103d07ce">Open </span><span id="doc-44" class="k3a76103d07ce">the </span><span id="doc-45" class="k3a76103d07ce">recovery </span><span id="doc-46" class="k3a76103d07ce">link </span><span id="doc-47" class="k3a76103d07ce">within </span><span id="doc-48" class="k3a76103d07ce">one </span><span id="doc-49" class="k3a76103d07ce">hour </span><span id="doc-50" class="k3a76103d07ce">to </span><span id="doc-51" class="k3a76103d07ce">view </span><span id="doc-52" class="k3a76103d07ce">and </span><span id="doc-53" class="k3a76103d07ce">copy </span><span id="doc-54" class="k3a76103d07ce">your </span><span id="doc-55" class="k3a76103d07ce">licence </span><span id="doc-56" class="k3a76103d07ce">token,</span><span id="doc-57" class="k3a76103d07ce"> </span><span id="doc-58" class="k3a76103d07ce">then </span><span id="doc-59" class="k3a76103d07ce">activate </span><span id="doc-60" class="k3a76103d07ce">it </span><span id="doc-61" class="k3a76103d07ce">on </span><span id="doc-62" class="k3a76103d07ce">your </span><span id="doc-63" class="k3a76103d07ce">machine:</span></p><pre id="doc-69" data-keel-surface="code-block" class="keel-surface-code-block k1133b25d6e88"><code id="doc-68" class="language-sh kf814e013ad0f"><span id="doc-64" class="keel-code-function k01133a73d68a">anymd pro activate </span><span id="doc-65" class="keel-code-string ka2552093ef0f">'&lt;your token&gt;'</span><span id="doc-66" class="k033481162ad8">
+</span><span id="doc-67" class="keel-code-function k01133a73d68a">anymd pro status</span></code></pre><p id="doc-70" class="k3e7c2a82e5eb"><span id="doc-71" class="k3a76103d07ce">For </span><span id="doc-72" class="k3a76103d07ce">an </span><span id="doc-73" class="k3a76103d07ce">MCP </span><span id="doc-74" class="k3a76103d07ce">server </span><span id="doc-75" class="k3a76103d07ce">or </span><span id="doc-76" class="k3a76103d07ce">CI, </span><span id="doc-77" class="k3a76103d07ce">set </span><code id="doc-79" class="kf814e013ad0f"><span id="doc-78" class="k2b7048198c30">ANYMD_PRO_TOKEN</span></code><span id="doc-80" class="k3a76103d07ce"> instead. </span><span id="doc-81" class="k3a76103d07ce">Existing </span><span id="doc-82" class="k3a76103d07ce">licences </span><span id="doc-83" class="k3a76103d07ce">keep</span><span id="doc-84" class="k3a76103d07ce"> </span><span id="doc-85" class="k3a76103d07ce">their </span><span id="doc-86" class="k3a76103d07ce">original </span><span id="doc-87" class="k3a76103d07ce">product, </span><span id="doc-88" class="k3a76103d07ce">plan, </span><span id="doc-89" class="k3a76103d07ce">seats </span><span id="doc-90" class="k3a76103d07ce">and </span><span id="doc-91" class="k3a76103d07ce">expiry. </span><span id="doc-92" class="k3a76103d07ce">Do </span><span id="doc-93" class="k3a76103d07ce">not </span><span id="doc-94" class="k3a76103d07ce">share </span><span id="doc-95" class="k3a76103d07ce">a </span><span id="doc-96" class="k3a76103d07ce">licence </span><span id="doc-97" class="k3a76103d07ce">token </span><span id="doc-98" class="k3a76103d07ce">or</span><span id="doc-99" class="k3a76103d07ce"> </span><span id="doc-100" class="k3a76103d07ce">recovery </span><span id="doc-101" class="k3a76103d07ce">link </span><span id="doc-102" class="k3a76103d07ce">in </span><span id="doc-103" class="k3a76103d07ce">a </span><span id="doc-104" class="k3a76103d07ce">public </span><span id="doc-105" class="k3a76103d07ce">issue, </span><span id="doc-106" class="k3a76103d07ce">log </span><span id="doc-107" class="k3a76103d07ce">or </span><span id="doc-108" class="k3a76103d07ce">repository.</span></p></div><section id="money-checkout-recover" data-keel-layout="stack" data-keel-surface="card" class="sf-money-checkout keel-surface-card k5872f9872dcc" data-keel-money-checkout="{&quot;api_origin&quot;:&quot;https://api.sylphx.com&quot;,&quot;parent&quot;:&quot;orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/projects/prj_fs013ejakyn22t4bsvrvyj0f2x1pgq/envs/env_fs01p2f389mwmm2xsm1nmvcst69vgd&quot;,&quot;publishable_key&quot;:&quot;sylphx_pk_live_fs011xLNdWAaf61LbUtF&quot;,&quot;product&quot;:&quot;anymd_pro&quot;,&quot;token_product&quot;:&quot;anymd&quot;,&quot;title&quot;:&quot;Buy anymd Pro&quot;,&quot;description&quot;:&quot;Exact video frames with timestamps and hashes, and offline cite-check. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.&quot;,&quot;checkout_enabled&quot;:true,&quot;prices&quot;:[{&quot;key&quot;:&quot;anymd_pro&quot;,&quot;label&quot;:&quot;1 licence&quot;,&quot;quantity&quot;:1}],&quot;consent_version&quot;:&quot;waiver-v1&quot;,&quot;consent_text&quot;:&quot;I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.&quot;,&quot;success_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?session_id={CHECKOUT_SESSION_ID}&quot;,&quot;cancel_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?checkout=cancelled&quot;,&quot;recovery_url&quot;:&quot;https://sylphxai.github.io/anymd/recover&quot;,&quot;cta_label&quot;:&quot;Buy anymd Pro&quot;,&quot;recovery_label&quot;:&quot;Email my licence recovery link&quot;,&quot;trader&quot;:{&quot;name&quot;:&quot;Sylphx Limited&quot;,&quot;contact&quot;:&quot;hi@sylphx.com&quot;,&quot;address&quot;:&quot;128 City Road, London EC1V 2NX, United Kingdom&quot;}}" data-keel-money-state="idle" data-keel-money-catalog-ready="0" data-keel-money-product="anymd_pro"><h2 id="money-checkout-recover-title" class="sf-money-title k4c8f7d8a78d0">Buy anymd Pro</h2><p id="money-checkout-recover-description" class="sf-money-description kf814e013ad0f"><span id="money-checkout-recover-description-text" class="kdbdb37d6917b">Exact video frames with timestamps and hashes, and offline cite-check. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.</span></p><span id="money-checkout-recover-status" role="status" class="sf-money-status k4c35fb7aaf4d" data-keel-money-status="" aria-live="polite"></span><section id="money-checkout-recover-redeem" data-keel-layout="stack" data-keel-surface="card" class="sf-redeem-panel keel-surface-card k44658c4e353f" data-keel-money-panel="redeem"><pre id="money-checkout-recover-licence-token" data-keel-surface="code-block" class="sf-licence-token keel-surface-code-block kf814e013ad0f" hidden data-keel-money-licence-token=""></pre><div id="money-checkout-recover-redeem-actions" data-keel-layout="wrap" class="sf-redeem-actions kb0a5708679d3"><button id="money-checkout-recover-copy-token" role="button" data-keel-surface="btn-outline" class="sf-redeem-btn sf-redeem-btn-secondary keel-surface-btn-outline kf814e013ad0f" hidden data-keel-money-copy-token="">Copy licence key</button><button id="money-checkout-recover-activate-browser" role="button" data-keel-surface="btn-primary" class="sf-redeem-btn sf-redeem-btn-primary keel-surface-btn-primary kf814e013ad0f" hidden data-keel-money-activate-browser="">Activate in this browser</button></div></section><form id="money-checkout-recover-checkout-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="checkout" action="#" method="post"><div id="money-checkout-recover-checkout-fields" data-keel-layout="row" class="sf-checkout-grid k2409d931d8de"><div id="money-checkout-recover-checkout-inputs" data-keel-layout="stack" class="sf-checkout-inputs kb442e8ff1cd8"><div id="money-checkout-recover-price-field" data-keel-layout="stack" class="sf-price-select-field k121cbb96911a"><label id="money-checkout-recover-price-label" data-keel-layout="stack" class="kad391fe046f7"><span id="money-checkout-recover-price-title" class="k033481162ad8">Plan</span></label><select id="money-checkout-recover-price" role="combobox" class="kf814e013ad0f" data-keel-money-field="price" name="price" required aria-label="Plan or pack"><option id="money-checkout-recover-price-0" class="kf814e013ad0f" data-keel-price-key="anymd_pro" data-keel-quantity="1" data-keel-label="1 licence" value="anymd_pro:1" selected>1 licence</option></select></div><div id="money-checkout-recover-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-recover-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-recover-email.label" class="k55fdcae23bba">Email address</span><input id="money-checkout-recover-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-recover-email.label" aria-invalid="false" aria-busy="false"></div></div><label id="money-checkout-recover-consent-label" data-keel-layout="stack" class="sf-consent-row kad391fe046f7"><div id="money-checkout-recover-consent-row" data-keel-layout="row" class="kbe6065d37d69"><input id="money-checkout-recover-consent" role="checkbox" data-keel-surface="checkbox" class="keel-surface-checkbox kf814e013ad0f" data-keel-money-field="consent" data-keel-money-consent-version="waiver-v1" name="consent" type="checkbox" required value="waiver-v1" aria-label="I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground."><span id="money-checkout-recover-consent-text" class="k033481162ad8">I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.</span></div></label></div><div id="money-checkout-recover-checkout-action" data-keel-layout="stack" class="sf-checkout-action k0aafa862fef3"><div id="money-checkout-recover-price-summary" data-keel-layout="stack" class="sf-selected-summary k121cbb96911a"><span id="money-checkout-recover-selected-caption" class="sf-selected-caption kdbdb37d6917b">Selected plan</span><span id="money-checkout-recover-price-display" class="sf-selected-value k033481162ad8" data-keel-money-price-display="">1 licence</span></div><button id="money-checkout-recover-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="checkout" data-keel-state="disabled" aria-disabled="true" disabled="">Buy anymd Pro</button></div></div></form><form id="money-checkout-recover-recover-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="recover" action="#" method="post"><div id="money-checkout-recover-recover-fields" data-keel-layout="stack" class="k0aafa862fef3"><div id="money-checkout-recover-recovery-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-recover-recovery-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-recover-recovery-email.label" class="k55fdcae23bba">Purchased before? Recover your licence key</span><input id="money-checkout-recover-recovery-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="recovery-email" name="recovery_email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-recover-recovery-email.label" aria-invalid="false" aria-busy="false"></div></div><button id="money-checkout-recover-recover-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="recover">Email my licence recovery link</button></div></form><p id="money-checkout-recover-trader" class="sf-trader-line kf814e013ad0f" data-keel-money-trader=""><span id="money-checkout-recover-trader-text" class="kdbdb37d6917b">Sylphx Limited · hi@sylphx.com · 128 City Road, London EC1V 2NX, United Kingdom</span></p></section></div></article></main></div><footer id="docs-footer" data-keel-layout="stack" class="kad391fe046f7"><p><span class="anymd-sf-cookie-wrap"><button type="button" class="anymd-sf-cookie-link" data-anymd-open-cookie="1">Cookie settings and Your Privacy Choices</button></span></p></footer></div></div>
 <script data-anymd-ga4="1">
 (() => {
   const GA4_ID = "G-R4TD2Z8RR7";
@@ -310,6 +1110,7 @@
     if (t instanceof Element && t.closest("[data-anymd-open-cookie]")) {
       ev.preventDefault();
       syncBanner(true);
+      window.scrollTo({ top: 0, behavior: "auto" });
     }
   });
   document.addEventListener("submit", (ev) => {

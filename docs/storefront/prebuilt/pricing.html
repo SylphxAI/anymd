@@ -26,12 +26,935 @@
 <style data-keel-styles>@layer keel.base,keel.theme,keel.node;@layer keel.base{*,*::before,*::after{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:var(--keel-font-ui,var(--keel-asset-font-ui,system-ui))}body{background:var(--keel-canvas);color:var(--keel-color-on-surface)}#keel-root,#keel-static-root{position:relative;z-index:1;width:100%;padding:0 0 40px;background:var(--keel-canvas);color:var(--keel-color-on-surface)}:where([data-keel-layout=stack]:not(details:not([open])),[data-keel-layout=row],[data-keel-layout=wrap]){display:flex}#keel-outlet{display:block;max-width:var(--keel-content-max-width);margin:0 auto;padding:var(--keel-space-sm) 20px 0;outline:none;background:transparent;color:inherit}.skip{position:absolute;left:-999px;top:var(--keel-space-sm);background:var(--keel-color-surface);color:var(--keel-color-on-surface);padding:var(--keel-space-sm) var(--keel-space-md);z-index:30;display:flex;align-items:center;min-width:44px;min-height:44px;border-radius:var(--keel-radius-sm)}.skip:focus{left:var(--keel-space-sm)}.skip:focus-visible{outline:var(--keel-focus-ring-width) solid var(--keel-focus-ring-color);outline-offset:2px}#keel-root a,#keel-static-root a{color:var(--keel-link);text-decoration:none}#keel-root a:hover,#keel-static-root a:hover{color:var(--keel-link-hover)}#keel-root :focus-visible,#keel-static-root :focus-visible{outline:var(--keel-focus-ring-width) solid var(--keel-focus-ring-color);outline-offset:2px}#keel-outlet.is-route-enter{animation:keel-route-in var(--keel-motion-slow) var(--keel-ease-enter) both}@keyframes keel-route-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}:where(#keel-root,#keel-static-root) :where(button,summary,select,textarea,input:not([type=hidden]):not([type=checkbox]):not([type=radio]),[role=button],nav a,[data-keel-surface=nav-link],[data-keel-surface=nav-link-active],[data-keel-surface=sidebar-item],[data-keel-surface=sidebar-item-active]){min-width:24px;min-height:24px}#keel-root :where(p,li,dd,td,blockquote,figcaption) a:not([data-keel-surface]),#keel-root :where(p,li,dd,td,blockquote,figcaption) a[data-keel-surface="nav-link"],#keel-static-root :where(p,li,dd,td,blockquote,figcaption) a:not([data-keel-surface]),#keel-static-root :where(p,li,dd,td,blockquote,figcaption) a[data-keel-surface="nav-link"]{text-decoration:underline;text-underline-offset:0.18em;text-decoration-thickness:1px}[data-keel-client-status]{position:fixed;z-index:30;inset-block-end:max(var(--keel-space-md),env(safe-area-inset-bottom));inset-inline-end:var(--keel-space-md);max-width:calc(100vw - 2 * var(--keel-space-md));padding:var(--keel-space-sm) var(--keel-space-md);border-radius:var(--keel-radius-sm);background:var(--keel-color-surface);color:var(--keel-color-on-surface);border:1px solid var(--keel-color-on-surface);font:inherit}[data-keel-client-status] button{min-width:24px;min-height:24px;margin-inline-start:var(--keel-space-sm);font:inherit;color:inherit;background:var(--keel-color-surface)}[data-keel-client-status] button:focus-visible{outline:var(--keel-focus-ring-width) solid var(--keel-focus-ring-color);outline-offset:2px}@media (prefers-reduced-motion:reduce){#keel-root [data-keel-motion],#keel-static-root [data-keel-motion]{transition:none !important}#keel-root [data-keel-motion="press"]:active,#keel-static-root [data-keel-motion="press"]:active{transform:none !important}#keel-outlet.is-route-enter{animation:none !important}#keel-root *,#keel-static-root *,html,body{scroll-behavior:auto !important}}}@layer keel.theme{:root{--keel-color-background:#070b14;--keel-color-surface:#121826;--keel-color-surface-high:#1a2233;--keel-color-primary:#7ec2ff;--keel-color-on-primary:#070b14;--keel-color-on-surface:#eef3fb;--keel-color-on-surface-variant:#93a0b5;--keel-color-outline:rgba(140, 170, 220, 0.14);--keel-color-muted:#1a2233;--keel-color-accent:#1a2233;--keel-color-on-accent:#eef3fb;--keel-color-secondary:#1a2233;--keel-color-on-secondary:#eef3fb;--keel-color-popover:#121826;--keel-color-on-popover:#eef3fb;--keel-color-ring:#7ec2ff;--keel-color-sidebar:#0b101c;--keel-color-on-sidebar:#eef3fb;--keel-color-sidebar-border:rgba(140, 170, 220, 0.14);--keel-color-danger:#e65a5a;--keel-color-on-danger:#070b14;--keel-color-success:#3dd68c;--keel-color-warning:#f0b429;--keel-color-info:#7ec2ff;--keel-color-scrim:rgba(0, 0, 0, 0.6);--keel-switch-thumb-off:var(--keel-color-on-surface);--keel-space-xs:4px;--keel-space-sm:8px;--keel-space-md:16px;--keel-space-lg:24px;--keel-radius-sm:6px;--keel-radius-md:8px;--keel-radius-lg:10px;--keel-radius-xl:14px;--keel-radius-pill:999px;--keel-type-display-size:35px;--keel-type-display-weight:600;--keel-type-display-tracking:-0.02em;--keel-type-display-leading:1.35;--keel-type-app-size:26px;--keel-type-app-weight:600;--keel-type-app-tracking:-0.01em;--keel-type-app-leading:1.35;--keel-type-body-size:17px;--keel-type-body-weight:600;--keel-type-body-tracking:0em;--keel-type-body-leading:1.35;--keel-type-label-size:13px;--keel-type-label-weight:600;--keel-type-label-tracking:0.01em;--keel-type-label-leading:1.35;--keel-type-caption-size:11px;--keel-type-caption-weight:500;--keel-type-caption-tracking:0.02em;--keel-type-caption-leading:1.35;--keel-motion-instant:0ms;--keel-motion-fast:120ms;--keel-motion-normal:200ms;--keel-motion-slow:320ms;--keel-motion-deliberate:480ms;--keel-ease-standard:ease;--keel-ease-enter:ease-out;--keel-ease-exit:ease-in;--keel-ease-emphasized:cubic-bezier(0.2, 0, 0, 1);--keel-elevation-e0:0 0 0 0 transparent;--keel-elevation-e1:0px 1px 3px 0px rgba(0, 0, 0, 0.18);--keel-elevation-e2:0px 3px 8px 0px rgba(0, 0, 0, 0.22);--keel-elevation-e3:0px 8px 18px 0px rgba(0, 0, 0, 0.28);--keel-elevation-e4:0px 14px 30px 0px rgba(0, 0, 0, 0.34);--keel-surface-card:#121826;--keel-surface-panel:#121826;--keel-surface-metric:#1a2233;--keel-surface-sheet:#121826;--keel-surface-dialog:#121826;--keel-surface-popover:#121826;--keel-surface-table:#121826;--keel-surface-table-header:#1a2233;--keel-app-bar-height:56px;--keel-nav-bar-height:72px;--keel-button-height:48px;--keel-root-font-size:16px;--keel-canvas:#070b14;--keel-link:#7ec2ff;--keel-link-hover:#7ec2ff;--keel-focus-ring-color:#7ec2ff;--keel-focus-ring-width:2px;--keel-content-max-width:1120px;--keel-canvas-pad-bottom:40px;--keel-outlet-pad-inline:20px;--keel-scroll-max-height:70vh;color-scheme:dark;}body{line-height:1.55;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.keel-surface-btn-outline{background-color:rgba(0, 0, 0, 0);color:#eef3fb;border:1px solid rgba(140, 170, 220, 0.14);border-radius:8px;--keel-surface-shadow:0 0 0 0 transparent;padding:8px 16px;transition:background-color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),border-color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),box-shadow var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),translate var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),scale var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),outline-color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1);font-size:var(--keel-type-button-size);font-weight:var(--keel-type-button-weight);letter-spacing:var(--keel-type-button-tracking);line-height:var(--keel-type-button-leading);display:flex;flex-direction:row;justify-content:center;align-items:center;flex-wrap:nowrap;min-height:48px}.keel-surface-btn-outline:active:not([aria-disabled="true"]):not(:disabled):not([data-keel-state="disabled"]):where(:not(.keel-own-states)){scale:0.97;transition:background-color var(--keel-motion-fast) var(--keel-ease-standard),color var(--keel-motion-fast) var(--keel-ease-standard),border-color var(--keel-motion-fast) var(--keel-ease-standard),box-shadow var(--keel-motion-fast) var(--keel-ease-standard),translate var(--keel-motion-fast) var(--keel-ease-standard),scale var(--keel-motion-fast) var(--keel-ease-standard),outline-color var(--keel-motion-fast) var(--keel-ease-standard)}.keel-surface-btn-outline:disabled:where(:not(.keel-own-states)),.keel-surface-btn-outline[aria-disabled="true"]:where(:not(.keel-own-states)),.keel-surface-btn-outline[data-keel-state="disabled"]:where(:not(.keel-own-states)){opacity:0.38;transition:background-color var(--keel-motion-fast) var(--keel-ease-standard),color var(--keel-motion-fast) var(--keel-ease-standard),border-color var(--keel-motion-fast) var(--keel-ease-standard),box-shadow var(--keel-motion-fast) var(--keel-ease-standard),translate var(--keel-motion-fast) var(--keel-ease-standard),scale var(--keel-motion-fast) var(--keel-ease-standard),outline-color var(--keel-motion-fast) var(--keel-ease-standard)}@media (prefers-reduced-motion:reduce){.keel-surface-btn-outline{transition:none}.keel-surface-btn-outline:active:not([aria-disabled="true"]):not(:disabled):not([data-keel-state="disabled"]):where(:not(.keel-own-states)){translate:none;scale:none;opacity:0.92}}form:invalid .keel-surface-btn-outline:where(:not(.keel-own-states)):is(button:not([type=button]):not([type=reset]):not([commandfor]),input[type=submit]){opacity:0.38}.keel-surface-btn-primary{background-color:#7ec2ff;color:#070b14;border-radius:8px;--keel-surface-shadow:0 0 0 0 transparent;padding:8px 16px;transition:background-color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),border-color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),box-shadow var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),translate var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),scale var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1),outline-color var(--keel-motion-normal) linear(0, 0.086, 0.277, 0.495, 0.694, 0.851, 0.961, 1.028, 1.06, 1.068, 1.062, 1.049, 1.034, 1.021, 1.01, 1.003, 0.998, 0.996, 0.995, 0.996, 0.997, 0.998, 0.999, 0.999, 1);font-size:var(--keel-type-button-size);font-weight:var(--keel-type-button-weight);letter-spacing:var(--keel-type-button-tracking);line-height:var(--keel-type-button-leading);display:flex;flex-direction:row;justify-content:center;align-items:center;flex-wrap:nowrap;min-height:48px}.keel-surface-btn-primary:active:not([aria-disabled="true"]):not(:disabled):not([data-keel-state="disabled"]):where(:not(.keel-own-states)){scale:0.97;transition:background-color var(--keel-motion-fast) var(--keel-ease-standard),color var(--keel-motion-fast) var(--keel-ease-standard),border-color var(--keel-motion-fast) var(--keel-ease-standard),box-shadow var(--keel-motion-fast) var(--keel-ease-standard),translate var(--keel-motion-fast) var(--keel-ease-standard),scale var(--keel-motion-fast) var(--keel-ease-standard),outline-color var(--keel-motion-fast) var(--keel-ease-standard)}.keel-surface-btn-primary:disabled:where(:not(.keel-own-states)),.keel-surface-btn-primary[aria-disabled="true"]:where(:not(.keel-own-states)),.keel-surface-btn-primary[data-keel-state="disabled"]:where(:not(.keel-own-states)){opacity:0.38;transition:background-color var(--keel-motion-fast) var(--keel-ease-standard),color var(--keel-motion-fast) var(--keel-ease-standard),border-color var(--keel-motion-fast) var(--keel-ease-standard),box-shadow var(--keel-motion-fast) var(--keel-ease-standard),translate var(--keel-motion-fast) var(--keel-ease-standard),scale var(--keel-motion-fast) var(--keel-ease-standard),outline-color var(--keel-motion-fast) var(--keel-ease-standard)}@media (prefers-reduced-motion:reduce){.keel-surface-btn-primary{transition:none}.keel-surface-btn-primary:active:not([aria-disabled="true"]):not(:disabled):not([data-keel-state="disabled"]):where(:not(.keel-own-states)){translate:none;scale:none;opacity:0.92}}form:invalid .keel-surface-btn-primary:where(:not(.keel-own-states)):is(button:not([type=button]):not([type=reset]):not([commandfor]),input[type=submit]){opacity:0.38}.keel-surface-card{background-color:#121826;color:#eef3fb;border:1px solid rgba(140, 170, 220, 0.14);border-radius:14px;--keel-surface-shadow:0 0 0 0 transparent;padding:16px;gap:8px;transition:background-color var(--keel-motion-fast) var(--keel-ease-standard),color var(--keel-motion-fast) var(--keel-ease-standard),border-color var(--keel-motion-fast) var(--keel-ease-standard),box-shadow var(--keel-motion-fast) var(--keel-ease-standard),translate var(--keel-motion-fast) var(--keel-ease-standard),scale var(--keel-motion-fast) var(--keel-ease-standard),outline-color var(--keel-motion-fast) var(--keel-ease-standard);display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;flex-wrap:nowrap}@media (hover:hover){.keel-surface-card[aria-selected="true"]:where(:not(:is(:disabled,[aria-disabled="true"],[data-keel-state="disabled"]))):where(:not(:is(:active,:focus-visible,:disabled,[aria-disabled="true"],[data-keel-state="disabled"]))):where(:not(.keel-own-states)):where(:not(:is(:hover))){background-color:#7ec2ff;color:#070b14;border-color:#7ec2ff}}@media (hover:none){.keel-surface-card[aria-selected="true"]:where(:not(:is(:disabled,[aria-disabled="true"],[data-keel-state="disabled"]))):where(:not(:is(:active,:focus-visible,:disabled,[aria-disabled="true"],[data-keel-state="disabled"]))):where(:not(.keel-own-states)){background-color:#7ec2ff;color:#070b14;border-color:#7ec2ff}}.keel-surface-card:disabled:where(:not(.keel-own-states)),.keel-surface-card[aria-disabled="true"]:where(:not(.keel-own-states)),.keel-surface-card[data-keel-state="disabled"]:where(:not(.keel-own-states)){opacity:0.38}@media (prefers-reduced-motion:reduce){.keel-surface-card{transition:none}}form:invalid .keel-surface-card:where(:not(.keel-own-states)):is(button:not([type=button]):not([type=reset]):not([commandfor]),input[type=submit]){opacity:0.38}.keel-surface-checkbox{background-color:#1a2233;color:#eef3fb;border:1px solid rgba(140, 170, 220, 0.14);border-radius:6px;--keel-surface-shadow:0 0 0 0 transparent;padding:4px 8px;font-size:var(--keel-type-body-size);font-weight:var(--keel-type-body-weight);letter-spacing:var(--keel-type-body-tracking);line-height:var(--keel-type-body-leading)}form:invalid .keel-surface-checkbox:where(:not(.keel-own-states)):is(button:not([type=button]):not([type=reset]):not([commandfor]),input[type=submit]){opacity:0.38}.keel-surface-code-block{background-color:#1a2233;color:#eef3fb;border-radius:8px;--keel-surface-shadow:0 0 0 0 transparent;padding:16px}form:invalid .keel-surface-code-block:where(:not(.keel-own-states)):is(button:not([type=button]):not([type=reset]):not([commandfor]),input[type=submit]){opacity:0.38}.keel-surface-input{background-color:#1a2233;color:#eef3fb;border:1px solid rgba(140, 170, 220, 0.14);border-radius:8px;--keel-surface-shadow:0 0 0 0 transparent;padding:4px 8px;font-size:var(--keel-type-body-size);font-weight:var(--keel-type-body-weight);letter-spacing:var(--keel-type-body-tracking);line-height:var(--keel-type-body-leading)}.keel-surface-input:user-invalid{border-color:var(--keel-color-danger);outline-color:var(--keel-color-danger)}form:invalid .keel-surface-input:where(:not(.keel-own-states)):is(button:not([type=button]):not([type=reset]):not([commandfor]),input[type=submit]){opacity:0.38}.keel-surface-nav-link{background-color:rgba(0, 0, 0, 0);color:#eef3fb;border-radius:8px;--keel-surface-shadow:0 0 0 0 transparent;padding:4px 8px;font-size:var(--keel-type-label-size);font-weight:var(--keel-type-label-weight);letter-spacing:var(--keel-type-label-tracking);line-height:var(--keel-type-label-leading);display:flex;flex-direction:row;justify-content:center;align-items:center;flex-wrap:nowrap}form:invalid .keel-surface-nav-link:where(:not(.keel-own-states)):is(button:not([type=button]):not([type=reset]):not([commandfor]),input[type=submit]){opacity:0.38}:where(p,li,dd,td,th,blockquote,figcaption) a[data-keel-surface="nav-link"]{display:inline;padding:0}:where(button,input,select,textarea,fieldset){margin:0;border:0 solid transparent;padding:0;background:transparent;color:inherit;font:inherit}:where(button){appearance:none;text-align:center;text-transform:none;cursor:pointer}:where(button:disabled){cursor:default}input.keel-surface-checkbox{appearance:none;position:relative;margin:0;padding:0;flex-shrink:0;cursor:pointer}input.keel-surface-checkbox[aria-hidden=true]{pointer-events:none}input.keel-surface-checkbox:is(:checked,[aria-checked=mixed]){background-color:var(--keel-color-primary);border-color:var(--keel-color-primary);color:var(--keel-color-on-primary)}input.keel-surface-checkbox::after{position:absolute;content:none;pointer-events:none}input.keel-surface-checkbox[type=checkbox]:checked::after{content:'';width:6px;height:10px;left:6px;top:2px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg)}input.keel-surface-checkbox[aria-checked=mixed]::after{content:'';width:10px;height:2px;left:4px;top:8px;background:currentColor;border:0;transform:none}input.keel-surface-checkbox[type=radio]:checked::after{content:'';inset:5px;background:currentColor;border-radius:50%}input.keel-surface-checkbox:disabled{opacity:.5;cursor:default}}@layer keel.node{.k01133a73d68a{font-size:14.875px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#7ec2ff}.k033481162ad8{font-size:var(--keel-type-body-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k0440d1e29da6{font-size:var(--keel-type-body-size);font-weight:700;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#eef3fb}.k0aafa862fef3{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;flex-wrap:nowrap;gap:8px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k1133b25d6e88{font-size:14.875px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k121cbb96911a{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;flex-wrap:nowrap;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k1acf1a641c27{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;flex-wrap:nowrap;gap:4px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k2409d931d8de{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;flex-wrap:nowrap;gap:16px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k2b7048198c30{font-size:14.875px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#eef3fb;background:#1a2233}.k3a76103d07ce{font-size:var(--keel-type-body-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#eef3fb}.k3e7c2a82e5eb{font-size:17px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k44658c4e353f{gap:16px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k4c35fb7aaf4d{font-size:var(--keel-type-caption-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#93a0b5}.k4c8f7d8a78d0{font-weight:var(--keel-type-app-weight);letter-spacing:var(--keel-type-app-tracking);line-height:var(--keel-type-app-leading);font-size:var(--keel-type-app-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k55fdcae23bba{font-size:var(--keel-type-label-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k5872f9872dcc{font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k5872f9872dcc [hidden],.k5872f9872dcc [data-keel-billing-hidden="true"],.k5872f9872dcc [data-keel-money-status]:empty,.k5872f9872dcc [data-keel-money-panel="redeem"]:not(:has([data-keel-money-licence-token]:not([hidden]),[data-keel-money-copy-token]:not([hidden]),[data-keel-money-activate-browser]:not([hidden]))){display:none}.k61d113ad93ce{font-weight:var(--keel-type-body-weight);letter-spacing:var(--keel-type-body-tracking);line-height:var(--keel-type-body-leading);font-size:var(--keel-type-body-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k7490420f69e2{display:flex;flex-direction:column;align-items:stretch;gap:4px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k754f4ae47687{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;flex-wrap:nowrap;gap:8px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;padding:8px}.k78e876e9653f{height:48px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.k84da60f30064{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;flex-wrap:nowrap;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.ka2552093ef0f{font-size:14.875px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#3dd68c}.kad391fe046f7{display:flex;flex-direction:column;align-items:stretch;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.kb0a5708679d3{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:16px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.kb442e8ff1cd8{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;flex-wrap:nowrap;gap:16px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.kbe6065d37d69{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;flex-wrap:nowrap;gap:8px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.kc8a83299f260{font-weight:var(--keel-type-display-weight);letter-spacing:var(--keel-type-display-tracking);line-height:var(--keel-type-display-leading);font-size:var(--keel-type-display-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.kdbdb37d6917b{font-size:var(--keel-type-body-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#93a0b5}.kdbe7eda5087a{font-size:var(--keel-type-body-size);font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#7ec2ff}code:not(pre code){background-color:var(--keel-color-surface-high);color:var(--keel-color-on-surface)}code:not(pre code) span{background:transparent;color:inherit}pre .keel-code-plain{color:var(--keel-color-on-surface)}pre .keel-code-comment{color:var(--keel-color-on-surface-variant)}pre .keel-code-keyword{color:var(--keel-color-primary)}pre .keel-code-string{color:var(--keel-color-success)}pre .keel-code-number{color:var(--keel-color-warning)}pre .keel-code-function{color:var(--keel-color-info)}pre .keel-code-type{color:var(--keel-color-warning)}.kf3bdd727ce52{min-height:48px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}.kf47195cfc345{display:flex;flex-direction:column;align-items:stretch;gap:4px;font-size:17px;font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui;color:#eef3fb;padding-block:0px 0px;padding-inline:29.75px 0px}.kf814e013ad0f{font-family:var(--keel-asset-font-ui, "__keel_absent_alias_ui"),system-ui}}</style>
 <link rel="stylesheet" href="/anymd/_docs/docs.css">
 <script type="module" src="/anymd/_keel/money.a5ef5f2b3f97.js"></script>
+<style data-anymd-storefront>
+/* Product presentation over verified, pinned Keel output. No remote assets. */
+:root {
+  color-scheme: light dark;
+  --sf-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sf-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sf-paper: #fbfcf8;
+  --sf-card: #ffffff;
+  --sf-wash: #f1f5e9;
+  --sf-ink: #101408;
+  --sf-muted: #414b38;
+  --sf-subtle: #6b7564;
+  --sf-line: #dce3d1;
+  --sf-accent: #c3f53c;
+  --sf-accent-deep: #9fd21c;
+  --sf-accent-ink: #243503;
+  --sf-link: #3f6100;
+  --sf-code-bg: #ffffff;
+  --sf-code-string: #2b5200;
+  --sf-code-inline-bg: rgba(195, 245, 60, 0.14);
+  --sf-shadow: 0 1px 2px rgba(16, 20, 8, 0.06), 0 14px 36px -14px rgba(16, 20, 8, 0.14);
+
+  --keel-canvas: var(--sf-paper);
+  --keel-color-background: var(--sf-paper);
+  --keel-color-surface: var(--sf-card);
+  --keel-color-surface-high: var(--sf-wash);
+  --keel-color-on-surface: var(--sf-ink);
+  --keel-color-on-surface-variant: var(--sf-muted);
+  --keel-color-primary: var(--sf-link);
+  --keel-color-on-primary: var(--sf-paper);
+  --keel-color-outline: var(--sf-line);
+  --keel-link: var(--sf-link);
+  --keel-link-hover: #2d4600;
+  --keel-focus-ring-color: var(--sf-link);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sf-paper: #0a0d07;
+    --sf-card: #12170d;
+    --sf-wash: #151c0f;
+    --sf-ink: #eaf2dd;
+    --sf-muted: #aebb9e;
+    --sf-subtle: #88957c;
+    --sf-line: #27321c;
+    --sf-link: #c3f53c;
+    --sf-code-bg: #070a04;
+    --sf-code-string: #c3f53c;
+    --sf-code-inline-bg: rgba(195, 245, 60, 0.08);
+    --sf-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 18px 44px -16px rgba(0, 0, 0, 0.85);
+
+    --keel-canvas: var(--sf-paper);
+    --keel-color-background: var(--sf-paper);
+    --keel-color-surface: var(--sf-card);
+    --keel-color-surface-high: var(--sf-wash);
+    --keel-color-on-surface: var(--sf-ink);
+    --keel-color-on-surface-variant: var(--sf-muted);
+    --keel-color-primary: var(--sf-accent);
+    --keel-color-on-primary: var(--sf-accent-ink);
+    --keel-color-outline: var(--sf-line);
+    --keel-link: var(--sf-accent);
+    --keel-link-hover: var(--sf-accent-deep);
+    --keel-focus-ring-color: var(--sf-accent);
+  }
+}
+
+html {
+  background: var(--sf-paper);
+  scroll-padding-top: 84px;
+}
+
+body {
+  margin: 0;
+  background: var(--sf-paper);
+  color: var(--sf-ink);
+  font-family: var(--sf-sans);
+}
+
+#keel-static-root {
+  padding: 0;
+  background: var(--sf-paper);
+  color: var(--sf-ink);
+}
+
+#storefront-root[data-anymd-storefront],
+#docs-root[data-anymd-storefront],
+.anymd-sf-consent {
+  font-family: var(--sf-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--sf-ink);
+  background: var(--sf-paper);
+}
+
+[data-anymd-storefront] *,
+.anymd-sf-consent * {
+  box-sizing: border-box;
+}
+
+[data-anymd-storefront] :where(h1, h2, h3, h4, strong, th) {
+  color: var(--sf-ink);
+}
+
+[data-anymd-storefront] :where(p, li, td, label, legend, em, span:not(pre span, code span)) {
+  color: inherit;
+  font-family: inherit;
+}
+
+[data-anymd-storefront] a,
+[data-anymd-storefront] a span:not(pre span, code span) {
+  color: var(--sf-link);
+  text-underline-offset: 3px;
+}
+
+[data-anymd-storefront] :is(button, input, select, summary, a):focus-visible,
+.anymd-sf-consent :is(button, a):focus-visible {
+  outline: 2px solid var(--sf-link);
+  outline-offset: 3px;
+}
+
+/* Consent banner — sits cleanly in flow at top of page, 0px when hidden. */
+.anymd-sf-consent {
+  position: relative;
+  z-index: 25;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 16px max(32px, calc((100vw - 1152px) / 2));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-bottom: 1px solid var(--sf-line);
+  border-radius: 0;
+  background: var(--sf-wash);
+  color: var(--sf-ink);
+  font-size: 13.5px;
+  line-height: 1.55;
+  box-shadow: none;
+}
+
+.anymd-sf-consent[hidden] {
+  display: none !important;
+}
+
+.anymd-sf-consent > span:first-child {
+  flex: 1 1 540px;
+  max-width: 720px;
+  color: var(--sf-muted);
+}
+
+.anymd-sf-consent a {
+  color: var(--sf-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.anymd-sf-consent-actions {
+  display: flex;
+  flex: 1 1 320px;
+  max-width: 420px;
+  gap: 8px;
+}
+
+.anymd-sf-consent button {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--sf-line);
+  border-radius: 6px;
+  background: var(--sf-card);
+  color: var(--sf-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.anymd-sf-consent button:hover,
+.anymd-sf-consent button[aria-pressed="true"] {
+  border-color: var(--sf-link);
+}
+
+/* Header & storefront navigation */
+#storefront-header,
+#docs-root[data-anymd-storefront] #docs-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--sf-line);
+  background: var(--sf-paper);
+}
+
+#storefront-header-inner,
+#docs-root[data-anymd-storefront] #docs-header {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  min-height: 64px;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+#storefront-header-inner {
+  border-bottom: 0;
+}
+
+#storefront-brand,
+#docs-root[data-anymd-storefront] #docs-header #docs-home {
+  color: var(--sf-ink);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+}
+
+#storefront-brand span {
+  color: var(--sf-ink);
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
+
+
+.anymd-sf-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 20px;
+}
+
+[data-anymd-storefront] .anymd-sf-nav a {
+  color: var(--sf-muted);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+[data-anymd-storefront] .anymd-sf-nav a:hover,
+[data-anymd-storefront] .anymd-sf-nav a[aria-current="page"] {
+  color: var(--sf-link);
+}
+
+/* Main /pricing layout: 2-column hero + checkout, full-width editorial sections below */
+#storefront-main {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 56px 0 88px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 56px 56px;
+  align-items: start;
+}
+
+#storefront-main > * {
+  min-width: 0;
+}
+
+#storefront-hero {
+  display: block;
+  padding: 8px 0 0;
+  background: none;
+}
+
+#storefront-hero::before {
+  content: "ANYMD PRO · OFFLINE LICENCE";
+  display: block;
+  margin: 0 0 18px;
+  font-family: var(--sf-mono);
+  font-size: 11.5px;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--sf-link);
+}
+
+#storefront-hero h1 {
+  max-width: 13ch;
+  font-size: clamp(36px, 4vw, 54px);
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  font-weight: 750;
+  margin: 0 0 24px;
+  color: var(--sf-ink);
+}
+
+#storefront-lead {
+  display: block;
+  color: var(--sf-muted);
+  font-size: 16.5px;
+  line-height: 1.7;
+  max-width: 48ch;
+}
+
+#storefront-lead p {
+  margin: 0 0 16px;
+  font-size: inherit;
+}
+
+#storefront-lead strong {
+  color: var(--sf-ink);
+  font-weight: 650;
+}
+
+#storefront-hero + #storefront-offers {
+  margin-top: 0;
+}
+
+#storefront-offers,
+#storefront-companion {
+  display: block;
+  padding: 0;
+  width: 100%;
+}
+
+/* Inline code & pre blocks */
+[data-anymd-storefront] code:not(pre code) {
+  border-radius: 5px;
+  background: var(--sf-code-inline-bg);
+  color: var(--sf-link);
+  border: 1px solid var(--sf-line);
+  font-family: var(--sf-mono);
+  font-size: 0.85em;
+  padding: 2px 6px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+[data-anymd-storefront] code:not(pre code) span {
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+#storefront-root[data-anymd-storefront] pre,
+#docs-root[data-anymd-storefront] #docs-article pre {
+  margin: 12px 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--sf-line);
+  background: var(--sf-code-bg);
+  color: var(--sf-ink);
+  font-family: var(--sf-mono);
+  font-size: 13.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+}
+
+#storefront-root[data-anymd-storefront] pre code,
+#docs-root[data-anymd-storefront] #docs-article pre code,
+#storefront-root[data-anymd-storefront] pre span,
+#docs-root[data-anymd-storefront] #docs-article pre span {
+  font-family: var(--sf-mono);
+  font-size: inherit;
+  background: transparent;
+  color: var(--sf-ink);
+}
+
+#storefront-root[data-anymd-storefront] pre .keel-code-plain,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-plain { color: var(--sf-ink); }
+#storefront-root[data-anymd-storefront] pre .keel-code-comment,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-comment { color: var(--sf-subtle); }
+#storefront-root[data-anymd-storefront] pre .keel-code-keyword,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-keyword { color: var(--sf-link); font-weight: 650; }
+#storefront-root[data-anymd-storefront] pre .keel-code-function,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-function { color: var(--sf-ink); }
+#storefront-root[data-anymd-storefront] pre .keel-code-string,
+#docs-root[data-anymd-storefront] #docs-article pre .keel-code-string { color: var(--sf-code-string); }
+
+/* Elevated checkout & recovery card */
+#storefront-root .sf-money-checkout,
+#docs-root[data-anymd-storefront] .sf-money-checkout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: var(--sf-card);
+  color: var(--sf-ink);
+  border: 1px solid var(--sf-line);
+  border-top: 4px solid var(--sf-accent);
+  border-radius: 16px;
+  box-shadow: var(--sf-shadow);
+  padding: 28px;
+  margin: 0;
+}
+
+[data-anymd-storefront] .sf-money-checkout h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--sf-ink);
+}
+
+[data-anymd-storefront] .sf-money-checkout p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sf-muted);
+}
+
+[data-anymd-storefront] .sf-money-checkout form[data-keel-money-form="checkout"],
+[data-anymd-storefront] .sf-money-checkout form[data-keel-money-form="recover"] {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(form, [id$="-checkout-fields"], [id$="-checkout-inputs"], [id$="-recover-fields"]) {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(label, legend, [id$=".label"]) {
+  color: var(--sf-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-consent-text"] {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--sf-muted);
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(input[type="email"], input[type="text"], select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 13px;
+  border: 1px solid var(--sf-line);
+  border-radius: 8px;
+  background: var(--sf-paper);
+  color: var(--sf-ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+[data-anymd-storefront] .sf-money-checkout :is(input[type="email"], input[type="text"], select):focus-visible {
+  border-color: var(--sf-link);
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-consent-row"] {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+[data-anymd-storefront] .sf-money-checkout .keel-surface-checkbox,
+[data-anymd-storefront] .sf-money-checkout input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  flex: none;
+  margin-top: 2px;
+}
+
+[data-anymd-storefront] .sf-money-checkout .sf-checkout-action,
+[data-anymd-storefront] .sf-money-checkout [id$="-checkout-action"] {
+  padding: 16px 0 0;
+  border-left: 0;
+  border-top: 1px solid var(--sf-line);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-price-summary"] {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+[data-anymd-storefront] .sf-money-checkout .sf-selected-caption {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sf-subtle);
+}
+
+[data-anymd-storefront] .sf-money-checkout .sf-selected-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sf-ink);
+}
+
+[data-anymd-storefront] .sf-money-checkout button {
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--sf-line);
+  background: var(--sf-wash);
+  color: var(--sf-ink);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#money-checkout-pricing-submit,
+#money-checkout-recover-recover-submit {
+  width: 100%;
+  background: var(--sf-accent);
+  color: var(--sf-accent-ink);
+  border-color: var(--sf-accent);
+}
+
+#money-checkout-pricing-submit:hover:not(:disabled),
+#money-checkout-recover-recover-submit:hover:not(:disabled) {
+  background: var(--sf-accent-deep);
+  border-color: var(--sf-accent-deep);
+}
+
+[data-anymd-storefront] .sf-money-checkout button:disabled,
+[data-anymd-storefront] .sf-money-checkout button[aria-disabled="true"] {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+[data-anymd-storefront] .sf-money-checkout [hidden] {
+  display: none !important;
+}
+
+.anymd-submit-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.anymd-wallet-trust {
+  font-size: 12px;
+  text-align: center;
+  color: var(--sf-subtle);
+}
+
+[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure {
+  border: 0;
+  border-top: 1px solid var(--sf-line);
+  border-radius: 0;
+  background: transparent;
+  padding-top: 10px;
+}
+
+[data-anymd-storefront] .sf-money-checkout summary {
+  height: auto;
+  min-height: 44px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sf-link);
+}
+
+[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > div {
+  padding: 12px 0 0;
+}
+
+[data-anymd-storefront] .sf-money-checkout [id$="-trader"] {
+  font-size: 12px;
+  color: var(--sf-subtle);
+}
+
+#money-checkout-recover [data-keel-money-status] {
+  order: -4;
+}
+
+#money-checkout-recover [data-keel-money-panel="redeem"] {
+  order: -3;
+}
+
+#money-checkout-recover form[data-keel-money-form="recover"] {
+  order: -2;
+  padding-top: 0;
+  padding-bottom: 22px;
+  border-top: 0;
+  border-bottom: 1px solid var(--sf-line);
+}
+
+#money-checkout-recover form[data-keel-money-form="recover"] [id$="recovery-email.label"] {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sf-ink);
+}
+
+/* Below-the-fold sections on /pricing */
+#storefront-main > section:not(#storefront-hero) {
+  grid-column: 1 / -1;
+}
+
+#storefront-main > section[id^="storefront-sec-"] {
+  padding-top: 40px;
+  border-top: 1px solid var(--sf-line);
+  gap: 20px;
+}
+
+#storefront-main h2 {
+  margin: 0;
+  color: var(--sf-ink);
+  font-size: clamp(24px, 2.5vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+#storefront-main h3 {
+  margin: 0 0 12px;
+  color: var(--sf-ink);
+  font-size: 18px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+#storefront-main .sf-section-lead,
+#storefront-main .sf-section-lead p {
+  color: var(--sf-muted);
+  font-size: 16.5px;
+  line-height: 1.65;
+  max-width: 62ch;
+}
+
+#storefront-main .sf-bento-grid[data-columns="3"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+#storefront-main .sf-bento-card {
+  padding: 24px;
+  background: var(--sf-wash);
+  border: 1px solid var(--sf-line);
+  border-radius: 14px;
+  color: var(--sf-muted);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+#storefront-main .sf-bento-card ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 15px;
+  color: var(--sf-muted);
+}
+
+#storefront-main .sf-bento-card li + li {
+  margin-top: 10px;
+}
+
+#storefront-main .sf-bento-card p {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--sf-muted);
+}
+
+#storefront-main .sf-bento-card p:last-child {
+  margin-bottom: 0;
+}
+
+#storefront-main .sf-bento-card strong {
+  color: var(--sf-ink);
+  font-weight: 650;
+}
+
+#storefront-main .sf-prose-section .sf-section-body {
+  max-width: 72ch;
+  color: var(--sf-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+#storefront-main .sf-prose-section p {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+#storefront-main .sf-prose-section p:last-child {
+  margin-bottom: 0;
+}
+
+#storefront-sec-3 p strong {
+  display: block;
+  margin-top: 22px;
+  margin-bottom: 4px;
+  color: var(--sf-ink);
+  font-weight: 650;
+}
+
+#storefront-sec-3 p:first-child strong {
+  margin-top: 0;
+}
+
+/* /recover 2-column layout */
+#docs-root[data-anymd-storefront] #docs-body {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 56px 0 88px;
+  display: block;
+}
+
+#docs-root[data-anymd-storefront] #docs-main,
+#docs-root[data-anymd-storefront] #docs-article {
+  max-width: none;
+  padding: 0;
+}
+
+#docs-root[data-anymd-storefront] #doc-with-checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+#docs-root[data-anymd-storefront] #doc {
+  min-width: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--sf-muted);
+}
+
+#docs-root[data-anymd-storefront] #doc h1 {
+  margin: 0 0 24px;
+  max-width: 13ch;
+  font-size: clamp(34px, 3.8vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  font-weight: 750;
+  color: var(--sf-ink);
+}
+
+#docs-root[data-anymd-storefront] #doc p {
+  margin: 0 0 16px;
+  color: var(--sf-muted);
+  font-size: 16px;
+}
+
+/* Footer */
+#storefront-footer {
+  background: var(--sf-paper);
+  border-top: 1px solid var(--sf-line);
+}
+
+#storefront-footer-inner,
+#docs-root[data-anymd-storefront] #docs-footer {
+  width: min(1152px, calc(100% - 64px));
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 28px 0 36px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--sf-muted);
+  font-size: 13px;
+}
+
+#docs-root[data-anymd-storefront] #docs-footer {
+  border-top: 1px solid var(--sf-line);
+}
+
+.anymd-sf-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  align-items: center;
+}
+
+[data-anymd-storefront] .anymd-sf-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--sf-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.anymd-sf-cookie-wrap {
+  margin-left: auto;
+}
+
+.anymd-sf-cookie-link {
+  background: none;
+  color: var(--sf-ink);
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 44px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .anymd-sf-consent {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  #storefront-main,
+  #docs-root[data-anymd-storefront] #doc-with-checkout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  #storefront-hero h1,
+  #docs-root[data-anymd-storefront] #doc h1 {
+    max-width: 16ch;
+  }
+
+  #storefront-main .sf-bento-grid[data-columns="3"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  #storefront-header-inner,
+  #docs-root[data-anymd-storefront] #docs-header {
+    width: calc(100% - 40px);
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding: 10px 0;
+  }
+
+  .anymd-sf-nav {
+    gap: 0 16px;
+  }
+
+  #storefront-main,
+  #docs-root[data-anymd-storefront] #docs-body {
+    width: calc(100% - 40px);
+    padding: 36px 0 64px;
+  }
+
+  #storefront-hero {
+    padding: 0;
+  }
+
+  #storefront-hero h1 {
+    font-size: 38px;
+  }
+
+  #docs-root[data-anymd-storefront] #doc h1 {
+    font-size: 34px;
+  }
+
+  #storefront-root .sf-money-checkout,
+  #docs-root[data-anymd-storefront] .sf-money-checkout {
+    padding: 20px;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  #storefront-footer-inner,
+  #docs-root[data-anymd-storefront] #docs-footer {
+    width: calc(100% - 40px);
+    padding: 24px 0 32px;
+  }
+
+  .anymd-sf-cookie-wrap {
+    margin-left: 0;
+  }
+
+  .anymd-sf-consent {
+    padding: 14px 20px;
+  }
+
+  .anymd-sf-consent-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    max-width: none;
+  }
+
+  .anymd-sf-consent button {
+    padding: 8px 6px;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+</style>
 </head>
 <body>
 <a id="keel-skip-link" class="skip" href="#storefront-main">Skip to main content</a>
-<div id="keel-static-root" data-keel-path="/pricing"><div id="storefront-root" data-keel-layout="stack" data-keel-surface="component:RouteView" class="sf-root k121cbb96911a" data-storefront-page="pricing"><header id="storefront-header" data-keel-layout="stack" class="sf-header kad391fe046f7"><div id="storefront-header-inner" data-keel-layout="row" class="sf-header-inner k84da60f30064"><a id="storefront-brand" data-keel-surface="nav-link" class="sf-brand keel-surface-nav-link k033481162ad8" href="/anymd/"><span id="storefront-brand-title" class="sf-brand-title k033481162ad8">anymd Pro</span></a><div id="storefront-header-actions" data-keel-layout="row" class="sf-header-actions k84da60f30064"></div></div></header><main id="storefront-main" data-keel-layout="stack" class="sf-main kad391fe046f7" tabindex="-1"><section id="storefront-hero" data-keel-layout="stack" class="sf-hero kad391fe046f7"><h1 id="let-your-agent-show-its-evidence" class="sf-hero-title kc8a83299f260">Let your agent show its evidence</h1><div id="storefront-lead" data-keel-layout="stack" class="sf-hero-lead kad391fe046f7"><div id="storefront-lead-md" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-lead-md-1" class="k3e7c2a82e5eb"><strong id="storefront-lead-md-2" class="kf814e013ad0f"><span id="storefront-lead-md-3" class="k0440d1e29da6">anymd </span><span id="storefront-lead-md-4" class="k0440d1e29da6">Pro</span></strong><span id="storefront-lead-md-5" class="k3a76103d07ce"> adds </span><span id="storefront-lead-md-6" class="k3a76103d07ce">two </span><span id="storefront-lead-md-7" class="k3a76103d07ce">things </span><span id="storefront-lead-md-8" class="k3a76103d07ce">to </span><span id="storefront-lead-md-9" class="k3a76103d07ce">the </span><span id="storefront-lead-md-10" class="k3a76103d07ce">free </span><span id="storefront-lead-md-11" class="k3a76103d07ce">anymd </span><span id="storefront-lead-md-12" class="k3a76103d07ce">MCP </span><span id="storefront-lead-md-13" class="k3a76103d07ce">server: </span><span id="storefront-lead-md-14" class="k3a76103d07ce">exact </span><span id="storefront-lead-md-15" class="k3a76103d07ce">video </span><span id="storefront-lead-md-16" class="k3a76103d07ce">frames </span><span id="storefront-lead-md-17" class="k3a76103d07ce">your </span><span id="storefront-lead-md-18" class="k3a76103d07ce">agent </span><span id="storefront-lead-md-19" class="k3a76103d07ce">can </span><span id="storefront-lead-md-20" class="k3a76103d07ce">cite, </span><span id="storefront-lead-md-21" class="k3a76103d07ce">and </span><strong id="storefront-lead-md-22" class="kf814e013ad0f"><span id="storefront-lead-md-23" class="k0440d1e29da6">cite-check</span></strong><span id="storefront-lead-md-24" class="k3a76103d07ce">, </span><span id="storefront-lead-md-25" class="k3a76103d07ce">which </span><span id="storefront-lead-md-26" class="k3a76103d07ce">proves </span><span id="storefront-lead-md-27" class="k3a76103d07ce">a </span><span id="storefront-lead-md-28" class="k3a76103d07ce">quote </span><span id="storefront-lead-md-29" class="k3a76103d07ce">is </span><span id="storefront-lead-md-30" class="k3a76103d07ce">on </span><span id="storefront-lead-md-31" class="k3a76103d07ce">the </span><span id="storefront-lead-md-32" class="k3a76103d07ce">page </span><span id="storefront-lead-md-33" class="k3a76103d07ce">and </span><span id="storefront-lead-md-34" class="k3a76103d07ce">at </span><span id="storefront-lead-md-35" class="k3a76103d07ce">the </span><span id="storefront-lead-md-36" class="k3a76103d07ce">spot </span><span id="storefront-lead-md-37" class="k3a76103d07ce">it </span><span id="storefront-lead-md-38" class="k3a76103d07ce">claims. </span><span id="storefront-lead-md-39" class="k3a76103d07ce">Everything </span><span id="storefront-lead-md-40" class="k3a76103d07ce">runs </span><span id="storefront-lead-md-41" class="k3a76103d07ce">on </span><span id="storefront-lead-md-42" class="k3a76103d07ce">your </span><span id="storefront-lead-md-43" class="k3a76103d07ce">machine.</span></p><p id="storefront-lead-md-44" class="k3e7c2a82e5eb"><span id="storefront-lead-md-45" class="k3a76103d07ce">Current </span><span id="storefront-lead-md-46" class="k3a76103d07ce">one-time </span><span id="storefront-lead-md-47" class="k3a76103d07ce">price </span><span id="storefront-lead-md-48" class="k3a76103d07ce">and </span><span id="storefront-lead-md-49" class="k3a76103d07ce">tax </span><span id="storefront-lead-md-50" class="k3a76103d07ce">are </span><span id="storefront-lead-md-51" class="k3a76103d07ce">shown </span><span id="storefront-lead-md-52" class="k3a76103d07ce">below </span><span id="storefront-lead-md-53" class="k3a76103d07ce">· </span><span id="storefront-lead-md-54" class="k3a76103d07ce">100-year </span><span id="storefront-lead-md-55" class="k3a76103d07ce">licence </span><span id="storefront-lead-md-56" class="k3a76103d07ce">· </span><span id="storefront-lead-md-57" class="k3a76103d07ce">works </span><span id="storefront-lead-md-58" class="k3a76103d07ce">offline, </span><span id="storefront-lead-md-59" class="k3a76103d07ce">no </span><span id="storefront-lead-md-60" class="k3a76103d07ce">account </span><span id="storefront-lead-md-61" class="k3a76103d07ce">· </span><a id="storefront-lead-md-62" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/pro-terms"><span id="storefront-lead-md-63" class="kdbe7eda5087a">Terms</span></a></p><p id="storefront-lead-md-64" class="k3e7c2a82e5eb"><span id="storefront-lead-md-65" class="k3a76103d07ce">Requires </span><span id="storefront-lead-md-66" class="k3a76103d07ce">anymd </span><span id="storefront-lead-md-67" class="k3a76103d07ce">8.4.0 </span><span id="storefront-lead-md-68" class="k3a76103d07ce">or </span><span id="storefront-lead-md-69" class="k3a76103d07ce">later </span><span id="storefront-lead-md-70" class="k3a76103d07ce">(</span><code id="storefront-lead-md-75" class="kf814e013ad0f"><span id="storefront-lead-md-71" class="k2b7048198c30">npx </span><span id="storefront-lead-md-72" class="k2b7048198c30">-y </span><span id="storefront-lead-md-73" class="k2b7048198c30">@sylphx/anymd@latest </span><span id="storefront-lead-md-74" class="k2b7048198c30">--version</span></code><span id="storefront-lead-md-76" class="k3a76103d07ce">). </span><span id="storefront-lead-md-77" class="k3a76103d07ce">The </span><span id="storefront-lead-md-78" class="k3a76103d07ce">anymd </span><span id="storefront-lead-md-79" class="k3a76103d07ce">core </span><span id="storefront-lead-md-80" class="k3a76103d07ce">stays </span><span id="storefront-lead-md-81" class="k3a76103d07ce">free </span><span id="storefront-lead-md-82" class="k3a76103d07ce">and </span><span id="storefront-lead-md-83" class="k3a76103d07ce">MIT </span><span id="storefront-lead-md-84" class="k3a76103d07ce">licensed.</span></p></div></div></section><div id="storefront-offers" data-keel-layout="stack" class="sf-offers k121cbb96911a" data-keel-storefront-offers=""><div id="storefront-companion" data-keel-layout="stack" class="sf-companion kad391fe046f7" data-keel-storefront-companion=""></div><section id="money-checkout-pricing" data-keel-layout="stack" data-keel-surface="card" class="sf-money-checkout keel-surface-card k5872f9872dcc" data-keel-money-checkout="{&quot;api_origin&quot;:&quot;https://api.sylphx.com&quot;,&quot;parent&quot;:&quot;orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/projects/prj_fs013ejakyn22t4bsvrvyj0f2x1pgq/envs/env_fs01p2f389mwmm2xsm1nmvcst69vgd&quot;,&quot;publishable_key&quot;:&quot;sylphx_pk_live_fs011xLNdWAaf61LbUtF&quot;,&quot;product&quot;:&quot;anymd_pro&quot;,&quot;token_product&quot;:&quot;anymd&quot;,&quot;title&quot;:&quot;Buy anymd Pro&quot;,&quot;description&quot;:&quot;Exact video frames with timestamps and hashes, and offline cite-check. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.&quot;,&quot;checkout_enabled&quot;:true,&quot;prices&quot;:[{&quot;key&quot;:&quot;anymd_pro&quot;,&quot;label&quot;:&quot;1 licence&quot;,&quot;quantity&quot;:1}],&quot;consent_version&quot;:&quot;waiver-v1&quot;,&quot;consent_text&quot;:&quot;I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.&quot;,&quot;success_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?session_id={CHECKOUT_SESSION_ID}&quot;,&quot;cancel_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?checkout=cancelled&quot;,&quot;recovery_url&quot;:&quot;https://sylphxai.github.io/anymd/recover&quot;,&quot;cta_label&quot;:&quot;Buy anymd Pro&quot;,&quot;recovery_label&quot;:&quot;Email my licence recovery link&quot;,&quot;trader&quot;:{&quot;name&quot;:&quot;Sylphx Limited&quot;,&quot;contact&quot;:&quot;hi@sylphx.com&quot;,&quot;address&quot;:&quot;128 City Road, London EC1V 2NX, United Kingdom&quot;},&quot;collapse_recovery&quot;:true}" data-keel-money-state="idle" data-keel-money-catalog-ready="0" data-keel-money-product="anymd_pro"><span id="money-checkout-pricing-status" role="status" class="sf-money-status k4c35fb7aaf4d" data-keel-money-status="" aria-live="polite"></span><section id="money-checkout-pricing-redeem" data-keel-layout="stack" data-keel-surface="card" class="sf-redeem-panel keel-surface-card k44658c4e353f" data-keel-money-panel="redeem"><pre id="money-checkout-pricing-licence-token" data-keel-surface="code-block" class="sf-licence-token keel-surface-code-block kf814e013ad0f" hidden data-keel-money-licence-token=""></pre><div id="money-checkout-pricing-redeem-actions" data-keel-layout="wrap" class="sf-redeem-actions kb0a5708679d3"><button id="money-checkout-pricing-copy-token" role="button" data-keel-surface="btn-outline" class="sf-redeem-btn sf-redeem-btn-secondary keel-surface-btn-outline kf814e013ad0f" hidden data-keel-money-copy-token="">Copy licence key</button><button id="money-checkout-pricing-activate-browser" role="button" data-keel-surface="btn-primary" class="sf-redeem-btn sf-redeem-btn-primary keel-surface-btn-primary kf814e013ad0f" hidden data-keel-money-activate-browser="">Activate in this browser</button></div></section><form id="money-checkout-pricing-checkout-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="checkout" action="#" method="post"><div id="money-checkout-pricing-checkout-fields" data-keel-layout="row" class="sf-checkout-grid k2409d931d8de"><div id="money-checkout-pricing-checkout-inputs" data-keel-layout="stack" class="sf-checkout-inputs kb442e8ff1cd8"><div id="money-checkout-pricing-price-field" data-keel-layout="stack" class="sf-price-select-field k121cbb96911a"><label id="money-checkout-pricing-price-label" data-keel-layout="stack" class="kad391fe046f7"><span id="money-checkout-pricing-price-title" class="k033481162ad8">Plan</span></label><select id="money-checkout-pricing-price" role="combobox" class="kf814e013ad0f" data-keel-money-field="price" name="price" required aria-label="Plan or pack"><option id="money-checkout-pricing-price-0" class="kf814e013ad0f" data-keel-price-key="anymd_pro" data-keel-quantity="1" data-keel-label="1 licence" value="anymd_pro:1" selected>1 licence</option></select></div><div id="money-checkout-pricing-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-pricing-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-pricing-email.label" class="k55fdcae23bba">Email address</span><input id="money-checkout-pricing-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-pricing-email.label" aria-invalid="false" aria-busy="false"></div></div><label id="money-checkout-pricing-consent-label" data-keel-layout="stack" class="sf-consent-row kad391fe046f7"><div id="money-checkout-pricing-consent-row" data-keel-layout="row" class="kbe6065d37d69"><input id="money-checkout-pricing-consent" role="checkbox" data-keel-surface="checkbox" class="keel-surface-checkbox kf814e013ad0f" data-keel-money-field="consent" data-keel-money-consent-version="waiver-v1" name="consent" type="checkbox" required value="waiver-v1" aria-label="I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground."><span id="money-checkout-pricing-consent-text" class="k033481162ad8">I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.</span></div></label></div><div id="money-checkout-pricing-checkout-action" data-keel-layout="stack" class="sf-checkout-action k0aafa862fef3"><div id="money-checkout-pricing-price-summary" data-keel-layout="stack" class="sf-selected-summary k121cbb96911a"><span id="money-checkout-pricing-selected-caption" class="sf-selected-caption kdbdb37d6917b">Selected plan</span><span id="money-checkout-pricing-price-display" class="sf-selected-value k033481162ad8" data-keel-money-price-display="">1 licence</span></div><div class="anymd-submit-wrap"><button id="money-checkout-pricing-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="checkout" data-keel-state="disabled" aria-disabled="true" disabled="">Buy anymd Pro</button><span class="anymd-wallet-trust">Apple Pay · Google Pay · Link</span></div></div></div></form><details id="money-checkout-pricing-recover-disclosure" data-keel-layout="stack" class="sf-recover-disclosure kad391fe046f7" data-keel-money-recover-disclosure=""><summary id="money-checkout-pricing-recover-disclosure.trigger" role="button" data-keel-layout="stack" data-keel-surface="btn-outline" class="keel-surface-btn-outline k78e876e9653f" aria-controls="money-checkout-pricing-recover-disclosure.panel"><span id="money-checkout-pricing-recover-disclosure.trigger.label" class="k033481162ad8">Purchased before? Recover your licence key</span></summary><div id="money-checkout-pricing-recover-disclosure.panel" data-keel-layout="stack" class="k754f4ae47687"><form id="money-checkout-pricing-recover-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="recover" action="#" method="post"><div id="money-checkout-pricing-recover-fields" data-keel-layout="stack" class="k0aafa862fef3"><div id="money-checkout-pricing-recovery-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-pricing-recovery-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-pricing-recovery-email.label" class="k55fdcae23bba">Email used at purchase</span><input id="money-checkout-pricing-recovery-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="recovery-email" name="recovery_email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-pricing-recovery-email.label" aria-invalid="false" aria-busy="false"></div></div><button id="money-checkout-pricing-recover-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="recover">Email my licence recovery link</button></div></form></div></details></section></div><section id="storefront-sec-0" data-keel-layout="stack" class="sf-section sf-bento-section kad391fe046f7"><div id="storefront-sec-head-0" data-keel-layout="stack" class="sf-section-head k121cbb96911a"><h2 id="why-it-matters" class="sf-section-title k4c8f7d8a78d0">Why it matters</h2><div id="storefront-sec-lead-0" data-keel-layout="stack" class="sf-section-lead kad391fe046f7"><div id="storefront-sec-lead-md-0" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-lead-md-0-1" class="k3e7c2a82e5eb"><span id="storefront-sec-lead-md-0-2" class="k3a76103d07ce">When </span><span id="storefront-sec-lead-md-0-3" class="k3a76103d07ce">an </span><span id="storefront-sec-lead-md-0-4" class="k3a76103d07ce">agent </span><span id="storefront-sec-lead-md-0-5" class="k3a76103d07ce">summarises </span><span id="storefront-sec-lead-md-0-6" class="k3a76103d07ce">a </span><span id="storefront-sec-lead-md-0-7" class="k3a76103d07ce">deposition </span><span id="storefront-sec-lead-md-0-8" class="k3a76103d07ce">video, </span><span id="storefront-sec-lead-md-0-9" class="k3a76103d07ce">an </span><span id="storefront-sec-lead-md-0-10" class="k3a76103d07ce">earnings </span><span id="storefront-sec-lead-md-0-11" class="k3a76103d07ce">call, </span><span id="storefront-sec-lead-md-0-12" class="k3a76103d07ce">a </span><span id="storefront-sec-lead-md-0-13" class="k3a76103d07ce">lecture </span><span id="storefront-sec-lead-md-0-14" class="k3a76103d07ce">or </span><span id="storefront-sec-lead-md-0-15" class="k3a76103d07ce">a </span><span id="storefront-sec-lead-md-0-16" class="k3a76103d07ce">contract </span><span id="storefront-sec-lead-md-0-17" class="k3a76103d07ce">PDF, </span><span id="storefront-sec-lead-md-0-18" class="k3a76103d07ce">you </span><span id="storefront-sec-lead-md-0-19" class="k3a76103d07ce">still </span><span id="storefront-sec-lead-md-0-20" class="k3a76103d07ce">have </span><span id="storefront-sec-lead-md-0-21" class="k3a76103d07ce">to </span><span id="storefront-sec-lead-md-0-22" class="k3a76103d07ce">trust </span><span id="storefront-sec-lead-md-0-23" class="k3a76103d07ce">it. </span><span id="storefront-sec-lead-md-0-24" class="k3a76103d07ce">Pro </span><span id="storefront-sec-lead-md-0-25" class="k3a76103d07ce">gives </span><span id="storefront-sec-lead-md-0-26" class="k3a76103d07ce">the </span><span id="storefront-sec-lead-md-0-27" class="k3a76103d07ce">agent </span><span id="storefront-sec-lead-md-0-28" class="k3a76103d07ce">something </span><span id="storefront-sec-lead-md-0-29" class="k3a76103d07ce">you </span><span id="storefront-sec-lead-md-0-30" class="k3a76103d07ce">can </span><span id="storefront-sec-lead-md-0-31" class="k3a76103d07ce">check.</span></p></div></div></div><div id="storefront-bento-md-0" data-keel-layout="stack" class="sf-bento-grid kad391fe046f7" data-keel-storefront-bento="" data-columns="3"><article id="verifiable-video-evidence" data-keel-layout="stack" class="sf-bento-card kad391fe046f7" data-keel-bento-id="verifiable-video-evidence" data-span="1"><div id="storefront-bento-copy-0-0" data-keel-layout="stack" class="sf-bento-copy k121cbb96911a"><h3 id="storefront-bento-h3-0-0" class="sf-bento-title k61d113ad93ce">Verifiable video evidence</h3><div id="storefront-bento-body-0-0" data-keel-layout="stack" class="sf-bento-md kad391fe046f7"><div id="storefront-bento-md-0-0" data-keel-layout="stack" class="kb442e8ff1cd8"><ul id="storefront-bento-md-0-0-1" data-keel-layout="stack" class="kf47195cfc345"><li id="storefront-bento-md-0-0-2" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-3" class="k3e7c2a82e5eb"><strong id="storefront-bento-md-0-0-4" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-5" class="k0440d1e29da6">Timeline.</span></strong><span id="storefront-bento-md-0-0-6" class="k3a76103d07ce"> </span><code id="storefront-bento-md-0-0-8" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-7" class="k2b7048198c30">inspect</span></code><span id="storefront-bento-md-0-0-9" class="k3a76103d07ce"> with </span><code id="storefront-bento-md-0-0-11" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-10" class="k2b7048198c30">video_timeline</span></code><span id="storefront-bento-md-0-0-12" class="k3a76103d07ce"> returns </span><span id="storefront-bento-md-0-0-13" class="k3a76103d07ce">an </span><span id="storefront-bento-md-0-0-14" class="k3a76103d07ce">ordered, </span><span id="storefront-bento-md-0-0-15" class="k3a76103d07ce">bounded </span><span id="storefront-bento-md-0-0-16" class="k3a76103d07ce">timeline </span><span id="storefront-bento-md-0-0-17" class="k3a76103d07ce">for </span><span id="storefront-bento-md-0-0-18" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-19" class="k3a76103d07ce">video: </span><span id="storefront-bento-md-0-0-20" class="k3a76103d07ce">scenes, </span><span id="storefront-bento-md-0-0-21" class="k3a76103d07ce">chapters, </span><span id="storefront-bento-md-0-0-22" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-23" class="k3a76103d07ce">subtitle </span><span id="storefront-bento-md-0-0-24" class="k3a76103d07ce">or </span><span id="storefront-bento-md-0-0-25" class="k3a76103d07ce">transcript </span><span id="storefront-bento-md-0-0-26" class="k3a76103d07ce">cues </span><span id="storefront-bento-md-0-0-27" class="k3a76103d07ce">with </span><span id="storefront-bento-md-0-0-28" class="k3a76103d07ce">their </span><span id="storefront-bento-md-0-0-29" class="k3a76103d07ce">start </span><span id="storefront-bento-md-0-0-30" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-31" class="k3a76103d07ce">end </span><span id="storefront-bento-md-0-0-32" class="k3a76103d07ce">times, </span><span id="storefront-bento-md-0-0-33" class="k3a76103d07ce">tied </span><span id="storefront-bento-md-0-0-34" class="k3a76103d07ce">to </span><span id="storefront-bento-md-0-0-35" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-36" class="k3a76103d07ce">source </span><span id="storefront-bento-md-0-0-37" class="k3a76103d07ce">file's </span><span id="storefront-bento-md-0-0-38" class="k3a76103d07ce">SHA-256.</span></p></li><li id="storefront-bento-md-0-0-39" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-40" class="k3e7c2a82e5eb"><strong id="storefront-bento-md-0-0-41" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-42" class="k0440d1e29da6">Frames.</span></strong><span id="storefront-bento-md-0-0-43" class="k3a76103d07ce"> </span><code id="storefront-bento-md-0-0-45" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-44" class="k2b7048198c30">render_frame</span></code><span id="storefront-bento-md-0-0-46" class="k3a76103d07ce"> returns </span><span id="storefront-bento-md-0-0-47" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-48" class="k3a76103d07ce">decoded </span><span id="storefront-bento-md-0-0-49" class="k3a76103d07ce">frame </span><span id="storefront-bento-md-0-0-50" class="k3a76103d07ce">at </span><span id="storefront-bento-md-0-0-51" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-52" class="k3a76103d07ce">times </span><span id="storefront-bento-md-0-0-53" class="k3a76103d07ce">you </span><span id="storefront-bento-md-0-0-54" class="k3a76103d07ce">ask </span><span id="storefront-bento-md-0-0-55" class="k3a76103d07ce">for. </span><span id="storefront-bento-md-0-0-56" class="k3a76103d07ce">Each </span><span id="storefront-bento-md-0-0-57" class="k3a76103d07ce">frame </span><span id="storefront-bento-md-0-0-58" class="k3a76103d07ce">records </span><span id="storefront-bento-md-0-0-59" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-60" class="k3a76103d07ce">requested </span><span id="storefront-bento-md-0-0-61" class="k3a76103d07ce">time, </span><span id="storefront-bento-md-0-0-62" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-63" class="k3a76103d07ce">actual </span><span id="storefront-bento-md-0-0-64" class="k3a76103d07ce">decoded </span><span id="storefront-bento-md-0-0-65" class="k3a76103d07ce">timestamp </span><span id="storefront-bento-md-0-0-66" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-67" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-68" class="k3a76103d07ce">SHA-256 </span><span id="storefront-bento-md-0-0-69" class="k3a76103d07ce">of </span><span id="storefront-bento-md-0-0-70" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-71" class="k3a76103d07ce">PNG, </span><span id="storefront-bento-md-0-0-72" class="k3a76103d07ce">so </span><span id="storefront-bento-md-0-0-73" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-74" class="k3a76103d07ce">citation </span><span id="storefront-bento-md-0-0-75" class="k3a76103d07ce">like </span><span id="storefront-bento-md-0-0-76" class="k3a76103d07ce">"at </span><span id="storefront-bento-md-0-0-77" class="k3a76103d07ce">01:17 </span><span id="storefront-bento-md-0-0-78" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-79" class="k3a76103d07ce">slide </span><span id="storefront-bento-md-0-0-80" class="k3a76103d07ce">shows </span><span id="storefront-bento-md-0-0-81" class="k3a76103d07ce">X" </span><span id="storefront-bento-md-0-0-82" class="k3a76103d07ce">can </span><span id="storefront-bento-md-0-0-83" class="k3a76103d07ce">be </span><span id="storefront-bento-md-0-0-84" class="k3a76103d07ce">re-checked. </span><span id="storefront-bento-md-0-0-85" class="k3a76103d07ce">A </span><span id="storefront-bento-md-0-0-86" class="k3a76103d07ce">nearby </span><span id="storefront-bento-md-0-0-87" class="k3a76103d07ce">keyframe </span><span id="storefront-bento-md-0-0-88" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-0-89" class="k3a76103d07ce">never </span><span id="storefront-bento-md-0-0-90" class="k3a76103d07ce">passed </span><span id="storefront-bento-md-0-0-91" class="k3a76103d07ce">off </span><span id="storefront-bento-md-0-0-92" class="k3a76103d07ce">as </span><span id="storefront-bento-md-0-0-93" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-94" class="k3a76103d07ce">requested </span><span id="storefront-bento-md-0-0-95" class="k3a76103d07ce">moment.</span></p></li><li id="storefront-bento-md-0-0-96" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-97" class="k3e7c2a82e5eb"><strong id="storefront-bento-md-0-0-98" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-99" class="k0440d1e29da6">Honest </span><span id="storefront-bento-md-0-0-100" class="k0440d1e29da6">limits.</span></strong><span id="storefront-bento-md-0-0-101" class="k3a76103d07ce"> Scene </span><span id="storefront-bento-md-0-0-102" class="k3a76103d07ce">changes </span><span id="storefront-bento-md-0-0-103" class="k3a76103d07ce">are </span><span id="storefront-bento-md-0-0-104" class="k3a76103d07ce">FFmpeg-detected </span><span id="storefront-bento-md-0-0-105" class="k3a76103d07ce">cuts, </span><span id="storefront-bento-md-0-0-106" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-107" class="k3a76103d07ce">heuristic </span><span id="storefront-bento-md-0-0-108" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-109" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-0-110" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-111" class="k3a76103d07ce">semantic </span><span id="storefront-bento-md-0-0-112" class="k3a76103d07ce">reading </span><span id="storefront-bento-md-0-0-113" class="k3a76103d07ce">of </span><span id="storefront-bento-md-0-0-114" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-115" class="k3a76103d07ce">video. </span><span id="storefront-bento-md-0-0-116" class="k3a76103d07ce">A </span><span id="storefront-bento-md-0-0-117" class="k3a76103d07ce">timeline </span><span id="storefront-bento-md-0-0-118" class="k3a76103d07ce">covers </span><span id="storefront-bento-md-0-0-119" class="k3a76103d07ce">at </span><span id="storefront-bento-md-0-0-120" class="k3a76103d07ce">most </span><span id="storefront-bento-md-0-0-121" class="k3a76103d07ce">ten </span><span id="storefront-bento-md-0-0-122" class="k3a76103d07ce">minutes </span><span id="storefront-bento-md-0-0-123" class="k3a76103d07ce">per </span><span id="storefront-bento-md-0-0-124" class="k3a76103d07ce">request. </span><span id="storefront-bento-md-0-0-125" class="k3a76103d07ce">No </span><span id="storefront-bento-md-0-0-126" class="k3a76103d07ce">model </span><span id="storefront-bento-md-0-0-127" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-0-128" class="k3a76103d07ce">downloaded.</span></p></li><li id="storefront-bento-md-0-0-129" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-130" class="k3e7c2a82e5eb"><code id="storefront-bento-md-0-0-132" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-131" class="k2b7048198c30">read</span></code><span id="storefront-bento-md-0-0-133" class="k3a76103d07ce"> and </span><code id="storefront-bento-md-0-0-135" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-134" class="k2b7048198c30">outline</span></code><span id="storefront-bento-md-0-0-136" class="k3a76103d07ce"> also </span><span id="storefront-bento-md-0-0-137" class="k3a76103d07ce">take </span><span id="storefront-bento-md-0-0-138" class="k3a76103d07ce">the </span><code id="storefront-bento-md-0-0-140" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-139" class="k2b7048198c30">timeline</span></code><span id="storefront-bento-md-0-0-141" class="k3a76103d07ce"> option, </span><span id="storefront-bento-md-0-0-142" class="k3a76103d07ce">so </span><span id="storefront-bento-md-0-0-143" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-144" class="k3a76103d07ce">same </span><span id="storefront-bento-md-0-0-145" class="k3a76103d07ce">scenes </span><span id="storefront-bento-md-0-0-146" class="k3a76103d07ce">appear </span><span id="storefront-bento-md-0-0-147" class="k3a76103d07ce">as </span><span id="storefront-bento-md-0-0-148" class="k3a76103d07ce">document </span><span id="storefront-bento-md-0-0-149" class="k3a76103d07ce">sections.</span></p></li></ul><p id="storefront-bento-md-0-0-150" class="k3e7c2a82e5eb"><a id="storefront-bento-md-0-0-151" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/guide/video-timeline"><span id="storefront-bento-md-0-0-152" class="kdbe7eda5087a">How </span><span id="storefront-bento-md-0-0-153" class="kdbe7eda5087a">video </span><span id="storefront-bento-md-0-0-154" class="kdbe7eda5087a">timelines </span><span id="storefront-bento-md-0-0-155" class="kdbe7eda5087a">work</span></a></p></div></div></div></article><article id="cite-check" data-keel-layout="stack" class="sf-bento-card kad391fe046f7" data-keel-bento-id="cite-check" data-span="1"><div id="storefront-bento-copy-0-1" data-keel-layout="stack" class="sf-bento-copy k121cbb96911a"><h3 id="storefront-bento-h3-0-1" class="sf-bento-title k61d113ad93ce">Cite-check</h3><div id="storefront-bento-body-0-1" data-keel-layout="stack" class="sf-bento-md kad391fe046f7"><div id="storefront-bento-md-0-1" data-keel-layout="stack" class="kb442e8ff1cd8"><ul id="storefront-bento-md-0-1-1" data-keel-layout="stack" class="kf47195cfc345"><li id="storefront-bento-md-0-1-2" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-1-3" class="k3e7c2a82e5eb"><code id="storefront-bento-md-0-1-5" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-4" class="k2b7048198c30">inspect</span></code><span id="storefront-bento-md-0-1-6" class="k3a76103d07ce"> with </span><code id="storefront-bento-md-0-1-8" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-7" class="k2b7048198c30">cite_check</span></code><span id="storefront-bento-md-0-1-9" class="k3a76103d07ce"> takes </span><span id="storefront-bento-md-0-1-10" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-1-11" class="k3a76103d07ce">PDF </span><span id="storefront-bento-md-0-1-12" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-13" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-1-14" class="k3a76103d07ce">list </span><span id="storefront-bento-md-0-1-15" class="k3a76103d07ce">of </span><span id="storefront-bento-md-0-1-16" class="k3a76103d07ce">citations </span><span id="storefront-bento-md-0-1-17" class="k3a76103d07ce">(quote, </span><span id="storefront-bento-md-0-1-18" class="k3a76103d07ce">page, </span><span id="storefront-bento-md-0-1-19" class="k3a76103d07ce">bounding </span><span id="storefront-bento-md-0-1-20" class="k3a76103d07ce">box) </span><span id="storefront-bento-md-0-1-21" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-22" class="k3a76103d07ce">returns </span><span id="storefront-bento-md-0-1-23" class="k3a76103d07ce">one </span><span id="storefront-bento-md-0-1-24" class="k3a76103d07ce">verdict </span><span id="storefront-bento-md-0-1-25" class="k3a76103d07ce">each: </span><code id="storefront-bento-md-0-1-27" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-26" class="k2b7048198c30">verified_exact</span></code><span id="storefront-bento-md-0-1-28" class="k3a76103d07ce">, </span><code id="storefront-bento-md-0-1-30" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-29" class="k2b7048198c30">verified_normalized</span></code><span id="storefront-bento-md-0-1-31" class="k3a76103d07ce">, </span><code id="storefront-bento-md-0-1-33" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-32" class="k2b7048198c30">unmatched</span></code><span id="storefront-bento-md-0-1-34" class="k3a76103d07ce"> or </span><code id="storefront-bento-md-0-1-36" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-35" class="k2b7048198c30">insufficient_evidence</span></code><span id="storefront-bento-md-0-1-37" class="k3a76103d07ce">.</span></p></li><li id="storefront-bento-md-0-1-38" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-1-39" class="k3e7c2a82e5eb"><span id="storefront-bento-md-0-1-40" class="k3a76103d07ce">It </span><span id="storefront-bento-md-0-1-41" class="k3a76103d07ce">checks </span><span id="storefront-bento-md-0-1-42" class="k3a76103d07ce">that </span><span id="storefront-bento-md-0-1-43" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-44" class="k3a76103d07ce">quote </span><span id="storefront-bento-md-0-1-45" class="k3a76103d07ce">occurs </span><span id="storefront-bento-md-0-1-46" class="k3a76103d07ce">in </span><span id="storefront-bento-md-0-1-47" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-48" class="k3a76103d07ce">text </span><span id="storefront-bento-md-0-1-49" class="k3a76103d07ce">extracted </span><span id="storefront-bento-md-0-1-50" class="k3a76103d07ce">from </span><span id="storefront-bento-md-0-1-51" class="k3a76103d07ce">that </span><span id="storefront-bento-md-0-1-52" class="k3a76103d07ce">page, </span><span id="storefront-bento-md-0-1-53" class="k3a76103d07ce">inside </span><span id="storefront-bento-md-0-1-54" class="k3a76103d07ce">that </span><span id="storefront-bento-md-0-1-55" class="k3a76103d07ce">box. </span><span id="storefront-bento-md-0-1-56" class="k3a76103d07ce">No </span><span id="storefront-bento-md-0-1-57" class="k3a76103d07ce">model </span><span id="storefront-bento-md-0-1-58" class="k3a76103d07ce">judges </span><span id="storefront-bento-md-0-1-59" class="k3a76103d07ce">it, </span><span id="storefront-bento-md-0-1-60" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-61" class="k3a76103d07ce">when </span><span id="storefront-bento-md-0-1-62" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-63" class="k3a76103d07ce">evidence </span><span id="storefront-bento-md-0-1-64" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-1-65" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-1-66" class="k3a76103d07ce">enough </span><span id="storefront-bento-md-0-1-67" class="k3a76103d07ce">(a </span><span id="storefront-bento-md-0-1-68" class="k3a76103d07ce">scan </span><span id="storefront-bento-md-0-1-69" class="k3a76103d07ce">with </span><span id="storefront-bento-md-0-1-70" class="k3a76103d07ce">no </span><span id="storefront-bento-md-0-1-71" class="k3a76103d07ce">OCR, </span><span id="storefront-bento-md-0-1-72" class="k3a76103d07ce">missing </span><span id="storefront-bento-md-0-1-73" class="k3a76103d07ce">geometry) </span><span id="storefront-bento-md-0-1-74" class="k3a76103d07ce">it </span><span id="storefront-bento-md-0-1-75" class="k3a76103d07ce">says </span><span id="storefront-bento-md-0-1-76" class="k3a76103d07ce">so </span><span id="storefront-bento-md-0-1-77" class="k3a76103d07ce">rather </span><span id="storefront-bento-md-0-1-78" class="k3a76103d07ce">than </span><span id="storefront-bento-md-0-1-79" class="k3a76103d07ce">guessing.</span></p></li><li id="storefront-bento-md-0-1-80" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-1-81" class="k3e7c2a82e5eb"><span id="storefront-bento-md-0-1-82" class="k3a76103d07ce">A </span><span id="storefront-bento-md-0-1-83" class="k3a76103d07ce">verified </span><span id="storefront-bento-md-0-1-84" class="k3a76103d07ce">result </span><span id="storefront-bento-md-0-1-85" class="k3a76103d07ce">proves </span><span id="storefront-bento-md-0-1-86" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-87" class="k3a76103d07ce">quote </span><span id="storefront-bento-md-0-1-88" class="k3a76103d07ce">is </span><strong id="storefront-bento-md-0-1-89" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-90" class="k0440d1e29da6">at </span><span id="storefront-bento-md-0-1-91" class="k0440d1e29da6">that </span><span id="storefront-bento-md-0-1-92" class="k0440d1e29da6">location </span><span id="storefront-bento-md-0-1-93" class="k0440d1e29da6">in </span><span id="storefront-bento-md-0-1-94" class="k0440d1e29da6">the </span><span id="storefront-bento-md-0-1-95" class="k0440d1e29da6">document</span></strong><span id="storefront-bento-md-0-1-96" class="k3a76103d07ce">. </span><span id="storefront-bento-md-0-1-97" class="k3a76103d07ce">It </span><span id="storefront-bento-md-0-1-98" class="k3a76103d07ce">does </span><span id="storefront-bento-md-0-1-99" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-1-100" class="k3a76103d07ce">prove </span><span id="storefront-bento-md-0-1-101" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-102" class="k3a76103d07ce">statement </span><span id="storefront-bento-md-0-1-103" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-1-104" class="k3a76103d07ce">true, </span><span id="storefront-bento-md-0-1-105" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-106" class="k3a76103d07ce">it </span><span id="storefront-bento-md-0-1-107" class="k3a76103d07ce">does </span><span id="storefront-bento-md-0-1-108" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-1-109" class="k3a76103d07ce">vouch </span><span id="storefront-bento-md-0-1-110" class="k3a76103d07ce">for </span><span id="storefront-bento-md-0-1-111" class="k3a76103d07ce">OCR </span><span id="storefront-bento-md-0-1-112" class="k3a76103d07ce">accuracy.</span></p></li></ul><p id="storefront-bento-md-0-1-113" class="k3e7c2a82e5eb"><a id="storefront-bento-md-0-1-114" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/guide/cite-check"><span id="storefront-bento-md-0-1-115" class="kdbe7eda5087a">How </span><span id="storefront-bento-md-0-1-116" class="kdbe7eda5087a">cite-check </span><span id="storefront-bento-md-0-1-117" class="kdbe7eda5087a">works</span></a></p></div></div></div></article><article id="who-it-is-for" data-keel-layout="stack" class="sf-bento-card kad391fe046f7" data-keel-bento-id="who-it-is-for" data-span="1"><div id="storefront-bento-copy-0-2" data-keel-layout="stack" class="sf-bento-copy k121cbb96911a"><h3 id="storefront-bento-h3-0-2" class="sf-bento-title k61d113ad93ce">Who it is for</h3><div id="storefront-bento-body-0-2" data-keel-layout="stack" class="sf-bento-md kad391fe046f7"><div id="storefront-bento-md-0-2" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-bento-md-0-2-1" class="k3e7c2a82e5eb"><span id="storefront-bento-md-0-2-2" class="k3a76103d07ce">Agents </span><span id="storefront-bento-md-0-2-3" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-2-4" class="k3a76103d07ce">people </span><span id="storefront-bento-md-0-2-5" class="k3a76103d07ce">who </span><span id="storefront-bento-md-0-2-6" class="k3a76103d07ce">have </span><span id="storefront-bento-md-0-2-7" class="k3a76103d07ce">to </span><span id="storefront-bento-md-0-2-8" class="k3a76103d07ce">point </span><span id="storefront-bento-md-0-2-9" class="k3a76103d07ce">at </span><span id="storefront-bento-md-0-2-10" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-2-11" class="k3a76103d07ce">source </span><span id="storefront-bento-md-0-2-12" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-2-13" class="k3a76103d07ce">be </span><span id="storefront-bento-md-0-2-14" class="k3a76103d07ce">believed: </span><span id="storefront-bento-md-0-2-15" class="k3a76103d07ce">legal </span><span id="storefront-bento-md-0-2-16" class="k3a76103d07ce">review, </span><span id="storefront-bento-md-0-2-17" class="k3a76103d07ce">research, </span><span id="storefront-bento-md-0-2-18" class="k3a76103d07ce">finance </span><span id="storefront-bento-md-0-2-19" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-2-20" class="k3a76103d07ce">media </span><span id="storefront-bento-md-0-2-21" class="k3a76103d07ce">work.</span></p></div></div></div></article></div></section><section id="storefront-sec-1" data-keel-layout="stack" class="sf-section sf-prose-section kad391fe046f7"><h2 id="price" class="sf-section-title k4c8f7d8a78d0">Price</h2><div id="storefront-sec-body-1" data-keel-layout="stack" class="sf-section-body sf-matrix-wrap kad391fe046f7"><div id="storefront-sec-md-1" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-md-1-1" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-1-2" class="kf814e013ad0f"><span id="storefront-sec-md-1-3" class="k0440d1e29da6">Current </span><span id="storefront-sec-md-1-4" class="k0440d1e29da6">one-time </span><span id="storefront-sec-md-1-5" class="k0440d1e29da6">price, </span><span id="storefront-sec-md-1-6" class="k0440d1e29da6">including </span><span id="storefront-sec-md-1-7" class="k0440d1e29da6">any </span><span id="storefront-sec-md-1-8" class="k0440d1e29da6">applicable </span><span id="storefront-sec-md-1-9" class="k0440d1e29da6">tax.</span></strong><span id="storefront-sec-md-1-10" class="k3a76103d07ce"> No </span><span id="storefront-sec-md-1-11" class="k3a76103d07ce">subscription. </span><span id="storefront-sec-md-1-12" class="k3a76103d07ce">One </span><span id="storefront-sec-md-1-13" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-1-14" class="k3a76103d07ce">per </span><span id="storefront-sec-md-1-15" class="k3a76103d07ce">person, </span><span id="storefront-sec-md-1-16" class="k3a76103d07ce">valid </span><span id="storefront-sec-md-1-17" class="k3a76103d07ce">for </span><span id="storefront-sec-md-1-18" class="k3a76103d07ce">100 </span><span id="storefront-sec-md-1-19" class="k3a76103d07ce">years, </span><span id="storefront-sec-md-1-20" class="k3a76103d07ce">with </span><span id="storefront-sec-md-1-21" class="k3a76103d07ce">future </span><span id="storefront-sec-md-1-22" class="k3a76103d07ce">releases </span><span id="storefront-sec-md-1-23" class="k3a76103d07ce">included. </span><span id="storefront-sec-md-1-24" class="k3a76103d07ce">Instant </span><span id="storefront-sec-md-1-25" class="k3a76103d07ce">delivery </span><span id="storefront-sec-md-1-26" class="k3a76103d07ce">after </span><span id="storefront-sec-md-1-27" class="k3a76103d07ce">payment: </span><span id="storefront-sec-md-1-28" class="k3a76103d07ce">copy </span><span id="storefront-sec-md-1-29" class="k3a76103d07ce">your </span><span id="storefront-sec-md-1-30" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-1-31" class="k3a76103d07ce">token </span><span id="storefront-sec-md-1-32" class="k3a76103d07ce">from </span><span id="storefront-sec-md-1-33" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-34" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-1-35" class="k3a76103d07ce">confirmation </span><span id="storefront-sec-md-1-36" class="k3a76103d07ce">page. </span><span id="storefront-sec-md-1-37" class="k3a76103d07ce">We </span><span id="storefront-sec-md-1-38" class="k3a76103d07ce">also </span><span id="storefront-sec-md-1-39" class="k3a76103d07ce">email </span><span id="storefront-sec-md-1-40" class="k3a76103d07ce">a </span><span id="storefront-sec-md-1-41" class="k3a76103d07ce">link </span><span id="storefront-sec-md-1-42" class="k3a76103d07ce">to </span><span id="storefront-sec-md-1-43" class="k3a76103d07ce">retrieve </span><span id="storefront-sec-md-1-44" class="k3a76103d07ce">it.</span></p><p id="storefront-sec-md-1-45" class="k3e7c2a82e5eb"><span id="storefront-sec-md-1-46" class="k3a76103d07ce">Buy </span><span id="storefront-sec-md-1-47" class="k3a76103d07ce">from </span><span id="storefront-sec-md-1-48" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-49" class="k3a76103d07ce">terminal: </span><code id="storefront-sec-md-1-53" class="kf814e013ad0f"><span id="storefront-sec-md-1-50" class="k2b7048198c30">anymd </span><span id="storefront-sec-md-1-51" class="k2b7048198c30">pro </span><span id="storefront-sec-md-1-52" class="k2b7048198c30">buy</span></code><span id="storefront-sec-md-1-54" class="k3a76103d07ce"> opens </span><span id="storefront-sec-md-1-55" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-56" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-1-57" class="k3a76103d07ce">in </span><span id="storefront-sec-md-1-58" class="k3a76103d07ce">your </span><span id="storefront-sec-md-1-59" class="k3a76103d07ce">browser </span><span id="storefront-sec-md-1-60" class="k3a76103d07ce">and </span><span id="storefront-sec-md-1-61" class="k3a76103d07ce">turns </span><span id="storefront-sec-md-1-62" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-63" class="k3a76103d07ce">payment </span><span id="storefront-sec-md-1-64" class="k3a76103d07ce">into </span><span id="storefront-sec-md-1-65" class="k3a76103d07ce">a </span><span id="storefront-sec-md-1-66" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-1-67" class="k3a76103d07ce">token </span><span id="storefront-sec-md-1-68" class="k3a76103d07ce">on </span><span id="storefront-sec-md-1-69" class="k3a76103d07ce">this </span><span id="storefront-sec-md-1-70" class="k3a76103d07ce">machine, </span><span id="storefront-sec-md-1-71" class="k3a76103d07ce">so </span><span id="storefront-sec-md-1-72" class="k3a76103d07ce">there </span><span id="storefront-sec-md-1-73" class="k3a76103d07ce">is </span><span id="storefront-sec-md-1-74" class="k3a76103d07ce">nothing </span><span id="storefront-sec-md-1-75" class="k3a76103d07ce">to </span><span id="storefront-sec-md-1-76" class="k3a76103d07ce">copy. </span><span id="storefront-sec-md-1-77" class="k3a76103d07ce">It </span><span id="storefront-sec-md-1-78" class="k3a76103d07ce">prints </span><span id="storefront-sec-md-1-79" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-80" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-1-81" class="k3a76103d07ce">page </span><span id="storefront-sec-md-1-82" class="k3a76103d07ce">and </span><span id="storefront-sec-md-1-83" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-84" class="k3a76103d07ce">purchase </span><span id="storefront-sec-md-1-85" class="k3a76103d07ce">command </span><span id="storefront-sec-md-1-86" class="k3a76103d07ce">instead </span><span id="storefront-sec-md-1-87" class="k3a76103d07ce">if </span><span id="storefront-sec-md-1-88" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-89" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-1-90" class="k3a76103d07ce">cannot </span><span id="storefront-sec-md-1-91" class="k3a76103d07ce">be </span><span id="storefront-sec-md-1-92" class="k3a76103d07ce">reached.</span></p></div></div></section><section id="storefront-sec-2" data-keel-layout="stack" class="sf-section sf-prose-section kad391fe046f7"><h2 id="activate" class="sf-section-title k4c8f7d8a78d0">Activate</h2><div id="storefront-sec-body-2" data-keel-layout="stack" class="sf-section-body sf-matrix-wrap kad391fe046f7"><div id="storefront-sec-md-2" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-md-2-1" class="k3e7c2a82e5eb"><span id="storefront-sec-md-2-2" class="k3a76103d07ce">Run </span><span id="storefront-sec-md-2-3" class="k3a76103d07ce">it </span><span id="storefront-sec-md-2-4" class="k3a76103d07ce">once:</span></p><pre id="storefront-sec-md-2-10" data-keel-surface="code-block" class="keel-surface-code-block k1133b25d6e88"><code id="storefront-sec-md-2-9" class="language-bash kf814e013ad0f"><span id="storefront-sec-md-2-5" class="keel-code-function k01133a73d68a">anymd pro activate </span><span id="storefront-sec-md-2-6" class="keel-code-string ka2552093ef0f">'&lt;your token&gt;'</span><span id="storefront-sec-md-2-7" class="k033481162ad8">
-</span><span id="storefront-sec-md-2-8" class="keel-code-function k01133a73d68a">anymd pro status</span></code></pre><p id="storefront-sec-md-2-11" class="k3e7c2a82e5eb"><span id="storefront-sec-md-2-12" class="k3a76103d07ce">or </span><span id="storefront-sec-md-2-13" class="k3a76103d07ce">set </span><span id="storefront-sec-md-2-14" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-15" class="k3a76103d07ce">token </span><span id="storefront-sec-md-2-16" class="k3a76103d07ce">in </span><span id="storefront-sec-md-2-17" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-18" class="k3a76103d07ce">environment:</span></p><pre id="storefront-sec-md-2-24" data-keel-surface="code-block" class="keel-surface-code-block k1133b25d6e88"><code id="storefront-sec-md-2-23" class="language-bash kf814e013ad0f"><span id="storefront-sec-md-2-19" class="keel-code-keyword k01133a73d68a">export</span><span id="storefront-sec-md-2-20" class="keel-code-function k01133a73d68a"> ANYMD_PRO_TOKEN</span><span id="storefront-sec-md-2-21" class="keel-code-keyword k01133a73d68a">=</span><span id="storefront-sec-md-2-22" class="keel-code-string ka2552093ef0f">'&lt;your token&gt;'</span></code></pre><p id="storefront-sec-md-2-25" class="k3e7c2a82e5eb"><span id="storefront-sec-md-2-26" class="k3a76103d07ce">The </span><span id="storefront-sec-md-2-27" class="k3a76103d07ce">environment </span><span id="storefront-sec-md-2-28" class="k3a76103d07ce">variable </span><span id="storefront-sec-md-2-29" class="k3a76103d07ce">wins </span><span id="storefront-sec-md-2-30" class="k3a76103d07ce">over </span><span id="storefront-sec-md-2-31" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-32" class="k3a76103d07ce">saved </span><span id="storefront-sec-md-2-33" class="k3a76103d07ce">file. </span><code id="storefront-sec-md-2-35" class="kf814e013ad0f"><span id="storefront-sec-md-2-34" class="k2b7048198c30">status</span></code><span id="storefront-sec-md-2-36" class="k3a76103d07ce"> shows </span><span id="storefront-sec-md-2-37" class="k3a76103d07ce">whether </span><span id="storefront-sec-md-2-38" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-2-39" class="k3a76103d07ce">is </span><span id="storefront-sec-md-2-40" class="k3a76103d07ce">active; </span><span id="storefront-sec-md-2-41" class="k3a76103d07ce">it </span><span id="storefront-sec-md-2-42" class="k3a76103d07ce">never </span><span id="storefront-sec-md-2-43" class="k3a76103d07ce">prints </span><span id="storefront-sec-md-2-44" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-45" class="k3a76103d07ce">token.</span></p></div></div></section><section id="storefront-sec-3" data-keel-layout="stack" class="sf-section sf-prose-section kad391fe046f7"><h2 id="faq" class="sf-section-title k4c8f7d8a78d0">FAQ</h2><div id="storefront-sec-body-3" data-keel-layout="stack" class="sf-section-body sf-matrix-wrap kad391fe046f7"><div id="storefront-sec-md-3" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-md-3-1" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-2" class="kf814e013ad0f"><span id="storefront-sec-md-3-3" class="k0440d1e29da6">Does </span><span id="storefront-sec-md-3-4" class="k0440d1e29da6">it </span><span id="storefront-sec-md-3-5" class="k0440d1e29da6">work </span><span id="storefront-sec-md-3-6" class="k0440d1e29da6">offline? </span><span id="storefront-sec-md-3-7" class="k0440d1e29da6">Do </span><span id="storefront-sec-md-3-8" class="k0440d1e29da6">I </span><span id="storefront-sec-md-3-9" class="k0440d1e29da6">need </span><span id="storefront-sec-md-3-10" class="k0440d1e29da6">an </span><span id="storefront-sec-md-3-11" class="k0440d1e29da6">account?</span></strong><span id="storefront-sec-md-3-12" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-13" class="k3a76103d07ce">Offline, </span><span id="storefront-sec-md-3-14" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-15" class="k3a76103d07ce">no </span><span id="storefront-sec-md-3-16" class="k3a76103d07ce">account. </span><span id="storefront-sec-md-3-17" class="k3a76103d07ce">Your </span><span id="storefront-sec-md-3-18" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-3-19" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-20" class="k3a76103d07ce">checked </span><span id="storefront-sec-md-3-21" class="k3a76103d07ce">on </span><span id="storefront-sec-md-3-22" class="k3a76103d07ce">your </span><span id="storefront-sec-md-3-23" class="k3a76103d07ce">machine </span><span id="storefront-sec-md-3-24" class="k3a76103d07ce">against </span><span id="storefront-sec-md-3-25" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-26" class="k3a76103d07ce">public </span><span id="storefront-sec-md-3-27" class="k3a76103d07ce">key </span><span id="storefront-sec-md-3-28" class="k3a76103d07ce">built </span><span id="storefront-sec-md-3-29" class="k3a76103d07ce">into </span><span id="storefront-sec-md-3-30" class="k3a76103d07ce">anymd. </span><span id="storefront-sec-md-3-31" class="k3a76103d07ce">Nothing </span><span id="storefront-sec-md-3-32" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-33" class="k3a76103d07ce">sent </span><span id="storefront-sec-md-3-34" class="k3a76103d07ce">anywhere </span><span id="storefront-sec-md-3-35" class="k3a76103d07ce">when </span><span id="storefront-sec-md-3-36" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-37" class="k3a76103d07ce">use </span><span id="storefront-sec-md-3-38" class="k3a76103d07ce">Pro.</span></p><p id="storefront-sec-md-3-39" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-40" class="kf814e013ad0f"><span id="storefront-sec-md-3-41" class="k0440d1e29da6">Is </span><span id="storefront-sec-md-3-42" class="k0440d1e29da6">the </span><span id="storefront-sec-md-3-43" class="k0440d1e29da6">core </span><span id="storefront-sec-md-3-44" class="k0440d1e29da6">still </span><span id="storefront-sec-md-3-45" class="k0440d1e29da6">free?</span></strong><span id="storefront-sec-md-3-46" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-47" class="k3a76103d07ce">Yes. </span><span id="storefront-sec-md-3-48" class="k3a76103d07ce">anymd </span><span id="storefront-sec-md-3-49" class="k3a76103d07ce">stays </span><span id="storefront-sec-md-3-50" class="k3a76103d07ce">MIT </span><span id="storefront-sec-md-3-51" class="k3a76103d07ce">licensed. </span><span id="storefront-sec-md-3-52" class="k3a76103d07ce">Reading, </span><span id="storefront-sec-md-3-53" class="k3a76103d07ce">outlining, </span><span id="storefront-sec-md-3-54" class="k3a76103d07ce">searching </span><span id="storefront-sec-md-3-55" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-56" class="k3a76103d07ce">inspecting </span><span id="storefront-sec-md-3-57" class="k3a76103d07ce">documents, </span><span id="storefront-sec-md-3-58" class="k3a76103d07ce">OCR, </span><span id="storefront-sec-md-3-59" class="k3a76103d07ce">transcripts, </span><span id="storefront-sec-md-3-60" class="k3a76103d07ce">the </span><span id="storefront-sec-md-3-61" class="k3a76103d07ce">MCP </span><span id="storefront-sec-md-3-62" class="k3a76103d07ce">server </span><span id="storefront-sec-md-3-63" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-64" class="k3a76103d07ce">the </span><span id="storefront-sec-md-3-65" class="k3a76103d07ce">CLI </span><span id="storefront-sec-md-3-66" class="k3a76103d07ce">stay </span><span id="storefront-sec-md-3-67" class="k3a76103d07ce">free </span><span id="storefront-sec-md-3-68" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-69" class="k3a76103d07ce">ungated, </span><span id="storefront-sec-md-3-70" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-71" class="k3a76103d07ce">nothing </span><span id="storefront-sec-md-3-72" class="k3a76103d07ce">that </span><span id="storefront-sec-md-3-73" class="k3a76103d07ce">was </span><span id="storefront-sec-md-3-74" class="k3a76103d07ce">free </span><span id="storefront-sec-md-3-75" class="k3a76103d07ce">has </span><span id="storefront-sec-md-3-76" class="k3a76103d07ce">moved </span><span id="storefront-sec-md-3-77" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-78" class="k3a76103d07ce">Pro. </span><span id="storefront-sec-md-3-79" class="k3a76103d07ce">Ordinary </span><code id="storefront-sec-md-3-81" class="kf814e013ad0f"><span id="storefront-sec-md-3-80" class="k2b7048198c30">read</span></code><span id="storefront-sec-md-3-82" class="k3a76103d07ce"> and </span><code id="storefront-sec-md-3-84" class="kf814e013ad0f"><span id="storefront-sec-md-3-83" class="k2b7048198c30">outline</span></code><span id="storefront-sec-md-3-85" class="k3a76103d07ce"> of </span><span id="storefront-sec-md-3-86" class="k3a76103d07ce">video </span><span id="storefront-sec-md-3-87" class="k3a76103d07ce">(metadata, </span><span id="storefront-sec-md-3-88" class="k3a76103d07ce">chapters, </span><span id="storefront-sec-md-3-89" class="k3a76103d07ce">subtitles) </span><span id="storefront-sec-md-3-90" class="k3a76103d07ce">are </span><span id="storefront-sec-md-3-91" class="k3a76103d07ce">still </span><span id="storefront-sec-md-3-92" class="k3a76103d07ce">free.</span></p><p id="storefront-sec-md-3-93" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-94" class="kf814e013ad0f"><span id="storefront-sec-md-3-95" class="k0440d1e29da6">What </span><span id="storefront-sec-md-3-96" class="k0440d1e29da6">happens </span><span id="storefront-sec-md-3-97" class="k0440d1e29da6">without </span><span id="storefront-sec-md-3-98" class="k0440d1e29da6">a </span><span id="storefront-sec-md-3-99" class="k0440d1e29da6">licence?</span></strong><span id="storefront-sec-md-3-100" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-101" class="k3a76103d07ce">A </span><span id="storefront-sec-md-3-102" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-103" class="k3a76103d07ce">operation </span><span id="storefront-sec-md-3-104" class="k3a76103d07ce">returns </span><span id="storefront-sec-md-3-105" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-106" class="k3a76103d07ce">short </span><span id="storefront-sec-md-3-107" class="k3a76103d07ce">message </span><span id="storefront-sec-md-3-108" class="k3a76103d07ce">with </span><span id="storefront-sec-md-3-109" class="k3a76103d07ce">the </span><span id="storefront-sec-md-3-110" class="k3a76103d07ce">current </span><span id="storefront-sec-md-3-111" class="k3a76103d07ce">one-time </span><span id="storefront-sec-md-3-112" class="k3a76103d07ce">price, </span><code id="storefront-sec-md-3-116" class="kf814e013ad0f"><span id="storefront-sec-md-3-113" class="k2b7048198c30">anymd </span><span id="storefront-sec-md-3-114" class="k2b7048198c30">pro </span><span id="storefront-sec-md-3-115" class="k2b7048198c30">buy</span></code><span id="storefront-sec-md-3-117" class="k3a76103d07ce"> and </span><span id="storefront-sec-md-3-118" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-119" class="k3a76103d07ce">link </span><span id="storefront-sec-md-3-120" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-121" class="k3a76103d07ce">this </span><span id="storefront-sec-md-3-122" class="k3a76103d07ce">page, </span><span id="storefront-sec-md-3-123" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-124" class="k3a76103d07ce">does </span><span id="storefront-sec-md-3-125" class="k3a76103d07ce">no </span><span id="storefront-sec-md-3-126" class="k3a76103d07ce">work. </span><span id="storefront-sec-md-3-127" class="k3a76103d07ce">Nothing </span><span id="storefront-sec-md-3-128" class="k3a76103d07ce">else </span><span id="storefront-sec-md-3-129" class="k3a76103d07ce">changes.</span></p><p id="storefront-sec-md-3-130" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-131" class="kf814e013ad0f"><span id="storefront-sec-md-3-132" class="k0440d1e29da6">Which </span><span id="storefront-sec-md-3-133" class="k0440d1e29da6">version </span><span id="storefront-sec-md-3-134" class="k0440d1e29da6">do </span><span id="storefront-sec-md-3-135" class="k0440d1e29da6">I </span><span id="storefront-sec-md-3-136" class="k0440d1e29da6">need?</span></strong><span id="storefront-sec-md-3-137" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-138" class="k3a76103d07ce">anymd </span><span id="storefront-sec-md-3-139" class="k3a76103d07ce">8.4.0 </span><span id="storefront-sec-md-3-140" class="k3a76103d07ce">or </span><span id="storefront-sec-md-3-141" class="k3a76103d07ce">later. </span><code id="storefront-sec-md-3-145" class="kf814e013ad0f"><span id="storefront-sec-md-3-142" class="k2b7048198c30">anymd </span><span id="storefront-sec-md-3-143" class="k2b7048198c30">pro </span><span id="storefront-sec-md-3-144" class="k2b7048198c30">status</span></code><span id="storefront-sec-md-3-146" class="k3a76103d07ce"> tells </span><span id="storefront-sec-md-3-147" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-148" class="k3a76103d07ce">whether </span><span id="storefront-sec-md-3-149" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-150" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-151" class="k3a76103d07ce">active.</span></p><p id="storefront-sec-md-3-152" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-153" class="kf814e013ad0f"><span id="storefront-sec-md-3-154" class="k0440d1e29da6">Can </span><span id="storefront-sec-md-3-155" class="k0440d1e29da6">my </span><span id="storefront-sec-md-3-156" class="k0440d1e29da6">team </span><span id="storefront-sec-md-3-157" class="k0440d1e29da6">use </span><span id="storefront-sec-md-3-158" class="k0440d1e29da6">one </span><span id="storefront-sec-md-3-159" class="k0440d1e29da6">licence?</span></strong><span id="storefront-sec-md-3-160" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-161" class="k3a76103d07ce">A </span><span id="storefront-sec-md-3-162" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-3-163" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-164" class="k3a76103d07ce">for </span><span id="storefront-sec-md-3-165" class="k3a76103d07ce">one </span><span id="storefront-sec-md-3-166" class="k3a76103d07ce">person. </span><span id="storefront-sec-md-3-167" class="k3a76103d07ce">Buy </span><span id="storefront-sec-md-3-168" class="k3a76103d07ce">one </span><span id="storefront-sec-md-3-169" class="k3a76103d07ce">for </span><span id="storefront-sec-md-3-170" class="k3a76103d07ce">each </span><span id="storefront-sec-md-3-171" class="k3a76103d07ce">person </span><span id="storefront-sec-md-3-172" class="k3a76103d07ce">who </span><span id="storefront-sec-md-3-173" class="k3a76103d07ce">uses </span><span id="storefront-sec-md-3-174" class="k3a76103d07ce">Pro.</span></p><p id="storefront-sec-md-3-175" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-176" class="kf814e013ad0f"><span id="storefront-sec-md-3-177" class="k0440d1e29da6">Refunds?</span></strong><span id="storefront-sec-md-3-178" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-179" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-180" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-181" class="k3a76103d07ce">digital </span><span id="storefront-sec-md-3-182" class="k3a76103d07ce">content </span><span id="storefront-sec-md-3-183" class="k3a76103d07ce">delivered </span><span id="storefront-sec-md-3-184" class="k3a76103d07ce">immediately: </span><span id="storefront-sec-md-3-185" class="k3a76103d07ce">at </span><span id="storefront-sec-md-3-186" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-3-187" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-188" class="k3a76103d07ce">ask </span><span id="storefront-sec-md-3-189" class="k3a76103d07ce">us </span><span id="storefront-sec-md-3-190" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-191" class="k3a76103d07ce">supply </span><span id="storefront-sec-md-3-192" class="k3a76103d07ce">it </span><span id="storefront-sec-md-3-193" class="k3a76103d07ce">straight </span><span id="storefront-sec-md-3-194" class="k3a76103d07ce">away </span><span id="storefront-sec-md-3-195" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-196" class="k3a76103d07ce">acknowledge </span><span id="storefront-sec-md-3-197" class="k3a76103d07ce">that </span><span id="storefront-sec-md-3-198" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-199" class="k3a76103d07ce">lose </span><span id="storefront-sec-md-3-200" class="k3a76103d07ce">your </span><span id="storefront-sec-md-3-201" class="k3a76103d07ce">14-day </span><span id="storefront-sec-md-3-202" class="k3a76103d07ce">right </span><span id="storefront-sec-md-3-203" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-204" class="k3a76103d07ce">cancel </span><span id="storefront-sec-md-3-205" class="k3a76103d07ce">once </span><span id="storefront-sec-md-3-206" class="k3a76103d07ce">your </span><span id="storefront-sec-md-3-207" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-3-208" class="k3a76103d07ce">token </span><span id="storefront-sec-md-3-209" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-210" class="k3a76103d07ce">delivered. </span><span id="storefront-sec-md-3-211" class="k3a76103d07ce">If </span><span id="storefront-sec-md-3-212" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-213" class="k3a76103d07ce">doesn't </span><span id="storefront-sec-md-3-214" class="k3a76103d07ce">work </span><span id="storefront-sec-md-3-215" class="k3a76103d07ce">as </span><span id="storefront-sec-md-3-216" class="k3a76103d07ce">described </span><span id="storefront-sec-md-3-217" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-218" class="k3a76103d07ce">we </span><span id="storefront-sec-md-3-219" class="k3a76103d07ce">can't </span><span id="storefront-sec-md-3-220" class="k3a76103d07ce">fix </span><span id="storefront-sec-md-3-221" class="k3a76103d07ce">it, </span><span id="storefront-sec-md-3-222" class="k3a76103d07ce">email </span><span id="storefront-sec-md-3-223" class="k3a76103d07ce">hi@sylphx.com </span><span id="storefront-sec-md-3-224" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-225" class="k3a76103d07ce">we'll </span><span id="storefront-sec-md-3-226" class="k3a76103d07ce">put </span><span id="storefront-sec-md-3-227" class="k3a76103d07ce">it </span><span id="storefront-sec-md-3-228" class="k3a76103d07ce">right </span><span id="storefront-sec-md-3-229" class="k3a76103d07ce">or </span><span id="storefront-sec-md-3-230" class="k3a76103d07ce">refund </span><span id="storefront-sec-md-3-231" class="k3a76103d07ce">you. </span><span id="storefront-sec-md-3-232" class="k3a76103d07ce">See </span><span id="storefront-sec-md-3-233" class="k3a76103d07ce">the </span><a id="storefront-sec-md-3-234" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/pro-terms"><span id="storefront-sec-md-3-235" class="kdbe7eda5087a">terms</span></a><span id="storefront-sec-md-3-236" class="k3a76103d07ce">.</span></p><p id="storefront-sec-md-3-237" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-238" class="kf814e013ad0f"><span id="storefront-sec-md-3-239" class="k0440d1e29da6">Who </span><span id="storefront-sec-md-3-240" class="k0440d1e29da6">sells </span><span id="storefront-sec-md-3-241" class="k0440d1e29da6">it?</span></strong><span id="storefront-sec-md-3-242" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-243" class="k3a76103d07ce">Sylphx </span><span id="storefront-sec-md-3-244" class="k3a76103d07ce">Limited, </span><span id="storefront-sec-md-3-245" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-246" class="k3a76103d07ce">company </span><span id="storefront-sec-md-3-247" class="k3a76103d07ce">registered </span><span id="storefront-sec-md-3-248" class="k3a76103d07ce">in </span><span id="storefront-sec-md-3-249" class="k3a76103d07ce">England </span><span id="storefront-sec-md-3-250" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-251" class="k3a76103d07ce">Wales </span><span id="storefront-sec-md-3-252" class="k3a76103d07ce">(company </span><span id="storefront-sec-md-3-253" class="k3a76103d07ce">number </span><span id="storefront-sec-md-3-254" class="k3a76103d07ce">16438428). </span><span id="storefront-sec-md-3-255" class="k3a76103d07ce">See </span><span id="storefront-sec-md-3-256" class="k3a76103d07ce">the </span><a id="storefront-sec-md-3-257" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/pro-terms"><span id="storefront-sec-md-3-258" class="kdbe7eda5087a">anymd </span><span id="storefront-sec-md-3-259" class="kdbe7eda5087a">Pro </span><span id="storefront-sec-md-3-260" class="kdbe7eda5087a">terms</span></a><span id="storefront-sec-md-3-261" class="k3a76103d07ce"> and </span><a id="storefront-sec-md-3-262" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/privacy"><span id="storefront-sec-md-3-263" class="kdbe7eda5087a">Privacy</span></a><span id="storefront-sec-md-3-264" class="k3a76103d07ce">.</span></p></div></div></section></main><footer id="storefront-footer" data-keel-layout="stack" class="sf-footer kad391fe046f7"><div id="storefront-footer-inner" data-keel-layout="row" class="sf-footer-inner k84da60f30064"><span id="storefront-footer-copy" class="sf-footer-copy kdbdb37d6917b">Sylphx Limited · hi@sylphx.com · 128 City Road, London EC1V 2NX, United Kingdom</span><span class="anymd-sf-cookie-wrap"><button type="button" class="anymd-sf-cookie-link" data-anymd-open-cookie="1">Cookie settings and Your Privacy Choices</button></span></div></footer></div></div>
-<div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
+<div id="keel-static-root" data-keel-path="/pricing"><div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
   <span>
     This page uses Google Analytics measurement when enabled to see how people find us and improve checkout. Depending on your choice, Google may set cookies and process identifiers such as your IP address. We never send your name or email. Sylphx Limited is the controller.
     <a href="/anymd/legal/privacy">Privacy</a>
@@ -41,7 +964,8 @@
     <button type="button" data-anymd-consent="analytics" aria-pressed="false">Analytics only</button>
     <button type="button" data-anymd-consent="none" aria-pressed="false">Reject</button>
   </span>
-</div>
+</div><div id="storefront-root" data-anymd-storefront="1" data-keel-layout="stack" data-keel-surface="component:RouteView" class="sf-root k121cbb96911a" data-storefront-page="pricing"><header id="storefront-header" data-keel-layout="stack" class="sf-header kad391fe046f7"><div id="storefront-header-inner" data-keel-layout="row" class="sf-header-inner k84da60f30064"><a id="storefront-brand" data-keel-surface="nav-link" class="sf-brand keel-surface-nav-link k033481162ad8" href="/anymd/"><span id="storefront-brand-title" class="sf-brand-title k033481162ad8">anymd Pro</span></a><div id="storefront-header-actions" data-keel-layout="row" class="sf-header-actions k84da60f30064"><nav class="anymd-sf-nav" aria-label="Storefront navigation"><a href="/anymd/">Home</a><a href="/anymd/guide/getting-started">Docs</a><a href="/anymd/playground">Playground</a><a href="/anymd/pricing" aria-current="page">Pricing</a><a href="/anymd/recover">Recover licence</a><a href="https://github.com/SylphxAI/anymd">GitHub</a></nav></div></div></header><main id="storefront-main" data-keel-layout="stack" class="sf-main kad391fe046f7" tabindex="-1"><section id="storefront-hero" data-keel-layout="stack" class="sf-hero kad391fe046f7"><h1 id="let-your-agent-show-its-evidence" class="sf-hero-title kc8a83299f260">Let your agent show its evidence</h1><div id="storefront-lead" data-keel-layout="stack" class="sf-hero-lead kad391fe046f7"><div id="storefront-lead-md" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-lead-md-1" class="k3e7c2a82e5eb"><strong id="storefront-lead-md-2" class="kf814e013ad0f"><span id="storefront-lead-md-3" class="k0440d1e29da6">anymd </span><span id="storefront-lead-md-4" class="k0440d1e29da6">Pro</span></strong><span id="storefront-lead-md-5" class="k3a76103d07ce"> adds </span><span id="storefront-lead-md-6" class="k3a76103d07ce">two </span><span id="storefront-lead-md-7" class="k3a76103d07ce">things </span><span id="storefront-lead-md-8" class="k3a76103d07ce">to </span><span id="storefront-lead-md-9" class="k3a76103d07ce">the </span><span id="storefront-lead-md-10" class="k3a76103d07ce">free </span><span id="storefront-lead-md-11" class="k3a76103d07ce">anymd </span><span id="storefront-lead-md-12" class="k3a76103d07ce">MCP </span><span id="storefront-lead-md-13" class="k3a76103d07ce">server: </span><span id="storefront-lead-md-14" class="k3a76103d07ce">exact </span><span id="storefront-lead-md-15" class="k3a76103d07ce">video </span><span id="storefront-lead-md-16" class="k3a76103d07ce">frames </span><span id="storefront-lead-md-17" class="k3a76103d07ce">your </span><span id="storefront-lead-md-18" class="k3a76103d07ce">agent </span><span id="storefront-lead-md-19" class="k3a76103d07ce">can </span><span id="storefront-lead-md-20" class="k3a76103d07ce">cite, </span><span id="storefront-lead-md-21" class="k3a76103d07ce">and </span><strong id="storefront-lead-md-22" class="kf814e013ad0f"><span id="storefront-lead-md-23" class="k0440d1e29da6">cite-check</span></strong><span id="storefront-lead-md-24" class="k3a76103d07ce">, </span><span id="storefront-lead-md-25" class="k3a76103d07ce">which </span><span id="storefront-lead-md-26" class="k3a76103d07ce">proves </span><span id="storefront-lead-md-27" class="k3a76103d07ce">a </span><span id="storefront-lead-md-28" class="k3a76103d07ce">quote </span><span id="storefront-lead-md-29" class="k3a76103d07ce">is </span><span id="storefront-lead-md-30" class="k3a76103d07ce">on </span><span id="storefront-lead-md-31" class="k3a76103d07ce">the </span><span id="storefront-lead-md-32" class="k3a76103d07ce">page </span><span id="storefront-lead-md-33" class="k3a76103d07ce">and </span><span id="storefront-lead-md-34" class="k3a76103d07ce">at </span><span id="storefront-lead-md-35" class="k3a76103d07ce">the </span><span id="storefront-lead-md-36" class="k3a76103d07ce">spot </span><span id="storefront-lead-md-37" class="k3a76103d07ce">it </span><span id="storefront-lead-md-38" class="k3a76103d07ce">claims. </span><span id="storefront-lead-md-39" class="k3a76103d07ce">Everything </span><span id="storefront-lead-md-40" class="k3a76103d07ce">runs </span><span id="storefront-lead-md-41" class="k3a76103d07ce">on </span><span id="storefront-lead-md-42" class="k3a76103d07ce">your </span><span id="storefront-lead-md-43" class="k3a76103d07ce">machine.</span></p><p id="storefront-lead-md-44" class="k3e7c2a82e5eb"><span id="storefront-lead-md-45" class="k3a76103d07ce">Current </span><span id="storefront-lead-md-46" class="k3a76103d07ce">one-time </span><span id="storefront-lead-md-47" class="k3a76103d07ce">price </span><span id="storefront-lead-md-48" class="k3a76103d07ce">and </span><span id="storefront-lead-md-49" class="k3a76103d07ce">tax </span><span id="storefront-lead-md-50" class="k3a76103d07ce">are </span><span id="storefront-lead-md-51" class="k3a76103d07ce">shown </span><span id="storefront-lead-md-52" class="k3a76103d07ce">below </span><span id="storefront-lead-md-53" class="k3a76103d07ce">· </span><span id="storefront-lead-md-54" class="k3a76103d07ce">100-year </span><span id="storefront-lead-md-55" class="k3a76103d07ce">licence </span><span id="storefront-lead-md-56" class="k3a76103d07ce">· </span><span id="storefront-lead-md-57" class="k3a76103d07ce">works </span><span id="storefront-lead-md-58" class="k3a76103d07ce">offline, </span><span id="storefront-lead-md-59" class="k3a76103d07ce">no </span><span id="storefront-lead-md-60" class="k3a76103d07ce">account </span><span id="storefront-lead-md-61" class="k3a76103d07ce">· </span><a id="storefront-lead-md-62" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/pro-terms"><span id="storefront-lead-md-63" class="kdbe7eda5087a">Terms</span></a></p><p id="storefront-lead-md-64" class="k3e7c2a82e5eb"><span id="storefront-lead-md-65" class="k3a76103d07ce">Requires </span><span id="storefront-lead-md-66" class="k3a76103d07ce">anymd </span><span id="storefront-lead-md-67" class="k3a76103d07ce">8.4.0 </span><span id="storefront-lead-md-68" class="k3a76103d07ce">or </span><span id="storefront-lead-md-69" class="k3a76103d07ce">later </span><span id="storefront-lead-md-70" class="k3a76103d07ce">(</span><code id="storefront-lead-md-75" class="kf814e013ad0f"><span id="storefront-lead-md-71" class="k2b7048198c30">npx </span><span id="storefront-lead-md-72" class="k2b7048198c30">-y </span><span id="storefront-lead-md-73" class="k2b7048198c30">@sylphx/anymd@latest </span><span id="storefront-lead-md-74" class="k2b7048198c30">--version</span></code><span id="storefront-lead-md-76" class="k3a76103d07ce">). </span><span id="storefront-lead-md-77" class="k3a76103d07ce">The </span><span id="storefront-lead-md-78" class="k3a76103d07ce">anymd </span><span id="storefront-lead-md-79" class="k3a76103d07ce">core </span><span id="storefront-lead-md-80" class="k3a76103d07ce">stays </span><span id="storefront-lead-md-81" class="k3a76103d07ce">free </span><span id="storefront-lead-md-82" class="k3a76103d07ce">and </span><span id="storefront-lead-md-83" class="k3a76103d07ce">MIT </span><span id="storefront-lead-md-84" class="k3a76103d07ce">licensed.</span></p></div></div></section><div id="storefront-offers" data-keel-layout="stack" class="sf-offers k121cbb96911a" data-keel-storefront-offers=""><div id="storefront-companion" data-keel-layout="stack" class="sf-companion kad391fe046f7" data-keel-storefront-companion=""></div><section id="money-checkout-pricing" data-keel-layout="stack" data-keel-surface="card" class="sf-money-checkout keel-surface-card k5872f9872dcc" data-keel-money-checkout="{&quot;api_origin&quot;:&quot;https://api.sylphx.com&quot;,&quot;parent&quot;:&quot;orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/projects/prj_fs013ejakyn22t4bsvrvyj0f2x1pgq/envs/env_fs01p2f389mwmm2xsm1nmvcst69vgd&quot;,&quot;publishable_key&quot;:&quot;sylphx_pk_live_fs011xLNdWAaf61LbUtF&quot;,&quot;product&quot;:&quot;anymd_pro&quot;,&quot;token_product&quot;:&quot;anymd&quot;,&quot;title&quot;:&quot;Buy anymd Pro&quot;,&quot;description&quot;:&quot;Exact video frames with timestamps and hashes, and offline cite-check. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.&quot;,&quot;checkout_enabled&quot;:true,&quot;prices&quot;:[{&quot;key&quot;:&quot;anymd_pro&quot;,&quot;label&quot;:&quot;1 licence&quot;,&quot;quantity&quot;:1}],&quot;consent_version&quot;:&quot;waiver-v1&quot;,&quot;consent_text&quot;:&quot;I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.&quot;,&quot;success_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?session_id={CHECKOUT_SESSION_ID}&quot;,&quot;cancel_url&quot;:&quot;https://sylphxai.github.io/anymd/pricing?checkout=cancelled&quot;,&quot;recovery_url&quot;:&quot;https://sylphxai.github.io/anymd/recover&quot;,&quot;cta_label&quot;:&quot;Buy anymd Pro&quot;,&quot;recovery_label&quot;:&quot;Email my licence recovery link&quot;,&quot;trader&quot;:{&quot;name&quot;:&quot;Sylphx Limited&quot;,&quot;contact&quot;:&quot;hi@sylphx.com&quot;,&quot;address&quot;:&quot;128 City Road, London EC1V 2NX, United Kingdom&quot;},&quot;collapse_recovery&quot;:true}" data-keel-money-state="idle" data-keel-money-catalog-ready="0" data-keel-money-product="anymd_pro"><span id="money-checkout-pricing-status" role="status" class="sf-money-status k4c35fb7aaf4d" data-keel-money-status="" aria-live="polite"></span><section id="money-checkout-pricing-redeem" data-keel-layout="stack" data-keel-surface="card" class="sf-redeem-panel keel-surface-card k44658c4e353f" data-keel-money-panel="redeem"><pre id="money-checkout-pricing-licence-token" data-keel-surface="code-block" class="sf-licence-token keel-surface-code-block kf814e013ad0f" hidden data-keel-money-licence-token=""></pre><div id="money-checkout-pricing-redeem-actions" data-keel-layout="wrap" class="sf-redeem-actions kb0a5708679d3"><button id="money-checkout-pricing-copy-token" role="button" data-keel-surface="btn-outline" class="sf-redeem-btn sf-redeem-btn-secondary keel-surface-btn-outline kf814e013ad0f" hidden data-keel-money-copy-token="">Copy licence key</button><button id="money-checkout-pricing-activate-browser" role="button" data-keel-surface="btn-primary" class="sf-redeem-btn sf-redeem-btn-primary keel-surface-btn-primary kf814e013ad0f" hidden data-keel-money-activate-browser="">Activate in this browser</button></div></section><form id="money-checkout-pricing-checkout-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="checkout" action="#" method="post"><div id="money-checkout-pricing-checkout-fields" data-keel-layout="row" class="sf-checkout-grid k2409d931d8de"><div id="money-checkout-pricing-checkout-inputs" data-keel-layout="stack" class="sf-checkout-inputs kb442e8ff1cd8"><div id="money-checkout-pricing-price-field" data-keel-layout="stack" class="sf-price-select-field k121cbb96911a"><label id="money-checkout-pricing-price-label" data-keel-layout="stack" class="kad391fe046f7"><span id="money-checkout-pricing-price-title" class="k033481162ad8">Plan</span></label><select id="money-checkout-pricing-price" role="combobox" class="kf814e013ad0f" data-keel-money-field="price" name="price" required aria-label="Plan or pack"><option id="money-checkout-pricing-price-0" class="kf814e013ad0f" data-keel-price-key="anymd_pro" data-keel-quantity="1" data-keel-label="1 licence" value="anymd_pro:1" selected>1 licence</option></select></div><div id="money-checkout-pricing-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-pricing-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-pricing-email.label" class="k55fdcae23bba">Email address</span><input id="money-checkout-pricing-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-pricing-email.label" aria-invalid="false" aria-busy="false"></div></div><label id="money-checkout-pricing-consent-label" data-keel-layout="stack" class="sf-consent-row kad391fe046f7"><div id="money-checkout-pricing-consent-row" data-keel-layout="row" class="kbe6065d37d69"><input id="money-checkout-pricing-consent" role="checkbox" data-keel-surface="checkbox" class="keel-surface-checkbox kf814e013ad0f" data-keel-money-field="consent" data-keel-money-consent-version="waiver-v1" name="consent" type="checkbox" required value="waiver-v1" aria-label="I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground."><span id="money-checkout-pricing-consent-text" class="k033481162ad8">I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground.</span></div></label></div><div id="money-checkout-pricing-checkout-action" data-keel-layout="stack" class="sf-checkout-action k0aafa862fef3"><div id="money-checkout-pricing-price-summary" data-keel-layout="stack" class="sf-selected-summary k121cbb96911a"><span id="money-checkout-pricing-selected-caption" class="sf-selected-caption kdbdb37d6917b">Selected plan</span><span id="money-checkout-pricing-price-display" class="sf-selected-value k033481162ad8" data-keel-money-price-display="">1 licence</span></div><div class="anymd-submit-wrap"><button id="money-checkout-pricing-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="checkout" data-keel-state="disabled" aria-disabled="true" disabled="">Buy anymd Pro</button><span class="anymd-wallet-trust">Apple Pay · Google Pay · Link</span></div></div></div></form><details id="money-checkout-pricing-recover-disclosure" data-keel-layout="stack" class="sf-recover-disclosure kad391fe046f7" data-keel-money-recover-disclosure=""><summary id="money-checkout-pricing-recover-disclosure.trigger" role="button" data-keel-layout="stack" data-keel-surface="btn-outline" class="keel-surface-btn-outline k78e876e9653f" aria-controls="money-checkout-pricing-recover-disclosure.panel"><span id="money-checkout-pricing-recover-disclosure.trigger.label" class="k033481162ad8">Purchased before? Recover your licence key</span></summary><div id="money-checkout-pricing-recover-disclosure.panel" data-keel-layout="stack" class="k754f4ae47687"><form id="money-checkout-pricing-recover-form" data-keel-layout="stack" class="kad391fe046f7" data-keel-money-form="recover" action="#" method="post"><div id="money-checkout-pricing-recover-fields" data-keel-layout="stack" class="k0aafa862fef3"><div id="money-checkout-pricing-recovery-email.field" data-keel-layout="stack" class="k1acf1a641c27"><div id="money-checkout-pricing-recovery-email.field.labelled" data-keel-layout="stack" class="k1acf1a641c27"><span id="money-checkout-pricing-recovery-email.label" class="k55fdcae23bba">Email used at purchase</span><input id="money-checkout-pricing-recovery-email" role="textbox" data-keel-surface="input" class="keel-surface-input kf3bdd727ce52" data-keel-money-field="recovery-email" name="recovery_email" type="email" placeholder="you@example.com" autocomplete="email" inputmode="email" required value="" aria-label="you@example.com" aria-required="true" aria-labelledby="money-checkout-pricing-recovery-email.label" aria-invalid="false" aria-busy="false"></div></div><button id="money-checkout-pricing-recover-submit" role="button" data-keel-surface="btn-primary" class="keel-own-states keel-surface-btn-primary kf814e013ad0f" data-keel-money-submit="recover">Email my licence recovery link</button></div></form></div></details></section></div><section id="storefront-sec-0" data-keel-layout="stack" class="sf-section sf-bento-section kad391fe046f7"><div id="storefront-sec-head-0" data-keel-layout="stack" class="sf-section-head k121cbb96911a"><h2 id="why-it-matters" class="sf-section-title k4c8f7d8a78d0">Why it matters</h2><div id="storefront-sec-lead-0" data-keel-layout="stack" class="sf-section-lead kad391fe046f7"><div id="storefront-sec-lead-md-0" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-lead-md-0-1" class="k3e7c2a82e5eb"><span id="storefront-sec-lead-md-0-2" class="k3a76103d07ce">When </span><span id="storefront-sec-lead-md-0-3" class="k3a76103d07ce">an </span><span id="storefront-sec-lead-md-0-4" class="k3a76103d07ce">agent </span><span id="storefront-sec-lead-md-0-5" class="k3a76103d07ce">summarises </span><span id="storefront-sec-lead-md-0-6" class="k3a76103d07ce">a </span><span id="storefront-sec-lead-md-0-7" class="k3a76103d07ce">deposition </span><span id="storefront-sec-lead-md-0-8" class="k3a76103d07ce">video, </span><span id="storefront-sec-lead-md-0-9" class="k3a76103d07ce">an </span><span id="storefront-sec-lead-md-0-10" class="k3a76103d07ce">earnings </span><span id="storefront-sec-lead-md-0-11" class="k3a76103d07ce">call, </span><span id="storefront-sec-lead-md-0-12" class="k3a76103d07ce">a </span><span id="storefront-sec-lead-md-0-13" class="k3a76103d07ce">lecture </span><span id="storefront-sec-lead-md-0-14" class="k3a76103d07ce">or </span><span id="storefront-sec-lead-md-0-15" class="k3a76103d07ce">a </span><span id="storefront-sec-lead-md-0-16" class="k3a76103d07ce">contract </span><span id="storefront-sec-lead-md-0-17" class="k3a76103d07ce">PDF, </span><span id="storefront-sec-lead-md-0-18" class="k3a76103d07ce">you </span><span id="storefront-sec-lead-md-0-19" class="k3a76103d07ce">still </span><span id="storefront-sec-lead-md-0-20" class="k3a76103d07ce">have </span><span id="storefront-sec-lead-md-0-21" class="k3a76103d07ce">to </span><span id="storefront-sec-lead-md-0-22" class="k3a76103d07ce">trust </span><span id="storefront-sec-lead-md-0-23" class="k3a76103d07ce">it. </span><span id="storefront-sec-lead-md-0-24" class="k3a76103d07ce">Pro </span><span id="storefront-sec-lead-md-0-25" class="k3a76103d07ce">gives </span><span id="storefront-sec-lead-md-0-26" class="k3a76103d07ce">the </span><span id="storefront-sec-lead-md-0-27" class="k3a76103d07ce">agent </span><span id="storefront-sec-lead-md-0-28" class="k3a76103d07ce">something </span><span id="storefront-sec-lead-md-0-29" class="k3a76103d07ce">you </span><span id="storefront-sec-lead-md-0-30" class="k3a76103d07ce">can </span><span id="storefront-sec-lead-md-0-31" class="k3a76103d07ce">check.</span></p></div></div></div><div id="storefront-bento-md-0" data-keel-layout="stack" class="sf-bento-grid kad391fe046f7" data-keel-storefront-bento="" data-columns="3"><article id="verifiable-video-evidence" data-keel-layout="stack" class="sf-bento-card kad391fe046f7" data-keel-bento-id="verifiable-video-evidence" data-span="1"><div id="storefront-bento-copy-0-0" data-keel-layout="stack" class="sf-bento-copy k121cbb96911a"><h3 id="storefront-bento-h3-0-0" class="sf-bento-title k61d113ad93ce">Verifiable video evidence</h3><div id="storefront-bento-body-0-0" data-keel-layout="stack" class="sf-bento-md kad391fe046f7"><div id="storefront-bento-md-0-0" data-keel-layout="stack" class="kb442e8ff1cd8"><ul id="storefront-bento-md-0-0-1" data-keel-layout="stack" class="kf47195cfc345"><li id="storefront-bento-md-0-0-2" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-3" class="k3e7c2a82e5eb"><strong id="storefront-bento-md-0-0-4" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-5" class="k0440d1e29da6">Timeline.</span></strong><span id="storefront-bento-md-0-0-6" class="k3a76103d07ce"> </span><code id="storefront-bento-md-0-0-8" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-7" class="k2b7048198c30">inspect</span></code><span id="storefront-bento-md-0-0-9" class="k3a76103d07ce"> with </span><code id="storefront-bento-md-0-0-11" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-10" class="k2b7048198c30">video_timeline</span></code><span id="storefront-bento-md-0-0-12" class="k3a76103d07ce"> returns </span><span id="storefront-bento-md-0-0-13" class="k3a76103d07ce">an </span><span id="storefront-bento-md-0-0-14" class="k3a76103d07ce">ordered, </span><span id="storefront-bento-md-0-0-15" class="k3a76103d07ce">bounded </span><span id="storefront-bento-md-0-0-16" class="k3a76103d07ce">timeline </span><span id="storefront-bento-md-0-0-17" class="k3a76103d07ce">for </span><span id="storefront-bento-md-0-0-18" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-19" class="k3a76103d07ce">video: </span><span id="storefront-bento-md-0-0-20" class="k3a76103d07ce">scenes, </span><span id="storefront-bento-md-0-0-21" class="k3a76103d07ce">chapters, </span><span id="storefront-bento-md-0-0-22" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-23" class="k3a76103d07ce">subtitle </span><span id="storefront-bento-md-0-0-24" class="k3a76103d07ce">or </span><span id="storefront-bento-md-0-0-25" class="k3a76103d07ce">transcript </span><span id="storefront-bento-md-0-0-26" class="k3a76103d07ce">cues </span><span id="storefront-bento-md-0-0-27" class="k3a76103d07ce">with </span><span id="storefront-bento-md-0-0-28" class="k3a76103d07ce">their </span><span id="storefront-bento-md-0-0-29" class="k3a76103d07ce">start </span><span id="storefront-bento-md-0-0-30" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-31" class="k3a76103d07ce">end </span><span id="storefront-bento-md-0-0-32" class="k3a76103d07ce">times, </span><span id="storefront-bento-md-0-0-33" class="k3a76103d07ce">tied </span><span id="storefront-bento-md-0-0-34" class="k3a76103d07ce">to </span><span id="storefront-bento-md-0-0-35" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-36" class="k3a76103d07ce">source </span><span id="storefront-bento-md-0-0-37" class="k3a76103d07ce">file's </span><span id="storefront-bento-md-0-0-38" class="k3a76103d07ce">SHA-256.</span></p></li><li id="storefront-bento-md-0-0-39" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-40" class="k3e7c2a82e5eb"><strong id="storefront-bento-md-0-0-41" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-42" class="k0440d1e29da6">Frames.</span></strong><span id="storefront-bento-md-0-0-43" class="k3a76103d07ce"> </span><code id="storefront-bento-md-0-0-45" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-44" class="k2b7048198c30">render_frame</span></code><span id="storefront-bento-md-0-0-46" class="k3a76103d07ce"> returns </span><span id="storefront-bento-md-0-0-47" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-48" class="k3a76103d07ce">decoded </span><span id="storefront-bento-md-0-0-49" class="k3a76103d07ce">frame </span><span id="storefront-bento-md-0-0-50" class="k3a76103d07ce">at </span><span id="storefront-bento-md-0-0-51" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-52" class="k3a76103d07ce">times </span><span id="storefront-bento-md-0-0-53" class="k3a76103d07ce">you </span><span id="storefront-bento-md-0-0-54" class="k3a76103d07ce">ask </span><span id="storefront-bento-md-0-0-55" class="k3a76103d07ce">for. </span><span id="storefront-bento-md-0-0-56" class="k3a76103d07ce">Each </span><span id="storefront-bento-md-0-0-57" class="k3a76103d07ce">frame </span><span id="storefront-bento-md-0-0-58" class="k3a76103d07ce">records </span><span id="storefront-bento-md-0-0-59" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-60" class="k3a76103d07ce">requested </span><span id="storefront-bento-md-0-0-61" class="k3a76103d07ce">time, </span><span id="storefront-bento-md-0-0-62" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-63" class="k3a76103d07ce">actual </span><span id="storefront-bento-md-0-0-64" class="k3a76103d07ce">decoded </span><span id="storefront-bento-md-0-0-65" class="k3a76103d07ce">timestamp </span><span id="storefront-bento-md-0-0-66" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-67" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-68" class="k3a76103d07ce">SHA-256 </span><span id="storefront-bento-md-0-0-69" class="k3a76103d07ce">of </span><span id="storefront-bento-md-0-0-70" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-71" class="k3a76103d07ce">PNG, </span><span id="storefront-bento-md-0-0-72" class="k3a76103d07ce">so </span><span id="storefront-bento-md-0-0-73" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-74" class="k3a76103d07ce">citation </span><span id="storefront-bento-md-0-0-75" class="k3a76103d07ce">like </span><span id="storefront-bento-md-0-0-76" class="k3a76103d07ce">"at </span><span id="storefront-bento-md-0-0-77" class="k3a76103d07ce">01:17 </span><span id="storefront-bento-md-0-0-78" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-79" class="k3a76103d07ce">slide </span><span id="storefront-bento-md-0-0-80" class="k3a76103d07ce">shows </span><span id="storefront-bento-md-0-0-81" class="k3a76103d07ce">X" </span><span id="storefront-bento-md-0-0-82" class="k3a76103d07ce">can </span><span id="storefront-bento-md-0-0-83" class="k3a76103d07ce">be </span><span id="storefront-bento-md-0-0-84" class="k3a76103d07ce">re-checked. </span><span id="storefront-bento-md-0-0-85" class="k3a76103d07ce">A </span><span id="storefront-bento-md-0-0-86" class="k3a76103d07ce">nearby </span><span id="storefront-bento-md-0-0-87" class="k3a76103d07ce">keyframe </span><span id="storefront-bento-md-0-0-88" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-0-89" class="k3a76103d07ce">never </span><span id="storefront-bento-md-0-0-90" class="k3a76103d07ce">passed </span><span id="storefront-bento-md-0-0-91" class="k3a76103d07ce">off </span><span id="storefront-bento-md-0-0-92" class="k3a76103d07ce">as </span><span id="storefront-bento-md-0-0-93" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-94" class="k3a76103d07ce">requested </span><span id="storefront-bento-md-0-0-95" class="k3a76103d07ce">moment.</span></p></li><li id="storefront-bento-md-0-0-96" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-97" class="k3e7c2a82e5eb"><strong id="storefront-bento-md-0-0-98" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-99" class="k0440d1e29da6">Honest </span><span id="storefront-bento-md-0-0-100" class="k0440d1e29da6">limits.</span></strong><span id="storefront-bento-md-0-0-101" class="k3a76103d07ce"> Scene </span><span id="storefront-bento-md-0-0-102" class="k3a76103d07ce">changes </span><span id="storefront-bento-md-0-0-103" class="k3a76103d07ce">are </span><span id="storefront-bento-md-0-0-104" class="k3a76103d07ce">FFmpeg-detected </span><span id="storefront-bento-md-0-0-105" class="k3a76103d07ce">cuts, </span><span id="storefront-bento-md-0-0-106" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-107" class="k3a76103d07ce">heuristic </span><span id="storefront-bento-md-0-0-108" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-0-109" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-0-110" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-0-111" class="k3a76103d07ce">semantic </span><span id="storefront-bento-md-0-0-112" class="k3a76103d07ce">reading </span><span id="storefront-bento-md-0-0-113" class="k3a76103d07ce">of </span><span id="storefront-bento-md-0-0-114" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-115" class="k3a76103d07ce">video. </span><span id="storefront-bento-md-0-0-116" class="k3a76103d07ce">A </span><span id="storefront-bento-md-0-0-117" class="k3a76103d07ce">timeline </span><span id="storefront-bento-md-0-0-118" class="k3a76103d07ce">covers </span><span id="storefront-bento-md-0-0-119" class="k3a76103d07ce">at </span><span id="storefront-bento-md-0-0-120" class="k3a76103d07ce">most </span><span id="storefront-bento-md-0-0-121" class="k3a76103d07ce">ten </span><span id="storefront-bento-md-0-0-122" class="k3a76103d07ce">minutes </span><span id="storefront-bento-md-0-0-123" class="k3a76103d07ce">per </span><span id="storefront-bento-md-0-0-124" class="k3a76103d07ce">request. </span><span id="storefront-bento-md-0-0-125" class="k3a76103d07ce">No </span><span id="storefront-bento-md-0-0-126" class="k3a76103d07ce">model </span><span id="storefront-bento-md-0-0-127" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-0-128" class="k3a76103d07ce">downloaded.</span></p></li><li id="storefront-bento-md-0-0-129" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-0-130" class="k3e7c2a82e5eb"><code id="storefront-bento-md-0-0-132" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-131" class="k2b7048198c30">read</span></code><span id="storefront-bento-md-0-0-133" class="k3a76103d07ce"> and </span><code id="storefront-bento-md-0-0-135" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-134" class="k2b7048198c30">outline</span></code><span id="storefront-bento-md-0-0-136" class="k3a76103d07ce"> also </span><span id="storefront-bento-md-0-0-137" class="k3a76103d07ce">take </span><span id="storefront-bento-md-0-0-138" class="k3a76103d07ce">the </span><code id="storefront-bento-md-0-0-140" class="kf814e013ad0f"><span id="storefront-bento-md-0-0-139" class="k2b7048198c30">timeline</span></code><span id="storefront-bento-md-0-0-141" class="k3a76103d07ce"> option, </span><span id="storefront-bento-md-0-0-142" class="k3a76103d07ce">so </span><span id="storefront-bento-md-0-0-143" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-0-144" class="k3a76103d07ce">same </span><span id="storefront-bento-md-0-0-145" class="k3a76103d07ce">scenes </span><span id="storefront-bento-md-0-0-146" class="k3a76103d07ce">appear </span><span id="storefront-bento-md-0-0-147" class="k3a76103d07ce">as </span><span id="storefront-bento-md-0-0-148" class="k3a76103d07ce">document </span><span id="storefront-bento-md-0-0-149" class="k3a76103d07ce">sections.</span></p></li></ul><p id="storefront-bento-md-0-0-150" class="k3e7c2a82e5eb"><a id="storefront-bento-md-0-0-151" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/guide/video-timeline"><span id="storefront-bento-md-0-0-152" class="kdbe7eda5087a">How </span><span id="storefront-bento-md-0-0-153" class="kdbe7eda5087a">video </span><span id="storefront-bento-md-0-0-154" class="kdbe7eda5087a">timelines </span><span id="storefront-bento-md-0-0-155" class="kdbe7eda5087a">work</span></a></p></div></div></div></article><article id="cite-check" data-keel-layout="stack" class="sf-bento-card kad391fe046f7" data-keel-bento-id="cite-check" data-span="1"><div id="storefront-bento-copy-0-1" data-keel-layout="stack" class="sf-bento-copy k121cbb96911a"><h3 id="storefront-bento-h3-0-1" class="sf-bento-title k61d113ad93ce">Cite-check</h3><div id="storefront-bento-body-0-1" data-keel-layout="stack" class="sf-bento-md kad391fe046f7"><div id="storefront-bento-md-0-1" data-keel-layout="stack" class="kb442e8ff1cd8"><ul id="storefront-bento-md-0-1-1" data-keel-layout="stack" class="kf47195cfc345"><li id="storefront-bento-md-0-1-2" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-1-3" class="k3e7c2a82e5eb"><code id="storefront-bento-md-0-1-5" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-4" class="k2b7048198c30">inspect</span></code><span id="storefront-bento-md-0-1-6" class="k3a76103d07ce"> with </span><code id="storefront-bento-md-0-1-8" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-7" class="k2b7048198c30">cite_check</span></code><span id="storefront-bento-md-0-1-9" class="k3a76103d07ce"> takes </span><span id="storefront-bento-md-0-1-10" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-1-11" class="k3a76103d07ce">PDF </span><span id="storefront-bento-md-0-1-12" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-13" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-1-14" class="k3a76103d07ce">list </span><span id="storefront-bento-md-0-1-15" class="k3a76103d07ce">of </span><span id="storefront-bento-md-0-1-16" class="k3a76103d07ce">citations </span><span id="storefront-bento-md-0-1-17" class="k3a76103d07ce">(quote, </span><span id="storefront-bento-md-0-1-18" class="k3a76103d07ce">page, </span><span id="storefront-bento-md-0-1-19" class="k3a76103d07ce">bounding </span><span id="storefront-bento-md-0-1-20" class="k3a76103d07ce">box) </span><span id="storefront-bento-md-0-1-21" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-22" class="k3a76103d07ce">returns </span><span id="storefront-bento-md-0-1-23" class="k3a76103d07ce">one </span><span id="storefront-bento-md-0-1-24" class="k3a76103d07ce">verdict </span><span id="storefront-bento-md-0-1-25" class="k3a76103d07ce">each: </span><code id="storefront-bento-md-0-1-27" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-26" class="k2b7048198c30">verified_exact</span></code><span id="storefront-bento-md-0-1-28" class="k3a76103d07ce">, </span><code id="storefront-bento-md-0-1-30" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-29" class="k2b7048198c30">verified_normalized</span></code><span id="storefront-bento-md-0-1-31" class="k3a76103d07ce">, </span><code id="storefront-bento-md-0-1-33" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-32" class="k2b7048198c30">unmatched</span></code><span id="storefront-bento-md-0-1-34" class="k3a76103d07ce"> or </span><code id="storefront-bento-md-0-1-36" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-35" class="k2b7048198c30">insufficient_evidence</span></code><span id="storefront-bento-md-0-1-37" class="k3a76103d07ce">.</span></p></li><li id="storefront-bento-md-0-1-38" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-1-39" class="k3e7c2a82e5eb"><span id="storefront-bento-md-0-1-40" class="k3a76103d07ce">It </span><span id="storefront-bento-md-0-1-41" class="k3a76103d07ce">checks </span><span id="storefront-bento-md-0-1-42" class="k3a76103d07ce">that </span><span id="storefront-bento-md-0-1-43" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-44" class="k3a76103d07ce">quote </span><span id="storefront-bento-md-0-1-45" class="k3a76103d07ce">occurs </span><span id="storefront-bento-md-0-1-46" class="k3a76103d07ce">in </span><span id="storefront-bento-md-0-1-47" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-48" class="k3a76103d07ce">text </span><span id="storefront-bento-md-0-1-49" class="k3a76103d07ce">extracted </span><span id="storefront-bento-md-0-1-50" class="k3a76103d07ce">from </span><span id="storefront-bento-md-0-1-51" class="k3a76103d07ce">that </span><span id="storefront-bento-md-0-1-52" class="k3a76103d07ce">page, </span><span id="storefront-bento-md-0-1-53" class="k3a76103d07ce">inside </span><span id="storefront-bento-md-0-1-54" class="k3a76103d07ce">that </span><span id="storefront-bento-md-0-1-55" class="k3a76103d07ce">box. </span><span id="storefront-bento-md-0-1-56" class="k3a76103d07ce">No </span><span id="storefront-bento-md-0-1-57" class="k3a76103d07ce">model </span><span id="storefront-bento-md-0-1-58" class="k3a76103d07ce">judges </span><span id="storefront-bento-md-0-1-59" class="k3a76103d07ce">it, </span><span id="storefront-bento-md-0-1-60" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-61" class="k3a76103d07ce">when </span><span id="storefront-bento-md-0-1-62" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-63" class="k3a76103d07ce">evidence </span><span id="storefront-bento-md-0-1-64" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-1-65" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-1-66" class="k3a76103d07ce">enough </span><span id="storefront-bento-md-0-1-67" class="k3a76103d07ce">(a </span><span id="storefront-bento-md-0-1-68" class="k3a76103d07ce">scan </span><span id="storefront-bento-md-0-1-69" class="k3a76103d07ce">with </span><span id="storefront-bento-md-0-1-70" class="k3a76103d07ce">no </span><span id="storefront-bento-md-0-1-71" class="k3a76103d07ce">OCR, </span><span id="storefront-bento-md-0-1-72" class="k3a76103d07ce">missing </span><span id="storefront-bento-md-0-1-73" class="k3a76103d07ce">geometry) </span><span id="storefront-bento-md-0-1-74" class="k3a76103d07ce">it </span><span id="storefront-bento-md-0-1-75" class="k3a76103d07ce">says </span><span id="storefront-bento-md-0-1-76" class="k3a76103d07ce">so </span><span id="storefront-bento-md-0-1-77" class="k3a76103d07ce">rather </span><span id="storefront-bento-md-0-1-78" class="k3a76103d07ce">than </span><span id="storefront-bento-md-0-1-79" class="k3a76103d07ce">guessing.</span></p></li><li id="storefront-bento-md-0-1-80" data-keel-layout="stack" class="k7490420f69e2"><p id="storefront-bento-md-0-1-81" class="k3e7c2a82e5eb"><span id="storefront-bento-md-0-1-82" class="k3a76103d07ce">A </span><span id="storefront-bento-md-0-1-83" class="k3a76103d07ce">verified </span><span id="storefront-bento-md-0-1-84" class="k3a76103d07ce">result </span><span id="storefront-bento-md-0-1-85" class="k3a76103d07ce">proves </span><span id="storefront-bento-md-0-1-86" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-87" class="k3a76103d07ce">quote </span><span id="storefront-bento-md-0-1-88" class="k3a76103d07ce">is </span><strong id="storefront-bento-md-0-1-89" class="kf814e013ad0f"><span id="storefront-bento-md-0-1-90" class="k0440d1e29da6">at </span><span id="storefront-bento-md-0-1-91" class="k0440d1e29da6">that </span><span id="storefront-bento-md-0-1-92" class="k0440d1e29da6">location </span><span id="storefront-bento-md-0-1-93" class="k0440d1e29da6">in </span><span id="storefront-bento-md-0-1-94" class="k0440d1e29da6">the </span><span id="storefront-bento-md-0-1-95" class="k0440d1e29da6">document</span></strong><span id="storefront-bento-md-0-1-96" class="k3a76103d07ce">. </span><span id="storefront-bento-md-0-1-97" class="k3a76103d07ce">It </span><span id="storefront-bento-md-0-1-98" class="k3a76103d07ce">does </span><span id="storefront-bento-md-0-1-99" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-1-100" class="k3a76103d07ce">prove </span><span id="storefront-bento-md-0-1-101" class="k3a76103d07ce">the </span><span id="storefront-bento-md-0-1-102" class="k3a76103d07ce">statement </span><span id="storefront-bento-md-0-1-103" class="k3a76103d07ce">is </span><span id="storefront-bento-md-0-1-104" class="k3a76103d07ce">true, </span><span id="storefront-bento-md-0-1-105" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-1-106" class="k3a76103d07ce">it </span><span id="storefront-bento-md-0-1-107" class="k3a76103d07ce">does </span><span id="storefront-bento-md-0-1-108" class="k3a76103d07ce">not </span><span id="storefront-bento-md-0-1-109" class="k3a76103d07ce">vouch </span><span id="storefront-bento-md-0-1-110" class="k3a76103d07ce">for </span><span id="storefront-bento-md-0-1-111" class="k3a76103d07ce">OCR </span><span id="storefront-bento-md-0-1-112" class="k3a76103d07ce">accuracy.</span></p></li></ul><p id="storefront-bento-md-0-1-113" class="k3e7c2a82e5eb"><a id="storefront-bento-md-0-1-114" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/guide/cite-check"><span id="storefront-bento-md-0-1-115" class="kdbe7eda5087a">How </span><span id="storefront-bento-md-0-1-116" class="kdbe7eda5087a">cite-check </span><span id="storefront-bento-md-0-1-117" class="kdbe7eda5087a">works</span></a></p></div></div></div></article><article id="who-it-is-for" data-keel-layout="stack" class="sf-bento-card kad391fe046f7" data-keel-bento-id="who-it-is-for" data-span="1"><div id="storefront-bento-copy-0-2" data-keel-layout="stack" class="sf-bento-copy k121cbb96911a"><h3 id="storefront-bento-h3-0-2" class="sf-bento-title k61d113ad93ce">Who it is for</h3><div id="storefront-bento-body-0-2" data-keel-layout="stack" class="sf-bento-md kad391fe046f7"><div id="storefront-bento-md-0-2" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-bento-md-0-2-1" class="k3e7c2a82e5eb"><span id="storefront-bento-md-0-2-2" class="k3a76103d07ce">Agents </span><span id="storefront-bento-md-0-2-3" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-2-4" class="k3a76103d07ce">people </span><span id="storefront-bento-md-0-2-5" class="k3a76103d07ce">who </span><span id="storefront-bento-md-0-2-6" class="k3a76103d07ce">have </span><span id="storefront-bento-md-0-2-7" class="k3a76103d07ce">to </span><span id="storefront-bento-md-0-2-8" class="k3a76103d07ce">point </span><span id="storefront-bento-md-0-2-9" class="k3a76103d07ce">at </span><span id="storefront-bento-md-0-2-10" class="k3a76103d07ce">a </span><span id="storefront-bento-md-0-2-11" class="k3a76103d07ce">source </span><span id="storefront-bento-md-0-2-12" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-2-13" class="k3a76103d07ce">be </span><span id="storefront-bento-md-0-2-14" class="k3a76103d07ce">believed: </span><span id="storefront-bento-md-0-2-15" class="k3a76103d07ce">legal </span><span id="storefront-bento-md-0-2-16" class="k3a76103d07ce">review, </span><span id="storefront-bento-md-0-2-17" class="k3a76103d07ce">research, </span><span id="storefront-bento-md-0-2-18" class="k3a76103d07ce">finance </span><span id="storefront-bento-md-0-2-19" class="k3a76103d07ce">and </span><span id="storefront-bento-md-0-2-20" class="k3a76103d07ce">media </span><span id="storefront-bento-md-0-2-21" class="k3a76103d07ce">work.</span></p></div></div></div></article></div></section><section id="storefront-sec-1" data-keel-layout="stack" class="sf-section sf-prose-section kad391fe046f7"><h2 id="price" class="sf-section-title k4c8f7d8a78d0">Price</h2><div id="storefront-sec-body-1" data-keel-layout="stack" class="sf-section-body sf-matrix-wrap kad391fe046f7"><div id="storefront-sec-md-1" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-md-1-1" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-1-2" class="kf814e013ad0f"><span id="storefront-sec-md-1-3" class="k0440d1e29da6">Current </span><span id="storefront-sec-md-1-4" class="k0440d1e29da6">one-time </span><span id="storefront-sec-md-1-5" class="k0440d1e29da6">price, </span><span id="storefront-sec-md-1-6" class="k0440d1e29da6">including </span><span id="storefront-sec-md-1-7" class="k0440d1e29da6">any </span><span id="storefront-sec-md-1-8" class="k0440d1e29da6">applicable </span><span id="storefront-sec-md-1-9" class="k0440d1e29da6">tax.</span></strong><span id="storefront-sec-md-1-10" class="k3a76103d07ce"> No </span><span id="storefront-sec-md-1-11" class="k3a76103d07ce">subscription. </span><span id="storefront-sec-md-1-12" class="k3a76103d07ce">One </span><span id="storefront-sec-md-1-13" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-1-14" class="k3a76103d07ce">per </span><span id="storefront-sec-md-1-15" class="k3a76103d07ce">person, </span><span id="storefront-sec-md-1-16" class="k3a76103d07ce">valid </span><span id="storefront-sec-md-1-17" class="k3a76103d07ce">for </span><span id="storefront-sec-md-1-18" class="k3a76103d07ce">100 </span><span id="storefront-sec-md-1-19" class="k3a76103d07ce">years, </span><span id="storefront-sec-md-1-20" class="k3a76103d07ce">with </span><span id="storefront-sec-md-1-21" class="k3a76103d07ce">future </span><span id="storefront-sec-md-1-22" class="k3a76103d07ce">releases </span><span id="storefront-sec-md-1-23" class="k3a76103d07ce">included. </span><span id="storefront-sec-md-1-24" class="k3a76103d07ce">Instant </span><span id="storefront-sec-md-1-25" class="k3a76103d07ce">delivery </span><span id="storefront-sec-md-1-26" class="k3a76103d07ce">after </span><span id="storefront-sec-md-1-27" class="k3a76103d07ce">payment: </span><span id="storefront-sec-md-1-28" class="k3a76103d07ce">copy </span><span id="storefront-sec-md-1-29" class="k3a76103d07ce">your </span><span id="storefront-sec-md-1-30" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-1-31" class="k3a76103d07ce">token </span><span id="storefront-sec-md-1-32" class="k3a76103d07ce">from </span><span id="storefront-sec-md-1-33" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-34" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-1-35" class="k3a76103d07ce">confirmation </span><span id="storefront-sec-md-1-36" class="k3a76103d07ce">page. </span><span id="storefront-sec-md-1-37" class="k3a76103d07ce">We </span><span id="storefront-sec-md-1-38" class="k3a76103d07ce">also </span><span id="storefront-sec-md-1-39" class="k3a76103d07ce">email </span><span id="storefront-sec-md-1-40" class="k3a76103d07ce">a </span><span id="storefront-sec-md-1-41" class="k3a76103d07ce">link </span><span id="storefront-sec-md-1-42" class="k3a76103d07ce">to </span><span id="storefront-sec-md-1-43" class="k3a76103d07ce">retrieve </span><span id="storefront-sec-md-1-44" class="k3a76103d07ce">it.</span></p><p id="storefront-sec-md-1-45" class="k3e7c2a82e5eb"><span id="storefront-sec-md-1-46" class="k3a76103d07ce">Buy </span><span id="storefront-sec-md-1-47" class="k3a76103d07ce">from </span><span id="storefront-sec-md-1-48" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-49" class="k3a76103d07ce">terminal: </span><code id="storefront-sec-md-1-53" class="kf814e013ad0f"><span id="storefront-sec-md-1-50" class="k2b7048198c30">anymd </span><span id="storefront-sec-md-1-51" class="k2b7048198c30">pro </span><span id="storefront-sec-md-1-52" class="k2b7048198c30">buy</span></code><span id="storefront-sec-md-1-54" class="k3a76103d07ce"> opens </span><span id="storefront-sec-md-1-55" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-56" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-1-57" class="k3a76103d07ce">in </span><span id="storefront-sec-md-1-58" class="k3a76103d07ce">your </span><span id="storefront-sec-md-1-59" class="k3a76103d07ce">browser </span><span id="storefront-sec-md-1-60" class="k3a76103d07ce">and </span><span id="storefront-sec-md-1-61" class="k3a76103d07ce">turns </span><span id="storefront-sec-md-1-62" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-63" class="k3a76103d07ce">payment </span><span id="storefront-sec-md-1-64" class="k3a76103d07ce">into </span><span id="storefront-sec-md-1-65" class="k3a76103d07ce">a </span><span id="storefront-sec-md-1-66" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-1-67" class="k3a76103d07ce">token </span><span id="storefront-sec-md-1-68" class="k3a76103d07ce">on </span><span id="storefront-sec-md-1-69" class="k3a76103d07ce">this </span><span id="storefront-sec-md-1-70" class="k3a76103d07ce">machine, </span><span id="storefront-sec-md-1-71" class="k3a76103d07ce">so </span><span id="storefront-sec-md-1-72" class="k3a76103d07ce">there </span><span id="storefront-sec-md-1-73" class="k3a76103d07ce">is </span><span id="storefront-sec-md-1-74" class="k3a76103d07ce">nothing </span><span id="storefront-sec-md-1-75" class="k3a76103d07ce">to </span><span id="storefront-sec-md-1-76" class="k3a76103d07ce">copy. </span><span id="storefront-sec-md-1-77" class="k3a76103d07ce">It </span><span id="storefront-sec-md-1-78" class="k3a76103d07ce">prints </span><span id="storefront-sec-md-1-79" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-80" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-1-81" class="k3a76103d07ce">page </span><span id="storefront-sec-md-1-82" class="k3a76103d07ce">and </span><span id="storefront-sec-md-1-83" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-84" class="k3a76103d07ce">purchase </span><span id="storefront-sec-md-1-85" class="k3a76103d07ce">command </span><span id="storefront-sec-md-1-86" class="k3a76103d07ce">instead </span><span id="storefront-sec-md-1-87" class="k3a76103d07ce">if </span><span id="storefront-sec-md-1-88" class="k3a76103d07ce">the </span><span id="storefront-sec-md-1-89" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-1-90" class="k3a76103d07ce">cannot </span><span id="storefront-sec-md-1-91" class="k3a76103d07ce">be </span><span id="storefront-sec-md-1-92" class="k3a76103d07ce">reached.</span></p></div></div></section><section id="storefront-sec-2" data-keel-layout="stack" class="sf-section sf-prose-section kad391fe046f7"><h2 id="activate" class="sf-section-title k4c8f7d8a78d0">Activate</h2><div id="storefront-sec-body-2" data-keel-layout="stack" class="sf-section-body sf-matrix-wrap kad391fe046f7"><div id="storefront-sec-md-2" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-md-2-1" class="k3e7c2a82e5eb"><span id="storefront-sec-md-2-2" class="k3a76103d07ce">Run </span><span id="storefront-sec-md-2-3" class="k3a76103d07ce">it </span><span id="storefront-sec-md-2-4" class="k3a76103d07ce">once:</span></p><pre id="storefront-sec-md-2-10" data-keel-surface="code-block" class="keel-surface-code-block k1133b25d6e88"><code id="storefront-sec-md-2-9" class="language-bash kf814e013ad0f"><span id="storefront-sec-md-2-5" class="keel-code-function k01133a73d68a">anymd pro activate </span><span id="storefront-sec-md-2-6" class="keel-code-string ka2552093ef0f">'&lt;your token&gt;'</span><span id="storefront-sec-md-2-7" class="k033481162ad8">
+</span><span id="storefront-sec-md-2-8" class="keel-code-function k01133a73d68a">anymd pro status</span></code></pre><p id="storefront-sec-md-2-11" class="k3e7c2a82e5eb"><span id="storefront-sec-md-2-12" class="k3a76103d07ce">or </span><span id="storefront-sec-md-2-13" class="k3a76103d07ce">set </span><span id="storefront-sec-md-2-14" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-15" class="k3a76103d07ce">token </span><span id="storefront-sec-md-2-16" class="k3a76103d07ce">in </span><span id="storefront-sec-md-2-17" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-18" class="k3a76103d07ce">environment:</span></p><pre id="storefront-sec-md-2-24" data-keel-surface="code-block" class="keel-surface-code-block k1133b25d6e88"><code id="storefront-sec-md-2-23" class="language-bash kf814e013ad0f"><span id="storefront-sec-md-2-19" class="keel-code-keyword k01133a73d68a">export</span><span id="storefront-sec-md-2-20" class="keel-code-function k01133a73d68a"> ANYMD_PRO_TOKEN</span><span id="storefront-sec-md-2-21" class="keel-code-keyword k01133a73d68a">=</span><span id="storefront-sec-md-2-22" class="keel-code-string ka2552093ef0f">'&lt;your token&gt;'</span></code></pre><p id="storefront-sec-md-2-25" class="k3e7c2a82e5eb"><span id="storefront-sec-md-2-26" class="k3a76103d07ce">The </span><span id="storefront-sec-md-2-27" class="k3a76103d07ce">environment </span><span id="storefront-sec-md-2-28" class="k3a76103d07ce">variable </span><span id="storefront-sec-md-2-29" class="k3a76103d07ce">wins </span><span id="storefront-sec-md-2-30" class="k3a76103d07ce">over </span><span id="storefront-sec-md-2-31" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-32" class="k3a76103d07ce">saved </span><span id="storefront-sec-md-2-33" class="k3a76103d07ce">file. </span><code id="storefront-sec-md-2-35" class="kf814e013ad0f"><span id="storefront-sec-md-2-34" class="k2b7048198c30">status</span></code><span id="storefront-sec-md-2-36" class="k3a76103d07ce"> shows </span><span id="storefront-sec-md-2-37" class="k3a76103d07ce">whether </span><span id="storefront-sec-md-2-38" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-2-39" class="k3a76103d07ce">is </span><span id="storefront-sec-md-2-40" class="k3a76103d07ce">active; </span><span id="storefront-sec-md-2-41" class="k3a76103d07ce">it </span><span id="storefront-sec-md-2-42" class="k3a76103d07ce">never </span><span id="storefront-sec-md-2-43" class="k3a76103d07ce">prints </span><span id="storefront-sec-md-2-44" class="k3a76103d07ce">the </span><span id="storefront-sec-md-2-45" class="k3a76103d07ce">token.</span></p></div></div></section><section id="storefront-sec-3" data-keel-layout="stack" class="sf-section sf-prose-section kad391fe046f7"><h2 id="faq" class="sf-section-title k4c8f7d8a78d0">FAQ</h2><div id="storefront-sec-body-3" data-keel-layout="stack" class="sf-section-body sf-matrix-wrap kad391fe046f7"><div id="storefront-sec-md-3" data-keel-layout="stack" class="kb442e8ff1cd8"><p id="storefront-sec-md-3-1" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-2" class="kf814e013ad0f"><span id="storefront-sec-md-3-3" class="k0440d1e29da6">Does </span><span id="storefront-sec-md-3-4" class="k0440d1e29da6">it </span><span id="storefront-sec-md-3-5" class="k0440d1e29da6">work </span><span id="storefront-sec-md-3-6" class="k0440d1e29da6">offline? </span><span id="storefront-sec-md-3-7" class="k0440d1e29da6">Do </span><span id="storefront-sec-md-3-8" class="k0440d1e29da6">I </span><span id="storefront-sec-md-3-9" class="k0440d1e29da6">need </span><span id="storefront-sec-md-3-10" class="k0440d1e29da6">an </span><span id="storefront-sec-md-3-11" class="k0440d1e29da6">account?</span></strong><span id="storefront-sec-md-3-12" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-13" class="k3a76103d07ce">Offline, </span><span id="storefront-sec-md-3-14" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-15" class="k3a76103d07ce">no </span><span id="storefront-sec-md-3-16" class="k3a76103d07ce">account. </span><span id="storefront-sec-md-3-17" class="k3a76103d07ce">Your </span><span id="storefront-sec-md-3-18" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-3-19" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-20" class="k3a76103d07ce">checked </span><span id="storefront-sec-md-3-21" class="k3a76103d07ce">on </span><span id="storefront-sec-md-3-22" class="k3a76103d07ce">your </span><span id="storefront-sec-md-3-23" class="k3a76103d07ce">machine </span><span id="storefront-sec-md-3-24" class="k3a76103d07ce">against </span><span id="storefront-sec-md-3-25" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-26" class="k3a76103d07ce">public </span><span id="storefront-sec-md-3-27" class="k3a76103d07ce">key </span><span id="storefront-sec-md-3-28" class="k3a76103d07ce">built </span><span id="storefront-sec-md-3-29" class="k3a76103d07ce">into </span><span id="storefront-sec-md-3-30" class="k3a76103d07ce">anymd. </span><span id="storefront-sec-md-3-31" class="k3a76103d07ce">Nothing </span><span id="storefront-sec-md-3-32" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-33" class="k3a76103d07ce">sent </span><span id="storefront-sec-md-3-34" class="k3a76103d07ce">anywhere </span><span id="storefront-sec-md-3-35" class="k3a76103d07ce">when </span><span id="storefront-sec-md-3-36" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-37" class="k3a76103d07ce">use </span><span id="storefront-sec-md-3-38" class="k3a76103d07ce">Pro.</span></p><p id="storefront-sec-md-3-39" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-40" class="kf814e013ad0f"><span id="storefront-sec-md-3-41" class="k0440d1e29da6">Is </span><span id="storefront-sec-md-3-42" class="k0440d1e29da6">the </span><span id="storefront-sec-md-3-43" class="k0440d1e29da6">core </span><span id="storefront-sec-md-3-44" class="k0440d1e29da6">still </span><span id="storefront-sec-md-3-45" class="k0440d1e29da6">free?</span></strong><span id="storefront-sec-md-3-46" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-47" class="k3a76103d07ce">Yes. </span><span id="storefront-sec-md-3-48" class="k3a76103d07ce">anymd </span><span id="storefront-sec-md-3-49" class="k3a76103d07ce">stays </span><span id="storefront-sec-md-3-50" class="k3a76103d07ce">MIT </span><span id="storefront-sec-md-3-51" class="k3a76103d07ce">licensed. </span><span id="storefront-sec-md-3-52" class="k3a76103d07ce">Reading, </span><span id="storefront-sec-md-3-53" class="k3a76103d07ce">outlining, </span><span id="storefront-sec-md-3-54" class="k3a76103d07ce">searching </span><span id="storefront-sec-md-3-55" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-56" class="k3a76103d07ce">inspecting </span><span id="storefront-sec-md-3-57" class="k3a76103d07ce">documents, </span><span id="storefront-sec-md-3-58" class="k3a76103d07ce">OCR, </span><span id="storefront-sec-md-3-59" class="k3a76103d07ce">transcripts, </span><span id="storefront-sec-md-3-60" class="k3a76103d07ce">the </span><span id="storefront-sec-md-3-61" class="k3a76103d07ce">MCP </span><span id="storefront-sec-md-3-62" class="k3a76103d07ce">server </span><span id="storefront-sec-md-3-63" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-64" class="k3a76103d07ce">the </span><span id="storefront-sec-md-3-65" class="k3a76103d07ce">CLI </span><span id="storefront-sec-md-3-66" class="k3a76103d07ce">stay </span><span id="storefront-sec-md-3-67" class="k3a76103d07ce">free </span><span id="storefront-sec-md-3-68" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-69" class="k3a76103d07ce">ungated, </span><span id="storefront-sec-md-3-70" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-71" class="k3a76103d07ce">nothing </span><span id="storefront-sec-md-3-72" class="k3a76103d07ce">that </span><span id="storefront-sec-md-3-73" class="k3a76103d07ce">was </span><span id="storefront-sec-md-3-74" class="k3a76103d07ce">free </span><span id="storefront-sec-md-3-75" class="k3a76103d07ce">has </span><span id="storefront-sec-md-3-76" class="k3a76103d07ce">moved </span><span id="storefront-sec-md-3-77" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-78" class="k3a76103d07ce">Pro. </span><span id="storefront-sec-md-3-79" class="k3a76103d07ce">Ordinary </span><code id="storefront-sec-md-3-81" class="kf814e013ad0f"><span id="storefront-sec-md-3-80" class="k2b7048198c30">read</span></code><span id="storefront-sec-md-3-82" class="k3a76103d07ce"> and </span><code id="storefront-sec-md-3-84" class="kf814e013ad0f"><span id="storefront-sec-md-3-83" class="k2b7048198c30">outline</span></code><span id="storefront-sec-md-3-85" class="k3a76103d07ce"> of </span><span id="storefront-sec-md-3-86" class="k3a76103d07ce">video </span><span id="storefront-sec-md-3-87" class="k3a76103d07ce">(metadata, </span><span id="storefront-sec-md-3-88" class="k3a76103d07ce">chapters, </span><span id="storefront-sec-md-3-89" class="k3a76103d07ce">subtitles) </span><span id="storefront-sec-md-3-90" class="k3a76103d07ce">are </span><span id="storefront-sec-md-3-91" class="k3a76103d07ce">still </span><span id="storefront-sec-md-3-92" class="k3a76103d07ce">free.</span></p><p id="storefront-sec-md-3-93" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-94" class="kf814e013ad0f"><span id="storefront-sec-md-3-95" class="k0440d1e29da6">What </span><span id="storefront-sec-md-3-96" class="k0440d1e29da6">happens </span><span id="storefront-sec-md-3-97" class="k0440d1e29da6">without </span><span id="storefront-sec-md-3-98" class="k0440d1e29da6">a </span><span id="storefront-sec-md-3-99" class="k0440d1e29da6">licence?</span></strong><span id="storefront-sec-md-3-100" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-101" class="k3a76103d07ce">A </span><span id="storefront-sec-md-3-102" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-103" class="k3a76103d07ce">operation </span><span id="storefront-sec-md-3-104" class="k3a76103d07ce">returns </span><span id="storefront-sec-md-3-105" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-106" class="k3a76103d07ce">short </span><span id="storefront-sec-md-3-107" class="k3a76103d07ce">message </span><span id="storefront-sec-md-3-108" class="k3a76103d07ce">with </span><span id="storefront-sec-md-3-109" class="k3a76103d07ce">the </span><span id="storefront-sec-md-3-110" class="k3a76103d07ce">current </span><span id="storefront-sec-md-3-111" class="k3a76103d07ce">one-time </span><span id="storefront-sec-md-3-112" class="k3a76103d07ce">price, </span><code id="storefront-sec-md-3-116" class="kf814e013ad0f"><span id="storefront-sec-md-3-113" class="k2b7048198c30">anymd </span><span id="storefront-sec-md-3-114" class="k2b7048198c30">pro </span><span id="storefront-sec-md-3-115" class="k2b7048198c30">buy</span></code><span id="storefront-sec-md-3-117" class="k3a76103d07ce"> and </span><span id="storefront-sec-md-3-118" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-119" class="k3a76103d07ce">link </span><span id="storefront-sec-md-3-120" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-121" class="k3a76103d07ce">this </span><span id="storefront-sec-md-3-122" class="k3a76103d07ce">page, </span><span id="storefront-sec-md-3-123" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-124" class="k3a76103d07ce">does </span><span id="storefront-sec-md-3-125" class="k3a76103d07ce">no </span><span id="storefront-sec-md-3-126" class="k3a76103d07ce">work. </span><span id="storefront-sec-md-3-127" class="k3a76103d07ce">Nothing </span><span id="storefront-sec-md-3-128" class="k3a76103d07ce">else </span><span id="storefront-sec-md-3-129" class="k3a76103d07ce">changes.</span></p><p id="storefront-sec-md-3-130" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-131" class="kf814e013ad0f"><span id="storefront-sec-md-3-132" class="k0440d1e29da6">Which </span><span id="storefront-sec-md-3-133" class="k0440d1e29da6">version </span><span id="storefront-sec-md-3-134" class="k0440d1e29da6">do </span><span id="storefront-sec-md-3-135" class="k0440d1e29da6">I </span><span id="storefront-sec-md-3-136" class="k0440d1e29da6">need?</span></strong><span id="storefront-sec-md-3-137" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-138" class="k3a76103d07ce">anymd </span><span id="storefront-sec-md-3-139" class="k3a76103d07ce">8.4.0 </span><span id="storefront-sec-md-3-140" class="k3a76103d07ce">or </span><span id="storefront-sec-md-3-141" class="k3a76103d07ce">later. </span><code id="storefront-sec-md-3-145" class="kf814e013ad0f"><span id="storefront-sec-md-3-142" class="k2b7048198c30">anymd </span><span id="storefront-sec-md-3-143" class="k2b7048198c30">pro </span><span id="storefront-sec-md-3-144" class="k2b7048198c30">status</span></code><span id="storefront-sec-md-3-146" class="k3a76103d07ce"> tells </span><span id="storefront-sec-md-3-147" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-148" class="k3a76103d07ce">whether </span><span id="storefront-sec-md-3-149" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-150" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-151" class="k3a76103d07ce">active.</span></p><p id="storefront-sec-md-3-152" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-153" class="kf814e013ad0f"><span id="storefront-sec-md-3-154" class="k0440d1e29da6">Can </span><span id="storefront-sec-md-3-155" class="k0440d1e29da6">my </span><span id="storefront-sec-md-3-156" class="k0440d1e29da6">team </span><span id="storefront-sec-md-3-157" class="k0440d1e29da6">use </span><span id="storefront-sec-md-3-158" class="k0440d1e29da6">one </span><span id="storefront-sec-md-3-159" class="k0440d1e29da6">licence?</span></strong><span id="storefront-sec-md-3-160" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-161" class="k3a76103d07ce">A </span><span id="storefront-sec-md-3-162" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-3-163" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-164" class="k3a76103d07ce">for </span><span id="storefront-sec-md-3-165" class="k3a76103d07ce">one </span><span id="storefront-sec-md-3-166" class="k3a76103d07ce">person. </span><span id="storefront-sec-md-3-167" class="k3a76103d07ce">Buy </span><span id="storefront-sec-md-3-168" class="k3a76103d07ce">one </span><span id="storefront-sec-md-3-169" class="k3a76103d07ce">for </span><span id="storefront-sec-md-3-170" class="k3a76103d07ce">each </span><span id="storefront-sec-md-3-171" class="k3a76103d07ce">person </span><span id="storefront-sec-md-3-172" class="k3a76103d07ce">who </span><span id="storefront-sec-md-3-173" class="k3a76103d07ce">uses </span><span id="storefront-sec-md-3-174" class="k3a76103d07ce">Pro.</span></p><p id="storefront-sec-md-3-175" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-176" class="kf814e013ad0f"><span id="storefront-sec-md-3-177" class="k0440d1e29da6">Refunds?</span></strong><span id="storefront-sec-md-3-178" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-179" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-180" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-181" class="k3a76103d07ce">digital </span><span id="storefront-sec-md-3-182" class="k3a76103d07ce">content </span><span id="storefront-sec-md-3-183" class="k3a76103d07ce">delivered </span><span id="storefront-sec-md-3-184" class="k3a76103d07ce">immediately: </span><span id="storefront-sec-md-3-185" class="k3a76103d07ce">at </span><span id="storefront-sec-md-3-186" class="k3a76103d07ce">checkout </span><span id="storefront-sec-md-3-187" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-188" class="k3a76103d07ce">ask </span><span id="storefront-sec-md-3-189" class="k3a76103d07ce">us </span><span id="storefront-sec-md-3-190" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-191" class="k3a76103d07ce">supply </span><span id="storefront-sec-md-3-192" class="k3a76103d07ce">it </span><span id="storefront-sec-md-3-193" class="k3a76103d07ce">straight </span><span id="storefront-sec-md-3-194" class="k3a76103d07ce">away </span><span id="storefront-sec-md-3-195" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-196" class="k3a76103d07ce">acknowledge </span><span id="storefront-sec-md-3-197" class="k3a76103d07ce">that </span><span id="storefront-sec-md-3-198" class="k3a76103d07ce">you </span><span id="storefront-sec-md-3-199" class="k3a76103d07ce">lose </span><span id="storefront-sec-md-3-200" class="k3a76103d07ce">your </span><span id="storefront-sec-md-3-201" class="k3a76103d07ce">14-day </span><span id="storefront-sec-md-3-202" class="k3a76103d07ce">right </span><span id="storefront-sec-md-3-203" class="k3a76103d07ce">to </span><span id="storefront-sec-md-3-204" class="k3a76103d07ce">cancel </span><span id="storefront-sec-md-3-205" class="k3a76103d07ce">once </span><span id="storefront-sec-md-3-206" class="k3a76103d07ce">your </span><span id="storefront-sec-md-3-207" class="k3a76103d07ce">licence </span><span id="storefront-sec-md-3-208" class="k3a76103d07ce">token </span><span id="storefront-sec-md-3-209" class="k3a76103d07ce">is </span><span id="storefront-sec-md-3-210" class="k3a76103d07ce">delivered. </span><span id="storefront-sec-md-3-211" class="k3a76103d07ce">If </span><span id="storefront-sec-md-3-212" class="k3a76103d07ce">Pro </span><span id="storefront-sec-md-3-213" class="k3a76103d07ce">doesn't </span><span id="storefront-sec-md-3-214" class="k3a76103d07ce">work </span><span id="storefront-sec-md-3-215" class="k3a76103d07ce">as </span><span id="storefront-sec-md-3-216" class="k3a76103d07ce">described </span><span id="storefront-sec-md-3-217" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-218" class="k3a76103d07ce">we </span><span id="storefront-sec-md-3-219" class="k3a76103d07ce">can't </span><span id="storefront-sec-md-3-220" class="k3a76103d07ce">fix </span><span id="storefront-sec-md-3-221" class="k3a76103d07ce">it, </span><span id="storefront-sec-md-3-222" class="k3a76103d07ce">email </span><span id="storefront-sec-md-3-223" class="k3a76103d07ce">hi@sylphx.com </span><span id="storefront-sec-md-3-224" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-225" class="k3a76103d07ce">we'll </span><span id="storefront-sec-md-3-226" class="k3a76103d07ce">put </span><span id="storefront-sec-md-3-227" class="k3a76103d07ce">it </span><span id="storefront-sec-md-3-228" class="k3a76103d07ce">right </span><span id="storefront-sec-md-3-229" class="k3a76103d07ce">or </span><span id="storefront-sec-md-3-230" class="k3a76103d07ce">refund </span><span id="storefront-sec-md-3-231" class="k3a76103d07ce">you. </span><span id="storefront-sec-md-3-232" class="k3a76103d07ce">See </span><span id="storefront-sec-md-3-233" class="k3a76103d07ce">the </span><a id="storefront-sec-md-3-234" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/pro-terms"><span id="storefront-sec-md-3-235" class="kdbe7eda5087a">terms</span></a><span id="storefront-sec-md-3-236" class="k3a76103d07ce">.</span></p><p id="storefront-sec-md-3-237" class="k3e7c2a82e5eb"><strong id="storefront-sec-md-3-238" class="kf814e013ad0f"><span id="storefront-sec-md-3-239" class="k0440d1e29da6">Who </span><span id="storefront-sec-md-3-240" class="k0440d1e29da6">sells </span><span id="storefront-sec-md-3-241" class="k0440d1e29da6">it?</span></strong><span id="storefront-sec-md-3-242" class="k3a76103d07ce"> </span><span id="storefront-sec-md-3-243" class="k3a76103d07ce">Sylphx </span><span id="storefront-sec-md-3-244" class="k3a76103d07ce">Limited, </span><span id="storefront-sec-md-3-245" class="k3a76103d07ce">a </span><span id="storefront-sec-md-3-246" class="k3a76103d07ce">company </span><span id="storefront-sec-md-3-247" class="k3a76103d07ce">registered </span><span id="storefront-sec-md-3-248" class="k3a76103d07ce">in </span><span id="storefront-sec-md-3-249" class="k3a76103d07ce">England </span><span id="storefront-sec-md-3-250" class="k3a76103d07ce">and </span><span id="storefront-sec-md-3-251" class="k3a76103d07ce">Wales </span><span id="storefront-sec-md-3-252" class="k3a76103d07ce">(company </span><span id="storefront-sec-md-3-253" class="k3a76103d07ce">number </span><span id="storefront-sec-md-3-254" class="k3a76103d07ce">16438428). </span><span id="storefront-sec-md-3-255" class="k3a76103d07ce">See </span><span id="storefront-sec-md-3-256" class="k3a76103d07ce">the </span><a id="storefront-sec-md-3-257" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/pro-terms"><span id="storefront-sec-md-3-258" class="kdbe7eda5087a">anymd </span><span id="storefront-sec-md-3-259" class="kdbe7eda5087a">Pro </span><span id="storefront-sec-md-3-260" class="kdbe7eda5087a">terms</span></a><span id="storefront-sec-md-3-261" class="k3a76103d07ce"> and </span><a id="storefront-sec-md-3-262" data-keel-surface="nav-link" class="keel-surface-nav-link kdbe7eda5087a" href="https://sylphxai.github.io/anymd/legal/privacy"><span id="storefront-sec-md-3-263" class="kdbe7eda5087a">Privacy</span></a><span id="storefront-sec-md-3-264" class="k3a76103d07ce">.</span></p></div></div></section></main><footer id="storefront-footer" data-keel-layout="stack" class="sf-footer kad391fe046f7"><div id="storefront-footer-inner" data-keel-layout="row" class="sf-footer-inner k84da60f30064"><span id="storefront-footer-copy" class="sf-footer-copy kdbdb37d6917b">Sylphx Limited · hi@sylphx.com · 128 City Road, London EC1V 2NX, United Kingdom</span><span class="anymd-sf-cookie-wrap"><button type="button" class="anymd-sf-cookie-link" data-anymd-open-cookie="1">Cookie settings and Your Privacy Choices</button></span></div></footer></div></div>
 <script data-anymd-ga4="1">
 (() => {
   const GA4_ID = "G-R4TD2Z8RR7";
@@ -196,6 +1120,7 @@
     if (t instanceof Element && t.closest("[data-anymd-open-cookie]")) {
       ev.preventDefault();
       syncBanner(true);
+      window.scrollTo({ top: 0, behavior: "auto" });
     }
   });
   document.addEventListener("submit", (ev) => {

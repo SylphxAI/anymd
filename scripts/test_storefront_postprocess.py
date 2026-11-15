@@ -31,6 +31,10 @@ class StorefrontPostprocessTest(unittest.TestCase):
         once = sp.postprocess_pricing_html(html, fm)
         twice = sp.postprocess_pricing_html(once, fm)
         self.assertEqual(once, twice)
+        self.assertIn('data-anymd-storefront="1"', once)
+        self.assertIn('class="anymd-sf-nav"', once)
+        self.assertIn('<style data-anymd-storefront>', once)
+        self.assertNotIn('<nav id="docs-nav"', once)
         self.assertIn(
             '<meta property="og:image" content="https://sylphxai.github.io/anymd/og-pro.png">',
             once,
@@ -49,6 +53,10 @@ class StorefrontPostprocessTest(unittest.TestCase):
         once = sp.postprocess_recover_html(html, fm)
         twice = sp.postprocess_recover_html(once, fm)
         self.assertEqual(once, twice)
+        self.assertIn('<div id="docs-root" data-anymd-storefront="1"', once)
+        self.assertIn('class="anymd-sf-nav"', once)
+        self.assertIn('<style data-anymd-storefront>', once)
+        self.assertNotIn('<nav id="docs-nav"', once)
         self.assertNotIn("Money", once)
 
     def test_postprocess_money_js_is_idempotent(self) -> None:

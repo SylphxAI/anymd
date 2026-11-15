@@ -31,140 +31,40 @@ LEGACY_OFFER_DESCRIPTION = (
     "Current one-time price comes from the live Money catalogue."
 )
 
-STOREFRONT_STYLE = """<style data-anymd-storefront>
-#docs-root[data-anymd-storefront="1"] #docs-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-  max-width: 68rem;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0.9rem 1.5rem;
-}
-#docs-root[data-anymd-storefront="1"] .anymd-sf-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1.25rem;
-  font-size: 0.92rem;
-}
-#docs-root[data-anymd-storefront="1"] .anymd-sf-nav a {
-  color: var(--keel-color-on-surface-variant, #93a0b5);
-  text-decoration: none;
-}
-#docs-root[data-anymd-storefront="1"] .anymd-sf-nav a:hover {
-  color: #c3f53c;
-}
-#docs-root[data-anymd-storefront="1"] #docs-body {
-  display: block;
-  max-width: 52rem;
-  margin: 0 auto;
-  padding: 1.75rem 1.5rem 3rem;
-}
-#docs-root[data-anymd-storefront="1"] #docs-article {
-  max-width: 100%;
-}
-#docs-root[data-anymd-storefront="1"] #money-checkout-pricing {
-  margin: 1.5rem 0 2.5rem;
-  padding: 1.5rem;
-  border: 1px solid rgba(195, 245, 60, 0.35);
-  border-radius: 14px;
-  background: var(--keel-color-surface, #121826);
-}
-#docs-root[data-anymd-storefront="1"] #money-checkout-pricing-submit {
-  background: #c3f53c;
-  color: #0a0d07;
-  font-weight: 700;
-  border-color: #c3f53c;
-}
-#docs-root[data-anymd-storefront="1"] #money-checkout-pricing-submit[disabled] {
-  opacity: 0.65;
-}
-#docs-root[data-anymd-storefront="1"] #docs-footer {
-  max-width: 52rem;
-  margin: 0 auto;
-  padding: 1.5rem;
-  border-top: 1px solid var(--keel-color-outline, rgba(140, 170, 220, 0.14));
-  font-size: 0.875rem;
-  color: var(--keel-color-on-surface-variant, #93a0b5);
-}
-.anymd-submit-wrap {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
-}
-.anymd-wallet-trust {
-  font-size: 0.78rem;
-  letter-spacing: 0.01em;
-  color: var(--keel-color-on-surface-variant, #93a0b5);
-}
-.anymd-sf-cookie-wrap {
-  margin-left: auto;
-}
-.anymd-sf-cookie-link {
-  color: var(--keel-color-on-surface-variant, #93a0b5);
-  font-size: 0.82rem;
-  text-decoration: underline;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
-.anymd-sf-consent {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  left: 16px;
-  z-index: 120;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 55rem;
-  margin: 0 auto;
-  padding: 14px 16px;
-  border: 1px solid rgba(140, 170, 220, 0.25);
-  border-radius: 10px;
-  background: var(--keel-color-surface, #121826);
-  color: var(--keel-color-on-surface, #e6edf7);
-  box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-.anymd-sf-consent[hidden] { display: none; }
-.anymd-sf-consent a { color: #c3f53c; }
-.anymd-sf-consent-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.anymd-sf-consent button {
-  padding: 6px 14px;
-  border: 1px solid rgba(140, 170, 220, 0.3);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  color: inherit;
-  cursor: pointer;
-}
-.anymd-sf-consent button[aria-pressed="true"] {
-  border-color: #c3f53c;
-  font-weight: 600;
-}
-@media (max-width: 640px) {
-  .anymd-submit-wrap { align-items: flex-start; }
-  .anymd-sf-cookie-wrap { margin-left: 0; }
-}
-</style>"""
+STOREFRONT_CSS_PATH = Path(__file__).resolve().parent / "storefront.css"
 
-STOREFRONT_NAV = (
-    '<nav class="anymd-sf-nav" aria-label="Storefront navigation">'
-    '<a href="/anymd/">Home</a>'
-    '<a href="/anymd/guide/getting-started">Docs</a>'
-    '<a href="/anymd/playground">Playground</a>'
+STOREFRONT_NAV_ITEMS = (
+    ("/anymd/", "Home"),
+    ("/anymd/guide/getting-started", "Docs"),
+    ("/anymd/playground", "Playground"),
+    ("/anymd/pricing", "Pricing"),
+    ("/anymd/recover", "Recover licence"),
+    ("https://github.com/SylphxAI/anymd", "GitHub"),
+)
+
+STOREFRONT_FOOTER_LINKS = (
+    '<nav class="anymd-sf-footer-links" aria-label="Legal and contact">'
     '<a href="/anymd/recover">Recover licence</a>'
-    '<a href="https://github.com/SylphxAI/anymd">GitHub</a>'
+    '<a href="/anymd/legal/pro-terms">anymd Pro terms</a>'
+    '<a href="/anymd/legal/privacy">Privacy</a>'
+    '<a href="mailto:hi@sylphx.com">hi@sylphx.com</a>'
     "</nav>"
 )
+
+
+def load_storefront_style() -> str:
+    """Load the storefront stylesheet wrapped in <style data-anymd-storefront>."""
+    css = STOREFRONT_CSS_PATH.read_text(encoding="utf-8").strip()
+    return f"<style data-anymd-storefront>\n{css}\n</style>"
+
+
+def build_storefront_nav(current_href: str) -> str:
+    """Build storefront top navigation with aria-current on the active route."""
+    links = []
+    for href, label in STOREFRONT_NAV_ITEMS:
+        current = ' aria-current="page"' if href == current_href else ""
+        links.append(f'<a href="{href}"{current}>{label}</a>')
+    return '<nav class="anymd-sf-nav" aria-label="Storefront navigation">' + "".join(links) + "</nav>"
 
 MONEY_ALLOWLIST_OLD = """export const UTM_ALLOWLIST = [
   "utm_source",
@@ -340,10 +240,9 @@ def parse_ga4_measurement_id(config_json: Path) -> str:
     return ga4
 
 
-def _build_ga4_storefront_snippet(ga4_id: str) -> str:
-    """Build default-deny consent-gated GA4 script + cookie controls for prebuilt pages."""
-    safe_id = json.dumps(ga4_id)
-    return f"""<div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
+def _build_ga4_consent_banner() -> str:
+    """Build the top-of-page flow-positioned cookie consent banner."""
+    return """<div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
   <span>
     This page uses Google Analytics measurement when enabled to see how people find us and improve checkout. Depending on your choice, Google may set cookies and process identifiers such as your IP address. We never send your name or email. Sylphx Limited is the controller.
     <a href="/anymd/legal/privacy">Privacy</a>
@@ -353,8 +252,13 @@ def _build_ga4_storefront_snippet(ga4_id: str) -> str:
     <button type="button" data-anymd-consent="analytics" aria-pressed="false">Analytics only</button>
     <button type="button" data-anymd-consent="none" aria-pressed="false">Reject</button>
   </span>
-</div>
-<script data-anymd-ga4="1">
+</div>"""
+
+
+def _build_ga4_storefront_script(ga4_id: str) -> str:
+    """Build default-deny consent-gated GA4 script for prebuilt pages."""
+    safe_id = json.dumps(ga4_id)
+    return f"""<script data-anymd-ga4="1">
 (() => {{
   const GA4_ID = {safe_id};
   if (!GA4_ID) return;
@@ -508,6 +412,7 @@ def _build_ga4_storefront_snippet(ga4_id: str) -> str:
     if (t instanceof Element && t.closest("[data-anymd-open-cookie]")) {{
       ev.preventDefault();
       syncBanner(true);
+      window.scrollTo({{ top: 0, behavior: "auto" }});
     }}
   }});
   document.addEventListener("submit", (ev) => {{
@@ -540,7 +445,7 @@ def _build_ga4_storefront_snippet(ga4_id: str) -> str:
 
 def inject_storefront_ga4(html_text: str, ga4_id: str) -> str:
     """Inject default-deny consent-gated GA4 + cookie settings link cleanly without static gtag scripts."""
-    if not ga4_id or 'data-anymd-ga4="1"' in html_text:
+    if not ga4_id:
         return html_text
     cookie_btn = '<span class="anymd-sf-cookie-wrap"><button type="button" class="anymd-sf-cookie-link" data-anymd-open-cookie="1">Cookie settings and Your Privacy Choices</button></span>'
     if "data-anymd-open-cookie" not in html_text:
@@ -553,10 +458,22 @@ def inject_storefront_ga4(html_text: str, ga4_id: str) -> str:
             footer = extract_balanced_tag(html_text, '<footer id="docs-footer"', "footer")
             if footer is not None:
                 f_html, s, e = footer
-                html_text = html_text[:s] + f_html[:-len("</footer>")] + f"<p>{cookie_btn}</p></footer>" + html_text[e:]
-    snippet = _build_ga4_storefront_snippet(ga4_id)
+                html_text = html_text[:s] + f_html[:-len("</footer>")] + cookie_btn + "</footer>" + html_text[e:]
+    existing_banner = extract_balanced_tag(html_text, '<div class="anymd-sf-consent"', "div")
+    if existing_banner is not None:
+        _, bs, be = existing_banner
+        html_text = html_text[:bs] + html_text[be:]
+    html_text = re.sub(r'\s*<script data-anymd-ga4="1">.*?</script>', "", html_text, flags=re.DOTALL)
+    banner = _build_ga4_consent_banner()
+    if '<div id="storefront-root"' in html_text:
+        html_text = html_text.replace('<div id="storefront-root"', f'{banner}<div id="storefront-root"', 1)
+    elif '<div id="docs-root"' in html_text:
+        html_text = html_text.replace('<div id="docs-root"', f'{banner}<div id="docs-root"', 1)
+    elif "<body>" in html_text:
+        html_text = html_text.replace("<body>", f"<body>\n{banner}", 1)
+    script = _build_ga4_storefront_script(ga4_id)
     if "</body>" in html_text:
-        html_text = html_text.replace("</body>", f"{snippet}\n</body>", 1)
+        html_text = html_text.replace("</body>", f"{script}\n</body>", 1)
     return html_text
 
 
@@ -623,6 +540,92 @@ def extract_balanced_tag(document: str, start_marker: str, tag_name: str) -> tup
             if depth == 0:
                 return document[start:pos], start, pos
     return None
+
+
+def _strip_docs_chrome(html_text: str) -> str:
+    """Remove docs sidebar, TOC, edit link, and pager from storefront pages."""
+    for marker, tag_name in (
+        ('<nav id="docs-nav"', "nav"),
+        ('<nav id="docs-toc"', "nav"),
+        ('<a id="docs-edit"', "a"),
+        ('<nav id="docs-pager"', "nav"),
+    ):
+        extracted = extract_balanced_tag(html_text, marker, tag_name)
+        if extracted is not None:
+            _, s, e = extracted
+            html_text = html_text[:s] + html_text[e:]
+    return html_text
+
+
+def _inject_storefront_style(html_text: str) -> str:
+    """Insert or replace the inline storefront stylesheet at the end of <head>."""
+    style_tag = load_storefront_style()
+    if "<style data-anymd-storefront>" in html_text:
+        return re.sub(
+            r"<style data-anymd-storefront>.*?</style>",
+            lambda _m: style_tag,
+            html_text,
+            count=1,
+            flags=re.DOTALL,
+        )
+    if "</head>" in html_text:
+        return html_text.replace("</head>", f"{style_tag}\n</head>", 1)
+    return html_text
+
+
+def _inject_storefront_nav(html_text: str, current_href: str) -> str:
+    """Insert or refresh storefront top navigation inside the active header."""
+    nav_html = build_storefront_nav(current_href)
+    if 'class="anymd-sf-nav"' in html_text:
+        existing = extract_balanced_tag(html_text, '<nav class="anymd-sf-nav"', "nav")
+        if existing is not None:
+            _, s, e = existing
+            return html_text[:s] + nav_html + html_text[e:]
+        return html_text
+    actions = extract_balanced_tag(html_text, '<div id="storefront-header-actions"', "div")
+    if actions is not None:
+        act_html, s, e = actions
+        updated = act_html[: -len("</div>")] + nav_html + "</div>"
+        return html_text[:s] + updated + html_text[e:]
+    header = extract_balanced_tag(html_text, '<header id="docs-header"', "header")
+    if header is not None:
+        hdr_html, s, e = header
+        updated = hdr_html.replace("</header>", f"{nav_html}</header>", 1)
+        return html_text[:s] + updated + html_text[e:]
+    return html_text
+
+
+def _ensure_storefront_footer_links(html_text: str) -> str:
+    """Ensure legal/recovery footer links sit cleanly inside the storefront footer."""
+    if "anymd-sf-footer-links" in html_text:
+        return html_text
+    if 'id="storefront-footer-inner"' in html_text:
+        footer_inner = extract_balanced_tag(html_text, '<div id="storefront-footer-inner"', "div")
+        if footer_inner is not None:
+            inner_html, s, e = footer_inner
+            if '<span id="storefront-footer-copy"' in inner_html:
+                updated = inner_html.replace(
+                    '<span id="storefront-footer-copy"',
+                    f'{STOREFRONT_FOOTER_LINKS}<span id="storefront-footer-copy"',
+                    1,
+                )
+            else:
+                updated = inner_html[: -len("</div>")] + STOREFRONT_FOOTER_LINKS + "</div>"
+            return html_text[:s] + updated + html_text[e:]
+    if '<footer id="docs-footer"' in html_text and "anymd Pro terms" not in html_text:
+        footer = extract_balanced_tag(html_text, '<footer id="docs-footer"', "footer")
+        if footer is not None:
+            f_html, s, e = footer
+            cookie_wrap = extract_balanced_tag(f_html, '<p><span class="anymd-sf-cookie-wrap"', "p")
+            if cookie_wrap is not None:
+                cw_html, cs, ce = cookie_wrap
+                inner_span = cw_html[len("<p>") : -len("</p>")]
+                f_html = f_html[:cs] + inner_span + f_html[ce:]
+            updated = f_html.replace(
+                ">", f">{STOREFRONT_FOOTER_LINKS}", 1
+            )
+            return html_text[:s] + updated + html_text[e:]
+    return html_text
 
 
 def postprocess_pricing_html(
@@ -723,30 +726,20 @@ def postprocess_pricing_html(
         else:
             html_text = html_text.replace("</head>", f"{injection}</head>", 1)
 
-    # 3. Clean above-the-fold storefront layout if raw Keel docs shell is present.
-    for marker, tag_name in (
-        ('<nav id="docs-nav"', "nav"),
-        ('<nav id="docs-toc"', "nav"),
-        ('<a id="docs-edit"', "a"),
-        ('<nav id="docs-pager"', "nav"),
-    ):
-        extracted = extract_balanced_tag(html_text, marker, tag_name)
-        if extracted is not None:
-            _, s, e = extracted
-            html_text = html_text[:s] + html_text[e:]
-
-    if 'data-anymd-storefront="1"' not in html_text and '<div id="docs-root"' in html_text:
-        html_text = html_text.replace(
-            '<div id="docs-root"', '<div id="docs-root" data-anymd-storefront="1"', 1
-        )
-    if "data-anymd-storefront" in html_text and '<style data-anymd-storefront>' not in html_text:
-        html_text = html_text.replace("</head>", f"{STOREFRONT_STYLE}\n</head>", 1)
-    if 'class="anymd-sf-nav"' not in html_text:
-        header = extract_balanced_tag(html_text, '<header id="docs-header"', "header")
-        if header is not None:
-            hdr_html, s, e = header
-            updated_hdr = hdr_html.replace("</header>", f"{STOREFRONT_NAV}</header>", 1)
-            html_text = html_text[:s] + updated_hdr + html_text[e:]
+    # 3. Clean storefront chrome, citrus stylesheet, and navigation.
+    html_text = _strip_docs_chrome(html_text)
+    if 'data-anymd-storefront="1"' not in html_text:
+        if '<div id="storefront-root"' in html_text:
+            html_text = html_text.replace(
+                '<div id="storefront-root"', '<div id="storefront-root" data-anymd-storefront="1"', 1
+            )
+        elif '<div id="docs-root"' in html_text:
+            html_text = html_text.replace(
+                '<div id="docs-root"', '<div id="docs-root" data-anymd-storefront="1"', 1
+            )
+    if "data-anymd-storefront" in html_text:
+        html_text = _inject_storefront_style(html_text)
+    html_text = _inject_storefront_nav(html_text, "/anymd/pricing")
 
     # Move #money-checkout-pricing above #why-it-matters if currently placed after #doc.
     why_idx = html_text.find('<h2 id="why-it-matters"')
@@ -769,24 +762,7 @@ def postprocess_pricing_html(
                     + html_without_checkout[why_idx_after:]
                 )
 
-    if '<footer id="docs-footer"' in html_text and "anymd Pro terms" not in html_text:
-        footer = extract_balanced_tag(html_text, '<footer id="docs-footer"', "footer")
-        if footer is not None:
-            f_html, s, e = footer
-            if f_html.endswith("></footer>"):
-                footer_content = (
-                    '<p><a href="/anymd/recover">Recover licence</a> · '
-                    '<a href="/anymd/legal/pro-terms">anymd Pro terms</a> · '
-                    '<a href="/anymd/legal/privacy">Privacy</a> · '
-                    '<a href="mailto:hi@sylphx.com">hi@sylphx.com</a></p>'
-                )
-                html_text = (
-                    html_text[:s]
-                    + f_html[: -len("</footer>")]
-                    + footer_content
-                    + "</footer>"
-                    + html_text[e:]
-                )
+    html_text = _ensure_storefront_footer_links(html_text)
 
     if "anymd-wallet-trust" not in html_text:
         submit_pat = re.compile(
@@ -827,8 +803,14 @@ def postprocess_recover_html(
         "If a paid licence exists, Money sends",
         "If a paid licence exists, we send",
     )
-    if '<style data-anymd-storefront>' not in html_text and "</head>" in html_text:
-        html_text = html_text.replace("</head>", f"{STOREFRONT_STYLE}\n</head>", 1)
+    html_text = _strip_docs_chrome(html_text)
+    if 'data-anymd-storefront="1"' not in html_text and '<div id="docs-root"' in html_text:
+        html_text = html_text.replace(
+            '<div id="docs-root"', '<div id="docs-root" data-anymd-storefront="1"', 1
+        )
+    html_text = _inject_storefront_style(html_text)
+    html_text = _inject_storefront_nav(html_text, "/anymd/recover")
+    html_text = _ensure_storefront_footer_links(html_text)
     html_text = _replace_offer_description(html_text, resolved_offer)
     return inject_storefront_ga4(html_text, ga4_id)
 
