@@ -3,12 +3,52 @@ import { installFencedCodeCopy } from './fenced-code-copy';
 import './fenced-code-copy.css';
 import DefaultTheme from 'vitepress/theme';
 import type { Theme } from 'vitepress';
+import {
+  appendAttributionToUrl,
+  isPricingHref,
+  mergedAttribution,
+  persistAttribution,
+} from '../pro/tracking';
 import HeroInstall from './components/HeroInstall.vue';
 import Playground from './components/Playground.vue';
 import ProBuy from './components/ProBuy.vue';
 import ProTracking from './components/ProTracking.vue';
 import SiteFooter from './components/SiteFooter.vue';
 import './custom.css';
+
+function decoratePricingLinks(): void {
+  const attr = persistAttribution(window.location.search);
+  if (Object.keys(attr).length === 0) return;
+  for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+    const raw = anchor.getAttribute('href');
+    if (raw && isPricingHref(raw)) {
+      anchor.setAttribute('href', appendAttributionToUrl(raw, attr));
+    }
+  }
+}
+
+function installAttributionForwarding(): () => void {
+  decoratePricingLinks();
+  const onClick = (event: MouseEvent) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const anchor = target.closest('a[href]');
+    if (!(anchor instanceof HTMLAnchorElement)) return;
+    const raw = anchor.getAttribute('href');
+    if (!raw || !isPricingHref(raw)) return;
+    const attr = mergedAttribution(window.location.search);
+    if (Object.keys(attr).length > 0) {
+      anchor.setAttribute('href', appendAttributionToUrl(raw, attr));
+    }
+  };
+  const onPopState = () => decoratePricingLinks();
+  document.addEventListener('click', onClick, true);
+  window.addEventListener('popstate', onPopState);
+  return () => {
+    document.removeEventListener('click', onClick, true);
+    window.removeEventListener('popstate', onPopState);
+  };
+}
 
 /**
  * anymd theme — inherits VitePress and layers the citrus design system in
@@ -18,11 +58,16 @@ import './custom.css';
 const theme: Theme = {
   extends: DefaultTheme,
   setup() {
-    let dispose: (() => void) | undefined;
+    let disposeCopy: (() => void) | undefined;
+    let disposeAttribution: (() => void) | undefined;
     onMounted(() => {
-      dispose = installFencedCodeCopy();
+      disposeCopy = installFencedCodeCopy();
+      disposeAttribution = installAttributionForwarding();
     });
-    onUnmounted(() => dispose?.());
+    onUnmounted(() => {
+      disposeCopy?.();
+      disposeAttribution?.();
+    });
   },
   Layout: () =>
     h(DefaultTheme.Layout, null, {

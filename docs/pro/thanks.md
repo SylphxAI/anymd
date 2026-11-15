@@ -34,6 +34,6 @@ export ANYMD_PRO_TOKEN='<your token>'
 
 Pro works offline and needs no account. Problems with the token? Email hi@sylphx.com.
 
-[Back to the docs](/guide/getting-started) · [What Pro includes](/pro)
+[Back to the docs](/guide/getting-started) · [What Pro includes](/pricing)
 
 <ProTracking page="thanks" />

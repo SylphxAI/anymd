@@ -31,7 +31,7 @@ The current price shown at checkout, paid once, including any VAT or sales tax w
 
 ## Delivery
 
-We email your token to the address you give at checkout, usually within a few hours. Activation is described on the [anymd Pro page](/pro).
+We email your token to the address you give at checkout, usually within a few hours. Activation is described on the [anymd Pro page](/pricing).
 
 ## Refunds and cancellation
 

@@ -28,6 +28,12 @@ const ATTEMPT_STORAGE_PREFIX = "keel:money:attempt:";
 const ATTEMPT_NONCE_KEY = "keel:money:attempt-nonce";
 const SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 const SESSION_PLACEHOLDER_TOKEN = "__KEEL_CHECKOUT_SESSION_ID_PLACEHOLDER__";
+export const CLICK_ID_ALLOWLIST = [
+  "gclid",
+  "gbraid",
+  "wbraid",
+  "fbclid",
+];
 export const UTM_ALLOWLIST = [
   "utm_source",
   "utm_medium",
@@ -35,6 +41,41 @@ export const UTM_ALLOWLIST = [
   "utm_content",
   "utm_term",
 ];
+export const ATTRIBUTION_ALLOWLIST = [
+  ...UTM_ALLOWLIST,
+  ...CLICK_ID_ALLOWLIST,
+];
+const ATTRIBUTION_STORAGE_KEY = "anymd_pro_attribution";
+
+function readStoredAttribution() {
+  try {
+    if (typeof window === "undefined" || !window.sessionStorage) return {};
+    const raw = window.sessionStorage.getItem(ATTRIBUTION_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    const out = {};
+    for (const key of ATTRIBUTION_ALLOWLIST) {
+      const value = parsed[key];
+      if (typeof value === "string" && value.trim()) {
+        out[key] = value.trim().slice(0, MAX_UTM_VALUE_LENGTH);
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredAttribution(attribution) {
+  try {
+    if (typeof window === "undefined" || !window.sessionStorage) return;
+    if (!attribution || Object.keys(attribution).length === 0) return;
+    window.sessionStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(attribution));
+  } catch {
+    // Ignore storage errors in restricted environments.
+  }
+}
 const MAX_UTM_VALUE_LENGTH = 500;
 
 let inMemoryAttemptNonce = null;
@@ -91,9 +132,10 @@ export function rotateAttemptNonce() {
 }
 
 export function extractAttributionMetadata(search) {
-  const out = {};
+  const explicitSearch = typeof search === "string";
+  const out = explicitSearch ? {} : readStoredAttribution();
   let rawSearch = search;
-  if (typeof rawSearch !== "string") {
+  if (!explicitSearch) {
     try {
       rawSearch = window.location.search || "";
     } catch {
@@ -106,12 +148,15 @@ export function extractAttributionMetadata(search) {
   } catch {
     return out;
   }
-  for (const key of UTM_ALLOWLIST) {
+  for (const key of ATTRIBUTION_ALLOWLIST) {
     const raw = params.get(key);
     if (typeof raw !== "string") continue;
     const trimmed = raw.trim();
     if (!trimmed) continue;
     out[key] = trimmed.slice(0, MAX_UTM_VALUE_LENGTH);
+  }
+  if (!explicitSearch) {
+    writeStoredAttribution(out);
   }
   return out;
 }
@@ -125,7 +170,7 @@ export function appendAttributionParams(rawUrl, attribution) {
   ) {
     return rawUrl;
   }
-  const entries = UTM_ALLOWLIST.filter(
+  const entries = ATTRIBUTION_ALLOWLIST.filter(
     (k) => typeof attribution[k] === "string" && attribution[k].trim().length > 0,
   ).map((k) => [k, attribution[k].trim().slice(0, MAX_UTM_VALUE_LENGTH)]);
   if (entries.length === 0) {

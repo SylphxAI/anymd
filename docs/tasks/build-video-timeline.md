@@ -44,7 +44,7 @@ For a video with embedded subtitles, ordinary `read` remains useful without Pro.
 
 ## Pro: inspect a bounded interval
 
-With an [existing licence activated](/pro#activate), run:
+With an [existing licence activated](/pricing#activate), run:
 
 ```sh
 node mcp-call.mjs inspect '{"operation":"video_timeline","sources":[{"path":"demo.mkv"}],"timeline":{"start_ms":0,"end_ms":2000,"max_scenes":20,"caption":false}}'

@@ -9,7 +9,7 @@ const { hasSidebar } = useSidebar();
   <footer class="site-footer" :class="{ 'has-sidebar': hasSidebar }">
     <div class="site-footer-inner">
       <nav class="site-footer-links" aria-label="Legal and contact">
-        <a :href="withBase('/pro')">anymd Pro</a>
+        <a :href="withBase('/pricing')">anymd Pro</a>
         <a :href="withBase('/legal/terms')">Terms</a>
         <a :href="withBase('/legal/pro-terms')">anymd Pro terms</a>
         <a :href="withBase('/legal/privacy')">Privacy</a>

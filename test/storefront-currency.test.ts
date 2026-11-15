@@ -23,11 +23,15 @@ type Submit = (event: { preventDefault(): void }) => Promise<void>;
 // context. No request can reach the network: even submit is a refusing fixture.
 async function mount(
   currency: string,
-  amounts: Record<string, string> = { USD: '2900', HKD: '22600' }
+  amounts: Record<string, string> = { USD: '2900', HKD: '22600' },
+  options: { search?: string; storedAttribution?: Record<string, string> } = {}
 ) {
   const calls: Request[] = [];
   const attributes = new Map([['data-keel-money-checkout', JSON.stringify(config)]]);
   const storage = new Map([['keel:money:attempt-nonce', 'same-offline-attempt']]);
+  if (options.storedAttribution) {
+    storage.set('anymd_pro_attribution', JSON.stringify(options.storedAttribution));
+  }
   const listeners = new Map<string, Submit>();
   const option = {
     value: config.prices[0].id || `${config.prices[0].key}:${config.prices[0].quantity}`,
@@ -75,7 +79,7 @@ async function mount(
     crypto: webcrypto,
     window: {
       location: {
-        search: '',
+        search: options.search ?? '',
         assign: () => {
           throw new Error('Unexpected checkout redirect');
         },
@@ -112,17 +116,29 @@ async function mount(
       };
     },
   };
-  const mountCheckout = runInNewContext(
-    `${source.replace(/^export /gm, '')}\nmountCheckout`,
-    sandbox
-  );
-  await mountCheckout(root);
+  const exportExpr = '({ mountCheckout, extractAttributionMetadata, appendAttributionParams })';
+  const exportsObj = runInNewContext(`${source.replace(/^export /gm, '')}\n${exportExpr}`, sandbox);
+  await exportsObj.mountCheckout(root);
   const submit = async () => {
     const listener = listeners.get('submit');
     if (!listener) throw new Error('Checkout submit handler was not mounted');
     await listener({ preventDefault: () => {} });
   };
-  return { calls, attributes, display, button, submit };
+  return {
+    calls,
+    attributes,
+    display,
+    button,
+    submit,
+    storage,
+    extractAttributionMetadata: exportsObj.extractAttributionMetadata as (
+      search?: string
+    ) => Record<string, string>,
+    appendAttributionParams: exportsObj.appendAttributionParams as (
+      rawUrl: string,
+      attribution: Record<string, string>
+    ) => string,
+  };
 }
 
 function post(checkout: Awaited<ReturnType<typeof mount>>) {
@@ -173,5 +189,97 @@ describe('generated Keel storefront currency', () => {
     expect(checkout.attributes.get('data-keel-money-catalog-ready')).toBe('0');
     await checkout.submit();
     expect(checkout.calls.map((call) => call.method)).toEqual(['GET']);
+  });
+});
+
+describe('generated Keel storefront SEO, layout, and attribution', () => {
+  test('pricing.html fixes title, og:image, paid JSON-LD, and above-the-fold checkout', () => {
+    const expectedTitle = 'anymd Pro: verifiable video evidence and cite-check for AI agents';
+    const title = html.match(/<title>([^<]+)<\/title>/)?.[1] ?? '';
+    expect(title).toBe(expectedTitle);
+    expect(title).not.toContain('· anymd Pro');
+    expect(html).toContain(`<meta property="og:title" content="${expectedTitle}">`);
+    expect(html).toContain(
+      '<meta property="og:image" content="https://sylphxai.github.io/anymd/og-pro.png">'
+    );
+    expect(html).toContain(
+      '<meta name="twitter:image" content="https://sylphxai.github.io/anymd/og-pro.png">'
+    );
+    expect(html).toContain('<meta property="og:type" content="website">');
+    expect(html).toContain('type="application/ld+json"');
+    expect(html).toContain('"isAccessibleForFree":false');
+    expect(html).not.toContain('"price":"0"');
+    expect(html).not.toContain('id="docs-nav"');
+    expect(html).not.toContain('id="docs-toc"');
+    const checkoutIdx = html.indexOf('id="money-checkout-pricing"');
+    const detailsIdx = html.indexOf('id="why-it-matters"');
+    expect(checkoutIdx).toBeGreaterThan(-1);
+    expect(detailsIdx).toBeGreaterThan(checkoutIdx);
+  });
+
+  test('money runtime forwards click IDs and UTMs into metadata and return URLs', async () => {
+    const search = [
+      '?gclid=g_123',
+      'gbraid=gb_456',
+      'wbraid=wb_789',
+      'fbclid=fb_012',
+      'utm_source=google',
+      'utm_medium=cpc',
+      'utm_campaign=pro',
+    ].join('&');
+    const checkout = await mount('USD', { USD: '2900' }, { search });
+    expect(checkout.extractAttributionMetadata(search)).toEqual({
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      utm_campaign: 'pro',
+      gclid: 'g_123',
+      gbraid: 'gb_456',
+      wbraid: 'wb_789',
+      fbclid: 'fb_012',
+    });
+
+    await checkout.submit();
+    const request = post(checkout);
+    expect(request.body.metadata).toEqual({
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      utm_campaign: 'pro',
+      gclid: 'g_123',
+      gbraid: 'gb_456',
+      wbraid: 'wb_789',
+      fbclid: 'fb_012',
+    });
+    expect(request.body.success_url).toContain('gclid=g_123');
+    expect(request.body.success_url).toContain('gbraid=gb_456');
+    expect(request.body.success_url).toContain('wbraid=wb_789');
+    expect(request.body.success_url).toContain('fbclid=fb_012');
+    expect(request.body.success_url).toContain('utm_source=google');
+    expect(request.body.success_url).toContain('{CHECKOUT_SESSION_ID}');
+    expect(request.body.cancel_url).toContain('gclid=g_123');
+    expect(request.body.cancel_url).toContain('fbclid=fb_012');
+  });
+
+  test('money runtime restores sessionStorage attribution when query is empty', async () => {
+    const checkout = await mount(
+      'USD',
+      { USD: '2900' },
+      {
+        search: '',
+        storedAttribution: {
+          gclid: 'from_pro_page',
+          fbclid: 'fb_from_pro',
+          utm_source: 'pro_landing',
+        },
+      }
+    );
+    await checkout.submit();
+    const request = post(checkout);
+    expect(request.body.metadata).toEqual({
+      utm_source: 'pro_landing',
+      gclid: 'from_pro_page',
+      fbclid: 'fb_from_pro',
+    });
+    expect(request.body.success_url).toContain('gclid=from_pro_page');
+    expect(request.body.success_url).toContain('fbclid=fb_from_pro');
   });
 });

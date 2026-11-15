@@ -9,11 +9,69 @@ import product from '../../product.json';
  */
 const site = 'https://sylphxai.github.io/anymd/';
 
+const organizationJsonLd = {
+  '@type': 'Organization',
+  name: 'Sylphx',
+  legalName: 'Sylphx Limited',
+  url: 'https://sylphx.com',
+  sameAs: ['https://github.com/SylphxAI', 'https://sylphx.com'],
+};
+
+const websiteJsonLd = {
+  '@type': 'WebSite',
+  name: 'anymd',
+  url: site,
+  description: product.description,
+};
+
+function buildJsonLd(relativePath: string, pageDesc: string) {
+  const isProPage = relativePath === 'pro.md' || relativePath === 'pro/thanks.md';
+  if (isProPage) {
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        organizationJsonLd,
+        websiteJsonLd,
+        {
+          '@type': 'SoftwareApplication',
+          name: 'anymd Pro',
+          applicationCategory: 'DeveloperApplication',
+          operatingSystem: 'macOS, Linux, Windows',
+          url: `${site}pricing`,
+          isAccessibleForFree: false,
+          description: pageDesc,
+        },
+      ],
+    };
+  }
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationJsonLd,
+      websiteJsonLd,
+      {
+        '@type': 'SoftwareApplication',
+        name: 'anymd',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'macOS, Linux, Windows',
+        url: site,
+        downloadUrl: 'https://www.npmjs.com/package/@sylphx/anymd',
+        description: product.description,
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+      },
+    ],
+  };
+}
+
 export default defineConfig({
   base: '/anymd/',
   cleanUrls: true,
-  // Keel emits this static route after VitePress has checked the docs.
-  ignoreDeadLinks: [/^\/recover$/],
+  // Keel emits /pricing and /recover after VitePress has checked the docs.
+  ignoreDeadLinks: [/^\/recover$/, /^\/pricing(?:$|[?#])/],
   title: 'anymd',
   description: product.description,
 
@@ -23,8 +81,16 @@ export default defineConfig({
   lastUpdated: true,
   sitemap: {
     hostname: site,
-    // The post-purchase page is not a landing page.
-    transformItems: (items) => items.filter((item) => !item.url.includes('pro/thanks')),
+    // /pro/thanks is post-purchase; /pro canonicalizes to /pricing (emitted by Keel).
+    transformItems: (items) => {
+      const filtered = items.filter(
+        (item) => !item.url.includes('pro/thanks') && !/(?:^|\/)pro(?:\/|$)/.test(item.url)
+      );
+      if (!filtered.some((item) => item.url === 'pricing' || item.url === 'pricing.html')) {
+        filtered.push({ url: 'pricing' });
+      }
+      return filtered;
+    },
   },
 
   // Maintainer docs that are not part of the site.
@@ -55,48 +121,13 @@ export default defineConfig({
     ['meta', { name: 'robots', content: 'index, follow' }],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/anymd/favicon.svg' }],
     ['link', { rel: 'icon', href: '/anymd/favicon.ico', sizes: '16x16 32x32 48x48' }],
-    [
-      'script',
-      { type: 'application/ld+json' },
-      JSON.stringify({
-        '@context': 'https://schema.org',
-        '@graph': [
-          {
-            '@type': 'Organization',
-            name: 'Sylphx',
-            legalName: 'Sylphx Limited',
-            url: 'https://sylphx.com',
-            sameAs: ['https://github.com/SylphxAI', 'https://sylphx.com'],
-          },
-          {
-            '@type': 'WebSite',
-            name: 'anymd',
-            url: site,
-            description: product.description,
-          },
-          {
-            '@type': 'SoftwareApplication',
-            name: 'anymd',
-            applicationCategory: 'DeveloperApplication',
-            operatingSystem: 'macOS, Linux, Windows',
-            url: site,
-            downloadUrl: 'https://www.npmjs.com/package/@sylphx/anymd',
-            description: product.description,
-            offers: {
-              '@type': 'Offer',
-              price: '0',
-              priceCurrency: 'USD',
-            },
-          },
-        ],
-      }),
-    ],
   ],
 
   // Each page names its own URL, so search engines index every page, not just the home page.
   transformPageData(pageData) {
-    const pageUrl =
+    const rawPageUrl =
       site + pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '');
+    const pageUrl = pageData.relativePath === 'pro.md' ? `${site}pricing` : rawPageUrl;
     const pageTitle =
       pageData.frontmatter.title ?? (pageData.title || `${product.name} — ${product.tagline}`);
     const pageDesc = pageData.frontmatter.description ?? product.description;
@@ -112,6 +143,7 @@ export default defineConfig({
       ['meta', { property: 'og:image', content: image }],
       ['meta', { name: 'twitter:image', content: image }],
       ['meta', { property: 'og:description', content: pageDesc }],
+      ['script', { type: 'application/ld+json' }, JSON.stringify(buildJsonLd(pageData.relativePath, pageDesc))]
     );
   },
 
@@ -123,7 +155,7 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/getting-started', activeMatch: '^/guide/(?!benchmarks)' },
       { text: 'Benchmarks', link: '/guide/benchmarks' },
       { text: 'Playground', link: '/playground' },
-      { text: 'Pro', link: '/pro' },
+      { text: 'Pro', link: '/pricing' },
       { text: 'GitHub', link: 'https://github.com/SylphxAI/anymd' },
       { text: 'npm', link: 'https://www.npmjs.com/package/@sylphx/anymd' },
     ],
@@ -159,7 +191,7 @@ export default defineConfig({
       },
       {
         text: 'Pro',
-        items: [{ text: 'anymd Pro', link: '/pro' }],
+        items: [{ text: 'anymd Pro', link: '/pricing' }],
       },
     ],
 

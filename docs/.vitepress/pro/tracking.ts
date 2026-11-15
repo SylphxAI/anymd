@@ -1,30 +1,52 @@
 /**
- * Pro landing tracking: gtag.js (GA4 + Google Ads) with Consent Mode v2.
- * Runs only on /pro and /pro/thanks (the ProTracking component is mounted by
- * those two pages and nowhere else). While an id is a placeholder, nothing loads
- * and no network request is made. Events carry no email, name or free text.
+ * Pro landing tracking and attribution forwarding.
+ * Preserves inbound ad click IDs (gclid, gbraid, wbraid, fbclid) and UTM
+ * parameters across /pro, docs navigation, /pricing, and checkout requests.
+ * Optional GA4 / Google Ads tags only load when non-placeholder IDs are set.
  */
 import config from './config.json';
 
 export type Choice = 'all' | 'analytics' | 'none';
 type Gtag = (...args: unknown[]) => void;
 type ConsentState = Record<string, string>;
+type ProConfig = {
+  buyUrl: string;
+  ga4MeasurementId?: string;
+  adsConversionId?: string;
+  purchaseSendTo?: string;
+};
+
+const proConfig: ProConfig = config;
 
 export const PRO_VALUE = 29;
+export const CLICK_ID_KEYS = ['gclid', 'gbraid', 'wbraid', 'fbclid'] as const;
+export const UTM_KEYS = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+] as const;
+export const ATTRIBUTION_KEYS = [...CLICK_ID_KEYS, ...UTM_KEYS] as const;
+export type AttributionMap = Record<string, string>;
+
 const STORE_KEY = 'anymd_pro_consent';
+export const ATTRIBUTION_STORAGE_KEY = 'anymd_pro_attribution';
+const MAX_ATTRIBUTION_VALUE_LENGTH = 500;
+const CLICK_ID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
 const REGIONS = [
   'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV',
   'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH',
 ];
 
-export const buyUrl: string = config.buyUrl;
+export const buyUrl: string = proConfig.buyUrl;
 
 export function isPlaceholder(value: string | undefined): boolean {
   return !value || /X{4}|PRO_PAYMENT_LINK/.test(value);
 }
 
 export function trackingEnabled(): boolean {
-  return !isPlaceholder(config.ga4MeasurementId) || !isPlaceholder(config.adsConversionId);
+  return !isPlaceholder(proConfig.ga4MeasurementId) || !isPlaceholder(proConfig.adsConversionId);
 }
 
 function storageGet(store: 'local' | 'session', key: string): string | null {
@@ -62,16 +84,124 @@ export function consentState(choice: Choice): ConsentState {
   };
 }
 
-/** Stripe client_reference_id accepts letters, digits, dash and underscore, up to 200 chars. */
-export function clickId(search: string): string {
-  const raw = new URLSearchParams(search).get('gclid') ?? '';
-  return /^[A-Za-z0-9_-]{1,200}$/.test(raw) ? raw : '';
+function sanitizeAttributionEntry(key: string, raw: string | null | undefined): string {
+  if (typeof raw !== 'string') return '';
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  if ((CLICK_ID_KEYS as readonly string[]).includes(key)) {
+    return CLICK_ID_PATTERN.test(trimmed) ? trimmed : '';
+  }
+  return trimmed.slice(0, MAX_ATTRIBUTION_VALUE_LENGTH);
 }
 
-export function buyHref(gclid: string): string {
-  if (!gclid || !/^https:\/\/buy\.stripe\.com\//.test(buyUrl)) return buyUrl;
-  const sep = buyUrl.includes('?') ? '&' : '?';
-  return `${buyUrl}${sep}client_reference_id=${encodeURIComponent(gclid)}`;
+export function extractAttribution(search: string): AttributionMap {
+  const out: AttributionMap = {};
+  if (!search) return out;
+  const params = new URLSearchParams(search);
+  for (const key of ATTRIBUTION_KEYS) {
+    const clean = sanitizeAttributionEntry(key, params.get(key));
+    if (clean) out[key] = clean;
+  }
+  return out;
+}
+
+export function storedAttribution(): AttributionMap {
+  const raw = storageGet('session', ATTRIBUTION_STORAGE_KEY);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object') return {};
+    const out: AttributionMap = {};
+    for (const key of ATTRIBUTION_KEYS) {
+      const val = parsed[key];
+      if (typeof val === 'string') {
+        const clean = sanitizeAttributionEntry(key, val);
+        if (clean) out[key] = clean;
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function mergedAttribution(search = ''): AttributionMap {
+  return { ...storedAttribution(), ...extractAttribution(search) };
+}
+
+export function persistAttribution(search: string): AttributionMap {
+  const merged = mergedAttribution(search);
+  if (Object.keys(merged).length > 0) {
+    storageSet('session', ATTRIBUTION_STORAGE_KEY, JSON.stringify(merged));
+  }
+  return merged;
+}
+
+/** Validated Google click id from query params, or ''. */
+export function clickId(search: string): string {
+  return extractAttribution(search).gclid ?? '';
+}
+
+function normalizeAttributionInput(input: AttributionMap | string): AttributionMap {
+  if (typeof input !== 'string') {
+    const out: AttributionMap = {};
+    for (const key of ATTRIBUTION_KEYS) {
+      const clean = sanitizeAttributionEntry(key, input[key]);
+      if (clean) out[key] = clean;
+    }
+    return out;
+  }
+  const trimmed = input.trim();
+  if (!trimmed) return {};
+  if (trimmed.startsWith('?') || trimmed.includes('=')) {
+    return extractAttribution(trimmed);
+  }
+  const clean = sanitizeAttributionEntry('gclid', trimmed);
+  return clean ? { gclid: clean } : {};
+}
+
+export function appendAttributionToUrl(
+  targetUrl: string,
+  attribution: AttributionMap | string
+): string {
+  const attr = normalizeAttributionInput(attribution);
+  if (Object.keys(attr).length === 0 || !targetUrl) return targetUrl;
+  const isAbsolute = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(targetUrl);
+  const parsed = new URL(targetUrl, isAbsolute ? undefined : 'https://sylphxai.github.io');
+  if (/^https:\/\/buy\.stripe\.com\//.test(targetUrl)) {
+    if (attr.gclid && !parsed.searchParams.has('client_reference_id')) {
+      parsed.searchParams.set('client_reference_id', attr.gclid);
+    }
+    for (const key of UTM_KEYS) {
+      const val = attr[key];
+      if (val && !parsed.searchParams.has(key)) {
+        parsed.searchParams.set(key, val);
+      }
+    }
+    return parsed.toString();
+  }
+  for (const key of ATTRIBUTION_KEYS) {
+    const val = attr[key];
+    if (val && !parsed.searchParams.has(key)) {
+      parsed.searchParams.set(key, val);
+    }
+  }
+  return isAbsolute ? parsed.toString() : `${parsed.pathname}${parsed.search}${parsed.hash}`;
+}
+
+export function isPricingHref(href: string): boolean {
+  if (!href) return false;
+  try {
+    const parsed = new URL(href, 'https://sylphxai.github.io/anymd/');
+    const path = parsed.pathname.replace(/\/+$/, '');
+    return path === '/pricing' || path === '/anymd/pricing';
+  } catch {
+    return false;
+  }
+}
+
+export function buyHref(attributionOrClickId: AttributionMap | string = ''): string {
+  return appendAttributionToUrl(buyUrl, attributionOrClickId);
 }
 
 let gtag: Gtag | null = null;
@@ -80,8 +210,8 @@ let gtag: Gtag | null = null;
 export function loadTags(page: 'pro' | 'thanks'): boolean {
   if (gtag) return true;
   if (!trackingEnabled()) return false;
-  const ga4 = config.ga4MeasurementId;
-  const ads = config.adsConversionId;
+  const ga4 = proConfig.ga4MeasurementId ?? '';
+  const ads = proConfig.adsConversionId ?? '';
   const useGa = !isPlaceholder(ga4);
   const w = window as unknown as { dataLayer: unknown[] };
   w.dataLayer = w.dataLayer || [];
@@ -101,8 +231,10 @@ export function loadTags(page: 'pro' | 'thanks'): boolean {
   const params: Record<string, unknown> = { send_page_view: true };
   // The thanks URL carries a Stripe session id: report the path only.
   if (page === 'thanks') params.page_location = location.origin + location.pathname;
-  if (useGa) g('config', ga4, params);
-  if (!isPlaceholder(ads)) g('config', ads, page === 'thanks' ? { page_location: params.page_location } : {});
+  if (useGa && ga4) g('config', ga4, params);
+  if (!isPlaceholder(ads) && ads) {
+    g('config', ads, page === 'thanks' ? { page_location: params.page_location } : {});
+  }
   const s = document.createElement('script');
   s.async = true;
   s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(useGa ? ga4 : ads)}`;
@@ -138,9 +270,12 @@ export function trackPurchase(search: string): string {
   if (!gtag || storageGet('session', key)) return id;
   storageSet('session', key, '1');
   const base = { transaction_id: id, value: PRO_VALUE, currency: 'USD' };
-  gtag('event', 'purchase', { ...base, items: [{ item_id: 'anymd_pro', price: PRO_VALUE, quantity: 1 }] });
-  if (!isPlaceholder(config.purchaseSendTo)) {
-    gtag('event', 'conversion', { ...base, send_to: config.purchaseSendTo });
+  gtag('event', 'purchase', {
+    ...base,
+    items: [{ item_id: 'anymd_pro', price: PRO_VALUE, quantity: 1 }],
+  });
+  if (!isPlaceholder(proConfig.purchaseSendTo) && proConfig.purchaseSendTo) {
+    gtag('event', 'conversion', { ...base, send_to: proConfig.purchaseSendTo });
   }
   return id;
 }

@@ -40,6 +40,7 @@ if [ "$USE_PREBUILT" != "1" ]; then
   cp "$OUT/out/recover.html" "$PREBUILT/recover.html"
   cp -R "$OUT/out/_docs" "$PREBUILT/"
   cp -R "$OUT/out/_keel" "$PREBUILT/"
+  python3 scripts/storefront_postprocess.py "$PREBUILT"
   python3 scripts/storefront_artifact.py write "$ROOT" "$KEEL_REV"
 fi
 python3 scripts/storefront_artifact.py verify "$ROOT" "$KEEL_REV"
@@ -60,6 +61,11 @@ grep -q 'data-keel-money-form="checkout"' "$DIST/pricing.html"
 grep -q 'data-keel-money-form="recover"' "$DIST/recover.html"
 grep -q 'src="/anymd/_keel/' "$DIST/pricing.html"
 grep -q 'href="/anymd/_docs/' "$DIST/pricing.html"
+! grep -q '· anymd Pro</title>' "$DIST/pricing.html"
+grep -q 'property="og:image" content="https://sylphxai.github.io/anymd/og-pro.png"' "$DIST/pricing.html"
+! grep -q 'id="docs-nav"' "$DIST/pricing.html"
+grep -q 'gclid' "$DIST"/_keel/money.*.js
+grep -q 'fbclid' "$DIST"/_keel/money.*.js
 ! grep -q 'ProBuy\|ProTracking' "$DIST/pricing.html"
 ! grep -q 'buy.sylphx.com' "$DIST/pricing.html"
 ! grep -q 'buy.sylphx.com' "$DIST/recover.html"

@@ -44,4 +44,4 @@ This is why the two modes cannot drift into separate engines: there is one conve
 
 ## anymd Pro
 
-[anymd Pro](/pro) is a separate, one-off licence for two local-only extras: video timelines with exact hashed frames, and cite-check. It runs offline with no account, works with future releases, and is not affected by the hosted service. The free core and the Pro operations both stay in this repository's local binary.
+[anymd Pro](/pricing) is a separate, one-off licence for two local-only extras: video timelines with exact hashed frames, and cite-check. It runs offline with no account, works with future releases, and is not affected by the hosted service. The free core and the Pro operations both stay in this repository's local binary.
