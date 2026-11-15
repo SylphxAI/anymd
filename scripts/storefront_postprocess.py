@@ -261,7 +261,6 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
     return f"""<script data-anymd-ga4="1">
 (() => {{
   const GA4_ID = {safe_id};
-  if (!GA4_ID) return;
   const STORE_KEY = "anymd_pro_consent";
   const ATTR_KEY = "anymd_pro_attribution";
   const PURCHASE_PREFIX = "anymd_pro_purchase_";
@@ -273,6 +272,72 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
   }};
   let gtagLoaded = false;
   let lastPaidSessionId = "";
+
+  function setGaDisable(disabled) {{
+    if (GA4_ID) window["ga-disable-" + GA4_ID] = disabled;
+  }}
+  function isAnalyticsCookieName(name) {{
+    return name === "_ga" || name.startsWith("_ga_") || name === "_gid" || name.startsWith("_gat");
+  }}
+  function currentHostname() {{
+    if (typeof location.hostname === "string" && location.hostname) return location.hostname;
+    try {{
+      if (typeof location.origin === "string" && location.origin && location.origin !== "null") {{
+        return new URL(location.origin).hostname;
+      }}
+    }} catch {{}}
+    return "";
+  }}
+  function cookieDomains(hostname) {{
+    const domains = new Set([""]);
+    const host = (hostname || "").trim();
+    if (!host) return Array.from(domains);
+    domains.add(host);
+    if (host.includes(".")) domains.add("." + host);
+    if (!/^\\d+(?:\\.\\d+){{3}}$/.test(host) && !host.includes(":")) {{
+      const parts = host.split(".").filter(Boolean);
+      for (let i = 1; i < parts.length - 1; i++) {{
+        const suffix = parts.slice(i).join(".");
+        domains.add(suffix);
+        domains.add("." + suffix);
+      }}
+    }}
+    return Array.from(domains);
+  }}
+  function cookiePaths() {{
+    const paths = new Set(["/", "/anymd", "/anymd/"]);
+    if (typeof location.pathname === "string" && location.pathname.startsWith("/")) {{
+      paths.add(location.pathname);
+      const dir = location.pathname.replace(/\\/[^/]*$/, "/");
+      if (dir) paths.add(dir);
+    }}
+    return Array.from(paths);
+  }}
+  function purgeAnalyticsCookies() {{
+    if (typeof document.cookie !== "string" || !document.cookie) return;
+    const names = new Set();
+    for (const part of document.cookie.split(";")) {{
+      const eq = part.indexOf("=");
+      const name = (eq === -1 ? part : part.slice(0, eq)).trim();
+      if (name && isAnalyticsCookieName(name)) names.add(name);
+    }}
+    if (names.size === 0) return;
+    const domains = cookieDomains(currentHostname());
+    const paths = cookiePaths();
+    const expired = "expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0";
+    for (const name of names) {{
+      for (const path of paths) {{
+        for (const domain of domains) {{
+          const domainAttr = domain ? "; domain=" + domain : "";
+          document.cookie = name + "=; " + expired + "; path=" + path + domainAttr;
+        }}
+      }}
+    }}
+  }}
+  if (!GA4_ID) {{
+    purgeAnalyticsCookies();
+    return;
+  }}
 
   function readConsent() {{
     try {{
@@ -331,7 +396,14 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
     }};
   }}
   function ensureGtag(choice) {{
-    if (!hasConsent(choice)) return false;
+    if (!hasConsent(choice)) {{
+      if (choice === "none") {{
+        setGaDisable(true);
+        purgeAnalyticsCookies();
+      }}
+      return false;
+    }}
+    setGaDisable(false);
     window.dataLayer = window.dataLayer || [];
     if (typeof window.gtag !== "function") {{
       window.gtag = function () {{ window.dataLayer.push(arguments); }};
@@ -401,8 +473,12 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
         if (hasConsent(choice)) {{
           ensureGtag(choice);
           if (lastPaidSessionId) emitPurchase(lastPaidSessionId);
-        }} else if (typeof window.gtag === "function") {{
-          window.gtag("consent", "update", ALL_DENIED);
+        }} else {{
+          setGaDisable(true);
+          if (typeof window.gtag === "function") {{
+            window.gtag("consent", "update", ALL_DENIED);
+          }}
+          purgeAnalyticsCookies();
         }}
       }});
     }}

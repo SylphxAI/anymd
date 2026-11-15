@@ -6,6 +6,7 @@ import {
   type TrackingPage,
   hasAnalyticsConsent,
   loadTags,
+  purgeAnalyticsCookies,
   savedChoice,
   trackPageView,
   trackPurchase,
@@ -44,7 +45,10 @@ function choose(choice: Choice) {
 }
 
 onMounted(() => {
-  if (!enabled) return;
+  if (!enabled) {
+    purgeAnalyticsCookies();
+    return;
+  }
   current.value = savedChoice();
   open.value = !current.value;
   const page = resolvedPage();
