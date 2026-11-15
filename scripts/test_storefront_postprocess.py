@@ -37,6 +37,19 @@ class StorefrontPostprocessTest(unittest.TestCase):
         )
         self.assertNotIn("· anymd Pro</title>", once)
         self.assertNotIn('"price":"0"', once)
+        self.assertNotIn("Money", once)
+        self.assertIn("One-time 100-year offline licence", once)
+
+    def test_postprocess_recover_html_scrubs_internal_names(self) -> None:
+        root = Path(__file__).resolve().parent.parent
+        html = (root / "docs" / "storefront" / "prebuilt" / "recover.html").read_text(
+            encoding="utf-8"
+        )
+        fm = sp.parse_frontmatter(root / "docs" / "storefront" / "recover.md")
+        once = sp.postprocess_recover_html(html, fm)
+        twice = sp.postprocess_recover_html(once, fm)
+        self.assertEqual(once, twice)
+        self.assertNotIn("Money", once)
 
     def test_postprocess_money_js_is_idempotent(self) -> None:
         root = Path(__file__).resolve().parent.parent
@@ -46,7 +59,7 @@ class StorefrontPostprocessTest(unittest.TestCase):
         once = sp.postprocess_money_js(js)
         twice = sp.postprocess_money_js(once)
         self.assertEqual(once, twice)
-        for key in ("gclid", "gbraid", "wbraid", "fbclid"):
+        for key in ("gclid", "gbraid", "wbraid", "fbclid", "entry_surface"):
             self.assertIn(f'"{key}"', once)
 
 

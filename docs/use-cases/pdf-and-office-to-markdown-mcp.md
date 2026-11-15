@@ -1,0 +1,58 @@
+---
+title: "Convert PDF, Word, Excel & Media to Clean Markdown Locally (MCP + CLI) | anymd"
+titleTemplate: false
+description: "Fast local Rust MCP server and CLI turning PDF, DOCX, PPTX, XLSX, EPUB, HTML, OCR images, and video transcripts into token-lean Markdown. 96.4 on AgentDocBench (11.5 s for 38 docs). Free, MIT, no API key."
+image: https://sylphxai.github.io/anymd/og-image.png
+---
+
+<p class="pro-trust">Free MIT Rust MCP server &amp; CLI · No API key</p>
+
+# Any file to clean Markdown for AI agents—locally in milliseconds.
+
+Python document converters take minutes to load models or scramble multi-column PDFs and tables. `anymd` is a native Rust binary and MCP server that parses PDF, Word, PowerPoint, Excel, EPUB, HTML, OCR images, and audio/video directly on your machine—scoring **96.4** across 38 documents in **11.5 seconds** on [AgentDocBench](/guide/benchmarks?entry_surface=seo_pdf-and-office-to-markdown-mcp).
+
+<p>
+  <a class="pro-buy" href="/anymd/guide/getting-started?entry_surface=seo_pdf-and-office-to-markdown-mcp">Install via npx -y @sylphx/anymd setup</a>
+  &nbsp;&nbsp;
+  <a href="/anymd/guide/benchmarks?entry_surface=seo_pdf-and-office-to-markdown-mcp">See AgentDocBench results</a>
+</p>
+
+## Why teams switch to `anymd`
+
+### 1. One command wires Claude Code, Codex, Cursor, VS Code &amp; Claude Desktop
+
+Run `npx -y @sylphx/anymd setup` (or install via `cargo install anymd`, `brew install sylphxai/tap/anymd`, `winget install Sylphx.anymd`, or Docker `ghcr.io/sylphxai/anymd`). Zero Python virtualenvs, zero LibreOffice installs, and zero API keys.
+
+### 2. Reading-order Markdown and intact tables without burning context tokens
+
+`anymd` rebuilds words from PDF glyph gaps, orders two-column papers correctly, recovers borderless tables, strips running headers, and adds `<!-- page N -->` anchors. Use `outline` to jump straight to a section and `read` with a token budget so huge files stay inside context.
+
+### 3. 100% local privacy—or hosted metered parsing when you have no runtime
+
+Files stay on your machine (`--allow-dir` locks MCP scope to one folder). Need a hosted API without running a binary? [Sylphx AI parse](https://sylphx.com/ai) runs the exact same `anymd-core`, `anymd-pdf`, and `anymd-formats` crates billed per page. See [Local and hosted](/guide/hosted?entry_surface=seo_pdf-and-office-to-markdown-mcp).
+
+## Measured on AgentDocBench (38 Docs / 12 Categories)
+
+| Converter | Overall Score | Docs Converted | Table Cells F1 | Time (All 38 Docs) | Output Tokens |
+|---|---|---|---|---|---|
+| **anymd (Rust, local MIT)** | **96.4** | **38 / 38** | **92.2** | **11.5 s** | **368,659** |
+| Docling | 93.0 | 38 / 38 | 89.9 | 2,432.4 s | 430,148 |
+| Kreuzberg | 81.7 | 38 / 38 | 38.4 | 16.0 s | 455,689 |
+| Unstructured | 81.2 | 38 / 38 | 38.4 | 346.5 s | 414,333 |
+| MarkItDown | 76.8 | 38 / 38 | 57.2 | 75.6 s | 538,388 |
+| Marker | 71.0 | 30 / 38 | 60.9 | 7,104.5 s | 277,779 |
+| `pdftotext` | 42.2 | 23 / 38 | 0.0 | 0.90 s | 201,448 |
+
+## FAQ
+
+**What file formats does `anymd` convert with zero external cloud calls?**
+One `read` call handles PDF, Word (`.docx`), PowerPoint (`.pptx`), Excel/OpenDocument (`.xlsx`, `.xls`, `.ods`, CSV/TSV), EPUB, HTML and URLs, images (EXIF + OCR via local doc-VLM or Tesseract), and audio/video metadata, subtitles, and transcripts.
+
+**Does `anymd` require an API key or upload my documents?**
+No. Everything runs locally on your machine under the MIT licence, and no network call is made unless you explicitly pass an `http(s)` URL.
+
+**Why is `anymd` faster than Docling, Marker, or MarkItDown?**
+`anymd` is compiled native Rust (`anymd-core`, `anymd-pdf`, `anymd-formats`) that parses XML/ZIP and PDF glyph coordinates in parallel page by page without loading heavy Python ML frameworks for native text documents.
+
+**Is the core MCP server free forever, or gated behind Pro?**
+Reading, outlining, searching, OCR, transcripts, the CLI, and all four core MCP tools (`read`, `outline`, `search`, `inspect`) remain 100% free and MIT licensed. Only offline `cite_check` and verifiable video frame/timeline inspection require [anymd Pro](https://sylphxai.github.io/anymd/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp) ($29 one-time).

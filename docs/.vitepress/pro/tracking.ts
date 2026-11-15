@@ -27,7 +27,7 @@ export const UTM_KEYS = [
   'utm_content',
   'utm_term',
 ] as const;
-export const ATTRIBUTION_KEYS = [...CLICK_ID_KEYS, ...UTM_KEYS] as const;
+export const ATTRIBUTION_KEYS = [...CLICK_ID_KEYS, ...UTM_KEYS, 'entry_surface'] as const;
 export type AttributionMap = Record<string, string>;
 
 const STORE_KEY = 'anymd_pro_consent';

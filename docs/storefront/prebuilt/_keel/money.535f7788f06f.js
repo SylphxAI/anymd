@@ -44,6 +44,7 @@ export const UTM_ALLOWLIST = [
 export const ATTRIBUTION_ALLOWLIST = [
   ...UTM_ALLOWLIST,
   ...CLICK_ID_ALLOWLIST,
+  "entry_surface",
 ];
 const ATTRIBUTION_STORAGE_KEY = "anymd_pro_attribution";
 
@@ -555,7 +556,7 @@ async function redeemReturnedSession(root, config) {
   const sessionId = params.get("session_id") || params.get("checkout_session");
   if (!sessionId || !sessionId.startsWith("cs_")) return;
 
-  setStatus(root, "redeeming", "Verifying payment status with Sylphx Money…");
+  setStatus(root, "redeeming", "Verifying payment status…");
   let claimSecret = null;
   try {
     const stored = window.sessionStorage.getItem(`${CLAIM_STORAGE_PREFIX}${sessionId}`);
@@ -955,7 +956,7 @@ export async function mountCheckout(root) {
           }
         }
         if (!response.ok) {
-          setStatus(root, "error", "Checkout request was refused by Sylphx Money.");
+          setStatus(root, "error", "Checkout request was refused.");
           return;
         }
         let session = await response.json();
@@ -964,7 +965,7 @@ export async function mountCheckout(root) {
           pendingAttempt = null;
           response = await sendClientCreate();
           if (!response.ok) {
-            setStatus(root, "error", "Checkout request was refused by Sylphx Money.");
+            setStatus(root, "error", "Checkout request was refused.");
             return;
           }
           session = await response.json();

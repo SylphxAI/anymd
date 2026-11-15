@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress';
+import pkg from '../../packages/anymd/package.json';
 import product from '../../product.json';
 
 /**
@@ -24,7 +25,173 @@ const websiteJsonLd = {
   description: product.description,
 };
 
+const publisherOrg = {
+  '@type': 'Organization',
+  name: 'Sylphx Limited',
+  url: 'https://sylphx.com',
+  email: 'hi@sylphx.com',
+};
+
+const useCaseGraphs: Record<string, object> = {
+  'use-cases/pdf-and-office-to-markdown-mcp.md': {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationJsonLd,
+      websiteJsonLd,
+      {
+        '@type': 'SoftwareApplication',
+        name: 'anymd',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'macOS, Linux, Windows',
+        url: `${site}use-cases/pdf-and-office-to-markdown-mcp`,
+        downloadUrl: 'https://www.npmjs.com/package/@sylphx/anymd',
+        softwareVersion: pkg.version,
+        description:
+          'Fast local Rust MCP server and CLI converting PDF, Word, PowerPoint, Excel, EPUB, HTML, OCR images, and audio/video into clean, token-lean Markdown for AI agents.',
+        offers: [
+          {
+            '@type': 'Offer',
+            name: 'anymd Core (MIT, local CLI & MCP)',
+            price: '0',
+            priceCurrency: 'USD',
+          },
+          {
+            '@type': 'Offer',
+            name: 'anymd Pro (One-time 100-year offline licence)',
+            price: '29',
+            priceCurrency: 'USD',
+          },
+        ],
+        publisher: publisherOrg,
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'What file formats does anymd support?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'anymd converts PDF, Word (.docx), PowerPoint (.pptx), Excel and spreadsheets (.xlsx, .xls, .ods, CSV/TSV), EPUB, HTML and URLs, images with OCR, and audio/video metadata, chapters, subtitles, and transcripts.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Does anymd require an API key or upload local files?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'No. Local anymd runs offline on your machine under the MIT licence with no API key or account required. Network calls happen only when you pass an explicit http(s) URL.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'How does anymd compare on AgentDocBench?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Across 38 documents in 12 categories on AgentDocBench, anymd scores 96.4 overall (38/38 converted, 92.2 Table cells F1) in 11.5 seconds, compared to Docling at 93.0 in 2,432.4 seconds and MarkItDown at 76.8 in 75.6 seconds.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'How do I install anymd into Claude Code, Cursor, or Codex?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Run npx -y @sylphx/anymd setup to configure detected MCP clients automatically, or install via cargo install anymd, brew install sylphxai/tap/anymd, winget, or Docker.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+  'use-cases/verifiable-video-and-cite-check-ai-agents.md': {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationJsonLd,
+      websiteJsonLd,
+      {
+        '@type': 'SoftwareApplication',
+        name: 'anymd Pro',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'macOS, Linux, Windows',
+        url: `${site}use-cases/verifiable-video-and-cite-check-ai-agents`,
+        softwareVersion: pkg.version,
+        isAccessibleForFree: false,
+        description:
+          'Offline PDF cite_check (quote and bounding-box verification) and SHA-256 verifiable video timeline and frame extraction for AI agents via MCP and CLI.',
+        offers: [
+          {
+            '@type': 'Offer',
+            name: 'anymd Pro (USD, one-time 100-year licence)',
+            price: '29',
+            priceCurrency: 'USD',
+          },
+          {
+            '@type': 'Offer',
+            name: 'anymd Pro (GBP, one-time 100-year licence)',
+            price: '24',
+            priceCurrency: 'GBP',
+          },
+          {
+            '@type': 'Offer',
+            name: 'anymd Pro (EUR, one-time 100-year licence)',
+            price: '27',
+            priceCurrency: 'EUR',
+          },
+          {
+            '@type': 'Offer',
+            name: 'anymd Pro (HKD, one-time 100-year licence)',
+            price: '228',
+            priceCurrency: 'HKD',
+          },
+        ],
+        publisher: publisherOrg,
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'What does anymd cite_check verify?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'cite_check deterministically checks 1 to 100 quotes against extracted text inside a specified physical PDF page and bounding box, returning verified_exact, verified_normalized, unmatched, or insufficient_evidence.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Does anymd Pro work offline without an account?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Yes. anymd Pro uses an offline Ed25519-signed licence token verified against a public key embedded in the anymd binary, with no account or network call required.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'How much does anymd Pro cost?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'anymd Pro is a one-time payment of $29 USD, £24 GBP, €27 EUR, or HK$228 HKD (tax inclusive) for a single-person 100-year licence with no recurring subscription.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'How do I buy and activate anymd Pro?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Run anymd pro buy from your terminal (anymd 8.4.0+) or purchase at https://sylphxai.github.io/anymd/pricing, then activate with anymd pro activate or the ANYMD_PRO_TOKEN environment variable.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+
 function buildJsonLd(relativePath: string, pageDesc: string) {
+  const useCase = useCaseGraphs[relativePath];
+  if (useCase) {
+    return useCase;
+  }
   const isProPage = relativePath === 'pro.md' || relativePath === 'pro/thanks.md';
   if (isProPage) {
     return {
@@ -132,7 +299,8 @@ export default defineConfig({
       pageData.frontmatter.title ?? (pageData.title || `${product.name} — ${product.tagline}`);
     const pageDesc = pageData.frontmatter.description ?? product.description;
     const isHome = pageData.relativePath === 'index.md';
-    const ogTitle = isHome ? pageTitle : `${pageTitle} | anymd`;
+    const hasBrandSuffix = / \| anymd(?: Pro)?$/.test(pageTitle);
+    const ogTitle = isHome || hasBrandSuffix ? pageTitle : `${pageTitle} | anymd`;
     const image = pageData.frontmatter.image ?? `${site}og-image.png`;
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push(
@@ -153,6 +321,11 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/guide/getting-started', activeMatch: '^/guide/(?!benchmarks)' },
+      {
+        text: 'Use Cases',
+        link: '/use-cases/pdf-and-office-to-markdown-mcp',
+        activeMatch: '^/use-cases/',
+      },
       { text: 'Benchmarks', link: '/guide/benchmarks' },
       { text: 'Playground', link: '/playground' },
       { text: 'Pro', link: '/pricing' },
@@ -183,6 +356,19 @@ export default defineConfig({
           { text: 'Extract a video frame', link: '/tasks/extract-video-frame' },
           { text: 'Build a video timeline', link: '/tasks/build-video-timeline' },
           { text: 'Check a PDF citation', link: '/tasks/check-pdf-citation' },
+        ],
+      },
+      {
+        text: 'Use Cases',
+        items: [
+          {
+            text: 'PDF & Office to Markdown MCP',
+            link: '/use-cases/pdf-and-office-to-markdown-mcp',
+          },
+          {
+            text: 'Cite-check & Video Evidence',
+            link: '/use-cases/verifiable-video-and-cite-check-ai-agents',
+          },
         ],
       },
       {

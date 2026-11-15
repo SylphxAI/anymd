@@ -215,6 +215,10 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
     const detailsIdx = html.indexOf('id="why-it-matters"');
     expect(checkoutIdx).toBeGreaterThan(-1);
     expect(detailsIdx).toBeGreaterThan(checkoutIdx);
+    expect(html).not.toContain('Money');
+    expect(html).toContain('One-time 100-year offline licence');
+    const recoverHtml = readFileSync(new URL('recover.html', prebuilt), 'utf8');
+    expect(recoverHtml).not.toContain('Money');
   });
 
   test('money runtime forwards click IDs and UTMs into metadata and return URLs', async () => {
@@ -226,6 +230,7 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
       'utm_source=google',
       'utm_medium=cpc',
       'utm_campaign=pro',
+      'entry_surface=seo_verifiable-video-and-cite-check-ai-agents',
     ].join('&');
     const checkout = await mount('USD', { USD: '2900' }, { search });
     expect(checkout.extractAttributionMetadata(search)).toEqual({
@@ -236,6 +241,7 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
       gbraid: 'gb_456',
       wbraid: 'wb_789',
       fbclid: 'fb_012',
+      entry_surface: 'seo_verifiable-video-and-cite-check-ai-agents',
     });
 
     await checkout.submit();
@@ -248,7 +254,11 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
       gbraid: 'gb_456',
       wbraid: 'wb_789',
       fbclid: 'fb_012',
+      entry_surface: 'seo_verifiable-video-and-cite-check-ai-agents',
     });
+    expect(request.body.success_url).toContain(
+      'entry_surface=seo_verifiable-video-and-cite-check-ai-agents'
+    );
     expect(request.body.success_url).toContain('gclid=g_123');
     expect(request.body.success_url).toContain('gbraid=gb_456');
     expect(request.body.success_url).toContain('wbraid=wb_789');

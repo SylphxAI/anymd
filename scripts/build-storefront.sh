@@ -66,6 +66,9 @@ grep -q 'property="og:image" content="https://sylphxai.github.io/anymd/og-pro.pn
 ! grep -q 'id="docs-nav"' "$DIST/pricing.html"
 grep -q 'gclid' "$DIST"/_keel/money.*.js
 grep -q 'fbclid' "$DIST"/_keel/money.*.js
+grep -q 'entry_surface' "$DIST"/_keel/money.*.js
+! grep -q 'Money' "$DIST/pricing.html"
+! grep -q 'Money' "$DIST/recover.html"
 ! grep -q 'ProBuy\|ProTracking' "$DIST/pricing.html"
 ! grep -q 'buy.sylphx.com' "$DIST/pricing.html"
 ! grep -q 'buy.sylphx.com' "$DIST/recover.html"

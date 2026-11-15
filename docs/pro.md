@@ -1,7 +1,7 @@
 ---
 title: "anymd Pro: verifiable video evidence and cite-check for AI agents"
 titleTemplate: false
-description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline checks that a quote is on the page it cites. Current one-time pricing from Money, works offline.
+description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline cite-checks. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.
 image: https://sylphxai.github.io/anymd/og-pro.png
 aside: false
 sidebar: false
@@ -102,13 +102,13 @@ Sylphx Limited, a company registered in England and Wales (company number 164384
 
 <ProTracking page="pro" />
 
-## Money signer trust and test activation
+## Signer trust and test activation
 
 The offline production policy accepts the historical seller key and the current
-live Money signer. Key rotation adds trust without invalidating sold licences;
+live licence signer. Key rotation adds trust without invalidating sold licences;
 signature, plan, product and expiry checks still apply.
 
-For a Money TEST grant, use `anymd pro --test status` or
+For a test licence grant, use `anymd pro --test status` or
 `anymd pro --test activate <token>`. This explicit policy trusts only the test
 signer, reports `Pro (TEST)`, reads `ANYMD_TEST_PRO_TOKEN`, and stores activations
 in `test-pro-token` beside the production `pro-token` file. The ordinary CLI
