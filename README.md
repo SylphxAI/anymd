@@ -19,7 +19,7 @@ anymd is the free, local mode of the same crates that run [Sylphx AI parse](http
 [![license](https://mark.sylphx.com/badge/license-MIT-c3f53c?style=flat-square&labelColor=0a0d07)](https://github.com/SylphxAI/anymd/blob/main/LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SylphxAI/anymd/badge)](https://scorecard.dev/viewer/?uri=github.com/SylphxAI/anymd) <!-- repomap:agent-ready -->[![agent-ready 93/100](https://mark.sylphx.com/badge/agent--ready-93%2F100-brightgreen?style=flat-square&labelColor=0a0d07)](https://github.com/SylphxAI/repomap#agent-readiness-score)<!-- /repomap:agent-ready -->
 
-[Install](#install) · [Benchmarks](#benchmarks) · [Tools](#mcp-tools) · [CLI](#cli) · [Formats](#formats) · [Docs](https://sylphxai.github.io/anymd/) · [Pro](https://sylphxai.github.io/anymd/pro)
+[Install](#install) · [Benchmarks](#benchmarks) · [Tools](#mcp-tools) · [CLI](#cli) · [Formats](#formats) · [Docs](https://sylphxai.github.io/anymd/) · [Pro](https://sylphxai.github.io/anymd/pricing)
 
 <!-- generated:formerly -->
 <sub>Formerly **pdf-reader-mcp**. [Migrating from pdf-reader-mcp](https://sylphxai.github.io/anymd/guide/migration)</sub>
@@ -204,7 +204,7 @@ anymd exposes four tools.
 | **`outline`** | Navigate a heading tree, with node ids and unit/Markdown ranges | `source`, `format` (`json` · `tree`) |
 | **`read`** | Turn a file, URL, or folder into Markdown | `source`, `pages` (`"1-5,8"`), `max_tokens` (default 20000), `cursor`, `ocr`, `images` (`refs` · `none`), `revisions` (`markup` · `accept` · `reject`), `transcript`, `download_asr_model` |
 | **`search`** | Find text across files, folders, and URLs | `query`, `sources`, `mode` (`auto` · `literal` · `ranked`), `glob`, `max_results` |
-| **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect`, [`cite_check`](https://sylphxai.github.io/anymd/guide/cite-check) (quote and location support, [anymd Pro](https://sylphxai.github.io/anymd/pro)) |
+| **`inspect`** | Go deeper on a PDF | `operation`: `render_page`, `extract_regions`, `ocr_pages`, `structure` (JSON with geometry), `compare`, `inspect`, [`cite_check`](https://sylphxai.github.io/anymd/guide/cite-check) (quote and location support, [anymd Pro](https://sylphxai.github.io/anymd/pricing)) |
 
 A `read` answer looks like this:
 
@@ -281,7 +281,7 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 
 ## anymd Pro
 
-The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (current one-time price, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. [Buy anymd Pro](https://sylphxai.github.io/anymd/pricing) for instant delivery after payment: copy your licence token from the checkout confirmation page, or [recover it](https://sylphxai.github.io/anymd/recover) through the product's recovery page. Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy. [See anymd Pro](https://sylphxai.github.io/anymd/pro).
+The anymd core is free and open source (MIT), and nothing that was free has moved to Pro. **anymd Pro** (current one-time price, from 8.4.0) adds exactly two things for agents that must show their evidence: video timelines with exact, hashed frames (`inspect` `video_timeline` and `render_frame`, and the `timeline` option of `read` and `outline`) and cite-check, which verifies a quote at a page and location in a PDF. Licences are checked offline; no account. Pro funds anymd's development. [Buy anymd Pro](https://sylphxai.github.io/anymd/pricing) for instant delivery after payment: copy your licence token from the checkout confirmation page, or [recover it](https://sylphxai.github.io/anymd/recover) through the product's recovery page. Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy.
 
 ## Local and hosted
 

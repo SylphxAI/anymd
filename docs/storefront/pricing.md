@@ -3,6 +3,8 @@ title: "anymd Pro: verifiable video evidence and cite-check for AI agents"
 titleTemplate: false
 description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline checks that a quote is on the page it cites. Current one-time pricing from Money, works offline.
 image: https://sylphxai.github.io/anymd/og-pro.png
+layout: storefront
+checkout_placement: hero
 aside: false
 sidebar: false
 editLink: false
@@ -19,6 +21,8 @@ money_checkout: pro
 Current one-time price and tax are shown below · 100-year licence · works offline, no account · [Terms](https://sylphxai.github.io/anymd/legal/pro-terms)
 
 Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
+
+<!-- keel:checkout -->
 
 ## Why it matters
 
@@ -90,4 +94,3 @@ Pro is digital content delivered immediately: at checkout you ask us to supply i
 
 **Who sells it?**
 Sylphx Limited, a company registered in England and Wales (company number 16438428). See the [anymd Pro terms](https://sylphxai.github.io/anymd/legal/pro-terms) and [Privacy](https://sylphxai.github.io/anymd/legal/privacy).
-

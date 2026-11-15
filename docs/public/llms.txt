@@ -23,5 +23,5 @@ anymd is a Rust command-line tool and Model Context Protocol (MCP) server publis
 - [Supported formats](https://sylphxai.github.io/anymd/guide/formats)
 - [Benchmarks](https://sylphxai.github.io/anymd/guide/benchmarks)
 - [Playground](https://sylphxai.github.io/anymd/playground)
-- [anymd Pro](https://sylphxai.github.io/anymd/pro)
+- [anymd Pro](https://sylphxai.github.io/anymd/pricing)
 - [GitHub repository](https://github.com/SylphxAI/anymd)

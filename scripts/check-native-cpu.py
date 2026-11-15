@@ -10,9 +10,15 @@ SIMD = (
 )
 
 
+def find_caches(build_root: Path) -> list[Path]:
+    legacy = build_root.glob("transcribe-cpp-sys-*/out/build/CMakeCache.txt")
+    nested = build_root.glob("transcribe-cpp-sys/*/out/build/CMakeCache.txt")
+    return sorted({*legacy, *nested})
+
+
 def check(cache: Path) -> None:
     values = {}
-    for line in cache.read_text().splitlines():
+    for line in cache.read_text(encoding="utf-8").splitlines():
         if not line or line.startswith(("#", "//")) or "=" not in line:
             continue
         key, value = line.split("=", 1)
@@ -26,15 +32,19 @@ def check(cache: Path) -> None:
             raise ValueError(f"{cache}: {key} enables a non-baseline x86 instruction set")
 
 
-def main() -> int:
-    caches = sorted(Path(sys.argv[1]).glob("transcribe-cpp-sys-*/out/build/CMakeCache.txt"))
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    if len(args) != 1:
+        print("Usage: check-native-cpu.py <cargo-build-dir>", file=sys.stderr)
+        return 1
+    caches = find_caches(Path(args[0]))
     if not caches:
         print("No compiled transcribe-cpp-sys CMake cache found", file=sys.stderr)
         return 1
     try:
         for cache in caches:
             check(cache)
-    except ValueError as error:
+    except (OSError, UnicodeDecodeError, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
     print(f"Portable ASR CPU configuration verified in {len(caches)} native build(s)")
