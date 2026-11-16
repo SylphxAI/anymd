@@ -23,8 +23,13 @@ type Submit = (event: { preventDefault(): void }) => Promise<void>;
 // context. No request can reach the network: even submit is a refusing fixture.
 async function mount(
   currency: string,
-  amounts: Record<string, string> = { USD: '2900', HKD: '22600' },
-  options: { search?: string; storedAttribution?: Record<string, string> } = {}
+  amounts: Record<string, string> = { USD: '2900', HKD: '22900' },
+  options: {
+    search?: string;
+    storedCurrency?: string;
+    languages?: string[];
+    storedAttribution?: Record<string, string>;
+  } = {}
 ) {
   const calls: Request[] = [];
   const attributes = new Map([['data-keel-money-checkout', JSON.stringify(config)]]);
@@ -32,6 +37,18 @@ async function mount(
   if (options.storedAttribution) {
     storage.set('anymd_pro_attribution', JSON.stringify(options.storedAttribution));
   }
+  if (options.storedCurrency) storage.set('keel:money:currency', options.storedCurrency);
+  const currencyListeners = new Map<string, () => void>();
+  type CurrencyOption = { value: string; textContent: string; selected: boolean };
+  const currencySelect = {
+    value: '',
+    options: [] as CurrencyOption[],
+    replaceChildren: (...nodes: CurrencyOption[]) => {
+      currencySelect.options = nodes;
+    },
+    addEventListener: (name: string, listener: () => void) => currencyListeners.set(name, listener),
+  };
+  const currencyWrap = { setAttribute: () => {}, removeAttribute: () => {} };
   const listeners = new Map<string, Submit>();
   const option = {
     value: config.prices[0].id || `${config.prices[0].key}:${config.prices[0].quantity}`,
@@ -53,12 +70,15 @@ async function mount(
     getAttribute: () => null,
   };
   const root = {
+    __keelSelectCurrency: undefined as undefined | ((code: string) => boolean),
     dispatchEvent: () => true,
     hasAttribute: (name: string) => attributes.has(name),
     setAttribute: (name: string, value: string) => attributes.set(name, value),
     getAttribute: (name: string) => attributes.get(name) ?? null,
     querySelector: (selector: string) => {
       if (selector.includes('data-keel-money-field="price"')) return select;
+      if (selector.includes('data-keel-money-field="currency"')) return currencySelect;
+      if (selector === '[data-keel-money-currency-wrap]') return currencyWrap;
       if (selector.includes('data-keel-money-field="email"'))
         return { value: 'buyer@example.invalid' };
       if (selector.includes('data-keel-money-field="consent"')) return { checked: true };
@@ -84,12 +104,28 @@ async function mount(
     }
   }
   const sandbox = {
+    // Avoid host timezone influencing the catalogue-default fallback case.
+    Intl: {
+      NumberFormat: Intl.NumberFormat,
+      Locale: Intl.Locale,
+      DateTimeFormat: () => ({ resolvedOptions: () => ({ timeZone: 'UTC' }) }),
+    },
     URL,
     URLSearchParams,
     TextEncoder,
     CustomEvent: MockCustomEvent,
     crypto: webcrypto,
+    document: {
+      querySelectorAll: () => [],
+      querySelector: () => null,
+      createElement: () => ({ value: '', textContent: '', selected: false }),
+    },
     window: {
+      navigator: { languages: options.languages ?? [] },
+      localStorage: {
+        getItem: (key: string) => storage.get(key) ?? null,
+        setItem: (key: string, value: string) => storage.set(key, value),
+      },
       location: {
         search: options.search ?? '',
         assign: () => {
@@ -138,6 +174,12 @@ async function mount(
   };
   return {
     calls,
+    currencySelect,
+    selectCurrency: (code: string) => root.__keelSelectCurrency?.(code),
+    changeCurrency: (code: string) => {
+      currencySelect.value = code;
+      currencyListeners.get('change')?.();
+    },
     attributes,
     display,
     button,
@@ -162,13 +204,74 @@ function post(checkout: Awaited<ReturnType<typeof mount>>) {
   return { body: JSON.parse(request.body), key: request.headers['Idempotency-Key'] };
 }
 
+const catalogue = JSON.parse(
+  readFileSync(new URL('../config/money-catalogue.json', import.meta.url), 'utf8')
+);
+const catalogueAmounts: Record<string, string> = catalogue.spec.products
+  .find((product: { key: string }) => product.key === config.product)
+  .prices.find((price: { key: string }) => price.key === config.prices[0].key).unit_amounts;
+
 describe('generated Keel storefront currency', () => {
+  test('native selector offers all 16 catalogue currencies and submits each visible price', async () => {
+    const checkout = await mount('USD', catalogueAmounts);
+    expect(checkout.currencySelect.options).toHaveLength(16);
+    expect(checkout.currencySelect.options.map((option) => option.value).sort()).toEqual(
+      Object.keys(catalogueAmounts).sort()
+    );
+    const identities = new Set<string>();
+    for (const [code, raw] of Object.entries(catalogueAmounts)) {
+      checkout.changeCurrency(code);
+      expect(checkout.currencySelect.value).toBe(code);
+      expect(checkout.attributes.get('data-keel-money-currency')).toBe(code);
+      const exponent = ['JPY', 'KRW', 'VND'].includes(code) ? 0 : 2;
+      const formatted = new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: code,
+        minimumFractionDigits: exponent,
+        maximumFractionDigits: exponent,
+      }).format(Number(raw) / (exponent === 0 ? 1 : 100));
+      expect(checkout.display.textContent).toContain(formatted);
+      expect(checkout.storage.get('keel:money:currency')).toBe(code);
+      await checkout.submit();
+      const last = checkout.calls.filter((call) => call.method === 'POST').at(-1);
+      expect(JSON.parse(last?.body ?? '{}').currency_code).toBe(code);
+      identities.add(last?.headers['Idempotency-Key'] ?? '');
+    }
+    expect(identities.size).toBe(16);
+  });
+
+  test('currency precedence is query, saved choice, locale, then catalogue default', async () => {
+    const cases = [
+      { search: '?currency=jpy', storedCurrency: 'HKD', languages: ['en-GB'], expected: 'JPY' },
+      { search: '?currency=INVALID', storedCurrency: 'HKD', languages: ['en-GB'], expected: 'HKD' },
+      { storedCurrency: 'INVALID', languages: ['en-GB'], expected: 'GBP' },
+      { languages: [], expected: 'USD' },
+    ];
+    for (const { expected, ...options } of cases) {
+      const checkout = await mount('USD', catalogueAmounts, options);
+      expect(checkout.currencySelect.value).toBe(expected);
+    }
+  });
+
+  test('invalid selection preserves visible price, request currency, and saved choice', async () => {
+    const checkout = await mount('USD', catalogueAmounts);
+    expect(checkout.selectCurrency('hkd')).toBe(true);
+    const before = checkout.display.textContent;
+    checkout.changeCurrency('INVALID');
+    expect(checkout.selectCurrency('INVALID')).toBe(false);
+    expect(checkout.currencySelect.value).toBe('HKD');
+    expect(checkout.display.textContent).toBe(before);
+    expect(checkout.storage.get('keel:money:currency')).toBe('HKD');
+    await checkout.submit();
+    expect(post(checkout).body.currency_code).toBe('HKD');
+  });
+
   test('render hydrates only the catalogue and does not create an order', async () => {
     const checkout = await mount('HKD');
     expect(checkout.calls.map((call) => call.method)).toEqual(['GET']);
     expect(checkout.attributes.get('data-keel-money-catalog-ready')).toBe('1');
     expect(checkout.button.disabled).toBe(false);
-    expect(checkout.display.textContent).toContain('226.00');
+    expect(checkout.display.textContent).toContain('229.00');
   });
 
   test('request currency follows visible catalogue default, not the first amount', async () => {
@@ -176,7 +279,7 @@ describe('generated Keel storefront currency', () => {
     await checkout.submit();
     const request = post(checkout);
     expect(request.body.currency_code).toBe('HKD');
-    expect(checkout.display.textContent).toContain('226.00');
+    expect(checkout.display.textContent).toContain('229.00');
     await checkout.submit();
     const attempts = checkout.calls.filter((call) => call.method === 'POST');
     expect(attempts).toHaveLength(2);
@@ -192,7 +295,7 @@ describe('generated Keel storefront currency', () => {
     expect(post(hkd).body.currency_code).toBe('HKD');
     expect(post(usd).key).not.toBe(post(hkd).key);
     expect(usd.display.textContent).toContain('29.00');
-    expect(hkd.display.textContent).toContain('226.00');
+    expect(hkd.display.textContent).toContain('229.00');
   });
 
   test('unavailable catalogue currency fails closed without a checkout write', async () => {
@@ -206,7 +309,7 @@ describe('generated Keel storefront currency', () => {
 
 describe('generated Keel storefront SEO, layout, and attribution', () => {
   test('pricing.html fixes title, og:image, paid JSON-LD, and above-the-fold checkout', () => {
-    const expectedTitle = 'anymd Pro: verifiable video evidence and cite-check for AI agents';
+    const expectedTitle = 'anymd Pro: video moments you can cite, quotes you can check';
     const title = html.match(/<title>([^<]+)<\/title>/)?.[1] ?? '';
     expect(title).toBe(expectedTitle);
     expect(title).not.toContain('· anymd Pro');
@@ -228,7 +331,7 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
     expect(checkoutIdx).toBeGreaterThan(-1);
     expect(detailsIdx).toBeGreaterThan(checkoutIdx);
     expect(html).not.toContain('Money');
-    expect(html).toContain('One-time 100-year offline licence');
+    expect(html).toContain('Buy a 100-year Pro licence with one payment.');
     const recoverHtml = readFileSync(new URL('recover.html', prebuilt), 'utf8');
     expect(html).toContain('Apple Pay · Google Pay · Link');
     expect(html).toContain('anymd-wallet-trust');

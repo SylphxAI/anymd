@@ -16,16 +16,13 @@ import sys
 SITE_URL = "https://sylphxai.github.io/anymd/"
 SITE_NAME = "anymd Pro"
 DEFAULT_OG_IMAGE = f"{SITE_URL}og-pro.png"
-OG_IMAGE_ALT = "anymd Pro: verifiable video evidence and cite-check for AI agents"
+OG_IMAGE_ALT = "anymd Pro: video moments you can cite, quotes you can check"
 DEFAULT_PRICING_DESCRIPTION = (
-    "Let your agent show its evidence. Exact video frames with timestamps and hashes, "
-    "and offline cite-checks. One-time 100-year offline licence — $29 USD across 16 local currencies at checkout."
+    "Cite video moments and check PDF quotes on your own machine. "
+    "Buy a 100-year Pro licence with one payment. See the current price before you buy."
 )
 DEFAULT_RECOVER_DESCRIPTION = "Retrieve an existing anymd Pro offline licence by email."
-DEFAULT_OFFER_DESCRIPTION = (
-    "Exact video frames with timestamps and hashes, and offline cite-check. "
-    "One-time 100-year offline licence — $29 USD across 16 local currencies at checkout."
-)
+DEFAULT_OFFER_DESCRIPTION = DEFAULT_PRICING_DESCRIPTION
 LEGACY_OFFER_DESCRIPTION = (
     "Exact video frames with timestamps and hashes, and offline cite-check. "
     "Current one-time price comes from the live Money catalogue."
@@ -864,7 +861,7 @@ def postprocess_pricing_html(
 
     html_text = _ensure_storefront_footer_links(html_text)
 
-    if "anymd-wallet-trust" not in html_text:
+    if 'class="anymd-wallet-trust"' not in html_text:
         submit_pat = re.compile(
             r'(<button\s+id="money-checkout-pricing-submit"[^>]*>.*?</button>)',
             re.DOTALL,

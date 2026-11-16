@@ -547,6 +547,122 @@ export function parseMinorAmount(raw) {
   return null;
 }
 
+const CURRENCY_STORAGE_KEY = "keel:money:currency";
+export const ZERO_DECIMAL_CURRENCIES = new Set(["JPY", "KRW", "VND"]);
+const PREFERRED_CURRENCY_ORDER = [
+  "USD", "HKD", "TWD", "GBP", "EUR",
+  "JPY", "KRW", "MYR", "SGD", "CAD",
+  "AUD", "NZD", "THB", "PHP", "IDR", "VND",
+];
+const CURRENCY_OPTION_LABELS = {
+  USD: "USD ($)",
+  HKD: "HKD (HK$)",
+  TWD: "TWD (NT$)",
+  GBP: "GBP (£)",
+  EUR: "EUR (€)",
+  JPY: "JPY (¥)",
+  KRW: "KRW (₩)",
+  MYR: "MYR (RM)",
+  SGD: "SGD (S$)",
+  CAD: "CAD (CA$)",
+  AUD: "AUD (A$)",
+  NZD: "NZD (NZ$)",
+  THB: "THB (฿)",
+  PHP: "PHP (₱)",
+  IDR: "IDR (Rp)",
+  VND: "VND (₫)",
+};
+const REGION_TO_CURRENCY = {
+  HK: "HKD", MO: "HKD",
+  TW: "TWD",
+  US: "USD", PR: "USD", GU: "USD", VI: "USD",
+  GB: "GBP", UK: "GBP", GG: "GBP", JE: "GBP", IM: "GBP",
+  AT: "EUR", BE: "EUR", CY: "EUR", DE: "EUR", EE: "EUR",
+  ES: "EUR", FI: "EUR", FR: "EUR", GR: "EUR", HR: "EUR",
+  IE: "EUR", IT: "EUR", LT: "EUR", LU: "EUR", LV: "EUR",
+  MT: "EUR", NL: "EUR", PT: "EUR", SI: "EUR", SK: "EUR",
+  AD: "EUR", MC: "EUR", SM: "EUR", VA: "EUR",
+  JP: "JPY",
+  KR: "KRW",
+  MY: "MYR",
+  SG: "SGD",
+  CA: "CAD",
+  AU: "AUD",
+  NZ: "NZD",
+  TH: "THB",
+  PH: "PHP",
+  ID: "IDR",
+  VN: "VND",
+};
+const TIMEZONE_TO_CURRENCY = {
+  "Asia/Hong_Kong": "HKD",
+  "Asia/Macau": "HKD",
+  "Asia/Taipei": "TWD",
+  "Europe/London": "GBP",
+  "Asia/Tokyo": "JPY",
+  "Asia/Seoul": "KRW",
+  "Asia/Kuala_Lumpur": "MYR",
+  "Asia/Kuching": "MYR",
+  "Asia/Singapore": "SGD",
+  "Asia/Bangkok": "THB",
+  "Asia/Manila": "PHP",
+  "Asia/Jakarta": "IDR",
+  "Asia/Makassar": "IDR",
+  "Asia/Jayapura": "IDR",
+  "Asia/Ho_Chi_Minh": "VND",
+  "Asia/Saigon": "VND",
+  "Pacific/Auckland": "NZD",
+  "Australia/Sydney": "AUD",
+  "Australia/Melbourne": "AUD",
+  "Australia/Brisbane": "AUD",
+  "Australia/Perth": "AUD",
+  "Australia/Adelaide": "AUD",
+};
+
+export function currencyExponent(currency) {
+  if (typeof currency !== "string") return 2;
+  return ZERO_DECIMAL_CURRENCIES.has(currency.trim().toUpperCase()) ? 0 : 2;
+}
+
+export function detectPreferredCurrencies() {
+  const out = [];
+  const add = (code) => {
+    if (code && !out.includes(code)) out.push(code);
+  };
+  try {
+    const nav = typeof window !== "undefined" ? window.navigator : undefined;
+    const langs = Array.isArray(nav?.languages) && nav.languages.length > 0
+      ? nav.languages
+      : typeof nav?.language === "string" && nav.language
+        ? [nav.language]
+        : [];
+    for (const tag of langs) {
+      if (typeof tag !== "string") continue;
+      let region = "";
+      try {
+        if (typeof Intl?.Locale === "function") {
+          region = new Intl.Locale(tag).maximize().region || "";
+        }
+      } catch {
+        region = "";
+      }
+      if (!region) {
+        const m = tag.match(/[-_]([A-Za-z]{2})(?:$|[-_])/);
+        if (m) region = m[1].toUpperCase();
+      }
+      const mapped = REGION_TO_CURRENCY[region.toUpperCase()];
+      if (mapped) add(mapped);
+    }
+    const tz = Intl?.DateTimeFormat?.()?.resolvedOptions?.()?.timeZone;
+    if (typeof tz === "string" && TIMEZONE_TO_CURRENCY[tz]) {
+      add(TIMEZONE_TO_CURRENCY[tz]);
+    }
+  } catch {
+    // Locale inspection unavailable; fall back to catalog default.
+  }
+  return out;
+}
+
 export function formatMinorAmount(rawAmount, currency, quantity = 1) {
   const unitMinor = parseMinorAmount(rawAmount);
   if (
@@ -561,13 +677,17 @@ export function formatMinorAmount(rawAmount, currency, quantity = 1) {
   const totalMinor = unitMinor * quantity;
   if (!Number.isSafeInteger(totalMinor)) return null;
   const code = currency.trim().toUpperCase();
+  const exponent = currencyExponent(code);
+  const value = totalMinor / (exponent === 0 ? 1 : 100);
   try {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: code,
-    }).format(totalMinor / 100);
+      minimumFractionDigits: exponent,
+      maximumFractionDigits: exponent,
+    }).format(value);
   } catch {
-    return `${(totalMinor / 100).toFixed(2)} ${code}`;
+    return exponent === 0 ? `${Math.round(value)} ${code}` : `${value.toFixed(2)} ${code}`;
   }
 }
 
@@ -643,6 +763,7 @@ async function hydrateCatalog(
         .filter((item) => item && !item.archived && typeof item.key === "string")
         .map((item) => [item.key, item]),
     );
+    const resolvedEntries = [];
     for (const configured of config.prices) {
       const price = priceByKey.get(configured.key);
       if (!price || !price.unit_amounts || typeof price.unit_amounts !== "object") {
@@ -654,14 +775,17 @@ async function hydrateCatalog(
         );
         return false;
       }
-      const currency = price.default_currency || Object.keys(price.unit_amounts)[0];
-      const rawMinor = currency ? price.unit_amounts[currency] : undefined;
-      const formatted = formatMinorAmount(
-        rawMinor,
-        currency,
-        configured.quantity,
-      );
-      if (!formatted) {
+      const amounts = new Map();
+      for (const [rawCode, rawVal] of Object.entries(price.unit_amounts)) {
+        const code = String(rawCode || "").trim().toUpperCase();
+        if (!code || parseMinorAmount(rawVal) === null) continue;
+        amounts.set(code, rawVal);
+      }
+      const defaultCurrency =
+        typeof price.default_currency === "string" && price.default_currency.trim()
+          ? price.default_currency.trim().toUpperCase()
+          : "";
+      if (defaultCurrency && !amounts.has(defaultCurrency)) {
         setButtonDisabled(submitButton, true);
         setStatus(
           root,
@@ -670,76 +794,261 @@ async function hydrateCatalog(
         );
         return false;
       }
-      const parsedMinor = parseMinorAmount(rawMinor);
-      const unitFormatted = formatMinorAmount(rawMinor, currency, 1);
-      const seatCount =
-        Number.isInteger(configured.seats) && configured.seats >= 1
-          ? configured.seats
-          : null;
-      const perSeatFormatted =
-        seatCount && parsedMinor !== null
-          ? formatMinorAmount(
-              Math.round((parsedMinor * configured.quantity) / seatCount),
-              currency,
-              1,
-            )
-          : unitFormatted;
-      const interval = price.recurring_interval ? ` / ${price.recurring_interval}` : "";
-      allowedOptions.set(optionSelectorValue(configured), {
-        ...configured,
-        currency_code: currency.toUpperCase(),
-        formatted_total: formatted,
-        formatted_unit: unitFormatted,
-        formatted_per_seat: perSeatFormatted,
-        interval,
-      });
+      if (amounts.size === 0) {
+        setButtonDisabled(submitButton, true);
+        setStatus(
+          root,
+          "error",
+          `Price "${configured.key}" has no valid catalog unit amount.`,
+        );
+        return false;
+      }
+      const fallbackCurrency =
+        [defaultCurrency, ...amounts.keys()].find(
+          (code) =>
+            code &&
+            amounts.has(code) &&
+            formatMinorAmount(amounts.get(code), code, configured.quantity),
+        ) ||
+        defaultCurrency ||
+        amounts.keys().next().value;
+      resolvedEntries.push({ configured, price, amounts, defaultCurrency, fallbackCurrency });
     }
-    if (priceSelect && typeof priceSelect.querySelectorAll === "function") {
-      for (const optionEl of priceSelect.querySelectorAll("option")) {
-        const optionConfig = allowedOptions.get(optionEl.value);
-        if (!optionConfig || !optionConfig.formatted_total) continue;
-        const baseLabel = optionEl.getAttribute("data-keel-label") || optionConfig.label;
-        optionEl.textContent = baseLabel.includes(optionConfig.formatted_total)
-          ? baseLabel
-          : `${baseLabel} — ${optionConfig.formatted_total}${optionConfig.interval || ""}`;
+
+    const rawCatalogKeys = new Set();
+    for (const entry of resolvedEntries) {
+      for (const code of entry.amounts.keys()) {
+        rawCatalogKeys.add(code);
       }
     }
-    for (const card of queryAll(root, "[data-keel-money-tier-card]")) {
-      const selector = card.getAttribute("data-keel-money-tier-card") || "";
-      const optionConfig = allowedOptions.get(selector);
-      if (!optionConfig) continue;
-      const priceEl =
-        typeof card.querySelector === "function"
-          ? card.querySelector("[data-keel-money-tier-price]")
-          : null;
-      if (priceEl && optionConfig.formatted_total) {
-        priceEl.textContent = `${optionConfig.formatted_total}${optionConfig.interval || ""}`;
+    if (rawCatalogKeys.size === 0) {
+      setButtonDisabled(submitButton, true);
+      setStatus(
+        root,
+        "error",
+        "Configured prices do not expose any valid catalog currency.",
+      );
+      return false;
+    }
+
+    const buildCurrencyEntries = (currency) => {
+      if (!currency) return null;
+      const nextEntries = [];
+      for (const { configured, price, amounts, fallbackCurrency } of resolvedEntries) {
+        const entryCurrency = amounts.has(currency) ? currency : fallbackCurrency;
+        const rawMinor = amounts.get(entryCurrency);
+        const formatted = formatMinorAmount(rawMinor, entryCurrency, configured.quantity);
+        if (!formatted) return null;
+        const parsedMinor = parseMinorAmount(rawMinor);
+        const unitFormatted = formatMinorAmount(rawMinor, entryCurrency, 1);
+        const seatCount =
+          Number.isInteger(configured.seats) && configured.seats >= 1
+            ? configured.seats
+            : null;
+        const perSeatFormatted =
+          seatCount && parsedMinor !== null
+            ? formatMinorAmount(
+                Math.round((parsedMinor * configured.quantity) / seatCount),
+                entryCurrency,
+                1,
+              )
+            : unitFormatted;
+        const interval = price.recurring_interval ? ` / ${price.recurring_interval}` : "";
+        nextEntries.push([
+          optionSelectorValue(configured),
+          {
+            ...configured,
+            currency_code: entryCurrency,
+            formatted_total: formatted,
+            formatted_unit: unitFormatted,
+            formatted_per_seat: perSeatFormatted,
+            interval,
+          },
+        ]);
       }
-      const unitEl =
-        typeof card.querySelector === "function"
-          ? card.querySelector("[data-keel-money-tier-unit]")
-          : null;
-      if (unitEl) {
-        if (optionConfig.seats && optionConfig.formatted_per_seat) {
-          const note = supplementalUnitNote(optionConfig.unit_note, "seat");
-          unitEl.textContent = note
-            ? `${optionConfig.formatted_per_seat} / seat · ${note}`
-            : `${optionConfig.formatted_per_seat} / seat`;
-        } else if (
-          optionConfig.quantity > 1 &&
-          optionConfig.formatted_unit &&
-          optionConfig.unit_note
-        ) {
-          const note = supplementalUnitNote(optionConfig.unit_note, "unit");
-          unitEl.textContent = note
-            ? `${optionConfig.formatted_unit} / unit · ${note}`
-            : `${optionConfig.formatted_unit} / unit`;
-        } else if (optionConfig.unit_note) {
-          unitEl.textContent = optionConfig.unit_note;
+      return nextEntries;
+    };
+
+    const catalogKeys = new Set();
+    for (const code of rawCatalogKeys) {
+      if (buildCurrencyEntries(code)) {
+        catalogKeys.add(code);
+      }
+    }
+    if (catalogKeys.size === 0) {
+      setButtonDisabled(submitButton, true);
+      setStatus(
+        root,
+        "error",
+        "Could not format active catalog pricing.",
+      );
+      return false;
+    }
+
+    const availableCurrencies = [];
+    for (const code of PREFERRED_CURRENCY_ORDER) {
+      if (catalogKeys.has(code)) availableCurrencies.push(code);
+    }
+    for (const code of catalogKeys) {
+      if (!availableCurrencies.includes(code)) availableCurrencies.push(code);
+    }
+
+    let queryCurrency = "";
+    try {
+      const params = new URLSearchParams(window?.location?.search || "");
+      const raw = params.get("currency");
+      if (raw && raw.trim()) queryCurrency = raw.trim().toUpperCase();
+    } catch {
+      queryCurrency = "";
+    }
+    let storedCurrency = "";
+    try {
+      const saved = window?.localStorage?.getItem(CURRENCY_STORAGE_KEY);
+      if (saved && saved.trim()) storedCurrency = saved.trim().toUpperCase();
+    } catch {
+      storedCurrency = "";
+    }
+    const localeCandidates = detectPreferredCurrencies();
+    const sharedDefaultCurrency = resolvedEntries[0]?.defaultCurrency || "";
+
+    const currencyWrap =
+      typeof root.querySelector === "function"
+        ? root.querySelector("[data-keel-money-currency-wrap]")
+        : null;
+    const currencySelect = resolveFieldControl(root, "currency", "select");
+
+    const applyCurrency = (rawCurrency) => {
+      const currency = String(rawCurrency || "").trim().toUpperCase();
+      if (!currency || !catalogKeys.has(currency)) return false;
+      const nextEntries = buildCurrencyEntries(currency);
+      if (!nextEntries) return false;
+      for (const [selector, optionEntry] of nextEntries) {
+        allowedOptions.set(selector, optionEntry);
+      }
+      if (priceSelect && typeof priceSelect.querySelectorAll === "function") {
+        for (const optionEl of priceSelect.querySelectorAll("option")) {
+          const optionConfig = allowedOptions.get(optionEl.value);
+          if (!optionConfig || !optionConfig.formatted_total) continue;
+          const baseLabel = optionEl.getAttribute("data-keel-label") || optionConfig.label;
+          optionEl.textContent = baseLabel.includes(optionConfig.formatted_total)
+            ? baseLabel
+            : `${baseLabel} — ${optionConfig.formatted_total}${optionConfig.interval || ""}`;
         }
       }
+      for (const card of queryAll(root, "[data-keel-money-tier-card]")) {
+        const selector = card.getAttribute("data-keel-money-tier-card") || "";
+        const optionConfig = allowedOptions.get(selector);
+        if (!optionConfig) continue;
+        const priceEl =
+          typeof card.querySelector === "function"
+            ? card.querySelector("[data-keel-money-tier-price]")
+            : null;
+        if (priceEl && optionConfig.formatted_total) {
+          priceEl.textContent = `${optionConfig.formatted_total}${optionConfig.interval || ""}`;
+        }
+        const unitEl =
+          typeof card.querySelector === "function"
+            ? card.querySelector("[data-keel-money-tier-unit]")
+            : null;
+        if (unitEl) {
+          if (optionConfig.seats && optionConfig.formatted_per_seat) {
+            const note = supplementalUnitNote(optionConfig.unit_note, "seat");
+            unitEl.textContent = note
+              ? `${optionConfig.formatted_per_seat} / seat · ${note}`
+              : `${optionConfig.formatted_per_seat} / seat`;
+          } else if (
+            optionConfig.quantity > 1 &&
+            optionConfig.formatted_unit &&
+            optionConfig.unit_note
+          ) {
+            const note = supplementalUnitNote(optionConfig.unit_note, "unit");
+            unitEl.textContent = note
+              ? `${optionConfig.formatted_unit} / unit · ${note}`
+              : `${optionConfig.formatted_unit} / unit`;
+          } else if (optionConfig.unit_note) {
+            unitEl.textContent = optionConfig.unit_note;
+          }
+        }
+      }
+      root.setAttribute("data-keel-money-currency", currency);
+      if (currencySelect) {
+        currencySelect.value = currency;
+      }
+      syncTierSelection(root, config, allowedOptions, priceSelect, priceDisplay, submitButton);
+      return true;
+    };
+
+    const initialCandidates = [
+      queryCurrency,
+      storedCurrency,
+      ...localeCandidates,
+      sharedDefaultCurrency,
+      ...availableCurrencies,
+    ];
+    let initialCurrency = "";
+    for (const candidate of initialCandidates) {
+      if (candidate && catalogKeys.has(candidate) && applyCurrency(candidate)) {
+        initialCurrency = candidate;
+        break;
+      }
     }
-    syncTierSelection(root, config, allowedOptions, priceSelect, priceDisplay, submitButton);
+    if (!initialCurrency) {
+      setButtonDisabled(submitButton, true);
+      setStatus(
+        root,
+        "error",
+        "Could not format active catalog pricing.",
+      );
+      return false;
+    }
+
+    const selectCurrency = (rawCurrency) => {
+      const chosen = String(rawCurrency || "").trim().toUpperCase();
+      const prevCurrency = root.getAttribute("data-keel-money-currency") || initialCurrency;
+      if (!applyCurrency(chosen)) {
+        if (currencySelect) currencySelect.value = prevCurrency;
+        return false;
+      }
+      try {
+        window?.localStorage?.setItem(CURRENCY_STORAGE_KEY, chosen);
+      } catch {
+        // Storage unavailable; active session still uses selected currency.
+      }
+      return true;
+    };
+
+    if (currencySelect) {
+      if (typeof document !== "undefined" && typeof document.createElement === "function") {
+        const optionNodes = availableCurrencies.map((code) => {
+          const opt = document.createElement("option");
+          opt.value = code;
+          opt.textContent = CURRENCY_OPTION_LABELS[code] || code;
+          opt.selected = code === initialCurrency;
+          return opt;
+        });
+        if (typeof currencySelect.replaceChildren === "function") {
+          currencySelect.replaceChildren(...optionNodes);
+        } else {
+          currencySelect.innerHTML = "";
+          for (const opt of optionNodes) currencySelect.appendChild?.(opt);
+        }
+      }
+      currencySelect.value = initialCurrency;
+      if (typeof currencySelect.addEventListener === "function") {
+        currencySelect.addEventListener("change", () => {
+          selectCurrency(currencySelect.value);
+        });
+      }
+    }
+    if (currencyWrap) {
+      if (availableCurrencies.length > 1) {
+        currencyWrap.removeAttribute?.("hidden");
+      } else {
+        currencyWrap.setAttribute?.("hidden", "");
+      }
+    }
+    root.__keelSelectCurrency = selectCurrency;
+
     root.setAttribute("data-keel-money-catalog-ready", "1");
     setButtonDisabled(submitButton, false);
     return true;
@@ -1555,12 +1864,9 @@ export async function mountCheckout(root) {
   }
 
   if (typeof fetch === "function") {
-    const tasks = [
-      redeemReturnedSession(root, config),
-      redeemRecoveryLink(root, config),
-    ];
+    const tasks = [];
     if (checkoutEnabled) {
-      tasks.unshift(
+      tasks.push(
         hydrateCatalog(
           root,
           config,
@@ -1571,6 +1877,10 @@ export async function mountCheckout(root) {
         ),
       );
     }
+    tasks.push(
+      redeemReturnedSession(root, config),
+      redeemRecoveryLink(root, config),
+    );
     await Promise.all(tasks);
     showOwnedTier(root, config, checkoutForm, submitButton);
   }

@@ -62,12 +62,12 @@ const readmeFormerly = (p: Product) =>
 const docsFormerly = (p: Product) =>
   `<p class="cit-fine" style="text-align:center">Formerly <strong>${p.formerly}</strong>. See <a href="./guide/migration">Migration</a>.</p>`;
 
-// one line naming the hosted, metered mode of the same crates (free local mode is the default)
+// Keep the hosted alternative focused on the customer’s choice.
 const hostedLine = (p: Product) =>
-  `anymd is the free, local mode of the same crates that run [${p.hosted.name}](${p.hosted.url}), the hosted document-parse service: ${p.hosted.blurb}`;
+  `Prefer a hosted service? Use [${p.hosted.name}](${p.hosted.url}) to ${p.hosted.blurb}`;
 
 const docsHosted = (p: Product) =>
-  `<p class="cit-fine">anymd is the free, local mode of the same crates that run <a href="${p.hosted.url}">${p.hosted.name}</a>, the hosted document-parse service: ${p.hosted.blurb} See <a href="./guide/hosted">Local and hosted</a>.</p>`;
+  `<p class="cit-fine">Prefer a hosted service? Use <a href="${p.hosted.url}">${p.hosted.name}</a> to ${p.hosted.blurb} See <a href="./guide/hosted">Local and hosted</a>.</p>`;
 
 const docsHero = (p: Product) =>
   [`  text: ${JSON.stringify(p.tagline)}`, `  tagline: ${JSON.stringify(subtitle(p))}`].join('\n');

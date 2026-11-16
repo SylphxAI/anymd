@@ -117,7 +117,7 @@ const useCaseGraphs: Record<string, object> = {
         softwareVersion: pkg.version,
         isAccessibleForFree: false,
         description:
-          'Offline PDF cite_check (quote and bounding-box verification) and SHA-256 verifiable video timeline and frame extraction for AI agents via MCP and CLI.',
+          'Find the page behind a PDF quote and the frame behind a video citation. Works on your machine, with a one-time Pro licence.',
         offers: [
           {
             '@type': 'Offer',
@@ -223,34 +223,34 @@ const useCaseGraphs: Record<string, object> = {
         mainEntity: [
           {
             '@type': 'Question',
-            name: 'What does anymd cite_check verify?',
+            name: 'What does a citation match tell me?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'cite_check deterministically checks 1 to 100 quotes against extracted text inside a specified physical PDF page and bounding box, returning verified_exact, verified_normalized, unmatched, or insufficient_evidence.',
+              text: 'It tells you that the quoted text was found on the specified page and area. It does not establish that the statement is true. Missing OCR or text positions can leave a citation unconfirmed.',
             },
           },
           {
             '@type': 'Question',
-            name: 'Does anymd Pro work offline without an account?',
+            name: 'Do I need an internet connection after purchase?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Yes. anymd Pro uses an offline Ed25519-signed licence token verified against a public key embedded in the anymd binary, with no account or network call required.',
+              text: 'Pro works offline. Activate your licence once on your machine; licence checks stay there.',
             },
           },
           {
             '@type': 'Question',
-            name: 'How much does anymd Pro cost?',
+            name: 'Is there a subscription?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'anymd Pro is a one-time payment of $29 USD (or your local currency across 16 supported currencies at checkout, tax inclusive) for a single-person 100-year licence with no recurring subscription.',
+              text: 'No. You make one payment for a single-person, 100-year licence with future releases included. The current price, currency and applicable tax are shown before you buy.',
             },
           },
           {
             '@type': 'Question',
-            name: 'How do I buy and activate anymd Pro?',
+            name: 'Can I buy Pro from the terminal?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Run anymd pro buy from your terminal (anymd 8.4.0+) or purchase at https://sylphxai.github.io/anymd/pricing, then activate with anymd pro activate or the ANYMD_PRO_TOKEN environment variable.',
+              text: 'On anymd 8.4.0 or later, run anymd pro buy. It opens checkout in your browser and saves the issued licence on your machine. You can also buy on the web and activate the licence yourself.',
             },
           },
         ],
