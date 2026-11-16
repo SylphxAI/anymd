@@ -93,7 +93,7 @@ jobs:
     name: build ${{ matrix.tool }} (${{ matrix.osk }})
     needs: plan
     if: ${{ needs.plan.outputs.builds != '[]' }}
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.osk == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -148,7 +148,7 @@ jobs:
     needs: [plan, data, build]
     # A skipped or failed build must not block the engines that do not need it.
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.data.result == 'success' }}
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.osk == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 350
     strategy:
       fail-fast: false
@@ -220,14 +220,13 @@ jobs:
   # and what does it add to a minimal binary? (The CLI sizes above are the C++ tools.)
   probe:
     name: crate ${{ matrix.crate }} (${{ matrix.target }})
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
         runner: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        crate: ${{ fromJSON(github.event_name == 'pull_request' && '["baseline","transcribe-cpp"]' || '["baseline","transcribe-cpp","crispasr","sherpa-onnx"]') }}
+        crate: [baseline, transcribe-cpp, crispasr, sherpa-onnx]
         include:
           - { runner: ubuntu-latest, target: x86_64-unknown-linux-gnu }
           - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }

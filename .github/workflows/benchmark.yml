@@ -11,18 +11,13 @@ on:
         description: 'Comma-separated tools to run (empty = all)'
         required: false
         default: ''
-  pull_request:
-    paths:
-      - 'bench/**'
-      - '!bench/results/**'
-      - '.github/workflows/benchmark.yml'
 
 permissions:
   contents: read
 
 concurrency:
   group: benchmark-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   prepare:

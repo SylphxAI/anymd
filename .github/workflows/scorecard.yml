@@ -1,4 +1,4 @@
-# optimistic-merge: advisory
+# optimistic-merge: advisory — OpenSSF Scorecard SARIF and supply-chain badge publisher.
 name: scorecard
 
 # OpenSSF Scorecard: supply-chain checks on this public repository, published

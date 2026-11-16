@@ -180,15 +180,6 @@ jobs:
           ANYMD_PRO_TOKEN: ${{ secrets.ANYMD_PRO_TOKEN_CI }}
         run: bun run test:cov
 
-      - name: Upload coverage reports
-        continue-on-error: true
-        if: ${{ !cancelled() && hashFiles('coverage/**') != '' }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 3
-
   # Trunk and manual runs only: macOS and Windows run after merge, not on each pull request. GitHub-hosted
   # standard runners are free for public repositories (owner standards/dx.md).
   other-os:
@@ -262,11 +253,11 @@ jobs:
       checks: read
       pull-requests: read
     name: verified
-    if: always()
+    if: always() && !cancelled()
     needs: [docs, audit, rust, other-os, release-targets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: SylphxAI/.github/.github/actions/needs-pass@067656cfe8f8d1ff888aa9c70e442b75372dea8d # main
+      - uses: SylphxAI/.github/.github/actions/needs-pass@f27e4105e2da7d681ecebe946634bdda7ba553ba # main
         with:
           needs: ${{ toJSON(needs) }}

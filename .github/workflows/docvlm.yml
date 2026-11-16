@@ -1,11 +1,12 @@
 name: Doc-VLM release targets
 
 on:
-  push:
-    branches: [feat/docvlm-ocr]
-  pull_request:
-    paths: [crates/anymd-ocr-vlm/**, crates/anymd/src/ocr_vlm*, Cargo.lock, .github/workflows/docvlm.yml]
   workflow_dispatch:
+    inputs:
+      measure:
+        description: 'Run float, q8, and q4 CPU measurement pass after build'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -121,7 +122,7 @@ jobs:
           name: docvlm-pages
           path: pages
       - name: Install and measure the production OCR worker
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[measure]')
+        if: inputs.measure
         shell: bash
         env:
           ANYMD_CACHE_DIR: ${{ runner.temp }}/anymd-cache

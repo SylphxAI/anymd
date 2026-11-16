@@ -148,8 +148,8 @@ ANYMD_BIN=target/release/anymd .venv/bin/python bench/run.py --tool anymd \
 DIR --results FILE` rescores saved outputs after a truth fix. Heavy tools (docling, marker, unstructured) are
 meant for the workflow's runners, not a laptop.
 
-The [Benchmark workflow](../.github/workflows/benchmark.yml) runs on every pull request that touches `bench/`
-and on demand (`gh workflow run benchmark.yml -f tools=anymd,docling`). Each tool runs on its own 4-CPU
+The [Benchmark workflow](../.github/workflows/benchmark.yml) runs on demand
+(`gh workflow run benchmark.yml -f tools=anymd,docling`); offline harness tests run in CI on every PR. Each tool runs on its own 4-CPU
 GitHub-hosted runner (docling and marker in 4 shards, unstructured in 2) with tesseract (English, Chinese,
 Japanese), poppler, and pandoc installed for every tool alike. The Leaderboard job's summary shows the table,
 and its `agentdocbench-results` artifact holds the merged results JSON and every Markdown output.
