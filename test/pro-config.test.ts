@@ -460,4 +460,39 @@ describe('purchase attribution', () => {
       });
     }
   });
+
+  test('config/money-catalogue.json and use-case JSON-LD share exact 16-currency prices', () => {
+    const cat = JSON.parse(
+      readFileSync(new URL('../config/money-catalogue.json', import.meta.url), 'utf8')
+    ) as {
+      spec: { products: Array<{ prices: Array<{ unit_amounts: Record<string, string> }> }> };
+    };
+    const amounts = cat.spec.products[0]?.prices[0]?.unit_amounts ?? {};
+    const zeroDecimal = new Set(['JPY', 'KRW', 'VND']);
+    const expectedCurrencies = [
+      'USD',
+      'HKD',
+      'TWD',
+      'GBP',
+      'EUR',
+      'JPY',
+      'KRW',
+      'MYR',
+      'SGD',
+      'CAD',
+      'AUD',
+      'NZD',
+      'THB',
+      'PHP',
+      'IDR',
+      'VND',
+    ];
+    expect(Object.keys(amounts).sort()).toEqual([...expectedCurrencies].sort());
+    const vpCfg = readFileSync(new URL('../docs/.vitepress/config.ts', import.meta.url), 'utf8');
+    for (const c of expectedCurrencies) {
+      const minor = Number(amounts[c]);
+      const major = zeroDecimal.has(c) ? String(minor) : String(minor / 100);
+      expect(vpCfg).toContain(`price: '${major}',\n            priceCurrency: '${c}',`);
+    }
+  });
 });

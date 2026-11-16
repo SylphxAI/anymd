@@ -19,12 +19,12 @@ DEFAULT_OG_IMAGE = f"{SITE_URL}og-pro.png"
 OG_IMAGE_ALT = "anymd Pro: verifiable video evidence and cite-check for AI agents"
 DEFAULT_PRICING_DESCRIPTION = (
     "Let your agent show its evidence. Exact video frames with timestamps and hashes, "
-    "and offline cite-checks. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228."
+    "and offline cite-checks. One-time 100-year offline licence — $29 USD across 16 local currencies at checkout."
 )
 DEFAULT_RECOVER_DESCRIPTION = "Retrieve an existing anymd Pro offline licence by email."
 DEFAULT_OFFER_DESCRIPTION = (
     "Exact video frames with timestamps and hashes, and offline cite-check. "
-    "One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228."
+    "One-time 100-year offline licence — $29 USD across 16 local currencies at checkout."
 )
 LEGACY_OFFER_DESCRIPTION = (
     "Exact video frames with timestamps and hashes, and offline cite-check. "
@@ -365,6 +365,26 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
     }} catch {{}}
     return location.pathname.includes("/recover") ? "recover_page" : "pricing_page";
   }}
+  const UNIT_VALUES = {{USD:29,HKD:229,TWD:959,GBP:21.99,EUR:26.99,JPY:4639,KRW:38900,MYR:118.99,SGD:37.99,CAD:41.99,AUD:42.99,NZD:52.99,THB:989,PHP:1859,IDR:529000,VND:749000}};
+  function readCheckoutCurrency() {{
+    try {{
+      if (typeof document !== "undefined" && typeof document.querySelector === "function") {{
+        const sel = document.querySelector('[data-keel-money-field="currency"]');
+        const v = sel && typeof sel.value === "string" ? sel.value.trim().toUpperCase() : "";
+        if (v && Object.prototype.hasOwnProperty.call(UNIT_VALUES, v)) return v;
+      }}
+      const q = new URLSearchParams(location.search || "").get("currency");
+      if (q) {{
+        const c = q.trim().toUpperCase();
+        if (Object.prototype.hasOwnProperty.call(UNIT_VALUES, c)) return c;
+      }}
+      if (typeof localStorage !== "undefined" && typeof localStorage.getItem === "function") {{
+        const s = (localStorage.getItem("keel:money:currency") || "").trim().toUpperCase();
+        if (s && Object.prototype.hasOwnProperty.call(UNIT_VALUES, s)) return s;
+      }}
+    }} catch {{}}
+    return "USD";
+  }}
   function readOption() {{
     const sel = document.querySelector('[data-keel-money-field="price"]');
     return sel && typeof sel.value === "string" && sel.value.trim() ? sel.value.trim() : "anymd_pro";
@@ -444,12 +464,14 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, "1");
     }} catch {{}}
+    const currency = readCheckoutCurrency();
+    const val = UNIT_VALUES[currency] || 29;
     window.gtag("event", "purchase", {{
       transaction_id: sessionId,
-      value: 29,
-      currency: "USD",
+      value: val,
+      currency: currency,
       ...dimensions("stripe_redirect"),
-      items: [{{ item_id: "anymd_pro", price: 29, quantity: 1 }}],
+      items: [{{ item_id: "anymd_pro", price: val, quantity: 1 }}],
     }});
   }}
 
@@ -495,11 +517,13 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
     const form = ev.target;
     if (!(form instanceof Element) || form.getAttribute("data-keel-money-form") !== "checkout") return;
     if (!ensureGtag(readConsent())) return;
+    const currency = readCheckoutCurrency();
+    const val = UNIT_VALUES[currency] || 29;
     window.gtag("event", "begin_checkout", {{
-      currency: "USD",
-      value: 29,
+      currency: currency,
+      value: val,
       ...dimensions("pricing_checkout_form"),
-      items: [{{ item_id: "anymd_pro", item_name: "anymd Pro", price: 29, quantity: 1 }}],
+      items: [{{ item_id: "anymd_pro", item_name: "anymd Pro", price: val, quantity: 1 }}],
       transport_type: "beacon",
     }});
   }}, true);
