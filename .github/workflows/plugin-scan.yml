@@ -10,6 +10,7 @@ permissions:
 jobs:
   scan:
     name: Plugin source scan
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

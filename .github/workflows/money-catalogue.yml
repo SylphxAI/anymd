@@ -33,6 +33,7 @@ concurrency:
 jobs:
   test:
     name: Offline contract tests
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -51,7 +52,7 @@ jobs:
   preview:
     name: Apply to preview
     needs: test
-    if: github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main'
+    if: ${{ github.repository_visibility == 'public' && (github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -67,7 +68,7 @@ jobs:
   production:
     name: Apply to production
     needs: preview
-    if: github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main'
+    if: ${{ github.repository_visibility == 'public' && (github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -81,7 +82,7 @@ jobs:
   verify:
     name: Verify Access (${{ matrix.declaration }})
     needs: test
-    if: github.event_name == 'workflow_dispatch' && inputs.verify_only == true
+    if: ${{ github.repository_visibility == 'public' && (github.event_name == 'workflow_dispatch' && inputs.verify_only == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:

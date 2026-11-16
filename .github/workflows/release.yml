@@ -100,7 +100,7 @@ jobs:
   # publish set, an ordinary push would fail this job before it publishes
   # anything, so it runs only when release.yml is dispatched by hand.
   crates:
-    if: github.event_name == 'workflow_dispatch' && needs.release.result == 'success'
+    if: ${{ github.repository_visibility == 'public' && (github.event_name == 'workflow_dispatch' && needs.release.result == 'success') }}
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -138,7 +138,7 @@ jobs:
   # manifest is uploaded last, so a failed run can be rerun.
   companion-plan:
     needs: release
-    if: needs.release.result == 'success'
+    if: ${{ github.repository_visibility == 'public' && (needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -171,7 +171,7 @@ jobs:
 
   companion-build:
     needs: companion-plan
-    if: needs.companion-plan.outputs.todo == 'true'
+    if: ${{ github.repository_visibility == 'public' && (needs.companion-plan.outputs.todo == 'true') }}
     name: companion ${{ matrix.key }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -242,7 +242,7 @@ jobs:
 
   companion:
     needs: [companion-plan, companion-build]
-    if: always() && needs.companion-build.result == 'success'
+    if: ${{ github.repository_visibility == 'public' && (always() && needs.companion-build.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # The signing key lives only in this environment (main branch only).
@@ -318,7 +318,7 @@ jobs:
     needs: [release, companion-plan, companion-build, companion]
     # The companions are release assets too, so they join SHA256SUMS and the
     # attestations; `skipped` means they were already attached.
-    if: always() && !cancelled() && needs.release.result == 'success' && needs.companion-build.result != 'failure' && needs.companion.result != 'failure' && needs.companion-plan.result == 'success'
+    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.release.result == 'success' && needs.companion-build.result != 'failure' && needs.companion.result != 'failure' && needs.companion-plan.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -411,7 +411,7 @@ jobs:
   # proposed is left alone, so every push to main is safe.
   winget:
     needs: release
-    if: needs.release.result == 'success'
+    if: ${{ github.repository_visibility == 'public' && (needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -454,7 +454,7 @@ jobs:
   # no pull request, and the release is unaffected.
   winget-submit:
     needs: winget
-    if: needs.winget.outputs.rendered == 'true'
+    if: ${{ github.repository_visibility == 'public' && (needs.winget.outputs.rendered == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -483,7 +483,7 @@ jobs:
   # verified trust pack when PyPI delivery is incomplete. No Rust rebuild.
   wheels:
     needs: [release, trust]
-    if: always() && !cancelled() && needs.release.result == 'success'
+    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -537,7 +537,7 @@ jobs:
   # Complete versions are skipped by the wheel probe; missing authority fails.
   pypi:
     needs: wheels
-    if: always() && !cancelled() && needs.wheels.result == 'success' && needs.wheels.outputs.built == 'true'
+    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.wheels.result == 'success' && needs.wheels.outputs.built == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: pypi
@@ -560,7 +560,7 @@ jobs:
   # compile), tagged with the version and latest.
   image:
     needs: release
-    if: needs.release.result == 'success'
+    if: ${{ github.repository_visibility == 'public' && (needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

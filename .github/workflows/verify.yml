@@ -26,7 +26,7 @@ permissions:
 jobs:
   docs:
     name: Build docs
-    if: inputs.code != 'false'
+    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -58,7 +58,7 @@ jobs:
 
   audit:
     name: Audit Rust dependencies
-    if: inputs.code != 'false'
+    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -82,7 +82,7 @@ jobs:
   # The Rust workspace: package, build, fixtures, tests and coverage.
   rust:
     name: Build and test
-    if: inputs.code != 'false'
+    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -183,7 +183,7 @@ jobs:
   # Trunk and manual runs only: macOS and Windows run after merge, not on each pull request. GitHub-hosted
   # standard runners are free for public repositories (owner standards/dx.md).
   other-os:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: ${{ github.repository_visibility == 'public' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     name: Test other OS
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -219,7 +219,7 @@ jobs:
   # probe) on the other release targets, without downloading model weights.
   release-targets:
     name: Release build (${{ matrix.target }})
-    if: inputs.code != 'false'
+    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -253,7 +253,7 @@ jobs:
       checks: read
       pull-requests: read
     name: verified
-    if: always() && !cancelled()
+    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled()) }}
     needs: [docs, audit, rust, other-os, release-targets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
