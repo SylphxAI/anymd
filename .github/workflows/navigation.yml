@@ -1,19 +1,16 @@
 name: Navigation regression
 
 on:
-  pull_request:
-    paths:
-      - 'crates/anymd/src/outline.rs'
-      - 'test/production/outline.contract.test.ts'
-      - 'scripts/check-navigation-regression.py'
-      - '.github/workflows/navigation.yml'
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: 'Base commit or branch to compare against (defaults to origin/main)'
+        required: false
+        default: 'origin/main'
 
 permissions:
   contents: read
-
-concurrency:
-  group: navigation-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
 
 jobs:
   regression:
@@ -21,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_ref || 'origin/main' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
