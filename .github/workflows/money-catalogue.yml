@@ -1,3 +1,4 @@
+# optimistic-merge: advisory — Money catalogue deployment and path-scoped contract tests; offline tests also run in ci.yml.
 name: Money catalogue
 
 on:
@@ -26,13 +27,14 @@ permissions:
   id-token: write
 
 concurrency:
-  group: money-catalogue
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('{0}-pr-{1}', github.workflow, github.event.pull_request.number) || format('{0}-run-{1}', github.workflow, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
     name: Offline contract tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:

@@ -1,4 +1,4 @@
-# optimistic-merge: advisory
+# optimistic-merge: advisory — Publishes release artifacts and packages on version-bump pushes to main.
 name: release
 
 # Publishes when packages/anymd/package.json carries a version that is not on

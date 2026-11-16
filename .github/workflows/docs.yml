@@ -1,4 +1,4 @@
-# optimistic-merge: advisory
+# optimistic-merge: advisory — Deploys GitHub Pages docs site; docs build verification runs in verify.yml.
 name: Deploy Docs
 
 on:
@@ -20,6 +20,7 @@ jobs:
   build:
     name: Build Docs Site
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -70,6 +71,7 @@ jobs:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
