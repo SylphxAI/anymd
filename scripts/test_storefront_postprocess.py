@@ -74,6 +74,16 @@ class StorefrontPostprocessTest(unittest.TestCase):
         for key in ("gclid", "gbraid", "wbraid", "fbclid", "entry_surface"):
             self.assertIn(f'"{key}"', once)
 
+    def test_postprocess_pricing_html_injects_16_currency_ga4_values(self) -> None:
+        root = Path(__file__).resolve().parent.parent
+        html = (root / "docs" / "storefront" / "prebuilt" / "pricing.html").read_text(
+            encoding="utf-8"
+        )
+        fm = sp.parse_frontmatter(root / "docs" / "storefront" / "pricing.md")
+        rendered = sp.postprocess_pricing_html(html, fm, ga4_id="G-R4TD2Z8RR7")
+        for expected in ("JPY:4639", "KRW:38900", "VND:749000", "IDR:529000", "TWD:959", "USD:29", "readCheckoutCurrency"):
+            self.assertIn(expected, rendered)
+
 
 if __name__ == "__main__":
     unittest.main()

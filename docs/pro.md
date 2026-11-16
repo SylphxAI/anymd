@@ -1,7 +1,7 @@
 ---
 title: "anymd Pro: verifiable video evidence and cite-check for AI agents"
 titleTemplate: false
-description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline cite-checks. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.
+description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline cite-checks. One-time 100-year offline licence — $29 USD across 16 local currencies at checkout.
 image: https://sylphxai.github.io/anymd/og-pro.png
 aside: false
 sidebar: false
