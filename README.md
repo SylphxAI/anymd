@@ -9,7 +9,7 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 <!-- /generated:lead -->
 
 <!-- generated:hosted -->
-anymd is the free, local mode of the same crates that run [Sylphx AI parse](https://sylphx.com/ai), the hosted document-parse service: the same crates, hosted and metered per page for callers that want no local runtime.
+Prefer a hosted service? Use [Sylphx AI parse](https://sylphx.com/ai) to convert documents without installing a local runtime, and pay per page.
 <!-- /generated:hosted -->
 
 [![npm](https://mark.sylphx.com/npm/v/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
@@ -288,7 +288,7 @@ The anymd core is free and open source (MIT), and nothing that was free has move
 anymd has two modes, and only one of them runs on your machine:
 
 - **Local (free, MIT, this repository).** The `anymd` binary, the MCP server, the CLI and the `anymd-core`, `anymd-pdf` and `anymd-formats` crates. It converts on your machine, uploads nothing, and needs no API key.
-- **Hosted ([Sylphx AI parse](https://sylphx.com/ai), metered).** The same crates, pinned at the published version and imported unchanged, serve document parsing for Sylphx AI callers that do not want a local runtime. The call is billed per page and needs a Sylphx AI account. This is the paid mode; there is no licence key and nothing in the local binary is gated by it.
+- **Hosted ([Sylphx AI parse](https://sylphx.com/ai), pay per page).** Convert documents through an API without installing a local runtime. A Sylphx AI account is required. The free local core and the separate anymd Pro licence are unchanged.
 
 Sylphx AI parse is not a different parser and not a fork: the hosted service imports these crates, so a fix here reaches both modes and the two never drift into separate engines. Only the free local binary lives in this repository; the hosted service lives in the Sylphx platform.
 

@@ -826,6 +826,24 @@ form[data-keel-money-form="checkout"],
 .sf-selected-summary { display: flex; flex-direction: column; gap: 0.08rem; }
 .sf-selected-caption { font-size: 0.69rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .sf-selected-value { font-weight: 650; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.sf-currency-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+.sf-currency-row[hidden] { display: none; }
+.sf-currency-row label { font-size: 0.78rem; font-weight: 550; color: var(--keel-color-on-surface-variant); }
+[data-keel-money-checkout] .sf-currency-row select {
+  min-height: 2rem;
+  min-width: 6.5rem;
+  max-width: 100%;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
 .sf-consent-row { font-size: 0.76rem; line-height: 1.38; color: var(--keel-color-on-surface-variant); cursor: pointer; }
 .sf-consent-row > div { display: flex; flex-direction: row; align-items: flex-start; gap: 0.5rem; }
 

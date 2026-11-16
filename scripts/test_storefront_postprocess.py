@@ -2,6 +2,7 @@
 """Tests for storefront_postprocess.py SEO, layout, and click-ID patching."""
 
 from pathlib import Path
+import re
 import sys
 import unittest
 
@@ -44,7 +45,26 @@ class StorefrontPostprocessTest(unittest.TestCase):
         self.assertNotIn("· anymd Pro</title>", once)
         self.assertNotIn('"price":"0"', once)
         self.assertNotIn("Money", once)
-        self.assertIn("One-time 100-year offline licence", once)
+        self.assertIn("Buy a 100-year Pro licence with one payment.", once)
+        self.assertEqual(once.count('class="anymd-wallet-trust"'), 1)
+        self.assertIn("Apple Pay · Google Pay · Link", once)
+
+    def test_wallet_markup_is_injected_when_only_its_css_is_present(self) -> None:
+        root = Path(__file__).resolve().parent.parent
+        html = (root / "docs/storefront/prebuilt/pricing.html").read_text(encoding="utf-8")
+        html, removed = re.subn(
+            r'<div class="anymd-submit-wrap">(<button[^>]+id="money-checkout-pricing-submit"[^>]*>.*?</button>)'
+            r'<span class="anymd-wallet-trust">.*?</span></div>',
+            r"\1", html, count=1, flags=re.DOTALL,
+        )
+        self.assertEqual(removed, 1)
+        self.assertIn(".anymd-wallet-trust", html)
+        self.assertNotIn('class="anymd-wallet-trust"', html)
+        fm = sp.parse_frontmatter(root / "docs/storefront/pricing.md")
+        once = sp.postprocess_pricing_html(html, fm)
+        self.assertEqual(once.count('class="anymd-wallet-trust"'), 1)
+        self.assertEqual(once.count('class="anymd-submit-wrap"'), 1)
+        self.assertEqual(sp.postprocess_pricing_html(once, fm), once)
 
     def test_postprocess_recover_html_scrubs_internal_names(self) -> None:
         root = Path(__file__).resolve().parent.parent

@@ -25,19 +25,19 @@ features:
       light: /icons/zap.svg
       dark: /icons/dark/zap.svg
     title: Fast
-    details: "Native Rust converts in parallel, page by page, with no models to load. The benchmarks list the measured times."
+    details: "Start converting documents without downloading an AI model."
     link: /guide/benchmarks
   - icon:
       light: /icons/table-2.svg
       dark: /icons/dark/table-2.svg
     title: Accurate layout
-    details: Words rebuilt from glyph gaps, two-column papers in reading order, tables recovered, including borderless ones. No glued words, no scrambled columns.
+    details: Turn papers into readable text, with columns in reading order and tables kept together.
     link: /guide/formats#pdf
   - icon:
       light: /icons/scan-text.svg
       dark: /icons/dark/scan-text.svg
     title: Token-lean
-    details: Markdown with page anchors, a small front-matter header, and compact tables. A token budget and a cursor keep big documents inside your context.
+    details: Give your agent the pages it needs, with page references and compact Markdown that fits its context.
     link: /guide/tools#read
   - icon:
       light: /icons/file-text.svg
@@ -49,7 +49,7 @@ features:
       light: /icons/search.svg
       dark: /icons/dark/search.svg
     title: Search everything
-    details: Search files, whole folders, and URLs at once. Exact phrases first, BM25-ranked passages when nothing matches exactly.
+    details: Find an exact quote, or search for the most relevant passages.
     link: /guide/tools#search
   - icon:
       light: /icons/hard-drive.svg
@@ -66,7 +66,7 @@ features:
 <!-- /generated:formerly -->
 
 <!-- generated:hosted -->
-<p class="cit-fine">anymd is the free, local mode of the same crates that run <a href="https://sylphx.com/ai">Sylphx AI parse</a>, the hosted document-parse service: the same crates, hosted and metered per page for callers that want no local runtime. See <a href="./guide/hosted">Local and hosted</a>.</p>
+<p class="cit-fine">Prefer a hosted service? Use <a href="https://sylphx.com/ai">Sylphx AI parse</a> to convert documents without installing a local runtime, and pay per page. See <a href="./guide/hosted">Local and hosted</a>.</p>
 <!-- /generated:hosted -->
 
 <video src="/demo.mp4" poster="/demo-poster.png" autoplay muted loop playsinline preload="metadata" width="820" style="display:block;margin:32px auto;max-width:100%;height:auto;border-radius:12px" aria-label="Real terminal session: anymd converts a PDF, searches a folder, reads a spreadsheet, and Claude Code answers through the anymd MCP server"></video>

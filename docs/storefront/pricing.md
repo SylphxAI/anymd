@@ -1,7 +1,7 @@
 ---
-title: "anymd Pro: verifiable video evidence and cite-check for AI agents"
+title: "anymd Pro: video moments you can cite, quotes you can check"
 titleTemplate: false
-description: Let your agent show its evidence. Exact video frames with timestamps and hashes, and offline cite-checks. One-time 100-year offline licence — $29 USD / £24 GBP / €27 EUR / HK$228.
+description: Cite video moments and check PDF quotes on your own machine. Buy a 100-year Pro licence with one payment. See the current price before you buy.
 image: https://sylphxai.github.io/anymd/og-pro.png
 layout: storefront
 checkout_placement: hero
@@ -14,44 +14,43 @@ next: false
 money_checkout: pro
 ---
 
-# Let your agent show its evidence
+# Video moments you can cite, quotes you can check
 
-**anymd Pro** adds two things to the free anymd MCP server: exact video frames your agent can cite, and **cite-check**, which proves a quote is on the page and at the spot it claims. Everything runs on your machine.
+Give your agent the video frame behind a claim, and check whether a PDF quote appears where its citation says it does. Both work on your machine.
 
-Current one-time price and tax are shown below · 100-year licence · works offline, no account · [Terms](https://sylphxai.github.io/anymd/legal/pro-terms)
+Pay once. Use Pro offline for 100 years, with no account required. The price below includes applicable tax. [Terms apply](https://sylphxai.github.io/anymd/legal/pro-terms).
 
-Requires anymd 8.4.0 or later (`npx -y @sylphx/anymd@latest --version`). The anymd core stays free and MIT licensed.
+Works with anymd 8.4.0 or later. The core stays free and MIT licensed. Check your version in the [setup guide](https://sylphxai.github.io/anymd/guide/pro-licence-testing).
 
 <!-- keel:checkout -->
 
 ## Why it matters
 
-When an agent summarises a deposition video, an earnings call, a lecture or a contract PDF, you still have to trust it. Pro gives the agent something you can check.
+Reviewing a video summary or a quoted passage should not mean searching the whole source again. Pro takes you back to the exact frame or page, so you can check an answer before you use it.
 
 ### Verifiable video evidence
 
-- **Timeline.** `inspect` with `video_timeline` returns an ordered, bounded timeline for a video: scenes, chapters, and subtitle or transcript cues with their start and end times, tied to the source file's SHA-256.
-- **Frames.** `render_frame` returns the decoded frame at the times you ask for. Each frame records the requested time, the actual decoded timestamp and a SHA-256 of the PNG, so a citation like "at 01:17 the slide shows X" can be re-checked. A nearby keyframe is never passed off as the requested moment.
-- **Honest limits.** Scene changes are FFmpeg-detected cuts, a heuristic and not a semantic reading of the video. A timeline covers at most ten minutes per request. No model is downloaded.
-- `read` and `outline` also take the `timeline` option, so the same scenes appear as document sections.
+- **Find your way through a video** with scene changes, chapters and subtitle or transcript timings. Each timeline is linked to its source file.
+- **See the frame behind a video citation.** Each image includes the requested time and the actual decoded timestamp, so you can check which moment it shows.
+- **Know the limits.** Timelines cover up to 10 minutes per request. Scene markers detect visual cuts; they do not explain what the video means. No AI model download is needed.
 
 [How video timelines work](https://sylphxai.github.io/anymd/guide/video-timeline)
 
 ### Cite-check
 
-- `inspect` with `cite_check` takes a PDF and a list of citations (quote, page, bounding box) and returns one verdict each: `verified_exact`, `verified_normalized`, `unmatched` or `insufficient_evidence`.
-- It checks that the quote occurs in the text extracted from that page, inside that box. No model judges it, and when the evidence is not enough (a scan with no OCR, missing geometry) it says so rather than guessing.
-- A verified result proves the quote is **at that location in the document**. It does not prove the statement is true, and it does not vouch for OCR accuracy.
+- **Check each PDF quote against its cited page and area.** See whether it matches, doesn't match, or needs more evidence.
+- Checks use the text and its position on the page, not an AI opinion. A scan without OCR or missing text positions may leave a citation unconfirmed.
+- A match confirms where the quote appears, not whether it is true. OCR errors can still affect the result.
 
 [How cite-check works](https://sylphxai.github.io/anymd/guide/cite-check)
 
 ### Who it is for
 
-Agents and people who have to point at a source and be believed: legal review, research, finance and media work.
+Developers building agents that cite their sources. Writers checking quotes. Researchers, legal reviewers and finance teams who need to show where an answer came from.
 
 ## Price
 
-**Current one-time price, including any applicable tax.** No subscription. One licence per person, valid for 100 years, with future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
+**Current one-time price, including any applicable tax.** Choose from 16 currencies at checkout. No subscription. One licence per person, valid for 100 years, with future releases included. Instant delivery after payment: copy your licence token from the checkout confirmation page. We also email a link to retrieve it.
 
 Buy from the terminal: `anymd pro buy` opens the checkout in your browser and turns the payment into a licence token on this machine, so there is nothing to copy. It prints the Pro page and the purchase command instead if the checkout cannot be reached.
 
@@ -70,18 +69,18 @@ or set the token in the environment:
 export ANYMD_PRO_TOKEN='<your token>'
 ```
 
-The environment variable wins over the saved file. `status` shows whether Pro is active; it never prints the token.
+Using a server or CI? Set `ANYMD_PRO_TOKEN`. It takes priority over a saved licence; `anymd pro status` confirms activation without displaying your key.
 
 ## FAQ
 
 **Does it work offline? Do I need an account?**
-Offline, and no account. Your licence is checked on your machine against a public key built into anymd. Nothing is sent anywhere when you use Pro.
+Use Pro offline, without an account. Licence checks stay on your machine.
 
 **Is the core still free?**
 Yes. anymd stays MIT licensed. Reading, outlining, searching and inspecting documents, OCR, transcripts, the MCP server and the CLI stay free and ungated, and nothing that was free has moved to Pro. Ordinary `read` and `outline` of video (metadata, chapters, subtitles) are still free.
 
 **What happens without a licence?**
-A Pro operation returns a short message with the current one-time price, `anymd pro buy` and a link to this page, and does no work. Nothing else changes.
+Not on Pro yet? Free features keep working. If you try a Pro feature, you'll see the price and how to buy before that feature runs.
 
 **Which version do I need?**
 anymd 8.4.0 or later. `anymd pro status` tells you whether Pro is active.
