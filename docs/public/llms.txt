@@ -4,7 +4,7 @@
 
 anymd is a Rust command-line tool and Model Context Protocol (MCP) server published by Sylphx Limited (`https://sylphx.com`). It converts documents, slides, spreadsheets, e-books, web pages, images, and audio/video files into clean, structured Markdown locally on your machine with no API key required (96.4 overall score across 38 documents in 11.5 s on AgentDocBench). Hosted metered parsing is available at Sylphx AI parse (`https://sylphx.com/ai`).
 
-anymd Pro ($29 USD one-time across 16 local currencies, 100-year offline Ed25519 licence) adds deterministic PDF `cite_check` and SHA-256 verifiable video timelines and frame extraction.
+anymd Pro ($29 USD one-time across 16 local currencies, 100-year offline licence) adds deterministic PDF `cite_check` and SHA-256 verifiable video timelines and frame extraction.
 
 ## Install and Setup
 
