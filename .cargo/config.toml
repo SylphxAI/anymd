@@ -5,6 +5,7 @@
 rustflags = ["-C", "target-feature=+fp16"]
 
 # Published binaries must not inherit the CI host's CPU instruction set.
-# transcribe-cpp-sys 0.2.4 forwards these defines to its bundled CMake build.
+# transcribe-cpp-sys enables SSE4.2, AVX and F16C explicitly on static x64 macOS
+# builds. Disable them explicitly because the conservative preset only fills unset options.
 [env]
-TRANSCRIBE_CMAKE_ARGS = { value = "-DGGML_NATIVE=OFF -DTRANSCRIBE_X86_CONSERVATIVE=ON", force = true }
+TRANSCRIBE_CMAKE_ARGS = { value = "-DGGML_NATIVE=OFF -DTRANSCRIBE_X86_CONSERVATIVE=ON -DGGML_SSE42=OFF -DGGML_AVX=OFF -DGGML_F16C=OFF", force = true }

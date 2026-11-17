@@ -1202,34 +1202,31 @@ fn extraction_contains_cff_custom_encoding_charset_panic() {
 
 fn inline_image_pdf(content: &[u8]) -> Vec<u8> {
     let objects = [
-        "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
-        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
-        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << >> >>"
-            .to_string(),
-        format!(
-            "<< /Length {} >>\nstream\n{}\nendstream",
-            content.len(),
-            String::from_utf8_lossy(content)
-        ),
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << >> >>",
     ];
     let mut pdf = b"%PDF-1.4\n%\xE2\xE3\xCF\xD3\n".to_vec();
-    let mut offsets = Vec::with_capacity(objects.len());
+    let mut offsets = Vec::with_capacity(objects.len() + 1);
     for (index, object) in objects.iter().enumerate() {
         offsets.push(pdf.len());
         pdf.extend_from_slice(format!("{} 0 obj\n{object}\nendobj\n", index + 1).as_bytes());
     }
+    // Image samples are arbitrary bytes; a UTF-8 conversion changes the stream and its length.
+    offsets.push(pdf.len());
+    pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", content.len()).as_bytes());
+    pdf.extend_from_slice(content);
+    pdf.extend_from_slice(b"\nendstream\nendobj\n");
     let xref_offset = pdf.len();
-    pdf.extend_from_slice(format!("xref\n0 {}\n", objects.len() + 1).as_bytes());
+    let xref_size = offsets.len() + 1;
+    pdf.extend_from_slice(format!("xref\n0 {xref_size}\n").as_bytes());
     pdf.extend_from_slice(b"0000000000 65535 f \n");
     for offset in offsets {
         pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
     }
     pdf.extend_from_slice(
-        format!(
-            "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n",
-            objects.len() + 1
-        )
-        .as_bytes(),
+        format!("trailer\n<< /Size {xref_size} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n")
+            .as_bytes(),
     );
     pdf
 }
