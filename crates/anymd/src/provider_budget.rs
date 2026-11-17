@@ -33,7 +33,7 @@ impl ProviderRequestPermit {
     /// Takes a slot, or refuses with `refusal` when both are busy.
     pub(crate) fn acquire(refusal: impl FnOnce() -> String) -> Result<Self, String> {
         ACTIVE_REQUESTS
-            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |active| {
+            .try_update(Ordering::AcqRel, Ordering::Acquire, |active| {
                 (active < MAX_CONCURRENT_PROVIDER_REQUESTS).then_some(active + 1)
             })
             .map(|_| Self)

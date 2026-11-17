@@ -338,7 +338,8 @@ fn grid_of(
         }
     }
     let content = if framed {
-        let mut boxes: Vec<(&(usize, usize, usize, usize), &Vec<usize>)> = extent
+        type ContentBox<'a> = (&'a (usize, usize, usize, usize), &'a Vec<usize>);
+        let mut boxes: Vec<ContentBox<'_>> = extent
             .iter()
             .filter_map(|(root, e)| members.get(root).map(|m| (e, m)))
             .collect();

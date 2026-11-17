@@ -97,7 +97,7 @@ fn verify_model(spec: &ModelSpec, path: &Path) -> Result<(), String> {
         }
         hash.update(&buffer[..n]);
     }
-    let digest = format!("{:x}", hash.finalize());
+    let digest = hex::encode(hash.finalize());
     if digest != spec.sha256 {
         return Err(format!(
             "model checksum mismatch: {} is not the pinned {}",
@@ -327,7 +327,7 @@ mod tests {
     fn cached_model_verification_rejects_wrong_size_and_same_size_corruption() {
         use sha2::{Digest, Sha256};
         let body = b"test weights";
-        let hash = format!("{:x}", Sha256::digest(body));
+        let hash = hex::encode(Sha256::digest(body));
         let spec = ModelSpec {
             name: "test.gguf",
             bytes: body.len() as u64,

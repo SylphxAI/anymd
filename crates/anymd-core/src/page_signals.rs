@@ -384,7 +384,7 @@ fn squiggly_quad_bbox(points: &[(f64, f64)]) -> Option<[f64; 4]> {
     // pdf.js SquigglyAnnotation pointsCallback over normalized quads
     // [minX,maxY, maxX,maxY, minX,minY, maxX,minY] returns
     // [minX, minY-2*dy, maxX, minY+2*dy] with dy=(maxY-minY)/6, unioned.
-    if points.len() < 4 || points.len() % 4 != 0 {
+    if points.len() < 4 || !points.len().is_multiple_of(4) {
         return None;
     }
     let mut left = f64::INFINITY;

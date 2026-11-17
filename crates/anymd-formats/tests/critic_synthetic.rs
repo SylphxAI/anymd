@@ -68,7 +68,11 @@ fn expected(name: &str, result: &str, revisions: Revisions) -> String {
         .iter()
         .any(|(n, r, _why)| *n == name && *r == result)
     {
-        let golden = if result == "accepted" { "accept" } else { "reject" };
+        let golden = if result == "accepted" {
+            "accept"
+        } else {
+            "reject"
+        };
         return std::fs::read_to_string(path(&format!("{name}.{golden}.md"))).unwrap();
     }
     markdown(&format!("{name}.{result}.docx"), revisions)
@@ -196,13 +200,20 @@ fn without_citations(line: &str) -> String {
         }
         let citation = |c: &char| c.is_ascii_digit() || "ivx".contains(*c);
         if at > 0 && !chars[at - 1].is_whitespace() && citation(&chars[at]) {
-            let end = (at..chars.len()).find(|&i| !citation(&chars[i])).unwrap_or(chars.len());
-            let alone = chars.get(end).is_none_or(|c| c.is_whitespace() || c.is_ascii_punctuation());
+            let end = (at..chars.len())
+                .find(|&i| !citation(&chars[i]))
+                .unwrap_or(chars.len());
+            let alone = chars
+                .get(end)
+                .is_none_or(|c| c.is_whitespace() || c.is_ascii_punctuation());
             // After a word, or after a word and its punctuation (`control.1`).
             let word = |c: &char| c.is_alphabetic() && !citation(c);
             let after_word = word(&chars[at - 1])
                 || (chars[at - 1].is_ascii_punctuation() && at > 1 && word(&chars[at - 2]));
-            if alone && after_word && chars[at].is_ascii_digit() == chars[at..end].iter().all(char::is_ascii_digit) {
+            if alone
+                && after_word
+                && chars[at].is_ascii_digit() == chars[at..end].iter().all(char::is_ascii_digit)
+            {
                 at = end;
                 continue;
             }
@@ -276,8 +287,11 @@ fn every_output_matches_its_source_of_truth() {
     // as in Writer's own text (hard-delimiters has some as plain text).
     for name in DOCUMENTS {
         for (kind, result) in [("accept", "accepted"), ("reject", "rejected")] {
-            let ours = lines(&std::fs::read_to_string(path(&format!("{name}.{kind}.md"))).unwrap()).join("\n");
-            let writer = lines(&std::fs::read_to_string(path(&format!("{name}.{result}.txt"))).unwrap()).join("\n");
+            let ours = lines(&std::fs::read_to_string(path(&format!("{name}.{kind}.md"))).unwrap())
+                .join("\n");
+            let writer =
+                lines(&std::fs::read_to_string(path(&format!("{name}.{result}.txt"))).unwrap())
+                    .join("\n");
             for delimiter in ["{++", "{--", "{~~", "{==", "{>>", "<<}"] {
                 assert_eq!(
                     ours.matches(delimiter).count(),

@@ -792,7 +792,7 @@ pub fn render_frame(
     {
         return Err("decoded frame exceeds pixel budget".into());
     }
-    let sha256 = format!("{:x}", Sha256::digest(&output.stdout));
+    let sha256 = hex::encode(Sha256::digest(&output.stdout));
     Ok(Some(DecodedFrame {
         metadata: FrameMetadata {
             requested_ms,

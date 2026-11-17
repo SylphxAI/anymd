@@ -402,7 +402,7 @@ fn decode_coefficients(
         return Some(vec![(1.0, 0.0); channels]);
     }
     let mut coefficients = Vec::with_capacity(channels);
-    for pair in values.chunks_exact(2).take(channels) {
+    for pair in values.as_chunks::<2>().0.iter().take(channels) {
         let Some(minimum) = pdf_number(document, &pair[0]) else {
             budget.unsupported = true;
             return None;

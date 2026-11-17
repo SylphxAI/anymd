@@ -62,7 +62,7 @@ pub fn words_to_markdown(words: &[PlacedWord], height: f64, points_per_pixel: f6
     let mut glyphs = Vec::new();
     for word in &words {
         let chars: Vec<char> = word.text.chars().collect();
-        if chars.is_empty() || !(word.x1 > word.x0) {
+        if chars.is_empty() || word.x1.partial_cmp(&word.x0) != Some(std::cmp::Ordering::Greater) {
             continue;
         }
         let size = size_of(word.line);
@@ -150,7 +150,7 @@ fn attach_item_markers(words: &[PlacedWord]) -> Vec<PlacedWord> {
             continue;
         }
         let marker_height = marker.bottom - marker.top;
-        if !(marker_height > 0.0) {
+        if marker_height.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
             continue;
         }
         let gap = next.x0 - marker.x1;
@@ -201,6 +201,21 @@ fn is_item_marker(text: &str) -> bool {
     !digits.is_empty() && digits.len() <= 2 && digits.chars().all(|ch| ch.is_ascii_digit())
 }
 
+/// OCR often reads a typewritten full stop as a comma. A paragraph never
+/// ends with a comma, so a final comma after a word is a full stop.
+fn end_with_period(text: &mut String) {
+    let trimmed = text.trim_end();
+    if trimmed.len() < 20 || !trimmed.ends_with(',') {
+        return;
+    }
+    let before = trimmed[..trimmed.len() - 1].chars().last();
+    if before.is_some_and(|c| c.is_alphanumeric() || c == ')' || c == '%') {
+        let cut = trimmed.len() - 1;
+        text.truncate(cut);
+        text.push('.');
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -244,20 +259,5 @@ mod tests {
         for words in cases {
             assert_eq!(attach_item_markers(&words), words);
         }
-    }
-}
-
-/// OCR often reads a typewritten full stop as a comma. A paragraph never
-/// ends with a comma, so a final comma after a word is a full stop.
-fn end_with_period(text: &mut String) {
-    let trimmed = text.trim_end();
-    if trimmed.len() < 20 || !trimmed.ends_with(',') {
-        return;
-    }
-    let before = trimmed[..trimmed.len() - 1].chars().last();
-    if before.is_some_and(|c| c.is_alphanumeric() || c == ')' || c == '%') {
-        let cut = trimmed.len() - 1;
-        text.truncate(cut);
-        text.push('.');
     }
 }

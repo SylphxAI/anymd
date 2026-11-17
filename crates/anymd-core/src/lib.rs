@@ -203,7 +203,7 @@ pub fn hash_file(path: &Path, max_file_bytes: u64) -> Result<FileHash, HashError
 
     Ok(FileHash {
         path: path.to_string_lossy().to_string(),
-        source_hash: format!("{:x}", Sha256::digest(&bytes)),
+        source_hash: hex::encode(Sha256::digest(&bytes)),
         file_size,
         route: HASH_ROUTE.into(),
     })

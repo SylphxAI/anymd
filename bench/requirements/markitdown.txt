@@ -1,1 +1,1 @@
-markitdown[all]==0.1.8
+markitdown[all]==0.1.9

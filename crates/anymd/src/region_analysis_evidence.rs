@@ -885,6 +885,51 @@ pub fn analyze_regions(value: Value) -> Result<CallToolResult, rmcp::ErrorData> 
     ))
 }
 
+/// Raster caption seam: only an explicitly configured local command is eligible.
+pub(crate) fn local_caption_identity() -> Option<String> {
+    let ProviderConfig::Command {
+        command,
+        args_template,
+    } = provider_config().ok()?
+    else {
+        return None;
+    };
+    Some(format!("{command}:{args_template:?}"))
+}
+
+pub(crate) fn caption_raster(
+    png: &[u8],
+    source: &str,
+    width: u32,
+    height: u32,
+    timeout_ms: u64,
+) -> Result<crate::video_evidence::FrameDescription, String> {
+    let config = provider_config()?;
+    if !matches!(config, ProviderConfig::Command { .. }) {
+        return Err("local-command caption provider required".into());
+    }
+    let region = json!({"region_id":"video-frame", "evidence_id":source, "source_bounding_box":{"left":0,"bottom":0,"right":width,"top":height}});
+    let stdout = run_provider(&config, png, source, &region, &[], timeout_ms, 16_000)
+        .map_err(|e| e.message)?;
+    let value = normalize_output(&stdout, 16_000);
+    Ok(crate::video_evidence::FrameDescription {
+        text: value["description"].as_str().unwrap_or("").into(),
+        provider: "external-command".into(),
+        model_revision: serde_json::from_str::<Value>(&stdout)
+            .ok()
+            .and_then(|v| v["model_revision"].as_str().map(str::to_string)),
+        truncated: value["truncated"].as_bool().unwrap_or(false)
+            || value["warnings"].as_array().is_some_and(|warnings| {
+                warnings
+                    .iter()
+                    .any(|v| v.as_str().is_some_and(|s| s.contains("truncated")))
+            })
+            || serde_json::from_str::<Value>(&stdout)
+                .ok()
+                .is_some_and(|v| v["truncated"].as_bool().unwrap_or(false)),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -929,79 +974,33 @@ mod tests {
 
     #[test]
     fn accepts_http_and_preset_configuration_and_rejects_bad_command_args() {
-        let http = provider_config_from(
-            None,
-            None,
-            Some("http://127.0.0.1:9/analyze".into()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
+        let http = provider_config_from(ProviderEnv {
+            http_value: Some("http://127.0.0.1:9/analyze".into()),
+            ..Default::default()
+        })
         .expect("http config");
         assert_eq!(http.provider_label(), "http");
 
-        let ollama = provider_config_from(
-            None,
-            None,
-            None,
-            None,
-            Some("ollama".into()),
-            None,
-            Some("llava".into()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
+        let ollama = provider_config_from(ProviderEnv {
+            preset_value: Some("ollama".into()),
+            ollama_model: Some("llava".into()),
+            ..Default::default()
+        })
         .expect("ollama config");
         assert_eq!(ollama.provider_label(), "http");
 
-        assert!(provider_config_from(
-            Some("provider".into()),
-            Some(r#"["--flag"]"#.into()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
+        assert!(provider_config_from(ProviderEnv {
+            command_value: Some("provider".into()),
+            args_value: Some(r#"["--flag"]"#.into()),
+            ..Default::default()
+        })
         .unwrap_err()
         .contains("{input}"));
 
-        assert!(provider_config_from(
-            None,
-            None,
-            None,
-            None,
-            Some("nope".into()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
+        assert!(provider_config_from(ProviderEnv {
+            preset_value: Some("nope".into()),
+            ..Default::default()
+        })
         .unwrap_err()
         .contains("Unsupported"));
     }
@@ -1047,22 +1046,10 @@ mod tests {
             let _ = stream.write_all(response.as_bytes());
         });
 
-        let config = provider_config_from(
-            None,
-            None,
-            Some(format!("http://{addr}/analyze")),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
+        let config = provider_config_from(ProviderEnv {
+            http_value: Some(format!("http://{addr}/analyze")),
+            ..Default::default()
+        })
         .expect("http config");
         let region = json!({
             "page": 1,
@@ -1097,49 +1084,4 @@ mod tests {
         assert!(budget.charge(2, 0, refusal).unwrap_err().contains("bytes"));
         assert!(budget.ensure_available().unwrap_err().contains("bytes"));
     }
-}
-
-/// Raster caption seam: only an explicitly configured local command is eligible.
-pub(crate) fn local_caption_identity() -> Option<String> {
-    let ProviderConfig::Command {
-        command,
-        args_template,
-    } = provider_config().ok()?
-    else {
-        return None;
-    };
-    Some(format!("{command}:{args_template:?}"))
-}
-
-pub(crate) fn caption_raster(
-    png: &[u8],
-    source: &str,
-    width: u32,
-    height: u32,
-    timeout_ms: u64,
-) -> Result<crate::video_evidence::FrameDescription, String> {
-    let config = provider_config()?;
-    if !matches!(config, ProviderConfig::Command { .. }) {
-        return Err("local-command caption provider required".into());
-    }
-    let region = json!({"region_id":"video-frame", "evidence_id":source, "source_bounding_box":{"left":0,"bottom":0,"right":width,"top":height}});
-    let stdout = run_provider(&config, png, source, &region, &[], timeout_ms, 16_000)
-        .map_err(|e| e.message)?;
-    let value = normalize_output(&stdout, 16_000);
-    Ok(crate::video_evidence::FrameDescription {
-        text: value["description"].as_str().unwrap_or("").into(),
-        provider: "external-command".into(),
-        model_revision: serde_json::from_str::<Value>(&stdout)
-            .ok()
-            .and_then(|v| v["model_revision"].as_str().map(str::to_string)),
-        truncated: value["truncated"].as_bool().unwrap_or(false)
-            || value["warnings"].as_array().is_some_and(|warnings| {
-                warnings
-                    .iter()
-                    .any(|v| v.as_str().is_some_and(|s| s.contains("truncated")))
-            })
-            || serde_json::from_str::<Value>(&stdout)
-                .ok()
-                .is_some_and(|v| v["truncated"].as_bool().unwrap_or(false)),
-    })
 }

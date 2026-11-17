@@ -5,7 +5,7 @@
 [package]
 edition = "2018"
 name = "anymd-pdf-extract"
-version = "0.12.3"
+version = "0.12.4"
 authors = ["Jeff Muizelaar <jmuizelaar@mozilla.com>", "Sylphx <contact@sylphx.com>"]
 build = false
 include = ["src/**/*", "README.md", "LICENSE"]
@@ -20,7 +20,6 @@ keywords = ["pdf", "text", "pdf2text", "anymd", "fork"]
 categories = ["parser-implementations", "text-processing"]
 license = "MIT"
 repository = "https://github.com/SylphxAI/anymd"
-homepage = "https://github.com/SylphxAI/anymd"
 
 [lib]
 name = "pdf_extract"
@@ -33,35 +32,32 @@ workspace = true
 version = "0.2.0"
 
 [dependencies.encoding_rs]
-version = "0.8.34"
+version = "0.8.44"
 
 [dependencies.euclid]
-version = "0.20.5"
+version = "0.22.14"
 
 [dependencies.log]
-version = "0.4.22"
+version = "0.4.35"
 
 [dependencies.lopdf]
-version = "0.42"
+version = "0.47.0"
 features = ["wasm_js"]
 default-features = false
-
-[dependencies.postscript]
-version = "0.19"
 
 [dependencies.type1-encoding-parser]
 version = "0.1.1"
 
 [dependencies.unicode-normalization]
-version = "0.1.19"
+version = "0.1.26"
 
 [dev-dependencies.simple_logger]
-version = "5"
+version = "5.2.0"
 features = ["colors"]
 default-features = false
 
 [dev-dependencies.test-log]
-version = "0.2.17"
+version = "0.2.21"
 
 # No `ureq` dev-dependency: only upstream's test suite used it, and this
 # vendored copy ships src/ alone. Keeping it would hold ureq 2 (and its TLS

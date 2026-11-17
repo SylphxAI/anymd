@@ -203,13 +203,13 @@ async fn api_key_middleware(
     headers: HeaderMap,
     request: Request<Body>,
     next: Next,
-) -> Result<Response, Response> {
+) -> Response {
     let Some(expected_key) = config.api_key.as_deref() else {
-        return Ok(next.run(request).await);
+        return next.run(request).await;
     };
 
     if is_health_request(request.method(), request.uri().path()) {
-        return Ok(next.run(request).await);
+        return next.run(request).await;
     }
 
     let presented = headers
@@ -217,7 +217,7 @@ async fn api_key_middleware(
         .and_then(|value| value.to_str().ok());
 
     if is_api_key_valid(expected_key, presented) {
-        return Ok(next.run(request).await);
+        return next.run(request).await;
     }
 
     let body = serde_json::json!({
@@ -232,7 +232,7 @@ async fn api_key_middleware(
     response
         .headers_mut()
         .insert("www-authenticate", HeaderValue::from_static("X-API-Key"));
-    Err(response)
+    response
 }
 
 /// Only the health route itself skips the API key. The middleware runs inside

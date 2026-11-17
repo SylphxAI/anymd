@@ -11,7 +11,10 @@ pub fn run(arguments: &[String]) -> i32 {
         }
         return match crate::ocr_vlm::install() {
             Ok(path) => {
-                println!("OCR engine and models installed and verified at {}", path.display());
+                println!(
+                    "OCR engine and models installed and verified at {}",
+                    path.display()
+                );
                 0
             }
             Err(error) => {

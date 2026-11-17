@@ -26,7 +26,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-noto-cjk fonts-liberation
-          pip install pillow==12.1.1 numpy==2.4.2
+          pip install pillow==13.0.0 numpy==2.5.5
           python3 crates/anymd-ocr-vlm/bench/test_measure.py
           python3 crates/anymd-ocr-vlm/bench/make_pages.py pages
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -54,8 +54,10 @@ jobs:
             target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
+        with:
+          toolchain: '1.100.0'
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Tests and release binary
         shell: bash
         run: |
@@ -116,7 +118,7 @@ jobs:
             target/${{ matrix.target }}/release/anymd
             target/${{ matrix.target }}/release/anymd.exe
           retention-days: 3
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -133,7 +135,7 @@ jobs:
           binary="target/${{ matrix.target }}/release/anymd"
           if [[ "${{ runner.os }}" == "Windows" ]]; then binary="$binary.exe"; fi
           "$binary" setup ocr
-          pip install psutil==7.0.0
+          pip install psutil==7.2.2
           failed=0
           for mode in none q8 q4; do
             ANYMD_OCR_QUANTIZATION="$mode" python crates/anymd-ocr-vlm/bench/measure.py --binary "$binary" --pages pages --out "measure-$mode.json" || failed=1

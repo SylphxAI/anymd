@@ -2,8 +2,6 @@ extern crate pom;
 
 use pom::char_class::{alpha, hex_digit, multispace, oct_digit};
 use pom::parser::*;
-use pom::DataInput;
-use pom::Parser;
 use std::collections::HashMap;
 
 use std::str::FromStr;
@@ -20,35 +18,35 @@ pub enum Value {
     Dictionary(HashMap<String, Value>),
 }
 
-fn hex_char() -> Parser<u8, u8> {
+fn hex_char<'a>() -> Parser<'a, u8, u8> {
     let number = is_a(hex_digit).repeat(2);
     number
         .collect()
-        .convert(|v| u8::from_str_radix(&String::from_utf8(v).unwrap(), 16))
+        .convert(|v| u8::from_str_radix(std::str::from_utf8(v).unwrap(), 16))
 }
 
-fn comment() -> Parser<u8, ()> {
+fn comment<'a>() -> Parser<'a, u8, ()> {
     sym(b'%') * none_of(b"\r\n").repeat(0..) * eol().discard()
 }
 
-fn content_space() -> Parser<u8, ()> {
+fn content_space<'a>() -> Parser<'a, u8, ()> {
     is_a(multispace).repeat(0..).discard()
 }
 
-fn operator() -> Parser<u8, String> {
+fn operator<'a>() -> Parser<'a, u8, String> {
     (is_a(alpha) | one_of(b"*'\""))
         .repeat(1..)
-        .convert(|v| String::from_utf8(v))
+        .convert(String::from_utf8)
 }
 
-fn oct_char() -> Parser<u8, u8> {
+fn oct_char<'a>() -> Parser<'a, u8, u8> {
     let number = is_a(oct_digit).repeat(1..4);
     number
         .collect()
-        .convert(|v| u8::from_str_radix(&String::from_utf8(v).unwrap(), 8))
+        .convert(|v| u8::from_str_radix(std::str::from_utf8(v).unwrap(), 8))
 }
 
-fn escape_sequence() -> Parser<u8, Vec<u8>> {
+fn escape_sequence<'a>() -> Parser<'a, u8, Vec<u8>> {
     sym(b'\\')
         * (sym(b'\\').map(|_| vec![b'\\'])
             | sym(b'(').map(|_| vec![b'('])
@@ -63,7 +61,7 @@ fn escape_sequence() -> Parser<u8, Vec<u8>> {
             | empty().map(|_| vec![]))
 }
 
-fn nested_literal_string() -> Parser<u8, Vec<u8>> {
+fn nested_literal_string<'a>() -> Parser<'a, u8, Vec<u8>> {
     sym(b'(')
         * (none_of(b"\\()").repeat(1..) | escape_sequence() | call(nested_literal_string))
             .repeat(0..)
@@ -80,7 +78,7 @@ fn nested_literal_string() -> Parser<u8, Vec<u8>> {
         - sym(b')')
 }
 
-fn literal_string() -> Parser<u8, Vec<u8>> {
+fn literal_string<'a>() -> Parser<'a, u8, Vec<u8>> {
     sym(b'(')
         * (none_of(b"\\()").repeat(1..) | escape_sequence() | nested_literal_string())
             .repeat(0..)
@@ -88,34 +86,37 @@ fn literal_string() -> Parser<u8, Vec<u8>> {
         - sym(b')')
 }
 
-fn name() -> Parser<u8, Vec<u8>> {
-    sym(b'/') * (none_of(b" \t\n\r\x0C()<>[]{}/%#") | sym(b'#') * hex_char()).repeat(0..)
+fn name<'a>() -> Parser<'a, u8, Vec<u8>> {
+    sym(b'/') * (none_of(b" \t\n\r\x0C()<>[]{}/%#") | (sym(b'#') * hex_char())).repeat(0..)
 }
 
-fn integer() -> Parser<u8, i64> {
+fn integer<'a>() -> Parser<'a, u8, i64> {
     let number = one_of(b"+-").opt() + one_of(b"0123456789").repeat(1..);
     number
         .collect()
-        .convert(|v| String::from_utf8(v))
-        .convert(|s| i64::from_str(&s))
+        .convert(std::str::from_utf8)
+        .convert(i64::from_str)
 }
 
-fn number() -> Parser<u8, String> {
+fn number<'a>() -> Parser<'a, u8, String> {
     let number = one_of(b"+-").opt()
         + ((one_of(b"0123456789") - one_of(b"0123456789").repeat(0..).discard())
             | (one_of(b"0123456789").repeat(1..) * sym(b'.') - one_of(b"0123456789").repeat(0..))
-            | sym(b'.') - one_of(b"0123456789").repeat(1..));
-    number.collect().convert(|v| String::from_utf8(v))
+            | (sym(b'.') - one_of(b"0123456789").repeat(1..)));
+    number
+        .collect()
+        .convert(std::str::from_utf8)
+        .map(str::to_owned)
 }
 
-fn space() -> Parser<u8, ()> {
+fn space<'a>() -> Parser<'a, u8, ()> {
     (one_of(b" \t\n\r\0\x0C").repeat(1..).discard())
         .repeat(0..)
         .discard()
 }
 
 // Dictionaries are not mentioned in the CMap spec but are produced by software like Cairo and Skia and supported other by readers
-fn dictionary() -> Parser<u8, HashMap<String, Value>> {
+fn dictionary<'a>() -> Parser<'a, u8, HashMap<String, Value>> {
     let entry = name() - space() + call(value);
     let entries = seq(b"<<") * space() * entry.repeat(0..) - seq(b">>");
     entries.map(|entries| {
@@ -129,38 +130,38 @@ fn dictionary() -> Parser<u8, HashMap<String, Value>> {
     })
 }
 
-fn hexadecimal_string() -> Parser<u8, Vec<u8>> {
+fn hexadecimal_string<'a>() -> Parser<'a, u8, Vec<u8>> {
     sym(b'<') * (space() * hex_char()).repeat(0..) - (space() * sym(b'>'))
 }
 
-fn eol() -> Parser<u8, u8> {
-    sym(b'\r') * sym(b'\n') | sym(b'\n') | sym(b'\r')
+fn eol<'a>() -> Parser<'a, u8, u8> {
+    (sym(b'\r') * sym(b'\n')) | sym(b'\n') | sym(b'\r')
 }
 
-fn value() -> Parser<u8, Value> {
+fn value<'a>() -> Parser<'a, u8, Value> {
     (seq(b"true").map(|_| Value::Boolean(true))
         | seq(b"false").map(|_| Value::Boolean(false))
-        | integer().map(|v| Value::Integer(v))
-        | number().map(|v| Value::Number(v))
-        | name().map(|v| Value::Name(v))
-        | operator().map(|v| Value::Operator(v))
-        | literal_string().map(|v| Value::LiteralString(v))
-        | dictionary().map(|v| Value::Dictionary(v))
-        | hexadecimal_string().map(|v| Value::LiteralString(v))
-        | array().map(|v| Value::Array(v)))
+        | integer().map(Value::Integer)
+        | number().map(Value::Number)
+        | name().map(Value::Name)
+        | operator().map(Value::Operator)
+        | literal_string().map(Value::LiteralString)
+        | dictionary().map(Value::Dictionary)
+        | hexadecimal_string().map(Value::LiteralString)
+        | array().map(Value::Array))
         - content_space()
 }
 
-fn array() -> Parser<u8, Vec<Value>> {
+fn array<'a>() -> Parser<'a, u8, Vec<Value>> {
     sym(b'[') * space() * call(value).repeat(0..) - sym(b']')
 }
 
-fn file() -> Parser<u8, Vec<Value>> {
+fn file<'a>() -> Parser<'a, u8, Vec<Value>> {
     (comment().repeat(0..) * content_space() * value()).repeat(1..)
 }
 
 pub fn parse(input: &[u8]) -> Result<Vec<Value>, pom::Error> {
-    file().parse(&mut DataInput::new(input))
+    file().parse(input)
 }
 
 fn as_code(str: &[u8]) -> u32 {
@@ -203,7 +204,7 @@ pub fn get_unicode_map(input: &[u8]) -> Result<HashMap<u32, Vec<u8>>, &'static s
             Value::Operator(ref o) => {
                 match o.as_ref() {
                     "beginbfchar" => {
-                        let Some(&Value::Integer(ref count)) = lexed.get(i.wrapping_sub(1)) else {
+                        let Some(Value::Integer(count)) = lexed.get(i.wrapping_sub(1)) else {
                             i += 1;
                             continue;
                         };
@@ -228,7 +229,7 @@ pub fn get_unicode_map(input: &[u8]) -> Result<HashMap<u32, Vec<u8>>, &'static s
                         i += 1;
                     }
                     "beginbfrange" => {
-                        let Some(&Value::Integer(ref count)) = lexed.get(i.wrapping_sub(1)) else {
+                        let Some(Value::Integer(count)) = lexed.get(i.wrapping_sub(1)) else {
                             i += 1;
                             continue;
                         };
@@ -352,7 +353,7 @@ pub fn get_byte_mapping(input: &[u8]) -> Result<ByteMapping, &'static str> {
         match lexed[i] {
             Value::Operator(ref o) => match o.as_ref() {
                 "begincodespacerange" => {
-                    let Some(&Value::Integer(ref count)) = lexed.get(i.wrapping_sub(1)) else {
+                    let Some(Value::Integer(count)) = lexed.get(i.wrapping_sub(1)) else {
                         i += 1;
                         continue;
                     };
@@ -373,7 +374,7 @@ pub fn get_byte_mapping(input: &[u8]) -> Result<ByteMapping, &'static str> {
                     i += 1;
                 }
                 "begincidrange" => {
-                    let Some(&Value::Integer(ref count)) = lexed.get(i.wrapping_sub(1)) else {
+                    let Some(Value::Integer(count)) = lexed.get(i.wrapping_sub(1)) else {
                         i += 1;
                         continue;
                     };

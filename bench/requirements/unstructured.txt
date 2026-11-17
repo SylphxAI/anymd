@@ -1,2 +1,2 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-unstructured[pdf,docx,pptx,xlsx,epub,csv]==0.27.8
+unstructured[pdf,docx,pptx,xlsx,epub,csv]==0.27.37

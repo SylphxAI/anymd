@@ -4,13 +4,12 @@
 
 [package]
 name = "anymd-adobe-cmap-parser"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2018"
 authors = ["Jeff Muizelaar <jmuizelaar@mozilla.com>", "Sylphx <contact@sylphx.com>"]
 description = "Fork of adobe-cmap-parser 0.4.1 for anymd: malformed CMaps no longer panic the host"
 license = "MIT"
 repository = "https://github.com/SylphxAI/anymd"
-homepage = "https://github.com/SylphxAI/anymd"
 readme = "README.md"
 keywords = ["cmap", "font", "pdf", "postscript", "anymd"]
 categories = ["parser-implementations"]
@@ -21,4 +20,4 @@ name = "adobe_cmap_parser"
 path = "src/lib.rs"
 
 [dependencies]
-pom = "1.0.1"
+pom = "3.4.0"

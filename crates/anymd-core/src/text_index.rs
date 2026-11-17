@@ -913,7 +913,7 @@ pub(crate) fn read_pdf_info(doc: &Document) -> PdfInfo {
         catalog
             .get(b"Lang")
             .ok()
-            .and_then(|value| decode_pdfjs_text_string(value))
+            .and_then(decode_pdfjs_text_string)
             .map(|value| value.trim().to_string())
             .filter(|value| !value.is_empty())
     });

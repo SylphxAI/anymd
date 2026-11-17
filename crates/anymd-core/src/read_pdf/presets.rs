@@ -49,7 +49,10 @@ pub(super) fn enable_absent(input: &Value, key: &str, field: &mut bool) {
 pub(super) fn apply_read_preset(parsed: &mut ReadPdfInput, input: &Value, preset: &str) {
     let structural = matches!(preset, "quality" | "research" | "full");
     let audits = matches!(preset, "balanced" | "research" | "full");
-    let known = matches!(preset, "fast" | "balanced" | "quality" | "research" | "full");
+    let known = matches!(
+        preset,
+        "fast" | "balanced" | "quality" | "research" | "full"
+    );
     if !known {
         return;
     }
@@ -60,7 +63,11 @@ pub(super) fn apply_read_preset(parsed: &mut ReadPdfInput, input: &Value, preset
         "include_page_geometry",
         &mut parsed.include_page_geometry,
     );
-    enable_absent(input, "include_document_map", &mut parsed.include_document_map);
+    enable_absent(
+        input,
+        "include_document_map",
+        &mut parsed.include_document_map,
+    );
     enable_absent(input, "include_chunks", &mut parsed.include_chunks);
     enable_absent(input, "include_markdown", &mut parsed.include_markdown);
     enable_absent(input, "include_tables", &mut parsed.include_tables);
@@ -85,11 +92,31 @@ pub(super) fn apply_read_preset(parsed: &mut ReadPdfInput, input: &Value, preset
             &mut parsed.include_document_ast,
         );
         enable_absent(input, "include_outline", &mut parsed.include_outline);
-        enable_absent(input, "include_annotations", &mut parsed.include_annotations);
-        enable_absent(input, "include_page_labels", &mut parsed.include_page_labels);
-        enable_absent(input, "include_permissions", &mut parsed.include_permissions);
-        enable_absent(input, "include_form_fields", &mut parsed.include_form_fields);
-        enable_absent(input, "include_attachments", &mut parsed.include_attachments);
+        enable_absent(
+            input,
+            "include_annotations",
+            &mut parsed.include_annotations,
+        );
+        enable_absent(
+            input,
+            "include_page_labels",
+            &mut parsed.include_page_labels,
+        );
+        enable_absent(
+            input,
+            "include_permissions",
+            &mut parsed.include_permissions,
+        );
+        enable_absent(
+            input,
+            "include_form_fields",
+            &mut parsed.include_form_fields,
+        );
+        enable_absent(
+            input,
+            "include_attachments",
+            &mut parsed.include_attachments,
+        );
         enable_absent(
             input,
             "include_structure_tree",
@@ -102,7 +129,11 @@ pub(super) fn apply_read_preset(parsed: &mut ReadPdfInput, input: &Value, preset
             "include_safety_findings",
             &mut parsed.include_safety_findings,
         );
-        enable_absent(input, "include_trust_report", &mut parsed.include_trust_report);
+        enable_absent(
+            input,
+            "include_trust_report",
+            &mut parsed.include_trust_report,
+        );
         enable_absent(
             input,
             "include_accessibility_report",

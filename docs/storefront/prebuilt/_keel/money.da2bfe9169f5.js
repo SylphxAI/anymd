@@ -549,6 +549,7 @@ export function parseMinorAmount(raw) {
 
 const CURRENCY_STORAGE_KEY = "keel:money:currency";
 export const ZERO_DECIMAL_CURRENCIES = new Set(["JPY", "KRW", "VND"]);
+const THREE_DECIMAL_CURRENCIES = new Set(["BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND"]);
 const PREFERRED_CURRENCY_ORDER = [
   "USD", "HKD", "TWD", "GBP", "EUR",
   "JPY", "KRW", "MYR", "SGD", "CAD",
@@ -621,7 +622,9 @@ const TIMEZONE_TO_CURRENCY = {
 
 export function currencyExponent(currency) {
   if (typeof currency !== "string") return 2;
-  return ZERO_DECIMAL_CURRENCIES.has(currency.trim().toUpperCase()) ? 0 : 2;
+  const code = currency.trim().toUpperCase();
+  if (ZERO_DECIMAL_CURRENCIES.has(code)) return 0;
+  return THREE_DECIMAL_CURRENCIES.has(code) ? 3 : 2;
 }
 
 export function detectPreferredCurrencies() {
@@ -664,30 +667,40 @@ export function detectPreferredCurrencies() {
 }
 
 export function formatMinorAmount(rawAmount, currency, quantity = 1) {
-  const unitMinor = parseMinorAmount(rawAmount);
+  // Keep the catalog parser's accepted input forms; computed totals and per-seat
+  // amounts can additionally arrive as exact integers beyond Number's range.
+  const unitMinor = typeof rawAmount === "bigint"
+    ? (rawAmount >= 0n ? rawAmount : null)
+    : parseMinorAmount(rawAmount);
   if (
     unitMinor === null ||
     typeof currency !== "string" ||
     !currency.trim() ||
-    !Number.isInteger(quantity) ||
+    !Number.isSafeInteger(quantity) ||
     quantity < 1
   ) {
     return null;
   }
-  const totalMinor = unitMinor * quantity;
-  if (!Number.isSafeInteger(totalMinor)) return null;
+  const totalMinor = BigInt(unitMinor) * BigInt(quantity);
   const code = currency.trim().toUpperCase();
   const exponent = currencyExponent(code);
-  const value = totalMinor / (exponent === 0 ? 1 : 100);
+  const scale = 10n ** BigInt(exponent);
+  const fraction = totalMinor % scale;
+  const minimumFractionDigits = fraction === 0n ? 0 : exponent;
+  const whole = totalMinor / scale;
+  const value = fraction === 0n
+    ? String(whole)
+    : `${whole}.${String(fraction).padStart(exponent, "0")}`;
   try {
+    // Intl accepts a decimal string without a lossy conversion to Number.
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: code,
-      minimumFractionDigits: exponent,
+      minimumFractionDigits,
       maximumFractionDigits: exponent,
     }).format(value);
   } catch {
-    return exponent === 0 ? `${Math.round(value)} ${code}` : `${value.toFixed(2)} ${code}`;
+    return `${value} ${code}`;
   }
 }
 
@@ -842,13 +855,14 @@ async function hydrateCatalog(
         const parsedMinor = parseMinorAmount(rawMinor);
         const unitFormatted = formatMinorAmount(rawMinor, entryCurrency, 1);
         const seatCount =
-          Number.isInteger(configured.seats) && configured.seats >= 1
+          Number.isSafeInteger(configured.seats) && configured.seats >= 1
             ? configured.seats
             : null;
         const perSeatFormatted =
           seatCount && parsedMinor !== null
             ? formatMinorAmount(
-                Math.round((parsedMinor * configured.quantity) / seatCount),
+                (BigInt(parsedMinor) * BigInt(configured.quantity) + BigInt(seatCount) / 2n)
+                  / BigInt(seatCount),
                 entryCurrency,
                 1,
               )

@@ -182,7 +182,8 @@ pub(crate) fn reading_regions(
         }
     }
     // Merge consecutive bands that share the same column gutter.
-    let mut groups: Vec<(Option<(f64, f64)>, Vec<Segment>)> = Vec::new();
+    type SegmentGroup = (Option<(f64, f64)>, Vec<Segment>);
+    let mut groups: Vec<SegmentGroup> = Vec::new();
     for (band, cut) in bands.into_iter().zip(cuts) {
         match (groups.last_mut(), cut) {
             (Some((Some(prev), group)), Some(gutter))

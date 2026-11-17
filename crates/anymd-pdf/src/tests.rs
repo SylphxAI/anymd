@@ -370,7 +370,7 @@ fn text_painted_like_its_background_is_dropped() {
     collector
         .text_paint(&ColorSpace::DeviceRGB, &green, 0)
         .unwrap();
-    let at = |x: f64| Transform::row_major(1.0, 0.0, 0.0, 1.0, x, 120.0);
+    let at = |x: f64| Transform::new(1.0, 0.0, 0.0, 1.0, x, 120.0);
     collector
         .output_character(&at(110.0), 0.5, 0.0, 10.0, "h")
         .unwrap();

@@ -6,7 +6,7 @@
 //! (`expect initialized request`), which surfaces as EOF to the client.
 //!
 //! This module:
-//! 1. builds a draft-shaped DiscoverResult from our ServerInfo
+//! 1. builds a draft-shaped DiscoverResult from our ServerConfig
 //! 2. wraps any RoleServer transport so pre-init `server/discover` is answered
 //!    without killing the connection, then `initialize` can proceed
 
@@ -15,8 +15,8 @@ use std::future::Future;
 use std::sync::Arc;
 
 use rmcp::model::{
-    ClientJsonRpcMessage, ClientRequest, CustomRequest, CustomResult, ProtocolVersion, ServerInfo,
-    ServerJsonRpcMessage, ServerResult,
+    ClientJsonRpcMessage, ClientRequest, CustomRequest, CustomResult, ProtocolVersion,
+    ServerConfig, ServerJsonRpcMessage, ServerResult,
 };
 use rmcp::service::RoleServer;
 use rmcp::transport::Transport;
@@ -33,7 +33,7 @@ const SERVER_INFO_META_KEY: &str = "io.modelcontextprotocol/serverInfo";
 /// <https://modelcontextprotocol.io/specification/draft/server/discover>:
 /// `resultType`, `supportedVersions`, `capabilities`, `_meta.serverInfo`,
 /// `instructions`.
-pub fn discover_result_value(info: &ServerInfo) -> Value {
+pub fn discover_result_value(info: &ServerConfig) -> Value {
     let supported_versions: Vec<String> = ProtocolVersion::KNOWN_VERSIONS
         .iter()
         .map(|version| version.as_str().to_string())
@@ -115,30 +115,28 @@ where
         self.inner.send(item)
     }
 
-    fn receive(&mut self) -> impl Future<Output = Option<ClientJsonRpcMessage>> + Send {
-        async {
-            loop {
-                let message = self.inner.receive().await?;
-                let ClientJsonRpcMessage::Request(request) = &message else {
-                    return Some(message);
-                };
+    async fn receive(&mut self) -> Option<ClientJsonRpcMessage> {
+        loop {
+            let message = self.inner.receive().await?;
+            let ClientJsonRpcMessage::Request(request) = &message else {
+                return Some(message);
+            };
 
-                if !is_server_discover_request(&request.request) {
-                    return Some(message);
-                }
-
-                let response = ServerJsonRpcMessage::response(
-                    ServerResult::CustomResult(CustomResult::new(
-                        self.discover_result.as_ref().clone(),
-                    )),
-                    request.id.clone(),
-                );
-
-                if self.inner.send(response).await.is_err() {
-                    return None;
-                }
-                // Answer discover and wait for the next client message (usually initialize).
+            if !is_server_discover_request(&request.request) {
+                return Some(message);
             }
+
+            let response = ServerJsonRpcMessage::response(
+                ServerResult::CustomResult(CustomResult::new(
+                    self.discover_result.as_ref().clone(),
+                )),
+                request.id.clone(),
+            );
+
+            if self.inner.send(response).await.is_err() {
+                return None;
+            }
+            // Answer discover and wait for the next client message (usually initialize).
         }
     }
 
@@ -152,8 +150,8 @@ mod tests {
     use super::*;
     use rmcp::model::{Implementation, ServerCapabilities};
 
-    fn sample_info() -> ServerInfo {
-        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+    fn sample_info() -> ServerConfig {
+        ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(
                 Implementation::new("anymd", "5.0.0")
                     .with_description("test description")

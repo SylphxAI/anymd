@@ -2,8 +2,8 @@
 
 use std::path::{Path, PathBuf};
 
-use anymd_core::{read_pdf_from_value, READ_PDF_ROUTE};
 use anymd::read_pdf;
+use anymd_core::{read_pdf_from_value, READ_PDF_ROUTE};
 use serde_json::{json, Value};
 
 fn repo_root() -> PathBuf {
@@ -120,9 +120,7 @@ fn rmcp_read_pdf_structured_content_matches_core_payload() {
         Some("anymd")
     );
     assert_eq!(
-        structured
-            .pointer("/route/engine")
-            .and_then(Value::as_str),
+        structured.pointer("/route/engine").and_then(Value::as_str),
         Some("rust-core")
     );
 

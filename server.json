@@ -7,13 +7,13 @@
     "url": "https://github.com/SylphxAI/anymd",
     "source": "github"
   },
-  "version": "8.5.11",
+  "version": "8.5.12",
   "websiteUrl": "https://sylphxai.github.io/anymd/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@sylphx/anymd",
-      "version": "8.5.11",
+      "version": "8.5.12",
       "transport": {
         "type": "stdio"
       }

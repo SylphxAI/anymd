@@ -330,7 +330,7 @@ impl RenderDocument {
             },
         );
         let rgba = pixmap.data_as_u8_slice();
-        if rgba.chunks_exact(4).any(|pixel| pixel[3] != 255) {
+        if rgba.as_chunks::<4>().0.iter().any(|pixel| pixel[3] != 255) {
             return Err(RenderError::encode_failed(
                 "White-background render unexpectedly contained transparent pixels.",
             ));

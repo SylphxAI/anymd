@@ -175,7 +175,12 @@ pub fn attach_evidence(
 }
 
 /// Wrap an error-shaped structured body with family envelope fields.
-pub fn attach_error_envelope(tool: &str, code: &str, message: &str, warnings: Vec<String>) -> Value {
+pub fn attach_error_envelope(
+    tool: &str,
+    code: &str,
+    message: &str,
+    warnings: Vec<String>,
+) -> Value {
     json!({
         "envelope_version": ENVELOPE_VERSION,
         "status": "error",

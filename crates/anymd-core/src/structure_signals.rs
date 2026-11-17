@@ -569,7 +569,7 @@ fn read_number_tree<'a>(
                 walker.limited = true;
                 return None;
             }
-            for pair in nums.chunks_exact(2) {
+            for pair in nums.as_chunks::<2>().0.iter() {
                 if let Some(key) = walker.integer(pair[0]) {
                     output.insert(key, pair[1]);
                 }

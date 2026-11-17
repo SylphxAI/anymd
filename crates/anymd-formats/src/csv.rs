@@ -203,7 +203,7 @@ mod tests {
 
     #[test]
     fn same_cells_across_encodings_and_delimiters() {
-        for delimiter in [b',', b'\t'] {
+        for delimiter in *b",\t" {
             let d = char::from(delimiter);
             assert_encodings(
                 &format!("name{d}city\r\nAlice{d}Hong Kong\r\n陳小明{d}香港\r\n"),
@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn malformed_utf16_is_an_actionable_error_and_next_conversion_works() {
         for little_endian in [true, false] {
-            for delimiter in [b',', b'\t'] {
+            for delimiter in *b",\t" {
                 for units in [
                     vec![0xD800],
                     vec![0xDC00],

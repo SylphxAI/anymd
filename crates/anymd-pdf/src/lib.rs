@@ -124,12 +124,15 @@ fn layout_options() -> LoadOptions {
 /// trailer, so layout never looks for anything else. A trailer without a
 /// reachable `/Root` leaves the document as it is.
 fn prune_unreachable(doc: &mut Document) {
-    fn visit<'a>(object: &'a Object, stack: &mut Vec<ObjectId>) {
+    fn visit(object: &Object, stack: &mut Vec<ObjectId>) {
         match object {
             Object::Reference(id) => stack.push(*id),
             Object::Array(items) => items.iter().for_each(|item| visit(item, stack)),
             Object::Dictionary(dict) => dict.iter().for_each(|(_, value)| visit(value, stack)),
-            Object::Stream(stream) => stream.dict.iter().for_each(|(_, value)| visit(value, stack)),
+            Object::Stream(stream) => stream
+                .dict
+                .iter()
+                .for_each(|(_, value)| visit(value, stack)),
             _ => {}
         }
     }
@@ -137,7 +140,9 @@ fn prune_unreachable(doc: &mut Document) {
         return;
     }
     let mut stack = Vec::new();
-    doc.trailer.iter().for_each(|(_, value)| visit(value, &mut stack));
+    doc.trailer
+        .iter()
+        .for_each(|(_, value)| visit(value, &mut stack));
     let mut reached = std::collections::HashSet::new();
     while let Some(id) = stack.pop() {
         if !reached.insert(id) {
@@ -227,7 +232,7 @@ pub fn scanned_pages(doc: &Document, pages: &[u32]) -> Vec<u32> {
 }
 
 fn scanned_page(page: &crate::extract::RawPage) -> bool {
-    if !image_only_page(page) || !(page.area > 0.0) {
+    if !image_only_page(page) || page.area.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
         return false;
     }
     let covered: f64 = page

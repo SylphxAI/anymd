@@ -395,13 +395,11 @@ fn multi_page_text_pdf(page_texts: &[String]) -> Vec<u8> {
             page_count
         ),
     ];
-    let mut contents_object = 3 + page_count;
-    let font_object = contents_object + page_count;
-    for _text in page_texts {
+    let font_object = 3 + 2 * page_count;
+    for (contents_object, _text) in (3 + page_count..).zip(page_texts) {
         objects.push(format!(
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 {font_object} 0 R >> >> /Contents {contents_object} 0 R >>"
         ));
-        contents_object += 1;
     }
     for text in page_texts {
         let content = format!("BT /F1 12 Tf 1 0 0 1 72 700 Tm ({text}) Tj ET");
@@ -594,7 +592,7 @@ fn geometry_is_finite_utf16_aware_and_bounded() {
     assert_eq!(astral.left, 20.0);
     assert_eq!(astral.right, 40.0);
 
-    let nonfinite = Transform::row_major(1.0, 0.0, 0.0, 1.0, f64::NAN, 20.0);
+    let nonfinite = Transform::new(1.0, 0.0, 0.0, 1.0, f64::NAN, 20.0);
     assert!(TextBoundingBox::from_character(&nonfinite, 1.0, 12.0).is_none());
 
     let mut output = TextItemOutput {
@@ -621,7 +619,7 @@ fn source_coordinates_canonicalize_f32_expansion_at_four_decimal_places() {
     assert_eq!(canonical_coordinate(f64::INFINITY), None);
     assert_eq!(canonical_coordinate(f64::MAX), None);
 
-    let transform = Transform::row_major(1.0, 0.0, 0.0, 1.0, 123.000_999_451, 699.499_023_438);
+    let transform = Transform::new(1.0, 0.0, 0.0, 1.0, 123.000_999_451, 699.499_023_438);
     let box_ = TextBoundingBox::from_character(&transform, 1.0, 1.500_976_609)
         .expect("canonical character box");
     assert_eq!(box_.left, 123.001);
@@ -659,8 +657,8 @@ fn opposite_extreme_finite_coordinates_fail_item_geometry_closed() {
         ..TextItemOutput::default()
     };
     output.begin_word().expect("begin word");
-    let left_transform = Transform::row_major(1.0, 0.0, 0.0, 1.0, -1.0e308, 10.0);
-    let right_transform = Transform::row_major(1.0, 0.0, 0.0, 1.0, 1.0e308, 10.0);
+    let left_transform = Transform::new(1.0, 0.0, 0.0, 1.0, -1.0e308, 10.0);
+    let right_transform = Transform::new(1.0, 0.0, 0.0, 1.0, 1.0e308, 10.0);
     output
         .output_character(&left_transform, 1.0, 0.0, 12.0, "a")
         .expect("left character");
@@ -679,8 +677,8 @@ fn opposite_extreme_finite_coordinates_fail_item_geometry_closed() {
 
 #[test]
 fn individual_invalid_character_geometry_is_sticky_in_both_orders() {
-    let valid = Transform::row_major(1.0, 0.0, 0.0, 1.0, 72.0, 700.0);
-    let invalid = Transform::row_major(1.0, 0.0, 0.0, 1.0, f64::NAN, 700.0);
+    let valid = Transform::new(1.0, 0.0, 0.0, 1.0, 72.0, 700.0);
+    let invalid = Transform::new(1.0, 0.0, 0.0, 1.0, f64::NAN, 700.0);
     for transforms in [[&invalid, &valid], [&valid, &invalid]] {
         let mut output = TextItemOutput {
             pages: vec![Vec::new()],
@@ -1204,34 +1202,31 @@ fn extraction_contains_cff_custom_encoding_charset_panic() {
 
 fn inline_image_pdf(content: &[u8]) -> Vec<u8> {
     let objects = [
-        "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
-        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
-        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << >> >>"
-            .to_string(),
-        format!(
-            "<< /Length {} >>\nstream\n{}\nendstream",
-            content.len(),
-            String::from_utf8_lossy(content)
-        ),
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << >> >>",
     ];
     let mut pdf = b"%PDF-1.4\n%\xE2\xE3\xCF\xD3\n".to_vec();
-    let mut offsets = Vec::with_capacity(objects.len());
+    let mut offsets = Vec::with_capacity(objects.len() + 1);
     for (index, object) in objects.iter().enumerate() {
         offsets.push(pdf.len());
         pdf.extend_from_slice(format!("{} 0 obj\n{object}\nendobj\n", index + 1).as_bytes());
     }
+    // Image samples are arbitrary bytes; a UTF-8 conversion changes the stream and its length.
+    offsets.push(pdf.len());
+    pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", content.len()).as_bytes());
+    pdf.extend_from_slice(content);
+    pdf.extend_from_slice(b"\nendstream\nendobj\n");
     let xref_offset = pdf.len();
-    pdf.extend_from_slice(format!("xref\n0 {}\n", objects.len() + 1).as_bytes());
+    let xref_size = offsets.len() + 1;
+    pdf.extend_from_slice(format!("xref\n0 {xref_size}\n").as_bytes());
     pdf.extend_from_slice(b"0000000000 65535 f \n");
     for offset in offsets {
         pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
     }
     pdf.extend_from_slice(
-        format!(
-            "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n",
-            objects.len() + 1
-        )
-        .as_bytes(),
+        format!("trailer\n<< /Size {xref_size} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n")
+            .as_bytes(),
     );
     pdf
 }
@@ -1321,5 +1316,5 @@ fn extraction_survives_cid_cmap_with_odd_length_bfrange_destination() {
     let search = search_pdf_text(&fixture, 256 * 1024 * 1024, "a", false, false, 100, 50, 120)
         .expect("malformed CMap must not abort search");
     assert_eq!(search.num_pages, 1);
-    assert_eq!(search.truncated, false);
+    assert!(!search.truncated);
 }

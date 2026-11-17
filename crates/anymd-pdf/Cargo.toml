@@ -5,7 +5,6 @@ edition.workspace = true
 rust-version = "1.92"
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
 authors.workspace = true
 readme.workspace = true
 include = ["src/**/*", "Cargo.toml"]
@@ -17,9 +16,9 @@ categories = ["parsing", "text-processing"]
 path = "src/lib.rs"
 
 [dependencies]
-flate2 = "1"
-image = { version = "0.25", default-features = false, features = ["png"] }
+flate2 = "1.1.11"
+image = { version = "0.25.10", default-features = false, features = ["png"] }
 pdf-extract = { workspace = true }
 
 [target.'cfg(all(target_os = "linux", target_env = "gnu"))'.dependencies]
-libc = "0.2"
+libc = "0.2.191"
