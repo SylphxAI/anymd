@@ -12,6 +12,8 @@ on:
       - 'config/money-catalogue.json'
       - 'scripts/money-catalogue-apply.sh'
       - 'scripts/money-catalogue-apply.test.ts'
+      - 'scripts/workflow_condition.py'
+      - 'scripts/test_workflow_conditions.py'
       - '.github/workflows/money-catalogue.yml'
       - 'scripts/money-access-verify.py'
       - 'scripts/money-access-verify.test.py'
@@ -33,6 +35,7 @@ concurrency:
 jobs:
   test:
     name: Offline contract tests
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -47,11 +50,12 @@ jobs:
       - run: bun test scripts/money-catalogue-apply.test.ts
 
       - run: python3 scripts/money-access-verify.test.py
+      - run: python3 scripts/test_workflow_conditions.py MoneyCatalogueConditions
 
   preview:
     name: Apply to preview
     needs: test
-    if: github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main'
+    if: ${{ github.repository_visibility == 'public' && (github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -67,7 +71,7 @@ jobs:
   production:
     name: Apply to production
     needs: preview
-    if: github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main'
+    if: ${{ github.repository_visibility == 'public' && (github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -81,7 +85,7 @@ jobs:
   verify:
     name: Verify Access (${{ matrix.declaration }})
     needs: test
-    if: github.event_name == 'workflow_dispatch' && inputs.verify_only == true
+    if: ${{ github.repository_visibility == 'public' && (github.event_name == 'workflow_dispatch' && inputs.verify_only == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:

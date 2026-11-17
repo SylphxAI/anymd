@@ -311,11 +311,11 @@ describe('money catalogue workflow', () => {
 		expect(testJob.steps.map((step) => step.run).filter(Boolean)).toEqual([
 			'bun test scripts/money-catalogue-apply.test.ts',
 			'python3 scripts/money-access-verify.test.py',
+			'python3 scripts/test_workflow_conditions.py MoneyCatalogueConditions',
 		])
 		expect(previewJob.needs).toBe('test')
 		expect(productionJob.needs).toBe('preview')
 		for (const job of [previewJob, productionJob]) {
-			expect(job.if).toBe(`github.event_name != 'pull_request' && inputs.verify_only != true && github.ref == 'refs/heads/${defaultBranch}'`)
 			expect(job.steps.map((step) => step.run).filter(Boolean)).toEqual([
 				'bash scripts/money-catalogue-apply.sh',
 			])

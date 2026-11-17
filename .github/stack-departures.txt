@@ -54,7 +54,6 @@ architecture C6 unexplained-suppression crates/anymd-core/src/structure_signals.
 architecture C6 unexplained-suppression crates/anymd-core/src/text_index/cite_check.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 1
 architecture C6 unexplained-suppression crates/anymd-core/src/text_index/search.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 1
 architecture C6 unexplained-suppression crates/anymd-core/src/text_index/search.rs acc8eedb6dbc9170505b9fc58128ca3d9e78fd588dac4ca30173f5a7176ebdcf 2
-architecture C7 failure-only-verdict .github/workflows/release.yml 7a1229133f8a7f2e3755a15bfa4edcaab793866e4a6743c599d36ba9794737b7 1
 model-pin bench-asr/pins.json whisper-large-v3-turbo 1
 model-pin bench-asr/plan.py whisper-large-v3-turbo 1
 # stack-rule-adopted-v1 architecture/C1/cache-economy

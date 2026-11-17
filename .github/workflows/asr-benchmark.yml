@@ -36,6 +36,7 @@ concurrency:
 jobs:
   plan:
     name: Plan
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -60,6 +61,7 @@ jobs:
   data:
     name: data ${{ matrix.dataset }}
     needs: plan
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -92,7 +94,7 @@ jobs:
   build:
     name: build ${{ matrix.tool }} (${{ matrix.osk }})
     needs: plan
-    if: ${{ needs.plan.outputs.builds != '[]' }}
+    if: ${{ github.repository_visibility == 'public' && (needs.plan.outputs.builds != '[]') }}
     runs-on: ${{ matrix.osk == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 60
     strategy:
@@ -147,7 +149,7 @@ jobs:
     name: ${{ matrix.id }}
     needs: [plan, data, build]
     # A skipped or failed build must not block the engines that do not need it.
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.data.result == 'success' }}
+    if: ${{ github.repository_visibility == 'public' && (!cancelled() && needs.plan.result == 'success' && needs.data.result == 'success') }}
     runs-on: ${{ matrix.osk == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 350
     strategy:
@@ -220,6 +222,7 @@ jobs:
   # and what does it add to a minimal binary? (The CLI sizes above are the C++ tools.)
   probe:
     name: crate ${{ matrix.crate }} (${{ matrix.target }})
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     strategy:
@@ -270,7 +273,7 @@ jobs:
   report:
     name: Report
     needs: [plan, bench, probe]
-    if: ${{ !cancelled() }}
+    if: ${{ github.repository_visibility == 'public' && (!cancelled()) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

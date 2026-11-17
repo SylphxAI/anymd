@@ -22,6 +22,7 @@ concurrency:
 jobs:
   prepare:
     name: Corpus and anymd
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -62,6 +63,7 @@ jobs:
   bench:
     name: ${{ matrix.tool }} ${{ matrix.shard }}
     needs: prepare
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -167,7 +169,7 @@ jobs:
   report:
     name: Leaderboard
     needs: bench
-    if: always()
+    if: ${{ github.repository_visibility == 'public' && (always()) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

@@ -40,7 +40,7 @@ env:
 
 jobs:
   build:
-    if: inputs.predictions_run == ''
+    if: ${{ github.repository_visibility == 'public' && (inputs.predictions_run == '') }}
     name: Build anymd
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -59,6 +59,7 @@ jobs:
   predict:
     name: Pages ${{ matrix.shard }}
     needs: build
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -105,7 +106,7 @@ jobs:
   evaluate:
     name: Official evaluator
     needs: predict
-    if: always() && !cancelled() && (needs.predict.result == 'success' || inputs.predictions_run != '')
+    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && (needs.predict.result == 'success' || inputs.predictions_run != '')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:

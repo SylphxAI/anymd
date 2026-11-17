@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   pages:
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,6 +37,7 @@ jobs:
   targets:
     name: Candle on ${{ matrix.target }}
     needs: pages
+    if: ${{ github.repository_visibility == 'public' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     strategy:
