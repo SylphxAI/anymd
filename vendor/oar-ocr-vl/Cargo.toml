@@ -13,7 +13,7 @@
 edition = "2024"
 rust-version = "1.95"
 name = "anymd-oar-ocr-vl"
-version = "0.9.4"
+version = "0.9.5"
 build = "build.rs"
 autolib = false
 autobins = false
@@ -57,56 +57,56 @@ name = "oar_ocr_vl"
 path = "src/lib.rs"
 
 [dependencies.candle-core]
-version = "0.11.0"
+version = "0.11.1"
 
 [dependencies.candle-flash-attn]
-version = "0.11.0"
+version = "0.11.1"
 optional = true
 
 [dependencies.candle-nn]
-version = "0.11.0"
+version = "0.11.1"
 
 [dependencies.candle-transformers]
-version = "0.11.0"
+version = "0.11.1"
 
 [dependencies.half]
-version = "2"
+version = "2.7.1"
 
 [dependencies.html-escape]
-version = "0.2"
+version = "0.3.1"
 
 [dependencies.image]
-version = "0.25.6"
+version = "0.25.10"
 default-features = false
 features = ["png", "jpeg", "gif", "tiff", "bmp", "webp"]
 
 [dependencies.once_cell]
-version = "1.19"
+version = "1.21.4"
 
 [dependencies.rand]
-version = "0.10"
+version = "0.10.4"
 
 [dependencies.rayon]
-version = "1.8"
+version = "1.12.0"
 
 [dependencies.regex]
-version = "1.11.1"
+version = "1.13.1"
 
 [dependencies.serde]
-version = "1.0"
+version = "1.0.229"
 features = [
     "derive",
     "rc",
 ]
 
 [dependencies.serde_json]
-version = "1.0"
+version = "1.0.154"
 
 [dependencies.thiserror]
-version = "2.0"
+version = "2.0.21"
 
 [dependencies.tokenizers]
-version = "0.23"
+version = "0.23.2"
 features = [
     "progressbar",
     "onig",
@@ -114,19 +114,19 @@ features = [
 default-features = false
 
 [dependencies.tracing]
-version = "0.1"
+version = "0.1.44"
 
 [dev-dependencies.clap]
-version = "4.5.42"
+version = "4.6.8"
 features = ["derive"]
 
 [dev-dependencies.criterion]
-version = "0.8"
+version = "0.8.2"
 features = ["html_reports"]
 
 [dev-dependencies.hayro]
-version = "0.7"
+version = "0.9.0"
 
 [dev-dependencies.tracing-subscriber]
-version = "0.3.20"
+version = "0.3.23"
 features = ["env-filter"]

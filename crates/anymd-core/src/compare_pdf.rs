@@ -45,36 +45,62 @@ pub struct ComparePdfError {
 }
 
 impl ComparePdfError {
-    fn invalid_params(message: impl Into<String>) -> Self { Self { code: ComparePdfErrorCode::InvalidParams, message: message.into() } }
-    fn invalid_request(message: impl Into<String>) -> Self { Self { code: ComparePdfErrorCode::InvalidRequest, message: message.into() } }
+    fn invalid_params(message: impl Into<String>) -> Self {
+        Self {
+            code: ComparePdfErrorCode::InvalidParams,
+            message: message.into(),
+        }
+    }
+    fn invalid_request(message: impl Into<String>) -> Self {
+        Self {
+            code: ComparePdfErrorCode::InvalidRequest,
+            message: message.into(),
+        }
+    }
 }
 
 impl From<TextIndexError> for ComparePdfError {
     fn from(error: TextIndexError) -> Self {
         match error.code {
-            crate::text_index::TextIndexErrorCode::InvalidParams => Self::invalid_params(error.message),
-            crate::text_index::TextIndexErrorCode::InvalidRequest => Self::invalid_request(error.message),
-            crate::text_index::TextIndexErrorCode::ExtractionFailed => Self::invalid_request(error.message),
+            crate::text_index::TextIndexErrorCode::InvalidParams => {
+                Self::invalid_params(error.message)
+            }
+            crate::text_index::TextIndexErrorCode::InvalidRequest => {
+                Self::invalid_request(error.message)
+            }
+            crate::text_index::TextIndexErrorCode::ExtractionFailed => {
+                Self::invalid_request(error.message)
+            }
         }
     }
 }
 
 fn terms(text: &str) -> std::collections::HashSet<String> {
     text.split_whitespace()
-        .map(|token| token.trim_matches(|c: char| !c.is_alphanumeric()).to_lowercase())
+        .map(|token| {
+            token
+                .trim_matches(|c: char| !c.is_alphanumeric())
+                .to_lowercase()
+        })
         .filter(|token| !token.is_empty())
         .collect()
 }
 
 pub fn compare_pdf(input: &ComparePdfInput) -> Result<ComparePdfResponse, ComparePdfError> {
     if input.before.trim().is_empty() || input.after.trim().is_empty() {
-        return Err(ComparePdfError::invalid_params("before and after are required local PDF paths"));
+        return Err(ComparePdfError::invalid_params(
+            "before and after are required local PDF paths",
+        ));
     }
     if input.before == input.after {
-        return Err(ComparePdfError::invalid_params("before and after must be different PDFs"));
+        return Err(ComparePdfError::invalid_params(
+            "before and after must be different PDFs",
+        ));
     }
     if input.context_chars.is_some_and(|value| value > 1000) {
-        return Err(ComparePdfError::invalid_params("context_chars must be <= 1000"));
+        return Err(ComparePdfError::invalid_params(
+            "context_chars must be <= 1000",
+        ));
     }
     let max_file_bytes = input.max_file_bytes.unwrap_or(256 * 1024 * 1024);
     let before_pages = extract_page_texts(&PathBuf::from(&input.before), max_file_bytes)?;
@@ -106,12 +132,15 @@ pub fn compare_pdf(input: &ComparePdfInput) -> Result<ComparePdfResponse, Compar
         before_chars: before_text.chars().count(),
         after_chars: after_text.chars().count(),
         route: "rust-text-compare",
-        warnings: vec!["Comparison is text-level; visual-only layout changes are not claimed.".into()],
+        warnings: vec![
+            "Comparison is text-level; visual-only layout changes are not claimed.".into(),
+        ],
     })
 }
 
 pub fn compare_pdf_from_value(input: &Value) -> Result<ComparePdfResponse, ComparePdfError> {
-    let parsed: ComparePdfInput = serde_json::from_value(input.clone())
-        .map_err(|error| ComparePdfError::invalid_params(format!("Invalid pdf_compare input: {error}")))?;
+    let parsed: ComparePdfInput = serde_json::from_value(input.clone()).map_err(|error| {
+        ComparePdfError::invalid_params(format!("Invalid pdf_compare input: {error}"))
+    })?;
     compare_pdf(&parsed)
 }

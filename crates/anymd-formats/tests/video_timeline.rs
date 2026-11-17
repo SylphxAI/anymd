@@ -82,7 +82,7 @@ fn fixture(dir: &Path, variable: bool) -> PathBuf {
     path
 }
 fn hash(path: &Path) -> String {
-    format!("{:x}", Sha256::digest(std::fs::read(path).unwrap()))
+    hex::encode(Sha256::digest(std::fs::read(path).unwrap()))
 }
 fn options() -> TimelineOptions {
     TimelineOptions {
@@ -123,7 +123,7 @@ fn hard_cut_nonzero_pts_audio_offset_overlap_and_real_frame_timestamp() {
     assert_eq!((frame.metadata.width, frame.metadata.height), (64, 48));
     assert_eq!(
         frame.metadata.sha256,
-        format!("{:x}", Sha256::digest(&frame.png))
+        hex::encode(Sha256::digest(&frame.png))
     );
     // A keyframe timestamp or simply echoing 1031 cannot satisfy this check.
     assert_ne!(frame.metadata.actual_ms, frame.metadata.requested_ms as i64);
@@ -159,21 +159,17 @@ fn continuous_scene_bounded_window_and_no_frame_after_media_end() {
     assert_eq!(timeline.scenes[0].start_ms, 200);
     assert_eq!(timeline.scenes[0].end_ms, 900);
     let clock = timeline.clock.as_ref().unwrap();
-    assert!(
-        timeline::render_frame(&path, clock, 2500, 3000, deadline)
-            .unwrap()
-            .is_none()
-    );
+    assert!(timeline::render_frame(&path, clock, 2500, 3000, deadline)
+        .unwrap()
+        .is_none());
     assert!(timeline::render_frame(&path, clock, 0, 0, deadline).is_err());
-    assert!(
-        timeline::extract(
-            &path,
-            &hash(&path),
-            &selected,
-            Instant::now() - Duration::from_secs(1)
-        )
-        .is_err()
-    );
+    assert!(timeline::extract(
+        &path,
+        &hash(&path),
+        &selected,
+        Instant::now() - Duration::from_secs(1)
+    )
+    .is_err());
     let sidecar = SubtitleTrack {
         id: "sidecar:en",
         playback_offset_ms: 0,

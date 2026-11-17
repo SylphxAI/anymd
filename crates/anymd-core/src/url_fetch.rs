@@ -421,6 +421,8 @@ mod tests {
         NextTimeout {
             after: ureq::unversioned::transport::time::Duration::NotHappening,
             reason: ureq::Timeout::Global,
+            per_read: None,
+            per_write: None,
         }
     }
 

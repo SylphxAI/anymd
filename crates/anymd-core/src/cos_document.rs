@@ -57,7 +57,7 @@ impl ParsedPdf {
                 "File exceeds maximum size of {max_file_bytes} bytes."
             )));
         }
-        let source_hash = format!("{:x}", Sha256::digest(&bytes));
+        let source_hash = hex::encode(Sha256::digest(&bytes));
         let is_linearized = detect_pdfjs_linearization(&bytes);
         let mut document = Document::load_mem(&bytes).map_err(extraction_error)?;
         // lopdf automatically decrypts PDFs that accept the empty password and
@@ -457,8 +457,8 @@ mod tests {
             parts.extend_from_slice(obj5.as_bytes());
             let xref_pos = parts.len();
             let mut xref = String::from("xref\n0 6\n0000000000 65535 f \n");
-            for i in 1..=5 {
-                xref.push_str(&format!("{:010} 00000 n \n", offsets[i]));
+            for offset in offsets.iter().skip(1) {
+                xref.push_str(&format!("{offset:010} 00000 n \n"));
             }
             parts.extend_from_slice(xref.as_bytes());
             parts.extend_from_slice(

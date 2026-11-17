@@ -39,7 +39,7 @@ impl TimelineSelection {
     }
 }
 fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    hex::encode(Sha256::digest(bytes))
 }
 fn remaining(deadline: Instant) -> Result<u64, String> {
     let ms = deadline
@@ -389,16 +389,28 @@ pub fn worker(args: &[String]) -> Result<(), String> {
     println!("{}", execute(work)?);
     Ok(())
 }
-fn request(
-    source: &str,
+struct RequestOptions<'a> {
     selection: Option<TimelineSelection>,
     timestamps: Option<Vec<u64>>,
     transcript: bool,
     ocr: Option<crate::ocr_vlm::OcrEngine>,
-    expected: Option<&str>,
+    expected: Option<&'a str>,
     timeout: u64,
+}
+
+fn request(
+    source: &str,
+    options: RequestOptions<'_>,
     policy: &SourceAccessPolicy,
 ) -> Result<Value, String> {
+    let RequestOptions {
+        selection,
+        timestamps,
+        transcript,
+        ocr,
+        expected,
+        timeout,
+    } = options;
     if !(1000..=300_000).contains(&timeout) {
         return Err("timeout_ms must be 1000..300000".into());
     }
@@ -472,12 +484,14 @@ pub(crate) fn document(
 ) -> Result<VideoEvidence, String> {
     serde_json::from_value(request(
         source,
-        Some(selection.clone()),
-        None,
-        transcript,
-        ocr,
-        None,
-        60_000,
+        RequestOptions {
+            selection: Some(selection.clone()),
+            timestamps: None,
+            transcript,
+            ocr,
+            expected: None,
+            timeout: 60_000,
+        },
         policy,
     )?)
     .map_err(|e| e.to_string())
@@ -543,12 +557,14 @@ pub(crate) fn inspect(
         }
         let mut payload = request(
             spec,
-            args.timeline,
-            args.timestamps_ms,
-            args.transcript.unwrap_or(false),
-            args.ocr,
-            args.expected_source_sha256.as_deref(),
-            args.timeout_ms.unwrap_or(60_000) as u64,
+            RequestOptions {
+                selection: args.timeline,
+                timestamps: args.timestamps_ms,
+                transcript: args.transcript.unwrap_or(false),
+                ocr: args.ocr,
+                expected: args.expected_source_sha256.as_deref(),
+                timeout: args.timeout_ms.unwrap_or(60_000) as u64,
+            },
             policy,
         )?;
         let mut images = Vec::new();

@@ -27,10 +27,10 @@ pub(crate) fn decode<'a>(bytes: &'a [u8], kind: &str) -> Result<Cow<'a, [u8]>, C
         ))
     };
     let payload = &bytes[2..];
-    if payload.len() % 2 != 0 {
+    if !payload.len().is_multiple_of(2) {
         return Err(invalid("incomplete two-byte code unit (odd byte count)"));
     }
-    let units = payload.chunks_exact(2).map(|pair| {
+    let units = payload.as_chunks::<2>().0.iter().map(|pair| {
         let pair = [pair[0], pair[1]];
         if little_endian {
             u16::from_le_bytes(pair)
@@ -74,7 +74,7 @@ pub(crate) fn prefix(bytes: &[u8]) -> Cow<'_, str> {
     let bytes = &bytes[..bytes.len().min(512)];
     let little = bytes.starts_with(&[0xFF, 0xFE]);
     if little || bytes.starts_with(&[0xFE, 0xFF]) {
-        let units = bytes[2..].chunks_exact(2).map(|pair| {
+        let units = bytes[2..].as_chunks::<2>().0.iter().map(|pair| {
             let pair = [pair[0], pair[1]];
             if little {
                 u16::from_le_bytes(pair)

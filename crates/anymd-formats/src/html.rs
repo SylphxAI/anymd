@@ -53,6 +53,8 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     })
 }
 
+type ImageRenderer<'a> = dyn Fn(&str, &str) -> Embed + 'a;
+
 /// Rendering knobs shared with the EPUB converter.
 pub(crate) struct RenderOptions<'a> {
     pub base: Option<Url>,
@@ -63,7 +65,7 @@ pub(crate) struct RenderOptions<'a> {
     pub select_main: bool,
     /// Decides what an `<img>` becomes, given its `src` and alt text: an
     /// exported file, nothing, or the default alt-text form (EPUB).
-    pub images: Option<&'a dyn Fn(&str, &str) -> Embed>,
+    pub images: Option<&'a ImageRenderer<'a>>,
 }
 
 /// Markdown for an already-decoded HTML/XHTML document.

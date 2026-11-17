@@ -32,7 +32,7 @@ use rmcp::{
     model::{
         CacheScope, CallToolResponse, CustomRequest, CustomResult, Implementation, ListToolsResult,
         MetaObject, PaginatedRequestParams, ProtocolVersion, ResultType, ServerCapabilities,
-        ServerInfo,
+        ServerConfig,
     },
     service::{RequestContext, RoleServer},
     tool, tool_handler, tool_router, ErrorData, ServerHandler,
@@ -567,8 +567,8 @@ impl PdfReaderMcp {
 
 #[tool_handler]
 impl ServerHandler for PdfReaderMcp {
-    fn get_info(&self) -> ServerInfo {
-        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+    fn get_info(&self) -> ServerConfig {
+        ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(
                 Implementation::new(SERVER_NAME, SERVER_VERSION)
                     .with_description(
@@ -619,23 +619,21 @@ impl ServerHandler for PdfReaderMcp {
 
     /// Post-init `server/discover` (SEP-2575). Pre-init is handled by
     /// [`discover_compat::DiscoverAwareTransport`].
-    fn on_custom_request(
+    async fn on_custom_request(
         &self,
         request: CustomRequest,
         _context: RequestContext<RoleServer>,
-    ) -> impl std::future::Future<Output = Result<CustomResult, ErrorData>> + Send + '_ {
-        async move {
-            if request.method == discover_compat::SERVER_DISCOVER_METHOD {
-                return Ok(CustomResult::new(discover_compat::discover_result_value(
-                    &self.get_info(),
-                )));
-            }
-            Err(ErrorData::new(
-                rmcp::model::ErrorCode::METHOD_NOT_FOUND,
-                request.method,
-                None,
-            ))
+    ) -> Result<CustomResult, ErrorData> {
+        if request.method == discover_compat::SERVER_DISCOVER_METHOD {
+            return Ok(CustomResult::new(discover_compat::discover_result_value(
+                &self.get_info(),
+            )));
         }
+        Err(ErrorData::new(
+            rmcp::model::ErrorCode::METHOD_NOT_FOUND,
+            request.method,
+            None,
+        ))
     }
 }
 

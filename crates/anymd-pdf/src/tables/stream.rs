@@ -232,7 +232,8 @@ pub(crate) fn stream_table(
             .cells
             .iter()
             .zip(&used)
-            .filter_map(|(cell, u)| u.then(|| strip_leaders(cell)))
+            .filter(|(_, used)| **used)
+            .map(|(cell, _)| strip_leaders(cell))
             .collect();
         for span in &mut line.spans {
             *span = (

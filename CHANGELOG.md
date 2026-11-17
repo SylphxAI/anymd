@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.5.12
+
+### Patch Changes
+
+- Update conversion libraries, build tools, and release actions to current stable versions.
+
 ## 8.5.11
 
 ### Patch Changes

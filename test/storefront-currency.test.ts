@@ -204,6 +204,23 @@ function post(checkout: Awaited<ReturnType<typeof mount>>) {
   return { body: JSON.parse(request.body), key: request.headers['Idempotency-Key'] };
 }
 
+// The verified Keel runtime omits all-zero fractions but retains the full
+// minor-unit precision for fractional prices. Check the complete rendered label.
+function expectPrice(
+  checkout: Awaited<ReturnType<typeof mount>>,
+  code: string,
+  amount: number,
+  digits = 0
+) {
+  const price = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: code,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(amount);
+  expect(checkout.display.textContent).toBe(`${config.prices[0].label} — ${price}`);
+}
+
 const catalogue = JSON.parse(
   readFileSync(new URL('../config/money-catalogue.json', import.meta.url), 'utf8')
 );
@@ -224,13 +241,8 @@ describe('generated Keel storefront currency', () => {
       expect(checkout.currencySelect.value).toBe(code);
       expect(checkout.attributes.get('data-keel-money-currency')).toBe(code);
       const exponent = ['JPY', 'KRW', 'VND'].includes(code) ? 0 : 2;
-      const formatted = new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency: code,
-        minimumFractionDigits: exponent,
-        maximumFractionDigits: exponent,
-      }).format(Number(raw) / (exponent === 0 ? 1 : 100));
-      expect(checkout.display.textContent).toContain(formatted);
+      const scale = 10 ** exponent;
+      expectPrice(checkout, code, Number(raw) / scale, Number(raw) % scale === 0 ? 0 : exponent);
       expect(checkout.storage.get('keel:money:currency')).toBe(code);
       await checkout.submit();
       const last = checkout.calls.filter((call) => call.method === 'POST').at(-1);
@@ -238,6 +250,15 @@ describe('generated Keel storefront currency', () => {
       identities.add(last?.headers['Idempotency-Key'] ?? '');
     }
     expect(identities.size).toBe(16);
+  });
+
+  test('fractional catalogue amounts render the full minor-unit precision', async () => {
+    const checkout = await mount('USD', { USD: '2910', HKD: '22905' });
+    expectPrice(checkout, 'USD', 29.1, 2);
+    checkout.changeCurrency('HKD');
+    expectPrice(checkout, 'HKD', 229.05, 2);
+    await checkout.submit();
+    expect(post(checkout).body.currency_code).toBe('HKD');
   });
 
   test('currency precedence is query, saved choice, locale, then catalogue default', async () => {
@@ -271,7 +292,7 @@ describe('generated Keel storefront currency', () => {
     expect(checkout.calls.map((call) => call.method)).toEqual(['GET']);
     expect(checkout.attributes.get('data-keel-money-catalog-ready')).toBe('1');
     expect(checkout.button.disabled).toBe(false);
-    expect(checkout.display.textContent).toContain('229.00');
+    expectPrice(checkout, 'HKD', 229);
   });
 
   test('request currency follows visible catalogue default, not the first amount', async () => {
@@ -279,7 +300,7 @@ describe('generated Keel storefront currency', () => {
     await checkout.submit();
     const request = post(checkout);
     expect(request.body.currency_code).toBe('HKD');
-    expect(checkout.display.textContent).toContain('229.00');
+    expectPrice(checkout, 'HKD', 229);
     await checkout.submit();
     const attempts = checkout.calls.filter((call) => call.method === 'POST');
     expect(attempts).toHaveLength(2);
@@ -294,8 +315,8 @@ describe('generated Keel storefront currency', () => {
     expect(post(usd).body.currency_code).toBe('USD');
     expect(post(hkd).body.currency_code).toBe('HKD');
     expect(post(usd).key).not.toBe(post(hkd).key);
-    expect(usd.display.textContent).toContain('29.00');
-    expect(hkd.display.textContent).toContain('229.00');
+    expectPrice(usd, 'USD', 29);
+    expectPrice(hkd, 'HKD', 229);
   });
 
   test('unavailable catalogue currency fails closed without a checkout write', async () => {

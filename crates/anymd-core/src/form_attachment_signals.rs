@@ -789,7 +789,7 @@ fn extract_attachments<'a>(
                 return None;
             }
             pair_budget -= needed;
-            for pair in names.chunks_exact(2) {
+            for pair in names.as_chunks::<2>().0.iter() {
                 pairs.push((pair[0], Some(pair[1])));
             }
             if orphan_count == 1 {

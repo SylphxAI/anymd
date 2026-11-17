@@ -77,7 +77,9 @@ pub(crate) fn decode_pdfjs_text_string(value: &Object) -> Option<String> {
             payload = &payload[..payload.len() - 1];
         }
         let units: Vec<u16> = payload
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .map(|chunk| u16::from_be_bytes([chunk[0], chunk[1]]))
             .collect();
         return String::from_utf16(&units).ok();
@@ -88,7 +90,9 @@ pub(crate) fn decode_pdfjs_text_string(value: &Object) -> Option<String> {
             payload = &payload[..payload.len() - 1];
         }
         let units: Vec<u16> = payload
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]))
             .collect();
         return String::from_utf16(&units).ok();

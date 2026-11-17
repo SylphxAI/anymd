@@ -7,7 +7,8 @@ export CARGO_NET_GIT_FETCH_WITH_CLI=true
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-KEEL_REV="${KEEL_REV:-67e44d2a4d75065ba9cb94e181c419c578325491}"
+# Keel CLI 0.1.6290 (keel-verified-2026-11-17-4).
+KEEL_REV="${KEEL_REV:-fda4c00d357fc87aa32d0e421f8845e4127c12ae}"
 CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
 CARGO_BIN="${CARGO_BIN:-cargo}"
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/anymd-keel-target-${KEEL_REV:0:12}}"

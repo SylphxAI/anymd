@@ -63,10 +63,12 @@ pub struct Placed {
 /// How embedded images are exported. `place` receives the encoded image, its
 /// caption when the page has one, and the page number; it writes the file and
 /// returns the Markdown, or `None` to leave the image out.
+pub type PlaceImage<'a> = dyn Fn(&EncodedImage, Option<&str>, u32) -> Option<Placed> + 'a;
+
 pub struct ImageOptions<'a> {
     /// Images that repeat across the document (see [`repeated_images`]).
     pub repeated: &'a HashSet<u64>,
-    pub place: &'a dyn Fn(&EncodedImage, Option<&str>, u32) -> Option<Placed>,
+    pub place: &'a PlaceImage<'a>,
 }
 
 /// An exported image and where it sits on its page.

@@ -330,7 +330,7 @@ fn collect_label_ranges(
             walker.truncated = true;
             return;
         }
-        for pair in nums.chunks_exact(2) {
+        for pair in nums.as_chunks::<2>().0.iter() {
             let Some(start) = walker
                 .resolve_owned(&pair[0])
                 .and_then(|value| value.as_i64().ok())

@@ -14,8 +14,8 @@ mod config;
 mod ernie;
 mod model;
 mod processing;
-mod quantized_linear;
 mod projector;
+mod quantized_linear;
 mod vision;
 
 pub use config::{

@@ -11,7 +11,9 @@ pub(crate) fn decode_pdf_string(object: &Object) -> Option<String> {
     };
     let text = if bytes.starts_with(&[0xFE, 0xFF]) {
         let units: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .map(|pair| u16::from_be_bytes([pair[0], pair[1]]))
             .collect();
         String::from_utf16_lossy(&units)

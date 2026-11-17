@@ -197,7 +197,8 @@ pub(crate) fn rows_of(glyphs: Vec<Glyph>) -> Vec<Vec<Glyph>> {
     }
     runs.sort_by(|a, b| b.base.total_cmp(&a.base).then(a.x0.total_cmp(&b.x0)));
     // (reference baseline, reference size, spans, glyphs)
-    let mut rows: Vec<(f64, f64, Vec<(f64, f64)>, Vec<Glyph>)> = Vec::new();
+    type Row = (f64, f64, Vec<(f64, f64)>, Vec<Glyph>);
+    let mut rows: Vec<Row> = Vec::new();
     for run in runs {
         let only_space = run.glyphs.iter().all(|g| g.space);
         if let Some((ref_base, ref_size, spans, row)) = rows.last_mut() {

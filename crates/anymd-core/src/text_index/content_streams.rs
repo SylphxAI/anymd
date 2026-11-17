@@ -24,11 +24,13 @@ pub(super) fn validate_selected_page_content_streams(
         if selected.is_some_and(|pages| !pages.contains(&page_number)) {
             continue;
         }
-        let content = doc.get_page_content(object_id).map_err(|err| {
-            TextIndexError::extraction_failed(format!(
+        let content = doc
+            .get_page_content_with_limit(object_id, usize::MAX)
+            .map_err(|err| {
+                TextIndexError::extraction_failed(format!(
                 "Failed to extract PDF text: invalid content stream (page {page_number}): {err}"
             ))
-        })?;
+            })?;
         validate_inline_images(&content).map_err(|detail| {
             TextIndexError::extraction_failed(format!(
                 "Failed to extract PDF text: invalid content stream (page {page_number}): {detail}"
@@ -41,9 +43,8 @@ pub(super) fn validate_selected_page_content_streams(
         // otherwise — is a page-level tool error, never a worker abort.
         // `Content::decode` takes `&[u8]`; wrap the call so the closure is
         // `UnwindSafe` without relying on `AssertUnwindSafe`.
-        let decode_result = std::panic::catch_unwind(|| {
-            lopdf::content::Content::decode(&content).map(|_| ())
-        });
+        let decode_result =
+            std::panic::catch_unwind(|| lopdf::content::Content::decode(&content).map(|_| ()));
         match decode_result {
             Ok(Ok(())) => {}
             Ok(Err(err)) => {
@@ -82,7 +83,11 @@ pub(super) fn validate_inline_images(content: &[u8]) -> Result<(), String> {
         let mut rest = after_bi;
         let data_start = loop {
             rest = skip_content_whitespace(rest);
-            if rest.len() >= 2 && rest[0] == b'I' && rest[1] == b'D' && is_id_terminator(rest.get(2)) {
+            if rest.len() >= 2
+                && rest[0] == b'I'
+                && rest[1] == b'D'
+                && is_id_terminator(rest.get(2))
+            {
                 break &rest[2..];
             }
             let (key, after_key) = take_inline_name(rest)
@@ -94,15 +99,16 @@ pub(super) fn validate_inline_images(content: &[u8]) -> Result<(), String> {
             rest = after_value;
         };
         // lopdf requires exactly one whitespace byte after `ID`.
-        let data = data_start.strip_prefix(b" ")
+        let data = data_start
+            .strip_prefix(b" ")
             .or_else(|| data_start.strip_prefix(b"\n"))
             .or_else(|| data_start.strip_prefix(b"\r"))
             .or_else(|| data_start.strip_prefix(b"\t"))
             .ok_or_else(|| "inline image ID not followed by whitespace".to_string())?;
         let expected = inline_image_data_len(&dict)?;
-        let image_data = data.get(..expected).ok_or_else(|| {
-            "inline image data shorter than /W /H /BPC imply".to_string()
-        })?;
+        let image_data = data
+            .get(..expected)
+            .ok_or_else(|| "inline image data shorter than /W /H /BPC imply".to_string())?;
         // Guard the `EI`-in-data trap from the other direction too: image
         // data containing `EI`-like bytes must not confuse validation, since
         // the length — not a literal scan — determines where data ends.
@@ -112,7 +118,8 @@ pub(super) fn validate_inline_images(content: &[u8]) -> Result<(), String> {
         // whitespace is required before `EI` (the data-length computation
         // consumes the separator) and at least one trailing whitespace byte
         // must follow for the parse to complete.
-        let ei = after_data.strip_prefix(b" ")
+        let ei = after_data
+            .strip_prefix(b" ")
             .or_else(|| after_data.strip_prefix(b"\n"))
             .or_else(|| after_data.strip_prefix(b"\r"))
             .or_else(|| after_data.strip_prefix(b"\t"))
@@ -135,10 +142,8 @@ pub(super) fn inline_image_data_len(dict: &[(&[u8], &[u8])]) -> Result<usize, St
             .find(|(key, _)| *key == abbr || *key == full)
             .map(|(_, value)| *value)
     };
-    let parse_int = |raw: &[u8]
-| -> Option<i64> {
-        std::str::from_utf8(raw).ok()?.trim().parse::<i64>().ok()
-    };
+    let parse_int =
+        |raw: &[u8]| -> Option<i64> { std::str::from_utf8(raw).ok()?.trim().parse::<i64>().ok() };
     let width = lookup(b"W", b"Width")
         .and_then(parse_int)
         .ok_or_else(|| "inline image missing /W".to_string())?;
@@ -158,8 +163,8 @@ pub(super) fn inline_image_data_len(dict: &[(&[u8], &[u8])]) -> Result<usize, St
     let components: usize = if is_mask {
         1
     } else {
-        let cs = lookup(b"CS", b"ColorSpace")
-            .ok_or_else(|| "inline image missing /CS".to_string())?;
+        let cs =
+            lookup(b"CS", b"ColorSpace").ok_or_else(|| "inline image missing /CS".to_string())?;
         match cs {
             b"G" | b"DeviceGray" | b"Gray" => 1,
             b"RGB" | b"DeviceRGB" => 3,
@@ -170,13 +175,17 @@ pub(super) fn inline_image_data_len(dict: &[(&[u8], &[u8])]) -> Result<usize, St
     let width = width as usize;
     let height = height as usize;
     let bpc = bpc as usize;
-    let row_bits = width.checked_mul(components.checked_mul(bpc).ok_or_else(|| {
-        "inline image dimensions overflow".to_string()
-    })?).ok_or_else(|| "inline image dimensions overflow".to_string())?;
+    let row_bits = width
+        .checked_mul(
+            components
+                .checked_mul(bpc)
+                .ok_or_else(|| "inline image dimensions overflow".to_string())?,
+        )
+        .ok_or_else(|| "inline image dimensions overflow".to_string())?;
     let stride = row_bits.div_ceil(8);
-    height.checked_mul(stride).ok_or_else(|| {
-        "inline image dimensions overflow".to_string()
-    })
+    height
+        .checked_mul(stride)
+        .ok_or_else(|| "inline image dimensions overflow".to_string())
 }
 
 pub(super) fn is_content_whitespace(byte: u8) -> bool {
@@ -184,7 +193,10 @@ pub(super) fn is_content_whitespace(byte: u8) -> bool {
 }
 
 pub(super) fn skip_content_whitespace(mut input: &[u8]) -> &[u8] {
-    while input.first().is_some_and(|byte| is_content_whitespace(*byte)) {
+    while input
+        .first()
+        .is_some_and(|byte| is_content_whitespace(*byte))
+    {
         input = &input[1..];
     }
     input
@@ -218,9 +230,9 @@ pub(super) fn find_inline_begin(content: &[u8]) -> Option<usize> {
 /// Take a `/Name` (without the leading slash) from an inline dict.
 pub(super) fn take_inline_name(input: &[u8]) -> Option<(&[u8], &[u8])> {
     let rest = input.strip_prefix(b"/")?;
-    let end = rest
-        .iter()
-        .position(|byte| !byte.is_ascii_alphanumeric() && !matches!(byte, b'*' | b'\'' | b'"' | b'_' | b'.' | b'-'))?;
+    let end = rest.iter().position(|byte| {
+        !byte.is_ascii_alphanumeric() && !matches!(byte, b'*' | b'\'' | b'"' | b'_' | b'.' | b'-')
+    })?;
     if end == 0 {
         return None;
     }

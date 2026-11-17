@@ -257,7 +257,7 @@ fn file_digest(path: &Path) -> Result<Option<String>, String> {
         }
         digest.update(&buffer[..n]);
     }
-    Ok(Some(format!("{:x}", digest.finalize())))
+    Ok(Some(hex::encode(digest.finalize())))
 }
 
 /// The release-asset platform key (the npm package suffix) of this build.
@@ -761,7 +761,7 @@ mod tests {
     fn checksum_rejects_a_changed_cache_file() {
         let mut file = tempfile::NamedTempFile::new().unwrap();
         file.write_all(b"hello").unwrap();
-        let hash = format!("{:x}", Sha256::digest(b"hello"));
+        let hash = hex::encode(Sha256::digest(b"hello"));
         assert!(verified(file.path(), &hash).unwrap());
         file.write_all(b" changed").unwrap();
         assert!(!verified(file.path(), &hash).unwrap());
@@ -847,7 +847,7 @@ mod tests {
         std::fs::write(dir.path().join(companion_file_name()), b"x").unwrap();
         std::fs::write(
             dir.path().join(COMPANION_HASH_FILE),
-            format!("{:x}", Sha256::digest(b"x")),
+            hex::encode(Sha256::digest(b"x")),
         )
         .unwrap();
         std::fs::write(dir.path().join(COMPANION_VERSION_FILE), "0.0.0").unwrap();
@@ -982,10 +982,10 @@ printf '{"regions":[{"label":"text","bbox":[0,0,1,1],"score":0.9,"order":2,"text
     fn release(key: &SigningKey, signed_version: &str, reported: &str, tamper: bool) -> Release {
         let asset = companion_asset("test-plat");
         let binary = format!("#!/bin/sh\necho 'anymd-ocr-vlm {reported}'\n").into_bytes();
-        let manifest = format!("{:x}  {asset}\n", Sha256::digest(&binary));
+        let manifest = format!("{}  {asset}\n", hex::encode(Sha256::digest(&binary)));
         let signature = sign(key, signed_version, &manifest);
         let served = if tamper {
-            format!("{:x}  {asset}\n", Sha256::digest(b"evil"))
+            format!("{}  {asset}\n", hex::encode(Sha256::digest(b"evil")))
         } else {
             manifest
         };
@@ -1121,7 +1121,7 @@ printf '{"regions":[{"label":"text","bbox":[0,0,1,1],"score":0.9,"order":2,"text
         std::fs::write(root.join(companion_file_name()), bytes).unwrap();
         std::fs::write(
             root.join(COMPANION_HASH_FILE),
-            format!("{:x}", Sha256::digest(bytes)),
+            hex::encode(Sha256::digest(bytes)),
         )
         .unwrap();
         std::fs::write(root.join(COMPANION_VERSION_FILE), env!("CARGO_PKG_VERSION")).unwrap();

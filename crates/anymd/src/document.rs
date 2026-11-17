@@ -1087,7 +1087,10 @@ mod tests {
             ..reference.clone()
         };
         assert!(visible_chars(&reference.markdown) > SPARSE_PAGE_CHARS);
-        assert_eq!(ocr_candidates(&[reference.clone()], &doc, true), vec![0]);
+        assert_eq!(
+            ocr_candidates(std::slice::from_ref(&reference), &doc, true),
+            vec![0]
+        );
         assert_eq!(ocr_candidates(&[plain], &doc, true), vec![0]);
         assert!(ocr_candidates(&[reference], &doc, false).is_empty());
         // Page 2 of the fixture has a native text line over its raster image.
