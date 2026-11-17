@@ -318,7 +318,7 @@ jobs:
     needs: [release, companion-plan, companion-build, companion]
     # The companions are release assets too, so they join SHA256SUMS and the
     # attestations; `skipped` means they were already attached.
-    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.release.result == 'success' && needs.companion-build.result != 'failure' && needs.companion.result != 'failure' && needs.companion-plan.result == 'success') }}
+    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.release.result == 'success' && (needs.companion-build.result == 'success' || needs.companion-build.result == 'skipped') && (needs.companion.result == 'success' || needs.companion.result == 'skipped') && needs.companion-plan.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

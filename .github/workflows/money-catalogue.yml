@@ -12,6 +12,8 @@ on:
       - 'config/money-catalogue.json'
       - 'scripts/money-catalogue-apply.sh'
       - 'scripts/money-catalogue-apply.test.ts'
+      - 'scripts/workflow_condition.py'
+      - 'scripts/test_workflow_conditions.py'
       - '.github/workflows/money-catalogue.yml'
       - 'scripts/money-access-verify.py'
       - 'scripts/money-access-verify.test.py'
@@ -48,6 +50,7 @@ jobs:
       - run: bun test scripts/money-catalogue-apply.test.ts
 
       - run: python3 scripts/money-access-verify.test.py
+      - run: python3 scripts/test_workflow_conditions.py MoneyCatalogueConditions
 
   preview:
     name: Apply to preview
