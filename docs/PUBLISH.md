@@ -34,18 +34,21 @@
 
 ## Native CPU portability
 
-Repository builds use `.cargo/config.toml` to pass `GGML_NATIVE=OFF` and
-`TRANSCRIBE_X86_CONSERVATIVE=ON` to transcribe-cpp-sys. This disables host-specific
-CPU tuning and optional x86 SIMD tiers: a binary built on a recent CI CPU can
-run on an older supported CPU. CI checks the compiled CMake cache on every
-release target with `scripts/check-native-cpu.py`. Model-free compilation alone
-does not prove CPU portability. The benchmark's AVX2 tool build is a separate
-measurement, not the portable release binary's performance guarantee.
+Repository builds use `.cargo/config.toml` to disable host-specific CPU tuning
+and optional x86 SIMD tiers in transcribe-cpp-sys. The conservative preset alone
+does not override the SSE4.2, AVX, and F16C defaults on static macOS x86_64
+builds, so those options are disabled explicitly. CI checks the compiled CMake
+cache on every release target with `scripts/check-native-cpu.py`. Model-free
+compilation alone does not prove CPU portability. The benchmark's AVX2 tool
+build is a separate measurement, not the portable release binary's performance
+guarantee.
 
-When redistributing a source build outside this checkout, set
-`TRANSCRIBE_CMAKE_ARGS="-DGGML_NATIVE=OFF -DTRANSCRIBE_X86_CONSERVATIVE=ON"`
-before building; Cargo's repository configuration is not inherited by downstream
-crates.io consumers.
+Cargo does not inherit the repository configuration for downstream crates.io
+builds. When redistributing a source build outside this checkout, set:
+
+```sh
+export TRANSCRIBE_CMAKE_ARGS="-DGGML_NATIVE=OFF -DTRANSCRIBE_X86_CONSERVATIVE=ON -DGGML_SSE42=OFF -DGGML_AVX=OFF -DGGML_F16C=OFF"
+```
 
 ## winget, Homebrew and Scoop
 
