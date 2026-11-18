@@ -10,6 +10,7 @@ import {
   extractAttribution,
   isPlaceholder,
   isPricingHref,
+  isStorefrontHref,
   loadTags,
   mergedAttribution,
   PURCHASE_STORAGE_PREFIX,
@@ -270,6 +271,16 @@ describe('purchase attribution', () => {
     expect(isPricingHref('/anymd/pricing')).toBe(true);
     expect(isPricingHref('https://sylphxai.github.io/anymd/pricing?utm_source=docs')).toBe(true);
     expect(isPricingHref('/anymd/guide/getting-started')).toBe(false);
+  });
+
+  test('storefront pages load in full instead of through the docs router', () => {
+    expect(isStorefrontHref('/anymd/pricing')).toBe(true);
+    expect(isStorefrontHref('/anymd/pricing?entry_surface=seo_vs-marker&utm_source=github')).toBe(true);
+    expect(isStorefrontHref('/anymd/recover')).toBe(true);
+    expect(isStorefrontHref('https://sylphxai.github.io/anymd/pricing.html')).toBe(true);
+    expect(isStorefrontHref('/anymd/pro')).toBe(false);
+    expect(isStorefrontHref('/anymd/vs/marker')).toBe(false);
+    expect(isStorefrontHref('https://example.com/anymd/pricing')).toBe(false);
   });
 
   test('persistAttribution and mergedAttribution preserve click IDs across navigation', () => {

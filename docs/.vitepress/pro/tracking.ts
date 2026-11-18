@@ -208,6 +208,21 @@ export function isPricingHref(href: string): boolean {
   }
 }
 
+/**
+ * True for the storefront pages built after VitePress (`/pricing`, `/recover`). The VitePress
+ * client router has no route for them and would render its 404, so they must load in full.
+ */
+export function isStorefrontHref(href: string, origin = 'https://sylphxai.github.io'): boolean {
+  try {
+    const parsed = new URL(href, `${origin}/anymd/`);
+    if (parsed.origin !== origin) return false;
+    const path = parsed.pathname.replace(/\/+$/, '').replace(/\.html$/, '');
+    return path === '/anymd/pricing' || path === '/anymd/recover';
+  } catch {
+    return false;
+  }
+}
+
 export function buyHref(attributionOrClickId: AttributionMap | string = ''): string {
   return appendAttributionToUrl(buyUrl, attributionOrClickId);
 }
