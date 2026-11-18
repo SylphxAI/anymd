@@ -9,9 +9,12 @@ const { hasSidebar } = useSidebar();
   <footer class="site-footer" :class="{ 'has-sidebar': hasSidebar }">
     <div class="site-footer-inner">
       <nav class="site-footer-links" aria-label="Compare anymd">
+        <a :href="withBase('/vs/')">All comparisons</a>
         <a :href="withBase('/vs/docling')">anymd vs Docling</a>
+        <a :href="withBase('/vs/kreuzberg')">anymd vs Kreuzberg</a>
         <a :href="withBase('/vs/marker')">anymd vs Marker</a>
         <a :href="withBase('/vs/markitdown')">anymd vs MarkItDown</a>
+        <a :href="withBase('/vs/pdftotext')">anymd vs pdftotext</a>
         <a :href="withBase('/vs/unstructured')">anymd vs Unstructured</a>
       </nav>
       <nav class="site-footer-links" aria-label="Legal and contact">
