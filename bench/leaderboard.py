@@ -6,8 +6,10 @@ Rewrites the block between `<!-- leaderboard:start -->` and
 between `<!-- headline:start -->` and `<!-- headline:end -->` in README.md (with
 its `<!-- proof:start -->` line against each comparison tool), and
 the head-to-head block between `<!-- versus:start -->` and `<!-- versus:end -->`
-in each docs/vs/<tool>.md comparison page. The headline figures that a comparison
-page and llms.txt quote by hand, outside that block, are checked against the results.
+in each docs/vs/<tool>.md comparison page, and the scoreboard between
+`<!-- hub:start -->` and `<!-- hub:end -->` in docs/vs/index.md. The headline figures
+that a comparison page, the hub and llms.txt quote by hand, outside those blocks, are
+checked against the results.
 Numbers are never edited by hand: change the results, then run
 
   python bench/leaderboard.py            # rewrite the docs
@@ -26,9 +28,11 @@ ROOT = HERE.parent
 DOCS = ROOT / "docs" / "guide" / "benchmarks.md"
 README = ROOT / "README.md"
 VERSUS = ROOT / "docs" / "vs"
+HUB = VERSUS / "index.md"
 # Hand-written copy that quotes a comparison page's headline figures, besides the page itself.
 VERSUS_COPY = [ROOT / "docs" / "public" / "llms.txt"]
-DISPLAY_NAMES = {"markitdown": "MarkItDown", "docling": "Docling", "marker": "Marker", "unstructured": "Unstructured"}
+DISPLAY_NAMES = {"markitdown": "MarkItDown", "docling": "Docling", "marker": "Marker", "unstructured": "Unstructured",
+                 "kreuzberg": "Kreuzberg", "pdftotext": "pdftotext"}
 
 CATEGORY_NAMES = {
     "paper": "Papers (math)",
@@ -269,6 +273,11 @@ def label(name):
     return DISPLAY_NAMES.get(name, name)
 
 
+def version(meta, name):
+    """A tool's version number alone: "anymd 8.2.0" and "pdftotext version 24.02.0" both drop the prefix."""
+    return re.sub(rf"^{re.escape(name)}\s+(?:version\s+)?", "", meta[name]["tool_version"])
+
+
 def totals(s, docs=None):
     """Seconds and output tokens over the documents a tool converted, or over `docs` (ids) only."""
     ok = [r for d, r in s["rows"].items() if r.get("status") == "ok" and (docs is None or d in docs)]
@@ -307,10 +316,6 @@ def versus(corpus, summary, meta, other, ours="anymd"):
     """A comparison page's head-to-head block: anymd against one other tool on every document."""
     a, b = summary[ours], summary[other]
 
-    def version(name):
-        v = meta[name]["tool_version"]
-        return v[len(name) + 1:] if v.startswith(name + " ") else v
-
     def bold(x, y):
         if pct(x) == pct(y):
             return pct(x), pct(y)
@@ -320,7 +325,7 @@ def versus(corpus, summary, meta, other, ours="anymd"):
     complete = len(shared) == len(corpus)
     scope = "all converted documents" if complete else f"the {len(shared)} documents both converted"
 
-    out = [f"| AgentDocBench | {ours} {version(ours)} | {label(other)} {version(other)} |", "|---|---|---|"]
+    out = [f"| AgentDocBench | {ours} {version(meta, ours)} | {label(other)} {version(meta, other)} |", "|---|---|---|"]
     for title, key in [("Overall", "overall"), ("Sentences kept verbatim", "sentences"), ("Text F1", "text_f1"),
                        ("Reading order", "order"), ("Table cells F1", "tables")]:
         x, y = bold(a[key], b[key])
@@ -333,6 +338,22 @@ def versus(corpus, summary, meta, other, ours="anymd"):
     lean = (f"**{ka:,}**", f"{kb:,}") if ka < kb else (f"{ka:,}", f"**{kb:,}**")
     out.append(f"| Time, {scope} | {fast[0]} | {fast[1]} |")
     out.append(f"| Output tokens, {scope} | {lean[0]} | {lean[1]} |")
+    ocr_facts = []
+    scans = {d["id"] for d in corpus if d["category"] == "scanned"} & shared
+    if tb < ta and scans:
+        # The other tool is faster on the shared documents: show how much of anymd's time is OCR on scans.
+        rest = shared - scans
+        (sa, _), (ra, rka), (rb, rkb) = totals(a, scans), totals(a, rest), totals(b, rest)
+        scanned_score = mean(doc_score(b["rows"].get(d)) for d in scans)
+        fast_rest = (f"**{secs(ra)}**", secs(rb)) if ra < rb else (secs(ra), f"**{secs(rb)}**")
+        lean_rest = (f"**{rka:,}**", f"{rkb:,}") if rka < rkb else (f"{rka:,}", f"**{rkb:,}**")
+        out.append("")
+        out.append(f"{ours} spends {secs(sa)} of its {secs(ta)} on the {len(scans)} scanned documents, which it reads "
+                   f"with OCR and where {label(other)} scores {pct(scanned_score)}. On the other {len(rest)}, "
+                   f"{ours} takes {fast_rest[0]} and {label(other)} {fast_rest[1]}, and they return "
+                   f"{lean_rest[0]} and {lean_rest[1]} output tokens.")
+        ocr_facts = [secs(sa).removesuffix(" s"), secs(ra).removesuffix(" s"), secs(rb).removesuffix(" s"),
+                     f"{rka:,}", f"{rkb:,}"]
 
     wins, losses, ties = [], [], 0
     for doc in corpus:
@@ -379,9 +400,44 @@ def versus(corpus, summary, meta, other, ours="anymd"):
                    f"**{pct(mean(a['per_category'][c] for c in rest))}** for {ours} and "
                    f"**{pct(mean(b['per_category'][c] for c in rest))}** for {label(other)}.\n")
     facts = [pct(a["overall"]), pct(b["overall"]), secs(ta).removesuffix(" s"), secs(tb).removesuffix(" s"),
-             f"{ka:,}", f"{kb:,}", fewer(ka, kb), version(ours), version(other),
-             meta[ours]["date"], meta[other]["date"]]
+             f"{ka:,}", f"{kb:,}", fewer(ka, kb), version(meta, ours), version(meta, other),
+             meta[ours]["date"], meta[other]["date"], *ocr_facts]
     return "\n".join(out).rstrip("\n") + "\n", facts
+
+
+def hub(corpus, summary, order, meta, pages, ours="anymd"):
+    """The comparison hub's scoreboard: every tool's headline figures, each linked to its head-to-head page."""
+    n = len(corpus)
+    common = [d["id"] for d in corpus if all(summary[t]["rows"].get(d["id"], {}).get("status") == "ok" for t in order)]
+    top = max(summary[t]["overall"] for t in order)
+    out = ["| Tool | Overall | Converted | Table cells F1 | Time | Output tokens | Head to head |",
+           "|---|---|---|---|---|---|---|"]
+    for name in order:
+        s = summary[name]
+        seconds, tokens = totals(s)
+        overall = f"**{pct(s['overall'])}**" if s["overall"] == top else pct(s["overall"])
+        link = "–" if name == ours else (f"[anymd vs {label(name)}](/vs/{name})" if name in pages else "–")
+        tool = f"{label(name)} {version(meta, name)}"
+        out.append(f"| {tool} | {overall} | {s['coverage'][0]}/{s['coverage'][1]} | {pct(s['tables'])} | "
+                   f"{secs(seconds)} | {tokens:,} | {link} |")
+    out.append("")
+    out.append(f"Scores are 0 to 100; higher is better. Overall is the mean of the {len(summary_categories(corpus))} "
+               f"category scores, and a document a tool did not convert scores 0. Time and tokens cover the documents "
+               f"each tool converted, so the table below compares them on the same {len(common)} documents.\n")
+    out.append(f"### Speed and tokens on the {len(common)} documents every tool converted\n")
+    out.append("| Tool | Time | Output tokens | Measured |")
+    out.append("|---|---|---|---|")
+    for name in order:
+        seconds, tokens = totals(summary[name], set(common))
+        m = meta[name]
+        run = f"[{m['date']}]({m['run_url']})" if m.get("run_url") else m["date"]
+        out.append(f"| {label(name)} | {secs(seconds)} | {tokens:,} | {run} |")
+    machines = sorted({m["machine"] for m in meta.values()})
+    out.append("")
+    out.append(f"Every tool ran on GitHub-hosted runners ({'; '.join(machines)}), timed as a fresh process per file.")
+    seconds, _ = totals(summary[ours])
+    facts = [pct(summary[ours]["overall"]), secs(seconds).removesuffix(" s"), str(n)]
+    return "\n".join(out) + "\n", facts
 
 
 def versus_pages(corpus, summary, meta):
@@ -413,11 +469,13 @@ def main():
         return
     meta = {t["meta"]["tool"]: t["meta"] for t in tools if not t["meta"].get("skipped")}
     pages = versus_pages(corpus, summary, meta)
+    hub_block, hub_facts = hub(corpus, summary, order, meta, {path.stem for path in pages})
     targets = {
         DOCS: [("leaderboard", board), ("corpus", corpus_table(corpus))],
         README: [("headline", headline(summary, order)), ("fast", fast_bullet(corpus, summary)),
                  ("proof", proof(corpus, summary, [path.stem for path in pages]))],
         **{path: [("versus", block)] for path, (block, _) in pages.items()},
+        HUB: [("hub", hub_block)],
     }
     missing = []
     for path, (_, facts) in pages.items():
@@ -426,6 +484,10 @@ def main():
             absent = [f for f in facts if f not in text]
             if absent:
                 missing.append(f"{copy.relative_to(ROOT)} lacks {', '.join(absent)} for {path.stem}")
+    hub_text = re.sub(r"<!-- hub:start -->.*?<!-- hub:end -->", "", HUB.read_text("utf-8"), flags=re.S)
+    absent = [f for f in hub_facts if f not in hub_text]
+    if absent:
+        missing.append(f"{HUB.relative_to(ROOT)} lacks {', '.join(absent)}")
     if missing:
         raise SystemExit("comparison copy does not match the results: " + "; ".join(missing))
     stale = []

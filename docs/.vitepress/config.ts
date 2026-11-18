@@ -285,7 +285,7 @@ function comparisonGraph(relativePath: string, pageDesc: string) {
         name: 'anymd',
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'macOS, Linux, Windows',
-        url: site + relativePath.replace(/\.md$/, ''),
+        url: site + relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, ''),
         downloadUrl: 'https://www.npmjs.com/package/@sylphx/anymd',
         softwareVersion: pkg.version,
         description: pageDesc,
@@ -463,9 +463,12 @@ export default defineConfig({
           {
             text: 'Compare',
             items: [
+              { text: 'All comparisons', link: '/vs/' },
               { text: 'anymd vs Docling', link: '/vs/docling' },
+              { text: 'anymd vs Kreuzberg', link: '/vs/kreuzberg' },
               { text: 'anymd vs Marker', link: '/vs/marker' },
               { text: 'anymd vs MarkItDown', link: '/vs/markitdown' },
+              { text: 'anymd vs pdftotext', link: '/vs/pdftotext' },
               { text: 'anymd vs Unstructured', link: '/vs/unstructured' },
             ],
           },
@@ -516,9 +519,12 @@ export default defineConfig({
       {
         text: 'Compare',
         items: [
+          { text: 'All comparisons', link: '/vs/' },
           { text: 'anymd vs Docling', link: '/vs/docling' },
+          { text: 'anymd vs Kreuzberg', link: '/vs/kreuzberg' },
           { text: 'anymd vs Marker', link: '/vs/marker' },
           { text: 'anymd vs MarkItDown', link: '/vs/markitdown' },
+          { text: 'anymd vs pdftotext', link: '/vs/pdftotext' },
           { text: 'anymd vs Unstructured', link: '/vs/unstructured' },
         ],
       },

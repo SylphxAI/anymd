@@ -22,6 +22,16 @@ On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured
 
 On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Unstructured 0.27.8 (measured 2026-09-25, default auto strategy, no hi_res) scores 81.2. anymd converts all 38 in 11.5 s against 346.5 s, returns 11% fewer output tokens (368,659 against 414,333), and scores 92.2 against 38.4 on table cells F1. Unstructured scores slightly higher on EPUB and offers typed elements, chunking and connectors. Comparison: https://sylphxai.github.io/anymd/vs/unstructured
 
+## anymd vs Kreuzberg
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Kreuzberg 4.10.4 (measured 2026-09-25, Python API with Markdown output and Tesseract OCR on) scores 81.7. anymd converts all 38 in 11.5 s against 16.0 s, returns 19% fewer output tokens (368,659 against 455,689), and scores 92.2 against 38.4 on table cells F1. Kreuzberg scores slightly higher on HTML and EPUB, and offers bindings for many languages, email and archive formats, chunking and embeddings. Its successor, Xberg, was not measured. Comparison: https://sylphxai.github.io/anymd/vs/kreuzberg
+
+## anymd vs pdftotext
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Poppler pdftotext 24.02.0 (measured 2026-09-25, default mode, PDFs only) scores 42.2; pdftotext read the 23 PDFs and does not support the 15 other files. On those 23, pdftotext takes 0.90 s against anymd's 11.4 s, because anymd spends 10.5 s on OCR for 3 scanned PDFs where pdftotext scores 0, and anymd returns 3% more output tokens (207,030 against 201,448). On the other 20 born-digital PDFs, anymd takes 0.87 s against 0.88 s and returns 200,747 output tokens against 201,435, with Markdown tables (table cells F1 92.2 against 0.0). pdftotext's output is the benchmark's reference text for born-digital PDFs. Comparison: https://sylphxai.github.io/anymd/vs/pdftotext
+
+All seven tools side by side: https://sylphxai.github.io/anymd/vs/
+
 ## Install and Setup
 
 - npm: `npx -y @sylphx/anymd setup --client cursor,claude-code,codex`
@@ -35,9 +45,12 @@ On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured
 - [Getting started](https://sylphxai.github.io/anymd/guide/getting-started)
 - [PDF & Office to Markdown MCP](https://sylphxai.github.io/anymd/use-cases/pdf-and-office-to-markdown-mcp)
 - [Verifiable video & PDF cite-check for AI agents](https://sylphxai.github.io/anymd/use-cases/verifiable-video-and-cite-check-ai-agents)
+- [All comparisons](https://sylphxai.github.io/anymd/vs/)
 - [anymd vs Docling](https://sylphxai.github.io/anymd/vs/docling)
+- [anymd vs Kreuzberg](https://sylphxai.github.io/anymd/vs/kreuzberg)
 - [anymd vs Marker](https://sylphxai.github.io/anymd/vs/marker)
 - [anymd vs MarkItDown](https://sylphxai.github.io/anymd/vs/markitdown)
+- [anymd vs pdftotext](https://sylphxai.github.io/anymd/vs/pdftotext)
 - [anymd vs Unstructured](https://sylphxai.github.io/anymd/vs/unstructured)
 - [Local and hosted (Sylphx AI parse)](https://sylphxai.github.io/anymd/guide/hosted)
 - [MCP tools](https://sylphxai.github.io/anymd/guide/tools)

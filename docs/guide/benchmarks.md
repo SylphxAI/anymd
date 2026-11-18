@@ -14,7 +14,7 @@ tool produced an output, the corpus and ground truth are public, and the categor
 tables below like everything else. The harness, corpus, ground truth, and raw results are in
 [`bench/`](https://github.com/SylphxAI/anymd/tree/main/bench).
 
-Choosing between converters? Side-by-side pages compare anymd with [Docling](/vs/docling), [Marker](/vs/marker), [MarkItDown](/vs/markitdown) and [Unstructured](/vs/unstructured) on these documents, including where each one scores higher.
+Choosing between converters? [All comparisons](/vs/) puts the seven tools side by side, and head-to-head pages compare anymd with [Docling](/vs/docling), [Kreuzberg](/vs/kreuzberg), [Marker](/vs/marker), [MarkItDown](/vs/markitdown), [pdftotext](/vs/pdftotext) and [Unstructured](/vs/unstructured) on these documents, including where each one scores higher.
 
 ## Leaderboard
 

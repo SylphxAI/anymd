@@ -39,11 +39,59 @@ function visibleFaq(markdown: string): Array<{ question: string; answer: string 
 }
 
 const tools = readdirSync(new URL('../docs/vs/', import.meta.url))
-  .filter((file) => file.endsWith('.md'))
+  .filter((file) => file.endsWith('.md') && file !== 'index.md')
   .map((file) => file.replace(/\.md$/, ''));
 
 test('every benchmarked comparison tool has a page', () => {
-  expect(tools.sort()).toEqual(['docling', 'marker', 'markitdown', 'unstructured']);
+  const benchmarked = readdirSync(new URL('../bench/results/', import.meta.url))
+    .map((file) => file.replace(/\.json$/, ''))
+    .filter((tool) => tool !== 'anymd');
+  expect(tools.sort()).toEqual(benchmarked.sort());
+});
+
+describe('comparison hub', () => {
+  const page = read('../docs/vs/index.md');
+  const sidebar = (config.themeConfig?.sidebar ?? []) as Array<{ items: Array<{ link: string }> }>;
+
+  test('is linked from the nav, the sidebar, the footer, the benchmarks page and llms.txt', () => {
+    expect(sidebar.flatMap((g) => g.items.map((i) => i.link))).toContain('/vs/');
+    expect(JSON.stringify(config.themeConfig?.nav)).toContain('"/vs/"');
+    expect(read('../docs/.vitepress/theme/components/SiteFooter.vue')).toContain(
+      "withBase('/vs/')"
+    );
+    expect(read('../docs/guide/benchmarks.md')).toContain('(/vs/)');
+    expect(read('../docs/public/llms.txt')).toContain(`(${site}vs/)`);
+  });
+
+  test('carries a generated scoreboard that links every head-to-head page', () => {
+    expect(page).toContain('<!-- hub:start -->');
+    expect(page).toContain('<!-- hub:end -->');
+    expect(page).toMatch(/^description: ".{120,160}"$/m);
+    for (const tool of tools) expect(page).toContain(`(/vs/${tool})`);
+  });
+
+  test('names its own canonical URL, in the head and the JSON-LD', () => {
+    expect(head('vs/index.md')).toContainEqual(['link', { rel: 'canonical', href: `${site}vs/` }]);
+    const app = jsonLd('vs/index.md')['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
+    expect(app?.url).toBe(`${site}vs/`);
+  });
+
+  test('FAQPage JSON-LD repeats the visible FAQ word for word', () => {
+    const faq = jsonLd('vs/index.md')['@graph'].find((n) => n['@type'] === 'FAQPage');
+    const structured = ((faq?.mainEntity ?? []) as Faq[]).map((q) => ({
+      question: q.name,
+      answer: q.acceptedAnswer.text,
+    }));
+    expect(structured.length).toBeGreaterThan(0);
+    expect(structured).toEqual(visibleFaq(page));
+  });
+
+  test('attributes Pro links to the hub and names no internal systems', () => {
+    expect(page).toContain('/pricing?entry_surface=seo_vs-hub');
+    expect(page).toContain('US$29');
+    expect(page).not.toContain('utm_');
+    expect(page).not.toMatch(/Keel|Spiron|AnyAgents|Sylphx Money/);
+  });
 });
 
 describe.each(tools)('anymd vs %s page', (tool) => {
