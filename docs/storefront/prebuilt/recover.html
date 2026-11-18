@@ -595,17 +595,51 @@ body {
   border-top: 1px solid var(--sf-line);
   border-radius: 0;
   background: transparent;
+  overflow: visible;
   padding-top: 10px;
 }
 
-[data-anymd-storefront] .sf-money-checkout summary {
+/* Keel paints this trigger as a fixed dark btn-outline pill and docs.css sets
+   summary text to ink, so light mode showed dark text on dark. Render it as a
+   link row on the card surface in both schemes. */
+#storefront-root .sf-money-checkout details.sf-recover-disclosure > summary,
+#docs-root[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > summary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
   height: auto;
   min-height: 44px;
   padding: 8px 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sf-link);
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 600;
+  list-style: none;
+}
+
+#storefront-root .sf-money-checkout details.sf-recover-disclosure > summary > span,
+#docs-root[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > summary > span,
+#storefront-root .sf-money-checkout details.sf-recover-disclosure > summary::after,
+#docs-root[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > summary::after {
   color: var(--sf-link);
+}
+
+#storefront-root .sf-money-checkout details.sf-recover-disclosure > summary::after,
+#docs-root[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > summary::after {
+  font-size: 18px;
+  line-height: 1;
+}
+
+#storefront-root .sf-money-checkout details.sf-recover-disclosure > summary:hover > span,
+#docs-root[data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > summary:hover > span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 [data-anymd-storefront] .sf-money-checkout details.sf-recover-disclosure > div {
