@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.5.13
+
+### Patch Changes
+
+- Reject unknown MCP client IDs before changing any configuration. List supported IDs and suggest `claude-code` or `claude-desktop` when given `claude`.
+
 ## 8.5.12
 
 ### Patch Changes
