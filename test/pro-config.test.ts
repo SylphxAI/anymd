@@ -275,7 +275,9 @@ describe('purchase attribution', () => {
 
   test('storefront pages load in full instead of through the docs router', () => {
     expect(isStorefrontHref('/anymd/pricing')).toBe(true);
-    expect(isStorefrontHref('/anymd/pricing?entry_surface=seo_vs-marker&utm_source=github')).toBe(true);
+    expect(isStorefrontHref('/anymd/pricing?entry_surface=seo_vs-marker&utm_source=github')).toBe(
+      true
+    );
     expect(isStorefrontHref('/anymd/recover')).toBe(true);
     expect(isStorefrontHref('https://sylphxai.github.io/anymd/pricing.html')).toBe(true);
     expect(isStorefrontHref('/anymd/pro')).toBe(false);

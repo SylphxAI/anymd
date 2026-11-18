@@ -2,7 +2,7 @@ import { h, onMounted, onUnmounted } from 'vue';
 import { installFencedCodeCopy } from './fenced-code-copy';
 import './fenced-code-copy.css';
 import DefaultTheme from 'vitepress/theme';
-import type { Theme } from 'vitepress';
+import { inBrowser, type Theme } from 'vitepress';
 import {
   appendAttributionToUrl,
   isPricingHref,
@@ -95,7 +95,7 @@ const theme: Theme = {
     // Nav, sidebar, footer and in-page links to /pricing or /recover load the storefront page in
     // full, with the attribution already appended to the link, instead of the router's 404.
     router.onBeforeRouteChange = (to) => {
-      if (!isStorefrontHref(to, window.location.origin)) return;
+      if (!inBrowser || !isStorefrontHref(to, window.location.origin)) return;
       window.location.assign(to);
       return false;
     };
