@@ -10,12 +10,24 @@ anymd Pro ($29 USD one-time across 16 local currencies, 100-year offline licence
 
 On the same 38 AgentDocBench documents, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Microsoft MarkItDown 0.1.8 (measured 2026-09-25, CLI defaults) scores 76.8. anymd converts all 38 in 11.5 s against 75.6 s and returns 32% fewer output tokens (368,659 against 538,388). MarkItDown scores higher on designed reports (97.4 vs 96.9). Comparison: https://sylphxai.github.io/anymd/vs/markitdown
 
+## anymd vs Docling
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Docling 2.130.0 (measured 2026-09-25, CLI default pipeline, CPU only) scores 93.0. anymd converts all 38 in 11.5 s against 2,432.4 s and returns 14% fewer output tokens (368,659 against 430,148). Docling scores higher on scanned documents (78.4 vs 77.9), designed reports and EPUB, and offers a Python API and a lossless JSON document model. Comparison: https://sylphxai.github.io/anymd/vs/docling
+
+## anymd vs Marker
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Marker 2.0.0 (measured 2026-09-25, default CPU mode, no LLM) scores 71.0; Marker converted 30 of the 38 (6 timeouts at 900 s, 2 unsupported CSV files). On the 30 both converted, anymd takes 4.64 s against 7,104.5 s, returns 20% fewer output tokens (222,618 against 277,779), and scores 95.5 against 89.3. Marker's OCR scored higher on two scanned PDFs; GPU runs were not measured. Comparison: https://sylphxai.github.io/anymd/vs/marker
+
+## anymd vs Unstructured
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Unstructured 0.27.8 (measured 2026-09-25, default auto strategy, no hi_res) scores 81.2. anymd converts all 38 in 11.5 s against 346.5 s, returns 11% fewer output tokens (368,659 against 414,333), and scores 92.2 against 38.4 on table cells F1. Unstructured scores slightly higher on EPUB and offers typed elements, chunking and connectors. Comparison: https://sylphxai.github.io/anymd/vs/unstructured
+
 ## Install and Setup
 
-- npm: `npx -y @sylphx/anymd setup --client cursor,claude,codex`
+- npm: `npx -y @sylphx/anymd setup --client cursor,claude-code,codex`
 - Cargo: `cargo install anymd`
 - Homebrew: `brew install sylphxai/tap/anymd`
-- Windows: `winget install Sylphx.anymd`
+- Windows (Scoop): `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket`, then `scoop install anymd`
 
 ## Documentation & Use Cases
 
@@ -23,7 +35,10 @@ On the same 38 AgentDocBench documents, anymd 8.2.0 (measured 2026-10-01) scores
 - [Getting started](https://sylphxai.github.io/anymd/guide/getting-started)
 - [PDF & Office to Markdown MCP](https://sylphxai.github.io/anymd/use-cases/pdf-and-office-to-markdown-mcp)
 - [Verifiable video & PDF cite-check for AI agents](https://sylphxai.github.io/anymd/use-cases/verifiable-video-and-cite-check-ai-agents)
+- [anymd vs Docling](https://sylphxai.github.io/anymd/vs/docling)
+- [anymd vs Marker](https://sylphxai.github.io/anymd/vs/marker)
 - [anymd vs MarkItDown](https://sylphxai.github.io/anymd/vs/markitdown)
+- [anymd vs Unstructured](https://sylphxai.github.io/anymd/vs/unstructured)
 - [Local and hosted (Sylphx AI parse)](https://sylphxai.github.io/anymd/guide/hosted)
 - [MCP tools](https://sylphxai.github.io/anymd/guide/tools)
 - [Cite-check](https://sylphxai.github.io/anymd/guide/cite-check)

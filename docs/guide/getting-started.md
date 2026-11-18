@@ -33,7 +33,7 @@ Python wheels and a [Python API](python.md) are prepared in this repository but
 are not published to PyPI yet. Use npm or Docker until publication; `pip install
 anymd` and `uvx anymd` do not currently install this project.
 
-On Windows, `winget install Sylphx.anymd` installs the same prebuilt binary. On macOS and Linux, `brew install sylphxai/tap/anymd`. With Scoop, add `https://github.com/SylphxAI/scoop-bucket` and run `scoop install anymd`.
+On Windows, Scoop installs the same prebuilt binary: add the bucket with `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` and run `scoop install anymd`. On macOS and Linux, `brew install sylphxai/tap/anymd`.
 
 Prefer Cargo? `cargo install anymd` builds the same binary from [crates.io](https://crates.io/crates/anymd). It needs Rust 1.95+, CMake and a C++ compiler, and includes bundled ASR. Local doc-VLM OCR is a separate engine: `anymd setup ocr` downloads it (a small executable, SHA-256 verified) with the pinned models, or build with `--features ocr-vlm` to link it in; without setup, automatic OCR keeps using installed `tesseract`. Audio and video still use optional `ffmpeg`.
 
