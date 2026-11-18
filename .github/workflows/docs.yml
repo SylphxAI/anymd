@@ -56,6 +56,9 @@ jobs:
         run: bash scripts/build-wasm.sh
 
       - name: Build docs
+        env:
+          ANYMD_OBS_PUBLISHABLE_KEY: ${{ vars.ANYMD_OBS_PUBLISHABLE_KEY }}
+          ANYMD_OBS_CAPTURE_URL: ${{ vars.ANYMD_OBS_CAPTURE_URL }}
         run: bun run docs:build
 
       - name: Verify playground assets

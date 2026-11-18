@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitepress';
 import pkg from '../../packages/anymd/package.json';
 import product from '../../product.json';
+import { injectObservability } from './observability';
 
 /**
  * anymd — documentation site.
@@ -389,6 +390,7 @@ export default defineConfig({
 
   // Maintainer docs that are not part of the site.
   srcExclude: ['PUBLISH.md', 'vision.md', 'security/**', 'storefront/**'],
+  transformHtml: (html, _id, { page }) => injectObservability(html, page, process.env),
   vite: {
     build: {
       target: 'esnext',
