@@ -18,7 +18,7 @@ Both tools turn files into Markdown for LLMs, and both are free and MIT licensed
 </p>
 
 ```bash
-npx -y @sylphx/anymd setup --client cursor,claude,codex
+npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 ```
 
 ## At a glance
@@ -26,7 +26,7 @@ npx -y @sylphx/anymd setup --client cursor,claude,codex
 | | anymd | MarkItDown |
 |---|---|---|
 | What it is | One native Rust binary: CLI and MCP server | Python library and CLI, with a separate MCP package |
-| Install | `npx -y @sylphx/anymd setup`, Homebrew, winget, Cargo or Docker | `pip install 'markitdown[all]'`, Python 3.10 to 3.14, virtual environment recommended |
+| Install | `npx -y @sylphx/anymd setup`, Homebrew, Scoop, Cargo or Docker | `pip install 'markitdown[all]'`, Python 3.10 to 3.14, virtual environment recommended |
 | MCP tools | Built in: `read`, `outline`, `search`, `inspect` | `markitdown-mcp`: one tool, `convert_to_markdown` |
 | AgentDocBench overall | **96.4** | 76.8 |
 | Time, all 38 documents | **11.5 s** | 75.6 s |
@@ -93,7 +93,7 @@ The benchmark lives in the anymd repository. The scoring does not know which too
 
 ### One binary, no Python environment
 
-`npx -y @sylphx/anymd setup` adds anymd to Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf and Gemini CLI at once. Homebrew (`brew install sylphxai/tap/anymd`), winget (`winget install Sylphx.anymd`), Cargo (`cargo install anymd`) and Docker (`ghcr.io/sylphxai/anymd`) install the same binary. There is no virtual environment to keep in sync and no API key.
+`npx -y @sylphx/anymd setup` adds anymd to Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf and Gemini CLI at once. Homebrew (`brew install sylphxai/tap/anymd`), Scoop (`scoop install anymd` from the `SylphxAI/scoop-bucket` bucket), Cargo (`cargo install anymd`) and Docker (`ghcr.io/sylphxai/anymd`) install the same binary. There is no virtual environment to keep in sync and no API key.
 
 ### Layouts that usually break stay readable
 
@@ -152,7 +152,7 @@ On the command line, mostly: `anymd report.pdf -o report.md` works like `markitd
 On AgentDocBench, anymd converted all 38 documents in 11.5 seconds and MarkItDown in 75.6 seconds, each timed as a fresh process per file with start-up included.
 
 **Does anymd need Python?**
-No. anymd is a native Rust binary. The `npx` install needs Node 18 or newer; Homebrew, winget and Docker install the same binary without Node.
+No. anymd is a native Rust binary. The `npx` install needs Node 18 or newer; Homebrew, Scoop and Docker install the same binary without Node.
 
 **Can MarkItDown read scanned PDFs?**
 Not with its default options: on AgentDocBench its CLI returned no text for three image-only PDFs. It offers an OCR plugin that calls an LLM, and Azure Document Intelligence. anymd reads scans locally with tesseract, or with a local document model after `anymd setup ocr`, and scores 77.9 on the scanned category.

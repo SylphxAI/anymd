@@ -28,7 +28,7 @@ README = ROOT / "README.md"
 VERSUS = ROOT / "docs" / "vs"
 # Hand-written copy that quotes a comparison page's headline figures, besides the page itself.
 VERSUS_COPY = [ROOT / "docs" / "public" / "llms.txt"]
-DISPLAY_NAMES = {"markitdown": "MarkItDown"}
+DISPLAY_NAMES = {"markitdown": "MarkItDown", "docling": "Docling", "marker": "Marker", "unstructured": "Unstructured"}
 
 CATEGORY_NAMES = {
     "paper": "Papers (math)",
@@ -269,29 +269,38 @@ def label(name):
     return DISPLAY_NAMES.get(name, name)
 
 
-def totals(s):
-    """Seconds and output tokens over the documents a tool converted."""
-    ok = [r for r in s["rows"].values() if r.get("status") == "ok"]
+def totals(s, docs=None):
+    """Seconds and output tokens over the documents a tool converted, or over `docs` (ids) only."""
+    ok = [r for d, r in s["rows"].items() if r.get("status") == "ok" and (docs is None or d in docs)]
     return sum(r["seconds"] for r in ok), sum(r["tokens"] for r in ok)
 
 
+def both_converted(corpus, a, b):
+    """Ids of the documents both tools converted, so time and tokens compare the same work."""
+    return {d["id"] for d in corpus
+            if all(s["rows"].get(d["id"], {}).get("status") == "ok" for s in (a, b))}
+
+
+def fewer(x, y):
+    """How much less (or more) x is than y, as "32% fewer" or "12% more"."""
+    return f"{abs(1 - x / y):.0%} {'fewer' if x < y else 'more'}"
+
+
 def proof(corpus, summary, others, ours="anymd"):
-    """The README's head-to-head line for each comparison page, linked to that page.
+    """The README's head-to-head lines, one per comparison page, each linked to its page.
 
     Only a tool that converted every document gets a line, so the times and tokens compare the same work."""
-    out = []
-    for other in others:
+    n = len(corpus)
+    full = [o for o in others if summary[ours]["coverage"][0] == n and summary[o]["coverage"][0] == n]
+    out = [f"**Head to head on the same {n} documents** (AgentDocBench score · time for all {n} · output tokens):\n"]
+    for other in sorted(full, key=lambda o: -summary[o]["overall"]):
         a, b = summary[ours], summary[other]
-        if a["coverage"][0] != len(corpus) or b["coverage"][0] != len(corpus):
-            continue
         (ta, ka), (tb, kb) = totals(a), totals(b)
-        tokens = f"{abs(1 - ka / kb):.0%} {'fewer' if ka < kb else 'more'} output tokens"
-        out.append(f"**vs {label(other)}, on the same {len(corpus)} documents:** AgentDocBench score "
-                   f"**{pct(a['overall'])}** vs {pct(b['overall'])} · **{secs(ta)}** vs {secs(tb)} for all "
-                   f"{len(corpus)} · **{tokens}**. "
-                   f"[See the full comparison →](https://sylphxai.github.io/anymd/vs/{other}"
-                   f"?utm_source=github&utm_medium=readme&utm_content=vs_{other})")
-    return "\n\n".join(out) + "\n"
+        out.append(f"- [vs {label(other)}](https://sylphxai.github.io/anymd/vs/{other}"
+                   f"?utm_source=github&utm_medium=readme&utm_content=vs_{other}): "
+                   f"**{pct(a['overall'])}** vs {pct(b['overall'])} · **{secs(ta)}** vs {secs(tb)} · "
+                   f"**{fewer(ka, kb)} tokens**")
+    return "\n".join(out) + "\n" if full else ""
 
 
 def versus(corpus, summary, meta, other, ours="anymd"):
@@ -303,9 +312,13 @@ def versus(corpus, summary, meta, other, ours="anymd"):
         return v[len(name) + 1:] if v.startswith(name + " ") else v
 
     def bold(x, y):
-        if x == y:
+        if pct(x) == pct(y):
             return pct(x), pct(y)
         return (f"**{pct(x)}**", pct(y)) if x > y else (pct(x), f"**{pct(y)}**")
+
+    shared = both_converted(corpus, a, b)
+    complete = len(shared) == len(corpus)
+    scope = "all converted documents" if complete else f"the {len(shared)} documents both converted"
 
     out = [f"| AgentDocBench | {ours} {version(ours)} | {label(other)} {version(other)} |", "|---|---|---|"]
     for title, key in [("Overall", "overall"), ("Sentences kept verbatim", "sentences"), ("Text F1", "text_f1"),
@@ -315,11 +328,11 @@ def versus(corpus, summary, meta, other, ours="anymd"):
         if key == "overall":
             out.append(f"| Documents converted | {a['coverage'][0]}/{a['coverage'][1]} | "
                        f"{b['coverage'][0]}/{b['coverage'][1]} |")
-    (ta, ka), (tb, kb) = totals(a), totals(b)
+    (ta, ka), (tb, kb) = totals(a, shared), totals(b, shared)
     fast = (f"**{secs(ta)}**", secs(tb)) if ta < tb else (secs(ta), f"**{secs(tb)}**")
     lean = (f"**{ka:,}**", f"{kb:,}") if ka < kb else (f"{ka:,}", f"**{kb:,}**")
-    out.append(f"| Time, all converted documents | {fast[0]} | {fast[1]} |")
-    out.append(f"| Output tokens, all converted documents | {lean[0]} | {lean[1]} |")
+    out.append(f"| Time, {scope} | {fast[0]} | {fast[1]} |")
+    out.append(f"| Output tokens, {scope} | {lean[0]} | {lean[1]} |")
 
     wins, losses, ties = [], [], 0
     for doc in corpus:
@@ -332,7 +345,17 @@ def versus(corpus, summary, meta, other, ours="anymd"):
             ties += 1
     out.append("")
     out.append(f"Document by document, {ours} scores higher on {len(wins)}, {label(other)} on {len(losses)}, "
-               f"and {ties} are tied.\n")
+               f"and {ties} {'is' if ties == 1 else 'are'} tied.\n")
+    if not complete:
+        def overall_on(s):
+            by_category = {}
+            for doc in corpus:
+                if doc["id"] in shared:
+                    by_category.setdefault(doc["category"], []).append(doc_score(s["rows"].get(doc["id"])))
+            return mean(mean(v) for v in by_category.values())
+        out.append(f"A document a tool did not convert scores 0. On the {len(shared)} documents both converted, "
+                   f"the overall is **{pct(overall_on(a))}** for {ours} and **{pct(overall_on(b))}** for "
+                   f"{label(other)}, and time and tokens above are measured on those {len(shared)}.\n")
 
     out.append("### By category\n")
     out.append(f"| Category | Documents | {ours} | {label(other)} |")
@@ -356,7 +379,7 @@ def versus(corpus, summary, meta, other, ours="anymd"):
                    f"**{pct(mean(a['per_category'][c] for c in rest))}** for {ours} and "
                    f"**{pct(mean(b['per_category'][c] for c in rest))}** for {label(other)}.\n")
     facts = [pct(a["overall"]), pct(b["overall"]), secs(ta).removesuffix(" s"), secs(tb).removesuffix(" s"),
-             f"{ka:,}", f"{kb:,}", f"{abs(1 - ka / kb):.0%}", version(ours), version(other),
+             f"{ka:,}", f"{kb:,}", fewer(ka, kb), version(ours), version(other),
              meta[ours]["date"], meta[other]["date"]]
     return "\n".join(out).rstrip("\n") + "\n", facts
 

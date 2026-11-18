@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitepress';
 import pkg from '../../packages/anymd/package.json';
 import product from '../../product.json';
@@ -96,7 +97,7 @@ const pageGraphs: Record<string, object> = {
             name: 'How do I install anymd into Claude Code, Cursor, or Codex?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Run npx -y @sylphx/anymd setup to configure detected MCP clients automatically, or install via cargo install anymd, brew install sylphxai/tap/anymd, winget, or Docker.',
+              text: 'Run npx -y @sylphx/anymd setup to configure detected MCP clients automatically, or install via cargo install anymd, brew install sylphxai/tap/anymd, Scoop, or Docker.',
             },
           },
         ],
@@ -257,7 +258,23 @@ const pageGraphs: Record<string, object> = {
       },
     ],
   },
-  'vs/markitdown.md': {
+};
+
+/** A page's visible FAQ as plain text: each bold question line under `## FAQ` and the answer line after it. */
+export function visibleFaq(markdown: string): Array<{ question: string; answer: string }> {
+  const section = markdown.split('\n## FAQ\n')[1]?.split('\n## ')[0] ?? '';
+  const plain = (text: string) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`/g, '');
+  const lines = section.split('\n');
+  return lines.flatMap((line, i) => {
+    const question = line.match(/^\*\*(.+)\*\*$/)?.[1];
+    return question ? [{ question, answer: plain(lines[i + 1] ?? '') }] : [];
+  });
+}
+
+/** A comparison page (`vs/<tool>.md`): the free and Pro offers, and its visible FAQ word for word. */
+function comparisonGraph(relativePath: string, pageDesc: string) {
+  const markdown = readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
+  return {
     '@context': 'https://schema.org',
     '@graph': [
       organizationJsonLd,
@@ -267,18 +284,12 @@ const pageGraphs: Record<string, object> = {
         name: 'anymd',
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'macOS, Linux, Windows',
-        url: `${site}vs/markitdown`,
+        url: site + relativePath.replace(/\.md$/, ''),
         downloadUrl: 'https://www.npmjs.com/package/@sylphx/anymd',
         softwareVersion: pkg.version,
-        description:
-          'A native Rust CLI and MCP server that turns documents into Markdown for AI agents. On AgentDocBench it scores 96.4 to MarkItDown 76.8 on the same 38 documents.',
+        description: pageDesc,
         offers: [
-          {
-            '@type': 'Offer',
-            name: 'anymd (MIT, local CLI & MCP)',
-            price: '0',
-            priceCurrency: 'USD',
-          },
+          { '@type': 'Offer', name: 'anymd (MIT, local CLI & MCP)', price: '0', priceCurrency: 'USD' },
           {
             '@type': 'Offer',
             name: 'anymd Pro (One-time 100-year offline licence)',
@@ -290,65 +301,23 @@ const pageGraphs: Record<string, object> = {
       },
       {
         '@type': 'FAQPage',
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: 'Is anymd a drop-in replacement for MarkItDown?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "On the command line, mostly: anymd report.pdf -o report.md works like markitdown report.pdf -o report.md, and npx -y @sylphx/anymd setup adds anymd to your MCP clients. anymd's Python package is not on PyPI yet, so code that imports markitdown cannot switch today.",
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Is anymd faster than MarkItDown?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'On AgentDocBench, anymd converted all 38 documents in 11.5 seconds and MarkItDown in 75.6 seconds, each timed as a fresh process per file with start-up included.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Does anymd need Python?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'No. anymd is a native Rust binary. The npx install needs Node 18 or newer; Homebrew, winget and Docker install the same binary without Node.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Can MarkItDown read scanned PDFs?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Not with its default options: on AgentDocBench its CLI returned no text for three image-only PDFs. It offers an OCR plugin that calls an LLM, and Azure Document Intelligence. anymd reads scans locally with tesseract, or with a local document model after anymd setup ocr, and scores 77.9 on the scanned category.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Is the benchmark biased toward anymd?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "It lives in the anymd repository, so you can check it: the scoring does not know which tool produced an output, the corpus and ground truth are public, six documents come from MarkItDown's own test files, and the categories where anymd loses are published. Anyone can rerun it or add a tool.",
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Is anymd free?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Yes. anymd is MIT licensed, including the CLI, the MCP server, OCR and transcripts. anymd Pro is an optional one-time purchase, US$29 or the local price in 16 currencies, that adds PDF cite-check and video timelines and frames.',
-            },
-          },
-        ],
+        mainEntity: visibleFaq(markdown).map(({ question, answer }) => ({
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: { '@type': 'Answer', text: answer },
+        })),
       },
     ],
-  },
-};
+  };
+}
 
 function buildJsonLd(relativePath: string, pageDesc: string) {
   const pageGraph = pageGraphs[relativePath];
   if (pageGraph) {
     return pageGraph;
+  }
+  if (/^vs\/[^/]+\.md$/.test(relativePath)) {
+    return comparisonGraph(relativePath, pageDesc);
   }
   const isProPage = relativePath === 'pro.md' || relativePath === 'pro/thanks.md';
   if (isProPage) {
@@ -484,7 +453,22 @@ export default defineConfig({
         link: '/use-cases/pdf-and-office-to-markdown-mcp',
         activeMatch: '^/use-cases/',
       },
-      { text: 'Benchmarks', link: '/guide/benchmarks' },
+      {
+        text: 'Benchmarks',
+        activeMatch: '^/(guide/benchmarks|vs/)',
+        items: [
+          { text: 'AgentDocBench results', link: '/guide/benchmarks' },
+          {
+            text: 'Compare',
+            items: [
+              { text: 'anymd vs Docling', link: '/vs/docling' },
+              { text: 'anymd vs Marker', link: '/vs/marker' },
+              { text: 'anymd vs MarkItDown', link: '/vs/markitdown' },
+              { text: 'anymd vs Unstructured', link: '/vs/unstructured' },
+            ],
+          },
+        ],
+      },
       { text: 'Playground', link: '/playground' },
       { text: 'Pro', link: '/pricing' },
       { text: 'GitHub', link: 'https://github.com/SylphxAI/anymd' },
@@ -531,7 +515,12 @@ export default defineConfig({
       },
       {
         text: 'Compare',
-        items: [{ text: 'anymd vs MarkItDown', link: '/vs/markitdown' }],
+        items: [
+          { text: 'anymd vs Docling', link: '/vs/docling' },
+          { text: 'anymd vs Marker', link: '/vs/marker' },
+          { text: 'anymd vs MarkItDown', link: '/vs/markitdown' },
+          { text: 'anymd vs Unstructured', link: '/vs/unstructured' },
+        ],
       },
       {
         text: 'Try it',

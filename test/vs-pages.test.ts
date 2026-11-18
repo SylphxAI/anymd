@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import config from '../docs/.vitepress/config';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -38,16 +38,28 @@ function visibleFaq(markdown: string): Array<{ question: string; answer: string 
   return out;
 }
 
-describe('anymd vs MarkItDown page', () => {
-  const page = read('../docs/vs/markitdown.md');
+const tools = readdirSync(new URL('../docs/vs/', import.meta.url))
+  .filter((file) => file.endsWith('.md'))
+  .map((file) => file.replace(/\.md$/, ''));
 
-  test('is linked from the sidebar, the benchmarks page and llms.txt', () => {
+test('every benchmarked comparison tool has a page', () => {
+  expect(tools.sort()).toEqual(['docling', 'marker', 'markitdown', 'unstructured']);
+});
+
+describe.each(tools)('anymd vs %s page', (tool) => {
+  const page = read(`../docs/vs/${tool}.md`);
+
+  test('is linked from the nav, the sidebar, the footer, the benchmarks page and llms.txt', () => {
     const groups = (config.themeConfig?.sidebar ?? []) as Array<{
       items: Array<{ link: string }>;
     }>;
-    expect(groups.flatMap((g) => g.items.map((i) => i.link))).toContain('/vs/markitdown');
-    expect(read('../docs/guide/benchmarks.md')).toContain('(/vs/markitdown)');
-    expect(read('../docs/public/llms.txt')).toContain(`(${site}vs/markitdown)`);
+    expect(groups.flatMap((g) => g.items.map((i) => i.link))).toContain(`/vs/${tool}`);
+    expect(JSON.stringify(config.themeConfig?.nav)).toContain(`"/vs/${tool}"`);
+    expect(read('../docs/.vitepress/theme/components/SiteFooter.vue')).toContain(
+      `withBase('/vs/${tool}')`
+    );
+    expect(read('../docs/guide/benchmarks.md')).toContain(`(/vs/${tool})`);
+    expect(read('../docs/public/llms.txt')).toContain(`(${site}vs/${tool})`);
   });
 
   test('carries generated benchmark figures, not hand-edited ones', () => {
@@ -57,14 +69,14 @@ describe('anymd vs MarkItDown page', () => {
   });
 
   test('names its own canonical URL', () => {
-    expect(head('vs/markitdown.md')).toContainEqual([
+    expect(head(`vs/${tool}.md`)).toContainEqual([
       'link',
-      { rel: 'canonical', href: `${site}vs/markitdown` },
+      { rel: 'canonical', href: `${site}vs/${tool}` },
     ]);
   });
 
   test('FAQPage JSON-LD repeats the visible FAQ word for word', () => {
-    const faq = jsonLd('vs/markitdown.md')['@graph'].find((n) => n['@type'] === 'FAQPage');
+    const faq = jsonLd(`vs/${tool}.md`)['@graph'].find((n) => n['@type'] === 'FAQPage');
     const structured = ((faq?.mainEntity ?? []) as Faq[]).map((q) => ({
       question: q.name,
       answer: q.acceptedAnswer.text,
@@ -73,9 +85,16 @@ describe('anymd vs MarkItDown page', () => {
     expect(structured).toEqual(visibleFaq(page));
   });
 
-  test('public copy names no internal systems', () => {
+  test('attributes Pro links to the page and states the one-time price', () => {
+    expect(page).toContain(`/pricing?entry_surface=seo_vs-${tool}`);
+    expect(page).toContain('US$29');
+    expect(page).not.toContain('utm_');
+  });
+
+  test('public copy names no internal systems and no unreleased installer', () => {
     for (const copy of [page, read('../docs/public/llms.txt')]) {
       expect(copy).not.toMatch(/Keel|Spiron|AnyAgents|Sylphx Money/);
+      expect(copy).not.toMatch(/winget install|--client [^\n`]*\bclaude\b(?!-)/);
     }
   });
 });

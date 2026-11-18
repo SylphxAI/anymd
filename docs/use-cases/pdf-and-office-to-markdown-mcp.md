@@ -21,7 +21,7 @@ Python document converters take minutes to load models or scramble multi-column 
 
 ### 1. One command wires Claude Code, Codex, Cursor, VS Code &amp; Claude Desktop
 
-Run `npx -y @sylphx/anymd setup` (or install via `cargo install anymd`, `brew install sylphxai/tap/anymd`, `winget install Sylphx.anymd`, or Docker `ghcr.io/sylphxai/anymd`). Zero Python virtualenvs, zero LibreOffice installs, and zero API keys.
+Run `npx -y @sylphx/anymd setup` (or install via `cargo install anymd`, `brew install sylphxai/tap/anymd`, Scoop from the `SylphxAI/scoop-bucket` bucket, or Docker `ghcr.io/sylphxai/anymd`). Zero Python virtualenvs, zero LibreOffice installs, and zero API keys.
 
 ### 2. Reading-order Markdown and intact tables without burning context tokens
 
@@ -43,7 +43,7 @@ Files stay on your machine (`--allow-dir` locks MCP scope to one folder). Need a
 | Marker | 71.0 | 30 / 38 | 60.9 | 7,104.5 s | 277,779 |
 | `pdftotext` | 42.2 | 23 / 38 | 0.0 | 0.90 s | 201,448 |
 
-Coming from MarkItDown? See [anymd vs MarkItDown](/vs/markitdown?entry_surface=seo_pdf-and-office-to-markdown-mcp) for a side-by-side comparison and a one-line switch.
+Coming from MarkItDown? See [anymd vs MarkItDown](/vs/markitdown?entry_surface=seo_pdf-and-office-to-markdown-mcp) for a side-by-side comparison and a one-line switch. Comparing Python pipelines? See [anymd vs Docling](/vs/docling?entry_surface=seo_pdf-and-office-to-markdown-mcp), [Marker](/vs/marker?entry_surface=seo_pdf-and-office-to-markdown-mcp) or [Unstructured](/vs/unstructured?entry_surface=seo_pdf-and-office-to-markdown-mcp).
 
 ## FAQ
 
