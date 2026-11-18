@@ -22,7 +22,7 @@ ignored = ["sylphx-mcp-kit", "kamadak-exif"]
 
 [dependencies]
 hex = "0.4.3"
-sylphx-mcp-kit = { version = "0.8.11", default-features = false }
+sylphx-mcp-kit = { version = "0.8.13", default-features = false }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 zip = { version = "9.6.1", default-features = false, features = ["deflate"] }

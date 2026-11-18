@@ -151,7 +151,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "anymd"
-version = "8.5.12"
+version = "8.5.13"
 dependencies = [
  "anyhow",
  "anymd-core",
@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-core"
-version = "8.5.12"
+version = "8.5.13"
 dependencies = [
  "anymd-pdf",
  "anymd-pdf-extract",
@@ -212,7 +212,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-formats"
-version = "8.5.12"
+version = "8.5.13"
 dependencies = [
  "calamine",
  "csv",
@@ -265,7 +265,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-ocr-vlm"
-version = "8.5.12"
+version = "8.5.13"
 dependencies = [
  "anyhow",
  "anymd-oar-ocr-vl",
@@ -276,7 +276,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-pdf"
-version = "8.5.12"
+version = "8.5.13"
 dependencies = [
  "anymd-pdf-extract",
  "flate2",
@@ -302,7 +302,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-wasm"
-version = "8.5.12"
+version = "8.5.13"
 dependencies = [
  "anymd-core",
  "anymd-formats",
@@ -4378,9 +4378,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sylphx-mcp-kit"
-version = "0.8.11"
+version = "0.8.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1671c29f067929fd536e35e993639851e8ce349a518e17c3bc17e0ce4bc5914"
+checksum = "e12f81629105543ec6d3f366bff21692f7b786cfa3bbd9cb73f0d8f4336ccc35"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
