@@ -2,10 +2,11 @@ import { h, onMounted, onUnmounted } from 'vue';
 import { installFencedCodeCopy } from './fenced-code-copy';
 import './fenced-code-copy.css';
 import DefaultTheme from 'vitepress/theme';
-import type { Theme } from 'vitepress';
+import { inBrowser, type Theme } from 'vitepress';
 import {
   appendAttributionToUrl,
   isPricingHref,
+  isStorefrontHref,
   mergedAttribution,
   persistAttribution,
 } from '../pro/tracking';
@@ -90,7 +91,14 @@ const theme: Theme = {
       'layout-top': () => h(ProTracking),
       'layout-bottom': () => h(SiteFooter),
     }),
-  enhanceApp({ app }) {
+  enhanceApp({ app, router }) {
+    // Nav, sidebar, footer and in-page links to /pricing or /recover load the storefront page in
+    // full, with the attribution already appended to the link, instead of the router's 404.
+    router.onBeforeRouteChange = (to) => {
+      if (!inBrowser || !isStorefrontHref(to, window.location.origin)) return;
+      window.location.assign(to);
+      return false;
+    };
     app.component('Playground', Playground);
     app.component('ProBuy', ProBuy);
     app.component('ProTracking', ProTracking);
