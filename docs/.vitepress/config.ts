@@ -32,7 +32,7 @@ const publisherOrg = {
   email: 'hi@sylphx.com',
 };
 
-const useCaseGraphs: Record<string, object> = {
+const pageGraphs: Record<string, object> = {
   'use-cases/pdf-and-office-to-markdown-mcp.md': {
     '@context': 'https://schema.org',
     '@graph': [
@@ -257,12 +257,98 @@ const useCaseGraphs: Record<string, object> = {
       },
     ],
   },
+  'vs/markitdown.md': {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationJsonLd,
+      websiteJsonLd,
+      {
+        '@type': 'SoftwareApplication',
+        name: 'anymd',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'macOS, Linux, Windows',
+        url: `${site}vs/markitdown`,
+        downloadUrl: 'https://www.npmjs.com/package/@sylphx/anymd',
+        softwareVersion: pkg.version,
+        description:
+          'A native Rust CLI and MCP server that turns documents into Markdown for AI agents. On AgentDocBench it scores 96.4 to MarkItDown 76.8 on the same 38 documents.',
+        offers: [
+          {
+            '@type': 'Offer',
+            name: 'anymd (MIT, local CLI & MCP)',
+            price: '0',
+            priceCurrency: 'USD',
+          },
+          {
+            '@type': 'Offer',
+            name: 'anymd Pro (One-time 100-year offline licence)',
+            price: '29',
+            priceCurrency: 'USD',
+          },
+        ],
+        publisher: publisherOrg,
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Is anymd a drop-in replacement for MarkItDown?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: "On the command line, mostly: anymd report.pdf -o report.md works like markitdown report.pdf -o report.md, and npx -y @sylphx/anymd setup adds anymd to your MCP clients. anymd's Python package is not on PyPI yet, so code that imports markitdown cannot switch today.",
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Is anymd faster than MarkItDown?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'On AgentDocBench, anymd converted all 38 documents in 11.5 seconds and MarkItDown in 75.6 seconds, each timed as a fresh process per file with start-up included.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Does anymd need Python?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'No. anymd is a native Rust binary. The npx install needs Node 18 or newer; Homebrew, winget and Docker install the same binary without Node.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Can MarkItDown read scanned PDFs?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Not with its default options: on AgentDocBench its CLI returned no text for three image-only PDFs. It offers an OCR plugin that calls an LLM, and Azure Document Intelligence. anymd reads scans locally with tesseract, or with a local document model after anymd setup ocr, and scores 77.9 on the scanned category.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Is the benchmark biased toward anymd?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: "It lives in the anymd repository, so you can check it: the scoring does not know which tool produced an output, the corpus and ground truth are public, six documents come from MarkItDown's own test files, and the categories where anymd loses are published. Anyone can rerun it or add a tool.",
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Is anymd free?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Yes. anymd is MIT licensed, including the CLI, the MCP server, OCR and transcripts. anymd Pro is an optional one-time purchase, US$29 or the local price in 16 currencies, that adds PDF cite-check and video timelines and frames.',
+            },
+          },
+        ],
+      },
+    ],
+  },
 };
 
 function buildJsonLd(relativePath: string, pageDesc: string) {
-  const useCase = useCaseGraphs[relativePath];
-  if (useCase) {
-    return useCase;
+  const pageGraph = pageGraphs[relativePath];
+  if (pageGraph) {
+    return pageGraph;
   }
   const isProPage = relativePath === 'pro.md' || relativePath === 'pro/thanks.md';
   if (isProPage) {
@@ -442,6 +528,10 @@ export default defineConfig({
             link: '/use-cases/verifiable-video-and-cite-check-ai-agents',
           },
         ],
+      },
+      {
+        text: 'Compare',
+        items: [{ text: 'anymd vs MarkItDown', link: '/vs/markitdown' }],
       },
       {
         text: 'Try it',

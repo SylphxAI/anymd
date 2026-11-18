@@ -2,8 +2,11 @@
 """Render the AgentDocBench leaderboard from bench/results/*.json.
 
 Rewrites the block between `<!-- leaderboard:start -->` and
-`<!-- leaderboard:end -->` in docs/guide/benchmarks.md, and the headline block
-between `<!-- headline:start -->` and `<!-- headline:end -->` in README.md.
+`<!-- leaderboard:end -->` in docs/guide/benchmarks.md, the headline block
+between `<!-- headline:start -->` and `<!-- headline:end -->` in README.md, and
+the head-to-head block between `<!-- versus:start -->` and `<!-- versus:end -->`
+in each docs/vs/<tool>.md comparison page. The headline figures that a comparison
+page and llms.txt quote by hand, outside that block, are checked against the results.
 Numbers are never edited by hand: change the results, then run
 
   python bench/leaderboard.py            # rewrite the docs
@@ -21,6 +24,10 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 DOCS = ROOT / "docs" / "guide" / "benchmarks.md"
 README = ROOT / "README.md"
+VERSUS = ROOT / "docs" / "vs"
+# Hand-written copy that quotes a comparison page's headline figures, besides the page itself.
+VERSUS_COPY = [ROOT / "docs" / "public" / "llms.txt"]
+DISPLAY_NAMES = {"markitdown": "MarkItDown"}
 
 CATEGORY_NAMES = {
     "paper": "Papers (math)",
@@ -257,6 +264,89 @@ def fast_bullet(corpus, summary):
     return text + ".\n"
 
 
+def label(name):
+    return DISPLAY_NAMES.get(name, name)
+
+
+def versus(corpus, summary, meta, other, ours="anymd"):
+    """A comparison page's head-to-head block: anymd against one other tool on every document."""
+    a, b = summary[ours], summary[other]
+
+    def version(name):
+        v = meta[name]["tool_version"]
+        return v[len(name) + 1:] if v.startswith(name + " ") else v
+
+    def bold(x, y):
+        if x == y:
+            return pct(x), pct(y)
+        return (f"**{pct(x)}**", pct(y)) if x > y else (pct(x), f"**{pct(y)}**")
+
+    def totals(s):
+        ok = [r for r in s["rows"].values() if r.get("status") == "ok"]
+        return sum(r["seconds"] for r in ok), sum(r["tokens"] for r in ok)
+
+    out = [f"| AgentDocBench | {ours} {version(ours)} | {label(other)} {version(other)} |", "|---|---|---|"]
+    for title, key in [("Overall", "overall"), ("Sentences kept verbatim", "sentences"), ("Text F1", "text_f1"),
+                       ("Reading order", "order"), ("Table cells F1", "tables")]:
+        x, y = bold(a[key], b[key])
+        out.append(f"| {title} | {x} | {y} |")
+        if key == "overall":
+            out.append(f"| Documents converted | {a['coverage'][0]}/{a['coverage'][1]} | "
+                       f"{b['coverage'][0]}/{b['coverage'][1]} |")
+    (ta, ka), (tb, kb) = totals(a), totals(b)
+    fast = (f"**{secs(ta)}**", secs(tb)) if ta < tb else (secs(ta), f"**{secs(tb)}**")
+    lean = (f"**{ka:,}**", f"{kb:,}") if ka < kb else (f"{ka:,}", f"**{kb:,}**")
+    out.append(f"| Time, all converted documents | {fast[0]} | {fast[1]} |")
+    out.append(f"| Output tokens, all converted documents | {lean[0]} | {lean[1]} |")
+
+    wins, losses, ties = [], [], 0
+    for doc in corpus:
+        x, y = pct(doc_score(a["rows"].get(doc["id"]))), pct(doc_score(b["rows"].get(doc["id"])))
+        if float(x) > float(y):
+            wins.append(doc)
+        elif float(x) < float(y):
+            losses.append((doc, y, x))
+        else:
+            ties += 1
+    out.append("")
+    out.append(f"Document by document, {ours} scores higher on {len(wins)}, {label(other)} on {len(losses)}, "
+               f"and {ties} are tied.\n")
+
+    out.append("### By category\n")
+    out.append(f"| Category | Documents | {ours} | {label(other)} |")
+    out.append("|---|---|---|---|")
+    for category, docs in summary_categories(corpus).items():
+        x, y = bold(a["per_category"][category], b["per_category"][category])
+        out.append(f"| {CATEGORY_NAMES.get(category, category)} | {len(docs)} | {x} | {y} |")
+    out.append("")
+
+    better = [f"{CATEGORY_NAMES.get(c, c)} ({pct(b['per_category'][c])} vs {pct(a['per_category'][c])})"
+              for c in summary_categories(corpus) if b["per_category"][c] > a["per_category"][c]]
+    better += [f"[`{doc['id']}`]({doc['url']}) ({y} vs {x})" for doc, y, x in losses]
+    if better:
+        out.append(f"**Where {label(other)} scores higher:** " + "; ".join(better) + ".\n")
+
+    zero = [c for c in summary_categories(corpus) if b["per_category"][c] == 0 and a["per_category"][c] > 0]
+    if zero:
+        rest = [c for c in summary_categories(corpus) if c not in zero]
+        names = ", ".join(CATEGORY_NAMES.get(c, c) for c in zero)
+        out.append(f"Leave out {names}, where {label(other)} scores 0, and the overall is "
+                   f"**{pct(mean(a['per_category'][c] for c in rest))}** for {ours} and "
+                   f"**{pct(mean(b['per_category'][c] for c in rest))}** for {label(other)}.\n")
+    facts = [pct(a["overall"]), pct(b["overall"]), secs(ta).removesuffix(" s"), secs(tb).removesuffix(" s"),
+             f"{ka:,}", f"{kb:,}", f"{abs(1 - ka / kb):.0%}", version(ours), version(other),
+             meta[ours]["date"], meta[other]["date"]]
+    return "\n".join(out).rstrip("\n") + "\n", facts
+
+
+def versus_pages(corpus, summary, meta):
+    """Every docs/vs/<tool>.md page whose tool has results."""
+    if not VERSUS.is_dir() or "anymd" not in summary:
+        return {}
+    return {path: versus(corpus, summary, meta, path.stem) for path in sorted(VERSUS.glob("*.md"))
+            if path.stem in summary}
+
+
 def splice(text, name, block):
     pattern = re.compile(rf"(<!-- {name}:start -->\n).*?(<!-- {name}:end -->)", re.S)
     if not pattern.search(text):
@@ -276,10 +366,22 @@ def main():
     if args.print:
         sys.stdout.write(board)
         return
+    meta = {t["meta"]["tool"]: t["meta"] for t in tools if not t["meta"].get("skipped")}
+    pages = versus_pages(corpus, summary, meta)
     targets = {
         DOCS: [("leaderboard", board), ("corpus", corpus_table(corpus))],
         README: [("headline", headline(summary, order)), ("fast", fast_bullet(corpus, summary))],
+        **{path: [("versus", block)] for path, (block, _) in pages.items()},
     }
+    missing = []
+    for path, (_, facts) in pages.items():
+        for copy in [path, *VERSUS_COPY]:
+            text = re.sub(r"<!-- versus:start -->.*?<!-- versus:end -->", "", copy.read_text("utf-8"), flags=re.S)
+            absent = [f for f in facts if f not in text]
+            if absent:
+                missing.append(f"{copy.relative_to(ROOT)} lacks {', '.join(absent)} for {path.stem}")
+    if missing:
+        raise SystemExit("comparison copy does not match the results: " + "; ".join(missing))
     stale = []
     for path, blocks in targets.items():
         text = path.read_text("utf-8")
