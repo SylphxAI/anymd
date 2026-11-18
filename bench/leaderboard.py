@@ -3,7 +3,8 @@
 
 Rewrites the block between `<!-- leaderboard:start -->` and
 `<!-- leaderboard:end -->` in docs/guide/benchmarks.md, the headline block
-between `<!-- headline:start -->` and `<!-- headline:end -->` in README.md, and
+between `<!-- headline:start -->` and `<!-- headline:end -->` in README.md (with
+its `<!-- proof:start -->` line against each comparison tool), and
 the head-to-head block between `<!-- versus:start -->` and `<!-- versus:end -->`
 in each docs/vs/<tool>.md comparison page. The headline figures that a comparison
 page and llms.txt quote by hand, outside that block, are checked against the results.
@@ -268,6 +269,31 @@ def label(name):
     return DISPLAY_NAMES.get(name, name)
 
 
+def totals(s):
+    """Seconds and output tokens over the documents a tool converted."""
+    ok = [r for r in s["rows"].values() if r.get("status") == "ok"]
+    return sum(r["seconds"] for r in ok), sum(r["tokens"] for r in ok)
+
+
+def proof(corpus, summary, others, ours="anymd"):
+    """The README's head-to-head line for each comparison page, linked to that page.
+
+    Only a tool that converted every document gets a line, so the times and tokens compare the same work."""
+    out = []
+    for other in others:
+        a, b = summary[ours], summary[other]
+        if a["coverage"][0] != len(corpus) or b["coverage"][0] != len(corpus):
+            continue
+        (ta, ka), (tb, kb) = totals(a), totals(b)
+        tokens = f"{abs(1 - ka / kb):.0%} {'fewer' if ka < kb else 'more'} output tokens"
+        out.append(f"**vs {label(other)}, on the same {len(corpus)} documents:** AgentDocBench score "
+                   f"**{pct(a['overall'])}** vs {pct(b['overall'])} · **{secs(ta)}** vs {secs(tb)} for all "
+                   f"{len(corpus)} · **{tokens}**. "
+                   f"[See the full comparison →](https://sylphxai.github.io/anymd/vs/{other}"
+                   f"?utm_source=github&utm_medium=readme&utm_content=vs_{other})")
+    return "\n\n".join(out) + "\n"
+
+
 def versus(corpus, summary, meta, other, ours="anymd"):
     """A comparison page's head-to-head block: anymd against one other tool on every document."""
     a, b = summary[ours], summary[other]
@@ -280,10 +306,6 @@ def versus(corpus, summary, meta, other, ours="anymd"):
         if x == y:
             return pct(x), pct(y)
         return (f"**{pct(x)}**", pct(y)) if x > y else (pct(x), f"**{pct(y)}**")
-
-    def totals(s):
-        ok = [r for r in s["rows"].values() if r.get("status") == "ok"]
-        return sum(r["seconds"] for r in ok), sum(r["tokens"] for r in ok)
 
     out = [f"| AgentDocBench | {ours} {version(ours)} | {label(other)} {version(other)} |", "|---|---|---|"]
     for title, key in [("Overall", "overall"), ("Sentences kept verbatim", "sentences"), ("Text F1", "text_f1"),
@@ -370,7 +392,8 @@ def main():
     pages = versus_pages(corpus, summary, meta)
     targets = {
         DOCS: [("leaderboard", board), ("corpus", corpus_table(corpus))],
-        README: [("headline", headline(summary, order)), ("fast", fast_bullet(corpus, summary))],
+        README: [("headline", headline(summary, order)), ("fast", fast_bullet(corpus, summary)),
+                 ("proof", proof(corpus, summary, [path.stem for path in pages]))],
         **{path: [("versus", block)] for path, (block, _) in pages.items()},
     }
     missing = []
