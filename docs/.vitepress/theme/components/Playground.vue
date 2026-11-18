@@ -5,6 +5,11 @@ import { useClipboard } from '../composables/useClipboard';
 
 type Status = 'loading' | 'ready' | 'busy' | 'unavailable';
 
+// This is a Playground input cap, not a guarantee about conversion memory use.
+const MAX_FILE_MB = 20;
+const MAX_FILE_BYTES = MAX_FILE_MB * 1_000_000;
+const cliHint = 'Or try the anymd CLI on your device.';
+
 interface Result {
   name: string;
   size: number;
@@ -23,7 +28,6 @@ interface Renderer {
 
 const status = ref<Status>('loading');
 const version = ref('');
-const loadMs = ref(0);
 const error = ref('');
 const result = shallowRef<Result | null>(null);
 const tab = ref<'rendered' | 'raw'>('rendered');
@@ -40,48 +44,61 @@ let pending: { id: number; name: string; size: number } | null = null;
 
 const wasmBase = () => new URL(withBase('/wasm/'), window.location.href).href;
 
+function workerUnavailable() {
+  worker?.terminate();
+  worker = null;
+  pending = null;
+  status.value = 'unavailable';
+  error.value = `Reload the page to try again. ${cliHint}`;
+}
+
 function startWorker() {
   worker?.terminate();
-  worker = new Worker(new URL('./anymd.worker.ts', import.meta.url), { type: 'module' });
-  worker.onmessage = (event: MessageEvent) => {
-    const data = event.data;
-    if (data.type === 'ready') {
+  status.value = 'loading';
+  try {
+    const activeWorker = new Worker(new URL('./anymd.worker.ts', import.meta.url), { type: 'module' });
+    worker = activeWorker;
+    activeWorker.onmessage = (event) => {
+      if (worker === activeWorker) onWorkerMessage(event);
+    };
+    activeWorker.onerror = () => {
+      if (worker === activeWorker) workerUnavailable();
+    };
+    activeWorker.postMessage({ type: 'init', base: wasmBase() });
+  } catch {
+    workerUnavailable();
+  }
+}
+
+function onWorkerMessage(event: MessageEvent) {
+  const data = event.data;
+  if (data.type === 'ready') {
+    status.value = 'ready';
+    version.value = data.version;
+  } else if (data.type === 'unavailable') {
+    workerUnavailable();
+  } else if (pending && data.id === pending.id) {
+    const { name, size } = pending;
+    pending = null;
+    if (data.type === 'result') {
       status.value = 'ready';
-      version.value = data.version;
-      loadMs.value = data.loadMs;
-    } else if (data.type === 'unavailable') {
-      status.value = 'unavailable';
-      error.value = data.error;
-    } else if (pending && data.id === pending.id) {
-      const { name, size } = pending;
-      pending = null;
-      if (data.type === 'result') {
-        status.value = 'ready';
-        error.value = '';
-        result.value = {
-          name,
-          size,
-          markdown: data.markdown,
-          format: data.format,
-          title: data.title,
-          units: data.units,
-          unitNoun: data.unit_noun,
-          tokens: data.tokens,
-          ms: data.ms,
-        };
-      } else {
-        error.value = `${name}: ${data.error}`;
-        result.value = null;
-        status.value = 'loading';
-        startWorker();
-      }
+      result.value = {
+        name,
+        size,
+        markdown: data.markdown,
+        format: data.format,
+        title: data.title,
+        units: data.units,
+        unitNoun: data.unit_noun,
+        tokens: data.tokens,
+        ms: data.ms,
+      };
+    } else {
+      error.value = `Could not convert this file. Try a smaller file or a different supported format. ${cliHint}`;
+      // A conversion error can leave WebAssembly unable to handle another file.
+      startWorker();
     }
-  };
-  worker.onerror = () => {
-    status.value = 'unavailable';
-    error.value = 'The converter worker failed to start.';
-  };
-  worker.postMessage({ type: 'init', base: wasmBase() });
+  }
 }
 
 onMounted(async () => {
@@ -101,15 +118,59 @@ onMounted(async () => {
   renderer.value = md;
 });
 
-onBeforeUnmount(() => worker?.terminate());
+onBeforeUnmount(() => {
+  worker?.terminate();
+  worker = null;
+});
 
-async function convertFile(file: File) {
-  if (!worker || status.value === 'unavailable') return;
-  const bytes = await file.arrayBuffer();
-  pending = { id: ++nextId, name: file.name, size: file.size };
+function showFileError(message: string) {
+  pending = null;
+  status.value = 'ready';
+  error.value = message;
+}
+
+async function convertFile(source: File | (() => Promise<File>)) {
+  const activeWorker = worker;
+  if (!activeWorker || status.value !== 'ready') return;
+
+  // Reserve the converter before any async work so a second drop cannot replace this request.
   status.value = 'busy';
   error.value = '';
-  worker.postMessage({ type: 'convert', id: pending.id, name: file.name, bytes }, [bytes]);
+  result.value = null;
+  tab.value = 'rendered';
+
+  let file: File;
+  try {
+    file = typeof source === 'function' ? await source() : source;
+  } catch {
+    if (worker === activeWorker) showFileError('Could not download the sample. Try again or choose a file.');
+    return;
+  }
+  if (worker !== activeWorker) return;
+  if (file.size > MAX_FILE_BYTES) {
+    showFileError(`This file is too large for the Playground. Choose a file of ${MAX_FILE_MB} MB or less. ${cliHint}`);
+    return;
+  }
+
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await file.arrayBuffer();
+  } catch {
+    if (worker === activeWorker) showFileError(`Could not read this file. Choose it again or try a different file. ${cliHint}`);
+    return;
+  }
+  if (worker !== activeWorker) return;
+
+  pending = { id: ++nextId, name: file.name, size: file.size };
+  try {
+    activeWorker.postMessage({ type: 'convert', id: pending.id, name: file.name, bytes }, [bytes]);
+  } catch {
+    showFileError(`Could not start converting this file. Try again or choose a smaller file. ${cliHint}`);
+  }
+}
+
+function chooseFile() {
+  if (status.value === 'ready') fileInput.value?.click();
 }
 
 function onDrop(event: DragEvent) {
@@ -125,10 +186,13 @@ function onPick(event: Event) {
   input.value = '';
 }
 
-async function trySample() {
-  const response = await fetch(withBase('/playground/sample.pdf'));
-  const blob = await response.blob();
-  await convertFile(new File([blob], 'sample.pdf', { type: 'application/pdf' }));
+function trySample() {
+  void convertFile(async () => {
+    const response = await fetch(withBase('/playground/sample.pdf'));
+    if (!response.ok) throw new Error('Sample download failed');
+    const blob = await response.blob();
+    return new File([blob], 'sample.pdf', { type: 'application/pdf' });
+  });
 }
 
 const frontMatter = computed(() => {
@@ -189,7 +253,7 @@ function download() {
 }
 
 const humanSize = (bytes: number) =>
-  bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
+  bytes < 1_000 ? `${bytes} B` : bytes < 1_000_000 ? `${(bytes / 1_000).toFixed(0)} KB` : `${(bytes / 1_000_000).toFixed(1)} MB`;
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 </script>
@@ -202,22 +266,18 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
       role="button"
       tabindex="0"
       aria-label="Drop a file or choose one to convert"
-      @click="fileInput?.click()"
-      @keydown.enter.prevent="fileInput?.click()"
-      @keydown.space.prevent="fileInput?.click()"
-      @dragover.prevent="dragging = true"
+      aria-describedby="pg-file-limit"
+      :aria-disabled="status !== 'ready'"
+      @click="chooseFile"
+      @keydown.enter.prevent="chooseFile"
+      @keydown.space.prevent="chooseFile"
+      @dragover.prevent="dragging = status === 'ready'"
       @dragleave.prevent="dragging = false"
       @drop.prevent="onDrop"
     >
-      <input ref="fileInput" type="file" hidden data-testid="file" @change="onPick" />
-      <template v-if="status === 'unavailable'">
-        <strong>The converter is not in this build.</strong>
-        <span>Build it with <code>scripts/build-wasm.sh</code>, or install the CLI: <code>npx @sylphx/anymd file.pdf</code></span>
-      </template>
-      <template v-else-if="status === 'loading'">
-        <strong>Loading the converter…</strong>
-        <span>About 1 MB, once; cached after that.</span>
-      </template>
+      <input ref="fileInput" type="file" hidden data-testid="file" @click.stop @change="onPick" />
+      <strong v-if="status === 'unavailable'">The converter is unavailable.</strong>
+      <strong v-else-if="status === 'loading'">Loading the converter…</strong>
       <template v-else-if="status === 'busy'">
         <strong>Converting…</strong>
         <span>Running in a Web Worker on your device.</span>
@@ -226,15 +286,18 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
         <strong>Drop a file here, or click to choose one</strong>
         <span>PDF · DOCX · PPTX · XLSX/ODS · CSV/TSV · EPUB · HTML · Markdown/text · SRT/VTT · images and media (metadata)</span>
       </template>
+      <span id="pg-file-limit">Maximum file size: {{ MAX_FILE_MB }} MB</span>
     </div>
 
     <div class="pg-bar">
       <button class="pg-btn" :disabled="status !== 'ready'" data-testid="sample" @click="trySample">Try a sample</button>
-      <span class="pg-privacy"><b>Private:</b> files never leave your browser. No upload, no server.</span>
+      <span class="pg-privacy">The browser converts your files on this device without uploading them.</span>
       <span v-if="version" class="pg-meta">anymd {{ version }} · WebAssembly</span>
     </div>
 
-    <p v-if="error" class="pg-error" data-testid="error">{{ error }}</p>
+    <div role="alert">
+      <p v-if="error" class="pg-error" data-testid="error">{{ error }}</p>
+    </div>
 
     <section v-if="result" class="pg-out" data-testid="result">
       <div class="pg-stats">

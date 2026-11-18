@@ -136,12 +136,19 @@ equations are not scored beyond the words around them; images and figures are no
 
 ```bash
 python3 bench/fetch.py .cache/bench-corpus                  # download + verify the corpus
-python3 -m venv .venv && .venv/bin/pip install -r bench/requirements/harness.txt -r bench/requirements/markitdown.txt
+python3 -m venv .venv && .venv/bin/pip install -r bench/requirements/harness.txt
 cargo build --release -p anymd             # anymd, into target/release/anymd
 
 ANYMD_BIN=target/release/anymd .venv/bin/python bench/run.py --tool anymd \
   --corpus .cache/bench-corpus --out bench/results/anymd.json --save-outputs out/anymd
 .venv/bin/python bench/leaderboard.py --print
+```
+
+To rerun the MarkItDown comparison, install its pinned dependencies in the same environment:
+
+```bash
+.venv/bin/pip install -r bench/requirements/markitdown.txt
+.venv/bin/python bench/run.py --tool markitdown --corpus .cache/bench-corpus --out bench/results/markitdown.json
 ```
 
 `--docs id1,id2` runs a subset, `--shard 2/4` every fourth document from the second, and `score.py --outputs

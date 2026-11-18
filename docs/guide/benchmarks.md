@@ -303,13 +303,20 @@ not measured in these video rows.
 ```bash
 python3 bench/fetch.py .cache/bench-corpus          # download and verify the corpus
 cargo build --release -p anymd     # anymd
-python3 -m venv .venv && .venv/bin/pip install -r bench/requirements/harness.txt -r bench/requirements/markitdown.txt
+python3 -m venv .venv && .venv/bin/pip install -r bench/requirements/harness.txt
 
 ANYMD_BIN=target/release/anymd .venv/bin/python bench/run.py --tool anymd \
   --corpus .cache/bench-corpus --out bench/results/anymd.json
-.venv/bin/python bench/run.py --tool markitdown --corpus .cache/bench-corpus --out bench/results/markitdown.json
-.venv/bin/python bench/leaderboard.py --print
 ```
+
+To rerun the MarkItDown comparison, install its pinned dependencies in the same environment:
+
+```bash
+.venv/bin/pip install -r bench/requirements/markitdown.txt
+.venv/bin/python bench/run.py --tool markitdown --corpus .cache/bench-corpus --out bench/results/markitdown.json
+```
+
+Print the leaderboard with `.venv/bin/python bench/leaderboard.py --print`.
 
 The [Benchmark workflow](https://github.com/SylphxAI/anymd/actions/workflows/benchmark.yml) runs every tool on its
 own GitHub-hosted runner with the same system packages (poppler, tesseract with Chinese and Japanese, pandoc),
