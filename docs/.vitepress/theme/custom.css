@@ -568,6 +568,26 @@
   border-bottom-color: var(--vp-c-divider);
 }
 
+/* Keep the inline links and Extra menu on one row, including when the sidebar opens at 960px. */
+@media (768px <= width < 1120px) {
+  .VPNavBar #local-search .DocSearch-Button {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .VPNavBar #local-search .DocSearch-Search-Icon {
+    top: 0;
+    margin: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  .VPNavBar #local-search :is(.DocSearch-Button-Placeholder, .DocSearch-Button-Keys) {
+    display: none;
+  }
+}
+
 .dark .VPNavBar {
   background: rgba(10, 13, 7, 0.82) !important;
 }

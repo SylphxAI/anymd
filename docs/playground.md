@@ -10,10 +10,9 @@ Drop a file and get the Markdown an agent would read. This page runs the same
 Rust engine as the anymd CLI and MCP server, compiled to WebAssembly, inside a
 Web Worker on your device.
 
-::: tip Your files never leave your browser
-The file is read with the browser's File API and converted locally. Nothing is
-uploaded, and there is no server behind this page. You can go offline once it
-has loaded and keep converting.
+::: tip Your documents are not uploaded
+This page downloads the WebAssembly converter. The browser reads and converts
+files on your device. **Try a sample** downloads a PDF to convert the same way.
 :::
 
 <ClientOnly>

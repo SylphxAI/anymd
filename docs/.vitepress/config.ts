@@ -471,8 +471,6 @@ export default defineConfig({
       },
       { text: 'Playground', link: '/playground' },
       { text: 'Pro', link: '/pricing' },
-      { text: 'GitHub', link: 'https://github.com/SylphxAI/anymd' },
-      { text: 'npm', link: 'https://www.npmjs.com/package/@sylphx/anymd' },
     ],
 
     sidebar: [
