@@ -43,6 +43,8 @@ Files stay on your machine (`--allow-dir` locks MCP scope to one folder). Need a
 | Marker | 71.0 | 30 / 38 | 60.9 | 7,104.5 s | 277,779 |
 | `pdftotext` | 42.2 | 23 / 38 | 0.0 | 0.90 s | 201,448 |
 
+Coming from MarkItDown? See [anymd vs MarkItDown](/vs/markitdown?entry_surface=seo_pdf-and-office-to-markdown-mcp) for a side-by-side comparison and a one-line switch.
+
 ## FAQ
 
 **What file formats does `anymd` convert with zero external cloud calls?**
