@@ -189,6 +189,7 @@ function onPick(event: Event) {
 function trySample() {
   void convertFile(async () => {
     const response = await fetch(withBase('/playground/sample.pdf'));
+    window.dispatchEvent(new CustomEvent('anymd:sample-http', { detail: response.status }));
     if (!response.ok) throw new Error('Sample download failed');
     const blob = await response.blob();
     return new File([blob], 'sample.pdf', { type: 'application/pdf' });
@@ -290,7 +291,7 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
     </div>
 
     <div class="pg-bar">
-      <button class="pg-btn" :disabled="status !== 'ready'" data-testid="sample" @click="trySample">Try a sample</button>
+      <button class="pg-btn" :disabled="status !== 'ready'" data-testid="sample" data-obs-control="playground-sample" @click="trySample">Try a sample</button>
       <span class="pg-privacy">The browser converts your files on this device without uploading them.</span>
       <span v-if="version" class="pg-meta">anymd {{ version }} · WebAssembly</span>
     </div>
@@ -307,11 +308,11 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
         <span data-testid="elapsed">{{ Math.max(1, Math.round(result.ms)) }} ms</span>
       </div>
       <div class="pg-tabs" role="tablist">
-        <button role="tab" data-testid="tab-rendered" :aria-selected="tab === 'rendered'" :class="{ on: tab === 'rendered' }" @click="tab = 'rendered'">Rendered</button>
-        <button role="tab" data-testid="tab-raw" :aria-selected="tab === 'raw'" :class="{ on: tab === 'raw' }" @click="tab = 'raw'">Markdown</button>
+        <button role="tab" data-testid="tab-rendered" data-obs-control="rendered-tab" :aria-selected="tab === 'rendered'" :class="{ on: tab === 'rendered' }" @click="tab = 'rendered'">Rendered</button>
+        <button role="tab" data-testid="tab-raw" data-obs-control="raw-tab" :aria-selected="tab === 'raw'" :class="{ on: tab === 'raw' }" @click="tab = 'raw'">Markdown</button>
         <span class="pg-spacer" />
         <button type="button" class="pg-btn" :disabled="copyState === 'copying'" @click="copy">{{ copyState === 'copied' ? 'Copied' : copyState === 'copying' ? 'Copying…' : copyState === 'failed' ? 'Retry copy' : 'Copy' }}</button>
-        <button class="pg-btn" @click="download">Download .md</button>
+        <button class="pg-btn" data-obs-download @click="download">Download .md</button>
       </div>
       <p class="pg-copy-status" role="status">{{ copyState === 'copied' ? 'Markdown copied.' : copyState === 'failed' ? 'Copy failed. Copy the selected Markdown manually, download it, or retry.' : '' }}</p>
       <div v-if="tab === 'rendered'" class="pg-rendered vp-doc">

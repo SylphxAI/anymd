@@ -1,4 +1,5 @@
-import { h, onMounted, onUnmounted } from 'vue';
+import { h, onErrorCaptured, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute } from 'vitepress';
 import { installFencedCodeCopy } from './fenced-code-copy';
 import './fenced-code-copy.css';
 import DefaultTheme from 'vitepress/theme';
@@ -59,6 +60,13 @@ function installAttributionForwarding(): () => void {
 const theme: Theme = {
   extends: DefaultTheme,
   setup() {
+    const route = useRoute();
+    if (typeof window !== 'undefined') {
+      onErrorCaptured(() => {
+        window.dispatchEvent(new Event('anymd:vue-error'));
+      });
+      watch(() => route.path, () => window.dispatchEvent(new Event('anymd:navigation')));
+    }
     let consentObserver: ResizeObserver | undefined;
     let disposeCopy: (() => void) | undefined;
     let disposeAttribution: (() => void) | undefined;
