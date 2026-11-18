@@ -14,10 +14,26 @@ const env = {
   GITHUB_SHA: release,
 };
 
+class FixtureEventTarget {
+  private listeners = new Map<string, ((event: object) => void)[]>();
+
+  addEventListener(name: string, listener: (event: object) => void) {
+    const listeners = this.listeners.get(name) ?? [];
+    listeners.push(listener);
+    this.listeners.set(name, listeners);
+  }
+
+  emit(name: string, props = {}) {
+    // Bun's Event.isTrusted cannot be replaced. Model event input without changing platform events.
+    const event = { type: name, ...props };
+    for (const listener of this.listeners.get(name) ?? []) listener.call(this, event);
+  }
+}
+
 function browser(path = '/anymd/playground', captureUrl = receiver, pending = false) {
   const posts: { url: string; body: string; options: RequestInit }[] = [];
-  const window = new EventTarget();
-  const document = new EventTarget();
+  const window = new FixtureEventTarget();
+  const document = new FixtureEventTarget();
   const location = new URL(path, 'https://sylphxai.github.io');
   const now = { value: 0 };
   const timers = new Map<number, () => void>();
@@ -87,24 +103,18 @@ function browser(path = '/anymd/playground', captureUrl = receiver, pending = fa
     },
     clearTimeout: (id: number) => timers.delete(id),
   });
-  const event = (target: EventTarget, name: string, props = {}) => {
-    const e = new Event(name);
-    for (const [key, value] of Object.entries(props))
-      Object.defineProperty(e, key, { value, configurable: true });
-    target.dispatchEvent(e);
-  };
   return {
     posts,
     location,
     now,
     click: (target: Element, isTrusted = true) =>
-      event(document, 'click', { target, button: 0, isTrusted }),
-    fire: (name: string, props = {}) => event(window, name, props),
+      document.emit('click', { target, button: 0, isTrusted }),
+    fire: (name: string, props = {}) => window.emit(name, props),
     flushTimers: () => {
       for (const run of timers.values()) run();
     },
-    request: () => (window as EventTarget & { fetch: typeof fetch }).fetch('/private-path'),
-    ready: () => event(document, 'DOMContentLoaded'),
+    request: () => (window as FixtureEventTarget & { fetch: typeof fetch }).fetch('/private-path'),
+    ready: () => document.emit('DOMContentLoaded'),
     body,
     Element,
   };
