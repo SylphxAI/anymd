@@ -27,6 +27,11 @@ test('converts a local document and locates an exact source quote', async ({ pag
   await expect(page.getByText(/No exact match/i)).toBeVisible();
 });
 
+test('CLI consent page strips the query without suppressing the form origin', async ({ page }) => {
+  await page.goto('/cli-auth');
+  await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'strict-origin');
+});
+
 test('shows the provider choices and one-time 16-currency pricing', async ({ page }) => {
   await page.goto('/pricing');
   await expect(page.getByText('$29', { exact: true })).toBeVisible();

@@ -4,7 +4,9 @@ import { headers } from 'next/headers';
 import { authConfig, session } from '@/lib/auth';
 import { challengePattern, statePattern } from '@/lib/cli-grant';
 
-export const metadata: Metadata = {title:'Connect the CLI', robots:{index:false, follow:false}, referrer:'no-referrer'};
+// Include only the origin on the same-origin form POST; no-referrer would
+// force Origin: null in Chromium. The callback redirect sends no referrer.
+export const metadata: Metadata = {title:'Connect the CLI', robots:{index:false, follow:false}, referrer:'strict-origin'};
 
 export default async function CliAuth({searchParams}: {searchParams:Promise<Record<string, string | string[] | undefined>>}) {
   const {port, state, challenge} = await searchParams;

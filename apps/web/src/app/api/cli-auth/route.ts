@@ -6,7 +6,7 @@ import { entitlement, licenceTokens, moneyContextForSession } from '@/lib/money'
 export async function POST(request: Request) {
   try {
     const config = requireAuth();
-    const contentType = request.headers.get('content-type');
+    const contentType = request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
     if (contentType === 'application/x-www-form-urlencoded') {
       if (request.headers.get('origin') !== appOrigin(request) || request.headers.get('sec-fetch-site') === 'cross-site') throw new HttpError(403, 'invalid_origin');
       const data = new URLSearchParams(await shortBody(request, 512));
