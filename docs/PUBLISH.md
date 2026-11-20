@@ -154,7 +154,7 @@ launcher, so `citra` and `pdf-reader-mcp` behave exactly like `anymd`.
 
 Project site URLs do not redirect on rename. Renaming the repository moves the
 docs site path behind `websiteUrl` and `homepage`, and needs `base` in
-`docs/.vitepress/config.ts` updated with it.
+the public web app’s links updated with it.
 
 ## Recover a partial release
 

@@ -30,7 +30,7 @@ README = ROOT / "README.md"
 VERSUS = ROOT / "docs" / "vs"
 HUB = VERSUS / "index.md"
 # Hand-written copy that quotes a comparison page's headline figures, besides the page itself.
-VERSUS_COPY = [ROOT / "docs" / "public" / "llms.txt"]
+VERSUS_COPY = [ROOT / "apps" / "web" / "public" / "llms.txt"]
 DISPLAY_NAMES = {"markitdown": "MarkItDown", "docling": "Docling", "marker": "Marker", "unstructured": "Unstructured",
                  "kreuzberg": "Kreuzberg", "pdftotext": "pdftotext"}
 
@@ -305,7 +305,7 @@ def proof(corpus, summary, others, ours="anymd"):
     for other in sorted(full, key=lambda o: -summary[o]["overall"]):
         a, b = summary[ours], summary[other]
         (ta, ka), (tb, kb) = totals(a), totals(b)
-        out.append(f"- [vs {label(other)}](https://sylphxai.github.io/anymd/vs/{other}"
+        out.append(f"- [vs {label(other)}](https://anymd.sylphx.com/vs/{other}"
                    f"?utm_source=github&utm_medium=readme&utm_content=vs_{other}): "
                    f"**{pct(a['overall'])}** vs {pct(b['overall'])} · **{secs(ta)}** vs {secs(tb)} · "
                    f"**{fewer(ka, kb)} tokens**")

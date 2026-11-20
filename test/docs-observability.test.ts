@@ -1,19 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { injectObservability } from '../docs/.vitepress/observability';
 
-const source = readFileSync(new URL('../docs/public/obs.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../apps/web/public/obs.js', import.meta.url), 'utf8');
 const receiver =
   'https://api.sylphx.com/v1/orgs/org_fs01afbdccgn8xdk1ghj5y47w0vtph/projects/prj_fs013ejakyn22t4bsvrvyj0f2x1pgq/envs/env_fs01p2f389mwmm2xsm1nmvcst69vgd/error_groups:capture';
 const fixtureKey = ['sylphx', 'pk', 'live', `z0z0${'0'.repeat(16)}`].join('_');
 const release = 'a'.repeat(40);
-const env = {
-  ANYMD_OBS_CAPTURE_URL: receiver,
-  ANYMD_OBS_PUBLISHABLE_KEY: fixtureKey,
-  GITHUB_SHA: release,
-};
-
 class FixtureEventTarget {
   private listeners = new Map<string, ((event: object) => void)[]>();
 
@@ -30,11 +23,11 @@ class FixtureEventTarget {
   }
 }
 
-function browser(path = '/anymd/playground', captureUrl = receiver, pending = false) {
+function browser(path = '/playground', captureUrl = receiver, pending = false) {
   const posts: { url: string; body: string; options: RequestInit }[] = [];
   const window = new FixtureEventTarget();
   const document = new FixtureEventTarget();
-  const location = new URL(path, 'https://sylphxai.github.io');
+  const location = new URL(path, 'https://anymd.sylphx.com');
   const now = { value: 0 };
   const timers = new Map<number, () => void>();
   let nextTimer = 0;
@@ -121,48 +114,8 @@ function browser(path = '/anymd/playground', captureUrl = receiver, pending = fa
 }
 
 describe('docs diagnostics', () => {
-  const html = `<!DOCTYPE html>
-<html lang="en-US">
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="/anymd/assets/style.css">
-    <script type="module" src="/anymd/assets/app.js"></script>
-  </head>
-  <body><img src="missing.png"></body>
-</html>`;
-
-  test('registers capture listeners before the rendered VitePress assets', () => {
-    const script = `<script src="/anymd/obs.js" data-capture-url="${receiver}" data-publishable-key="${fixtureKey}" data-release="${release}"></script>`;
-    for (const page of ['index.md', 'guide/getting-started.md', 'playground.md']) {
-      expect(injectObservability(html, page, env)).toBe(
-        html.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n    ${script}`)
-      );
-    }
-  });
-
-  test('leaves excluded pages and absent or invalid bindings untouched', () => {
-    for (const page of [
-      '404.md',
-      'pro.md',
-      'pro/thanks.md',
-      'pricing.md',
-      'recover.md',
-      'storefront/prebuilt/pricing.html',
-    ]) {
-      expect(injectObservability(html, page, env)).toBe(html);
-    }
-    for (const invalid of [
-      {},
-      { ...env, ANYMD_OBS_CAPTURE_URL: `${receiver}x` },
-      { ...env, ANYMD_OBS_PUBLISHABLE_KEY: 'fixture' },
-      { ...env, GITHUB_SHA: 'aabb' },
-    ]) {
-      expect(injectObservability(html, 'index.md', invalid)).toBe(html);
-    }
-  });
-
   test('captures early assets and empty src, with only fixed payload fields', async () => {
-    const b = browser('/anymd/playground?private-token=not-for-reports');
+    const b = browser('/playground?private-token=not-for-reports');
     b.fire('error', { target: new b.Element('AUDIO'), message: 'private-name@example.test' });
     b.body.querySelectorAll = () => [new b.Element('IMG', true)];
     b.ready();
@@ -184,7 +137,7 @@ describe('docs diagnostics', () => {
   });
 
   test('caps attempts and in-memory breadcrumbs independently of deduplication', async () => {
-    const b = browser('/anymd/');
+    const b = browser('/');
     const a = new b.Element('A');
     for (let i = 0; i < 18; i++) b.click(a);
     expect(b.posts).toHaveLength(0);
@@ -201,11 +154,11 @@ describe('docs diagnostics', () => {
   });
 
   test('bounds delivery and sends nothing while on excluded SPA routes', async () => {
-    const b = browser('/anymd/', receiver, true);
-    b.location.pathname = '/anymd/pro/thanks';
+    const b = browser('/', receiver, true);
+    b.location.pathname = '/pro/thanks';
     b.fire('anymd:navigation');
     b.fire('unhandledrejection');
-    b.location.pathname = '/anymd/playground';
+    b.location.pathname = '/playground';
     b.fire('anymd:navigation');
     b.fire('unhandledrejection');
     await Promise.resolve();
@@ -223,9 +176,9 @@ describe('docs diagnostics', () => {
 
   test('quiet on foreign hosts, Pro pages, wrong endpoints, and effective or untrusted clicks', async () => {
     for (const b of [
-      browser('https://preview.example/anymd/'),
-      browser('/anymd/pro/thanks'),
-      browser('/anymd/', `${receiver}x`),
+      browser('https://preview.example/'),
+      browser('/pro/thanks'),
+      browser('/', `${receiver}x`),
     ]) {
       b.fire('unhandledrejection');
       await Promise.resolve();

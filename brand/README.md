@@ -116,11 +116,11 @@ What this folder enforces by construction:
 
 | Surface | Copies |
 | --- | --- |
-| `docs/public/logo.svg` — the docs site logo, the home hero image, and the URL used by other pages | `svg/anymd-app-icon.svg` |
-| `docs/public/favicon.svg` — the docs site icon | `favicon/favicon.svg` |
-| `docs/public/favicon.ico` — the fallback icon | `favicon/favicon.ico` |
-| `docs/public/og-image.png` — `og:image`, `twitter:image`, and the README hero | `og/anymd-og.png` |
-| `docs/public/og-image.svg` — still served, linked by nothing | `og/anymd-og-vector.svg` |
+| `apps/web/public/logo.svg` — the docs site logo, the home hero image, and the URL used by other pages | `svg/anymd-app-icon.svg` |
+| `apps/web/public/favicon.svg` — the docs site icon | `favicon/favicon.svg` |
+| `apps/web/public/favicon.ico` — the fallback icon | `favicon/favicon.ico` |
+| `apps/web/public/og-image.png` — `og:image`, `twitter:image`, and the README hero | `og/anymd-og.png` |
+| `apps/web/public/og-image.svg` — still served, linked by nothing | `og/anymd-og-vector.svg` |
 
 ## Provenance
 

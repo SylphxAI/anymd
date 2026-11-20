@@ -2,7 +2,7 @@
 title: "anymd vs PyMuPDF4LLM: MIT Rust MCP alternative to AGPL Python"
 titleTemplate: false
 description: "anymd vs PyMuPDF4LLM: MIT-licensed Rust MCP server and CLI for PDF, Office and media vs AGPL Python PDF library. Free MIT core or US$29 once."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · MIT Rust binary &amp; MCP vs AGPL-3.0 Python library</p>

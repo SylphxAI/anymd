@@ -18,7 +18,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://sylphxai.github.io/anymd/",
+  "homepage": "https://anymd.sylphx.com/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SylphxAI/anymd.git",

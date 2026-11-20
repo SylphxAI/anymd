@@ -1,0 +1,81 @@
+# anymd
+
+> Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video (metadata, subtitles, transcripts). A fast Rust MCP server and CLI that runs on your machine. No API key.
+
+anymd is a Rust command-line tool and Model Context Protocol (MCP) server published by Sylphx Limited (`https://sylphx.com`). It converts documents, slides, spreadsheets, e-books, web pages, images, and audio/video files into clean, structured Markdown locally on your machine with no API key required (96.4 overall score across 38 documents in 11.5 s on AgentDocBench).
+
+anymd Pro ($29 USD one-time across 16 local currencies, 100-year offline licence, `https://anymd.sylphx.com/pricing`) adds deterministic PDF `cite_check` and SHA-256 verifiable video timelines and frame extraction.
+
+## anymd vs MarkItDown
+
+On the same 38 AgentDocBench documents, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Microsoft MarkItDown 0.1.8 (measured 2026-09-25, CLI defaults) scores 76.8. anymd converts all 38 in 11.5 s against 75.6 s and returns 32% fewer output tokens (368,659 against 538,388). MarkItDown scores higher on designed reports (97.4 vs 96.9). Comparison: https://anymd.sylphx.com/vs/markitdown
+
+## anymd vs Docling
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Docling 2.130.0 (measured 2026-09-25, CLI default pipeline, CPU only) scores 93.0. anymd converts all 38 in 11.5 s against 2,432.4 s and returns 14% fewer output tokens (368,659 against 430,148). Docling scores higher on scanned documents (78.4 vs 77.9), designed reports and EPUB, and offers a Python API and a lossless JSON document model. Comparison: https://anymd.sylphx.com/vs/docling
+
+## anymd vs Marker
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Marker 2.0.0 (measured 2026-09-25, default CPU mode, no LLM) scores 71.0; Marker converted 30 of the 38 (6 timeouts at 900 s, 2 unsupported CSV files). On the 30 both converted, anymd takes 4.64 s against 7,104.5 s, returns 20% fewer output tokens (222,618 against 277,779), and scores 95.5 against 89.3. Marker's OCR scored higher on two scanned PDFs; GPU runs were not measured. Comparison: https://anymd.sylphx.com/vs/marker
+
+## anymd vs Unstructured
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Unstructured 0.27.8 (measured 2026-09-25, default auto strategy, no hi_res) scores 81.2. anymd converts all 38 in 11.5 s against 346.5 s, returns 11% fewer output tokens (368,659 against 414,333), and scores 92.2 against 38.4 on table cells F1. Unstructured scores slightly higher on EPUB and offers typed elements, chunking and connectors. Comparison: https://anymd.sylphx.com/vs/unstructured
+
+## anymd vs Kreuzberg
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Kreuzberg 4.10.4 (measured 2026-09-25, Python API with Markdown output and Tesseract OCR on) scores 81.7. anymd converts all 38 in 11.5 s against 16.0 s, returns 19% fewer output tokens (368,659 against 455,689), and scores 92.2 against 38.4 on table cells F1. Kreuzberg scores slightly higher on HTML and EPUB, and offers bindings for many languages, email and archive formats, chunking and embeddings. Its successor, Xberg, was not measured. Comparison: https://anymd.sylphx.com/vs/kreuzberg
+
+## anymd vs pdftotext
+
+On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Poppler pdftotext 24.02.0 (measured 2026-09-25, default mode, PDFs only) scores 42.2; pdftotext read the 23 PDFs and does not support the 15 other files. On those 23, pdftotext takes 0.90 s against anymd's 11.4 s, because anymd spends 10.5 s on OCR for 3 scanned PDFs where pdftotext scores 0, and anymd returns 3% more output tokens (207,030 against 201,448). On the other 20 born-digital PDFs, anymd takes 0.87 s against 0.88 s and returns 200,747 output tokens against 201,435, with Markdown tables (table cells F1 92.2 against 0.0). pdftotext's output is the benchmark's reference text for born-digital PDFs. Comparison: https://anymd.sylphx.com/vs/pdftotext
+
+All seven benchmarked tools side by side: https://anymd.sylphx.com/vs/
+
+## anymd vs LlamaParse
+
+Local MIT Rust CLI and MCP server with no API key, no file uploads and no per-page credit billing (96.4 overall across 38 AgentDocBench docs in 11.5 s; optional anymd Pro US$29 once) compared with LlamaIndex's hosted LlamaCloud parsing API (10,000 free credits/mo, then metered 1–25 credits/page). LlamaParse is a cloud API and was not measured on AgentDocBench. Comparison: https://anymd.sylphx.com/vs/llamaparse
+
+## anymd vs Mistral OCR
+
+Local MIT Rust CLI and MCP server that parses born-digital PDFs natively in milliseconds (0.87 s across 20 born-digital PDFs; 96.4 overall across 38 AgentDocBench docs in 11.5 s; free MIT core or US$29 once for Pro) compared with Mistral AI's cloud OCR API (metered US$2–US$4 per 1,000 pages, requires API key and uploads). Mistral OCR is a cloud API and was not measured on AgentDocBench. Comparison: https://anymd.sylphx.com/vs/mistral-ocr
+
+## anymd vs PyMuPDF4LLM
+
+Permissive MIT-licensed native Rust binary (CLI + built-in MCP server for PDF, Word, PowerPoint, Excel, EPUB, HTML, OCR and audio/video; 96.4 on AgentDocBench in 11.5 s; optional Pro US$29 once) compared with Artifex's AGPL-3.0 Python PDF library (commercial licence required for closed-source or SaaS use). PyMuPDF4LLM is not yet in AgentDocBench. Comparison: https://anymd.sylphx.com/vs/pymupdf4llm
+
+## Install and Setup
+
+- npm: `npx -y @sylphx/anymd setup --client cursor,claude-code,codex`
+- Cargo: `cargo install anymd`
+- Homebrew: `brew install sylphxai/tap/anymd`
+- Windows (Scoop): `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket`, then `scoop install anymd`
+
+## Documentation & Use Cases
+
+- [Home](https://anymd.sylphx.com/)
+- [Getting started](https://anymd.sylphx.com/guide/getting-started)
+- [PDF & Office to Markdown MCP](https://anymd.sylphx.com/use-cases/pdf-and-office-to-markdown-mcp)
+- [Verifiable video & PDF cite-check for AI agents](https://anymd.sylphx.com/use-cases/verifiable-video-and-cite-check-ai-agents)
+- [All comparisons](https://anymd.sylphx.com/vs/)
+- [anymd vs Docling](https://anymd.sylphx.com/vs/docling)
+- [anymd vs Kreuzberg](https://anymd.sylphx.com/vs/kreuzberg)
+- [anymd vs LlamaParse](https://anymd.sylphx.com/vs/llamaparse)
+- [anymd vs Marker](https://anymd.sylphx.com/vs/marker)
+- [anymd vs MarkItDown](https://anymd.sylphx.com/vs/markitdown)
+- [anymd vs Mistral OCR](https://anymd.sylphx.com/vs/mistral-ocr)
+- [anymd vs pdftotext](https://anymd.sylphx.com/vs/pdftotext)
+- [anymd vs PyMuPDF4LLM](https://anymd.sylphx.com/vs/pymupdf4llm)
+- [anymd vs Unstructured](https://anymd.sylphx.com/vs/unstructured)
+- [Local core and anymd Pro](https://anymd.sylphx.com/guide/hosted)
+- [MCP tools](https://anymd.sylphx.com/guide/tools)
+- [Cite-check](https://anymd.sylphx.com/guide/cite-check)
+- [CLI reference](https://anymd.sylphx.com/guide/cli)
+- [Python and loaders](https://anymd.sylphx.com/guide/python)
+- [Video timelines](https://anymd.sylphx.com/guide/video-timeline)
+- [Supported formats](https://anymd.sylphx.com/guide/formats)
+- [Benchmarks (AgentDocBench)](https://anymd.sylphx.com/guide/benchmarks)
+- [Playground](https://anymd.sylphx.com/playground)
+- [anymd Pro ($29 once)](https://anymd.sylphx.com/pricing)
+- [anymd Pro pricing](https://anymd.sylphx.com/pricing)
+- [GitHub repository](https://github.com/SylphxAI/anymd)

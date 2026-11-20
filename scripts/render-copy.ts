@@ -57,7 +57,7 @@ const alsoFromList = (p: Product) =>
   p.alsoFrom.map((x) => `- [**${x.name}**](${x.url}): ${x.description}`).join('\n');
 
 const readmeFormerly = (p: Product) =>
-  `<sub>Formerly **${p.formerly}**. [Migrating from ${p.formerly}](https://sylphxai.github.io/anymd/guide/migration)</sub>`;
+  `<sub>Formerly **${p.formerly}**. [Migrating from ${p.formerly}](https://anymd.sylphx.com/guide/migration)</sub>`;
 
 const docsFormerly = (p: Product) =>
   `<p class="cit-fine" style="text-align:center">Formerly <strong>${p.formerly}</strong>. See <a href="./guide/migration">Migration</a>.</p>`;

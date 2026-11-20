@@ -2,7 +2,7 @@
 title: "Check PDF quotes and video citations | anymd Pro"
 titleTemplate: false
 description: "Find the page behind a PDF quote and the frame behind a video citation. Works on your machine, with a one-time Pro licence."
-image: https://sylphxai.github.io/anymd/og-pro.png
+image: https://anymd.sylphx.com/og-pro.png
 ---
 
 <p class="pro-trust">anymd Pro · One payment · Works offline</p>
@@ -12,7 +12,7 @@ image: https://sylphxai.github.io/anymd/og-pro.png
 Reviewing an agent's summary should not mean searching the whole source again. **anymd Pro** helps you find the page behind a PDF quote and see the frame behind a video citation. Both work on your machine.
 
 <p>
-  <a class="pro-buy" href="https://sylphxai.github.io/anymd/pricing?entry_surface=seo_verifiable-video-and-cite-check-ai-agents">See Pro pricing</a>
+  <a class="pro-buy" href="https://anymd.sylphx.com/pricing?entry_surface=seo_verifiable-video-and-cite-check-ai-agents">See Pro pricing</a>
   &nbsp;&nbsp;
   <a href="/anymd/guide/cite-check?entry_surface=seo_verifiable-video-and-cite-check-ai-agents">How cite-check works</a>
 </p>

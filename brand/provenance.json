@@ -111,10 +111,10 @@
     }
   },
   "surfaces": {
-    "docs/public/favicon.ico": "favicon/favicon.ico",
-    "docs/public/favicon.svg": "favicon/favicon.svg",
-    "docs/public/logo.svg": "svg/anymd-app-icon.svg",
-    "docs/public/og-image.png": "og/anymd-og.png",
-    "docs/public/og-image.svg": "og/anymd-og-vector.svg"
+    "apps/web/public/favicon.ico": "favicon/favicon.ico",
+    "apps/web/public/favicon.svg": "favicon/favicon.svg",
+    "apps/web/public/logo.svg": "svg/anymd-app-icon.svg",
+    "apps/web/public/og-image.png": "og/anymd-og.png",
+    "apps/web/public/og-image.svg": "og/anymd-og-vector.svg"
   }
 }

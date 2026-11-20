@@ -2,7 +2,7 @@
 title: "anymd vs MarkItDown: a faster MarkItDown alternative"
 titleTemplate: false
 description: "anymd vs Microsoft MarkItDown on the same 38 documents: AgentDocBench 96.4 vs 76.8, 11.5 s vs 75.6 s, 32% fewer tokens. One Rust binary with MCP built in."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Same 38 public documents · Open benchmark</p>

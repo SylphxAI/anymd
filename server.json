@@ -8,7 +8,7 @@
     "source": "github"
   },
   "version": "8.5.14",
-  "websiteUrl": "https://sylphxai.github.io/anymd/",
+  "websiteUrl": "https://anymd.sylphx.com/",
   "packages": [
     {
       "registryType": "npm",

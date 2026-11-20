@@ -5,7 +5,7 @@ type: software
 version: 8.5.14
 license: MIT
 repository-code: "https://github.com/SylphxAI/anymd"
-url: "https://sylphxai.github.io/anymd/"
+url: "https://anymd.sylphx.com/"
 authors:
   - name: Sylphx Limited
 keywords:

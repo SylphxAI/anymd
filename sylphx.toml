@@ -1,17 +1,43 @@
 version = "1"
 
 [project]
+# Retain the connected project; do not provision a new tenancy for the web app.
 name = "@sylphx/pdf-reader-mcp"
+default_env = "production"
 
 [build]
-strategy = "auto"
-context = "docs"
+strategy = "dockerfile"
+dockerfile = "Dockerfile"
+context = "."
+
+# Auth's organization, publishable key and server secret come from the
+# environment's Auth binding. Money keys live in Platform Secrets.
+[environments.production.env.ANYMD_MONEY_MODE]
+value = "live"
+
+[environments.production.env.SYLPHX_MONEY_API_KEY]
+from_secret = "SYLPHX_MONEY_API_KEY"
 
 [[services]]
 name = "web"
 type = "web"
-port = 80
-watch_paths = ["docs/**"]
+port = 3000
+instance_type = "micro"
+path_prefixes = ["/", "/api/health", "/api/auth", "/api/anymd"]
+watch_paths = ["apps/web/**", "docs/**", "crates/**", "vendor/**", "config/money-catalogue.json", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "scripts/build-wasm.sh", "scripts/render-web-money.py", "bun.lock", "package.json", "Dockerfile", ".dockerignore", "sylphx.toml"]
+
+[services.build]
+strategy = "dockerfile"
+dockerfile = "Dockerfile"
+context = "."
+
+[services.health]
+mode = "http"
+path = "/api/health"
+
+[[domains]]
+hostname = "anymd.sylphx.com"
+service = "web"
 
 [ci]
 merge = "optimistic"

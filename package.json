@@ -2,8 +2,8 @@
   "name": "anymd-workspace",
   "private": true,
   "type": "module",
-  "description": "anymd repository tools: docs site, Biome, TypeScript tests over the Rust binary, and release scripts. The published packages are in packages/.",
-  "homepage": "https://sylphxai.github.io/anymd/",
+  "description": "anymd repository tools for the web app, Rust CLI and MCP server, and release workflows.",
+  "homepage": "https://anymd.sylphx.com/",
   "license": "MIT",
   "packageManager": "bun@1.4.4",
   "scripts": {
@@ -22,19 +22,19 @@
     "version:set": "bun scripts/set-version.ts",
     "render:copy": "bun scripts/render-copy.ts",
     "inspector": "npx @modelcontextprotocol/inspector node packages/anymd/bin/anymd.js mcp",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs && bash scripts/build-storefront.sh",
-    "docs:preview": "vitepress preview docs",
-    "perf:installed-footprint": "bun scripts/perf/measure-installed-footprint.ts"
+    "perf:installed-footprint": "bun scripts/perf/measure-installed-footprint.ts",
+    "web:dev": "bun run --cwd apps/web dev",
+    "web:build": "bun run --cwd apps/web build",
+    "web:e2e": "bun run --cwd apps/web test:e2e",
+    "docs:dev": "bun run web:dev",
+    "docs:build": "bun run web:build",
+    "docs:preview": "bun run --cwd apps/web start",
+    "web:wasm": "bash scripts/build-wasm.sh"
   },
   "overrides": {
     "brace-expansion": "^5.0.13",
     "esbuild": "^0.28.2",
-    "preact": "^11.2.0",
-    "defu": "^6.1.7",
-    "postcss": "^8.5.33",
-    "rollup": "^4.68.5",
-    "vite": "^7.3.8"
+    "postcss": "^8.5.33"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",
@@ -43,7 +43,9 @@
     "@types/pngjs": "^6.0.5",
     "markdown-it": "^15.0.3",
     "pngjs": "^7.0.0",
-    "typescript": "^7.0.2",
-    "vitepress": "^1.6.4"
-  }
+    "typescript": "^7.0.2"
+  },
+  "workspaces": [
+    "apps/web"
+  ]
 }

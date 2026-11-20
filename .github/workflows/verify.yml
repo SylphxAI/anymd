@@ -25,10 +25,10 @@ permissions:
 
 jobs:
   docs:
-    name: Build docs
+    name: Build and verify web
     if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -53,8 +53,33 @@ jobs:
             bun install --frozen-lockfile
           fi
 
-      - name: Build docs
-        run: bun run docs:build
+      - name: Set up Rust (WASM)
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
+        with:
+          toolchain: '1.100.0'
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+        with:
+          key: web-wasm
+
+      - name: Install wasm-bindgen CLI
+        uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519
+        with:
+          tool: wasm-bindgen@0.2.130
+
+      - name: Build standalone Next web app with WASM
+        run: bun run web:wasm && bun run web:build
+
+      - name: Check legacy redirects
+        run: python3 scripts/test_pages_redirect.py
+
+      - name: Install Chromium
+        run: cd apps/web && bunx playwright install --with-deps chromium
+
+      - name: Browser journeys (desktop and mobile; light and dark)
+        run: bun run web:e2e
 
   audit:
     name: Audit Rust dependencies
@@ -176,8 +201,7 @@ jobs:
         run: bun run test:rust
 
       # The docs playground runs anymd-pdf + anymd-formats in the browser; keep
-      # them free of native-only dependencies. (docs:build below degrades to a
-      # "not in this build" notice when the .wasm is absent.)
+      # them free of native-only dependencies.
       - name: Check WebAssembly build
         run: |
           rustup target add wasm32-unknown-unknown

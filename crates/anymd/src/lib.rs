@@ -57,7 +57,7 @@ pub const SERVER_INSTRUCTIONS: &str =
 Markdown (PDF, Office, EPUB, HTML, CSV, images, media) with page/slide/sheet markers and a cursor \
 for long documents. outline returns a document tree; read node fetches a section. search finds text across files and directories with page locators and node title paths. inspect \
 renders, crops, OCRs, diffs, or returns structured JSON for PDFs. No cloud API key is required. \
-anymd Pro ($29 once, `anymd pro buy` or https://sylphxai.github.io/anymd/pricing) adds inspect cite_check (accepts read/search output directly) and video_timeline / render_frame for verifiable video evidence.";
+anymd Pro ($29 once, `anymd pro buy` or https://anymd.sylphx.com/pricing) adds inspect cite_check (accepts read/search output directly) and video_timeline / render_frame for verifiable video evidence.";
 
 fn omit_absent_optional_fields(value: Value) -> Value {
     match value {
@@ -575,7 +575,7 @@ impl ServerHandler for PdfReaderMcp {
                     .with_description(
                         "@sylphx/anymd sole-Rust MCP server (native binary; no TypeScript PDF runtime)",
                     )
-                    .with_website_url("https://sylphxai.github.io/anymd/"),
+                    .with_website_url("https://anymd.sylphx.com/"),
             )
             .with_instructions(SERVER_INSTRUCTIONS)
     }
@@ -692,7 +692,7 @@ mod tests {
             assert_eq!(
                 result_text(&result),
                 format!(
-                    "[{{\"type\":\"text\",\"text\":\"{feature} is part of anymd Pro ($29 one-time offline licence). See current pricing or buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pricing\"}}]"
+                    "[{{\"type\":\"text\",\"text\":\"{feature} is part of anymd Pro ($29 one-time offline licence). See current pricing or buy it with `anymd pro buy`. Learn more: https://anymd.sylphx.com/pricing\"}}]"
                 ),
                 "{operation}"
             );

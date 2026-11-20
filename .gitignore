@@ -5,12 +5,6 @@ build/
 coverage/
 .env*
 
-# VitePress
-docs/.vitepress/cache
-docs/.vitepress/dist
-# Generated from crates/anymd/src/money_docs.toml by scripts/build-storefront.sh
-docs/storefront/docs.toml
-
 # Test Reports
 test-report.junit.xml
 .vercel
@@ -26,9 +20,17 @@ packages/npm/*/anymd.exe
 *.tgz
 
 # Browser playground WebAssembly (scripts/build-wasm.sh output)
-docs/public/wasm/
 benchmark-artifacts/
 __pycache__/
 
 # Local benchmark and regression corpora (bench/fetch.py, scripts/fetch-markdown-corpus.sh)
 .cache/
+
+# Next.js and browser-test output
+apps/web/.next/
+apps/web/next-env.d.ts
+apps/web/*.tsbuildinfo
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/public/wasm/
+apps/web/src/lib/money-production.generated.ts

@@ -2,7 +2,7 @@
 title: "anymd vs Marker: a CPU-only Marker alternative for AI agents"
 titleTemplate: false
 description: "anymd vs Marker on 38 documents: AgentDocBench 96.4 vs 71.0; on the 30 both converted, 4.64 s vs 7,104.5 s and 20% fewer tokens. MIT, no GPU needed."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Same 38 public documents · Open benchmark</p>

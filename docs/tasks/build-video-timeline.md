@@ -11,7 +11,7 @@ available subtitle or transcript cues with the source hash and timing evidence.
 The cuts are an FFmpeg heuristic, not a semantic account of what happens.
 
 The free MIT core still reads video metadata, chapters and subtitles without
-a licence. [See current Pro pricing](https://sylphxai.github.io/anymd/pricing?utm_source=docs_build_video_timeline).
+a licence. [See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_build_video_timeline).
 
 ## Create a two-scene fixture
 
@@ -21,7 +21,7 @@ No model or remote provider is used in this example.
 ```sh
 mkdir anymd-timeline && cd anymd-timeline
 npm install --no-save @sylphx/anymd@8.5.5
-curl -fsSLO https://sylphxai.github.io/anymd/examples/mcp-call.mjs
+curl -fsSLO https://anymd.sylphx.com/examples/mcp-call.mjs
 ffmpeg -hide_banner -loglevel error \
   -f lavfi -i 'color=c=red:size=320x240:rate=10:duration=1' \
   -f lavfi -i 'color=c=blue:size=320x240:rate=10:duration=1' \
@@ -87,4 +87,4 @@ To inspect a particular visual moment, [request a decoded frame](./extract-video
 The [timeline reference](/guide/video-timeline) covers clocks, sidecars, budgets
 and partial results in detail.
 
-[See current Pro pricing](https://sylphxai.github.io/anymd/pricing?utm_source=docs_build_video_timeline).
+[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_build_video_timeline).

@@ -18,19 +18,19 @@ This is the default mode, and it is not a trial and not feature-limited: nothing
 
 ## Verifiable evidence: anymd Pro ($29 once)
 
-[anymd Pro](https://sylphxai.github.io/anymd/pricing) is a one-time, 100-year offline licence (US$29 or the local price in 16 currencies, tax included) for agents and teams that need verifiable source evidence:
+[anymd Pro](https://anymd.sylphx.com/pricing) is a one-time, 100-year offline licence (US$29 or the local price in 16 currencies, tax included) for agents and teams that need verifiable source evidence:
 
 - **PDF `cite_check`**: verify that a quoted passage appears on the cited page and area using extracted text and coordinates, not an AI opinion.
 - **Video timelines and frames (`video_timeline`, `render_frame`)**: bounded scene/chapter/transcript timelines and exact decoded frames with SHA-256 hashes.
 
-Buy on the web at [anymd Pro pricing](https://sylphxai.github.io/anymd/pricing) or run `anymd pro buy` in your terminal.
+Buy on the web at [anymd Pro pricing](https://anymd.sylphx.com/pricing) or run `anymd pro buy` in your terminal.
 
 ## Which to pick
 
 | You want | Use |
 |---|---|
 | Fast local conversion, search, outline, OCR and transcripts with no account | Free local `anymd` (MIT) |
-| Deterministic PDF `cite_check` and SHA-256 verifiable video frames offline | [anymd Pro ($29 once)](https://sylphxai.github.io/anymd/pricing) |
+| Deterministic PDF `cite_check` and SHA-256 verifiable video frames offline | [anymd Pro ($29 once)](https://anymd.sylphx.com/pricing) |
 | Embedding the converter in a Rust service or platform | `anymd-core`, `anymd-pdf` and `anymd-formats` crates |
 
 ## API stability for importers

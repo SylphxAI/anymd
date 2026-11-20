@@ -649,8 +649,8 @@ jobs:
             org.opencontainers.image.title=anymd
             org.opencontainers.image.description=Any file to clean Markdown for AI agents. A fast Rust CLI and MCP server.
             org.opencontainers.image.licenses=MIT
-            org.opencontainers.image.url=https://sylphxai.github.io/anymd/
-            org.opencontainers.image.documentation=https://sylphxai.github.io/anymd/
+            org.opencontainers.image.url=https://anymd.sylphx.com/
+            org.opencontainers.image.documentation=https://anymd.sylphx.com/
             org.opencontainers.image.vendor=Sylphx
             io.modelcontextprotocol.server.name=io.github.SylphxAI/anymd
             io.sylphx.native.source=${{ steps.stage.outputs.source }}

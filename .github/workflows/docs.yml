@@ -1,10 +1,7 @@
-# optimistic-merge: advisory — Deploys GitHub Pages docs site; docs build verification runs in verify.yml.
-name: Deploy Docs
+# optimistic-merge: advisory — Publishes only legacy URL redirects; the web app is deployed by Sylphx.
+name: Deploy Legacy Redirects
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -18,51 +15,24 @@ concurrency:
 
 jobs:
   build:
-    name: Build Docs Site
-    if: ${{ github.repository_visibility == 'public' }}
+    name: Build redirect-only artifact
+    if: ${{ github.repository_visibility == 'public' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
-        with:
-          bun-version: '1.4.4'
+      - name: Verify the canonical web is serving before switching Pages
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error https://anymd.sylphx.com/api/health | jq -e '.status == "ok" and .service == "anymd-web"'
+          for route in /pricing /recover /pro/thanks /guide/getting-started /studio /llms.txt; do
+            curl --fail --silent --show-error "https://anymd.sylphx.com${route}" -o /dev/null
+          done
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Set up Rust (wasm32 target)
-        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
-        with:
-          toolchain: '1.100.0'
-          targets: wasm32-unknown-unknown
-
-      - name: Cache Rust build
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-
-      # Must match the `wasm-bindgen` crate pinned in crates/anymd-wasm/Cargo.toml.
-      - name: Install wasm-bindgen CLI
-        uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2.90.5
-        with:
-          tool: wasm-bindgen@0.2.130
-
-      - name: Install wasm-opt
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends binaryen
-
-      - name: Build playground WebAssembly
-        run: bash scripts/build-wasm.sh
-
-      - name: Build docs
-        env:
-          ANYMD_OBS_PUBLISHABLE_KEY: ${{ vars.ANYMD_OBS_PUBLISHABLE_KEY }}
-          ANYMD_OBS_CAPTURE_URL: ${{ vars.ANYMD_OBS_CAPTURE_URL }}
-        run: bun run docs:build
-
-      - name: Verify playground assets
-        run: test -s docs/.vitepress/dist/wasm/anymd_wasm_bg.wasm && test -s docs/.vitepress/dist/wasm/anymd_wasm.js
+      - name: Build redirects only
+        run: python3 scripts/build-pages-redirect.py dist/pages
 
       - name: Setup Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
@@ -70,12 +40,12 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: docs/.vitepress/dist
+          path: dist/pages
 
   deploy:
     name: Deploy to GitHub Pages
     needs: build
-    if: ${{ github.repository_visibility == 'public' }}
+    if: ${{ github.repository_visibility == 'public' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
