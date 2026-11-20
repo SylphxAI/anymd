@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { appOrigin, asText, HttpError, safeNext } from './http';
 
 const sessionName = 'anymd_session';
-type Config = { origin: string; pk: string; sk: string; organization: string };
+export type Config = { origin: string; pk: string; sk: string; organization: string };
 export type User = { id: string; name: string | null; email: string | null; emailVerified: boolean };
 export function authConfig(): Config | null {
   const pk = process.env.SYLPHX_PUBLISHABLE_KEY?.trim();
@@ -55,7 +55,7 @@ export async function authCall(config: Config, request: Request, path: string, b
   return response.status === 204 ? {} : response.json();
 }
 
-async function verifiedUser(config: Config, request: Request, token: string): Promise<User | null> {
+export async function verifySessionUser(config: Config, request: Request, token: string): Promise<User | null> {
   let body;
   try { body = await authCall(config, request, '/v1/sessions/current', token, undefined, true); }
   catch (err) {
@@ -72,7 +72,7 @@ async function verifiedUser(config: Config, request: Request, token: string): Pr
 export async function session(request: Request, config: Config) {
   const token = await sessionToken();
   if (!token) return null;
-  const user = await verifiedUser(config, request, token);
+  const user = await verifySessionUser(config, request, token);
   return user ? { user, token } : null;
 }
 export async function sessionToken() { return (await cookies()).get(sessionName)?.value; }
@@ -88,7 +88,7 @@ export async function acceptTicket(request: Request, config: Config, ticket: unk
   if (typeof ticket !== 'string' || !/^[\w-]{20,512}$/.test(ticket)) throw new HttpError(401, 'auth_refused');
   const body = await authCall(config, request, '/v1/client/tickets:redeem', config.sk, {ticket});
   const token = asText(body?.session?.token);
-  if (!token || !await verifiedUser(config, request, token)) throw new HttpError(401, 'auth_refused');
+  if (!token || !await verifySessionUser(config, request, token)) throw new HttpError(401, 'auth_refused');
   (await cookies()).set(sessionName, token, cookieOptions(request, '/', 30 * 86400));
 }
 

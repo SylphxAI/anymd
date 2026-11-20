@@ -29,7 +29,7 @@ test('converts a local document and locates an exact source quote', async ({ pag
 
 test('shows the provider choices and one-time 16-currency pricing', async ({ page }) => {
   await page.goto('/pricing');
-  await expect(page.getByText('US$29', { exact: true })).toBeVisible();
+  await expect(page.getByText('$29', { exact: true })).toBeVisible();
   const currency = page.getByLabel('Currency');
   await expect(currency.locator('option')).toHaveCount(16);
   await currency.selectOption('HKD');

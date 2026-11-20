@@ -1,5 +1,5 @@
 import 'server-only';
-import { moneyAccessToken, requireAuth, session } from './auth';
+import { type Config, moneyAccessToken, requireAuth, session, type User } from './auth';
 import { appOrigin, canonicalOrigin, HttpError } from './http';
 import { productionMoney } from './money-production.generated';
 import { product, tokenProduct } from './catalog';
@@ -7,16 +7,23 @@ import { product, tokenProduct } from './catalog';
 type Money = typeof productionMoney;
 
 export function checkoutKey(request: Request, money: Money) {
-  const live = money.parent === productionMoney.parent && appOrigin(request) === canonicalOrigin;
+  const live = money.parent === productionMoney.parent && liveMoneyHost(request);
   const key = (live ? process.env.SYLPHX_MONEY_API_KEY : process.env.ANYMD_MONEY_TEST_API_KEY)?.trim();
   if (!key?.startsWith(live ? 'sylphx_sk_live_' : 'sylphx_sk_test_')) throw new HttpError(503, 'checkout_unconfigured');
   return key;
 }
+function liveMoneyHost(request: Request) {
+  const origin = appOrigin(request);
+  const host = request.headers.get('host');
+  const assigned = process.env.ANYMD_APP_ORIGIN?.trim();
+  const staging = assigned === origin && process.env.SYLPHX_MONEY_API_KEY?.trim().startsWith('sylphx_sk_live_') && /^https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.sylphx\.app$/i.test(origin);
+  return (origin === canonicalOrigin || staging) && host === new URL(origin).host && process.env.ANYMD_MONEY_MODE === 'live';
+}
+
 export function moneyConfig(request: Request): Money | null {
   // No production fallback in a preview. Test keys are issued by Money for a
   // separate environment; no browser option can choose a tenant or a key.
-  const origin = appOrigin(request);
-  if (origin === canonicalOrigin && request.headers.get('host') === new URL(canonicalOrigin).host && process.env.ANYMD_MONEY_MODE === 'live') return productionMoney;
+  if (liveMoneyHost(request)) return productionMoney;
   const pk = process.env.ANYMD_MONEY_TEST_KEY?.trim();
   const parent = process.env.ANYMD_MONEY_TEST_PARENT?.trim();
   if (!pk?.startsWith('sylphx_pk_test_') || !parent || parent === productionMoney.parent || !/^orgs\/org_[a-z0-9]+\/projects\/prj_[a-z0-9]+\/envs\/env_[a-z0-9]+$/.test(parent)) return null;
@@ -29,9 +36,14 @@ export async function moneyContext(request: Request) {
   const config = requireAuth();
   const active = await session(request, config);
   if (!active) throw new HttpError(401, 'unauthorized');
+  const ctx = moneyContextForSession(request, config, active);
+  if (!ctx) throw new HttpError(503, 'billing_unconfigured');
+  return ctx;
+}
+
+export function moneyContextForSession(request: Request, config: Config, active: {user: User; token: string}) {
   const money = moneyConfig(request);
-  if (!money) throw new HttpError(503, 'billing_unconfigured');
-  return { config, ...active, money, accessToken: () => moneyAccessToken(request, config, active.token) };
+  return money ? { config, ...active, money, accessToken: () => moneyAccessToken(request, config, active.token) } : null;
 }
 
 const serviceErrors = new Map([
