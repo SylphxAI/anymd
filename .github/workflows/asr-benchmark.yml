@@ -89,7 +89,7 @@ jobs:
         with:
           name: data-${{ matrix.dataset }}
           path: ${{ runner.temp }}/data
-          retention-days: 3
+          retention-days: 1
 
   build:
     name: build ${{ matrix.tool }} (${{ matrix.osk }})
@@ -143,7 +143,7 @@ jobs:
         with:
           name: tool-${{ matrix.tool }}-${{ matrix.osk }}
           path: ${{ runner.temp }}/tool.tgz
-          retention-days: 3
+          retention-days: 1
 
   bench:
     name: ${{ matrix.id }}
@@ -216,7 +216,7 @@ jobs:
           path: |
             ${{ runner.temp }}/out/summary.json
             ${{ runner.temp }}/out/results.jsonl
-          retention-days: 30
+          retention-days: 1
 
   # Does each runtime's Rust crate build into a binary on every anymd release target,
   # and what does it add to a minimal binary? (The CLI sizes above are the C++ tools.)
@@ -269,7 +269,7 @@ jobs:
         with:
           name: probe-${{ matrix.crate }}-${{ matrix.target }}
           path: ${{ runner.temp }}/probe-out/probe.json
-          retention-days: 30
+          retention-days: 1
 
   report:
     name: Report
@@ -322,4 +322,4 @@ jobs:
         with:
           name: asr-report
           path: report.md
-          retention-days: 90
+          retention-days: 1

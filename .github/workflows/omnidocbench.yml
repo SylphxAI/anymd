@@ -56,7 +56,7 @@ jobs:
         with:
           name: anymd-binary
           path: target/release/anymd
-          retention-days: 7
+          retention-days: 1
 
   predict:
     name: Pages ${{ matrix.shard }}
@@ -103,7 +103,7 @@ jobs:
         with:
           name: predictions-${{ strategy.job-index }}
           path: pred/
-          retention-days: 7
+          retention-days: 1
 
   evaluate:
     name: Official evaluator
@@ -233,4 +233,4 @@ jobs:
             evaluator/result/
             evaluator/configs/end2end.yaml
             pred-parts/**/timings-*.json
-          retention-days: 90
+          retention-days: 1
