@@ -14,6 +14,12 @@ export const documents = [...folders.flatMap((dir) => readdirSync(resolve(root, 
 const nav = [['Getting started','getting-started'],['CLI','cli'],['MCP tools','tools'],['Formats','formats'],['Cite-check','cite-check'],['Video timeline','video-timeline'],['Benchmarks','benchmarks'],['Migration','migration']];
 const aliases: Record<string, string> = { vs: 'vs/index' };
 
+export function canonicalDocPath(slug: string): string {
+  if (slug === 'guide/getting-started') return '/docs';
+  if (slug === 'vs/index') return '/vs';
+  return slug.startsWith('guide/') ? '/docs/' + slug.slice('guide/'.length) : '/' + slug;
+}
+
 export function getDoc(input: string) {
   const slug = aliases[input] ?? input;
   if (!documents.includes(slug)) return null;

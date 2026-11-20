@@ -30,9 +30,8 @@ export function SessionAction({ primary = false }: { primary?: boolean }) {
   const state = useSession();
   const path = usePathname();
   if (state && state !== 'error' && state.user) return <Link href="/dashboard" className={'button ' + (primary ? 'button-primary' : '')}>Dashboard</Link>;
-  const ready = state !== null && state !== 'error' && state.authConfigured;
-  const href = ready ? '/api/auth/google?next=/dashboard' : '/sign-in?next=' + encodeURIComponent(path === '/' ? '/dashboard' : path);
-  return <a className={'button google-button ' + (primary ? 'button-primary' : '')} href={href}><GoogleMark />Continue with Google</a>;
+  const href = '/sign-in?next=' + encodeURIComponent(path === '/' ? '/dashboard' : path);
+  return <Link className={'button sign-in-button ' + (primary ? 'button-primary' : '')} href={href}>Sign in</Link>;
 }
 
 export function SignOut() {

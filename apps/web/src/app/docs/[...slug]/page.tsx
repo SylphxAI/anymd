@@ -1,4 +1,4 @@
-import { Doc, documents, getDoc } from '@/lib/docs';
+import { Doc, canonicalDocPath, documents, getDoc } from '@/lib/docs';
 
 type Props = { params: Promise<{ slug: string[] }> };
 export const dynamicParams = false;
@@ -11,6 +11,6 @@ const key = (slug: string[]) => slug.length === 1 && !documents.includes(slug.jo
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const doc = getDoc(key(slug));
-  return doc ? { title: doc.title, description: doc.description, alternates: { canonical: '/docs/' + doc.slug.replace(/^guide\//, '') } } : {};
+  return doc ? { title: doc.title, description: doc.description, alternates: { canonical: canonicalDocPath(doc.slug) } } : {};
 }
 export default async function DocsPage({ params }: Props) { return <Doc name={key((await params).slug)} />; }
