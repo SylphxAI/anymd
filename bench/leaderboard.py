@@ -19,6 +19,7 @@ Numbers are never edited by hand: change the results, then run
 
 import argparse
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -30,7 +31,7 @@ README = ROOT / "README.md"
 VERSUS = ROOT / "docs" / "vs"
 HUB = VERSUS / "index.md"
 # Hand-written copy that quotes a comparison page's headline figures, besides the page itself.
-VERSUS_COPY = [ROOT / "docs" / "public" / "llms.txt"]
+VERSUS_COPY = [ROOT / "apps" / "web" / "public" / "llms.txt"]
 DISPLAY_NAMES = {"markitdown": "MarkItDown", "docling": "Docling", "marker": "Marker", "unstructured": "Unstructured",
                  "kreuzberg": "Kreuzberg", "pdftotext": "pdftotext"}
 
@@ -75,7 +76,7 @@ def secs(value):
 
 def mean(values):
     values = list(values)
-    return sum(values) / len(values) if values else None
+    return math.fsum(values) / len(values) if values else None
 
 
 def summarize(corpus, data):
@@ -139,7 +140,7 @@ def render(corpus, tools):
         s = summary[name]
         ok = [r for r in s["rows"].values() if r.get("status") == "ok"]
         overall = f"**{pct(s['overall'])}**" if s["overall"] == top else pct(s["overall"])
-        time_all = sum(r["seconds"] for r in ok)
+        time_all = math.fsum(r["seconds"] for r in ok)
         tokens_all = sum(r["tokens"] for r in ok)
         add(f"| {name} | {overall} | {s['coverage'][0]}/{s['coverage'][1]} | {pct(s['sentences'])} | "
             f"{pct(s['text_f1'])} | {pct(s['order'])} | {pct(s['tables'])} | {secs(time_all)} | {tokens_all:,} |")
@@ -177,7 +178,7 @@ def render(corpus, tools):
         rows = [summary[name]["rows"][d["id"]] for d in common]
         seconds = sorted(r["seconds"] for r in rows)
         median = seconds[len(seconds) // 2] if seconds else 0
-        add(f"| {name} | {secs(sum(seconds))} | {secs(median)} | {sum(r['tokens'] for r in rows):,} |")
+        add(f"| {name} | {secs(math.fsum(seconds))} | {secs(median)} | {sum(r['tokens'] for r in rows):,} |")
     add("")
 
     add("<details><summary>Every document (score · time)</summary>\n")
@@ -241,25 +242,25 @@ def headline(summary, order):
     out.append("| Reading order | " + " | ".join(pct(summary[n]["order"]) for n in order) + " |")
     out.append("| Docs converted | " + " | ".join(f"{summary[n]['coverage'][0]}/{summary[n]['coverage'][1]}" for n in order) + " |")
     out.append("| Time, all docs | " + " | ".join(
-        secs(sum(r["seconds"] for r in summary[n]["rows"].values() if r.get("status") == "ok")) for n in order) + " |")
+        secs(math.fsum(r["seconds"] for r in summary[n]["rows"].values() if r.get("status") == "ok")) for n in order) + " |")
     return "\n".join(out) + "\n"
 
 
 def fast_bullet(corpus, summary):
     """The README's speed claim: anymd's total on every document it converted, against each comparison tool."""
     ids = [d["id"] for d in corpus if summary["anymd"]["rows"].get(d["id"], {}).get("status") == "ok"]
-    mine = sum(summary["anymd"]["rows"][d]["seconds"] for d in ids)
+    mine = math.fsum(summary["anymd"]["rows"][d]["seconds"] for d in ids)
     full, partial = [], []
     for name in ("docling", "markitdown", "marker"):
         if name not in summary:
             continue
         rows = summary[name]["rows"]
         shared = [d for d in ids if rows.get(d, {}).get("status") == "ok"]
-        theirs = sum(rows[d]["seconds"] for d in shared)
+        theirs = math.fsum(rows[d]["seconds"] for d in shared)
         if len(shared) == len(ids):
             full.append(f"{name} {secs(theirs)} ({theirs / mine:,.0f}×)")
         else:
-            same = sum(summary["anymd"]["rows"][d]["seconds"] for d in shared)
+            same = math.fsum(summary["anymd"]["rows"][d]["seconds"] for d in shared)
             partial.append(f"{name} converted {len(shared)} of them in {secs(theirs)}, against anymd's {secs(same)} "
                            f"on the same {len(shared)} ({theirs / same:,.0f}×)")
     text = (f"- **Fast.** Native Rust converts in parallel, page by page. On the {len(ids)} benchmark documents, "
@@ -281,7 +282,7 @@ def version(meta, name):
 def totals(s, docs=None):
     """Seconds and output tokens over the documents a tool converted, or over `docs` (ids) only."""
     ok = [r for d, r in s["rows"].items() if r.get("status") == "ok" and (docs is None or d in docs)]
-    return sum(r["seconds"] for r in ok), sum(r["tokens"] for r in ok)
+    return math.fsum(r["seconds"] for r in ok), sum(r["tokens"] for r in ok)
 
 
 def both_converted(corpus, a, b):
@@ -305,7 +306,7 @@ def proof(corpus, summary, others, ours="anymd"):
     for other in sorted(full, key=lambda o: -summary[o]["overall"]):
         a, b = summary[ours], summary[other]
         (ta, ka), (tb, kb) = totals(a), totals(b)
-        out.append(f"- [vs {label(other)}](https://sylphxai.github.io/anymd/vs/{other}"
+        out.append(f"- [vs {label(other)}](https://anymd.sylphx.com/vs/{other}"
                    f"?utm_source=github&utm_medium=readme&utm_content=vs_{other}): "
                    f"**{pct(a['overall'])}** vs {pct(b['overall'])} · **{secs(ta)}** vs {secs(tb)} · "
                    f"**{fewer(ka, kb)} tokens**")

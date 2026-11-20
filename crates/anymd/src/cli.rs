@@ -4,7 +4,7 @@
 
 use std::io::{IsTerminal, Read, Write};
 
-use crate::lean::{read_text, result_text, search, ReadRender};
+use crate::lean::{ReadRender, read_text, result_text, search};
 use crate::schema::{ReadArgs, SearchArgs};
 use crate::source_access::SourceAccessPolicy;
 
@@ -19,6 +19,7 @@ Usage:
   anymd cite-check <pdf> <quote>... [-p <page>]  Verify PDF quote/page citations (anymd Pro)
   anymd mcp [--allow-dir=<path>]...   Run the MCP server on stdio
                                       (also the default when stdin is piped and no file is given)
+  anymd login                         Sign in and sync your offline Pro licence
   anymd setup [--dry-run] [--remove]  Add anymd to the MCP clients on this machine
                                       (Claude Code, Codex, Cursor, VS Code, Claude Desktop,
                                       Windsurf, Gemini CLI); --remove undoes it
@@ -69,6 +70,7 @@ pub enum Mode {
     Version,
     Setup(Vec<String>),
     Pro(Vec<String>),
+    Login(Vec<String>),
     Cli(Vec<String>),
 }
 
@@ -81,6 +83,7 @@ pub fn mode(arguments: &[String]) -> Mode {
         Some("version") => return Mode::Version,
         Some("setup") => return Mode::Setup(arguments[1..].to_vec()),
         Some("pro") => return Mode::Pro(arguments[1..].to_vec()),
+        Some("login") => return Mode::Login(arguments[1..].to_vec()),
         _ => {}
     }
     let only_server_flags = arguments
@@ -290,7 +293,9 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             return 1;
         }
         let Some((pdf, quotes)) = parsed.inputs.split_first() else {
-            eprintln!("anymd: cite-check needs a PDF path/URL and at least one quote (or read/search output)");
+            eprintln!(
+                "anymd: cite-check needs a PDF path/URL and at least one quote (or read/search output)"
+            );
             return 2;
         };
         if quotes.is_empty() {

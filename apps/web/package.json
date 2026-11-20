@@ -1,0 +1,28 @@
+{
+  "name": "@anymd/web",
+  "private": true,
+  "scripts": {
+    "dev": "python3 ../../scripts/render-web-money.py && next dev --port 3000",
+    "build": "python3 ../../scripts/render-web-money.py && next build",
+    "start": "next start --port 3000",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "lucide-react": "^1.0.0",
+    "next": "16.4.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.0",
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "4.3.5",
+    "typescript": "^6.0.0"
+  }
+}

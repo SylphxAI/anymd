@@ -1,6 +1,8 @@
+mod login;
+
 use anymd::{
-    cli, discover_compat, http_transport, pro, setup, source_access::SourceAccessPolicy,
-    PdfReaderMcp, SERVER_VERSION,
+    PdfReaderMcp, SERVER_VERSION, cli, discover_compat, http_transport, pro, setup,
+    source_access::SourceAccessPolicy,
 };
 use rmcp::transport::async_rw::AsyncRwTransport;
 use rmcp::{ServerHandler, ServiceExt};
@@ -17,6 +19,7 @@ fn main() -> anyhow::Result<()> {
         return anymd::video_request::worker(&arguments[1..]).map_err(anyhow::Error::msg);
     }
     match cli::mode(&arguments) {
+        cli::Mode::Login(arguments) => login::run(&arguments),
         cli::Mode::Doctor => {
             doctor();
             Ok(())

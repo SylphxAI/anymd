@@ -34,7 +34,7 @@ pub fn convert(bytes: &[u8], filename: &str) -> Result<String, JsError> {
 }
 
 /// Like `convert`, but a JSON string with the Markdown and a few facts:
-/// `{ markdown, format, title, units, unit_noun, tokens }`.
+/// `{ markdown, format, title, units, unit_noun, tokens, source_units }`.
 #[wasm_bindgen(js_name = convertDetailed)]
 pub fn convert_detailed(bytes: &[u8], filename: &str) -> Result<String, JsError> {
     let document = open(bytes, filename).map_err(|message| JsError::new(&message))?;
@@ -46,6 +46,7 @@ pub fn convert_detailed(bytes: &[u8], filename: &str) -> Result<String, JsError>
         "unit_noun": noun(&document),
         "tokens": estimate_tokens(&markdown),
         "markdown": markdown,
+        "source_units": document.units.iter().map(|unit| serde_json::json!({"label": unit.label, "text": unit.markdown})).collect::<Vec<_>>(),
     });
     Ok(value.to_string())
 }

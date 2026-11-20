@@ -36,6 +36,7 @@ ocr-vlm = ["anymd-ocr-vlm/candle"]
 ignored = ["sylphx-mcp-kit"]
 
 [dependencies]
+getrandom = "0.4.3"
 hex = "0.4.3"
 anymd-ocr-vlm = { workspace = true }
 image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "gif", "tiff", "bmp", "webp"] }

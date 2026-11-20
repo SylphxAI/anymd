@@ -1,0 +1,2 @@
+[test]
+pathIgnorePatterns = ["**/apps/web/e2e/**"]

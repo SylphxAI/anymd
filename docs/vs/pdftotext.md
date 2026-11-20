@@ -2,7 +2,7 @@
 title: "anymd vs pdftotext: a pdftotext alternative with tables and OCR"
 titleTemplate: false
 description: "anymd vs Poppler pdftotext on 38 documents: AgentDocBench 96.4 vs 42.2. On 20 born-digital PDFs, 0.87 s vs 0.88 s, plus tables, OCR and Office files."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Same 38 public documents · Open benchmark</p>

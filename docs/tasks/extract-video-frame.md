@@ -13,7 +13,7 @@ It does not promise a frame exists at every millisecond.
 
 The free MIT core reads video metadata, chapters and subtitles. Pro adds
 timestamped decoded frames and [bounded timelines](./build-video-timeline).
-[See current Pro pricing](https://sylphxai.github.io/anymd/pricing?utm_source=docs_extract_video_frame).
+[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_extract_video_frame).
 
 ## Make a small local video
 
@@ -24,7 +24,7 @@ model, API key or transcription download is needed.
 ```sh
 mkdir anymd-frames && cd anymd-frames
 npm install --no-save @sylphx/anymd@8.5.5
-curl -fsSLO https://sylphxai.github.io/anymd/examples/mcp-call.mjs
+curl -fsSLO https://anymd.sylphx.com/examples/mcp-call.mjs
 ffmpeg -hide_banner -loglevel error -f lavfi \
   -i 'testsrc2=size=320x240:rate=10:duration=2' -c:v ffv1 demo.mkv
 ```
@@ -80,4 +80,4 @@ before treating the image as an original-resolution source.
 See the [video reference](/guide/video-timeline#frames) for decoding and budget
 semantics, or [build a timeline](./build-video-timeline) before picking frames.
 
-[See current Pro pricing](https://sylphxai.github.io/anymd/pricing?utm_source=docs_extract_video_frame).
+[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_extract_video_frame).

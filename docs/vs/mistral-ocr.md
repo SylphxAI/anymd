@@ -2,7 +2,7 @@
 title: "anymd vs Mistral OCR: local Rust MCP alternative to cloud OCR"
 titleTemplate: false
 description: "anymd vs Mistral OCR: local Rust MCP server and CLI with no API key or uploads vs Mistral's metered cloud OCR API. Free MIT core or US$29 once."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Local Rust MCP &amp; CLI vs metered Mistral OCR API</p>

@@ -2,7 +2,7 @@
 title: "anymd vs LlamaParse: a local LlamaParse alternative with no API key"
 titleTemplate: false
 description: "anymd vs LlamaParse: local Rust MCP server and CLI with no API key or file uploads vs metered LlamaCloud parsing. Free MIT core or US$29 once."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Local Rust MCP &amp; CLI vs hosted LlamaCloud API</p>

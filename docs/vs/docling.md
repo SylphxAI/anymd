@@ -2,7 +2,7 @@
 title: "anymd vs Docling: a fast Docling alternative without Python"
 titleTemplate: false
 description: "anymd vs Docling on the same 38 documents: AgentDocBench 96.4 vs 93.0, 11.5 s vs 2,432.4 s, 14% fewer tokens. One Rust binary, no Python or PyTorch."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Same 38 public documents · Open benchmark</p>

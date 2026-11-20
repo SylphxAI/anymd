@@ -2,7 +2,7 @@
 title: "anymd vs Kreuzberg: a Kreuzberg alternative that keeps tables"
 titleTemplate: false
 description: "anymd vs Kreuzberg on the same 38 documents: AgentDocBench 96.4 vs 81.7, 11.5 s vs 16.0 s, 19% fewer tokens, table cells F1 92.2 vs 38.4. MCP built in."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Same 38 public documents · Open benchmark</p>

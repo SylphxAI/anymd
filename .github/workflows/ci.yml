@@ -171,8 +171,8 @@ jobs:
       - name: Check Code Quality (Biome)
         run: bun run check
 
-      - name: Test docs error reporting
-        run: bun test test/docs-observability.test.ts
+      - name: Test web public contracts and error reporting
+        run: bun test test/docs-observability.test.ts test/web-commerce.test.ts test/vs-pages.test.ts
 
       - name: Public copy matches product.json and benchmark results
         run: bun run check:copy

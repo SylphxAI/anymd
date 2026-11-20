@@ -42,7 +42,7 @@ def metadata(version: str) -> str:
         + "Author-email: Sylphx <hi@sylphx.com>\n"
         + "License-Expression: MIT\n"
         + "License-File: LICENSE\n"
-        + "Project-URL: Homepage, https://sylphxai.github.io/anymd/\n"
+        + "Project-URL: Homepage, https://anymd.sylphx.com/\n"
         + "Project-URL: Source, https://github.com/SylphxAI/anymd\n"
         + "Project-URL: Changelog, https://github.com/SylphxAI/anymd/blob/main/CHANGELOG.md\n"
         + "Classifier: Programming Language :: Rust\n"

@@ -36,7 +36,7 @@ fn test_policy() -> LicencePolicy<'static> {
 }
 
 /// Where Pro is explained and sold.
-pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pricing";
+pub const PRO_URL: &str = "https://anymd.sylphx.com/pricing";
 
 /// Env var holding the token (wins over the token file).
 pub const TOKEN_ENV: &str = "ANYMD_PRO_TOKEN";
@@ -649,7 +649,7 @@ mod tests {
         let message = required.to_string();
         assert_eq!(
             message,
-            "Cite-check is part of anymd Pro ($29 one-time offline licence). See current pricing or buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pricing"
+            "Cite-check is part of anymd Pro ($29 one-time offline licence). See current pricing or buy it with `anymd pro buy`. Learn more: https://anymd.sylphx.com/pricing"
         );
         let result = required_result(&required);
         assert_eq!(result.is_error, Some(false));

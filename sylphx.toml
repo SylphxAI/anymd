@@ -1,17 +1,37 @@
 version = "1"
 
 [project]
-name = "@sylphx/pdf-reader-mcp"
+# Existing Platform project gold-gnat-rn7xc3. The first release uses its assigned host only.
+name = "anymd"
+default_env = "production"
 
 [build]
-strategy = "auto"
-context = "docs"
+strategy = "dockerfile"
+dockerfile = "Dockerfile"
+context = "."
+
+# Auth's organization, publishable key and server secret come from the
+# environment's Auth binding. Attach the Money key via a Platform Secret Binding
+# on the intended environment, not a repository-defined secret mapping.
+[environments.production.env.ANYMD_MONEY_MODE]
+value = "live"
 
 [[services]]
 name = "web"
 type = "web"
-port = 80
-watch_paths = ["docs/**"]
+port = 3000
+instance_type = "micro"
+path_prefixes = ["/", "/api/health", "/api/auth", "/api/anymd"]
+watch_paths = ["apps/web/**", "docs/**", "crates/**", "vendor/**", "config/money-catalogue.json", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "scripts/build-wasm.sh", "scripts/render-web-money.py", "bun.lock", "package.json", "Dockerfile", ".dockerignore", "sylphx.toml"]
+
+[services.build]
+strategy = "dockerfile"
+dockerfile = "Dockerfile"
+context = "."
+
+[services.health]
+mode = "http"
+path = "/api/health"
 
 [ci]
 merge = "optimistic"

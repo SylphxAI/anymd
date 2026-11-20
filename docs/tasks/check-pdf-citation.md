@@ -12,7 +12,7 @@ support, **not whether the statement is true**, and does not independently
 confirm OCR accuracy.
 
 Free reading, searching and PDF inspection stay MIT licensed and ungated.
-[See current Pro pricing](https://sylphxai.github.io/anymd/pricing?utm_source=docs_check_pdf_citation).
+[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_check_pdf_citation).
 
 ## Make a PDF you can reproduce
 
@@ -22,12 +22,12 @@ Python's standard library; no font files, model, OCR engine or API key are neede
 ```sh
 mkdir anymd-citations && cd anymd-citations
 npm install --no-save @sylphx/anymd@8.5.5
-curl -fsSLO https://sylphxai.github.io/anymd/examples/mcp-call.mjs
-curl -fsSLO https://sylphxai.github.io/anymd/examples/make-citation-pdf.py
+curl -fsSLO https://anymd.sylphx.com/examples/mcp-call.mjs
+curl -fsSLO https://anymd.sylphx.com/examples/make-citation-pdf.py
 python3 make-citation-pdf.py
 ```
 
-The [generator](https://sylphxai.github.io/anymd/examples/make-citation-pdf.py) writes `citation.pdf`, a one-page
+The [generator](https://anymd.sylphx.com/examples/make-citation-pdf.py) writes `citation.pdf`, a one-page
 612 × 792 PDF with native text `Deterministic quote` at (50, 700). The
 [MCP client](/examples/mcp-call.mjs) starts the installed release, confines file
 access to this directory and prints the tool result. It does not upload the PDF.
@@ -81,4 +81,4 @@ extraction. There can be several supported occurrences: presence is not uniquene
 The [cite-check reference](/guide/cite-check) covers request limits, optional
 OCR, geometry granularity, hash checks and failure cases.
 
-[See current Pro pricing](https://sylphxai.github.io/anymd/pricing?utm_source=docs_check_pdf_citation).
+[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_check_pdf_citation).

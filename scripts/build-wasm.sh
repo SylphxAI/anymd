@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Build the browser playground's WebAssembly module into docs/public/wasm/.
+# Build the browser playground's WebAssembly module into apps/web/public/wasm/.
 # Needs: rustup target wasm32-unknown-unknown, wasm-bindgen CLI matching the
 # pinned `wasm-bindgen` crate (crates/anymd-wasm/Cargo.toml). wasm-opt is optional.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
-out="$root/docs/public/wasm"
+out="$root/apps/web/public/wasm"
 CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
 export CARGO_HOME
 export PATH="$CARGO_HOME/bin:$PATH"
@@ -25,7 +25,7 @@ hash -r
   echo "wasm-bindgen CLI does not match Cargo.lock ($bindgen_version)" >&2
   exit 1
 }
-cargo build --manifest-path "$root/Cargo.toml" -p anymd-wasm --profile wasm-release --target wasm32-unknown-unknown
+cargo build --manifest-path "$root/Cargo.toml" -p anymd-wasm --locked --profile wasm-release --target wasm32-unknown-unknown
 target_dir="$(cargo metadata --manifest-path "$root/Cargo.toml" --format-version 1 --no-deps | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')"
 rm -rf "$out"
 wasm-bindgen --target web --no-typescript --out-dir "$out" \

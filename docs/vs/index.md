@@ -2,7 +2,7 @@
 title: "PDF and Office to Markdown converters compared | anymd"
 titleTemplate: false
 description: "anymd, Docling, Kreuzberg, Unstructured, MarkItDown, Marker and pdftotext on the same 38 documents: AgentDocBench scores, time and output tokens."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparisons · 7 tools · Same 38 public documents · Open benchmark</p>

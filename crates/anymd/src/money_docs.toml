@@ -1,12 +1,4 @@
 title = "anymd Pro"
-description = "Video moments you can cite, quotes you can check. Works on your machine."
-base_path = "/anymd"
-origin = "https://sylphxai.github.io"
-lang = "en"
-host = "github-pages"
-include = ["pricing.md", "recover.md"]
-edit_url = "https://github.com/SylphxAI/anymd/edit/main/docs/storefront/{path}"
-toc_max_level = 3
 
 [money]
 api_origin = "https://api.sylphx.com"
@@ -25,9 +17,9 @@ title = "Buy anymd Pro"
 description = "Cite video moments and check PDF quotes on your own machine. Buy a 100-year Pro licence with one payment. See the current price before you buy."
 consent_version = "waiver-v1"
 consent_text = "I ask for my licence to be supplied immediately after I pay. I understand that once it is supplied I lose my right to cancel this purchase and to a refund on that ground."
-success_url = "https://sylphxai.github.io/anymd/pricing?session_id={CHECKOUT_SESSION_ID}"
-cancel_url = "https://sylphxai.github.io/anymd/pricing?checkout=cancelled"
-recovery_url = "https://sylphxai.github.io/anymd/recover"
+success_url = "https://anymd.sylphx.com/pro/thanks?session_id={CHECKOUT_SESSION_ID}"
+cancel_url = "https://anymd.sylphx.com/pricing?checkout=cancelled"
+recovery_url = "https://anymd.sylphx.com/recover"
 cta_label = "Buy anymd Pro"
 recovery_label = "Email my licence recovery link"
 

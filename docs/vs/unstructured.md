@@ -2,7 +2,7 @@
 title: "anymd vs Unstructured: a faster Unstructured alternative for RAG"
 titleTemplate: false
 description: "anymd vs Unstructured on the same 38 documents: AgentDocBench 96.4 vs 81.2, 11.5 s vs 346.5 s, 11% fewer tokens, table cells F1 92.2 vs 38.4. No Python."
-image: https://sylphxai.github.io/anymd/og-image.png
+image: https://anymd.sylphx.com/og-image.png
 ---
 
 <p class="pro-trust">Comparison · Same 38 public documents · Open benchmark</p>
