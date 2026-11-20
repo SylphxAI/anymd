@@ -34,6 +34,10 @@ const tab = ref<'rendered' | 'raw'>('rendered');
 const dragging = ref(false);
 const { state: copyState, copy: write, reset: resetCopy } = useClipboard();
 const manual = ref<HTMLTextAreaElement | null>(null);
+const proHintDismissed = ref(false);
+function dismissProHint() {
+  proHintDismissed.value = true;
+}
 watch(result, resetCopy);
 const renderer = shallowRef<Renderer | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -307,6 +311,14 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
         <span data-testid="tokens">≈ {{ result.tokens.toLocaleString() }} tokens</span>
         <span data-testid="elapsed">{{ Math.max(1, Math.round(result.ms)) }} ms</span>
       </div>
+      <div v-if="!proHintDismissed" class="pg-pro-aha" data-testid="pro-aha">
+        <span>
+          <strong>Need verifiable citations?</strong>
+          <a :href="withBase('/pricing?entry_surface=playground_aha')">anymd Pro ($29 once)</a>
+          checks PDF quotes against the page cited (<code>cite_check</code>) and extracts exact SHA-256 video frames offline.
+        </span>
+        <button type="button" class="pg-pro-dismiss" aria-label="Dismiss Pro tip" @click="dismissProHint">Dismiss</button>
+      </div>
       <div class="pg-tabs" role="tablist">
         <button role="tab" data-testid="tab-rendered" data-obs-control="rendered-tab" :aria-selected="tab === 'rendered'" :class="{ on: tab === 'rendered' }" @click="tab = 'rendered'">Rendered</button>
         <button role="tab" data-testid="tab-raw" data-obs-control="raw-tab" :aria-selected="tab === 'raw'" :class="{ on: tab === 'raw' }" @click="tab = 'raw'">Markdown</button>
@@ -365,6 +377,17 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
   display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 16px; font-size: .85rem;
   color: var(--vp-c-text-2); background: var(--vp-c-bg-soft); border-bottom: 1px solid var(--vp-c-divider);
 }
+.pg-pro-aha {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  padding: 8px 16px; font-size: .82rem; color: var(--vp-c-text-2);
+  background: var(--vp-c-brand-soft); border-bottom: 1px solid var(--vp-c-divider);
+}
+.pg-pro-aha a { color: var(--vp-c-brand-1); font-weight: 600; text-decoration: underline; }
+.pg-pro-dismiss {
+  padding: 2px 10px; border-radius: 999px; font-size: .78rem;
+  border: 1px solid var(--vp-c-divider); color: var(--vp-c-text-2); background: transparent; cursor: pointer;
+}
+.pg-pro-dismiss:hover { border-color: var(--vp-c-brand-1); color: var(--vp-c-text-1); }
 .pg-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--vp-c-divider); }
 .pg-tabs [role='tab'] { padding: 4px 10px; font-size: .9rem; color: var(--vp-c-text-2); border-bottom: 2px solid transparent; }
 .pg-tabs [role='tab'].on { color: var(--vp-c-text-1); border-bottom-color: var(--vp-c-brand-1); }

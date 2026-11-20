@@ -69,7 +69,7 @@ features:
 <!-- /generated:formerly -->
 
 <!-- generated:hosted -->
-<p class="cit-fine">Prefer a hosted service? Use <a href="https://sylphx.com/ai">Sylphx AI parse</a> to convert documents without installing a local runtime, and pay per page. See <a href="./guide/hosted">Local and hosted</a>.</p>
+<p class="cit-fine">Need verifiable PDF quote checks and video frames? Get <a href="https://sylphxai.github.io/anymd/pricing">anymd Pro</a> to verify PDF quotes and cite exact video frames offline for US$29 once. See <a href="./pricing">anymd Pro</a>.</p>
 <!-- /generated:hosted -->
 
 <video src="/demo.mp4" poster="/demo-poster.png" autoplay muted loop playsinline preload="metadata" width="820" style="display:block;margin:32px auto;max-width:100%;height:auto;border-radius:12px" aria-label="Real terminal session: anymd converts a PDF, searches a folder, reads a spreadsheet, and Claude Code answers through the anymd MCP server"></video>

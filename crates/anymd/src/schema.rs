@@ -794,16 +794,17 @@ pub struct Citation {
     pub id: Option<String>,
     #[schemars(
         length(min = 1, max = 4096),
-        description = "Nonempty quote, at most 4096 UTF-16 units; request total at most 64000 units."
+        description = "Nonempty quote or direct read/search output snippet, at most 4096 UTF-16 units; request total at most 64000 units."
     )]
     pub quote: String,
+    #[serde(default)]
     #[schemars(
         range(min = 1),
-        description = "One-based physical PDF page, not a printed page label. At most 20 distinct pages per request."
+        description = "One-based physical PDF page, not a printed page label. Optional when quote includes a read `<!-- page N -->` marker or search `- p.N:` locator. At most 20 distinct pages per request."
     )]
     pub page: u32,
-    /// Bottom-left PDF coordinates, finite and with positive area. No padding.
-    pub bounding_box: CiteBoundingBox,
+    /// Optional bottom-left PDF coordinates, finite and with positive area. Omit to verify the quote anywhere on the page and return its supporting boxes.
+    pub bounding_box: Option<CiteBoundingBox>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]

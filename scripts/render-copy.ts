@@ -62,12 +62,12 @@ const readmeFormerly = (p: Product) =>
 const docsFormerly = (p: Product) =>
   `<p class="cit-fine" style="text-align:center">Formerly <strong>${p.formerly}</strong>. See <a href="./guide/migration">Migration</a>.</p>`;
 
-// Keep the hosted alternative focused on the customer’s choice.
+// Keep the Pro upgrade alternative focused on verifiable citations and video evidence.
 const hostedLine = (p: Product) =>
-  `Prefer a hosted service? Use [${p.hosted.name}](${p.hosted.url}) to ${p.hosted.blurb}`;
+  `Need verifiable PDF quote checks and video frames? Get [${p.hosted.name}](${p.hosted.url}) to ${p.hosted.blurb}`;
 
 const docsHosted = (p: Product) =>
-  `<p class="cit-fine">Prefer a hosted service? Use <a href="${p.hosted.url}">${p.hosted.name}</a> to ${p.hosted.blurb} See <a href="./guide/hosted">Local and hosted</a>.</p>`;
+  `<p class="cit-fine">Need verifiable PDF quote checks and video frames? Get <a href="${p.hosted.url}">${p.hosted.name}</a> to ${p.hosted.blurb} See <a href="./pricing">anymd Pro</a>.</p>`;
 
 const docsHero = (p: Product) =>
   [`  text: ${JSON.stringify(p.tagline)}`, `  tagline: ${JSON.stringify(subtitle(p))}`].join('\n');

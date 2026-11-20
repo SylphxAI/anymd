@@ -56,9 +56,9 @@ Metered credit tiers add up quickly when agents re-read folders, parse long repo
 
 Because anymd parses PDF glyph coordinates and Office XML natively in Rust without uploading files or polling cloud jobs, born-digital PDFs return in milliseconds (`0.87 s` total across 20 born-digital PDFs on 4 CPUs). One command—`npx -y @sylphx/anymd setup`—wires Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf and Gemini CLI with `outline`, token-budgeted `read` with `<!-- page N -->` anchors, `search` and `inspect`.
 
-### Hosted option when you do want an API
+### Verifiable PDF citations and video frames with anymd Pro
 
-Prefer not to run a local binary? [Sylphx AI parse](https://sylphx.com/ai) runs the exact same `anymd-core`, `anymd-pdf` and `anymd-formats` Rust crates as a pay-per-page hosted API, so local development and cloud jobs stay consistent.
+Need deterministic quote verification (`cite_check`) or SHA-256 verifiable video frames? [anymd Pro](/pricing?entry_surface=seo_vs-llamaparse) unlocks both offline in the same Rust binary for **US$29** once.
 
 ## When LlamaParse is the better fit
 
@@ -94,7 +94,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 - **Cite-check** compares up to 100 quotes per request with the page and area each one cites, and reports whether it matches, doesn't match, or needs more evidence. It uses the text and its position on the page, not an AI opinion.
 - **Video timelines and frames** show scenes, chapters and subtitle or transcript timings, and the frame behind a cited moment with its actual decoded timestamp and a SHA-256 hash of the image.
 
-Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Prefer a hosted service? Use [Sylphx AI parse](https://sylphx.com/ai) to convert documents without installing a local runtime, and pay per page.
+Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Buy on the web at [anymd Pro](/pricing?entry_surface=seo_vs-llamaparse) or run `anymd pro buy` in your terminal.
 
 <p>
   <a class="pro-buy" href="/anymd/pricing?entry_surface=seo_vs-llamaparse">See anymd Pro</a>

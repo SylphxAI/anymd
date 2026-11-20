@@ -1,47 +1,48 @@
 ---
-description: "anymd is the free, local mode; Sylphx AI parse is the hosted, metered mode of the same crates. What each costs and which to pick."
+description: "anymd is the free, local MIT core; anymd Pro ($29 once) adds offline PDF cite_check and verifiable video timelines and frames."
 ---
 
-# Local and hosted
+# Local core and anymd Pro
 
-anymd has two modes, and they are the same engine. This page says which is which, what each costs, and why the crate APIs stay stable.
+anymd runs locally on your machine. This page explains what is in the free MIT core, what [anymd Pro](/pricing) ($29 once) adds, and how the underlying Rust crates stay semver-stable for downstream importers.
 
-## Local: anymd (free, MIT, this repository)
+## Local core: anymd (free, MIT, this repository)
 
 The `anymd` binary is the MCP server and the CLI. It converts PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and video on your machine. Nothing is uploaded, no account or API key is needed, and the license is MIT.
 
 - One Rust binary (`crates/anymd`), plus the converter crates below it.
-- Every feature described on this site, including local doc-VLM OCR and transcripts.
+- Every conversion feature described on this site, including local doc-VLM OCR and transcripts.
 - No network call unless you pass a URL, and then only that URL is fetched.
 
-This is the default mode, and it is the one this documentation describes. It is not a trial and not feature-limited: nothing that was free has moved to the hosted mode.
+This is the default mode, and it is not a trial and not feature-limited: nothing that was free has moved to Pro.
 
-## Hosted: Sylphx AI parse (metered)
+## Verifiable evidence: anymd Pro ($29 once)
 
-[Sylphx AI parse](https://sylphx.com/ai) is the hosted document-parse service, for callers that do not want a local runtime: a server, an agent platform or a product that sends a document and gets page-indexed Markdown back. It is billed per page and needs a Sylphx AI account. The billing, accounts and service live in the Sylphx platform; the parser lives here.
+[anymd Pro](https://sylphxai.github.io/anymd/pricing) is a one-time, 100-year offline licence (US$29 or the local price in 16 currencies, tax included) for agents and teams that need verifiable source evidence:
 
-The hosted service imports the `anymd-core`, `anymd-pdf` and `anymd-formats` crates at a pinned published version. It is not a fork and not a second parser: a fix merged here reaches both the local binary and the hosted service.
+- **PDF `cite_check`**: verify that a quoted passage appears on the cited page and area using extracted text and coordinates, not an AI opinion.
+- **Video timelines and frames (`video_timeline`, `render_frame`)**: bounded scene/chapter/transcript timelines and exact decoded frames with SHA-256 hashes.
+
+Buy on the web at [anymd Pro pricing](https://sylphxai.github.io/anymd/pricing) or run `anymd pro buy` in your terminal.
 
 ## Which to pick
 
 | You want | Use |
 |---|---|
-| Privacy, offline use, no account, no per-page cost | Local `anymd` (this repository) |
-| No local runtime, or conversion inside a server or platform | Hosted [Sylphx AI parse](https://sylphx.com/ai) |
-| Both, with the same output | Local for the developer, hosted for the service; the crates are the same |
-
-Local and hosted produce the same Markdown from the same document, because the conversion code is the same code. Hosted adds the service around it: an endpoint, metering and a model runtime for text-less pages.
+| Fast local conversion, search, outline, OCR and transcripts with no account | Free local `anymd` (MIT) |
+| Deterministic PDF `cite_check` and SHA-256 verifiable video frames offline | [anymd Pro ($29 once)](https://sylphxai.github.io/anymd/pricing) |
+| Embedding the converter in a Rust service or platform | `anymd-core`, `anymd-pdf` and `anymd-formats` crates |
 
 ## API stability for importers
 
-The public converter API of `anymd-core`, `anymd-pdf` and `anymd-formats` is stable within a major version. The hosted service pins an exact published version, so a patch or minor release here never forces a change there:
+The public converter API of `anymd-core`, `anymd-pdf` and `anymd-formats` is stable within a major version. Downstream services pin an exact published version, so a patch or minor release here never forces a change there:
 
 - a patch release fixes behaviour and never changes the public API;
 - a minor release adds API and never breaks an existing one;
-- a breaking API change ships only in a major version, and the service moves to it deliberately, not automatically.
+- a breaking API change ships only in a major version, and importers move to it deliberately, not automatically.
 
-This is why the two modes cannot drift into separate engines: there is one converter, one set of crates, and one version the service pins.
+This is why there is one converter and one set of crates across local CLI, MCP and embedded deployments.
 
-## anymd Pro
+## Get anymd Pro
 
-[anymd Pro](/pricing) is a separate, one-off licence for two local-only extras: video timelines with exact hashed frames, and cite-check. It runs offline with no account, works with future releases, and is not affected by the hosted service. The free core and the Pro operations both stay in this repository's local binary.
+[anymd Pro](/pricing) runs 100% offline with no account, works with future releases, and is delivered instantly on the checkout confirmation page or automatically via `anymd pro buy`.

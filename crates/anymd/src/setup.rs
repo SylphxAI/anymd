@@ -55,6 +55,9 @@ pub fn run(arguments: &[String]) -> i32 {
                     "\nDone. Restart your editor or agent, then ask it to read a file with anymd."
                 );
             }
+            if !options.remove && crate::pro::current_license().is_none() {
+                println!("{}", crate::pro::discovery_hint());
+            }
             0
         }
         Err(error) => {

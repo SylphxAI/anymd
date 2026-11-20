@@ -20,7 +20,7 @@ Give your agent the video frame behind a claim, and check whether a PDF quote ap
 
 Pay once. Use Pro offline for 100 years, with no account required. The price below includes applicable tax. [Terms apply](https://sylphxai.github.io/anymd/legal/pro-terms).
 
-Works with anymd 8.4.0 or later. The core stays free and MIT licensed. Check your version in the [setup guide](https://sylphxai.github.io/anymd/guide/pro-licence-testing).
+Works with anymd 8.4.0 or later. The core stays free and MIT licensed. Check your version in the [getting started guide](https://sylphxai.github.io/anymd/guide/getting-started).
 
 <!-- keel:checkout -->
 

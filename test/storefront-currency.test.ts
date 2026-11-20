@@ -113,6 +113,9 @@ async function mount(
     URL,
     URLSearchParams,
     TextEncoder,
+    TextDecoder,
+    Uint8Array,
+    atob,
     CustomEvent: MockCustomEvent,
     crypto: webcrypto,
     document: {
@@ -164,7 +167,8 @@ async function mount(
       };
     },
   };
-  const exportExpr = '({ mountCheckout, extractAttributionMetadata, appendAttributionParams })';
+  const exportExpr =
+    '({ mountCheckout, extractAttributionMetadata, appendAttributionParams, decodeLicenceClaims })';
   const exportsObj = runInNewContext(`${source.replace(/^export /gm, '')}\n${exportExpr}`, sandbox);
   await exportsObj.mountCheckout(root);
   const submit = async () => {
@@ -182,9 +186,13 @@ async function mount(
     },
     attributes,
     display,
+    status,
     button,
     submit,
     storage,
+    decodeLicenceClaims: exportsObj.decodeLicenceClaims as (
+      token: string
+    ) => Record<string, unknown> | null,
     extractAttributionMetadata: exportsObj.extractAttributionMetadata as (
       search?: string
     ) => Record<string, string>,
@@ -352,6 +360,9 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
     expect(checkoutIdx).toBeGreaterThan(-1);
     expect(detailsIdx).toBeGreaterThan(checkoutIdx);
     expect(html).not.toContain('Money');
+    expect(html).not.toContain('pro-licence-testing');
+    expect(html).toContain('data-keel-money-cli-activate');
+    expect(html).toMatch(/id="money-checkout-pricing-price-field"[^>]*\bhidden\b/);
     expect(html).toContain('Buy a 100-year Pro licence with one payment.');
     const recoverHtml = readFileSync(new URL('recover.html', prebuilt), 'utf8');
     expect(html).toContain('Apple Pay · Google Pay · Link');
@@ -764,5 +775,29 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
       expect(footerEnd).toBeGreaterThan(-1);
       expect(consentPos).toBeGreaterThan(footerEnd);
     }
+  });
+
+  test('decodeLicenceClaims decodes 2-part payload.sig tokens and ?checkout=cancelled rotates nonce with calm status', async () => {
+    const checkout = await mount('USD', { USD: '2900' }, { search: '?checkout=cancelled' });
+    expect(checkout.attributes.get('data-keel-money-state')).toBe('cancelled');
+    expect(checkout.status.textContent).toContain('Checkout cancelled — no charge was made.');
+    expect(checkout.storage.get('keel:money:attempt-nonce')).not.toBe('same-offline-attempt');
+
+    const payloadJson = JSON.stringify({ plan: 'pro', product: 'anymd', issuedAt: 1700000000 });
+    const payloadB64 = Buffer.from(payloadJson).toString('base64url');
+    const fakeSigB64 = Buffer.from('not-json-ed25519-signature-bytes').toString('base64url');
+    const twoPartToken = `${payloadB64}.${fakeSigB64}`;
+    expect(checkout.decodeLicenceClaims(twoPartToken)).toEqual({
+      plan: 'pro',
+      product: 'anymd',
+      issuedAt: 1700000000,
+    });
+    const threePartToken = `eyJhbGciOiJFZERTQSJ9.${payloadB64}.${fakeSigB64}`;
+    expect(checkout.decodeLicenceClaims(threePartToken)).toEqual({
+      plan: 'pro',
+      product: 'anymd',
+      issuedAt: 1700000000,
+    });
+    expect(checkout.decodeLicenceClaims('malformed')).toBeNull();
   });
 });

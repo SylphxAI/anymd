@@ -44,7 +44,7 @@ Scores are 0 to 100; higher is better. Overall is the mean of the 12 category sc
 
 | Tool | Time | Output tokens | Measured |
 |---|---|---|---|
-| anymd | 4.58 s | 146,660 | [2026-10-01](https://github.com/SylphxAI/anymd/actions/runs/36794302607) |
+| anymd | 4.59 s | 146,660 | [2026-10-01](https://github.com/SylphxAI/anymd/actions/runs/36794302607) |
 | Docling | 1,723.3 s | 162,290 | [2026-09-25](https://github.com/SylphxAI/anymd/actions/runs/36119654329) |
 | Kreuzberg | 7.94 s | 139,422 | [2026-09-25](https://github.com/SylphxAI/anymd/actions/runs/36119654329) |
 | Unstructured | 187.4 s | 145,360 | [2026-09-25](https://github.com/SylphxAI/anymd/actions/runs/36119654329) |

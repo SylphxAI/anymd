@@ -104,6 +104,11 @@ class StorefrontPostprocessTest(unittest.TestCase):
         self.assertEqual(once, twice)
         for key in ("gclid", "gbraid", "wbraid", "fbclid", "entry_surface"):
             self.assertIn(f'"{key}"', once)
+        self.assertIn("parts.length === 2 ? parts[0] : parts.length === 3 ? parts[1] : null", once)
+        self.assertIn('returnParams.get("checkout")', once)
+        self.assertIn("Checkout cancelled — no charge was made.", once)
+        self.assertIn("data-keel-money-cli-activate", once)
+        self.assertIn("hasBrowserActivator", once)
 
     def test_postprocess_pricing_html_injects_16_currency_ga4_values(self) -> None:
         root = Path(__file__).resolve().parent.parent

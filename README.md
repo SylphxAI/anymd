@@ -9,7 +9,7 @@ PDF, Word, PowerPoint, Excel, EPUB, HTML and web pages, images (OCR), audio and 
 <!-- /generated:lead -->
 
 <!-- generated:hosted -->
-Prefer a hosted service? Use [Sylphx AI parse](https://sylphx.com/ai) to convert documents without installing a local runtime, and pay per page.
+Need verifiable PDF quote checks and video frames? Get [anymd Pro](https://sylphxai.github.io/anymd/pricing) to verify PDF quotes and cite exact video frames offline for US$29 once.
 <!-- /generated:hosted -->
 
 [![npm](https://mark.sylphx.com/npm/v/@sylphx/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://www.npmjs.com/package/@sylphx/anymd)
@@ -306,25 +306,23 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 
 **[Get anymd Pro for US$29 →](https://sylphxai.github.io/anymd/pricing?utm_source=github&utm_medium=readme&utm_content=pro_section)**
 
-Pay in any of 16 currencies at checkout; the price includes applicable tax. One licence per person, valid offline for 100 years, with future releases included. It needs anymd 8.4.0 or later. Delivery is instant: copy your licence token from the checkout confirmation page, or [recover it](https://sylphxai.github.io/anymd/recover) later. From a terminal, `anymd pro buy` opens the checkout in your browser and saves the licence on this machine, so there is nothing to copy. Pro funds anymd's development.
+Pay in any of 16 currencies at checkout; the price includes applicable tax. One licence per person, valid offline for 100 years, with future releases included. It needs anymd 8.4.0 or later. Delivery is instant: copy your licence token from the checkout confirmation page, or [recover it](https://sylphxai.github.io/anymd/recover) later. We also email a link to retrieve it. From a terminal, `anymd pro buy` shows the live price in your currency before you accept the immediate-supply terms, opens checkout in your browser, and saves the licence on this machine automatically. Pro funds anymd's development.
 
-| | anymd | anymd Pro | Sylphx AI parse |
-|---|---|---|---|
-| Price | Free, MIT | US$29 once | Pay per page |
-| Runs | On your machine | On your machine, licence checked offline | Hosted API, nothing to install |
-| You get | `read`, `outline`, `search`, `inspect`, OCR, transcripts, MCP server and CLI | Everything in anymd, plus `cite_check` and video timelines with exact frames | The same conversion crates, called over an API |
-| Start | `npx -y @sylphx/anymd setup` | [Buy Pro](https://sylphxai.github.io/anymd/pricing?utm_source=github&utm_medium=readme&utm_content=plans) | [sylphx.com/ai](https://sylphx.com/ai?utm_source=github&utm_medium=readme&utm_content=plans) |
+| | anymd | anymd Pro |
+|---|---|---|
+| Price | Free, MIT | US$29 once (16 currencies, tax included) |
+| Runs | On your machine | On your machine, licence checked offline |
+| You get | `read`, `outline`, `search`, `inspect`, OCR, transcripts, MCP server and CLI | Everything in anymd, plus `cite_check` and video timelines with exact frames |
+| Start | `npx -y @sylphx/anymd setup` | [Buy Pro](https://sylphxai.github.io/anymd/pricing?utm_source=github&utm_medium=readme&utm_content=plans) or `anymd pro buy` |
 
-## Local and hosted
+## Local core and Pro
 
-anymd has two modes, and only one of them runs on your machine:
+anymd runs on your machine in both tiers:
 
-- **Local (free, MIT, this repository).** The `anymd` binary, the MCP server, the CLI and the `anymd-core`, `anymd-pdf` and `anymd-formats` crates. It converts on your machine, uploads nothing, and needs no API key.
-- **Hosted ([Sylphx AI parse](https://sylphx.com/ai), pay per page).** Convert documents through an API without installing a local runtime. A Sylphx AI account is required. The free local core and the separate anymd Pro licence are unchanged.
+- **Local core (free, MIT, this repository).** The `anymd` binary, the MCP server, the CLI and the `anymd-core`, `anymd-pdf` and `anymd-formats` crates. It converts on your machine, uploads nothing, and needs no API key.
+- **anymd Pro ([US$29 once](https://sylphxai.github.io/anymd/pricing?utm_source=github&utm_medium=readme&utm_content=hosted), 100-year offline licence).** Unlocks deterministic PDF `cite_check` and SHA-256 verifiable video timelines and frame extraction in the same local binary, with no account and no recurring subscription.
 
-Sylphx AI parse is not a different parser and not a fork: the hosted service imports these crates, so a fix here reaches both modes and the two never drift into separate engines. Only the free local binary lives in this repository; the hosted service lives in the Sylphx platform.
-
-For importers, the `anymd-core`, `anymd-pdf` and `anymd-formats` crate APIs are stable within a major version: no breaking change ships without a major version bump, so the service's pinned version keeps working and is moved forward deliberately, never forced by a patch or minor release.
+For Rust importers, the `anymd-core`, `anymd-pdf` and `anymd-formats` crate APIs are stable within a major version: no breaking change ships without a major version bump.
 
 ## Security
 

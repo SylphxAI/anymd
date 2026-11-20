@@ -58,7 +58,7 @@ Overall is the mean of the category scores below, so every category weighs the s
 
 | Tool | Total time | Median per document | Output tokens |
 |---|---|---|---|
-| anymd | 4.58 s | 0.04 s | 146,660 |
+| anymd | 4.59 s | 0.04 s | 146,660 |
 | docling | 1,723.3 s | 63.9 s | 162,290 |
 | kreuzberg | 7.94 s | 0.20 s | 139,422 |
 | unstructured | 187.4 s | 7.74 s | 145,360 |

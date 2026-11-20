@@ -27,9 +27,9 @@ Run `npx -y @sylphx/anymd setup` (or install via `cargo install anymd`, `brew in
 
 `anymd` rebuilds words from PDF glyph gaps, orders two-column papers correctly, recovers borderless tables, strips running headers, and adds `<!-- page N -->` anchors. Use `outline` to jump straight to a section and `read` with a token budget so huge files stay inside context.
 
-### 3. 100% local privacy—or hosted metered parsing when you have no runtime
+### 3. 100% local privacy—plus verifiable PDF quote checks and video frames with Pro
 
-Files stay on your machine (`--allow-dir` locks MCP scope to one folder). Need a hosted API without running a binary? [Sylphx AI parse](https://sylphx.com/ai) runs the exact same `anymd-core`, `anymd-pdf`, and `anymd-formats` crates billed per page. See [Local and hosted](/guide/hosted?entry_surface=seo_pdf-and-office-to-markdown-mcp).
+Files stay on your machine (`--allow-dir` locks MCP scope to one folder). Need deterministic PDF quote verification (`cite_check`) or SHA-256 verifiable video frames? [anymd Pro](https://sylphxai.github.io/anymd/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp) unlocks both offline in the same binary for a one-time **US$29** payment. See [Local core and anymd Pro](/guide/hosted?entry_surface=seo_pdf-and-office-to-markdown-mcp).
 
 ## Measured on AgentDocBench (38 Docs / 12 Categories)
 

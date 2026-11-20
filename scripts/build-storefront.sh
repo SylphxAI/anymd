@@ -48,15 +48,49 @@ python3 scripts/storefront_artifact.py verify "$ROOT" "$KEEL_REV"
 
 # VitePress owns the rest of dist. Copy only the Keel pages and their runtime,
 # never its root index or other generated site metadata.
-mkdir -p "$DIST"
+mkdir -p "$DIST" "$DIST/pricing" "$DIST/recover" "$DIST/pro" "$DIST/docs"
 cp "$PREBUILT/pricing.html" "$DIST/pricing.html"
+cp "$PREBUILT/pricing.html" "$DIST/pricing/index.html"
 cp "$PREBUILT/recover.html" "$DIST/recover.html"
+cp "$PREBUILT/recover.html" "$DIST/recover/index.html"
+cat > "$DIST/pro/index.html" <<'EOF'
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>anymd Pro — Redirecting to pricing</title>
+<link rel="canonical" href="https://sylphxai.github.io/anymd/pricing">
+<meta http-equiv="refresh" content="0; url=/anymd/pricing">
+<script>location.replace("/anymd/pricing" + location.search + location.hash);</script>
+</head>
+<body><p>Redirecting to <a href="/anymd/pricing">anymd Pro pricing</a>…</p></body>
+</html>
+EOF
+cat > "$DIST/docs.html" <<'EOF'
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>anymd Docs — Redirecting to Getting started</title>
+<link rel="canonical" href="https://sylphxai.github.io/anymd/guide/getting-started">
+<meta http-equiv="refresh" content="0; url=/anymd/guide/getting-started">
+<script>location.replace("/anymd/guide/getting-started" + location.search + location.hash);</script>
+</head>
+<body><p>Redirecting to <a href="/anymd/guide/getting-started">anymd documentation</a>…</p></body>
+</html>
+EOF
+cp "$DIST/docs.html" "$DIST/docs/index.html"
 rm -rf "$DIST/_docs" "$DIST/_keel"
 cp -R "$PREBUILT/_docs" "$DIST/"
 cp -R "$PREBUILT/_keel" "$DIST/"
 
 test -s "$DIST/pricing.html"
+test -s "$DIST/pricing/index.html"
 test -s "$DIST/recover.html"
+test -s "$DIST/recover/index.html"
+test -s "$DIST/pro/index.html"
+test -s "$DIST/docs.html"
+test -s "$DIST/docs/index.html"
 grep -q 'data-keel-money-checkout' "$DIST/pricing.html"
 grep -q 'data-keel-money-form="checkout"' "$DIST/pricing.html"
 grep -q 'data-keel-money-form="recover"' "$DIST/recover.html"

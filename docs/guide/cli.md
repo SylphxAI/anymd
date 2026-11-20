@@ -40,6 +40,8 @@ node ids and title paths. With no `--node`, conversion and paging stay unchanged
 | `anymd - [options]` | Convert stdin (the format is detected from the bytes) |
 | `anymd outline <file\|url> [--format tree\|json]` | Show the document tree (tree by default; `--json` also selects JSON) |
 | `anymd search <query> [path\|url...]` | Search files and directories (default: `.`) |
+| `anymd cite-check <pdf> <quote>... [-p <page>]` | Verify PDF quote and page citations, or pass `read`/`search` output directly ([anymd Pro](/pricing), $29 once) |
+| `anymd pro status \| buy \| activate <token>` | Check, buy (`--currency <CODE>`), or activate an [anymd Pro](/pricing) offline licence ($29 once) |
 | `anymd mcp [--allow-dir=<path>]...` | Run the MCP server on stdio |
 | `anymd setup [--dry-run] [--remove]` | Add anymd to the MCP clients on this machine; `--remove` undoes it |
 | `anymd setup ocr` | Download and SHA-256-verify the doc-VLM OCR engine and its weights (~2 GB); opts into CPU inference |

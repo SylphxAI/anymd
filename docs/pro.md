@@ -19,7 +19,7 @@ Give your agent the video frame behind a claim, and check whether a PDF quote ap
 
 <p class="pro-trust">Pay once. Use Pro offline for 100 years, with no account required. The <a href="https://sylphxai.github.io/anymd/pricing" target="_self">checkout price</a> includes applicable tax. <a href="/anymd/legal/pro-terms">Terms apply</a>.</p>
 
-Works with anymd 8.4.0 or later. The core stays free and MIT licensed. Check your version in the [setup guide](/guide/pro-licence-testing).
+Works with anymd 8.4.0 or later. The core stays free and MIT licensed. Check your version in the [getting started guide](/guide/getting-started).
 
 ## Why it matters
 
@@ -98,6 +98,3 @@ Pro is digital content delivered immediately: at checkout you ask us to supply i
 
 **Who sells it?**
 Sylphx Limited, a company registered in England and Wales (company number 16438428). See the [anymd Pro terms](/legal/pro-terms) and [Privacy](/legal/privacy).
-
-
-For licence-delivery testing, see [Test Pro licence activation](/guide/pro-licence-testing).
