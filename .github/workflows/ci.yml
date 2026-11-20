@@ -140,7 +140,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Validate GitHub Actions workflows
-        uses: SylphxAI/.github/.github/actions/workflow-lint@3778944553b3f1d2a017832d343c2f844a226725 # main
+        uses: SylphxAI/.github/.github/actions/workflow-lint@d123f464e4e76ec1fcb960e9a3d158dadbf2fdf0 # main
         with:
           contract-mode: enforce
 
