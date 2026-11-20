@@ -43,3 +43,39 @@ test('shows the provider choices and one-time 16-currency pricing', async ({ pag
   await expect(page.getByRole('main').getByText('Continue with Google', { exact: true })).toBeVisible();
   await expect(page.getByText('Continue with GitHub', { exact: true })).toBeVisible();
 });
+
+test('pricing and its Pro alias show four concrete benefits before checkout', async ({ page }) => {
+  for (const path of ['/pricing', '/pro']) {
+    await page.goto(path);
+    const plan = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Anymd Pro', exact: true }) });
+    const benefits = plan.getByRole('listitem');
+    await expect(benefits).toHaveText([
+      'Everything in Free OSS',
+      'PDF cite-check with exact page & bounding-box proof',
+      'Hashed video-frame timeline extraction & citations',
+      'Local CLI & MCP sync via anymd login across your machines · 100-year licence',
+    ]);
+    await expect(plan.locator('li svg[aria-hidden="true"]')).toHaveCount(4);
+    expect(await benefits.last().evaluate((last) => last.getBoundingClientRect().bottom)).toBeLessThanOrEqual(
+      await plan.getByText('$29', { exact: true }).evaluate((price) => price.getBoundingClientRect().top),
+    );
+  }
+});
+
+test('header and hero send signed-out users to the provider chooser', async ({ page }) => {
+  await page.route('**/api/auth/session', (route) => route.fulfill({ json: { authConfigured: true, user: null } }));
+  const session = page.waitForResponse('**/api/auth/session');
+  await page.goto('/');
+  await session;
+  const header = page.getByRole('banner').getByRole('link', { name: 'Sign in', exact: true });
+  const hero = page.getByRole('main').getByRole('link', { name: 'Sign in', exact: true });
+  for (const link of [header, hero]) {
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', '/sign-in?next=%2Fdashboard');
+  }
+  await hero.click();
+  await expect(page).toHaveURL('/sign-in?next=%2Fdashboard');
+  const chooser = page.getByRole('main');
+  await expect(chooser.getByRole('link', { name: 'Continue with Google' })).toHaveAttribute('href', '/api/auth/google?next=%2Fdashboard');
+  await expect(chooser.getByRole('link', { name: 'Continue with GitHub' })).toHaveAttribute('href', '/api/auth/github?next=%2Fdashboard');
+});

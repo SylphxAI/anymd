@@ -16,10 +16,6 @@ export default {
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'X-Frame-Options', value: 'DENY' },
       ] },
-      { source: '/:path*',
-        has: [{ type: 'host', value: '[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.sylphx\\.app' }],
-        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
-      },
     ];
   },
 };

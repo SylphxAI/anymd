@@ -113,7 +113,7 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
   .wrap { width:calc(100% - 36px); }
   .header-row { min-height:64px; }
   .header-actions { gap:10px; }
-  .header-actions .google-button { font-size:12px; padding-inline:9px; }
+  .header-actions .sign-in-button { font-size:12px; padding-inline:9px; }
   .main-nav, .github-header { display:none; }
   .mobile-menu { display:block; position:relative; }
   .mobile-menu summary { list-style:none; display:grid; place-items:center; min-width:35px; min-height:42px; }
