@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.5.14
+
+### Patch Changes
+
+- Make `cite_check` accept `read` and `search` output directly without requiring manual `bounding_box` coordinates, and add the `anymd cite-check` CLI command.
+- Update `anymd pro buy` to show live pricing in your currency before checkout and save the offline licence automatically; note anymd Pro ($29 once) in MCP server instructions, `anymd setup`, `anymd doctor`, and package READMEs.
+- Update docs and storefront pages, including dark-mode `/pricing`, `/vs/` comparison pages, and post-checkout licence recovery fixes.
+
 ## 8.5.13
 
 ### Patch Changes
