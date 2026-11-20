@@ -195,6 +195,24 @@
   transform: translateY(-1px);
 }
 
+.VPHomeHero .VPButton[href*='/pricing'] {
+  border-color: var(--vp-c-brand-1);
+  background: var(--cit-soft);
+  color: var(--vp-c-text-1);
+  font-weight: 650;
+}
+
+.dark .VPHomeHero .VPButton[href*='/pricing'] {
+  border-color: rgba(195, 245, 60, 0.55);
+  background: rgba(195, 245, 60, 0.12);
+  color: var(--cit);
+}
+
+.VPHomeHero .VPButton[href*='/pricing']:hover {
+  border-color: var(--vp-c-brand-1);
+  background: rgba(195, 245, 60, 0.22);
+}
+
 /* ---------------------------------------------------------------- features */
 .VPHomeFeatures .container {
   padding-top: 24px;
@@ -662,14 +680,13 @@
   outline: 2px solid var(--vp-c-brand-1);
   outline-offset: 4px;
 }
-/* Consent is part of the page, never a floating cover over the install flow. */
+/* Consent is a static in-flow band at document bottom, never a top overlay. */
 .pro-consent-wrap {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
-  padding: 0 24px;
-  background: var(--vp-c-bg);
+  position: static;
+  margin-top: 12px;
 }
 .pro-cookie-link {
-  max-width: 1152px; margin: 0 auto; font-size: 13px; line-height: 1.5;
+  margin: 0; font-size: 13px; line-height: 1.5;
 }
 .pro-cookie-link a {
   scroll-margin-top: 80px;
@@ -677,29 +694,40 @@
   color: var(--vp-c-text-1); text-decoration: underline; text-underline-offset: 3px;
 }
 .pro-consent {
-  display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center;
-  justify-content: space-between; max-width: 1152px; margin: 0 auto; padding: 20px;
-  border: 1px solid var(--vp-c-divider); border-radius: 4px;
+  position: static;
+  display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center;
+  justify-content: space-between; margin: 8px 0 0; padding: 16px 20px;
+  border: 1px solid var(--vp-c-divider); border-radius: 6px;
   background: var(--vp-c-bg-elv); color: var(--vp-c-text-1);
-  font-size: 14px; line-height: 1.6;
+  font-size: 13.5px; line-height: 1.55;
 }
-.pro-consent > span:first-child { flex: 1 1 560px; }
-.pro-consent a { text-decoration: underline; text-underline-offset: 3px; }
-.pro-consent-actions { display: flex; flex: 1 1 340px; gap: 8px; }
+.pro-consent > span:first-child { flex: 1 1 540px; color: var(--vp-c-text-2); }
+.pro-consent a { color: var(--vp-c-text-1); text-decoration: underline; text-underline-offset: 3px; }
+.pro-consent-actions { display: flex; flex: 1 1 320px; max-width: 420px; gap: 8px; }
 .pro-consent button {
   flex: 1; min-height: 44px; padding: 8px 10px;
-  border: 1px solid var(--vp-c-divider); border-radius: 4px;
+  border: 1px solid var(--vp-c-divider); border-radius: 6px;
   background: var(--vp-c-bg-soft); color: var(--vp-c-text-1);
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
-.pro-consent button:hover { border-color: var(--vp-c-brand-1); }
+.pro-consent button:hover,
+.pro-consent button[aria-pressed='true'] { border-color: var(--vp-c-brand-1); }
 .pro-consent-wrap :is(a, button):focus-visible {
   outline: 2px solid var(--vp-c-brand-1); outline-offset: 3px;
 }
-@media (max-width: 959px) {
-  .Layout .VPNav { top: 0; margin-top: var(--vp-layout-top-height, 0px); }
-  .Layout .VPContent { margin-top: 0; }
-  .Layout .VPLocalNav { padding-top: 0; }
+@media (max-width: 639px) {
+  .pro-consent { padding: 14px 16px; }
+  .pro-consent-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    max-width: none;
+  }
+  .pro-consent button {
+    padding: 8px 6px;
+    font-size: 12px;
+    line-height: 1.25;
+  }
 }
 
 /* Pro buy fallback note and trust line. */

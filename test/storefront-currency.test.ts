@@ -740,7 +740,7 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
     }
   });
 
-  test('storefront CSS overrides Keel font variables so __keel_absent_alias_ui never resolves on body', () => {
+  test('storefront CSS overrides Keel font variables, defaults to dark theme, and keeps cookie banner static at document bottom with favicons', () => {
     const recoverHtml = readFileSync(new URL('recover.html', prebuilt), 'utf8');
     for (const pageHtml of [html, recoverHtml]) {
       const styleMatch = pageHtml.match(/<style data-anymd-storefront>([\s\S]*?)<\/style>/);
@@ -749,7 +749,20 @@ describe('generated Keel storefront SEO, layout, and attribution', () => {
       expect(css).toContain('--keel-font-ui: var(--sf-sans);');
       expect(css).toContain('--keel-asset-font-ui: var(--sf-sans);');
       expect(css).toContain('font-family: var(--sf-sans);');
+      expect(css).toContain('color-scheme: dark;');
+      expect(css).toContain('--sf-paper: #0a0d07;');
+      expect(css).toMatch(/\.anymd-sf-consent\s*\{[^}]*position:\s*static;/);
       expect(css).not.toContain('__keel_absent_alias_ui');
+      expect(pageHtml).toContain(
+        '<link rel="icon" type="image/svg+xml" href="/anymd/favicon.svg">'
+      );
+      expect(pageHtml).toContain(
+        '<link rel="icon" href="/anymd/favicon.ico" sizes="16x16 32x32 48x48">'
+      );
+      const footerEnd = pageHtml.indexOf('</footer>');
+      const consentPos = pageHtml.indexOf('id="anymd-sf-consent"');
+      expect(footerEnd).toBeGreaterThan(-1);
+      expect(consentPos).toBeGreaterThan(footerEnd);
     }
   });
 });

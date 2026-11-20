@@ -17,6 +17,9 @@ hero:
       text: Get started
       link: /guide/getting-started
     - theme: alt
+      text: Get Pro ($29 once)
+      link: /pricing
+    - theme: alt
       text: Try it in your browser
       link: /playground
 

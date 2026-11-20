@@ -72,6 +72,14 @@ Every tool ran on GitHub-hosted runners (Linux x86_64, 4 CPUs), timed as a fresh
 
 **anymd** is for agents that read PDFs, Office files, EPUB, HTML, scans and media through one MCP server on any CPU, with page anchors to cite and tables kept as Markdown. It is free and MIT licensed.
 
+## Cloud APIs and other libraries
+
+Three popular tools are not in the local AgentDocBench run above—two are metered cloud APIs requiring API keys and uploads, and one is an AGPL-3.0 Python library not yet submitted to `bench/`—so we compare architecture, privacy, licensing and pricing head to head:
+
+- **[anymd vs LlamaParse](/vs/llamaparse)**: local MIT Rust binary with no API key or file uploads vs LlamaCloud's metered credit-per-page parsing API.
+- **[anymd vs Mistral OCR](/vs/mistral-ocr)**: instant native PDF and Office parsing offline vs Mistral AI's cloud vision OCR API billed per 1,000 pages.
+- **[anymd vs PyMuPDF4LLM](/vs/pymupdf4llm)**: permissive MIT Rust CLI and MCP server across PDF, Office and media vs Artifex's AGPL-3.0 Python PDF library.
+
 ## How the scores were measured
 
 Every tool ran on GitHub-hosted Linux x86_64 runners with 4 CPUs, through its own CLI or Python API with default options unless its page says otherwise. Time is the wall time of a fresh process per file, start-up and model loading included. The scoring does not know which tool produced an output. GPUs, long-running servers and releases newer than the ones listed were not measured. The corpus, ground truth, scoring and raw results are public in [`bench/`](https://github.com/SylphxAI/anymd/tree/main/bench), and anyone can rerun them or [submit a tool](/guide/benchmarks#submit-a-tool).
