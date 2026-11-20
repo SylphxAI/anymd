@@ -16,12 +16,13 @@ Usage:
   anymd - [options]                   Convert stdin
   anymd outline <file|url> [--format tree|json]  Show the heading tree
   anymd search <query> [path|url...]  Search files and directories (default: .)
+  anymd cite-check <pdf> <quote>... [-p <page>]  Verify PDF quote/page citations (anymd Pro)
   anymd mcp [--allow-dir=<path>]...   Run the MCP server on stdio
                                       (also the default when stdin is piped and no file is given)
   anymd setup [--dry-run] [--remove]  Add anymd to the MCP clients on this machine
                                       (Claude Code, Codex, Cursor, VS Code, Claude Desktop,
                                       Windsurf, Gemini CLI); --remove undoes it
-  anymd pro status | buy | activate <token> Show, buy or activate an anymd Pro licence
+  anymd pro status | buy | activate <token> Show, buy or activate an anymd Pro licence ($29 once)
   anymd doctor                        Print version and optional tool availability
   anymd version                       Print the version
 
@@ -268,7 +269,11 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
     }
     let is_outline = arguments.first().map(String::as_str) == Some("outline");
     let is_search = arguments.first().map(String::as_str) == Some("search");
-    let parsed = match parse(if is_search || is_outline {
+    let is_cite_check = matches!(
+        arguments.first().map(String::as_str),
+        Some("cite-check" | "cite_check")
+    );
+    let parsed = match parse(if is_search || is_outline || is_cite_check {
         &arguments[1..]
     } else {
         &arguments[..]
@@ -279,7 +284,82 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             return 2;
         }
     };
-    let (text, failed) = if is_outline {
+    let (text, failed) = if is_cite_check {
+        if let Err(required) = crate::pro::require_pro("Cite-check") {
+            eprintln!("{required}");
+            return 1;
+        }
+        let Some((pdf, quotes)) = parsed.inputs.split_first() else {
+            eprintln!("anymd: cite-check needs a PDF path/URL and at least one quote (or read/search output)");
+            return 2;
+        };
+        if quotes.is_empty() {
+            eprintln!("anymd: cite-check needs at least one quote (or read/search output)");
+            return 2;
+        }
+        let page = parsed
+            .pages
+            .as_deref()
+            .and_then(|p| p.parse::<u32>().ok())
+            .unwrap_or(0);
+        let citations: Vec<crate::schema::Citation> = quotes
+            .iter()
+            .map(|q| crate::schema::Citation {
+                id: None,
+                quote: q.clone(),
+                page,
+                bounding_box: None,
+            })
+            .collect();
+        let is_url = pdf.starts_with("http://") || pdf.starts_with("https://");
+        let inspect_args = crate::schema::InspectArgs {
+            citations: Some(citations),
+            normalization: Some(crate::schema::CiteNormalization::WhitespaceV1),
+            operation: crate::schema::InspectOperation::CiteCheck,
+            timeline: None,
+            timestamps_ms: None,
+            expected_source_sha256: None,
+            transcript: None,
+            sources: vec![crate::schema::PdfEvidenceSource {
+                path: (!is_url).then(|| pdf.clone()),
+                url: is_url.then(|| pdf.clone()),
+                pages: None,
+                regions: None,
+            }],
+            profile: None,
+            sample_pages: None,
+            include_metadata: None,
+            scale: None,
+            max_pages: None,
+            max_regions: None,
+            max_pixels_per_page: None,
+            include_image: None,
+            timeout_ms: None,
+            max_output_chars: None,
+            languages: None,
+            ocr: None,
+        };
+        let rt = match tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+        {
+            Ok(rt) => rt,
+            Err(e) => {
+                eprintln!("anymd: {e}");
+                return 1;
+            }
+        };
+        match rt.block_on(crate::cite_check::inspect(inspect_args, policy.clone())) {
+            Ok(res) => (
+                format!("{}\n", result_text(&res)),
+                res.is_error == Some(true),
+            ),
+            Err(err) => {
+                eprintln!("anymd: {}", err.message);
+                return 2;
+            }
+        }
+    } else if is_outline {
         if parsed.inputs.len() != 1 {
             eprintln!("anymd: outline needs one file or URL");
             return 2;

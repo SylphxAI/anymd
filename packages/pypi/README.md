@@ -57,4 +57,8 @@ Neither framework is imported by `import anymd`. See the
 selection, errors, async limits and metadata handling. Framework versions may
 require a newer Python than the base API.
 
+## anymd Pro ($29 once)
+
+Core conversion, search, outline, OCR and transcripts are free and MIT licensed. For deterministic PDF quote verification (`cite_check`) and SHA-256 verifiable video timelines and frames (`video_timeline`, `render_frame`), get a 100-year offline licence for **US$29 once** via `anymd pro buy` or at https://sylphxai.github.io/anymd/pricing.
+
 Documentation, benchmarks and source: https://github.com/SylphxAI/anymd. MIT licence.

@@ -1085,8 +1085,13 @@ const LICENCE_STORAGE_PREFIX = "keel:money:licence:";
 // Decoding is only a display hint: the activation consumer verifies signatures.
 export function decodeLicenceClaims(token) {
   try {
-    const segment = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    const bytes = Uint8Array.from(atob(segment), (c) => c.charCodeAt(0));
+    if (typeof token !== "string") return null;
+    const parts = token.trim().split(".");
+    const raw = parts.length === 2 ? parts[0] : parts.length === 3 ? parts[1] : null;
+    if (!raw) return null;
+    const segment = raw.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = segment.padEnd(segment.length + ((4 - (segment.length % 4)) % 4), "=");
+    const bytes = Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
     const claims = JSON.parse(new TextDecoder().decode(bytes));
     return claims && typeof claims === "object" ? claims : null;
   } catch { return null; }
@@ -1118,14 +1123,26 @@ function presentLicence(root, config, token, autoActivate = false) {
       }
     };
   }
+  const hasBrowserActivator =
+    root.getAttribute("data-keel-money-browser-activator") === "1" ||
+    Boolean(typeof window !== "undefined" && window.__keelMoneyBrowserActivator);
   const activate = root.querySelector("[data-keel-money-activate-browser]");
   if (activate) {
-    activate.removeAttribute("hidden");
-    activate.onclick = () => emit("keel:money:activate");
+    if (hasBrowserActivator) {
+      activate.removeAttribute("hidden");
+      activate.onclick = () => emit("keel:money:activate");
+    } else {
+      activate.setAttribute("hidden", "");
+    }
+  }
+  const cliNode = root.querySelector("[data-keel-money-cli-activate]");
+  if (cliNode) {
+    cliNode.textContent = `${product} pro activate '${token}'`;
+    cliNode.removeAttribute("hidden");
   }
   const claims = decodeLicenceClaims(token);
-  if (claims?.product === product) {
-    try { window.localStorage.setItem(`${LICENCE_STORAGE_PREFIX}${product}`, JSON.stringify({ ...claims, token })); }
+  if (claims && (!claims.product || claims.product === product)) {
+    try { window.localStorage.setItem(`${LICENCE_STORAGE_PREFIX}${product}`, JSON.stringify({ ...claims, product, token })); }
     catch { /* Storage can be blocked; activation still works. */ }
   }
   emit("keel:money:licence-ready");
@@ -1368,7 +1385,17 @@ async function redeemReturnedSession(root, config) {
       // Never render a licence token without the browser-bound claim_secret from
       // sessionStorage, even if a response payload unexpectedly includes one.
       if (claimSecret && tokens.length > 0 && tokens[0].token && tokenNode) {
-        setStatus(root, "paid", "Payment verified. Copy your offline licence key below or activate in this browser.");
+        const hasBrowserActivator =
+          root.getAttribute("data-keel-money-browser-activator") === "1" ||
+          Boolean(typeof window !== "undefined" && window.__keelMoneyBrowserActivator);
+        const cliProduct = config.token_product || config.product;
+        setStatus(
+          root,
+          "paid",
+          hasBrowserActivator
+            ? "Payment verified. Copy your offline licence key below or activate in this browser."
+            : `Payment verified. Copy your offline licence key below and run: ${cliProduct} pro activate '<your-token>'`,
+        );
         presentLicence(root, config, tokens[0].token, true);
       } else {
         setStatus(
@@ -1441,7 +1468,11 @@ async function redeemRecoveryLink(root, config) {
     const tokens = Array.isArray(result?.licence_tokens) ? result.licence_tokens : [];
     if (tokens.length > 0 && tokens[0].token && tokenNode) {
       presentLicence(root, config, tokens[0].token);
-      setStatus(root, "recovered", "Licence verified. Copy your offline licence key below.");
+      setStatus(
+        root,
+        "recovered",
+        `Licence verified. Copy your offline licence key below and run: ${config.token_product || config.product} pro activate '<your-token>'`,
+      );
     } else {
       setStatus(root, "error", "No active licence was found for this recovery link.");
     }
@@ -1480,6 +1511,12 @@ export async function mountCheckout(root) {
     ]),
   );
   const priceSelect = resolveFieldControl(root, "price", "select");
+  if (Array.isArray(config.prices) && config.prices.length <= 1 && typeof root.querySelector === "function") {
+    const singlePriceField = root.querySelector(".sf-price-select-field");
+    if (singlePriceField && typeof singlePriceField.setAttribute === "function") {
+      singlePriceField.setAttribute("hidden", "");
+    }
+  }
   const priceDisplay = root.querySelector("[data-keel-money-price-display]");
   const emailInput = resolveFieldControl(root, "email", 'input[type="email"], input');
   const consentInput = resolveFieldControl(root, "consent", 'input[type="checkbox"], input');
@@ -1499,7 +1536,8 @@ export async function mountCheckout(root) {
   try {
     const returnParams = new URLSearchParams(window?.location?.search || "");
     const returnFlag = String(
-      returnParams.get("return") ||
+      returnParams.get("checkout") ||
+        returnParams.get("return") ||
         returnParams.get("status") ||
         returnParams.get("error") ||
         "",
@@ -1516,6 +1554,13 @@ export async function mountCheckout(root) {
       // its authoritative answer or turn expiry into explicit cancellation.
       if (!returnedSession?.startsWith("cs_")) {
         const expired = returnFlag === "expired" || returnParams.get("expired") === "1";
+        setStatus(
+          root,
+          expired ? "expired" : "cancelled",
+          expired
+            ? "Your previous checkout session expired before payment completed. You can start a new checkout below whenever you are ready."
+            : "Checkout cancelled — no charge was made. You can choose your currency and start a new checkout below whenever you are ready.",
+        );
         reportPurchase(root, {
           status: expired ? "unknown" : "cancelled",
           code: { domain: "keel.checkout", code: expired ? "expired_return" : "cancel_return" },

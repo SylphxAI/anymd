@@ -41,6 +41,59 @@ pub const PRO_URL: &str = "https://sylphxai.github.io/anymd/pricing";
 /// Env var holding the token (wins over the token file).
 pub const TOKEN_ENV: &str = "ANYMD_PRO_TOKEN";
 
+/// All 16 currencies in the live anymd Pro catalogue (tax-inclusive one-time price).
+pub const PRO_CURRENCIES: &[(&str, &str)] = &[
+    ("USD", "US$29"),
+    ("HKD", "HK$229"),
+    ("TWD", "NT$959"),
+    ("GBP", "£21.99"),
+    ("EUR", "€26.99"),
+    ("JPY", "¥4,639"),
+    ("KRW", "₩38,900"),
+    ("MYR", "RM118.99"),
+    ("SGD", "S$37.99"),
+    ("CAD", "CA$41.99"),
+    ("AUD", "A$42.99"),
+    ("NZD", "NZ$52.99"),
+    ("THB", "฿989"),
+    ("PHP", "₱1,859"),
+    ("IDR", "Rp529,000"),
+    ("VND", "₫749,000"),
+];
+
+/// Look up the formatted one-time price for a supported 3-letter currency code.
+pub fn format_currency_price(code: &str) -> Option<(&'static str, &'static str)> {
+    let trimmed = code.trim();
+    PRO_CURRENCIES
+        .iter()
+        .copied()
+        .find(|(c, _)| c.eq_ignore_ascii_case(trimmed))
+}
+
+/// Pre-checkout price, currency, and post-checkout CLI activation disclosure shown BEFORE
+/// requesting the statutory 14-day immediate-supply waiver consent.
+pub fn pre_checkout_disclosure(currency_code: &str) -> String {
+    let (code, formatted) = format_currency_price(currency_code).unwrap_or(("USD", "US$29"));
+    let currencies = PRO_CURRENCIES
+        .iter()
+        .map(|(c, p)| format!("{c} ({p})"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "anymd Pro — {formatted} ({code}) one-time payment (US$29 once; 100-year offline licence for 1 person, applicable tax included).\n\
+         Supported currencies (--currency <CODE>): {currencies}\n\
+         Post-checkout activation: keep this terminal open and `anymd pro buy` saves your licence automatically as soon as payment completes; \
+         or copy the token from the browser checkout confirmation page and run `anymd pro activate '<token>'`."
+    )
+}
+
+/// Crisp, non-blocking Aha hint for CLI conversion/doctor/setup discovery.
+pub fn discovery_hint() -> String {
+    format!(
+        "anymd Pro ($29 once): verify PDF quotes (`cite_check`) and extract SHA-256 video frames offline — run `anymd pro buy` or visit {PRO_URL}"
+    )
+}
+
 /// anymd's licence policy. `require_product` is false because tokens issued
 /// before the generic flow carry no `product` field.
 fn policy_with<'a>(keys: &'a [&'a str]) -> LicencePolicy<'a> {
@@ -95,7 +148,7 @@ impl fmt::Display for ProRequired {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} is part of anymd Pro with a one-time offline licence. See current pricing or buy it with `anymd pro buy`. Learn more: {PRO_URL}",
+            "{} is part of anymd Pro ($29 one-time offline licence). See current pricing or buy it with `anymd pro buy`. Learn more: {PRO_URL}",
             self.feature
         )
     }
@@ -147,41 +200,110 @@ pub fn run(arguments: &[String]) -> i32 {
     run_with(&policy(), checkout.as_ref(), arguments)
 }
 
-fn valid_buy_args(arguments: &[String]) -> bool {
+fn parse_buy_currency(arguments: &[String]) -> Result<(Option<&'static str>, Vec<String>), ()> {
+    let mut currency: Option<&'static str> = None;
+    let mut forwarded = Vec::with_capacity(arguments.len());
     let mut index = 0;
     while index < arguments.len() {
-        match arguments[index].as_str() {
-            "--no-browser" | "--json" | "--accept-terms" => index += 1,
+        let arg = arguments[index].as_str();
+        if let Some(code) = arg.strip_prefix("--currency=") {
+            let (canonical, _) = format_currency_price(code).ok_or(())?;
+            currency = Some(canonical);
+            index += 1;
+            continue;
+        }
+        match arg {
+            "--no-browser" | "--json" | "--accept-terms" => {
+                forwarded.push(arguments[index].clone());
+                index += 1;
+            }
             "--email" => {
-                if arguments.get(index + 1).is_none_or(|v| v.starts_with("--")) {
-                    return false;
-                }
+                let Some(next) = arguments.get(index + 1).filter(|v| !v.starts_with("--")) else {
+                    return Err(());
+                };
+                forwarded.push(arguments[index].clone());
+                forwarded.push(next.clone());
+                index += 2;
+            }
+            "--currency" => {
+                let Some(next) = arguments.get(index + 1).filter(|v| !v.starts_with("--")) else {
+                    return Err(());
+                };
+                let (canonical, _) = format_currency_price(next).ok_or(())?;
+                currency = Some(canonical);
                 index += 2;
             }
             // anymd sells one licence; seat packs and quantities do not apply.
-            "--pack" | "--qty" => return false,
-            _ => return false,
+            "--pack" | "--qty" => return Err(()),
+            _ => return Err(()),
         }
     }
-    true
+    Ok((currency, forwarded))
 }
 
 fn run_with(policy: &LicencePolicy, checkout: Option<&MoneyCheckout>, arguments: &[String]) -> i32 {
+    let mut forwarded_args: Option<Vec<String>> = None;
+    let mut selected_currency: Option<&'static str> = None;
     let ok = match arguments.first().map(String::as_str) {
         Some("status") => arguments.len() == 1,
         Some("activate") => arguments.len() == 2,
-        Some("buy") => valid_buy_args(&arguments[1..]),
+        Some("buy") => match parse_buy_currency(&arguments[1..]) {
+            Ok((currency, clean)) => {
+                selected_currency = currency;
+                let mut full = Vec::with_capacity(clean.len() + 1);
+                full.push("buy".into());
+                full.extend(clean);
+                forwarded_args = Some(full);
+                true
+            }
+            Err(()) => false,
+        },
         _ => false,
     };
     if !ok {
         eprintln!(
-            "usage: anymd pro status | anymd pro activate <token> | anymd pro buy [--email <address>] [--accept-terms] [--no-browser] [--json]"
+            "usage: anymd pro status | anymd pro activate <token> | anymd pro buy [--currency <code>] [--email <address>] [--accept-terms] [--no-browser] [--json]"
         );
         return 2;
     }
+    let dispatch_args = forwarded_args.as_deref().unwrap_or(arguments);
     match checkout {
-        Some(checkout) => licence::run_money_cli(policy, checkout, arguments),
-        None => licence::run_cli(policy, arguments),
+        Some(checkout) => {
+            let is_json = dispatch_args.iter().any(|a| a == "--json");
+            if !is_json {
+                use std::io::{IsTerminal, Write};
+                let interactive = std::io::stdin().is_terminal() && std::io::stdout().is_terminal();
+                let mut chosen = selected_currency.unwrap_or("USD");
+                eprintln!("{}", pre_checkout_disclosure(chosen));
+                if interactive
+                    && selected_currency.is_none()
+                    && !dispatch_args.iter().any(|a| a == "--accept-terms")
+                {
+                    eprint!("Currency [USD]: ");
+                    let _ = std::io::stderr().flush();
+                    let mut input = String::new();
+                    if std::io::stdin().read_line(&mut input).is_ok() {
+                        let trimmed = input.trim();
+                        if !trimmed.is_empty() {
+                            match format_currency_price(trimmed) {
+                                Some((canonical, formatted)) => {
+                                    chosen = canonical;
+                                    eprintln!(
+                                        "Selected price: {formatted} ({chosen}) one-time (tax included)."
+                                    );
+                                }
+                                None => {
+                                    eprintln!("anymd pro buy: unsupported currency `{trimmed}`");
+                                    return 2;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            licence::run_money_cli(policy, checkout, dispatch_args)
+        }
+        None => licence::run_cli(policy, dispatch_args),
     }
 }
 
@@ -527,11 +649,45 @@ mod tests {
         let message = required.to_string();
         assert_eq!(
             message,
-            "Cite-check is part of anymd Pro with a one-time offline licence. See current pricing or buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pricing"
+            "Cite-check is part of anymd Pro ($29 one-time offline licence). See current pricing or buy it with `anymd pro buy`. Learn more: https://sylphxai.github.io/anymd/pricing"
         );
         let result = required_result(&required);
         assert_eq!(result.is_error, Some(false));
         assert_eq!(result.content.len(), 1);
         assert_eq!(result.content[0].as_text().unwrap().text, message);
+    }
+
+    #[test]
+    fn pre_checkout_disclosure_and_multi_currency_selection() {
+        assert_eq!(PRO_CURRENCIES.len(), 16);
+        assert_eq!(format_currency_price("usd"), Some(("USD", "US$29")));
+        assert_eq!(format_currency_price("GBP"), Some(("GBP", "£21.99")));
+        assert_eq!(format_currency_price("jpy"), Some(("JPY", "¥4,639")));
+        assert_eq!(format_currency_price("INVALID"), None);
+        let disclosure = pre_checkout_disclosure("GBP");
+        assert!(disclosure.contains("£21.99 (GBP)"));
+        assert!(disclosure.contains("US$29 once"));
+        assert!(disclosure.contains("anymd pro activate '<token>'"));
+        assert_eq!(
+            run_with(
+                &policy(),
+                None,
+                &["buy".into(), "--currency".into(), "GBP".into()]
+            ),
+            0
+        );
+        assert_eq!(
+            run_with(&policy(), None, &["buy".into(), "--currency=EUR".into()]),
+            0
+        );
+        assert_eq!(
+            run_with(
+                &policy(),
+                Some(&checkout()),
+                &["buy".into(), "--currency".into(), "INVALID".into()]
+            ),
+            2
+        );
+        assert!(discovery_hint().contains("$29 once"));
     }
 }

@@ -20,9 +20,9 @@
   ],
   "formerly": "pdf-reader-mcp",
   "hosted": {
-    "name": "Sylphx AI parse",
-    "url": "https://sylphx.com/ai",
-    "blurb": "convert documents without installing a local runtime, and pay per page."
+    "name": "anymd Pro",
+    "url": "https://sylphxai.github.io/anymd/pricing",
+    "blurb": "verify PDF quotes and cite exact video frames offline for US$29 once."
   },
   "keywords": [
     "markdown",

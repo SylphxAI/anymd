@@ -73,6 +73,11 @@ fn doctor() {
     for (name, state) in anymd_formats::asr::status_lines() {
         println!("  {name:<14} {state}");
     }
+    if pro::current_license().is_some() {
+        println!("anymd Pro ($29 once): active (cite_check, video_timeline, render_frame)");
+    } else {
+        println!("  {}", pro::discovery_hint());
+    }
 }
 
 async fn serve() -> anyhow::Result<()> {

@@ -22,14 +22,80 @@ struct WorkerRequest {
 
 const MAX_BYTES: u64 = 256 * 1024 * 1024;
 const SCOPE: &str = "Quote/location support in extracted evidence; not semantic truth or independent confirmation of OCR accuracy.";
+const FULL_PAGE_BOUNDS: TextBoundingBox = TextBoundingBox {
+    left: -1.0e9,
+    bottom: -1.0e9,
+    right: 1.0e9,
+    top: 1.0e9,
+};
 
 fn bounds(citation: &Citation) -> TextBoundingBox {
-    let b = &citation.bounding_box;
-    TextBoundingBox {
-        left: b.left,
-        bottom: b.bottom,
-        right: b.right,
-        top: b.top,
+    match &citation.bounding_box {
+        Some(b) => TextBoundingBox {
+            left: b.left,
+            bottom: b.bottom,
+            right: b.right,
+            top: b.top,
+        },
+        None => FULL_PAGE_BOUNDS,
+    }
+}
+
+/// Normalize a citation so callers can pass output directly from `read`
+/// (`<!-- page N -->` markers) or `search` (`- p.N: …**match**…` lines)
+/// without hand-computing PDF bounding boxes.
+pub fn normalize_citation(citation: &mut Citation) {
+    if let Some(start) = citation.quote.find("<!-- page ") {
+        let after = &citation.quote[start + "<!-- page ".len()..];
+        if let Some(end) = after.find(" -->") {
+            if let Ok(parsed_page) = after[..end].trim().parse::<u32>() {
+                if citation.page == 0 {
+                    citation.page = parsed_page;
+                }
+                let mut cleaned = String::new();
+                cleaned.push_str(&citation.quote[..start]);
+                cleaned.push_str(&after[end + 4..]);
+                let trimmed = cleaned.trim_matches(['\r', '\n']);
+                if !trimmed.is_empty() {
+                    citation.quote = trimmed.to_string();
+                }
+            }
+        }
+    }
+    let candidate_lines: Vec<String> = citation.quote.lines().map(str::to_string).collect();
+    for line in candidate_lines {
+        let trimmed = line.trim();
+        let rest = trimmed
+            .strip_prefix("- p.")
+            .or_else(|| trimmed.strip_prefix("p."));
+        if let Some(after_p) = rest {
+            if let Some((digits, snippet)) = after_p.split_once(':') {
+                if let Ok(parsed_page) = digits.trim().parse::<u32>() {
+                    if citation.page == 0 {
+                        citation.page = parsed_page;
+                    }
+                    let cleaned = snippet
+                        .trim()
+                        .trim_matches('…')
+                        .trim_start_matches("...")
+                        .trim_end_matches("...")
+                        .replace("**", "");
+                    let cleaned = cleaned.trim();
+                    if !cleaned.is_empty() {
+                        citation.quote = cleaned.to_string();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn normalize_args(args: &mut InspectArgs) {
+    if let Some(citations) = args.citations.as_mut() {
+        for citation in citations {
+            normalize_citation(citation);
+        }
     }
 }
 
@@ -96,6 +162,7 @@ pub(crate) async fn inspect(
     policy: SourceAccessPolicy,
 ) -> Result<CallToolResult, ErrorData> {
     let started = Instant::now();
+    normalize_args(&mut args);
     validate(&args).map_err(|e| ErrorData::invalid_params(e, None))?;
     policy
         .admit_evidence_sources(&mut args.sources)
@@ -197,7 +264,8 @@ pub fn worker(arguments: &[String]) -> Result<(), String> {
     let request_options: WorkerRequest =
         serde_json::from_slice(&std::fs::read(request).map_err(|e| e.to_string())?)
             .map_err(|e| e.to_string())?;
-    let args = request_options.args;
+    let mut args = request_options.args;
+    normalize_args(&mut args);
     validate(&args)?;
     // Snapshot once: the hash, native extraction and OCR consume identical bytes,
     // even when a caller edits its local file while this request is in flight.
@@ -460,8 +528,41 @@ mod tests {
         value.citations.as_mut().unwrap()[0].quote = "😀".repeat(2049);
         assert!(validate(&value).is_err());
         value = args();
-        value.citations.as_mut().unwrap()[0].bounding_box.right = 0.;
+        value.citations.as_mut().unwrap()[0]
+            .bounding_box
+            .as_mut()
+            .unwrap()
+            .right = 0.;
         assert!(validate(&value).is_err());
+        value = args();
+        value.citations.as_mut().unwrap()[0].bounding_box = None;
+        assert!(validate(&value).is_ok());
+        let mut from_read: InspectArgs = serde_json::from_value(json!({
+            "operation": "cite_check",
+            "sources": [{"path": "fixture.pdf"}],
+            "citations": [{"quote": "<!-- page 3 -->\nDeterministic quote"}]
+        }))
+        .unwrap();
+        normalize_args(&mut from_read);
+        assert_eq!(from_read.citations.as_ref().unwrap()[0].page, 3);
+        assert_eq!(
+            from_read.citations.as_ref().unwrap()[0].quote,
+            "Deterministic quote"
+        );
+        assert!(validate(&from_read).is_ok());
+        let mut from_search: InspectArgs = serde_json::from_value(json!({
+            "operation": "cite_check",
+            "sources": [{"path": "fixture.pdf"}],
+            "citations": [{"quote": "- p.4: …**Deterministic quote**…"}]
+        }))
+        .unwrap();
+        normalize_args(&mut from_search);
+        assert_eq!(from_search.citations.as_ref().unwrap()[0].page, 4);
+        assert_eq!(
+            from_search.citations.as_ref().unwrap()[0].quote,
+            "Deterministic quote"
+        );
+        assert!(validate(&from_search).is_ok());
         value = args();
         value.citations.as_mut().unwrap()[0].page = 0;
         assert!(validate(&value).is_err());

@@ -110,11 +110,34 @@ describe('pro config', () => {
   });
 
   test('purchase copy promises instant on-page delivery, not an emailed token', () => {
-    for (const path of ['../README.md', '../docs/pro.md', '../docs/pro/thanks.md']) {
+    for (const path of [
+      '../README.md',
+      '../docs/pro.md',
+      '../docs/pro/thanks.md',
+      '../docs/storefront/pricing.md',
+      '../docs/legal/pro-terms.md',
+    ]) {
       const copy = readFileSync(new URL(path, import.meta.url), 'utf8');
       expect(copy.toLowerCase()).toContain('instant');
       expect(copy).toContain('checkout confirmation page');
       expect(copy).not.toMatch(/token.*(?:arrives|on its way).*by email|within a few hours/);
+    }
+  });
+
+  test('no dead sylphx.com/ai or pro-licence-testing links remain on public commercial surfaces', () => {
+    for (const path of [
+      '../product.json',
+      '../README.md',
+      '../docs/index.md',
+      '../docs/pro.md',
+      '../docs/storefront/pricing.md',
+      '../docs/public/llms.txt',
+      '../docs/guide/hosted.md',
+      '../docs/use-cases/pdf-and-office-to-markdown-mcp.md',
+    ]) {
+      const copy = readFileSync(new URL(path, import.meta.url), 'utf8');
+      expect(copy).not.toContain('sylphx.com/ai');
+      expect(copy).not.toContain('pro-licence-testing');
     }
   });
 });

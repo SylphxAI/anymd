@@ -202,6 +202,153 @@ MONEY_MOUNT_PERSIST = (
     "  extractAttributionMetadata();"
 )
 
+MONEY_DECODE_OLD = """export function decodeLicenceClaims(token) {
+  try {
+    const segment = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(segment), (c) => c.charCodeAt(0));
+    const claims = JSON.parse(new TextDecoder().decode(bytes));
+    return claims && typeof claims === "object" ? claims : null;
+  } catch { return null; }
+}"""
+
+MONEY_DECODE_NEW = """export function decodeLicenceClaims(token) {
+  try {
+    if (typeof token !== "string") return null;
+    const parts = token.trim().split(".");
+    const raw = parts.length === 2 ? parts[0] : parts.length === 3 ? parts[1] : null;
+    if (!raw) return null;
+    const segment = raw.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = segment.padEnd(segment.length + ((4 - (segment.length % 4)) % 4), "=");
+    const bytes = Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
+    const claims = JSON.parse(new TextDecoder().decode(bytes));
+    return claims && typeof claims === "object" ? claims : null;
+  } catch { return null; }
+}"""
+
+MONEY_PRESENT_OLD = """  const activate = root.querySelector("[data-keel-money-activate-browser]");
+  if (activate) {
+    activate.removeAttribute("hidden");
+    activate.onclick = () => emit("keel:money:activate");
+  }
+  const claims = decodeLicenceClaims(token);
+  if (claims?.product === product) {
+    try { window.localStorage.setItem(`${LICENCE_STORAGE_PREFIX}${product}`, JSON.stringify({ ...claims, token })); }
+    catch { /* Storage can be blocked; activation still works. */ }
+  }"""
+
+MONEY_PRESENT_NEW = """  const hasBrowserActivator =
+    root.getAttribute("data-keel-money-browser-activator") === "1" ||
+    Boolean(typeof window !== "undefined" && window.__keelMoneyBrowserActivator);
+  const activate = root.querySelector("[data-keel-money-activate-browser]");
+  if (activate) {
+    if (hasBrowserActivator) {
+      activate.removeAttribute("hidden");
+      activate.onclick = () => emit("keel:money:activate");
+    } else {
+      activate.setAttribute("hidden", "");
+    }
+  }
+  const cliNode = root.querySelector("[data-keel-money-cli-activate]");
+  if (cliNode) {
+    cliNode.textContent = `${product} pro activate '${token}'`;
+    cliNode.removeAttribute("hidden");
+  }
+  const claims = decodeLicenceClaims(token);
+  if (claims && (!claims.product || claims.product === product)) {
+    try { window.localStorage.setItem(`${LICENCE_STORAGE_PREFIX}${product}`, JSON.stringify({ ...claims, product, token })); }
+    catch { /* Storage can be blocked; activation still works. */ }
+  }"""
+
+MONEY_PAID_STATUS_OLD = 'setStatus(root, "paid", "Payment verified. Copy your offline licence key below or activate in this browser.");'
+
+MONEY_PAID_STATUS_NEW = """const hasBrowserActivator =
+          root.getAttribute("data-keel-money-browser-activator") === "1" ||
+          Boolean(typeof window !== "undefined" && window.__keelMoneyBrowserActivator);
+        const cliProduct = config.token_product || config.product;
+        setStatus(
+          root,
+          "paid",
+          hasBrowserActivator
+            ? "Payment verified. Copy your offline licence key below or activate in this browser."
+            : `Payment verified. Copy your offline licence key below and run: ${cliProduct} pro activate '<your-token>'`,
+        );"""
+
+MONEY_RECOVERED_STATUS_OLD = 'setStatus(root, "recovered", "Licence verified. Copy your offline licence key below.");'
+
+MONEY_RECOVERED_STATUS_NEW = """setStatus(
+        root,
+        "recovered",
+        `Licence verified. Copy your offline licence key below and run: ${config.token_product || config.product} pro activate '<your-token>'`,
+      );"""
+
+MONEY_CANCEL_OLD = """    const returnFlag = String(
+      returnParams.get("return") ||
+        returnParams.get("status") ||
+        returnParams.get("error") ||
+        "",
+    ).toLowerCase();
+    if (
+      ["cancel", "cancelled", "canceled", "expired"].includes(returnFlag) ||
+      returnParams.get("canceled") === "1" ||
+      returnParams.get("cancelled") === "1" ||
+      returnParams.get("expired") === "1"
+    ) {
+      rotateAttemptNonce();
+      const returnedSession = returnParams.get("session_id") || returnParams.get("checkout_session");
+      // A session reference is reconciled below; URL flags must not duplicate
+      // its authoritative answer or turn expiry into explicit cancellation.
+      if (!returnedSession?.startsWith("cs_")) {
+        const expired = returnFlag === "expired" || returnParams.get("expired") === "1";
+        reportPurchase(root, {
+          status: expired ? "unknown" : "cancelled",
+          code: { domain: "keel.checkout", code: expired ? "expired_return" : "cancel_return" },
+        });
+      }
+    }"""
+
+MONEY_CANCEL_NEW = """    const returnFlag = String(
+      returnParams.get("checkout") ||
+        returnParams.get("return") ||
+        returnParams.get("status") ||
+        returnParams.get("error") ||
+        "",
+    ).toLowerCase();
+    if (
+      ["cancel", "cancelled", "canceled", "expired"].includes(returnFlag) ||
+      returnParams.get("canceled") === "1" ||
+      returnParams.get("cancelled") === "1" ||
+      returnParams.get("expired") === "1"
+    ) {
+      rotateAttemptNonce();
+      const returnedSession = returnParams.get("session_id") || returnParams.get("checkout_session");
+      // A session reference is reconciled below; URL flags must not duplicate
+      // its authoritative answer or turn expiry into explicit cancellation.
+      if (!returnedSession?.startsWith("cs_")) {
+        const expired = returnFlag === "expired" || returnParams.get("expired") === "1";
+        setStatus(
+          root,
+          expired ? "expired" : "cancelled",
+          expired
+            ? "Your previous checkout session expired before payment completed. You can start a new checkout below whenever you are ready."
+            : "Checkout cancelled — no charge was made. You can choose your currency and start a new checkout below whenever you are ready.",
+        );
+        reportPurchase(root, {
+          status: expired ? "unknown" : "cancelled",
+          code: { domain: "keel.checkout", code: expired ? "expired_return" : "cancel_return" },
+        });
+      }
+    }"""
+
+MONEY_PRICE_SELECT_OLD = '  const priceSelect = resolveFieldControl(root, "price", "select");'
+
+MONEY_PRICE_SELECT_NEW = """  const priceSelect = resolveFieldControl(root, "price", "select");
+  if (Array.isArray(config.prices) && config.prices.length <= 1 && typeof root.querySelector === "function") {
+    const singlePriceField = root.querySelector(".sf-price-select-field");
+    if (singlePriceField && typeof singlePriceField.setAttribute === "function") {
+      singlePriceField.setAttribute("hidden", "");
+    }
+  }"""
+
 
 def parse_frontmatter(md_path: Path) -> dict[str, str]:
     """Read scalar YAML frontmatter values from a Markdown source file."""
@@ -725,6 +872,30 @@ def _ensure_storefront_footer_links(html_text: str) -> str:
     return html_text
 
 
+def _simplify_single_option_and_redeem_html(html_text: str) -> str:
+    """Hide redundant single-option Plan dropdown and inject CLI activation command block."""
+    html_text = html_text.replace(
+        "https://sylphxai.github.io/anymd/guide/pro-licence-testing",
+        "https://sylphxai.github.io/anymd/guide/getting-started",
+    )
+    html_text = html_text.replace(
+        "/anymd/guide/pro-licence-testing",
+        "/anymd/guide/getting-started",
+    )
+    html_text = re.sub(
+        r'(<div id="money-checkout-(?:pricing|recover)-price-field"[^>]*class="sf-price-select-field[^"]*")(?![^>]*\bhidden\b)',
+        r'\1 hidden',
+        html_text,
+    )
+    if "data-keel-money-cli-activate" not in html_text:
+        html_text = re.sub(
+            r'(<pre id="money-checkout-(pricing|recover)-licence-token"[^>]*></pre>)',
+            r'\1<code id="money-checkout-\2-cli-activate" class="sf-cli-activate" hidden data-keel-money-cli-activate=""></code>',
+            html_text,
+        )
+    return html_text
+
+
 def postprocess_pricing_html(
     html_text: str,
     frontmatter: dict[str, str],
@@ -875,6 +1046,7 @@ def postprocess_pricing_html(
             count=1,
         )
 
+    html_text = _simplify_single_option_and_redeem_html(html_text)
     html_text = _replace_offer_description(html_text, resolved_offer)
     return inject_storefront_ga4(html_text, ga4_id)
 
@@ -923,12 +1095,13 @@ def postprocess_recover_html(
     html_text = _inject_storefront_style(html_text)
     html_text = _inject_storefront_nav(html_text, "/anymd/recover")
     html_text = _ensure_storefront_footer_links(html_text)
+    html_text = _simplify_single_option_and_redeem_html(html_text)
     html_text = _replace_offer_description(html_text, resolved_offer)
     return inject_storefront_ga4(html_text, ga4_id)
 
 
 def postprocess_money_js(js_text: str) -> str:
-    """Ensure checkout runtime forwards gclid, gbraid, wbraid, fbclid, utm_*, and entry_surface."""
+    """Ensure checkout runtime forwards attribution and fixes post-checkout decode, activator, and cancellation."""
     if "CLICK_ID_ALLOWLIST" not in js_text:
         if MONEY_ALLOWLIST_OLD not in js_text:
             raise ValueError("Unable to locate UTM_ALLOWLIST in Money runtime")
@@ -941,6 +1114,18 @@ def postprocess_money_js(js_text: str) -> str:
         js_text = js_text.replace(MONEY_APPEND_OLD, MONEY_APPEND_NEW, 1)
     if "extractAttributionMetadata();" not in js_text and MONEY_MOUNT_MARKER in js_text:
         js_text = js_text.replace(MONEY_MOUNT_MARKER, MONEY_MOUNT_PERSIST, 1)
+    if MONEY_DECODE_OLD in js_text:
+        js_text = js_text.replace(MONEY_DECODE_OLD, MONEY_DECODE_NEW, 1)
+    if MONEY_PRESENT_OLD in js_text:
+        js_text = js_text.replace(MONEY_PRESENT_OLD, MONEY_PRESENT_NEW, 1)
+    if MONEY_PAID_STATUS_OLD in js_text:
+        js_text = js_text.replace(MONEY_PAID_STATUS_OLD, MONEY_PAID_STATUS_NEW, 1)
+    if MONEY_RECOVERED_STATUS_OLD in js_text:
+        js_text = js_text.replace(MONEY_RECOVERED_STATUS_OLD, MONEY_RECOVERED_STATUS_NEW, 1)
+    if MONEY_CANCEL_OLD in js_text:
+        js_text = js_text.replace(MONEY_CANCEL_OLD, MONEY_CANCEL_NEW, 1)
+    if "singlePriceField" not in js_text and MONEY_PRICE_SELECT_OLD in js_text:
+        js_text = js_text.replace(MONEY_PRICE_SELECT_OLD, MONEY_PRICE_SELECT_NEW, 1)
     js_text = js_text.replace("Verifying payment status with Sylphx Money…", "Verifying payment status…")
     js_text = js_text.replace("Checkout request was refused by Sylphx Money.", "Checkout request was refused.")
     return js_text

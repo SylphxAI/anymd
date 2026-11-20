@@ -135,7 +135,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 - **Cite-check** compares up to 100 quotes per request with the page and area each one cites, and reports whether it matches, doesn't match, or needs more evidence. It uses the text and its position on the page, not an AI opinion.
 - **Video timelines and frames** show scenes, chapters and subtitle or transcript timings, and the frame behind a cited moment with its actual decoded timestamp and a SHA-256 hash of the image.
 
-Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Prefer a hosted service? Use [Sylphx AI parse](https://sylphx.com/ai) to convert documents without installing a local runtime, and pay per page.
+Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Buy on the web at [anymd Pro](/pricing?entry_surface=seo_vs-marker) or run `anymd pro buy` in your terminal.
 
 <p>
   <a class="pro-buy" href="/anymd/pricing?entry_surface=seo_vs-marker">See anymd Pro</a>

@@ -58,7 +58,7 @@ Agents rarely read only scanned PDFs. anymd converts `.docx`, `.pptx`, `.xlsx`, 
 
 ### Free MIT core, or US$29 once for verifiable Pro evidence
 
-Everything needed for conversion, MCP, local OCR and local transcripts is free and MIT licensed. If your agent needs deterministic PDF `cite_check` or SHA-256 verifiable video frames, [anymd Pro](/pricing?entry_surface=seo_vs-mistral-ocr) costs **US$29** once—less than a single 8,000-page Mistral OCR 4 run—and works offline for 100 years. If you do want a hosted per-page API built on the same Rust crates, see [Sylphx AI parse](https://sylphx.com/ai).
+Everything needed for conversion, MCP, local OCR and local transcripts is free and MIT licensed. If your agent needs deterministic PDF `cite_check` or SHA-256 verifiable video frames, [anymd Pro](/pricing?entry_surface=seo_vs-mistral-ocr) costs **US$29** once—less than a single 8,000-page Mistral OCR 4 run—and works offline for 100 years.
 
 ## When Mistral OCR is the better fit
 
@@ -94,7 +94,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 - **Cite-check** compares up to 100 quotes per request with the page and area each one cites, and reports whether it matches, doesn't match, or needs more evidence. It uses the text and its position on the page, not an AI opinion.
 - **Video timelines and frames** show scenes, chapters and subtitle or transcript timings, and the frame behind a cited moment with its actual decoded timestamp and a SHA-256 hash of the image.
 
-Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Prefer a hosted service? Use [Sylphx AI parse](https://sylphx.com/ai) to convert documents without installing a local runtime, and pay per page.
+Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Buy on the web at [anymd Pro](/pricing?entry_surface=seo_vs-mistral-ocr) or run `anymd pro buy` in your terminal.
 
 <p>
   <a class="pro-buy" href="/anymd/pricing?entry_surface=seo_vs-mistral-ocr">See anymd Pro</a>
