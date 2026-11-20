@@ -42,7 +42,7 @@ export async function POST(request: Request, {params}: Params) {
     }
     if (action === 'checkout') {
       if (!currencyOptions.some(({code}) => code === data.currency) || data.consent !== true) throw new HttpError(400, 'invalid_request');
-      const key = field(data,'checkoutIntent', /^[a-f0-9-]{36}$/);
+      const key = field(data,'checkoutIntent', /^[a-f0-9]{64}$/);
       const keyForMoney = checkoutKey(request, ctx.money);
       // The BFF has already authenticated this exact subject. The privileged
       // server door alone may carry merchant-owned hosted waiver policy.

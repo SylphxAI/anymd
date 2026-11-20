@@ -1,8 +1,8 @@
 version = "1"
 
 [project]
-# Retain the connected project; do not provision a new tenancy for the web app.
-name = "@sylphx/pdf-reader-mcp"
+# Existing Platform project gold-gnat-rn7xc3. The first release uses its assigned host only.
+name = "anymd"
 default_env = "production"
 
 [build]
@@ -11,12 +11,10 @@ dockerfile = "Dockerfile"
 context = "."
 
 # Auth's organization, publishable key and server secret come from the
-# environment's Auth binding. Money keys live in Platform Secrets.
+# environment's Auth binding. Attach the Money key via a Platform Secret Binding
+# on the intended environment, not a repository-defined secret mapping.
 [environments.production.env.ANYMD_MONEY_MODE]
 value = "live"
-
-[environments.production.env.SYLPHX_MONEY_API_KEY]
-from_secret = "SYLPHX_MONEY_API_KEY"
 
 [[services]]
 name = "web"
@@ -34,10 +32,6 @@ context = "."
 [services.health]
 mode = "http"
 path = "/api/health"
-
-[[domains]]
-hostname = "anymd.sylphx.com"
-service = "web"
 
 [ci]
 merge = "optimistic"

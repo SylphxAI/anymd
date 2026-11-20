@@ -34,3 +34,6 @@ apps/web/test-results/
 apps/web/playwright-report/
 apps/web/public/wasm/
 apps/web/src/lib/money-production.generated.ts
+
+# Checked-in environment schema (names only).
+!.env.example

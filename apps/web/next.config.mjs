@@ -10,10 +10,16 @@ export default {
     return [{ source: '/playground/sample.pdf', destination: '/samples/sample.pdf' }];
   },
   async headers() {
-    return [{ source: '/:path*', headers: [
-      { key: 'X-Content-Type-Options', value: 'nosniff' },
-      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-      { key: 'X-Frame-Options', value: 'DENY' },
-    ] }];
+    return [
+      { source: '/:path*', headers: [
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'X-Frame-Options', value: 'DENY' },
+      ] },
+      { source: '/:path*',
+        has: [{ type: 'host', value: '[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.sylphx\\.app' }],
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+    ];
   },
 };

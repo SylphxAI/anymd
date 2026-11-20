@@ -27,6 +27,10 @@ async function request(path: string, data: object) {
   return result;
 }
 
+function checkoutIntent() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export function Checkout() {
   const session = useSession();
   const [currency, setCurrency] = useState('USD');
@@ -42,7 +46,7 @@ export function Checkout() {
       <label className="terms-control"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>{consentText} This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.</span></label>
       <button className="button button-primary" disabled={pending || !consent} type="button" onClick={async () => {
         setPending(true); setNotice('');
-        try { intent.current ??= crypto.randomUUID(); const result = await request('checkout', {currency, consent, checkoutIntent:intent.current}); if (!result.url) throw new Error('Checkout did not return a link.'); location.assign(result.url); }
+        try { intent.current ??= checkoutIntent(); const result = await request('checkout', {currency, consent, checkoutIntent:intent.current}); if (!result.url) throw new Error('Checkout did not return a link.'); location.assign(result.url); }
         catch (err) { setNotice(err instanceof Error ? err.message : 'Checkout is unavailable.'); setPending(false); }
       }}>{pending ? 'Opening checkout…' : 'Continue to secure checkout'} <ArrowRight size={16} /></button>
     </> : <Link className="button button-primary" href="/sign-in?next=/pricing">Sign in to buy Pro <ArrowRight size={16} /></Link>}

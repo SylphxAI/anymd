@@ -11,7 +11,7 @@ export function authConfig(): Config | null {
   const sk = process.env.SYLPHX_AUTH_SECRET_KEY?.trim();
   const organization = instanceId(process.env.SYLPHX_AUTH_ORGANIZATION_ID ?? '');
   try {
-    const url = new URL(process.env.SYLPHX_AUTH_URL?.trim() || 'https://api.sylphx.com');
+    const url = new URL(process.env.SYLPHX_AUTH_URL?.trim() ?? '');
     const allowed = url.protocol === 'https:' || (url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname));
     return allowed && pk && sk && organization ? { origin: url.origin, pk, sk, organization } : null;
   } catch { return null; }
