@@ -48,6 +48,12 @@ class StorefrontPostprocessTest(unittest.TestCase):
         self.assertIn("Buy a 100-year Pro licence with one payment.", once)
         self.assertEqual(once.count('class="anymd-wallet-trust"'), 1)
         self.assertIn("Apple Pay · Google Pay · Link", once)
+        self.assertIn('<link rel="icon" type="image/svg+xml" href="/anymd/favicon.svg">', once)
+        self.assertIn('<link rel="icon" href="/anymd/favicon.ico" sizes="16x16 32x32 48x48">', once)
+        self.assertIn("color-scheme: dark;", once)
+        self.assertIn("--sf-paper: #0a0d07;", once)
+        self.assertIn("position: static;", once)
+        self.assertGreater(once.index('id="anymd-sf-consent"'), once.index("</footer>"))
 
     def test_wallet_markup_is_injected_when_only_its_css_is_present(self) -> None:
         root = Path(__file__).resolve().parent.parent
@@ -82,6 +88,11 @@ class StorefrontPostprocessTest(unittest.TestCase):
         self.assertIn("--keel-asset-font-ui: var(--sf-sans);", once)
         self.assertNotIn('<nav id="docs-nav"', once)
         self.assertNotIn("Money", once)
+        self.assertIn('<link rel="icon" type="image/svg+xml" href="/anymd/favicon.svg">', once)
+        self.assertIn('<link rel="icon" href="/anymd/favicon.ico" sizes="16x16 32x32 48x48">', once)
+        self.assertIn("color-scheme: dark;", once)
+        self.assertIn("--sf-paper: #0a0d07;", once)
+        self.assertGreater(once.index('id="anymd-sf-consent"'), once.index("</footer>"))
 
     def test_postprocess_money_js_is_idempotent(self) -> None:
         root = Path(__file__).resolve().parent.parent

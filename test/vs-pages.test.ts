@@ -42,11 +42,19 @@ const tools = readdirSync(new URL('../docs/vs/', import.meta.url))
   .filter((file) => file.endsWith('.md') && file !== 'index.md')
   .map((file) => file.replace(/\.md$/, ''));
 
-test('every benchmarked comparison tool has a page', () => {
-  const benchmarked = readdirSync(new URL('../bench/results/', import.meta.url))
+const benchmarkedTools = new Set(
+  readdirSync(new URL('../bench/results/', import.meta.url))
     .map((file) => file.replace(/\.json$/, ''))
-    .filter((tool) => tool !== 'anymd');
-  expect(tools.sort()).toEqual(benchmarked.sort());
+    .filter((tool) => tool !== 'anymd')
+);
+
+test('every benchmarked comparison tool has a page and required non-benchmarked comparisons exist', () => {
+  for (const tool of benchmarkedTools) {
+    expect(tools).toContain(tool);
+  }
+  for (const tool of ['llamaparse', 'mistral-ocr', 'pymupdf4llm']) {
+    expect(tools).toContain(tool);
+  }
 });
 
 describe('comparison hub', () => {
@@ -110,9 +118,15 @@ describe.each(tools)('anymd vs %s page', (tool) => {
     expect(read('../docs/public/llms.txt')).toContain(`(${site}vs/${tool})`);
   });
 
-  test('carries generated benchmark figures, not hand-edited ones', () => {
-    expect(page).toContain('<!-- versus:start -->');
-    expect(page).toContain('<!-- versus:end -->');
+  test('carries generated benchmark figures or honest non-benchmarked disclosure and valid meta description', () => {
+    if (benchmarkedTools.has(tool)) {
+      expect(page).toContain('<!-- versus:start -->');
+      expect(page).toContain('<!-- versus:end -->');
+    } else {
+      expect(page).toContain('AgentDocBench');
+      expect(page).toContain('96.4');
+      expect(page).toContain('11.5 s');
+    }
     expect(page).toMatch(/^description: ".{120,160}"$/m);
   });
 

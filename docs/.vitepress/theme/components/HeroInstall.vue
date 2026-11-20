@@ -27,7 +27,7 @@ async function copy() {
     <p class="hero-install-note">
       Adds anymd to Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf and Gemini CLI. Needs Node 18+.
     </p>
-    <p class="hero-proof">1,000+ GitHub stars · 10,000+ npm downloads a month · MIT licensed</p>
+    <p class="hero-proof">1,000+ GitHub stars · 22,000+ npm downloads/mo · MIT licensed</p>
   </div>
 </template>
 

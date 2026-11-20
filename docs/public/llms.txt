@@ -30,7 +30,19 @@ On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured
 
 On the same 38 AgentDocBench documents and a 4-CPU runner, anymd 8.2.0 (measured 2026-10-01) scores 96.4 overall and Poppler pdftotext 24.02.0 (measured 2026-09-25, default mode, PDFs only) scores 42.2; pdftotext read the 23 PDFs and does not support the 15 other files. On those 23, pdftotext takes 0.90 s against anymd's 11.4 s, because anymd spends 10.5 s on OCR for 3 scanned PDFs where pdftotext scores 0, and anymd returns 3% more output tokens (207,030 against 201,448). On the other 20 born-digital PDFs, anymd takes 0.87 s against 0.88 s and returns 200,747 output tokens against 201,435, with Markdown tables (table cells F1 92.2 against 0.0). pdftotext's output is the benchmark's reference text for born-digital PDFs. Comparison: https://sylphxai.github.io/anymd/vs/pdftotext
 
-All seven tools side by side: https://sylphxai.github.io/anymd/vs/
+All seven benchmarked tools side by side: https://sylphxai.github.io/anymd/vs/
+
+## anymd vs LlamaParse
+
+Local MIT Rust CLI and MCP server with no API key, no file uploads and no per-page credit billing (96.4 overall across 38 AgentDocBench docs in 11.5 s; optional anymd Pro US$29 once) compared with LlamaIndex's hosted LlamaCloud parsing API (10,000 free credits/mo, then metered 1–25 credits/page). LlamaParse is a cloud API and was not measured on AgentDocBench. Comparison: https://sylphxai.github.io/anymd/vs/llamaparse
+
+## anymd vs Mistral OCR
+
+Local MIT Rust CLI and MCP server that parses born-digital PDFs natively in milliseconds (0.87 s across 20 born-digital PDFs; 96.4 overall across 38 AgentDocBench docs in 11.5 s; free MIT core or US$29 once for Pro) compared with Mistral AI's cloud OCR API (metered US$2–US$4 per 1,000 pages, requires API key and uploads). Mistral OCR is a cloud API and was not measured on AgentDocBench. Comparison: https://sylphxai.github.io/anymd/vs/mistral-ocr
+
+## anymd vs PyMuPDF4LLM
+
+Permissive MIT-licensed native Rust binary (CLI + built-in MCP server for PDF, Word, PowerPoint, Excel, EPUB, HTML, OCR and audio/video; 96.4 on AgentDocBench in 11.5 s; optional Pro US$29 once) compared with Artifex's AGPL-3.0 Python PDF library (commercial licence required for closed-source or SaaS use). PyMuPDF4LLM is not yet in AgentDocBench. Comparison: https://sylphxai.github.io/anymd/vs/pymupdf4llm
 
 ## Install and Setup
 
@@ -48,9 +60,12 @@ All seven tools side by side: https://sylphxai.github.io/anymd/vs/
 - [All comparisons](https://sylphxai.github.io/anymd/vs/)
 - [anymd vs Docling](https://sylphxai.github.io/anymd/vs/docling)
 - [anymd vs Kreuzberg](https://sylphxai.github.io/anymd/vs/kreuzberg)
+- [anymd vs LlamaParse](https://sylphxai.github.io/anymd/vs/llamaparse)
 - [anymd vs Marker](https://sylphxai.github.io/anymd/vs/marker)
 - [anymd vs MarkItDown](https://sylphxai.github.io/anymd/vs/markitdown)
+- [anymd vs Mistral OCR](https://sylphxai.github.io/anymd/vs/mistral-ocr)
 - [anymd vs pdftotext](https://sylphxai.github.io/anymd/vs/pdftotext)
+- [anymd vs PyMuPDF4LLM](https://sylphxai.github.io/anymd/vs/pymupdf4llm)
 - [anymd vs Unstructured](https://sylphxai.github.io/anymd/vs/unstructured)
 - [Local and hosted (Sylphx AI parse)](https://sylphxai.github.io/anymd/guide/hosted)
 - [MCP tools](https://sylphxai.github.io/anymd/guide/tools)

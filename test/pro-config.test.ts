@@ -59,13 +59,42 @@ describe('pro config', () => {
 
     const indexMd = readFileSync(new URL('../docs/index.md', import.meta.url), 'utf8');
     expect(indexMd).toContain('[anymd Pro](/pricing)');
+    expect(indexMd).toContain('text: Get Pro ($29 once)');
+    expect(indexMd).toContain('link: /pricing');
     expect(indexMd).not.toContain('(/pro)');
+
+    const heroInstall = readFileSync(
+      new URL('../docs/.vitepress/theme/components/HeroInstall.vue', import.meta.url),
+      'utf8'
+    );
+    expect(heroInstall).toContain('22,000+ npm downloads/mo');
+    expect(heroInstall).not.toContain('10,000+');
+
+    const proTracking = readFileSync(
+      new URL('../docs/.vitepress/theme/components/ProTracking.vue', import.meta.url),
+      'utf8'
+    );
+    expect(proTracking).not.toContain('<Teleport');
+
+    const themeIndex = readFileSync(
+      new URL('../docs/.vitepress/theme/index.ts', import.meta.url),
+      'utf8'
+    );
+    expect(themeIndex).not.toContain("'layout-top'");
+    expect(themeIndex).not.toContain('--vp-layout-top-height');
+
+    const customCss = readFileSync(
+      new URL('../docs/.vitepress/theme/custom.css', import.meta.url),
+      'utf8'
+    );
+    expect(customCss).toMatch(/\.pro-consent-wrap\s*\{[^}]*position:\s*static;/);
 
     const footer = readFileSync(
       new URL('../docs/.vitepress/theme/components/SiteFooter.vue', import.meta.url),
       'utf8'
     );
     expect(footer).toContain("withBase('/pricing')");
+    expect(footer).toContain('<ProTracking />');
     expect(footer).not.toContain("withBase('/pro')");
 
     const vpConfig = readFileSync(new URL('../docs/.vitepress/config.ts', import.meta.url), 'utf8');

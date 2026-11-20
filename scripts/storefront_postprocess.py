@@ -238,7 +238,7 @@ def parse_ga4_measurement_id(config_json: Path) -> str:
 
 
 def _build_ga4_consent_banner() -> str:
-    """Build the top-of-page flow-positioned cookie consent banner."""
+    """Build the bottom-of-page static in-flow cookie consent banner."""
     return """<div class="anymd-sf-consent" id="anymd-sf-consent" role="region" aria-label="Cookie consent" hidden data-anymd-ga4="1">
   <span>
     This page uses Google Analytics measurement when enabled to see how people find us and improve checkout. Depending on your choice, Google may set cookies and process identifiers such as your IP address. We never send your name or email. Sylphx Limited is the controller.
@@ -507,7 +507,9 @@ def _build_ga4_storefront_script(ga4_id: str) -> str:
     if (t instanceof Element && t.closest("[data-anymd-open-cookie]")) {{
       ev.preventDefault();
       syncBanner(true);
-      window.scrollTo({{ top: 0, behavior: "auto" }});
+      if (banner && typeof banner.scrollIntoView === "function") {{
+        banner.scrollIntoView({{ behavior: "auto", block: "end" }});
+      }}
     }}
   }});
   document.addEventListener("submit", (ev) => {{
@@ -562,12 +564,10 @@ def inject_storefront_ga4(html_text: str, ga4_id: str) -> str:
         html_text = html_text[:bs] + html_text[be:]
     html_text = re.sub(r'\s*<script data-anymd-ga4="1">.*?</script>', "", html_text, flags=re.DOTALL)
     banner = _build_ga4_consent_banner()
-    if '<div id="storefront-root"' in html_text:
-        html_text = html_text.replace('<div id="storefront-root"', f'{banner}<div id="storefront-root"', 1)
-    elif '<div id="docs-root"' in html_text:
-        html_text = html_text.replace('<div id="docs-root"', f'{banner}<div id="docs-root"', 1)
-    elif "<body>" in html_text:
-        html_text = html_text.replace("<body>", f"<body>\n{banner}", 1)
+    if "</footer>" in html_text:
+        html_text = html_text.replace("</footer>", f"</footer>{banner}", 1)
+    elif "</body>" in html_text:
+        html_text = html_text.replace("</body>", f"{banner}\n</body>", 1)
     script = _build_ga4_storefront_script(ga4_id)
     if "</body>" in html_text:
         html_text = html_text.replace("</body>", f"{script}\n</body>", 1)
@@ -796,6 +796,9 @@ def postprocess_pricing_html(
         separators=(",", ":"),
     )
     extra_head_tags = [
+        ('name="theme-color"', '<meta name="theme-color" content="#c3f53c">'),
+        ('href="/anymd/favicon.svg"', '<link rel="icon" type="image/svg+xml" href="/anymd/favicon.svg">'),
+        ('href="/anymd/favicon.ico"', '<link rel="icon" href="/anymd/favicon.ico" sizes="16x16 32x32 48x48">'),
         ('property="og:image"', f'<meta property="og:image" content="{escaped_img}">'),
         ('property="og:image:alt"', f'<meta property="og:image:alt" content="{OG_IMAGE_ALT}">'),
         ('property="og:image:width"', '<meta property="og:image:width" content="1280">'),
@@ -891,6 +894,18 @@ def postprocess_recover_html(
     )
     html_text = _set_meta_content(html_text, "name", "description", description)
     html_text = _set_meta_content(html_text, "property", "og:description", description)
+    recover_head_tags = [
+        ('name="theme-color"', '<meta name="theme-color" content="#c3f53c">'),
+        ('href="/anymd/favicon.svg"', '<link rel="icon" type="image/svg+xml" href="/anymd/favicon.svg">'),
+        ('href="/anymd/favicon.ico"', '<link rel="icon" href="/anymd/favicon.ico" sizes="16x16 32x32 48x48">'),
+    ]
+    missing_recover_tags = [tag for marker, tag in recover_head_tags if marker not in html_text]
+    if missing_recover_tags:
+        injection = "\n".join(missing_recover_tags) + "\n"
+        if "<!--/keel:head-->" in html_text:
+            html_text = html_text.replace("<!--/keel:head-->", f"{injection}<!--/keel:head-->", 1)
+        else:
+            html_text = html_text.replace("</head>", f"{injection}</head>", 1)
     html_text = re.sub(
         r"(<span[^>]*>)Money\s*(</span>\s*<span[^>]*>)sends(</span>)",
         r"\1we \2send\3",

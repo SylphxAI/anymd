@@ -70,13 +70,11 @@ watch(
 </script>
 
 <template>
-  <div v-if="enabled" class="pro-consent-wrap">
-    <Teleport to="#cookie-settings-footer" defer>
-      <p class="pro-cookie-link">
-        <a href="#cookie-settings" @click.prevent="open = true">Cookie settings and Your Privacy Choices</a>
-      </p>
-    </Teleport>
-    <div v-if="open" class="pro-consent" role="region" aria-label="Cookie consent">
+  <div v-if="enabled" id="cookie-settings-footer" class="pro-consent-wrap">
+    <p class="pro-cookie-link">
+      <a href="#cookie-settings" @click.prevent="open = true">Cookie settings and Your Privacy Choices</a>
+    </p>
+    <div v-if="open" id="cookie-settings" class="pro-consent" role="region" aria-label="Cookie consent">
       <span>
         This site uses Google Analytics measurement when enabled to see how people find us and which
         features help most. Depending on your choice, Google may set cookies and process identifiers

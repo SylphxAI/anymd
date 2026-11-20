@@ -1,23 +1,23 @@
 /* Product presentation over verified, pinned Keel output. No remote assets. */
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
   --sf-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --sf-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --sf-paper: #fbfcf8;
-  --sf-card: #ffffff;
-  --sf-wash: #f1f5e9;
-  --sf-ink: #101408;
-  --sf-muted: #414b38;
-  --sf-subtle: #6b7564;
-  --sf-line: #dce3d1;
+  --sf-paper: #0a0d07;
+  --sf-card: #12170d;
+  --sf-wash: #151c0f;
+  --sf-ink: #eaf2dd;
+  --sf-muted: #aebb9e;
+  --sf-subtle: #88957c;
+  --sf-line: #27321c;
   --sf-accent: #c3f53c;
   --sf-accent-deep: #9fd21c;
   --sf-accent-ink: #243503;
-  --sf-link: #3f6100;
-  --sf-code-bg: #ffffff;
-  --sf-code-string: #2b5200;
-  --sf-code-inline-bg: rgba(195, 245, 60, 0.14);
-  --sf-shadow: 0 1px 2px rgba(16, 20, 8, 0.06), 0 14px 36px -14px rgba(16, 20, 8, 0.14);
+  --sf-link: #c3f53c;
+  --sf-code-bg: #070a04;
+  --sf-code-string: #c3f53c;
+  --sf-code-inline-bg: rgba(195, 245, 60, 0.08);
+  --sf-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 18px 44px -16px rgba(0, 0, 0, 0.85);
 
   --keel-canvas: var(--sf-paper);
   --keel-color-background: var(--sf-paper);
@@ -25,44 +25,14 @@
   --keel-color-surface-high: var(--sf-wash);
   --keel-color-on-surface: var(--sf-ink);
   --keel-color-on-surface-variant: var(--sf-muted);
-  --keel-color-primary: var(--sf-link);
-  --keel-color-on-primary: var(--sf-paper);
+  --keel-color-primary: var(--sf-accent);
+  --keel-color-on-primary: var(--sf-accent-ink);
   --keel-color-outline: var(--sf-line);
-  --keel-link: var(--sf-link);
-  --keel-link-hover: #2d4600;
-  --keel-focus-ring-color: var(--sf-link);
+  --keel-link: var(--sf-accent);
+  --keel-link-hover: var(--sf-accent-deep);
+  --keel-focus-ring-color: var(--sf-accent);
   --keel-font-ui: var(--sf-sans);
   --keel-asset-font-ui: var(--sf-sans);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sf-paper: #0a0d07;
-    --sf-card: #12170d;
-    --sf-wash: #151c0f;
-    --sf-ink: #eaf2dd;
-    --sf-muted: #aebb9e;
-    --sf-subtle: #88957c;
-    --sf-line: #27321c;
-    --sf-link: #c3f53c;
-    --sf-code-bg: #070a04;
-    --sf-code-string: #c3f53c;
-    --sf-code-inline-bg: rgba(195, 245, 60, 0.08);
-    --sf-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 18px 44px -16px rgba(0, 0, 0, 0.85);
-
-    --keel-canvas: var(--sf-paper);
-    --keel-color-background: var(--sf-paper);
-    --keel-color-surface: var(--sf-card);
-    --keel-color-surface-high: var(--sf-wash);
-    --keel-color-on-surface: var(--sf-ink);
-    --keel-color-on-surface-variant: var(--sf-muted);
-    --keel-color-primary: var(--sf-accent);
-    --keel-color-on-primary: var(--sf-accent-ink);
-    --keel-color-outline: var(--sf-line);
-    --keel-link: var(--sf-accent);
-    --keel-link-hover: var(--sf-accent-deep);
-    --keel-focus-ring-color: var(--sf-accent);
-  }
 }
 
 html {
@@ -120,10 +90,9 @@ body {
   outline-offset: 3px;
 }
 
-/* Consent banner — sits cleanly in flow at top of page, 0px when hidden. */
+/* Consent banner — static in-flow band at document bottom, 0px when hidden. */
 .anymd-sf-consent {
-  position: relative;
-  z-index: 25;
+  position: static;
   width: 100%;
   max-width: none;
   margin: 0;
@@ -134,7 +103,7 @@ body {
   align-items: center;
   justify-content: space-between;
   border: 0;
-  border-bottom: 1px solid var(--sf-line);
+  border-top: 1px solid var(--sf-line);
   border-radius: 0;
   background: var(--sf-wash);
   color: var(--sf-ink);
@@ -196,7 +165,8 @@ body {
   padding: 0;
   border: 0;
   border-bottom: 1px solid var(--sf-line);
-  background: var(--sf-paper);
+  background: rgba(10, 13, 7, 0.88);
+  backdrop-filter: blur(8px);
 }
 
 #storefront-header-inner,

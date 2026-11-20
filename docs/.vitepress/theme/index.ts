@@ -67,28 +67,13 @@ const theme: Theme = {
       });
       watch(() => route.path, () => window.dispatchEvent(new Event('anymd:navigation')));
     }
-    let consentObserver: ResizeObserver | undefined;
     let disposeCopy: (() => void) | undefined;
     let disposeAttribution: (() => void) | undefined;
     onMounted(() => {
-      const wrapper = document.querySelector('.pro-consent-wrap');
-      if (wrapper) {
-        const measure = () => {
-          document.documentElement.style.setProperty(
-            '--vp-layout-top-height',
-            String(wrapper.getBoundingClientRect().height) + 'px'
-          );
-        };
-        consentObserver = new ResizeObserver(measure);
-        consentObserver.observe(wrapper);
-        measure();
-      }
       disposeCopy = installFencedCodeCopy();
       disposeAttribution = installAttributionForwarding();
     });
     onUnmounted(() => {
-      consentObserver?.disconnect();
-      document.documentElement.style.removeProperty('--vp-layout-top-height');
       disposeCopy?.();
       disposeAttribution?.();
     });
@@ -96,7 +81,6 @@ const theme: Theme = {
   Layout: () =>
     h(DefaultTheme.Layout, null, {
       'home-hero-actions-after': () => h(HeroInstall),
-      'layout-top': () => h(ProTracking),
       'layout-bottom': () => h(SiteFooter),
     }),
   enhanceApp({ app, router }) {
