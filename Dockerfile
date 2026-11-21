@@ -27,7 +27,7 @@ RUN bun run web:build
 FROM node:24-bookworm-slim AS web
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0
-COPY --from=build --chown=node:node /source/apps/web/.output ./.output
+COPY --from=build --chown=node:node /source/apps/web/.output ./apps/web/.output
 EXPOSE 3000
 USER node
-CMD ["node", ".output/server/index.mjs"]
+CMD ["node", "apps/web/.output/server/index.mjs"]

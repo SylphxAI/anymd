@@ -55,7 +55,8 @@ test('password sign-up is non-enumerating and sign-in redeems a server ticket', 
 test('OAuth uses only approved callback origins and refuses disabled GitHub', async ({ request, baseURL }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires the local Google-only social Auth fixture');
   for (const [host, forwarded, origin] of [
-    ['0.0.0.0:3000', 'web-16b143.sylphx.app', 'https://web-16b143.sylphx.app'],
+    ['anymd-web.default.svc.cluster.local:3000', 'web-16b143.sylphx.app', 'https://web-16b143.sylphx.app'],
+    ['anymd-web.default.svc.cluster.local:3000', '', baseURL],
     ['anymd.sylphx.com', 'anymd.sylphx.com', 'https://anymd.sylphx.com'],
     ['evil.example', 'web-16b143.sylphx.app.evil.example', baseURL],
   ]) {
