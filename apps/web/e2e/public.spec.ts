@@ -32,16 +32,13 @@ test('CLI consent page strips the query without suppressing the form origin', as
   await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'strict-origin');
 });
 
-test('shows the provider choices and one-time 16-currency pricing', async ({ page }) => {
+test('shows one-time 16-currency pricing', async ({ page }) => {
   await page.goto('/pricing');
   await expect(page.getByText('$29', { exact: true })).toBeVisible();
   const currency = page.getByLabel('Currency');
   await expect(currency.locator('option')).toHaveCount(16);
   await currency.selectOption('HKD');
   await expect(page.getByText('HK$229', { exact: true })).toBeVisible();
-  await page.goto('/sign-in?next=%2Fdashboard');
-  await expect(page.getByRole('main').getByText('Continue with Google', { exact: true })).toBeVisible();
-  await expect(page.getByText('Continue with GitHub', { exact: true })).toBeVisible();
 });
 
 test('pricing and its Pro alias show four concrete benefits before checkout', async ({ page }) => {
@@ -63,7 +60,7 @@ test('pricing and its Pro alias show four concrete benefits before checkout', as
 });
 
 test('header and hero send signed-out users to the provider chooser', async ({ page }) => {
-  await page.route('**/api/auth/session', (route) => route.fulfill({ json: { authConfigured: true, user: null } }));
+  await page.route('**/api/auth/session*', (route) => route.fulfill({ json: { authConfigured: true, providers: ['google', 'github'], user: null } }));
   const session = page.waitForResponse('**/api/auth/session');
   await page.goto('/');
   await session;

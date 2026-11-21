@@ -17,7 +17,8 @@ const bytes = (v: string) => Uint8Array.from(atob(v.replace(/-/g,'+').replace(/_
 const base64url = (v: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(v))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 
 export function SignInForm({next, error}: {next:string; error?:string}) {
-  const state = useSession();
+  const state = useSession(true);
+  const providers = state && state !== 'error' && state.authConfigured ? state.providers ?? [] : [];
   const configured = Boolean(state && state !== 'error' && state.authConfigured);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -27,10 +28,8 @@ export function SignInForm({next, error}: {next:string; error?:string}) {
   const providerQuery = '?next=' + encodeURIComponent(next);
   return <div className="panel stack auth-panel">
     {state === 'error' ? <p className="notice" role="alert">Sign-in is temporarily unavailable. Reload to try again.</p> : state && !state.authConfigured ? <p className="notice" role="status">Sign-in isn’t connected in this environment. You can still convert files in Studio and use the docs.</p> : null}
-    {configured ? <>
-      <a className="button button-primary" href={'/api/auth/google' + providerQuery}><GoogleMark /> Continue with Google</a>
-      <a className="button" href={'/api/auth/github' + providerQuery}><GithubMark size={17} /> Continue with GitHub</a>
-    </> : <><button type="button" className="button button-primary" disabled><GoogleMark /> Continue with Google</button><button type="button" className="button" disabled><GithubMark size={17} /> Continue with GitHub</button></>}
+    {providers.includes('google') && <a className="button button-primary" href={'/api/auth/google' + providerQuery}><GoogleMark /> Continue with Google</a>}
+    {providers.includes('github') && <a className="button" href={'/api/auth/github' + providerQuery}><GithubMark size={17} /> Continue with GitHub</a>}
     <button type="button" className="button" disabled={!configured || pending} onClick={async () => {
       if (!window.PublicKeyCredential || !navigator.credentials) { setNotice('Passkeys require a compatible browser and a secure connection.'); return; }
       setNotice(''); setPending(true);

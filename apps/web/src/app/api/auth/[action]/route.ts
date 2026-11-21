@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { acceptTicket, authCall, authConfig, cookieOptions, oauthFinish, oauthStart, requireAuth, session, signOut } from '@/lib/auth';
+import { acceptTicket, authCall, authConfig, cookieOptions, oauthFinish, oauthStart, requireAuth, session, signOut, socialProviders } from '@/lib/auth';
 import { appOrigin, failure, field, HttpError, json, redirect, sameOriginJson, safeNext } from '@/lib/http';
 
 type Params = { params: Promise<{ action: string }> };
@@ -12,7 +12,9 @@ export async function GET(request: Request, {params}: Params) {
     try {
       const config = authConfig();
       const active = config && await session(request, config);
-      return json({authConfigured: Boolean(config), user: active ? {name: active.user.name, email: active.user.email} : null});
+      const providers = config && new URL(request.url).searchParams.has('providers')
+        ? await socialProviders(request, config).catch(() => []) : [];
+      return json({authConfigured: Boolean(config), providers, user: active ? {name: active.user.name, email: active.user.email} : null});
     } catch (err) { return failure(err); }
   }
   try {
