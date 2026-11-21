@@ -108,7 +108,16 @@ const statePath = '/api/auth/callback';
 function stateMac(config: Config, origin: string, payload: string) {
   return createHmac('sha256', config.sk).update(`anymd-state-v1\0${origin}\0${payload}`).digest('base64url');
 }
+export async function socialProviders(request: Request, config: Config): Promise<string[]> {
+  const query = new URLSearchParams({publishable_key: config.pk});
+  const body = await authCall(config, request, '/v1/client/config?' + query, config.pk);
+  return ['google', 'github'].filter(provider => Array.isArray(body?.social) && body.social.some(
+    (entry: {provider?: unknown; credentials?: unknown} | null) => entry?.provider === provider && asText(entry.credentials),
+  ));
+}
+
 export async function oauthStart(request: Request, config: Config, provider: 'google' | 'github') {
+  if (!(await socialProviders(request, config)).includes(provider)) throw new HttpError(404, 'provider_unavailable');
   const nonce = randomBytes(24).toString('base64url');
   const next = safeNext(new URL(request.url).searchParams.get('next'));
   const origin = appOrigin(request);

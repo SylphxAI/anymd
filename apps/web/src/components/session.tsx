@@ -4,21 +4,21 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-export type Session = { authConfigured: boolean; user: { name: string | null; email: string | null } | null };
+export type Session = { authConfigured: boolean; providers?: string[]; user: { name: string | null; email: string | null } | null };
 
-export function useSession() {
+export function useSession(includeProviders = false) {
   const pathname = usePathname();
   const [state, setState] = useState<Session | 'error' | null>(null);
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/auth/session', { cache: 'no-store', signal: controller.signal })
+    fetch('/api/auth/session' + (includeProviders ? '?providers' : ''), { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error('Session unavailable');
         setState(await response.json());
       })
       .catch(() => { if (!controller.signal.aborted) setState('error'); });
     return () => controller.abort();
-  }, [pathname]);
+  }, [pathname, includeProviders]);
   return state;
 }
 
