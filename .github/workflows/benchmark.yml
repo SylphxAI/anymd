@@ -25,8 +25,17 @@ jobs:
     if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Read benchmark matrix
+        id: matrix
+        run: echo "value=$(jq -c . bench/matrix.json)" >> "$GITHUB_OUTPUT"
 
       - name: Test benchmark harness (offline)
         run: python3 -m unittest discover -s bench -p 'test_*.py'
@@ -50,14 +59,16 @@ jobs:
       - name: Build anymd
         run: cargo build --release -p anymd
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: corpus
           path: corpus/
           retention-days: 3
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: anymd-binary
           path: target/release/anymd
           retention-days: 3
@@ -68,24 +79,13 @@ jobs:
     if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { tool: anymd, shard: 1/1 }
-          - { tool: pdftotext, shard: 1/1 }
-          - { tool: markitdown, shard: 1/1 }
-          - { tool: kreuzberg, shard: 1/1 }
-          - { tool: docling, shard: 1/4 }
-          - { tool: docling, shard: 2/4 }
-          - { tool: docling, shard: 3/4 }
-          - { tool: docling, shard: 4/4 }
-          - { tool: marker, shard: 1/4 }
-          - { tool: marker, shard: 2/4 }
-          - { tool: marker, shard: 3/4 }
-          - { tool: marker, shard: 4/4 }
-          - { tool: unstructured, shard: 1/2 }
-          - { tool: unstructured, shard: 2/2 }
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     env:
       TOOL: ${{ matrix.tool }}
       SHARD: ${{ matrix.shard }}
@@ -102,15 +102,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         if: steps.selected.outputs.run == 'true'
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         if: steps.selected.outputs.run == 'true'
         with:
+          mode: get
           name: corpus
           path: corpus
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         if: steps.selected.outputs.run == 'true'
         with:
+          mode: get
           name: anymd-binary
           path: anymd-bin
 
@@ -160,28 +162,46 @@ jobs:
           python bench/run.py --tool "$TOOL" --shard "$SHARD" --corpus corpus \
             --out "out/$name.json" --save-outputs "out/outputs/$TOOL"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: steps.selected.outputs.run == 'true' && always()
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
+        if: always() && !cancelled() && steps.selected.outputs.run == 'true' && hashFiles('out/**') != ''
         with:
+          mode: put
           name: results-${{ env.NAME }}
           path: out/
-          if-no-files-found: ignore
           retention-days: 3
 
   report:
     name: Leaderboard
-    needs: bench
-    if: ${{ github.repository_visibility == 'public' && (always()) }}
+    needs: [prepare, bench]
+    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.prepare.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      - name: Select result names
+        id: bundles
+        env:
+          TOOLS: ${{ inputs.tools }}
+          MATRIX: ${{ needs.prepare.outputs.matrix }}
+        run: |
+          {
+            echo 'names<<EOF'
+            jq -r --arg tools "$TOOLS" '
+              .[] | select(.tool as $tool | $tools == "" or ($tools | split(",") | index($tool)))
+              | "results-\(.tool)-\(.shard | sub("/"; "of"))"
+            ' <<< "$MATRIX"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/run-store-collect
         with:
-          pattern: results-*
+          names: ${{ steps.bundles.outputs.names }}
           path: parts
-          merge-multiple: true
+          merge: 'true'
 
       - name: Merge shards and render
         env:
@@ -199,10 +219,16 @@ jobs:
           [ "$selected" -gt 0 ] || { echo 'No supported benchmark tools selected' >&2; exit 1; }
           python3 bench/leaderboard.py --results current-results --print | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - name: Stage benchmark results and Markdown outputs
+        run: |
+          out="$RUNNER_TEMP/agentdocbench"
+          mkdir -p "$out/bench" "$out/parts"
+          cp -a bench/results "$out/bench/"
+          if [ -d parts/outputs ]; then cp -a parts/outputs "$out/parts/"; fi
+
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: agentdocbench-results
-          path: |
-            bench/results/
-            parts/outputs/
+          path: ${{ runner.temp }}/agentdocbench
           retention-days: 3

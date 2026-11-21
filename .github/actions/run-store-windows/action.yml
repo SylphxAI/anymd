@@ -1,0 +1,16 @@
+name: Set up run-store on Windows
+description: Expose the run-store Python 3 command to Git Bash on Windows.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: '3.12'
+    - name: Expose python3 in Git Bash
+      shell: bash
+      run: |
+        shim="$RUNNER_TEMP/run-store-bin"
+        mkdir -p "$shim"
+        printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$shim/python3"
+        chmod +x "$shim/python3"
+        cygpath -w "$shim" >> "$GITHUB_PATH"

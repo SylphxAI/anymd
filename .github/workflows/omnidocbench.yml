@@ -26,7 +26,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: omnidocbench-${{ github.ref }}
@@ -44,6 +43,9 @@ jobs:
     name: Build anymd
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
@@ -52,8 +54,9 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: python3 bench/omnidocbench/test_harness.py
       - run: cargo build --release -p anymd
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: anymd-binary
           path: target/release/anymd
           retention-days: 1
@@ -64,6 +67,9 @@ jobs:
     if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -71,8 +77,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: get
           name: anymd-binary
           path: anymd-bin
 
@@ -98,11 +105,12 @@ jobs:
           python3 bench/omnidocbench/harness.py predict --shard "${{ matrix.shard }}" \
             --limit "$LIMIT" --workers 1 --timeout 620 --out "pred/${{ strategy.job-index }}"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: always()
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
+        if: always() && !cancelled() && hashFiles('pred/**') != ''
         with:
+          mode: put
           name: predictions-${{ strategy.job-index }}
-          path: pred/
+          path: pred/${{ strategy.job-index }}
           retention-days: 1
 
   evaluate:
@@ -111,6 +119,10 @@ jobs:
     if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && (needs.predict.result == 'success' || inputs.predictions_run != '')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -133,13 +145,20 @@ jobs:
             --run "$PREDICTIONS_RUN" --sha "$PREDICTIONS_SHA" --ocr "$ANYMD_OCR" \
             --limit "$LIMIT" --out source-provenance.json
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      - name: Name the 32 prediction bundles
+        id: bundles
+        run: |
+          {
+            echo 'names<<EOF'
+            printf 'predictions-%s\n' {0..31}
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/run-store-collect
         with:
-          github-token: ${{ github.token }}
           run-id: ${{ inputs.predictions_run || github.run_id }}
-          pattern: predictions-*
+          names: ${{ steps.bundles.outputs.names }}
           path: pred-parts
-          merge-multiple: true
 
       - name: Ground truth
         run: python3 bench/omnidocbench/harness.py gt --limit "$LIMIT" --out gt.json
@@ -223,14 +242,26 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: always()
+      - name: Stage available evaluator evidence
+        id: evidence
+        if: always() && !cancelled()
+        run: |
+          out="$RUNNER_TEMP/omnidocbench-results"
+          mkdir -p "$out"
+          for entry in source-provenance.json gt.json evaluator/result evaluator/configs/end2end.yaml; do
+            if [ -e "$entry" ]; then cp -a --parents "$entry" "$out/"; fi
+          done
+          if [ -d pred-parts ]; then
+            find pred-parts -type f -name 'timings-*.json' -exec cp --parents -t "$out" {} +
+          fi
+          if [ -n "$(find "$out" -type f -print -quit)" ]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
+        if: always() && !cancelled() && steps.evidence.outputs.present == 'true'
         with:
+          mode: put
           name: omnidocbench-results
-          path: |
-            source-provenance.json
-            gt.json
-            evaluator/result/
-            evaluator/configs/end2end.yaml
-            pred-parts/**/timings-*.json
+          path: ${{ runner.temp }}/omnidocbench-results
           retention-days: 1

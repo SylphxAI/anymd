@@ -1,0 +1,44 @@
+name: Collect run-store bundles
+description: Fetch exact matrix handover names with the pinned run-store implementation.
+inputs:
+  names:
+    description: Newline-delimited exact bundle names.
+    required: true
+  path:
+    description: Destination directory; each bundle gets a named subdirectory unless merge is true.
+    required: true
+  run-id:
+    description: Source run ID, if different from this run.
+    default: ''
+  required:
+    description: Require all bundles; otherwise allow missing producer evidence.
+    default: 'true'
+  merge:
+    description: Unpack all bundles into the same directory.
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    # The action's public entry point takes one name. Use its identically pinned
+    # implementation and helpers to fan in without introducing a second client.
+    - name: Check out run-store
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: SylphxAI/.github
+        ref: 724d4c9c87e736ced2068bc22eb57385adabd14d # main
+        path: .run-store-tools
+        persist-credentials: false
+        sparse-checkout: |
+          .github/actions/run-store
+          .github/actions/_shared
+    - name: Fetch matrix bundles
+      shell: bash
+      env:
+        MODE: get
+        REPO_ID: ${{ github.repository_id }}
+        STORE_RUN_ID: ${{ inputs.run-id || github.run_id }}
+        REQUIRED: ${{ inputs.required }}
+        NAMES: ${{ inputs.names }}
+        DEST: ${{ inputs.path }}
+        MERGE: ${{ inputs.merge }}
+      run: bash "$GITHUB_ACTION_PATH/collect.sh"

@@ -1,0 +1,16 @@
+[
+  {"tool": "anymd", "shard": "1/1"},
+  {"tool": "pdftotext", "shard": "1/1"},
+  {"tool": "markitdown", "shard": "1/1"},
+  {"tool": "kreuzberg", "shard": "1/1"},
+  {"tool": "docling", "shard": "1/4"},
+  {"tool": "docling", "shard": "2/4"},
+  {"tool": "docling", "shard": "3/4"},
+  {"tool": "docling", "shard": "4/4"},
+  {"tool": "marker", "shard": "1/4"},
+  {"tool": "marker", "shard": "2/4"},
+  {"tool": "marker", "shard": "3/4"},
+  {"tool": "marker", "shard": "4/4"},
+  {"tool": "unstructured", "shard": "1/2"},
+  {"tool": "unstructured", "shard": "2/2"}
+]
