@@ -261,13 +261,10 @@ jobs:
     if: github.event_name == 'pull_request' && needs.changes.outputs.navigation == 'true'
     uses: ./.github/workflows/navigation.yml
 
-  # The full suite on a pull request that is ready; never in a merge group or a draft.
+  # Verify selects its lanes on ready PRs and runs all lanes on manual CI.
   suite:
-    needs: changes
     if: github.event_name != 'merge_group' && !github.event.pull_request.draft
     uses: ./.github/workflows/verify.yml
-    with:
-      code: ${{ needs.changes.outputs.code }}
     secrets: inherit
 
   # No new departure from the default stack (docs/stack-conformance.md in
