@@ -1,4 +1,4 @@
-use super::{by, del, docx, dr, ins, md, p, pm, r, resolved, text_box, Revisions, W};
+use super::{by, del, docx, dr, end, ins, md, p, pm, r, resolved, text_box, Revisions, W};
 
 #[test]
 fn tracked_changes_become_critic_markup_without_losing_formatting() {

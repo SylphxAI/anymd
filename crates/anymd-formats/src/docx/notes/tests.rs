@@ -1,6 +1,6 @@
 use super::super::convert_with_output_limit;
 use super::{
-    comments, del, docx, dr, end, ins, md, p, pm, r, reference, resolved, Options, Revisions, W,
+    comments, del, docx, dr, ins, md, p, pm, r, reference, resolved, Options, Revisions, W,
 };
 
 #[test]
