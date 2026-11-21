@@ -1,11 +1,12 @@
 import { serve } from 'bun';
+import { randomBytes } from 'node:crypto';
 
-const ticket = crypto.randomUUID();
-const token = process.env.ANYMD_E2E_SESSION;
-if (!token) throw new Error('Missing local test session');
+const ticket = randomBytes(24).toString('base64url');
+const token = randomBytes(24).toString('base64url');
 serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');
+  if (url.pathname === '/fixture/session' && request.method === 'POST') return new Response(token);
   if (url.pathname === '/v1/client/config' && url.searchParams.get('publishable_key') === 'fixture') {
     return Response.json(request.headers.get('user-agent') === 'anymd-test-otp-passkey' ? {
       social: [], methods: { passkey: true, email_otp: true, password: false, sign_up: false },

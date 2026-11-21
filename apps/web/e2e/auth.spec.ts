@@ -21,9 +21,9 @@ test.describe('OTP and passkey Auth configuration', () => {
     await expect(page.getByRole('button', { name: 'Send sign-in code' })).toBeVisible();
     await expect(page.getByLabel('Password')).toHaveCount(0);
     await expect(page.getByText('or use email')).toHaveCount(0);
-    const token = process.env.ANYMD_E2E_SESSION;
-    if (!token) throw new Error('Missing local test session');
-    await context.addCookies([{ name: 'anymd_session', value: token, url: new URL(page.url()).origin }]);
+    const session = await page.request.post('http://127.0.0.1:3031/fixture/session');
+    expect(session.ok()).toBe(true);
+    await context.addCookies([{ name: 'anymd_session', value: await session.text(), url: new URL(page.url()).origin }]);
     await page.goto('/dashboard');
     await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeVisible();
   });
