@@ -1,7 +1,8 @@
 import { serve } from 'bun';
 
-const ticket = 'fixture-one-time-ticket';
-const token = 'fixture-session';
+const ticket = crypto.randomUUID();
+const token = process.env.ANYMD_E2E_SESSION;
+if (!token) throw new Error('Missing local test session');
 serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');

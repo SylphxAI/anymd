@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 const authOrigin = 'http://127.0.0.1:3031';
+process.env.ANYMD_E2E_SESSION ??= crypto.randomUUID();
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 export default defineConfig({
