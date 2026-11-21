@@ -162,9 +162,8 @@ Re-running an old run keeps its original commit and workflow, so it cannot
 pick up a release fix merged afterward. For a fix on `main`, dispatch
 `release.yml` on `main` without changing the product version. npm and the
 GitHub release are skipped when that version already exists; the crates job
-publishes only missing versions. On a dispatch with no native artifacts, the
-image job downloads the two Linux tarballs from the matching GitHub release
-and stages them into `dist/amd64/anymd` and `dist/arm64/anymd`, with no Rust
+publishes only missing versions. The image job downloads the two Linux
+tarballs from the matching GitHub release and stages them into `dist/amd64/anymd` and `dist/arm64/anymd`, with no Rust
 compile. `Dockerfile.release.dockerignore` includes those binaries and the root
 `LICENSE` in the build context. The image ships that file at
 `/usr/share/licenses/anymd/LICENSE`, including any bundled third-party notices,
@@ -180,17 +179,15 @@ requires one original source. Its licence comes from that source commit.
 `io.sylphx.packaging.source` and the image build attestation record the workflow
 packaging source. These can differ during recovery; neither is relabelled as
 the other.
-Ordinary pushes without new binaries skip the image job. This image recovery
-path is independent of Python delivery; it is not evidence that wheels were
-built or published.
+Ordinary pushes build the image only if that version is missing from GHCR.
+A manual dispatch can rebuild it. The image job is independent of Python
+delivery; it is not evidence that wheels were built or published.
 
-With no matching native artifacts, the wheel job uses
-`scripts/recover-wheels.py` to probe the exact version on PyPI. The helper skips
+The wheel job uses `scripts/recover-wheels.py` to probe the exact version on
+PyPI. The helper skips
 wheel building only when all five expected, non-yanked platform wheels are
 listed. A version-specific 404 or an incomplete wheel list triggers recovery;
-non-404 probe errors and mismatched version or wheel names fail. A partial
-native artifact matrix or an empty native binary fails instead of falling
-back to release assets.
+non-404 probe errors and mismatched version or wheel names fail.
 
 Recovery downloads all five binary archives from the matching GitHub release
 `vX.Y.Z`, never a latest release or a global binary. It resolves the actual tag
@@ -199,9 +196,10 @@ existing trust job's SHA256SUMS and GitHub asset digests, and verifies each
 archive's trust attestation against that tag's source commit and `release.yml`
 signer. Missing targets, corrupt assets, failed attestations or a recovered
 host binary reporting another version stop recovery. The wheel job waits for
-the trust job to finish; fresh native-artifact delivery does not require the
-trust job to succeed. Downloaded native files have their executable mode restored
-before the version check and wheel packaging; their bytes are unchanged.
+the trust job to finish and requires its trust pack when building wheels.
+Downloaded native files have their executable mode restored before the version
+check and wheel packaging; their bytes are unchanged. Wheels pass to the PyPI
+publish job through run-store.
 
 The existing wheel builder packages the Python API, README and licence fetched
 from that exact tag commit alongside those binaries. It must not substitute

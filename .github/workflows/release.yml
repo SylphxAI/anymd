@@ -178,6 +178,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     permissions:
+      id-token: write
       contents: read
     strategy:
       fail-fast: true
@@ -193,6 +194,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+
+      - name: Set up run-store on Windows
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/run-store-windows
 
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
@@ -236,11 +241,11 @@ jobs:
           chmod +x out/anymd-ocr-vlm-*
           ./out/anymd-ocr-vlm-${{ matrix.key }}${{ matrix.exe }} version | grep -Fx "anymd-ocr-vlm $V"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: companion-${{ matrix.key }}
-          path: out/*
-          if-no-files-found: error
+          path: out/anymd-ocr-vlm-${{ matrix.key }}${{ matrix.exe }}
           retention-days: 3
 
   companion:
@@ -251,6 +256,7 @@ jobs:
     # The signing key lives only in this environment (main branch only).
     environment: companion-signing
     permissions:
+      id-token: write
       contents: write
     steps:
       - name: Checkout the signing script
@@ -258,10 +264,10 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: |
+            .github/actions/run-store-collect
             scripts/sign-companion-manifest.py
             scripts/sign-requirements.txt
             crates/anymd/src/ocr_vlm.rs
-          path: repo
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -271,14 +277,18 @@ jobs:
       # No secret is in scope here: only hash-pinned binary wheels install.
       - name: Install the signing dependencies
         run: |
-          pip install --only-binary :all: --require-hashes -r repo/scripts/sign-requirements.txt
+          pip install --only-binary :all: --require-hashes -r scripts/sign-requirements.txt
 
-      - name: Download the companions
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      - uses: ./.github/actions/run-store-collect
         with:
-          pattern: companion-*
+          names: |
+            companion-darwin-arm64
+            companion-darwin-x64
+            companion-linux-x64-gnu
+            companion-linux-arm64-gnu
+            companion-win32-x64-msvc
           path: artifacts
-          merge-multiple: true
+          merge: 'true'
 
       - name: Build the manifest
         run: |
@@ -295,7 +305,7 @@ jobs:
         env:
           V: ${{ needs.companion-plan.outputs.version }}
           ANYMD_COMPANION_SIGNING_KEY: ${{ secrets.ANYMD_COMPANION_SIGNING_KEY }}
-        run: python3 repo/scripts/sign-companion-manifest.py "$V" artifacts/anymd-ocr-vlm-SHA256SUMS artifacts/anymd-ocr-vlm-SHA256SUMS.sig
+        run: python3 scripts/sign-companion-manifest.py "$V" artifacts/anymd-ocr-vlm-SHA256SUMS artifacts/anymd-ocr-vlm-SHA256SUMS.sig
 
       - name: Attach the companions and the manifest to the release
         env:
@@ -420,6 +430,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      id-token: write
       contents: read
     outputs:
       rendered: ${{ steps.rendered.outputs.rendered }}
@@ -446,11 +457,11 @@ jobs:
 
       - name: Upload the manifest
         if: steps.rendered.outputs.rendered == 'true'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: winget-manifest
           path: out/
-          if-no-files-found: error
           retention-days: 1
 
   # Opens the winget pull request. A job condition may read the repository
@@ -463,6 +474,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      id-token: write
       contents: read
     steps:
       - name: Checkout the submit script
@@ -474,8 +486,9 @@ jobs:
             packages/anymd/package.json
 
       - name: Download the manifest
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: get
           name: winget-manifest
           path: out
 
@@ -484,14 +497,15 @@ jobs:
           GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: bash scripts/winget-submit.sh submit
 
-  # Platform wheels use this run's natives, or the matching tagged release's
-  # verified trust pack when PyPI delivery is incomplete. No Rust rebuild.
+  # Reuse the matching tagged release's verified trust pack when PyPI
+  # delivery is incomplete. No Rust rebuild.
   wheels:
     needs: [release, trust]
     if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      id-token: write
       contents: read
       attestations: read
     outputs:
@@ -502,17 +516,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download the native binaries
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          pattern: native-*
-          path: artifacts
-
+      # The shared release workflow publishes the native assets. Bind the
+      # wheel payload to the verified tag instead of the kit's transient data.
       - name: Build the wheels
         id: build
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/recover-wheels.py --artifacts artifacts --out dist
+        run: python3 scripts/recover-wheels.py --out dist
 
       - name: Smoke the Linux wheel (pip install, then convert a PDF)
         if: steps.build.outputs.built == 'true'
@@ -528,11 +538,11 @@ jobs:
 
       - name: Upload the wheels
         if: steps.build.outputs.built == 'true'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: wheels
-          path: dist/*.whl
-          if-no-files-found: error
+          path: dist
           retention-days: 3
 
   # PyPI trusted publishing (OIDC, no token) requires a publisher for project
@@ -550,8 +560,9 @@ jobs:
       id-token: write
     steps:
       - name: Download the wheels
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: get
           name: wheels
           path: dist
 
@@ -581,49 +592,46 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download the Linux binaries
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          pattern: native-linux-*
-          path: artifacts
-
-      - name: Stage the binaries
+      - name: Stage the tagged Linux binaries
         id: stage
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          v=$(jq -r .version packages/anymd/package.json)
-          mkdir -p dist/amd64 dist/arm64
-          if [ -f artifacts/native-linux-x64-gnu/anymd ]; then
-            cp artifacts/native-linux-x64-gnu/anymd dist/amd64/
-            cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
-          elif [ "$EVENT_NAME" = workflow_dispatch ]; then
-            # A recovery run on main has no native artifacts: reuse the exact
-            # binaries already attached to this version's GitHub release.
-            mkdir -p assets
-            gh release download "v$v" --dir assets \
-              --pattern anymd-linux-x64-gnu.tar.gz \
-              --pattern anymd-linux-arm64-gnu.tar.gz \
-              --pattern anymd-linux-x64-gnu.identity.json \
-              --pattern anymd-linux-arm64-gnu.identity.json
-            for platform in linux-x64-gnu linux-arm64-gnu; do
-              mkdir -p "artifacts/native-$platform"
-              tar -xzf "assets/anymd-$platform.tar.gz" -C "artifacts/native-$platform" anymd
-              cp "assets/anymd-$platform.identity.json" "artifacts/native-$platform/identity.json"
-            done
-            cp artifacts/native-linux-x64-gnu/anymd dist/amd64/
-            cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
-            git fetch --no-tags origin "refs/tags/v$v:refs/tags/v$v"
-            tag_source=$(git rev-parse "v$v^{commit}")
-          else
-            echo "no new release in this run; no image"
-            echo "build=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          v=$(jq -er .version packages/anymd/package.json)
+          if [ "$EVENT_NAME" != workflow_dispatch ]; then
+            # On a regular push, leave already published versions alone.
+            # Only a confirmed registry miss permits a new image publication.
+            registry_token=$(curl -fsS --retry 2 --max-time 15 'https://ghcr.io/token?scope=repository:sylphxai/anymd:pull' | jq -er .token)
+            echo "::add-mask::$registry_token"
+            status=$(curl -sS --retry 2 --max-time 15 -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer $registry_token" \
+              -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json' \
+              "https://ghcr.io/v2/sylphxai/anymd/manifests/$v")
+            case "$status" in
+              200) echo 'Versioned image already exists'; exit 0 ;;
+              404) ;;
+              *) echo "Image registry probe failed (HTTP $status)" >&2; exit 1 ;;
+            esac
           fi
+          mkdir -p assets dist/amd64 dist/arm64
+          gh release download "v$v" --dir assets \
+            --pattern anymd-linux-x64-gnu.tar.gz \
+            --pattern anymd-linux-arm64-gnu.tar.gz \
+            --pattern anymd-linux-x64-gnu.identity.json \
+            --pattern anymd-linux-arm64-gnu.identity.json
+          for platform in linux-x64-gnu linux-arm64-gnu; do
+            mkdir -p "artifacts/native-$platform"
+            tar -xzf "assets/anymd-$platform.tar.gz" -C "artifacts/native-$platform" anymd
+            cp "assets/anymd-$platform.identity.json" "artifacts/native-$platform/identity.json"
+          done
+          cp artifacts/native-linux-x64-gnu/anymd dist/amd64/
+          cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
+          git fetch --no-tags origin "refs/tags/v$v:refs/tags/v$v"
+          tag_source=$(git rev-parse "v$v^{commit}")
           binary_source=$(python3 scripts/recover-wheels.py --artifacts artifacts --image-source)
-          test "$binary_source" = "${tag_source:-$binary_source}"
+          test "$binary_source" = "$tag_source"
           # Packaging executes from this workflow's reviewed checkout; payload
           # notices and native identities remain bound to the original source.
           git fetch --no-tags origin "$binary_source"
@@ -672,6 +680,8 @@ jobs:
       - name: Build and push
         if: steps.stage.outputs.build == 'true'
         id: push
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: 'false'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .

@@ -50,6 +50,17 @@ ALIGN_DATASETS = ["fleurs-en", "fleurs-zh", "fleurs-yue", "fleurs-ja"]
 RUNNER = {"linux": "ubuntu-latest", "macos": "macos-latest"}
 
 
+# These pairs drive both the builds and the report's exact bundle names.
+PROBE_TARGETS = [
+    ("ubuntu-latest", "x86_64-unknown-linux-gnu"),
+    ("ubuntu-24.04-arm", "aarch64-unknown-linux-gnu"),
+    ("macos-latest", "aarch64-apple-darwin"),
+    # Intel macOS hosted runners are retired; cross-compile on Apple Silicon.
+    ("macos-latest", "x86_64-apple-darwin"),
+    ("windows-latest", "x86_64-pc-windows-msvc"),
+]
+
+
 def main() -> None:
     smoke = os.environ.get("EVENT") == "pull_request"
     wanted = [e.strip() for e in os.environ.get("ENGINES", "").split(",") if e.strip()] or (["transcribe-cpp"] if smoke else list(ENGINES))
@@ -94,7 +105,14 @@ def main() -> None:
         if tool.startswith("build:"):
             for osk in ("linux", "macos") if macos_utts else ("linux",):
                 builds.append({"tool": tool.split(":", 1)[1], "osk": osk, "runner": RUNNER[osk]})
+    probes = [
+        {"runner": runner, "target": target, "crate": crate}
+        for runner, target in PROBE_TARGETS
+        for crate in ("baseline", "transcribe-cpp", "crispasr", "sherpa-onnx")
+        if crate != "baseline" or runner not in {"ubuntu-24.04-arm", "windows-latest"}
+    ]
     out = {
+        "probes": json.dumps(probes),
         "matrix": json.dumps(matrix),
         "builds": json.dumps(builds),
         "datasets": json.dumps(sorted(datasets)),

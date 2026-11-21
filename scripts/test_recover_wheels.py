@@ -309,7 +309,8 @@ class ReleaseImageTests(unittest.TestCase):
         image = workflow.split("  image:\n", 1)[1]
         self.assertIn("--image-source", image)
         self.assertIn('tag_source=$(git rev-parse "v$v^{commit}")', image)
-        self.assertIn('test "$binary_source" = "${tag_source:-$binary_source}"', image)
+        self.assertIn('gh release download "v$v" --dir assets', image)
+        self.assertIn('test "$binary_source" = "$tag_source"', image)
         self.assertIn('git show "$binary_source:LICENSE" > LICENSE', image)
         self.assertIn("io.sylphx.native.source=${{ steps.stage.outputs.source }}", image)
         self.assertIn("io.sylphx.packaging.source=${{ github.sha }}", image)

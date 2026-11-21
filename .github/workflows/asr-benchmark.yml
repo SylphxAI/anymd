@@ -44,6 +44,7 @@ jobs:
       builds: ${{ steps.plan.outputs.builds }}
       datasets: ${{ steps.plan.outputs.datasets }}
       utts: ${{ steps.plan.outputs.utts }}
+      probes: ${{ steps.plan.outputs.probes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -64,6 +65,9 @@ jobs:
     if: ${{ github.repository_visibility == 'public' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -85,8 +89,9 @@ jobs:
       - name: Fetch the pinned sample
         run: python3 bench-asr/fetch_data.py "${{ matrix.dataset }}" "$RUNNER_TEMP/data" --utts "${{ needs.plan.outputs.utts }}"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: data-${{ matrix.dataset }}
           path: ${{ runner.temp }}/data
           retention-days: 1
@@ -97,6 +102,9 @@ jobs:
     if: ${{ github.repository_visibility == 'public' && (needs.plan.outputs.builds != '[]') }}
     runs-on: ${{ matrix.osk == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -139,8 +147,9 @@ jobs:
           ls -la "$RUNNER_TEMP/tool"
           tar -C "$RUNNER_TEMP/tool" -czf "$RUNNER_TEMP/tool.tgz" .
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: tool-${{ matrix.tool }}-${{ matrix.osk }}
           path: ${{ runner.temp }}/tool.tgz
           retention-days: 1
@@ -152,6 +161,9 @@ jobs:
     if: ${{ github.repository_visibility == 'public' && (!cancelled() && needs.plan.result == 'success' && needs.data.result == 'success') }}
     runs-on: ${{ matrix.osk == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 350
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -165,15 +177,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: get
           name: data-${{ matrix.dataset }}
           path: ${{ runner.temp }}/data
 
       - name: Built tool
         if: startsWith(matrix.tool, 'build:')
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: get
           name: tool-${{ matrix.tool_key }}-${{ matrix.osk }}
           path: ${{ runner.temp }}/tool-archive
 
@@ -209,13 +223,20 @@ jobs:
             --tool-dir "$RUNNER_TEMP/tool" --model "$model" ${aligner[@]+"${aligner[@]}"} \
             --limit "${{ matrix.limit }}" --lang-mode "${{ matrix.lang_mode }}" --label "${{ matrix.label }}" --job-id "${{ matrix.id }}"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: always()
+      - name: Check for ASR evidence
+        id: evidence
+        if: always() && !cancelled()
+        run: |
+          if [ -f "$RUNNER_TEMP/out/summary.json" ] || [ -f "$RUNNER_TEMP/out/results.jsonl" ]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
+        if: always() && !cancelled() && steps.evidence.outputs.present == 'true'
         with:
+          mode: put
           name: res-${{ matrix.id }}
-          path: |
-            ${{ runner.temp }}/out/summary.json
-            ${{ runner.temp }}/out/results.jsonl
+          path: ${{ runner.temp }}/out
           retention-days: 1
 
   # Does each runtime's Rust crate build into a binary on every anymd release target,
@@ -225,26 +246,22 @@ jobs:
     if: ${{ github.repository_visibility == 'public' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+    needs: plan
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        crate: [baseline, transcribe-cpp, crispasr, sherpa-onnx]
-        include:
-          - { runner: ubuntu-latest, target: x86_64-unknown-linux-gnu }
-          - { runner: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
-          - { runner: macos-latest, target: aarch64-apple-darwin }
-          # Intel macOS hosted runners are retired: cross-compile from the arm runner (build only).
-          - { runner: macos-latest, target: x86_64-apple-darwin }
-          - { runner: windows-latest, target: x86_64-pc-windows-msvc }
-        exclude:
-          # Only the two candidate crates need every target; baseline anywhere is a size reference.
-          - { runner: ubuntu-24.04-arm, crate: baseline }
-          - { runner: windows-latest, crate: baseline }
+        include: ${{ fromJSON(needs.plan.outputs.probes) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+
+      - name: Set up run-store on Windows
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/run-store-windows
 
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
@@ -265,8 +282,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/probe-out"
           echo "{\"crate\": \"${{ matrix.crate }}\", \"target\": \"${{ matrix.target }}\", \"bytes\": $bytes}" > "$RUNNER_TEMP/probe-out/probe.json"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: probe-${{ matrix.crate }}-${{ matrix.target }}
           path: ${{ runner.temp }}/probe-out/probe.json
           retention-days: 1
@@ -277,6 +295,9 @@ jobs:
     if: ${{ github.repository_visibility == 'public' && (!cancelled()) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -288,15 +309,32 @@ jobs:
 
       - run: pip install jiwer opencc-python-reimplemented regex
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          pattern: res-*
-          path: results
+      - name: Name the planned evidence bundles
+        id: bundles
+        env:
+          RESULTS: ${{ needs.plan.outputs.matrix || '[]' }}
+          PROBES: ${{ needs.plan.outputs.probes || '[]' }}
+        run: |
+          {
+            echo 'results<<EOF'
+            jq -r '.[] | "res-\(.id)"' <<< "$RESULTS"
+            echo EOF
+            echo 'probes<<EOF'
+            jq -r '.[] | "probe-\(.crate)-\(.target)"' <<< "$PROBES"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      - uses: ./.github/actions/run-store-collect
         with:
-          pattern: probe-*
+          names: ${{ steps.bundles.outputs.results }}
+          path: results
+          required: 'false'
+
+      - uses: ./.github/actions/run-store-collect
+        with:
+          names: ${{ steps.bundles.outputs.probes }}
           path: probes
+          required: 'false'
 
       - name: Open ASR Leaderboard text normaliser (pinned commit)
         run: |
@@ -318,8 +356,9 @@ jobs:
           cat report.md >> "$GITHUB_STEP_SUMMARY"
           exit "$rc"
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
+          mode: put
           name: asr-report
           path: report.md
           retention-days: 1
