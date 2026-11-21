@@ -249,32 +249,49 @@ describe('money catalogue apply script', () => {
 		expect(result.calls.some((call) => call.includes(':sync'))).toBe(false)
 	})
 
-	test('only a keyless preview with the sole merchant_not_connected reason may continue', () => {
-		const merchantMissing = JSON.stringify({
-			code: 'INVALID_STATE',
-			details: [{ reason: 'merchant_not_connected' }],
-		})
-		const base = {
-			FAKE_EXCHANGE_BODY: GRANTED,
-			FAKE_EXCHANGE_CODE: '200',
-			FAKE_SYNC_BODY: merchantMissing,
+	const beforeSync = { FAKE_EXCHANGE_BODY: GRANTED, FAKE_EXCHANGE_CODE: '200' }
+	const preview = { ...beforeSync, FAKE_SYNC_CODE: '400', SYNC_FAILURE_NONFATAL: '1' }
+	const syncFailure = (...reasons: string[]) =>
+		JSON.stringify({ code: 'INVALID_STATE', details: reasons.map((reason) => ({ reason })) })
+
+	test.each(['merchant_not_connected', 'processor_not_configured'])(
+		'a keyless preview may continue after a sole %s response',
+		(reason) => {
+			const result = run({ ...preview, FAKE_SYNC_BODY: syncFailure(reason) })
+			expect(result.status, result.stdout + result.stderr).toBe(0)
+			expect(result.stdout).toContain('not synced')
+			expect(result.stdout).not.toContain('catalogue applied')
+		},
+	)
+
+	test('production fails closed on processor_not_configured without the preview flag', () => {
+		const result = run({
+			...beforeSync,
+			ACCESS_NAME: `${product}-money-catalogue-production`,
 			FAKE_SYNC_CODE: '400',
-			SYNC_FAILURE_NONFATAL: '1',
-		}
-		const missing = run(base)
-		expect(missing.status, missing.stdout + missing.stderr).toBe(0)
+			FAKE_SYNC_BODY: syncFailure('processor_not_configured'),
+		})
+		expect(result.status).toBe(1)
+		expect(result.stdout).toContain('POST price_catalogs/default:sync answered 400')
+		expect(result.stdout).not.toContain('not synced')
+	})
+
+	test('preview fails on other responses or when a test key is configured', () => {
+		const body = syncFailure('processor_not_configured')
 		for (const env of [
-			{ FAKE_SYNC_BODY: merchantMissing, STRIPE_TEST_RESTRICTED_KEY: 'rk_test_fixture', FAKE_MERCHANT_EXISTS: '1' },
-			{
-				FAKE_SYNC_BODY: JSON.stringify({
-					code: 'INVALID_STATE',
-					details: [{ reason: 'merchant_not_connected' }, { reason: 'different_failure' }],
-				}),
-			},
-			{ FAKE_SYNC_BODY: JSON.stringify({ code: 'INVALID_STATE', details: [{ reason: 'different_failure' }] }) },
-			{ FAKE_SYNC_BODY: '{"code":"INTERNAL"}', FAKE_SYNC_CODE: '500' },
+			{ STRIPE_TEST_RESTRICTED_KEY: 'rk_test_fixture', FAKE_MERCHANT_EXISTS: '1' },
+			{ FAKE_SYNC_BODY: syncFailure('merchant_not_connected', 'different_failure') },
+			{ FAKE_SYNC_BODY: syncFailure('merchant_not_connected', 'processor_not_configured') },
+			{ FAKE_SYNC_BODY: syncFailure('different_failure') },
+			{ FAKE_SYNC_BODY: syncFailure() },
+			{ FAKE_SYNC_BODY: '{"code":"INVALID_STATE","details":{"reason":{"reason":"processor_not_configured"}}}' },
+			{ FAKE_SYNC_BODY: body.replace('INVALID_STATE', 'INTERNAL') },
+			{ FAKE_SYNC_BODY: '{' },
+			{ FAKE_SYNC_CODE: '500' },
 		] as Record<string, string>[]) {
-			expect(run({ ...base, ...env }).status).not.toBe(0)
+			const result = run({ ...preview, FAKE_SYNC_BODY: body, ...env })
+			expect(result.status, result.stdout + result.stderr).toBe(1)
+			expect(result.stdout).not.toContain('not synced')
 		}
 	})
 })

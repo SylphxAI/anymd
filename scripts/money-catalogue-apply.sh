@@ -131,8 +131,8 @@ code=$(call_with_retry POST "${base}:sync" "$work/sync.out" --data '{}')
 if [ "$code" -ge 300 ]; then
   if [ "${SYNC_FAILURE_NONFATAL:-}" = "1" ] && [ -z "${STRIPE_TEST_RESTRICTED_KEY:-}" ] \
     && [ "$code" = "400" ] \
-    && jq -e '.code == "INVALID_STATE" and ([.details[]?.reason] == ["merchant_not_connected"])' "$work/sync.out" >/dev/null; then
-    echo "::warning::preview has no Stripe test-mode connection; its sole merchant_not_connected response is not blocking production"
+    && jq -e '.code == "INVALID_STATE" and (.details | type == "array") and ([.details[]?.reason] | . == ["merchant_not_connected"] or . == ["processor_not_configured"])' "$work/sync.out" >/dev/null; then
+    echo "::warning::preview has no Stripe test-mode connection; the missing test-mode setup is not blocking production"
     echo "catalogue patched on ${resource##*/}, not synced"
     exit 0
   fi
