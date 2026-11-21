@@ -1,4 +1,3 @@
-import 'server-only';
 
 import { canonicalOrigin, publicOrigin } from './app-origin';
 
@@ -18,13 +17,7 @@ export function appOrigin(request: Request) {
   return canonicalOrigin;
 }
 
-export function safeNext(value: unknown): string {
-  if (typeof value !== 'string' || value.length > 1800 || !value.startsWith('/') || /[\\\u0000-\u001f]/.test(value)) return '/dashboard';
-  const url = new URL(value, canonicalOrigin);
-  // Allow page navigation, not an API call or a second redirect.
-  if (url.origin !== canonicalOrigin || /^\/(?:api|sign-in)(?:\/|$)/i.test(url.pathname) || /%2f|%5c/i.test(url.pathname)) return '/dashboard';
-  return url.pathname + url.search + url.hash;
-}
+export { safeNext } from './safe-next';
 
 export class HttpError extends Error {
   constructor(readonly status: number, readonly code: string, readonly retryAfter?: string) { super(code); }

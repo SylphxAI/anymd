@@ -1,13 +1,19 @@
-'use client';
+import { Check, Copy } from 'lucide-solid';
+import { createSignal, onCleanup } from 'solid-js';
 
-import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
-
-export function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
-  const [result, setResult] = useState(label);
-  return <button type="button" className="button copy-button" onClick={async () => {
-    try { await navigator.clipboard.writeText(text); setResult('Copied'); }
-    catch { setResult('Select and copy the text'); }
-    window.setTimeout(() => setResult(label), 1800);
-  }}>{result === 'Copied' ? <Check size={15} /> : <Copy size={15} />}<span aria-live="polite">{result}</span></button>;
+export function CopyButton(props: { text: string; label?: string }) {
+  const [result, setResult] = createSignal<string>();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let attempt = 0;
+  onCleanup(() => { attempt++; clearTimeout(timer); });
+  return <button type="button" class="button copy-button" onClick={async () => {
+    const run = ++attempt;
+    clearTimeout(timer);
+    let message: string;
+    try { await navigator.clipboard.writeText(props.text); message = 'Copied'; }
+    catch { message = 'Select and copy the text'; }
+    if (run !== attempt) return;
+    setResult(message);
+    timer = setTimeout(() => setResult(undefined), 1800);
+  }}>{result() === 'Copied' ? <Check size={15} /> : <Copy size={15} />}<span aria-live="polite">{result() ?? props.label ?? 'Copy'}</span></button>;
 }

@@ -9,10 +9,9 @@ COPY scripts/build-wasm.sh ./scripts/build-wasm.sh
 RUN bash scripts/build-wasm.sh
 
 FROM oven/bun:1.4.4-debian AS bun
-FROM node:22-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /source
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
 COPY package.json bun.lock ./
 COPY apps/web/package.json ./apps/web/package.json
@@ -25,13 +24,10 @@ COPY apps/web ./apps/web
 COPY --from=wasm /source/apps/web/public/wasm ./apps/web/public/wasm
 RUN bun run web:build
 
-FROM node:22-bookworm-slim AS web
+FROM node:24-bookworm-slim AS web
 WORKDIR /app
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
-COPY --from=build --chown=node:node /source/apps/web/.next/standalone ./
-COPY --from=build --chown=node:node /source/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build --chown=node:node /source/apps/web/public ./apps/web/public
-COPY --from=build --chown=node:node /source/docs ./docs
+ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0
+COPY --from=build --chown=node:node /source/apps/web/.output ./.output
 EXPOSE 3000
 USER node
-CMD ["node", "apps/web/server.js"]
+CMD ["node", ".output/server/index.mjs"]
