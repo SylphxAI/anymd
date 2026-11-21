@@ -1,17 +1,14 @@
 import 'server-only';
 
-export const canonicalOrigin = 'https://anymd.sylphx.com';
+import { canonicalOrigin, publicOrigin } from './app-origin';
+
+export { canonicalOrigin } from './app-origin';
 const local = new Set(['localhost', '127.0.0.1', '[::1]']);
 
-const stagingOrigin = 'https://web-16b143.sylphx.app';
-
 export function appOrigin(request: Request) {
-  // Ingress can replace Host upstream. Only accept this app's public hosts,
-  // never a forwarded chain or another tenant's *.sylphx.app hostname.
   const host = request.headers.get('host') ?? '';
-  const publicHost = (request.headers.get('x-forwarded-host') ?? host).toLowerCase().replace(/:443$/, '');
-  const origin = 'https://' + publicHost;
-  if (origin === stagingOrigin || origin === canonicalOrigin) return origin;
+  const origin = publicOrigin(request.headers);
+  if (origin) return origin;
   if (process.env.ANYMD_APP_ORIGIN) {
     const url = new URL(process.env.ANYMD_APP_ORIGIN);
     if (url.protocol === 'https:' || (url.protocol === 'http:' && local.has(url.hostname))) return url.origin;
