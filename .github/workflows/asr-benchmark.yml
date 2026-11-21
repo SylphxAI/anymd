@@ -44,7 +44,6 @@ jobs:
       builds: ${{ steps.plan.outputs.builds }}
       datasets: ${{ steps.plan.outputs.datasets }}
       utts: ${{ steps.plan.outputs.utts }}
-      probes: ${{ steps.plan.outputs.probes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -249,11 +248,28 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    needs: plan
     strategy:
       fail-fast: false
+      # Keep runner selection statically evaluable. The report reads these
+      # target/crate axes and exclusions to collect the exact run-store names.
       matrix:
-        include: ${{ fromJSON(needs.plan.outputs.probes) }}
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-msvc
+        crate: [baseline, transcribe-cpp, crispasr, sherpa-onnx]
+        include:
+          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest }
+          - { target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm }
+          - { target: aarch64-apple-darwin, runner: macos-latest }
+          # Cross-compile for Intel on the same Apple Silicon runner.
+          - { target: x86_64-apple-darwin, runner: macos-latest }
+          - { target: x86_64-pc-windows-msvc, runner: windows-latest }
+        exclude:
+          - { target: aarch64-unknown-linux-gnu, crate: baseline }
+          - { target: x86_64-pc-windows-msvc, crate: baseline }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -307,22 +323,33 @@ jobs:
         with:
           python-version: '3.12'
 
-      - run: pip install jiwer opencc-python-reimplemented regex
+      - run: pip install jiwer opencc-python-reimplemented regex PyYAML==6.0.3
 
       - name: Name the planned evidence bundles
         id: bundles
         env:
           RESULTS: ${{ needs.plan.outputs.matrix || '[]' }}
-          PROBES: ${{ needs.plan.outputs.probes || '[]' }}
         run: |
-          {
-            echo 'results<<EOF'
-            jq -r '.[] | "res-\(.id)"' <<< "$RESULTS"
-            echo EOF
-            echo 'probes<<EOF'
-            jq -r '.[] | "probe-\(.crate)-\(.target)"' <<< "$PROBES"
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
+          python3 - <<'PYTHON' >> "$GITHUB_OUTPUT"
+          import itertools
+          import json
+          import os
+          from pathlib import Path
+
+          import yaml
+
+          workflow = yaml.safe_load(Path('.github/workflows/asr-benchmark.yml').read_text())
+          matrix = workflow['jobs']['probe']['strategy']['matrix']
+          excluded = {(row['target'], row['crate']) for row in matrix['exclude']}
+          print('results<<EOF')
+          for row in json.loads(os.environ['RESULTS']):
+              print(f"res-{row['id']}")
+          print('EOF\nprobes<<EOF')
+          for target, crate in itertools.product(matrix['target'], matrix['crate']):
+              if (target, crate) not in excluded:
+                  print(f'probe-{crate}-{target}')
+          print('EOF')
+          PYTHON
 
       - uses: ./.github/actions/run-store-collect
         with:
