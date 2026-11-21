@@ -56,7 +56,7 @@ export function Checkout() {
 }
 
 export function AccountPanel({ billing = false }: { billing?: boolean }) {
-  const session = useSession();
+  const session = useSession(true);
   const user = session && session !== 'error' ? session.user : null;
   const [account, setAccount] = useState<Account | 'error' | null>(null);
   const [notice, setNotice] = useState('');
@@ -87,7 +87,7 @@ export function AccountPanel({ billing = false }: { billing?: boolean }) {
         catch (err) { setNotice(err instanceof Error ? err.message : 'Billing is unavailable.'); setPending(false); }
       }}>{pending ? 'Opening billing…' : 'Manage billing and invoices'} <ArrowUpRight size={15} /></button><SignOut /></div>
       {notice && <p role="status" className="notice">{notice}</p>}
-      <RegisterPasskey />
+      {session.methods?.passkey === true && <RegisterPasskey />}
       <Link href="/recover" className="inline-link">Link a previous purchase</Link>
     </section>
     <section className="panel stack"><span className="eyebrow"><Terminal size={16} /> LOCAL TOOLS</span><h2>Connect CLI or MCP</h2><p className="muted">Use this MCP configuration in Claude Desktop, Cursor or Windsurf. Local file conversion requires no account.</p>

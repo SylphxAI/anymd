@@ -2,9 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import type { Capabilities } from '@/lib/auth-capabilities';
 import { useEffect, useState } from 'react';
 
-export type Session = { authConfigured: boolean; providers?: string[]; user: { name: string | null; email: string | null } | null };
+export type Session = { authConfigured: boolean; user: { name: string | null; email: string | null } | null } & Partial<Capabilities>;
 
 export function useSession(includeProviders = false) {
   const pathname = usePathname();

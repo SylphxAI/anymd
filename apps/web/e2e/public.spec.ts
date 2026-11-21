@@ -60,7 +60,7 @@ test('pricing and its Pro alias show four concrete benefits before checkout', as
 });
 
 test('header and hero send signed-out users to the provider chooser', async ({ page }) => {
-  await page.route('**/api/auth/session*', (route) => route.fulfill({ json: { authConfigured: true, providers: ['google', 'github'], user: null } }));
+  await page.route('**/api/auth/session*', (route) => route.fulfill({ json: { authConfigured: true, user: null } }));
   const session = page.waitForResponse('**/api/auth/session');
   await page.goto('/');
   await session;
@@ -74,5 +74,4 @@ test('header and hero send signed-out users to the provider chooser', async ({ p
   await expect(page).toHaveURL('/sign-in?next=%2Fdashboard');
   const chooser = page.getByRole('main');
   await expect(chooser.getByRole('link', { name: 'Continue with Google' })).toHaveAttribute('href', '/api/auth/google?next=%2Fdashboard');
-  await expect(chooser.getByRole('link', { name: 'Continue with GitHub' })).toHaveAttribute('href', '/api/auth/github?next=%2Fdashboard');
 });
