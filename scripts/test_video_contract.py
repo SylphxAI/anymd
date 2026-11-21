@@ -96,12 +96,12 @@ class SharedVideoContracts(unittest.TestCase):
     def test_four_tools_additive_dispatch_and_manifest_cursor(self):
         schema = (ROOT / "crates/anymd/src/schema.rs").read_text()
         lib = (ROOT / "crates/anymd/src/lib.rs").read_text()
-        lean = (ROOT / "crates/anymd/src/lean.rs").read_text()
+        lean_read = (ROOT / "crates/anymd/src/lean/read.rs").read_text()
         for text in ("VideoTimeline", "RenderFrame", "TimelineSelection", "expected_source_sha256"):
             self.assertIn(text, schema)
         self.assertLess(lib.index("crate::video_request::inspect"), lib.index("InspectOperation::Compare =>"))
-        self.assertIn("video cursor source/manifest/options mismatch", lean)
-        self.assertIn("Opened::from_video", lean)
+        self.assertIn("video cursor source/manifest/options mismatch", lean_read)
+        self.assertIn("Opened::from_video", lean_read)
         outline = (ROOT / "crates/anymd/src/outline.rs").read_text()
         self.assertIn("metadata_only.caption = false", outline)
         self.assertIn("&metadata_only, false, None", outline)
