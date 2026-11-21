@@ -1,7 +1,7 @@
 version = "1"
 
 [project]
-# Existing Platform project gold-gnat-rn7xc3. The first release uses its assigned host only.
+# Existing Platform project gold-gnat-rn7xc3.
 name = "anymd"
 default_env = "production"
 
@@ -32,6 +32,10 @@ context = "."
 [services.health]
 mode = "http"
 path = "/api/health"
+
+[[domains]]
+hostname = "anymd.sylphx.com"
+service = "web"
 
 [ci]
 merge = "optimistic"
