@@ -1,5 +1,14 @@
 {
   "spec": {
+    "checkout_branding": {
+      "display_name": "Anymd",
+      "icon": {
+        "url": "https://sylphx.com/icon-512.png"
+      },
+      "background_color": "#FFFEFA",
+      "button_color": "#15604B",
+      "border_style": "rounded"
+    },
     "features": [
       {
         "key": "anymd_pro",

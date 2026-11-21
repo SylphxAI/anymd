@@ -71,6 +71,9 @@ case "$url" in
   */price_catalogs/default:sync)
     if [ -n "$FAKE_SYNC_BODY" ]; then answer "$FAKE_SYNC_BODY" "\${FAKE_SYNC_CODE:-200}"; else answer '{}' "\${FAKE_SYNC_CODE:-200}"; fi ;;
   */price_catalogs/default*)
+    if [ "$method" = "PATCH" ]; then
+      if [[ "$data" == @* ]]; then cat "\${data#@}"; else printf '%s' "$data"; fi > "$RUNNER_TEMP/catalogue-patch.json"
+    fi
     if [ -n "$FAKE_MONEY_BODY" ]; then answer "$FAKE_MONEY_BODY" "\${FAKE_MONEY_CODE:-200}"; else answer '{}' "\${FAKE_MONEY_CODE:-200}"; fi ;;
   *) answer '{"unexpected":true}' 404 ;;
 esac
@@ -89,6 +92,7 @@ function run(env: Record<string, string>) {
 	chmodSync(curl, 0o755)
 	const log = join(dir, 'calls.log')
 	writeFileSync(log, '')
+	const patchBody = join(dir, 'catalogue-patch.json')
 	const merchantConnect = join(dir, 'merchant-connect.json')
 	const bunDir = process.execPath.replace(/\/[^/]+$/, '')
 	const result = Bun.spawnSync(['bash', 'scripts/money-catalogue-apply.sh'], {
@@ -108,6 +112,7 @@ function run(env: Record<string, string>) {
 		stdout: result.stdout.toString(),
 		stderr: result.stderr.toString(),
 		calls: readFileSync(log, 'utf8').split('\n').filter(Boolean),
+		patchBody: existsSync(patchBody) ? JSON.parse(readFileSync(patchBody, 'utf8')) : undefined,
 		merchantConnect: existsSync(merchantConnect)
 			? JSON.parse(readFileSync(merchantConnect, 'utf8'))
 			: undefined,
@@ -115,6 +120,14 @@ function run(env: Record<string, string>) {
 }
 
 describe('money catalogue apply script', () => {
+	test('PATCHes the complete catalogue with checkout branding', () => {
+		const result = run({ FAKE_EXCHANGE_CODE: '200', FAKE_EXCHANGE_BODY: GRANTED })
+		expect(result.status).toBe(0)
+		const expected = JSON.parse(readFileSync(join(root, 'config/money-catalogue.json'), 'utf8'))
+		expect(expected.spec.checkout_branding).toBeDefined()
+		expect(result.patchBody).toEqual(expected)
+	})
+
 	test('reuses or creates declared keys, then patches and syncs only the real catalogue', () => {
 		const result = run({ FAKE_EXCHANGE_BODY: GRANTED, FAKE_EXCHANGE_CODE: '200' })
 		expect(result.status).toBe(0)
