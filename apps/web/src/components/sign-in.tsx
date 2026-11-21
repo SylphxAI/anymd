@@ -1,14 +1,15 @@
 'use client';
 import { ArrowRight, Fingerprint, Mail } from 'lucide-react';
 import { useState } from 'react';
+import type { Capabilities } from '@/lib/auth-capabilities';
 import { GithubMark } from "./github-mark";
-import { GoogleMark, useSession } from './session';
+import { GoogleMark } from './session';
 
-export async function authRequest(path: string, body: object) {
+export async function authRequest(path: string, body: object, errorMessage = 'We couldn’t complete sign-in. Check your code or try another sign-in option.') {
   const response = await fetch('/api/auth/' + path, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   if (!response.ok) {
     if (response.status === 429) throw new Error('Too many attempts. Wait a minute, then try again.');
-    throw new Error('We couldn’t complete sign-in. Check your code or try another sign-in option.');
+    throw new Error(errorMessage);
   }
   return response.json();
 }
@@ -16,21 +17,24 @@ export async function authRequest(path: string, body: object) {
 const bytes = (v: string) => Uint8Array.from(atob(v.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
 const base64url = (v: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(v))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 
-export function SignInForm({next, error}: {next:string; error?:string}) {
-  const state = useSession(true);
-  const providers = state && state !== 'error' && state.authConfigured ? state.providers ?? [] : [];
-  const configured = Boolean(state && state !== 'error' && state.authConfigured);
+export function SignInForm({next, error, initialAuth}: {next:string; error?:string; initialAuth:Capabilities & {authConfigured:boolean}}) {
+  const {authConfigured, providers, methods} = initialAuth;
+  const [creating, setCreating] = useState(false);
+  const [accepted, setAccepted] = useState(false);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState(false);
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState(error === 'auth_unconfigured' ? 'Sign-in hasn’t been enabled in this environment.' : error ? 'Sign-in did not complete. Try again or choose another method.' : '');
+  const hasEmail = methods.password || methods.emailOtp;
   const providerQuery = '?next=' + encodeURIComponent(next);
   return <div className="panel stack auth-panel">
-    {state === 'error' ? <p className="notice" role="alert">Sign-in is temporarily unavailable. Reload to try again.</p> : state && !state.authConfigured ? <p className="notice" role="status">Sign-in isn’t connected in this environment. You can still convert files in Studio and use the docs.</p> : null}
+    {!authConfigured ? <p className="notice" role="status">Sign-in isn’t connected in this environment. You can still convert files in Studio and use the docs.</p> :
+      !providers.length && !methods.passkey && !hasEmail && <p className="notice" role="status">No sign-in methods are available. Reload to try again.</p>}
     {providers.includes('google') && <a className="button button-primary" href={'/api/auth/google' + providerQuery}><GoogleMark /> Continue with Google</a>}
     {providers.includes('github') && <a className="button" href={'/api/auth/github' + providerQuery}><GithubMark size={17} /> Continue with GitHub</a>}
-    <button type="button" className="button" disabled={!configured || pending} onClick={async () => {
+    {providers.length > 0 && (hasEmail || methods.passkey) && <div className="auth-rule"><span>{hasEmail ? 'or use email' : 'or use a passkey'}</span></div>}
+    {methods.passkey === true && <button type="button" className="button" disabled={pending} onClick={async () => {
       if (!window.PublicKeyCredential || !navigator.credentials) { setNotice('Passkeys require a compatible browser and a secure connection.'); return; }
       setNotice(''); setPending(true);
       try {
@@ -45,9 +49,27 @@ export function SignInForm({next, error}: {next:string; error?:string}) {
         location.assign(result.next);
       } catch { setNotice('Couldn’t use a passkey for this site. You can try again or sign in another way.'); }
       finally { setPending(false); }
-    }}><Fingerprint size={18} /> Use a passkey</button>
-    <div className="auth-rule"><span>or use email</span></div>
-    <form className="stack" onSubmit={async (event) => {
+    }}><Fingerprint size={18} /> Use a passkey</button>}
+    {methods.password === true && <form className="stack" method="post" onSubmit={async (event) => {
+      event.preventDefault(); setPending(true); setNotice(''); setAccepted(false);
+      const data = new FormData(event.currentTarget);
+      try {
+        const result = await authRequest(creating ? 'password-sign-up' : 'password-sign-in',
+          {email:data.get('email'), password:data.get('password'), next}, creating
+            ? 'Couldn’t create an account. Check your email address and use a password of at least 12 characters.'
+            : 'Couldn’t sign in. Check your email and password or try another sign-in option.');
+        if (creating) { setAccepted(true); setCreating(false); }
+        else location.assign(result.next);
+      } catch (err) { setNotice(err instanceof Error ? err.message : 'Unable to sign in.'); }
+      finally { setPending(false); }
+    }}>
+      <label className="field-label">Email address<input className="field" name="email" type="email" required autoComplete="username" placeholder="you@example.com" maxLength={254} /></label>
+      <label className="field-label">Password<input key={String(creating)} className="field" name="password" type="password" required autoComplete={creating ? 'new-password' : 'current-password'} minLength={creating ? 12 : undefined} maxLength={1024} /></label>
+      <button className="button" type="submit" disabled={pending}>{creating ? 'Create account' : 'Sign in with password'} <ArrowRight size={16} /></button>
+      {methods.signUp === true && <button type="button" disabled={pending} className="inline-link justify-self-start" onClick={() => {setCreating(!creating);setNotice('');setAccepted(false);}}>{creating ? 'Back to sign in' : 'Create an account'}</button>}
+    </form>}
+    {accepted && <p className="notice" role="status">Check your inbox for a verification email if you’re creating a new account. Then sign in with your password.</p>}
+    {methods.emailOtp === true && <form className="stack" onSubmit={async (event) => {
       event.preventDefault(); setPending(true); setNotice('');
       try {
         const result = await authRequest('sign-in', step ? {code,next} : {email,next});
@@ -57,9 +79,9 @@ export function SignInForm({next, error}: {next:string; error?:string}) {
       finally { setPending(false); }
     }}>
       {step ? <label className="field-label">Code sent to {email}<input className="field" autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}" required maxLength={6} value={code} onChange={(ev)=>setCode(ev.target.value)} /></label> : <label className="field-label">Email address<input className="field" type="email" required autoComplete="email" placeholder="you@example.com" maxLength={254} value={email} onChange={(ev)=>setEmail(ev.target.value)} /></label>}
-      <button className="button" type="submit" disabled={!configured || pending}><Mail size={16} /> {step ? 'Verify code' : 'Send sign-in code'} <ArrowRight size={16} /></button>
+      <button className="button" type="submit" disabled={pending}><Mail size={16} /> {step ? 'Verify code' : 'Send sign-in code'} <ArrowRight size={16} /></button>
       {step && <button type="button" className="inline-link justify-self-start" onClick={() => {setStep(false);setNotice('');}}>Use a different email</button>}
-    </form>
+    </form>}
     {notice && <p className="notice" role="alert">{notice}</p>}
   </div>;
 }

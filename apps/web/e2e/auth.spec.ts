@@ -1,15 +1,63 @@
 import { expect, test } from '@playwright/test';
-test('sign-in hides GitHub when only Google is usable', async ({ page }) => {
-  await page.goto('/sign-in');
-  await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
-  await expect(page.getByText('Continue with GitHub')).toHaveCount(0);
+test.describe('server-rendered Google and password sign-in', () => {
+  test.use({ javaScriptEnabled: false });
+  test('renders Google in initial HTML and hides disabled methods', async ({ page }) => {
+    await page.goto('/sign-in?next=/billing');
+    await expect(page.getByRole('link', { name: 'Continue with Google' })).toHaveAttribute('href', '/api/auth/google?next=%2Fbilling');
+    await expect(page.getByRole('link', { name: 'Continue with GitHub' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Use a passkey' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Send sign-in code' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Sign in with password' })).toBeVisible();
+    await expect(page.getByText('or use email')).toBeVisible();
+  });
 });
-test('OAuth uses only approved callback origins and refuses disabled GitHub', async ({ request }) => {
-  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires the local Google-only Auth fixture');
+
+test.describe('OTP and passkey Auth configuration', () => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires the local Auth fixture');
+  test.use({ userAgent: 'anymd-test-otp-passkey' });
+  test('shows enabled methods without password or a social divider', async ({ context, page }) => {
+    await page.goto('/sign-in');
+    await expect(page.getByRole('button', { name: 'Use a passkey' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Send sign-in code' })).toBeVisible();
+    await expect(page.getByLabel('Password')).toHaveCount(0);
+    await expect(page.getByText('or use email')).toHaveCount(0);
+    const session = await page.request.post('http://127.0.0.1:3031/fixture/session');
+    expect(session.ok()).toBe(true);
+    await context.addCookies([{ name: 'anymd_session', value: await session.text(), url: new URL(page.url()).origin }]);
+    await page.goto('/dashboard');
+    await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeVisible();
+  });
+});
+
+test('password sign-up is non-enumerating and sign-in redeems a server ticket', async ({ page }) => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires the local Auth fixture');
+  await page.goto('/sign-in');
+  await page.getByRole('button', { name: 'Create an account' }).click();
+  await expect(page.getByLabel('Password')).toHaveAttribute('autocomplete', 'new-password');
+  await page.getByLabel('Email address').fill('test@example.invalid');
+  await page.getByLabel('Password').fill('fixture-long-password');
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await expect(page.getByText('Check your inbox', { exact: false })).toBeVisible();
+  expect((await (await page.request.get('/api/auth/session')).json()).user).toBeNull();
+  await page.getByLabel('Password').fill('wrong-password');
+  await page.getByRole('button', { name: 'Sign in with password' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Check your email and password' })).toBeVisible();
+  await page.getByLabel('Password').fill('fixture-long-password');
+  await page.getByRole('button', { name: 'Sign in with password' }).click();
+  await expect(page).toHaveURL('/dashboard');
+  await expect(page.getByText('Signed in as test@example.invalid.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add a passkey' })).toHaveCount(0);
+  expect(await (await page.request.get('/api/auth/session?providers')).json()).toMatchObject({
+    authConfigured: true, providers: ['google'], methods: { emailOtp: false, passkey: false, password: true, signUp: true },
+  });
+});
+
+test('OAuth uses only approved callback origins and refuses disabled GitHub', async ({ request, baseURL }) => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires the local Google-only social Auth fixture');
   for (const [host, forwarded, origin] of [
     ['0.0.0.0:3000', 'web-16b143.sylphx.app', 'https://web-16b143.sylphx.app'],
     ['anymd.sylphx.com', 'anymd.sylphx.com', 'https://anymd.sylphx.com'],
-    ['evil.example', 'web-16b143.sylphx.app.evil.example', 'https://anymd.sylphx.com'],
+    ['evil.example', 'web-16b143.sylphx.app.evil.example', baseURL],
   ]) {
     const response = await request.get('/api/auth/google?next=/dashboard', { headers: { host, 'x-forwarded-host': forwarded }, maxRedirects: 0 });
     expect(response.status()).toBe(303);

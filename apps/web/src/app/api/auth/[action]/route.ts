@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
-import { acceptTicket, authCall, authConfig, cookieOptions, oauthFinish, oauthStart, requireAuth, session, signOut, socialProviders } from '@/lib/auth';
+import { acceptTicket, authCall, authConfig, clientCapabilities, cookieOptions, oauthFinish, oauthStart, requireAuth, session, signOut } from '@/lib/auth';
+import { noCapabilities } from '@/lib/auth-capabilities';
 import { appOrigin, failure, field, HttpError, json, redirect, sameOriginJson, safeNext } from '@/lib/http';
 
 type Params = { params: Promise<{ action: string }> };
@@ -12,9 +13,10 @@ export async function GET(request: Request, {params}: Params) {
     try {
       const config = authConfig();
       const active = config && await session(request, config);
-      const providers = config && new URL(request.url).searchParams.has('providers')
-        ? await socialProviders(request, config).catch(() => []) : [];
-      return json({authConfigured: Boolean(config), providers, user: active ? {name: active.user.name, email: active.user.email} : null});
+      const capabilities = new URL(request.url).searchParams.has('providers')
+        ? config ? await clientCapabilities(request, config).catch(() => noCapabilities) : noCapabilities
+        : { providers: [] };
+      return json({authConfigured: Boolean(config), ...capabilities, user: active ? {name: active.user.name, email: active.user.email} : null});
     } catch (err) { return failure(err); }
   }
   try {
@@ -38,6 +40,20 @@ export async function POST(request: Request, {params}: Params) {
     const config = requireAuth();
     const jar = await cookies();
     const next = safeNext(data.next);
+    if (action === 'password-sign-in' || action === 'password-sign-up') {
+      const email = field(data, 'email', emailPattern);
+      const password = data.password;
+      if (typeof password !== 'string' || !password.length || Buffer.byteLength(password) > 1024) throw new HttpError(400, 'invalid_request');
+      if (action === 'password-sign-up') {
+        // Auth returns the same acceptance for new and existing addresses and owns email verification.
+        const result = await authCall(config, request, '/v1/client/sign-up', config.pk, {email, password});
+        if (result?.accepted !== true) throw new HttpError(502, 'auth_unavailable');
+        return json({accepted:true}, 202);
+      }
+      const proof = await authCall(config, request, '/v1/client/sign-in/password', config.pk, {email, password, session_mode:'server'});
+      await acceptTicket(request, config, proof?.ticket);
+      return json({next});
+    }
     if (action === 'sign-in' || action === 'sign-up') {
       // Auth's Continue owns user creation after mailbox verification. Existing
       // and first-time users take the same path; this app never finds by email.
