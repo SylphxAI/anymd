@@ -1,6 +1,7 @@
 # Post-merge suite for optimistic merge: everything the merge-queue gate (ci.yml)
 # leaves out runs here on each push to main, and on a pull request marked ready
-# (ci.yml calls this file). The `verified` job is the marker Release reads.
+# (ci.yml calls this file and scopes the lanes to changed paths). The `verified`
+# job is the marker Release reads.
 # Public repository: GitHub-hosted standard runners only (scripts/check-public-runner-profiles.py).
 name: Verify
 
@@ -8,10 +9,6 @@ on:
   push:
     branches: [main]
   workflow_call:
-    inputs:
-      code:
-        type: string
-        default: "true"
   workflow_dispatch:
 
 concurrency:
@@ -24,9 +21,66 @@ permissions:
   checks: read
 
 jobs:
+  plan:
+    name: Plan Verify lanes
+    if: ${{ github.repository_visibility == 'public' && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ steps.paths.outputs.scope }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Classify changed paths
+        id: paths
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          files=$(mktemp)
+          trap 'rm -f -- "$files"' EXIT
+          # Check that GitHub's test merge covers this exact base and head.
+          # Compare the tested tree to its base; a move counts at both paths.
+          if [[ -z "$BASE" || -z "$HEAD" ]] ||
+             ! parents=$(git show -s --format=%P HEAD) || [[ "$parents" != "$BASE $HEAD" ]] ||
+             ! git diff --no-renames --ignore-submodules=none --name-only -z "$BASE" HEAD -- > "$files" ||
+             [[ ! -s "$files" ]]; then
+            echo 'scope=full' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          web=false native=false
+          while IFS= read -r -d '' path; do
+            case "$path" in
+              .github/workflows|.github/workflows/*|.github/actions|.github/actions/*)
+                echo 'scope=full' >> "$GITHUB_OUTPUT"
+                exit 0 ;;
+              LICENSE|CHANGELOG.md|CONTRIBUTING.md|SECURITY.md|.github/ISSUE_TEMPLATE/*) ;;
+              apps/web/*) web=true ;;
+              # The web WASM build uses anymd-core, anymd-formats and anymd-pdf.
+              # Keep their sources, manifests, and web copy inputs shared.
+              crates/anymd/src/*.rs|crates/anymd-ocr-vlm/src/*.rs|packages/anymd/*|packages/aliases/*|packages/npm/*|packages/pypi/*|scripts/build-wheels.py|scripts/recover-wheels.py)
+                native=true ;;
+              *) web=true; native=true ;;
+            esac
+          done < "$files"
+
+          case "$web/$native" in
+            true/true) scope=mixed ;;
+            true/false) scope=web ;;
+            false/true) scope=native ;;
+            false/false) scope=none ;;
+          esac
+          echo "scope=$scope" >> "$GITHUB_OUTPUT"
+
   docs:
     name: Build and verify web
-    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
+    needs: plan
+    if: ${{ github.repository_visibility == 'public' && !cancelled() && needs.plan.outputs.scope != 'native' && needs.plan.outputs.scope != 'none' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -52,6 +106,10 @@ jobs:
           else
             bun install --frozen-lockfile
           fi
+
+      - name: Test web contracts on web-only changes
+        if: ${{ needs.plan.outputs.scope == 'web' }}
+        run: bun test test/docs-observability.test.ts test/vs-pages.test.ts test/web-cli-grant.test.ts test/web-commerce.test.ts
 
       - name: Set up Rust (WASM)
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
@@ -83,7 +141,8 @@ jobs:
 
   audit:
     name: Audit Rust dependencies
-    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
+    needs: plan
+    if: ${{ github.repository_visibility == 'public' && !cancelled() && needs.plan.outputs.scope != 'web' && needs.plan.outputs.scope != 'none' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -109,7 +168,8 @@ jobs:
   # The Rust workspace: package, build, fixtures, tests and coverage.
   rust:
     name: Build and test
-    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
+    needs: plan
+    if: ${{ github.repository_visibility == 'public' && !cancelled() && needs.plan.outputs.scope != 'web' && needs.plan.outputs.scope != 'none' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -212,10 +272,11 @@ jobs:
           ANYMD_PRO_TOKEN: ${{ secrets.ANYMD_PRO_TOKEN_CI }}
         run: bun run test:cov
 
-  # Trunk and manual runs only: macOS and Windows run after merge, not on each pull request. GitHub-hosted
-  # standard runners are free for public repositories (owner standards/dx.md).
+  # Run the OS matrix on the trunk, on manual runs, and when the PR needs
+  # every lane. Missing plan output also selects every lane.
   other-os:
-    if: ${{ github.repository_visibility == 'public' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    needs: plan
+    if: ${{ github.repository_visibility == 'public' && !cancelled() && !contains(fromJSON('["web","native","mixed","none"]'), needs.plan.outputs.scope) }}
     name: Test other OS
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -253,7 +314,8 @@ jobs:
   # probe) on the other release targets, without downloading model weights.
   release-targets:
     name: Release build (${{ matrix.target }})
-    if: ${{ github.repository_visibility == 'public' && (inputs.code != 'false') }}
+    needs: plan
+    if: ${{ github.repository_visibility == 'public' && !cancelled() && needs.plan.outputs.scope != 'web' && needs.plan.outputs.scope != 'none' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -288,11 +350,12 @@ jobs:
       checks: read
       pull-requests: read
     name: verified
-    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled()) }}
-    needs: [docs, audit, rust, other-os, release-targets]
+    if: ${{ always() && github.repository_visibility == 'public' }}
+    needs: [plan, docs, audit, rust, other-os, release-targets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: SylphxAI/.github/.github/actions/needs-pass@3778944553b3f1d2a017832d343c2f844a226725 # main
         with:
           needs: ${{ toJSON(needs) }}
+          required: ${{ github.event_name == 'pull_request' && 'plan' || '' }}

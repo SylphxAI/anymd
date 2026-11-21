@@ -1,13 +1,17 @@
-"""Admission contracts for catalogue writes and release attestations.
+"""Admission contracts for Verify, catalogue writes, and release attestations.
 
 These matrices model the supported condition subset offline. GitHub job
 execution and actionlint remain the authority for scheduler behavior/syntax.
 """
 import itertools
+import os
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
+from textwrap import dedent
 
-from workflow_condition import condition, eligible
+from workflow_condition import condition, eligible, job
 
 ROOT = Path(__file__).resolve().parents[1]
 VISIBILITIES = ("public", "private", "internal", "")
@@ -65,6 +69,43 @@ class ReleaseTrustConditions(unittest.TestCase):
             success = all(result == "success" for result in (release, plan, build, companion)) and not cancelled
             with self.subTest(context=context, cancelled=cancelled):
                 self.assertEqual(eligible(gate, context, success=success, cancelled=cancelled), expected)
+
+
+class VerifyPlan(unittest.TestCase):
+    def test_exact_pr_diff_is_required_to_skip_any_lane(self):
+        workflow = (ROOT / ".github/workflows/verify.yml").read_text()
+        classify = dedent(job(workflow, "plan").split("        run: |\n", 1)[1])
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            output = Path(tmp) / "output"
+            repo.mkdir()
+
+            def git(*args, data=None):
+                return subprocess.check_output(["git", "-c", "user.name=Test", "-c", "user.email=test@example.com",
+                                                *args], cwd=repo, input=data, text=True).strip()
+
+            git("init", "-q")
+            base = git("commit-tree", git("mktree", data=""), data="base")
+            blob = git("hash-object", "-w", "--stdin", data="changed\n")
+            for paths, expected in (
+                (["apps/web/web file\n.ts"], "web"), (["crates/anymd/src/cli.rs"], "native"),
+                (["packages/pypi/new.py"], "native"), (["apps/web/a.ts", "packages/pypi/a.py"], "mixed"),
+                (["crates/anymd-formats/src/docx.rs"], "mixed"), (["sylphx.toml"], "mixed"),
+                (["apps/web/a.ts", ".github/workflows/verify.yml"], "full"), (["LICENSE"], "none"), ([], "full"),
+            ):
+                with self.subTest(paths=paths):
+                    git("read-tree", "--empty")
+                    for path in paths:
+                        git("update-index", "--add", "--cacheinfo", f"100644,{blob},{path}")
+                    tree = git("write-tree")
+                    head = git("commit-tree", tree, "-p", base, data="head")
+                    merge = git("commit-tree", tree, "-p", base, "-p", head, data="test merge")
+                    git("update-ref", "HEAD", merge)
+                    for event_head, scope in ((head, expected), (base, "full"), ("", "full")):
+                        output.write_text("")
+                        subprocess.run(["bash", "-e", "-o", "pipefail", "-c", classify], cwd=repo, check=True,
+                                       env=dict(os.environ, BASE=base, HEAD=event_head, GITHUB_OUTPUT=str(output)))
+                        self.assertEqual(output.read_text(), f"scope={scope}\n")
 
 
 if __name__ == "__main__":
