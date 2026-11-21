@@ -8,7 +8,5 @@
 [advisories]
 ignore = [
     # zip 8.6.0 reached only via candle-core; remove when candle-core moves to zip >= 9.
-    "RUSTSEC-2026-0367",
     "RUSTSEC-2026-0368",
-    "RUSTSEC-2026-0369",
 ]
