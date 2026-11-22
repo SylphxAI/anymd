@@ -4,10 +4,10 @@ import { For } from 'solid-js';
 import { PageMeta } from '@/components/page-meta';
 
 const guides = [
-  { slug: 'check-pdf-citation', title: 'Check a PDF citation', description: 'Verify that a quote appears on the cited page and in the cited area.' },
-  { slug: 'build-video-timeline', title: 'Build a video timeline', description: 'Find scene changes and timestamped cues in a local video.' },
-  { slug: 'extract-video-frame', title: 'Extract a video frame', description: 'Capture an exact frame and record its decoded timestamp and hash.' },
-];
+  { href: '/tasks/check-pdf-citation', title: 'Check a PDF citation', description: 'Verify that a quote appears on the cited page and in the cited area.' },
+  { href: '/tasks/build-video-timeline', title: 'Build a video timeline', description: 'Find scene changes and timestamped cues in a local video.' },
+  { href: '/tasks/extract-video-frame', title: 'Extract a video frame', description: 'Capture an exact frame and record its decoded timestamp and hash.' },
+] as const;
 
 export default function TasksRoute() {
   return <section class="wrap page-shell">
@@ -19,7 +19,7 @@ export default function TasksRoute() {
     </header>
     <ul class="stack max-w-3xl">
       <For each={guides}>{(guide) => <li>
-        <A href={'/tasks/' + guide.slug} class="panel flex items-center justify-between gap-4 hover:border-[var(--accent)]">
+        <A href={guide.href} class="panel flex items-center justify-between gap-4 hover:border-[var(--accent)]">
           <div><h2>{guide.title}</h2><p class="muted mt-2">{guide.description}</p></div>
           <ArrowRight size={20} aria-hidden="true" class="shrink-0 text-[var(--accent)]" />
         </A>
