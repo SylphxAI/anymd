@@ -45,7 +45,7 @@
     "cli"
   ],
   "license": "MIT",
-  "homepage": "https://anymd.sylphx.com/",
+  "homepage": "https://anymd.sylphx.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SylphxAI/anymd.git",

@@ -24,7 +24,7 @@ const meta = {
   version: "8.5.4",
   repo: "SylphxAI/anymd",
   description: 'Any file to "clean" Markdown',
-  homepage: "https://sylphxai.github.io/anymd/",
+  homepage: "https://anymd.sylphx.com",
   license: "MIT",
   publisher: "Sylphx",
 };
@@ -83,6 +83,7 @@ test("locale and version manifests name the package", () => {
   assert.ok(!locale.split("\n").some((line) => line.startsWith("ShortDescription:") && line.length > 280));
   assert.match(locale, /^License: MIT$/m);
   assert.match(locale, /LicenseUrl: https:\/\/github\.com\/SylphxAI\/anymd\/blob\/v8\.5\.4\/LICENSE/);
+  assert.match(locale, /^PackageUrl: https:\/\/anymd\.sylphx\.com$/m);
   assert.match(locale, /^Moniker: anymd$/m);
 });
 

@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version = "1.95"
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
 description = "Local document OCR with PaddleOCR-VL and PP-DocLayout on Candle"
 readme = "README.md"
 

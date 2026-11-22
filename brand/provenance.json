@@ -63,7 +63,7 @@
     },
     "og/anymd-og-vector.svg": {
       "source": "docs/public/og-image.svg: added in 1372688 (2026-07-01, #340), redrawn in a06881d (2026-09-22, #726) and 4d7adfd (2026-09-25, #741). The earlier all-vector card; still served at /anymd/og-image.svg, linked by nothing.",
-      "sha256": "3018aacc04d195c8c700d1175b918f633e900ba0e7342c35ab5d397b2ae990c9"
+      "sha256": "934729d7ded9d52f7518102abb93f52db1c370ae3ecd5125fd68f5e536427f51"
     },
     "og/anymd-og.html": {
       "source": "bench/demo/og-image.html: added in 435437f (2026-09-25, #754). The logo it inlines as a data URI was refreshed to the current app-icon master in this change.",
@@ -74,8 +74,8 @@
       "sha256": "7c32f92e107819d544e6ba8d3b59fb4e1405dfe0ccb1b518c83ada8a8cc0aa99"
     },
     "og/og-pro.svg": {
-      "source": "TODO: say where this master came from",
-      "sha256": "da3d85f2e61afb0e29275a2aa082ec6f2a64d05c2c3f0561571604e643a4ebc0"
+      "source": "Source for apps/web/public/og-pro.png, rendered in a browser at 1280×640.",
+      "sha256": "a445866f4d02748d6ccc4e191e06fa43ef4aeed11bef47721bac34e9e6d4c1a5"
     },
     "svg/anymd-app-icon-square.svg": {
       "source": "Derived in this change from brand/svg/anymd-app-icon.svg: the same artwork on a full-bleed tile with no corner radius, so iOS can apply its own mask to apple-touch-icon.",

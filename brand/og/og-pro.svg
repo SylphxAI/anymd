@@ -44,5 +44,5 @@
 
   <!-- footer -->
   <text x="96" y="574" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="26" fill="#eaf2dd">anymd Pro · US$29 once</text>
-  <text x="1184" y="574" text-anchor="end" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="24" fill="#7d8a72">sylphxai.github.io/anymd/pro</text>
+  <text x="1184" y="574" text-anchor="end" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="24" fill="#7d8a72">anymd.sylphx.com/pro</text>
 </svg>
