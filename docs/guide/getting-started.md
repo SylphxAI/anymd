@@ -107,6 +107,8 @@ npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <fi
 anymd report.pdf > report.md
 ```
 
+Switching from another MCP server? See [Anymd vs Markdownify MCP](/vs/markdownify-mcp).
+
 ## Verify a download
 
 Every release asset (the `.tar.gz` and `.zip` binaries and the `.mcpb` bundles) is listed in `SHA256SUMS` and carries a signed [GitHub artifact attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) that names the workflow run that built it. The release also attaches a CycloneDX software bill of materials (`anymd-<version>.cdx.json`).

@@ -32,6 +32,28 @@
    source and trust checks below. The `crates` job runs only on a manual
    dispatch until crates.io trusted publishing is configured (see below).
 
+## Official MCP Registry
+
+Use the existing [Official MCP Registry entry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fanymd/versions/latest). Keep the exact casing of `io.github.SylphxAI/anymd`: it matches the published npm `mcpName`. Do not create a second name to fix a listing in another directory.
+
+Before releasing, install [`mcp-publisher`](https://github.com/modelcontextprotocol/registry/releases) and run these from the repository root:
+
+```sh
+bun run check:versions
+mcp-publisher validate
+```
+
+After npm publishes, check the exact version and launch the package over stdio:
+
+```sh
+version=$(node -p 'require("./server.json").version')
+npm view "@sylphx/anymd@$version" mcpName bin --json
+npx -y @modelcontextprotocol/inspector --cli npx -y "@sylphx/anymd@$version" mcp --method tools/list
+curl -fsSL "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SylphxAI%2Fanymd/versions/$version" | jq '.server'
+```
+
+The [release workflow](../.github/workflows/release.yml) publishes from `main` only. It runs `mcp-publisher validate`, authenticates with `mcp-publisher login github-oidc`, and runs `mcp-publisher publish` only when the canonical name and version are missing. It does not update already-listed versions. To deliver a manifest correction such as the website URL or launch arguments, include it in the next version bump. After the workflow finishes, check that the Registry returns the same version, `@sylphx/anymd`, the `stdio` transport, the `mcp` package argument and `https://anymd.sylphx.com/`.
+
 ## Native CPU portability
 
 Repository builds use `.cargo/config.toml` to disable host-specific CPU tuning

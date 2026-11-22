@@ -16,7 +16,14 @@
       "version": "8.5.14",
       "transport": {
         "type": "stdio"
-      }
+      },
+      "runtimeHint": "npx",
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
     }
   ]
 }

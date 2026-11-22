@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const tag = 'https://www.googletagmanager.com/gtag/js?id=G-R4TD2Z8RR7';
 const googleHost = /(?:^|\.)(?:googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|google\.com)$/;
@@ -130,55 +130,94 @@ test('checkout binds consented campaign data across sign-in without waiting for 
   await expect(page).toHaveURL(url => url.origin === 'https://checkout.stripe.com');
 });
 
-test('successful checkout emits begin_checkout, only settled owned purchase emits once', async ({ page }) => {
+test('consented checkout emits begin_checkout but the return never measures a purchase', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
   const google = await isolate(page, 'US');
-  await page.goto('/sign-in?next=%2Fpricing');
-  await page.getByLabel('Email address').fill('test@example.invalid');
-  await page.getByRole('button', {name:'Continue', exact:true}).click();
-  await page.getByLabel('6-digit code').fill('123456');
-  await expect(page).toHaveURL('/pricing');
-  const processorSessionId = 'cs_test_Fixture123';
-  const thanks = '/pro/thanks?session_id=' + processorSessionId;
-  const origin = new URL(page.url()).origin;
-  const verify = (checkoutId: string) => page.request.post('/api/anymd/purchase-measurement', {headers:{origin}, data:{checkoutId, processorSessionId}});
-  for (const suffix of ['2', '3']) {
-    const result = await verify('chk-' + suffix.repeat(24));
-    expect(result.ok()).toBe(true);
-    expect(await result.json()).toEqual({purchase:null});
-  }
-  await page.route('https://checkout.stripe.com/**', route => route.fulfill({status:302, headers:{Location:origin + thanks}}));
-  await page.getByRole('checkbox').check();
-  const begin = page.waitForRequest('https://checkout.stripe.com/**');
-  const measurement = page.waitForResponse('**/api/anymd/purchase-measurement');
-  // Capture the consented commands during the brief hosted-checkout redirect.
+  const measurementRequests: string[] = [];
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === '/api/anymd/purchase-measurement') measurementRequests.push(request.url());
+  });
+  // Save the checkout event before the redirect clears the pricing page's queue.
   await page.addInitScript(() => addEventListener('pagehide', () => {
     const entries = (window as Window & {dataLayer?: ArrayLike<unknown>[]}).dataLayer ?? [];
     const event = entries.map(args => Array.from(args)).find(args => args[0] === 'event' && args[1] === 'begin_checkout');
     if (event) sessionStorage.setItem('test.checkout.event', JSON.stringify(event));
   }));
-  await page.reload();
+  await page.goto('/sign-in?next=%2Fpricing');
+  await page.getByLabel('Email address').fill('test@example.invalid');
+  await page.getByRole('button', {name:'Continue', exact:true}).click();
+  await page.getByLabel('6-digit code').fill('123456');
+  await expect(page).toHaveURL('/pricing');
+  await expect.poll(async () => (await events(page, 'pricing_view')).length).toBe(1);
+  const processorSessionId = 'cs_test_Fixture123';
+  const thanks = '/pro/thanks?session_id=' + processorSessionId;
+  const origin = new URL(page.url()).origin;
+  await page.route('https://checkout.stripe.com/**', route => route.fulfill({status:302, headers:{Location:origin + thanks}}));
   await page.getByRole('checkbox').check();
+  const checkout = page.waitForResponse(response => new URL(response.url()).pathname === '/api/anymd/checkout');
   await page.getByRole('button', {name:'Continue to secure checkout'}).click();
-  await begin;
+  const response = await checkout;
+  expect(response.ok()).toBe(true);
+  expect(await response.json()).toEqual({url:'https://checkout.stripe.com/c/pay/' + processorSessionId});
   await expect(page).toHaveURL(thanks);
-  expect((await measurement).ok()).toBe(true);
-  await expect.poll(async () => (await events(page, 'purchase')).length).toBe(1);
-  const [purchase] = await events(page, 'purchase');
-  expect(purchase[2]).toMatchObject({transaction_id:expect.stringMatching(/^[a-f0-9]{64}$/), currency:'USD', value:29});
-  expect(JSON.stringify(purchase)).not.toMatch(/cs_test|checkout_sessions|example\.invalid|usr_fixture|session_id/);
-  const start = await page.evaluate(() => JSON.parse(sessionStorage.getItem('test.checkout.event') || 'null'));
-  expect(start).toMatchObject(['event', 'begin_checkout', expect.objectContaining({currency:'USD'})]);
-  const trace = page.waitForResponse('**/cdn-cgi/trace');
-  await page.reload();
-  await trace;
+  await expect(page.getByRole('heading', {name:'Link this purchase'})).toBeVisible();
   await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
   expect(await events(page, 'purchase')).toEqual([]);
+  const start = await page.evaluate(() => JSON.parse(sessionStorage.getItem('test.checkout.event') || 'null'));
+  expect(start).toMatchObject(['event', 'begin_checkout', expect.objectContaining({currency:'USD'})]);
+  expect(await page.evaluate(() => Object.keys(sessionStorage).some(key => key.startsWith('anymd.ga4.checkout.')))).toBe(false);
+
+  // A tab opened before the change may still carry the old local checkout state.
   await page.evaluate(id => sessionStorage.setItem('anymd.ga4.checkout.' + id, 'chk-' + '1'.repeat(24)), processorSessionId);
-  const replay = page.waitForResponse('**/api/anymd/purchase-measurement');
   await page.reload();
-  expect((await replay).ok()).toBe(true);
-  await expect.poll(() => page.evaluate(id => sessionStorage.getItem('anymd.ga4.checkout.' + id), processorSessionId)).toBeNull();
+  await expect(page.getByRole('heading', {name:'Link this purchase'})).toBeVisible();
+  await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
   expect(await events(page, 'purchase')).toEqual([]);
+  expect(measurementRequests).toEqual([]);
   expect(google.every(url => url === tag)).toBe(true);
+
+  const retired = await page.request.post('/api/anymd/purchase-measurement', {headers:{origin}, data:{}});
+  expect(retired.status()).toBe(404);
+});
+
+function boxesOverlap(a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+test('the compact consent bar leaves conversion controls reachable without a choice', async ({ page }) => {
+  const google = await isolate(page, 'GB');
+  const targets: [string, () => Locator[]][] = [
+    ['/', () => [page.getByLabel('Example Markdown'), page.getByRole('link', {name:'Try Studio Free'}), page.getByRole('link', {name:'Get Anymd Pro — $29'})]],
+    ['/pricing', () => [page.getByRole('link', {name:'Install MCP / CLI'}), page.getByRole('link', {name:'Sign in to buy Pro'})]],
+    ['/studio', () => [page.getByRole('link', {name:'See Anymd Pro'})]],
+  ];
+  const mobile = page.viewportSize()!.width < 800;
+  for (const [path, controls] of targets) {
+    await page.goto(path);
+    const bar = panel(page);
+    await expect(bar).toBeVisible();
+    const box = (await bar.boundingBox())!;
+    expect(box.height, path).toBeLessThanOrEqual(mobile ? 104 : 72);
+    expect(await page.locator('#app').evaluate(el => Number.parseInt(getComputedStyle(el).paddingBottom, 10))).toBeGreaterThanOrEqual(box.height);
+    for (const control of controls()) {
+      await expect(control).toBeVisible();
+      expect.soft(boxesOverlap((await control.boundingBox())!, box), `${path} ${await control.textContent()} at rest`).toBe(false);
+      await control.evaluate(el => el.scrollIntoView({block:'center'}));
+      expect(boxesOverlap((await control.boundingBox())!, (await bar.boundingBox())!)).toBe(false);
+      if ((await control.getAttribute('href')) !== null) await control.click({trial:true});
+    }
+    const buttons = bar.getByRole('button');
+    await expect(buttons).toHaveCount(3);
+    const styles = await buttons.evaluateAll(els => els.map(el => {
+      const style = getComputedStyle(el);
+      return [style.borderTopColor, style.borderTopWidth, style.backgroundColor, style.color, style.fontWeight];
+    }));
+    expect(styles[0][1]).toBe('1px');
+    expect(styles.every(style => JSON.stringify(style) === JSON.stringify(styles[0]))).toBe(true);
+    await page.getByRole('button', { name: 'Cookie settings', exact: true }).click();
+    await expect(bar.getByRole('button', { name: 'Reject optional' })).toBeFocused();
+    await bar.getByRole('button', { name: 'Close without changing' }).click();
+  }
+  await expect(page.locator('#anymd-google-tag')).toHaveCount(0);
+  expect(google).toEqual([]);
 });

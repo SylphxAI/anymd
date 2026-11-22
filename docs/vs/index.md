@@ -58,6 +58,8 @@ Every tool ran on GitHub-hosted runners (Linux x86_64, 4 CPUs), timed as a fresh
 
 ## Which converter fits
 
+**[Markdownify MCP](/vs/markdownify-mcp)** is an MCP server built on MarkItDown, not the standalone converter measured above. Compare the install steps, supported formats, and web tools before switching.
+
 **[Docling](/vs/docling)** is the closest to anymd on accuracy. Pick it for an in-process Python library with LangChain or LlamaIndex integrations, a lossless JSON document model, or vision-language models on a GPU. It scored higher on designed reports, scans and EPUB; on a CPU it was the slowest of the tools that converted every document.
 
 **[Kreuzberg](/vs/kreuzberg)** has a Rust core with bindings for Python, TypeScript, Go, Java and more, reads 91+ formats including email and archives, and adds chunking and embeddings. It scored highest on HTML and tied anymd on spreadsheets; tables are its weak spot.

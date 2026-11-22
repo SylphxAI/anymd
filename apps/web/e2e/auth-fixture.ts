@@ -39,13 +39,6 @@ serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
         return Response.json({name, processor_session_id, url:'https://checkout.stripe.com/c/pay/' + processor_session_id});
       }
     }
-    if (request.method === 'GET' && url.pathname.startsWith(checkoutCollection + '/chk-')) {
-      const other = url.pathname.endsWith('222222222222222222222222');
-      const unpaid = url.pathname.endsWith('333333333333333333333333');
-      return Response.json({ name:url.pathname.slice(4), processor_session_id, subject:{end_user:other ? 'usr_other' : 'usr_fixture001'},
-        line_items:[{price:'anymd_pro', quantity:1}], state:unpaid ? 'open' : 'complete', payment_status:unpaid ? 'unpaid' : 'paid',
-        livemode:false, amount_total:'2900', currency_code:'USD', buyer_email:'test@example.invalid' });
-    }
   }
 
   if (url.pathname === '/v1/client/config' && url.searchParams.get('publishable_key') === 'pk_fixture' && request.headers.get('authorization') === 'Bearer pk_fixture') {

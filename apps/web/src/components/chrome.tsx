@@ -5,7 +5,7 @@ import { For } from 'solid-js';
 import { useCookieConsent } from './cookie-consent';
 import { SessionAction } from './session';
 
-const links = [['Studio', '/studio'], ['Docs', '/docs'], ['Pricing', '/pricing']] as const;
+const links = [['Studio', '/studio'], ['Docs', '/docs'], ['Comparisons', '/vs'], ['Pricing', '/pricing']] as const;
 
 export function Header() {
   return (

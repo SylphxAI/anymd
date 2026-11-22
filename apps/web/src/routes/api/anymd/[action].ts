@@ -1,11 +1,9 @@
 import type { APIEvent } from '@solidjs/start/server';
 import { bindCheckoutAttribution } from '@/lib/checkout-attribution';
-import { currencyOptions, currencyScale, price, product } from '@/lib/catalog';
+import { currencyOptions, price, product } from '@/lib/catalog';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
 import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/lib/http';
 import { checkoutKey, entitlement, moneyCall, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
-import { checkoutIdPattern, paidPurchase, processorSessionPattern } from '@/lib/purchase';
-
 
 export async function GET({request, params}: APIEvent) {
   if ((params).action !== 'account') return json({code:'not_found'},404);
@@ -42,20 +40,6 @@ export async function POST({request, params}: APIEvent) {
       const result = await moneyCall(ctx.money, `checkout_sessions/${id}:claim`, ctx.token, claim_secret ? {claim_secret} : {}, request.headers.get('user-agent') ?? undefined);
       return json({claimed:result.claimed === true && result.claimed_by === ctx.user.id});
     }
-    if (action === 'purchase-measurement') {
-      const id = field(data, 'checkoutId', checkoutIdPattern);
-      const processorSessionId = field(data, 'processorSessionId', processorSessionPattern);
-      const key = checkoutKey(request, ctx.money);
-      const live = key.startsWith('sylphx_sk_live_');
-      if (live !== processorSessionId.startsWith('cs_live_')) return json({purchase:null});
-      const checkout = await moneyCall(ctx.money, `checkout_sessions/${id}`, key, undefined, undefined, undefined, true);
-      const currency = currencyOptions.find(({code}) => code === checkout.currency_code)?.code;
-      const purchase = currency ? paidPurchase(checkout, {
-        name: `${ctx.money.parent}/checkout_sessions/${id}`, processorSessionId,
-        user: ctx.user.id, price: price.key, live, currencyScale: currencyScale(currency),
-      }) : null;
-      return json({purchase});
-    }
     if (action === 'checkout') {
       const currency = currencyOptions.find(({code}) => code === data.currency)?.code;
       if (!currency || data.consent !== true) throw new HttpError(400, 'invalid_request');
@@ -73,10 +57,7 @@ export async function POST({request, params}: APIEvent) {
       const prefix = ctx.money.parent + '/checkout_sessions/';
       const id = typeof result.name === 'string' && result.name.startsWith(prefix) ? result.name.slice(prefix.length) : '';
       void bindCheckoutAttribution(ctx.money, request.headers, id, data.measurementConsent);
-      const processorSessionId = result.processor_session_id;
-      const receipt = checkoutIdPattern.test(id) && typeof processorSessionId === 'string' && processorSessionPattern.test(processorSessionId)
-        ? {checkoutId:id, processorSessionId} : undefined;
-      return json({url, receipt});
+      return json({url});
     }
     if (action === 'billing-portal') {
       const jwt = await ctx.accessToken();
