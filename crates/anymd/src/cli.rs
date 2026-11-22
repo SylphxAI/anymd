@@ -4,7 +4,8 @@
 
 use std::io::{IsTerminal, Read, Write};
 
-use crate::lean::{ReadRender, read_text, result_text, search};
+use crate::document::EvidenceKind;
+use crate::lean::{read_text_with_evidence, result_text, search_with_evidence, ReadRender};
 use crate::schema::{ReadArgs, SearchArgs};
 use crate::source_access::SourceAccessPolicy;
 
@@ -261,6 +262,15 @@ fn stdin_to_temp() -> Result<tempfile::NamedTempFile, String> {
 
 /// Run the CLI; returns the process exit code.
 pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
+    run_with_evidence(arguments, policy, |_| {})
+}
+
+/// Notify the CLI caller only after qualifying work and output both succeed.
+pub fn run_with_evidence(
+    arguments: Vec<String>,
+    policy: &SourceAccessPolicy,
+    on_evidence: impl FnOnce(EvidenceKind),
+) -> i32 {
     let options = || arguments.iter().take_while(|a| a.as_str() != "--");
     if options().any(|a| a == "-h" || a == "--help") || arguments.is_empty() {
         println!("{USAGE}");
@@ -287,6 +297,7 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             return 2;
         }
     };
+    let mut evidence = None;
     let (text, failed) = if is_cite_check {
         if let Err(required) = crate::pro::require_pro("Cite-check") {
             eprintln!("{required}");
@@ -377,8 +388,11 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             images: parsed.images.clone(),
             revisions: parsed.revisions.clone(),
         };
-        match crate::outline::render(&args, policy) {
-            Ok(text) => (text, false),
+        match crate::outline::render_with_evidence(&args, policy) {
+            Ok((text, kind)) => {
+                evidence = kind;
+                (text, false)
+            }
             Err(message) => {
                 eprintln!("anymd: {message}");
                 return 2;
@@ -399,8 +413,11 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
             max_results: parsed.max,
             context_chars: None,
         };
-        match search(&args, policy) {
-            Ok(result) => (result_text(&result), result.is_error == Some(true)),
+        match search_with_evidence(&args, policy) {
+            Ok((result, kind)) => {
+                evidence = kind;
+                (result_text(&result), result.is_error == Some(true))
+            }
             Err(error) => {
                 eprintln!("anymd: {}", error.message);
                 return 2;
@@ -449,13 +466,14 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
                 front_matter: parsed.front_matter || several,
                 unlimited: true,
             };
-            match read_text(&args, policy, &render) {
-                Ok((text, failed)) => {
+            match read_text_with_evidence(&args, policy, &render) {
+                Ok((text, failed, kind)) => {
                     if failed {
                         any_failed = true;
                         eprint!("anymd: {input}: {}", error_line(&text));
                         continue;
                     }
+                    evidence = evidence.or(kind);
                     if !out.is_empty() {
                         out.push('\n');
                     }
@@ -487,6 +505,9 @@ pub fn run(arguments: Vec<String>, policy: &SourceAccessPolicy) -> i32 {
         eprintln!("anymd: {message}");
         return 1;
     }
+    if let Some(kind) = evidence.filter(|_| !failed) {
+        on_evidence(kind);
+    }
     i32::from(failed)
 }
 
@@ -504,6 +525,7 @@ fn error_line(front_matter: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::lean::read_text;
 
     fn args(list: &[&str]) -> Vec<String> {
         list.iter().map(|s| s.to_string()).collect()

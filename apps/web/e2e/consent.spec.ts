@@ -189,7 +189,7 @@ test('the compact consent bar leaves conversion controls reachable without a cho
   const targets: [string, () => Locator[]][] = [
     ['/', () => [page.getByLabel('Example Markdown'), page.getByRole('link', {name:'Try Studio Free'}), page.getByRole('link', {name:'Get Anymd Pro — $29'})]],
     ['/pricing', () => [page.getByRole('link', {name:'Install MCP / CLI'}), page.getByRole('link', {name:'Sign in to buy Pro'})]],
-    ['/studio', () => [page.getByRole('link', {name:'See Anymd Pro'})]],
+    ['/studio', () => [page.getByRole('link', {name:'Get Anymd Pro — $29 once', exact:true})]],
   ];
   const mobile = page.viewportSize()!.width < 800;
   for (const [path, controls] of targets) {

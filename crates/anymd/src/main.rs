@@ -1,8 +1,9 @@
 mod login;
+mod pro_hint;
 
 use anymd::{
-    PdfReaderMcp, SERVER_VERSION, cli, discover_compat, http_transport, pro, setup,
-    source_access::SourceAccessPolicy,
+    cli, discover_compat, http_transport, pro, setup, source_access::SourceAccessPolicy,
+    PdfReaderMcp, SERVER_VERSION,
 };
 use rmcp::transport::async_rw::AsyncRwTransport;
 use rmcp::{ServerHandler, ServiceExt};
@@ -37,7 +38,7 @@ fn main() -> anyhow::Result<()> {
                 .iter()
                 .take_while(|a| a.as_str() != "--")
                 .any(|a| matches!(a.as_str(), "-h" | "--help" | "-V" | "--version"));
-            let code = cli::run(arguments, &policy);
+            let code = cli::run_with_evidence(arguments, &policy, pro_hint::after_success);
             if code == 0 && !informational {
                 if let Some(root) = anymd_formats::cache::cache_dir() {
                     mcp_kit::star_hint::after_success(

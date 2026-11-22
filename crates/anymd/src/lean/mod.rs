@@ -15,7 +15,8 @@ pub use read::pagination::{Cursor, DEFAULT_MAX_TOKENS, MAX_MAX_TOKENS, MIN_MAX_T
 pub use read::{read, read_pdf, read_text, read_wants_legacy, ReadRender};
 pub use search::{search, search_pdf, search_wants_legacy};
 
-pub(crate) use read::scan_marker;
+pub(crate) use read::{read_text_with_evidence, scan_marker};
+pub(crate) use search::search_with_evidence;
 
 /// Plain text of a tool result (CLI output).
 pub fn result_text(result: &CallToolResult) -> String {
