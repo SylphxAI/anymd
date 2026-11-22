@@ -2,7 +2,7 @@ import type { Capabilities } from './auth-capabilities';
 
 export const resendDelaySeconds = 30;
 export const completeCode = /^[0-9]{6}$/;
-const aliases = new Set(['/login', '/signup', '/register', '/forgot-password']);
+const aliases = new Set(['/login', '/signup', '/sign-up', '/register', '/forgot-password']);
 
 export function signInAlias(pathname: string) {
   return aliases.has(pathname.replace(/\/+$/, '').toLowerCase());

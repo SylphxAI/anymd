@@ -20,7 +20,7 @@ test('OTP input accepts pasted digits without revealing the full recipient', () 
 });
 
 test('legacy sign-in aliases cannot become post-auth redirect loops', () => {
-  for (const route of ['/login', '/signup/', '/REGISTER', '/forgot-password']) {
+  for (const route of ['/login', '/signup/', '/sign-up', '/REGISTER', '/forgot-password']) {
     assert(signInAlias(route));
     assert.equal(safeNext(route + '?next=/billing'), '/dashboard');
   }

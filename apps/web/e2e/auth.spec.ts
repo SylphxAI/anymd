@@ -19,13 +19,14 @@ test('initial HTML shows only one entry with configured Google and email autocom
 
 test('legacy aliases redirect permanently, preserving only the safe return path', async ({ request }) => {
   const next = '/cli-auth?client_id=desktop&state=example#details';
-  for (const alias of ['login', 'signup', 'register', 'forgot-password']) {
+  for (const alias of ['login', 'signup', 'sign-up', 'register', 'forgot-password']) {
     const query = new URLSearchParams({ next });
     const res = await request.get('/' + alias + '?' + query, { maxRedirects: 0 });
     expect(res.status()).toBe(308);
     expect(res.headers().location).toBe('/sign-in?' + query);
   }
-  const res = await request.get('/login?next=https%3A%2F%2Fexample.invalid', { maxRedirects: 0 });
+  const res = await request.get('/sign-up?next=https%3A%2F%2Fexample.invalid', { maxRedirects: 0 });
+  expect(res.status()).toBe(308);
   expect(res.headers().location).toBe('/sign-in?next=%2Fdashboard');
 });
 
