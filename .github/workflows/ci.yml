@@ -287,8 +287,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           filter: blob:none
-      - uses: SylphxAI/.github/.github/actions/stack-conformance@9a736e6a2f4d93ddd6ccf13b56dbdc8ca3eb030d # main
+      - uses: SylphxAI/.github/.github/actions/stack-conformance@badfd7af0ea30267ccd709c68df81e5b1e66d5bd # main
         with:
+          auth-surface: full
           base: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || '' }}
 
   ci-ok:

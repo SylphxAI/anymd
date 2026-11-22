@@ -40,7 +40,7 @@ export function SignInForm(props: {next:string; error?:string; initialAuth:Capab
   const methods = () => props.initialAuth.methods;
   const entry = () => signInEntry(methods());
   const [email, setEmail] = createSignal('');
-  const [step, setStep] = createSignal<'email' | 'proof' | 'password'>('email');
+  const [step, setStep] = createSignal<'email' | 'proof'>('email');
   const [code, setCode] = createSignal('');
   const [codeSent, setCodeSent] = createSignal(false);
   const [remaining, setRemaining] = createSignal(0);
@@ -51,7 +51,6 @@ export function SignInForm(props: {next:string; error?:string; initialAuth:Capab
   let cooldownTimer: ReturnType<typeof setInterval> | undefined;
   let emailField: HTMLInputElement | undefined;
   let codeField: HTMLInputElement | undefined;
-  let passwordField: HTMLInputElement | undefined;
   let stepHeading: HTMLHeadingElement | undefined;
   const notice = () => localNotice() ?? (props.error === 'auth_unconfigured'
     ? 'Sign-in hasn’t been enabled in this environment.'
@@ -143,51 +142,26 @@ export function SignInForm(props: {next:string; error?:string; initialAuth:Capab
   return <div class="panel stack auth-panel">
     <Show when={step() === 'email'} fallback={<>
       <h2 class="font-semibold" tabindex="-1" ref={stepHeading}>Verify it’s you</h2>
-      <Show when={step() === 'password'} fallback={<>
-        <Show when={codeSent()}>
-          <p class="muted" role="status">Sent to {maskEmail(email())}</p>
-          <form class="stack" method="post" onSubmit={(ev) => { ev.preventDefault(); void verifyCode(code()); }}>
-            <label class="field-label">6-digit code<input class="field" ref={codeField} name="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" required readOnly={pending()} value={code()} onInput={(ev) => {
-              const value = normalizeCode(ev.currentTarget.value);
-              ev.currentTarget.value = value;
-              if (value === code()) return;
-              setCode(value);
-              if (completeCode.test(value)) void verifyCode(value);
-            }} /></label>
-            <button class="button button-primary" type="submit" disabled={pending() || !completeCode.test(code())}>Verify code</button>
-          </form>
-        </Show>
-        <Show when={methods().emailOtp}>
-          <button type="button" class="inline-link justify-self-start" disabled={pending() || remaining() > 0} onClick={() => void sendCode()}>
-            {codeSent() ? 'Resend' : 'Send a code'}{remaining() ? ' (' + remaining() + 's)' : ''}
-          </button>
-        </Show>
-        <Show when={canPasskey()}><button type="button" class="button" disabled={pending()} onClick={() => void usePasskey()}><Fingerprint size={16} /> Use a passkey</button></Show>
-        <Show when={methods().password}><button type="button" class="inline-link justify-self-start" disabled={pending()} onClick={() => {
-          setNotice(''); setStep('password'); passwordField?.focus();
-        }}>Use password instead</button></Show>
-        <Show when={!canPasskey() && entry() === 'other' && !methods().password}><p class="notice">Passkeys need a compatible browser and a secure connection.</p></Show>
-      </>}>
-        <p class="muted">For accounts that already have a password.</p>
-        <form class="stack" method="post" onSubmit={async (ev) => {
-          ev.preventDefault();
-          if (pending()) return;
-          const password = new FormData(ev.currentTarget).get('password');
-          setNotice(''); setPending(true);
-          try {
-            const result = await authRequest('password-sign-in', { email: email(), password, next: props.next }, 'Check your email and password, then try again.');
-            location.assign(result.next);
-          } catch (err) { setNotice(err instanceof AuthError ? err.message : 'Check your connection and try again.'); }
-          finally { setPending(false); }
-        }}>
-          <input type="hidden" name="username" autocomplete="username" value={email()} />
-          <label class="field-label">Password<input class="field" ref={passwordField} type="password" name="password" autocomplete="current-password" required /></label>
-          <button class="button button-primary" type="submit" disabled={pending()}>Sign in with password</button>
+      <Show when={codeSent()}>
+        <p class="muted" role="status">Sent to {maskEmail(email())}</p>
+        <form class="stack" method="post" onSubmit={(ev) => { ev.preventDefault(); void verifyCode(code()); }}>
+          <label class="field-label">6-digit code<input class="field" ref={codeField} name="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" required readOnly={pending()} value={code()} onInput={(ev) => {
+            const value = normalizeCode(ev.currentTarget.value);
+            ev.currentTarget.value = value;
+            if (value === code()) return;
+            setCode(value);
+            if (completeCode.test(value)) void verifyCode(value);
+          }} /></label>
+          <button class="button button-primary" type="submit" disabled={pending() || !completeCode.test(code())}>Verify code</button>
         </form>
-        <Show when={methods().emailOtp || canPasskey()}><button type="button" class="inline-link justify-self-start" disabled={pending()} onClick={() => {
-          setNotice(''); setStep('proof'); if (codeSent()) codeField?.focus(); else stepHeading?.focus();
-        }}>Use another method</button></Show>
       </Show>
+      <Show when={methods().emailOtp}>
+        <button type="button" class="inline-link justify-self-start" disabled={pending() || remaining() > 0} onClick={() => void sendCode()}>
+          {codeSent() ? 'Resend' : 'Send a code'}{remaining() ? ' (' + remaining() + 's)' : ''}
+        </button>
+      </Show>
+      <Show when={canPasskey()}><button type="button" class="button" disabled={pending()} onClick={() => void usePasskey()}><Fingerprint size={16} /> Use a passkey</button></Show>
+      <Show when={!canPasskey() && entry() === 'other'}><p class="notice">Passkeys need a compatible browser and a secure connection.</p></Show>
       <button type="button" class="inline-link justify-self-start" disabled={pending()} onClick={changeEmail}>Change email</button>
     </>}>
       <Show when={google()}><a class="button button-primary" href={'/api/auth/google' + providerQuery()} rel="external"><GoogleMark /> Continue with Google</a></Show>

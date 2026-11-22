@@ -3,17 +3,25 @@ import { createContext, createEffect, createSignal, onCleanup, onMount, Show, us
 import { checkoutContext, clearCheckoutContexts, clearGoogleCookies, startGoogle, stopGoogle, track, type GoogleConsent, type Purchase } from '@/lib/analytics';
 import { consentFor, consentKey, parseChoice, traceRegion, type Choice, type Region } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
+import { clickCookie, clickIds } from '@/lib/attribution';
 
 const purchaseKey = 'anymd.ga4.purchase.';
 const CookieContext = createContext<{
   open: (from: HTMLButtonElement) => void;
   ready: () => boolean;
+  checkoutChoice: () => Choice;
   beginCheckout: (currency: string, receipt?: {checkoutId: string; processorSessionId: string}) => Promise<void>;
   purchase: (purchase: Purchase, processorSessionId: string) => void;
 }>();
 
 function savedChoice() {
   try { return parseChoice(localStorage.getItem(consentKey)); } catch { return null; }
+}
+
+function writeMeasurementCookie(name: string, value: string, age: number) {
+  try {
+    document.cookie = name + '=' + value + '; Path=/; Max-Age=' + age + '; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+  } catch { /* unavailable cookie storage never blocks checkout */ }
 }
 
 export function CookieConsent(props: ParentProps) {
@@ -68,11 +76,19 @@ export function CookieConsent(props: ParentProps) {
   createEffect(() => {
     const resolved = region();
     const pathname = route.pathname;
+    const search = route.search;
     const current = choice();
     const privacySignal = gpc();
     if (!resolved) return;
     const consent = consentFor(resolved, current, privacySignal);
     const allowed = eligibleHost() && canSave() && consent.analytics_storage === 'granted';
+    if (!allowed || consent.ad_storage !== 'granted' || consent.ad_user_data !== 'granted') {
+      writeMeasurementCookie(clickCookie, '', 0);
+    } else {
+      const params = new URLSearchParams(search);
+      const ids = clickIds(key => params.getAll(key).length === 1 ? params.get(key) : null);
+      if (Object.keys(ids).length) writeMeasurementCookie(clickCookie, encodeURIComponent(JSON.stringify(ids)), 30 * 86_400);
+    }
     if (active && (!allowed || active.ad_storage !== consent.ad_storage)) {
       stopGoogle();
       active = undefined;
@@ -104,6 +120,9 @@ export function CookieConsent(props: ParentProps) {
       try { localStorage.removeItem(consentKey); } catch { /* disable measurement in this document */ }
       setCanSave(false);
     }
+    // The server can honor a restrictive choice even if a stale page submits
+    // a broader one. An unset cookie never grants measurement.
+    writeMeasurementCookie(consentKey, canSave() ? next : 'reject', 31_536_000);
     setChoice(next);
     close();
   }
@@ -119,6 +138,16 @@ export function CookieConsent(props: ParentProps) {
       queueMicrotask(() => firstAction?.focus());
     },
     ready,
+    checkoutChoice(): Choice {
+      const resolved = region();
+      if (!resolved || !eligibleHost() || !canSave() || hasGpc()) return 'reject';
+      try {
+        // Read at submit time: another tab may just have withdrawn consent.
+        const consent = consentFor(resolved, parseChoice(localStorage.getItem(consentKey)), false);
+        if (consent.analytics_storage !== 'granted') return 'reject';
+        return consent.ad_storage === 'granted' && consent.ad_user_data === 'granted' ? 'all' : 'analytics';
+      } catch { return 'reject'; }
+    },
     async beginCheckout(currency: string, receipt?: {checkoutId: string; processorSessionId: string}) {
       if (!active) return;
       if (receipt) checkoutContext(receipt.processorSessionId, receipt.checkoutId);

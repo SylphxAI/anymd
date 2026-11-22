@@ -5,8 +5,6 @@ export function parseCapabilities(body: { social?: unknown; methods?: Record<str
   return { providers, methods: {
     emailOtp: body?.methods?.email_otp === true,
     passkey: body?.methods?.passkey === true,
-    password: body?.methods?.password === true,
-    signUp: body?.methods?.sign_up === true,
   } };
 }
 

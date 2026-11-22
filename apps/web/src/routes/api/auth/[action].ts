@@ -40,14 +40,6 @@ export async function POST({request, params}: APIEvent) {
     if (action === 'sign-out') { await signOut(request); return json({ok:true}); }
     const config = requireAuth();
     const next = safeNext(data.next);
-    if (action === 'password-sign-in') {
-      const email = field(data, 'email', emailPattern);
-      const password = data.password;
-      if (typeof password !== 'string' || !password.length || Buffer.byteLength(password) > 1024) throw new HttpError(400, 'invalid_request');
-      const proof = await authCall(config, request, '/v1/client/sign-in/password', config.pk, {email, password, session_mode:'server'});
-      await acceptTicket(request, config, proof?.ticket);
-      return json({next});
-    }
     if (action === 'sign-in') {
       // Auth's Continue owns user creation after mailbox verification. Existing
       // and first-time users take the same path; this app never finds by email.

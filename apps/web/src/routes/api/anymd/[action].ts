@@ -1,4 +1,5 @@
 import type { APIEvent } from '@solidjs/start/server';
+import { bindCheckoutAttribution } from '@/lib/checkout-attribution';
 import { currencyOptions, currencyScale, price, product } from '@/lib/catalog';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
 import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/lib/http';
@@ -71,6 +72,7 @@ export async function POST({request, params}: APIEvent) {
       const url = processorUrl(result.url, 'checkout');
       const prefix = ctx.money.parent + '/checkout_sessions/';
       const id = typeof result.name === 'string' && result.name.startsWith(prefix) ? result.name.slice(prefix.length) : '';
+      void bindCheckoutAttribution(ctx.money, request.headers, id, data.measurementConsent);
       const processorSessionId = result.processor_session_id;
       const receipt = checkoutIdPattern.test(id) && typeof processorSessionId === 'string' && processorSessionPattern.test(processorSessionId)
         ? {checkoutId:id, processorSessionId} : undefined;

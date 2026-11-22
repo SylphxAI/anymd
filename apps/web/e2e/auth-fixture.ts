@@ -5,9 +5,29 @@ const ticket = randomBytes(24).toString('base64url');
 const token = randomBytes(24).toString('base64url');
 const flow = randomBytes(32).toString('base64url');
 const challenges = new Map<string, string>();
+const bindings = new Map<string, { body: unknown; responseStarted: boolean }>();
 serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');
+  if (url.pathname === '/test/attribution') return Response.json(bindings.get(url.searchParams.get('client') ?? '') ?? null);
+  if (url.pathname === '/v1/events/attribution_bindings' && request.method === 'POST' &&
+      request.headers.get('x-sylphx-key') === ['sylphx', 'pk', 'test', 'fixture'].join('_')) {
+    const body = await request.json();
+    if (typeof body.ga_client_id !== 'string') return new Response(null, {status:400});
+    const binding = {body, responseStarted:false};
+    bindings.set(body.ga_client_id, binding);
+    // Reject before the BFF's deadline. If the route awaited Events, checkout
+    // could not finish while this response is still in flight.
+    await Bun.sleep(650);
+    binding.responseStarted = true;
+    return new Response('fixture upstream failure', {status:503});
+  }
+  if (url.pathname === '/v1/client/oauth/google/start' && url.searchParams.get('session_mode') === 'server') {
+    const callback = new URL(url.searchParams.get('redirect_url')!);
+    if (callback.origin !== 'http://localhost:3000' || callback.pathname !== '/api/auth/callback') return new Response(null, {status:400});
+    callback.searchParams.set('sylphx_ticket', ticket);
+    return Response.redirect(callback);
+  }
   const checkoutCollection = '/v1/orgs/org_fixture/projects/prj_fixture/envs/env_fixture/checkout_sessions';
   if (url.pathname.startsWith(checkoutCollection) && request.headers.get('authorization') === 'Bearer ' + ['sylphx', 'sk', 'test', 'fixture'].join('_')) {
     const name = checkoutCollection.slice(4) + '/chk-111111111111111111111111';
@@ -29,7 +49,7 @@ serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   }
 
   if (url.pathname === '/v1/client/config' && url.searchParams.get('publishable_key') === 'pk_fixture' && request.headers.get('authorization') === 'Bearer pk_fixture') {
-    return Response.json(request.headers.get('user-agent') === 'anymd-test-otp-passkey' ? {
+    return Response.json(request.headers.get('user-agent') !== 'anymd-test-no-passwordless' ? {
       social: [{ provider: 'google', credentials: 'shared' }],
       methods: { passkey: true, email_otp: true, password: true, sign_up: true },
     } : {
@@ -48,7 +68,7 @@ serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   }
   if (request.method === 'POST' && request.headers.get('authorization') === 'Bearer pk_fixture') {
     const body = await request.json();
-    if (request.headers.get('user-agent') === 'anymd-test-otp-passkey') {
+    if (request.headers.get('user-agent') !== 'anymd-test-no-passwordless') {
       if (url.pathname === '/v1/client/continue' && /^[^@]+@example\.invalid$/.test(body.email) &&
           body.method === 'email_otp' && body.session_mode === 'server') {
         return Response.json({ step: 'email_otp', flow, expires_in: 600 });
@@ -70,8 +90,6 @@ serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
         }
       }
     }
-    if (url.pathname === '/v1/client/sign-in/password' && body.email === 'test@example.invalid' &&
-        body.password === 'fixture-long-password' && body.session_mode === 'server') return Response.json({ ticket });
     return Response.json({ code: 'auth_refused' }, { status: 401 });
   }
   return new Response(null, { status: 404 });
