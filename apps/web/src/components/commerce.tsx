@@ -34,9 +34,9 @@ function checkoutIntent() {
 
 export function Checkout() {
   const route = useLocation();
-  const signInHref = () => {
+  const checkoutNext = () => {
     const surface = checkoutSurface(route.pathname, route.search);
-    return surface === 'pricing' ? '/sign-in?next=/pricing' : '/sign-in?next=' + encodeURIComponent('/pricing?entry_surface=' + surface);
+    return surface === 'pricing' ? '/pricing' : encodeURIComponent('/pricing?entry_surface=' + surface);
   };
   const analytics = useCookieConsent();
   const session = useSession();
@@ -53,7 +53,7 @@ export function Checkout() {
   return <div class="stack">
     <div><div class="eyebrow">ONE-TIME PAYMENT</div><div class="price">{price()}</div><p class="muted">Tax included. No subscription.</p></div>
     <label><span class="mb-1 block text-sm font-semibold">Billing currency</span><select class="field" aria-label="Billing currency" value={currency()} onChange={(event) => {intent = undefined; setConsent(false); setCurrency(event.currentTarget.value);}}><For each={currencyOptions}>{(item) => <option value={item.code}>{item.code} · {item.label}</option>}</For></select></label>
-    <Show when={user()} fallback={<A class="button button-primary" href={signInHref()}>Sign in to buy Pro <ArrowRight size={16} /></A>}>
+    <Show when={user()} fallback={<A class="button button-primary" href={'/sign-in?next=' + checkoutNext()}>Sign in to buy Pro <ArrowRight size={16} /></A>}>
       <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{consentText} This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.</span></label>
       <button class="button button-primary" disabled={pending() || !consent()} type="button" onClick={async () => {
         if (pending() || !consent() || !user()) return;
