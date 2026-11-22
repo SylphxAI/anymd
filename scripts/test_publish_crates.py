@@ -3,6 +3,7 @@ import itertools
 import json
 import os
 from pathlib import Path
+import secrets
 import subprocess
 import tempfile
 import unittest
@@ -46,6 +47,7 @@ class ReconcileTests(unittest.TestCase):
         self.root = Path(tmp.name)
         self.registry = self.root / "registry.json"
         self.log = self.root / "publish.log"
+        (self.root / "mock-credential").write_text(secrets.token_urlsafe(24))
         self.write_registry({})
         (self.root / "metadata.json").write_text(json.dumps({"packages": [
             {"name": crate, "version": version} for crate, version in VERSIONS.items()]}))
@@ -64,7 +66,7 @@ if Path(sys.argv[0]).name == "cargo":
         print((root / "metadata.json").read_text())
     else:
         assert args[:-1] == ["publish", "--locked", "--registry", "crates-io", "-p"], args
-        assert os.environ["CARGO_REGISTRY_TOKEN"] == "test-only"
+        assert os.environ["CARGO_REGISTRY_TOKEN"] == (root / "mock-credential").read_text()
         crate = args[-1]
         assert state.get(crate, "missing") == "missing", crate
         with (root / "publish.log").open("a") as output:
@@ -103,11 +105,11 @@ else:
     def write_registry(self, state):
         self.registry.write_text(json.dumps(state))
 
-    def invoke(self, *args, token=None, **env):
+    def invoke(self, *args, authenticated=False, **env):
         environ = dict(os.environ, PATH=f"{self.root}:{os.environ['PATH']}", TEST_ROOT=str(self.root), **env)
         environ.pop("CARGO_REGISTRY_TOKEN", None)
-        if token:
-            environ["CARGO_REGISTRY_TOKEN"] = token
+        if authenticated:
+            environ["CARGO_REGISTRY_TOKEN"] = (self.root / "mock-credential").read_text()
         return subprocess.run(["bash", str(ROOT / "scripts/publish-crates.sh"), *args], cwd=ROOT,
                               env=environ, text=True, capture_output=True, timeout=15)
 
@@ -127,6 +129,12 @@ else:
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(self.log.exists())
 
+    def test_missing_set_without_a_credential_cannot_publish(self):
+        result = self.invoke()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("a crates.io trusted-publishing token is required", result.stderr)
+        self.assertFalse(self.log.exists())
+
     def test_partial_release_only_publishes_missing_versions_in_dependency_order(self):
         missing = [CRATES[i] for i in (0, 2, 4, 7)]
         self.write_registry({crate: "present" for crate in CRATES if crate not in missing})
@@ -134,7 +142,7 @@ else:
         self.assertEqual(plan.returncode, 0, plan.stderr)
         self.assertEqual(plan.stdout, "needed=true\n")
         self.assertFalse(self.log.exists())
-        result = self.invoke(token="test-only")
+        result = self.invoke(authenticated=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.log.read_text().splitlines(), missing)
         self.assertEqual(result.stdout.count("verified"), len(missing))
@@ -145,21 +153,21 @@ else:
             with self.subTest(status=status):
                 self.write_registry({CRATES[-1]: status})
                 for args in ((), ("--plan",)):
-                    result = self.invoke(*args, token="test-only")
+                    result = self.invoke(*args, authenticated=True)
                     self.assertNotEqual(result.returncode, 0)
                     self.assertEqual(result.stdout, "")
                     self.assertFalse(self.log.exists())
 
     def test_publish_failure_stays_visible_and_rerun_resumes(self):
-        result = self.invoke(token="test-only", FAIL_PUBLISH=CRATES[1])
+        result = self.invoke(authenticated=True, FAIL_PUBLISH=CRATES[1])
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.log.read_text().splitlines(), list(CRATES[:2]))
-        result = self.invoke(token="test-only")
+        result = self.invoke(authenticated=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.log.read_text().splitlines(), [*CRATES[:2], *CRATES[1:]])
 
     def test_successful_upload_without_registry_confirmation_fails(self):
-        result = self.invoke(token="test-only", NO_VISIBILITY="true")
+        result = self.invoke(authenticated=True, NO_VISIBILITY="true")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("did not confirm publication", result.stderr)
         self.assertEqual(self.log.read_text().splitlines(), [CRATES[0]])
