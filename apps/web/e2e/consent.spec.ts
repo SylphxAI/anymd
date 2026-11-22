@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { signupCookie } from '../src/lib/signup';
 
 const tag = 'https://www.googletagmanager.com/gtag/js?id=G-R4TD2Z8RR7';
 const googleHost = /(?:^|\.)(?:googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|google\.com)$/;
@@ -214,6 +215,113 @@ test('consented checkout emits begin_checkout but the return never measures a pu
 
   const retired = await page.request.post('/api/anymd/purchase-measurement', {headers:{origin}, data:{}});
   expect(retired.status()).toBe(404);
+});
+
+async function watchStorage(page: Page) {
+  await page.addInitScript(() => {
+    const writes: string[] = [];
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) { writes.push(key); return setItem.call(this, key, value); };
+    const cookie = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie')!;
+    Object.defineProperty(document, 'cookie', {get: () => cookie.get!.call(document), set: value => {
+      writes.push(value.split('=', 1)[0]);
+      cookie.set!.call(document, value);
+    }});
+    Object.defineProperty(window, '__storageWrites', {value:writes});
+  });
+}
+
+// In production, stub the web Auth callback. Locally, exercise the real
+// callback and verification routes against the loopback Sylphx Auth fixture.
+for (const [scenario, choice, country, gpc] of [
+  ['new', 'analytics', 'FR', false],
+  ['returning', 'analytics', 'FR', false],
+  ['legacy', 'analytics', 'FR', false],
+  ['new', null, 'FR', false],
+  ['new', 'reject', 'FR', false],
+  ['new', null, 'US', false],
+  ['new', 'analytics', 'US', true],
+] as const) {
+  const label = [scenario, choice ?? 'no-choice', country, gpc ? 'GPC' : ''].filter(Boolean).join(' ');
+  test.describe('OAuth signup: ' + label, () => {
+    const live = Boolean(process.env.PLAYWRIGHT_BASE_URL);
+    test.use({userAgent:live ? undefined : 'anymd-fixture-' + scenario + '-user', extraHTTPHeaders:gpc ? {'Sec-GPC':'1'} : {}});
+    test('checks the handoff and measurement', async ({ page }) => {
+      const google = await isolate(page, country, gpc);
+      await watchStorage(page);
+      const signUp = scenario === 'new' && choice === 'analytics' && !gpc;
+      const gaAllowed = !gpc && (choice === 'analytics' || (choice === null && country === 'US'));
+      const next = '/pricing?entry_surface=cli_video&email=private%40example.invalid#private';
+      if (live) {
+        await page.route('**/api/auth/**', route => {
+          if (new URL(route.request().url()).pathname === '/api/auth/callback') {
+            const headers: Record<string, string> = {Location:next};
+            if (signUp) headers['Set-Cookie'] = signupCookie + '=google.cli_video; Path=/; Max-Age=60; Secure; SameSite=Lax';
+            return route.fulfill({status:303, headers});
+          }
+          return route.fulfill({status:200, json:{authConfigured:true, user:null, providers:[]}});
+        });
+      }
+      await page.goto('/pricing');
+      if (choice) {
+        await page.getByRole('button', {name:'Cookie settings', exact:true}).click();
+        await panel(page).getByRole('button', {name:choice === 'reject' ? 'Reject optional' : 'Analytics only'}).click();
+      }
+      const callback = page.waitForResponse(response => new URL(response.url()).pathname === '/api/auth/callback');
+      const trace = page.waitForResponse('**/cdn-cgi/trace');
+      await page.goto(live ? '/api/auth/callback' : '/api/auth/google?next=' + encodeURIComponent(next));
+      const response = await callback;
+      expect(response.status()).toBe(303);
+      const handoff = (await response.headerValues('set-cookie')).filter(value => value.startsWith(signupCookie + '='));
+      if (signUp) expect(handoff).toEqual([expect.stringMatching(/^anymd_signup=google\.cli_video;/)]);
+      else expect(handoff).toEqual([]);
+      await trace;
+      await expect(page).toHaveURL(next);
+      if (gaAllowed) await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
+      else if (choice === null) await expect(panel(page)).toBeVisible();
+      else await expect(page.locator('#anymd-google-tag')).toHaveCount(0);
+      const origin = new URL(page.url()).origin;
+      expect(await events(page, 'sign_up')).toEqual(signUp ? [['event', 'sign_up', {
+        method:'google', entry_surface:'cli_video', page_location:origin + '/pricing', page_referrer:'', page_title:'Anymd', send_to:'G-R4TD2Z8RR7',
+      }]] : []);
+      expect((await page.context().cookies()).some(cookie => cookie.name === signupCookie)).toBe(false);
+      if (!signUp) expect(await page.evaluate(() => Reflect.get(window, '__storageWrites'))).toEqual([]);
+      if (!gaAllowed) {
+        expect(await commands(page)).toEqual([]);
+        expect(await page.evaluate(() => typeof Reflect.get(window, 'gtag'))).toBe('undefined');
+        expect(google).toEqual([]);
+      }
+      if (signUp) {
+        await page.getByRole('contentinfo').getByRole('link', {name:'Privacy', exact:true}).click();
+        await expect(page).toHaveURL('/privacy');
+        await expect.poll(async () => (await events(page, 'page_view')).length).toBe(2);
+        expect(await events(page, 'sign_up')).toHaveLength(1);
+        await page.reload();
+        await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
+        expect(await events(page, 'sign_up')).toEqual([]);
+      }
+      expect(google.every(url => url === tag)).toBe(true);
+    });
+  });
+}
+
+test('email OTP signup uses the redeemed ticket and drops private entry surfaces', async ({ page, context }) => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth fixture');
+  await isolate(page, 'FR');
+  await context.setExtraHTTPHeaders({'user-agent':'anymd-fixture-new-user'});
+  await page.goto('/sign-in?next=' + encodeURIComponent('/pro?entry_surface=private@example.invalid'));
+  await panel(page).getByRole('button', {name:'Analytics only'}).click();
+  await page.getByLabel('Email address').fill('test@example.invalid');
+  await page.getByRole('button', {name:'Continue', exact:true}).click();
+  await page.getByLabel('6-digit code').fill('123456');
+  await expect(page).toHaveURL('/pro?entry_surface=private@example.invalid');
+  const origin = new URL(page.url()).origin;
+  await expect.poll(() => events(page, 'sign_up')).toEqual([['event', 'sign_up', {
+    method:'email_otp', entry_surface:'pro', page_location:origin + '/pro', page_referrer:'', page_title:'Anymd', send_to:'G-R4TD2Z8RR7',
+  }]]);
+  await page.reload();
+  await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
+  expect(await events(page, 'sign_up')).toEqual([]);
 });
 
 function boxesOverlap(a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) {

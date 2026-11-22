@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { checkoutParameters, checkoutSurface, explicitAnalytics } from './funnel';
+import { explicitAnalytics } from './consent';
+import { checkoutParameters, checkoutSurface } from './funnel';
 
 test('conversion requires an explicit choice and GPC always wins', () => {
   assert.equal(explicitAnalytics(null, false), false);

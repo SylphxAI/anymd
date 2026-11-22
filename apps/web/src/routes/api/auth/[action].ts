@@ -54,7 +54,7 @@ export async function POST({request, params}: APIEvent) {
       const flow = getCookie('anymd_email_flow');
       if (!flow) throw new HttpError(401, 'auth_refused');
       const proof = await authCall(config, request, '/v1/client/continue/verify', config.pk, {flow, code:field(data, 'code', completeCode)});
-      await acceptTicket(request, config, proof?.ticket);
+      await acceptTicket(request, config, proof?.ticket, 'email_otp', next);
       setCookie('anymd_email_flow', '', cookieOptions(request, challengePath, 0));
       return json({next});
     }
@@ -83,7 +83,7 @@ export async function POST({request, params}: APIEvent) {
         await authCall(config, request, '/v1/client/me/passkeys/verify', active.token, {...common, attestation_object:field(data, 'attestation_object', /^[\w-]{1,16000}$/), transports}, true);
       } else {
         const proof = await authCall(config, request, '/v1/client/sign-in/passkey/verify', config.pk, {...common, authenticator_data:field(data,'authenticator_data', /^[\w-]{1,4096}$/), signature:field(data,'signature', /^[\w-]{1,4096}$/), user_handle:field(data,'user_handle', /^[\w-]{0,2048}$/), session_mode:'server'});
-        await acceptTicket(request, config, proof?.ticket);
+        await acceptTicket(request, config, proof?.ticket, 'passkey', next);
       }
       setCookie(key, '', cookieOptions(request, challengePath, 0));
       return json({next});

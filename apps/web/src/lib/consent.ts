@@ -17,6 +17,10 @@ export function parseChoice(value: unknown): Choice | null {
   return value === 'reject' || value === 'analytics' || value === 'all' ? value : null;
 }
 
+export function explicitAnalytics(choice: Choice | null, gpc: boolean) {
+  return !gpc && (choice === 'analytics' || choice === 'all');
+}
+
 export function traceRegion(text: string, hostname: string): Region {
   const lines = text.split(/\r?\n/);
   const locations = lines.filter(line => line.startsWith('loc='));
