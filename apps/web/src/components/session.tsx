@@ -33,8 +33,7 @@ export function SessionAction() {
     const state = session();
     return state && state !== 'error' && state.user;
   };
-  const href = () => '/sign-in?next=' + encodeURIComponent(route.pathname === '/' ? '/dashboard' : route.pathname);
-  return <Show when={signedIn()} fallback={<A class="button sign-in-button" href={href()}>Sign in</A>}>
+  return <Show when={signedIn()} fallback={<A class="button sign-in-button" href={'/sign-in?next=' + encodeURIComponent(route.pathname === '/' ? '/dashboard' : route.pathname)}>Sign in</A>}>
     <A href="/dashboard" class="button">Dashboard</A>
   </Show>;
 }

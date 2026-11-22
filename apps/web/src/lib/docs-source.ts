@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import { canonicalOrigin } from './app-origin';
+import { isBackendHref } from './backend-href';
 
 const source = import.meta.glob('../../../../docs/{guide,legal,security,tasks,use-cases,vs}/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const prefix = '../../../../docs/';
@@ -30,7 +31,11 @@ md.renderer.rules.link_open = (tokens, index, options, env, self) => {
   const { slug } = env as RenderContext;
   const link = tokens[index];
   const href = link.attrGet('href');
-  if (href) link.attrSet('href', localUrl(String(href), slug));
+  if (href) {
+    const target = localUrl(String(href), slug);
+    link.attrSet('href', target);
+    if (isBackendHref(target, canonicalOrigin)) link.attrJoin('rel', 'external');
+  }
   return self.renderToken(tokens, index, options);
 };
 md.renderer.rules.heading_open = (tokens, index, options, env, self) => {
