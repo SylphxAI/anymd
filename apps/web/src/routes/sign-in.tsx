@@ -12,7 +12,7 @@ export default function SignIn() {
   const options = createAsync(() => signInOptions(), { deferStream: true });
   return <section class="wrap page-shell auth-shell">
     <PageMeta title="Sign in" robots="noindex" />
-    <header class="page-heading"><span class="eyebrow">ACCOUNT / SIGN IN</span><h1>Sign in to Anymd.</h1><p>Manage Pro and connect your local tools. No account is needed to convert files.</p></header>
+    <header class="page-heading"><span class="eyebrow">ACCOUNT / SIGN IN</span><h1>Sign in to Anymd</h1><p>Manage Pro and connect your local tools. No account is needed to convert files.</p></header>
     <Show when={options()} keyed>{auth => <SignInForm initialAuth={auth} next={safeNext(search.next)} error={single(search.error)} />}</Show>
     <p class="muted mt-4 text-sm">See our <A class="inline-link" href="/legal/privacy">privacy notice</A> and <A class="inline-link" href="/legal/terms">site terms</A>.</p>
   </section>;

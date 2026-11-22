@@ -16,7 +16,7 @@ export default defineConfig({
     { command: 'bun e2e/auth-fixture.ts', url: authOrigin + '/health' },
     { command: 'bun run start', url: baseURL + '/api/health', timeout: 30_000, env: {
       ANYMD_APP_ORIGIN: baseURL, SYLPHX_AUTH_URL: authOrigin,
-      SYLPHX_PUBLISHABLE_KEY: 'fixture', SYLPHX_AUTH_SECRET_KEY: 'fixture',
+      SYLPHX_PUBLISHABLE_KEY: 'pk_fixture', SYLPHX_AUTH_SECRET_KEY: 'sk_fixture',
       SYLPHX_AUTH_ORGANIZATION_ID: '00000000-0000-0000-0000-000000000000',
     } },
   ],
