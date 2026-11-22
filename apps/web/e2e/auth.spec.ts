@@ -17,6 +17,14 @@ test('initial HTML shows only one entry with configured Google and email autocom
   } finally { await context.close(); }
 });
 
+test('Google sign-in returns to billing with the existing account', async ({ page }) => {
+  test.skip(fixtureOnly, 'Requires the local Auth fixture');
+  await page.goto('/sign-in?next=/billing');
+  await page.getByRole('link', {name:'Continue with Google'}).click();
+  await expect(page).toHaveURL('/billing');
+  expect((await (await page.request.get('/api/auth/session')).json()).user).toMatchObject({email:'test@example.invalid'});
+});
+
 test('legacy aliases redirect permanently, preserving only the safe return path', async ({ request }) => {
   const next = '/cli-auth?client_id=desktop&state=example#details';
   for (const alias of ['login', 'signup', 'sign-up', 'register', 'forgot-password']) {
@@ -30,44 +38,29 @@ test('legacy aliases redirect permanently, preserving only the safe return path'
   expect(res.headers().location).toBe('/sign-in?next=%2Fdashboard');
 });
 
-test('with OTP and passkey disabled, only the existing-password fallback is offered on step 2', async ({ page }) => {
-  test.skip(fixtureOnly, 'Requires the local Auth fixture');
-  const attempts: string[] = [];
-  page.on('request', req => { if (req.method() === 'POST') attempts.push(new URL(req.url()).pathname); });
-  await page.goto('/sign-in');
-  await expect(page.getByRole('button', { name: 'Use password instead' })).toHaveCount(0);
-  await page.getByLabel('Email address').fill('unknown@example.invalid');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Verify it’s you' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Use password instead' })).toBeVisible();
-  await expect(page.locator('input[autocomplete=one-time-code]')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Use a passkey' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Send a code' })).toHaveCount(0);
-  expect(attempts).toEqual([]);
-  await page.getByRole('button', { name: 'Change email' }).click();
-  await page.getByLabel('Email address').fill('test@example.invalid');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: 'Use password instead' }).click();
-  await expect(page.getByLabel('Password')).toHaveAttribute('autocomplete', 'current-password');
-  await page.getByLabel('Password').fill('wrong-password');
-  await page.getByRole('button', { name: 'Sign in with password' }).click();
-  await expect(page.getByRole('alert')).toContainText('Check your email and password');
-  await page.getByLabel('Password').fill('fixture-long-password');
-  await page.getByRole('button', { name: 'Sign in with password' }).click();
-  await expect(page).toHaveURL('/dashboard');
-  expect((await (await page.request.get('/api/auth/session')).json()).user).toMatchObject({ email: 'test@example.invalid' });
+test.describe('only social sign-in is available', () => {
+  test.use({ userAgent: 'anymd-test-no-passwordless' });
+  test('ignores the upstream password capability', async ({ page }) => {
+    test.skip(fixtureOnly, 'Requires the local Auth fixture');
+    await page.goto('/sign-in');
+    await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
+    await expect(page.getByText('Email sign-in is currently unavailable.')).toBeVisible();
+    await expect(page.getByLabel('Email address')).toHaveCount(0);
+    await expect(page.locator('input[type=password]')).toHaveCount(0);
+  });
 });
 
-test('password-sign-up no longer exists at the app boundary', async ({ request, baseURL }) => {
+test('the app does not expose password sign-in or sign-up', async ({ request, baseURL }) => {
   test.skip(fixtureOnly, 'Requires the local Auth fixture');
   const { origin } = new URL(baseURL!);
-  const response = await request.post('/api/auth/password-sign-up', { headers: { Origin: origin }, data: { email: 'test@example.invalid' } });
-  expect(response.status()).toBe(404);
+  for (const endpoint of ['password-sign-in', 'password-sign-up']) {
+    const response = await request.post('/api/auth/' + endpoint, { headers: { Origin: origin }, data: { email: 'test@example.invalid' } });
+    expect(response.status()).toBe(404);
+  }
 });
 
 test.describe('OTP and passkey enabled', () => {
   test.skip(fixtureOnly, 'Requires the local Auth fixture');
-  test.use({ userAgent: 'anymd-test-otp-passkey' });
 
   test('submits six digits inline, keeps a rejected code, cools down resend, and redeems a session', async ({ page }) => {
     await page.goto('/sign-in?next=/dashboard%23signed-in');
@@ -79,7 +72,7 @@ test.describe('OTP and passkey enabled', () => {
     await expect(code).toHaveAttribute('autocomplete', 'one-time-code');
     await expect(code).toBeFocused();
     await expect(page.getByRole('button', { name: /^Resend/ })).toBeDisabled();
-    await expect(page.getByRole('button', { name: 'Use password instead' })).toBeVisible();
+    await expect(page.locator('input[type=password]')).toHaveCount(0);
     await code.fill('234567');
     await expect(page.getByRole('alert')).toContainText('That code couldn’t be verified');
     await expect(code).toHaveValue('234567');

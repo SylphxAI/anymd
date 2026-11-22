@@ -54,7 +54,7 @@ export function Checkout() {
         try {
           intent ??= checkoutIntent();
           const code = currency();
-          const result = await request('checkout', {currency:code, consent:consent(), checkoutIntent:intent});
+          const result = await request('checkout', {currency:code, consent:consent(), checkoutIntent:intent, measurementConsent:analytics.checkoutChoice()});
           if (!result.url) throw new Error('Checkout did not return a link.');
           // Measurement must never prevent purchase.
           await analytics.beginCheckout(code, result.receipt).catch(() => undefined);

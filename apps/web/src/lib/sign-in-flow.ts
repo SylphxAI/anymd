@@ -11,7 +11,7 @@ export function signInAlias(pathname: string) {
 export function signInEntry(methods: Capabilities['methods']) {
   // Choose by tenant policy, never by whether a particular email has an account.
   if (methods.emailOtp) return 'email_otp';
-  if (methods.passkey || methods.password) return 'other';
+  if (methods.passkey) return 'other';
   return 'unavailable';
 }
 

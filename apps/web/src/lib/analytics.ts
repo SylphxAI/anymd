@@ -1,7 +1,7 @@
+import { measurementId } from './attribution';
 import { consentFor } from './consent';
 
-export const measurementId = 'G-R4TD2Z8RR7';
-export const gaDisable = 'ga-disable-G-R4TD2Z8RR7';
+export const gaDisable = `ga-disable-${measurementId}` as const;
 export type GoogleConsent = ReturnType<typeof consentFor>;
 export type Purchase = {transaction_id: string; currency: string; value: number};
 

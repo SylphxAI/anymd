@@ -100,15 +100,43 @@ test('GPC overrides the non-EEA defaults and an explicit allow choice', async ({
   expect(google).toEqual([]);
 });
 
+test('checkout binds consented campaign data across sign-in without waiting for Events', async ({ page }) => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth, Money, and Events fixtures');
+  await isolate(page, 'US');
+  await page.goto('/pricing?gclid=Ad-Click_123');
+  await expect(page.getByRole('contentinfo').getByRole('link', {name:'Recover purchase'})).toHaveCount(0);
+  await expect(page.getByRole('contentinfo').getByRole('button', {name:'Cookie settings'})).toBeVisible();
+  await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
+  const client = String(100000000 + Math.floor(Math.random() * 900000000)) + '.1700000000';
+  const origin = new URL(page.url()).origin;
+  await page.context().addCookies([
+    {name:'_ga', value:'GA1.1.' + client, url:origin},
+    {name:'_ga_R4TD2Z8RR7', value:'GS2.1.s1700000001$o1$g1', url:origin},
+  ]);
+  await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
+  await page.getByRole('link', {name:'Continue with Google'}).click();
+  await expect(page).toHaveURL('/pricing');
+  await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
+  await page.route('https://checkout.stripe.com/**', route => route.fulfill({status:200, body:'Hosted checkout fixture'}));
+  await page.getByRole('checkbox').check();
+  const creation = page.waitForResponse('**/api/anymd/checkout');
+  await page.getByRole('button', {name:'Continue to secure checkout'}).click();
+  expect((await creation).ok()).toBe(true);
+  await expect.poll(async () => (await page.request.get('http://127.0.0.1:3031/test/attribution?client=' + client)).json()).toEqual({
+    responseStarted:false,
+    body:{checkout_session_id:'chk-111111111111111111111111', consent:all,
+      ga_client_id:client, ga_session_id:'1700000001', gclid:'Ad-Click_123', page_location:'https://anymd.sylphx.com/pricing'},
+  });
+  await expect(page).toHaveURL(url => url.origin === 'https://checkout.stripe.com');
+});
+
 test('successful checkout emits begin_checkout, only settled owned purchase emits once', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
   const google = await isolate(page, 'US');
   await page.goto('/sign-in?next=%2Fpricing');
   await page.getByLabel('Email address').fill('test@example.invalid');
   await page.getByRole('button', {name:'Continue', exact:true}).click();
-  await page.getByRole('button', {name:'Use password instead'}).click();
-  await page.getByLabel('Password').fill('fixture-long-password');
-  await page.getByRole('button', {name:'Sign in with password'}).click();
+  await page.getByLabel('6-digit code').fill('123456');
   await expect(page).toHaveURL('/pricing');
   const processorSessionId = 'cs_test_Fixture123';
   const thanks = '/pro/thanks?session_id=' + processorSessionId;

@@ -4,8 +4,8 @@ import { parseCapabilities } from './auth-capabilities';
 import { safeNext } from './safe-next';
 import { completeCode, maskEmail, normalizeCode, signInAlias, signInEntry } from './sign-in-flow';
 
-test('tenant capabilities select email OTP, legacy fallback, or no method without a lookup', () => {
-  assert.equal(signInEntry(parseCapabilities({ methods: { email_otp: false, passkey: false, password: true } }).methods), 'other');
+test('tenant capabilities select email OTP, passkey, or no method without a lookup', () => {
+  assert.equal(signInEntry(parseCapabilities({ methods: { email_otp: false, passkey: false, password: true } }).methods), 'unavailable');
   assert.equal(signInEntry(parseCapabilities({ methods: { email_otp: true, passkey: true, password: true } }).methods), 'email_otp');
   assert.equal(signInEntry(parseCapabilities({ methods: { passkey: true } }).methods), 'other');
   assert.equal(signInEntry(parseCapabilities({ methods: { sign_up: true } }).methods), 'unavailable');
