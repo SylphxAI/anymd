@@ -26,6 +26,6 @@ MCP client config:
 
 ## anymd Pro ($29 once)
 
-All conversion, search, outline, OCR and transcript tools remain free and MIT licensed. Need deterministic PDF quote verification (`cite_check`) or SHA-256 verifiable video timelines and frame extraction (`video_timeline`, `render_frame`)? Get a 100-year offline licence for **US$29 once** (16 currencies, tax included) via `npx -y @sylphx/anymd pro buy` or at [anymd.sylphx.com/pricing](https://anymd.sylphx.com/pricing?entry_surface=npm_pdf_reader_mcp).
+All conversion, search, outline, OCR and transcript tools remain free and MIT licensed. Need deterministic PDF quote verification (`cite_check`) or SHA-256 verifiable video timelines and frame extraction (`video_timeline`, `render_frame`)? [Get Anymd Pro for US$29 once](https://anymd.sylphx.com/pricing?entry_surface=npm_pdf_reader_mcp), then run `anymd login` and sign in with the same account to activate Pro on this machine. The Pro tools work offline after activation.
 
 Docs: https://anymd.sylphx.com/

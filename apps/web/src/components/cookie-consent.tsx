@@ -3,6 +3,7 @@ import { createContext, createEffect, createSignal, onCleanup, onMount, Show, us
 import { clearGoogleCookies, startGoogle, stopGoogle, track, type GoogleConsent } from '@/lib/analytics';
 import { consentFor, consentKey, parseChoice, traceRegion, type Choice, type Region } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
+import { checkoutParameters, explicitAnalytics } from '@/lib/funnel';
 import { clickCookie, clickIds } from '@/lib/attribution';
 
 const CookieContext = createContext<{
@@ -38,8 +39,7 @@ export function CookieConsent(props: ParentProps) {
 
   onMount(() => {
     stopGoogle();
-    setChoice(savedChoice());
-    try { localStorage.setItem(consentKey + '.probe', '1'); localStorage.removeItem(consentKey + '.probe'); setCanSave(true); } catch { /* fail closed when preferences cannot be saved */ }
+    try { setChoice(parseChoice(localStorage.getItem(consentKey))); setCanSave(true); } catch { /* fail closed when preferences are inaccessible */ }
     setGpc(hasGpc());
     const controller = new AbortController();
     const settle = (value: Region) => { if (!controller.signal.aborted) setRegion(value); };
@@ -78,7 +78,7 @@ export function CookieConsent(props: ParentProps) {
     const consent = consentFor(resolved, current, privacySignal);
     const allowed = eligibleHost() && canSave() && consent.analytics_storage === 'granted';
     if (!allowed || consent.ad_storage !== 'granted' || consent.ad_user_data !== 'granted') {
-      writeMeasurementCookie(clickCookie, '', 0);
+      if (document.cookie.split(';').some(cookie => cookie.trimStart().startsWith(clickCookie + '='))) writeMeasurementCookie(clickCookie, '', 0);
     } else {
       const params = new URLSearchParams(search);
       const ids = clickIds(key => params.getAll(key).length === 1 ? params.get(key) : null);
@@ -117,7 +117,7 @@ export function CookieConsent(props: ParentProps) {
   }
 
   function choose(next: Choice) {
-    try { localStorage.setItem(consentKey, next); } catch {
+    try { localStorage.setItem(consentKey, next); setCanSave(true); } catch {
       // Prefer an unset choice to an old grant if storage ran out of space.
       try { localStorage.removeItem(consentKey); } catch { /* disable measurement in this document */ }
       setCanSave(false);
@@ -144,17 +144,20 @@ export function CookieConsent(props: ParentProps) {
       if (!resolved || !eligibleHost() || !canSave() || hasGpc()) return 'reject';
       try {
         // Read at submit time: another tab may just have withdrawn consent.
-        const consent = consentFor(resolved, parseChoice(localStorage.getItem(consentKey)), false);
-        if (consent.analytics_storage !== 'granted') return 'reject';
-        return consent.ad_storage === 'granted' && consent.ad_user_data === 'granted' ? 'all' : 'analytics';
+        const saved = parseChoice(localStorage.getItem(consentKey));
+        return saved === 'analytics' || saved === 'all' ? saved : 'reject';
       } catch { return 'reject'; }
     },
     async beginCheckout(currency: string) {
-      if (!active) return;
+      // Regional page-view defaults are not an opt-in to funnel events. Read
+      // the persisted choice again in case a different tab withdrew it.
+      if (active?.analytics_storage !== 'granted' || !canSave() || !explicitAnalytics(savedChoice(), hasGpc())) return;
+      const parameters = checkoutParameters(currency, route.pathname, route.search);
+      if (!parameters) return;
       await new Promise<void>(resolve => {
         const done = () => { clearTimeout(timeout); resolve(); };
         const timeout = setTimeout(done, 250);
-        track('begin_checkout', route.pathname, {currency, event_callback: done, event_timeout: 250, items:[{item_id:'anymd-pro', item_name:'Anymd Pro', quantity:1}]});
+        if (!track('begin_checkout', route.pathname, {...parameters, event_callback: done, event_timeout: 250})) done();
       });
     },
   };

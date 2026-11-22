@@ -1,5 +1,6 @@
 import { measurementId } from './attribution';
 import { consentFor } from './consent';
+import type { checkoutParameters } from './funnel';
 
 export const gaDisable = `ga-disable-${measurementId}` as const;
 export type GoogleConsent = ReturnType<typeof consentFor>;
@@ -54,10 +55,11 @@ export function clearGoogleCookies(analytics: boolean) {
   }
 }
 
-export function track(name: 'page_view' | 'pricing_view' | 'begin_checkout', pathname: string, parameters: Record<string, unknown> = {}) {
+export function track(name: 'page_view' | 'pricing_view' | 'begin_checkout', pathname: string, parameters?: NonNullable<ReturnType<typeof checkoutParameters>> & {event_callback: () => void; event_timeout: number}) {
   const w = google();
+  if (w[gaDisable] || typeof w.gtag !== 'function') return false;
   const context = {page_location: pageLocation(pathname), page_referrer: '', page_title: 'Anymd'};
-  if (w[gaDisable] || !w.gtag) return;
   w.gtag('set', context);
   w.gtag('event', name, {...parameters, ...context, send_to: measurementId});
+  return true;
 }

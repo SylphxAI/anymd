@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.5.16
+
+### Patch Changes
+
+- Point CLI users to pricing and account activation with `anymd login`.
+- Update the npm alias READMEs to match the one-time Pro checkout.
+- Show PDF citation proof in Studio and restore Pro onboarding links.
+
 ## 8.5.15
 
 ### Patch Changes
