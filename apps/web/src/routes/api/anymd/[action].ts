@@ -1,6 +1,7 @@
 import type { APIEvent } from '@solidjs/start/server';
 import { bindCheckoutAttribution } from '@/lib/checkout-attribution';
 import { currencyOptions, price, product } from '@/lib/catalog';
+import { knownEntrySurface } from '@/lib/entry-surface';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
 import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/lib/http';
 import { checkoutKey, entitlement, moneyCall, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
@@ -45,10 +46,12 @@ export async function POST({request, params}: APIEvent) {
       if (!currency || data.consent !== true) throw new HttpError(400, 'invalid_request');
       const key = field(data,'checkoutIntent', /^[a-f0-9]{64}$/);
       const keyForMoney = checkoutKey(request, ctx.money);
+      const entrySurface = knownEntrySurface(data.entrySurface) ?? 'pricing';
       // The BFF has already authenticated this exact subject. The privileged
       // server door alone may carry merchant-owned hosted waiver policy.
       const result = await moneyCall(ctx.money, 'checkout_sessions', keyForMoney, {
         subject, line_items:[{price:price.key, quantity:1}], currency_code:currency,
+        metadata:{entry_surface:entrySurface},
         success_url:`${origin}/pro/thanks?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url:`${origin}/pricing?checkout=cancelled`,
         consent_collection:{terms_required:true, terms_text:consentText, terms_version:consentVersion},

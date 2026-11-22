@@ -13,10 +13,13 @@ const token = randomBytes(24).toString('base64url');
 const flow = randomBytes(32).toString('base64url');
 const challenges = new Map<string, string>();
 const bindings = new Map<string, { body: unknown; responseStarted: boolean }>();
+const checkoutMetadata = new Map<string, unknown>();
+const fixtureUser = 'usr_fixture001';
 serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');
   if (url.pathname === '/test/attribution') return Response.json(bindings.get(url.searchParams.get('client') ?? '') ?? null);
+  if (url.pathname === '/test/checkout-metadata') return Response.json(checkoutMetadata.get(url.searchParams.get('intent') ?? '') ?? null);
   if (url.pathname === '/v1/events/attribution_bindings' && request.method === 'POST' &&
       request.headers.get('x-sylphx-key') === ['sylphx', 'pk', 'test', 'fixture'].join('_')) {
     const body = await request.json();
@@ -41,8 +44,12 @@ serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
     const processor_session_id = 'cs_test_Fixture123';
     if (request.method === 'POST' && url.pathname === checkoutCollection && !url.search) {
       const data = await request.json();
-      if (data.subject?.end_user === 'usr_fixture001' && data.line_items?.[0]?.price === 'anymd_pro' &&
-          new URL(data.success_url).searchParams.get('session_id') === '{CHECKOUT_SESSION_ID}' && request.headers.has('idempotency-key')) {
+      const prefix = `anymd-${fixtureUser}-`;
+      const key = request.headers.get('idempotency-key');
+      const intent = key?.startsWith(prefix) ? key.slice(prefix.length) : '';
+      if (data.subject?.end_user === fixtureUser && data.line_items?.[0]?.price === 'anymd_pro' &&
+          new URL(data.success_url).searchParams.get('session_id') === '{CHECKOUT_SESSION_ID}' && /^[a-f0-9]{64}$/.test(intent)) {
+        checkoutMetadata.set(intent, data.metadata);
         return Response.json({name, processor_session_id, url:'https://checkout.stripe.com/c/pay/' + processor_session_id});
       }
     }
@@ -60,7 +67,7 @@ serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   if (url.pathname === '/v1/sessions/current' && request.headers.get('authorization') === 'Bearer ' + token &&
       request.headers.get('x-sylphx-caller-key') === 'pk_fixture') {
     return Response.json({ session: { principal: {
-      project_id: '00000000-0000-0000-0000-000000000000', principal_id: 'usr_fixture001', primary_email: 'test@example.invalid', state: 'active',
+      project_id: '00000000-0000-0000-0000-000000000000', principal_id: fixtureUser, primary_email: 'test@example.invalid', state: 'active',
     } } });
   }
   if (request.method === 'POST' && url.pathname === '/v1/client/tickets:redeem' && request.headers.get('authorization') === 'Bearer sk_fixture') {
