@@ -4,13 +4,14 @@ import { clearGoogleCookies, startGoogle, stopGoogle, track, type GoogleConsent 
 import { consentFor, consentKey, explicitAnalytics, parseChoice, traceRegion, type Choice, type Region } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
 import { checkoutParameters } from '@/lib/funnel';
+import type { EntrySurface } from '@/lib/entry-surface';
 import { clickCookie, clickIds } from '@/lib/attribution';
 import { parseSignupSignal, signupCookie, type SignupSignal } from '@/lib/signup';
 
 const CookieContext = createContext<{
   open: (from: HTMLButtonElement) => void;
   checkoutChoice: () => Choice;
-  beginCheckout: (currency: string) => Promise<void>;
+  beginCheckout: (currency: string, entrySurface: EntrySurface) => Promise<void>;
 }>();
 
 function savedChoice() {
@@ -168,11 +169,11 @@ export function CookieConsent(props: ParentProps) {
         return saved === 'analytics' || saved === 'all' ? saved : 'reject';
       } catch { return 'reject'; }
     },
-    async beginCheckout(currency: string) {
+    async beginCheckout(currency: string, entrySurface: EntrySurface) {
       // Regional page-view defaults are not an opt-in to funnel events. Read
       // the persisted choice again in case a different tab withdrew it.
       if (active?.analytics_storage !== 'granted' || !canSave() || !explicitAnalytics(savedChoice(), hasGpc())) return;
-      const parameters = checkoutParameters(currency, route.pathname, route.search);
+      const parameters = checkoutParameters(currency, entrySurface);
       if (!parameters) return;
       await new Promise<void>(resolve => {
         const done = () => { clearTimeout(timeout); resolve(); };

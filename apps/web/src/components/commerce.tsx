@@ -7,6 +7,7 @@ import { SignOut, useSession } from './session';
 import { RegisterPasskey } from './sign-in';
 import { currencyOptions, consentText } from '@/lib/catalog';
 import { checkoutSurface } from '@/lib/funnel';
+import type { EntrySurface } from '@/lib/entry-surface';
 
 type Account = { plan: 'Free OSS' | 'Anymd Pro'; entitlementActive: boolean; features: string[] };
 const cliLogin = 'anymd login';
@@ -34,14 +35,15 @@ function checkoutIntent() {
 
 export function Checkout() {
   const route = useLocation();
+  const entrySurface = () => checkoutSurface(route.pathname, route.search);
   const checkoutNext = () => {
-    const surface = checkoutSurface(route.pathname, route.search);
+    const surface = entrySurface();
     return surface === 'pricing' ? '/pricing' : encodeURIComponent('/pricing?entry_surface=' + surface);
   };
   const analytics = useCookieConsent();
   const session = useSession();
   const [currency, setCurrency] = createSignal('USD');
-  let intent: string | undefined;
+  let intent: { key: string; entrySurface: EntrySurface } | undefined;
   const [consent, setConsent] = createSignal(false);
   const [pending, setPending] = createSignal(false);
   const [notice, setNotice] = createSignal('');
@@ -59,12 +61,15 @@ export function Checkout() {
         if (pending() || !consent() || !user()) return;
         setPending(true); setNotice('');
         try {
-          intent ??= checkoutIntent();
+          const checkout = intent ??= {key:checkoutIntent(), entrySurface:entrySurface()};
           const code = currency();
-          const result = await request('checkout', {currency:code, consent:consent(), checkoutIntent:intent, measurementConsent:analytics.checkoutChoice()});
+          const result = await request('checkout', {
+            currency:code, consent:consent(), checkoutIntent:checkout.key,
+            entrySurface:checkout.entrySurface, measurementConsent:analytics.checkoutChoice(),
+          });
           if (!result.url) throw new Error('Checkout did not return a link.');
           // Measurement must never prevent purchase.
-          await analytics.beginCheckout(code).catch(() => undefined);
+          await analytics.beginCheckout(code, checkout.entrySurface).catch(() => undefined);
           location.assign(result.url);
         }
         catch (err) { setNotice(err instanceof Error ? err.message : 'Checkout is unavailable.'); setPending(false); }

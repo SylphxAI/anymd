@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
 import { signupCookie } from '../src/lib/signup';
 
 const tag = 'https://www.googletagmanager.com/gtag/js?id=G-R4TD2Z8RR7';
@@ -23,6 +24,14 @@ async function isolate(page: Page, country: string | null, gpc = false) {
 const panel = (page: Page) => page.getByRole('complementary', {name:'Cookie settings'});
 const commands = (page: Page) => page.evaluate(() => ((window as Window & {dataLayer?: ArrayLike<unknown>[]}).dataLayer ?? []).map(command => Array.from(command)));
 const events = async (page: Page, name: string) => (await commands(page)).filter(x => x[0] === 'event' && x[1] === name);
+
+async function moneyCheckoutMetadata(page: Page, checkoutIntent: string) {
+  const url = new URL('http://127.0.0.1:3031/test/checkout-metadata');
+  url.searchParams.set('intent', checkoutIntent);
+  const response = await page.request.get(url.href);
+  expect(response.ok()).toBe(true);
+  return response.json();
+}
 
 for (const [label, code] of [['EEA', 'DE'], ['UK', 'GB'], ['Switzerland', 'CH'], ['unknown', null]] as const) {
   test(label + ' makes no Google requests before choice or after rejection', async ({ page }) => {
@@ -110,7 +119,7 @@ test('checkout works with no consent and sends no GA commands or analytics stora
   });
   await page.route('**/api/auth/session*', route => route.fulfill({json:{authConfigured:true, user:{name:'Test', email:'test@example.invalid'}}}));
   await page.route('**/api/anymd/checkout', async route => {
-    expect(route.request().postDataJSON().measurementConsent).toBe('reject');
+    expect(route.request().postDataJSON()).toMatchObject({measurementConsent:'reject', entrySurface:'studio_cite_preview'});
     expect(await commands(page)).toEqual([]);
     expect(await page.evaluate(() => Reflect.get(window, '__storageWrites'))).toEqual([]);
     await route.fulfill({json:{url:'/pro/thanks?session_id=cs_test_NOT_FOR_GOOGLE'}});
@@ -161,6 +170,32 @@ test('checkout binds consented campaign data across sign-in without waiting for 
   await expect(page).toHaveURL(url => url.origin === 'https://checkout.stripe.com');
 });
 
+test('checkout accepts only existing funnel labels in Money metadata', async ({ page }) => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
+  const google = await isolate(page, 'FR', true);
+  await page.goto('/pricing');
+  await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
+  await page.getByRole('link', {name:'Continue with Google'}).click();
+  await expect(page).toHaveURL('/pricing');
+  const origin = new URL(page.url()).origin;
+  for (const [entrySurface, expected] of [
+    ['cli_video', 'cli_video'], ['pricing', 'pricing'], ['pro', 'pro'],
+    ['studio_cite_preview', 'studio_cite_preview'], ['seo_vs-marker', 'seo_vs-marker'],
+    [undefined, 'pricing'], ['billing', 'pricing'], ['cli_unrecognized', 'pricing'],
+    ['private@example.invalid', 'pricing'], ['cli_pdf\n', 'pricing'], ['cli_vidéo', 'pricing'],
+    ['x'.repeat(101), 'pricing'], [null, 'pricing'], [{entry_surface:'cli_pdf'}, 'pricing'],
+  ] as const) {
+    const checkoutIntent = randomBytes(32).toString('hex');
+    const response = await page.request.post('/api/anymd/checkout', {
+      headers:{origin, 'sec-gpc':'1'},
+      data:{currency:'USD', consent:true, checkoutIntent, entrySurface, metadata:{customer:'private@example.invalid'}},
+    });
+    expect(response.ok()).toBe(true);
+    expect(await moneyCheckoutMetadata(page, checkoutIntent)).toEqual({entry_surface:expected});
+  }
+  expect(google).toEqual([]);
+});
+
 test('consented checkout emits begin_checkout but the return never measures a purchase', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
   const google = await isolate(page, 'FR');
@@ -192,6 +227,8 @@ test('consented checkout emits begin_checkout but the return never measures a pu
   const response = await checkout;
   expect(response.ok()).toBe(true);
   expect(await response.json()).toEqual({url:'https://checkout.stripe.com/c/pay/' + processorSessionId});
+  const {checkoutIntent} = response.request().postDataJSON();
+  expect(await moneyCheckoutMetadata(page, checkoutIntent)).toEqual({entry_surface:'cli_pdf'});
   await expect(page).toHaveURL(thanks);
   await expect(page.getByRole('heading', {name:'Activate Anymd Pro'})).toBeVisible();
   await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);

@@ -22,10 +22,10 @@ test('only known public entry surfaces leave the browser', () => {
 });
 
 test('checkout uses the selected catalogue price and currency scale', () => {
-  assert.deepEqual(checkoutParameters('USD','/pricing','?entry_surface=npm_citra'), {
+  assert.deepEqual(checkoutParameters('USD','npm_citra'), {
     value:29, currency:'USD', plan_sku:'anymd_pro', entry_surface:'npm_citra',
     items:[{item_id:'anymd_pro', item_name:'Anymd Pro', quantity:1, price:29}],
   });
-  assert.equal(checkoutParameters('JPY','/pricing','')?.value, 4639);
-  assert.equal(checkoutParameters('toString','/pricing',''), undefined);
+  assert.equal(checkoutParameters('JPY','pricing')?.value, 4639);
+  assert.equal(checkoutParameters('toString','pricing'), undefined);
 });
