@@ -27,6 +27,15 @@ function localUrl(href: string, slug: string) {
 type RenderContext = { slug: string; headings: Map<string, number> };
 
 const md = new MarkdownIt({ html: false, linkify: true });
+// Standalone source comments mark generated sections. Consume the comment line
+// without enabling HTML or touching examples inside Markdown code blocks.
+md.block.ruler.before('paragraph', 'source_comment', (state, start, _end, silent) => {
+  if (state.sCount[start] - state.blkIndent >= 4) return false;
+  const line = state.src.slice(state.bMarks[start] + state.tShift[start], state.eMarks[start]);
+  if (!/^<!--(?:(?!-->).)*-->[ \t]*$/.test(line)) return false;
+  if (!silent) state.line = start + 1;
+  return true;
+}, { alt: ['paragraph'] });
 md.renderer.rules.link_open = (tokens, index, options, env, self) => {
   const { slug } = env as RenderContext;
   const link = tokens[index];

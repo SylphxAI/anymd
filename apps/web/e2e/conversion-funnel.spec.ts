@@ -28,6 +28,16 @@ test('public pages have no escaped HTML and SEO pages link directly to pricing',
       const main = page.getByRole('main');
       await expect(main.getByRole('heading', { level: 1 })).toBeVisible();
       expect(await main.innerText()).not.toMatch(/<\/?(?:a|p|details|summary)(?:\s|>)/i);
+      const article = main.locator('article.prose');
+      if (await article.count()) {
+        const prose = await article.evaluate(el => {
+          const copy = el.cloneNode(true) as HTMLElement;
+          copy.querySelectorAll('code, pre').forEach(example => example.remove());
+          return copy.textContent;
+        });
+        expect(prose).not.toMatch(/<(?:!--|\/?[a-z][\w-]*(?=[\s/>]))/i);
+      }
+      if (path === '/vs/docling') await expect(article.locator('code').getByText('<!-- page N -->', { exact: true }).first()).toBeVisible();
       if (seoPaths.includes(path)) {
         const cta = main.locator('a.button-primary[href^="/pricing?entry_surface=seo_"]').first();
         await expect(cta).toBeVisible();
