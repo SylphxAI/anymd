@@ -17,7 +17,7 @@ for (const { name, host, forwarded, indexable } of cases) {
     if (forwarded) headers['x-forwarded-host'] = forwarded;
     const options = { headers, maxRedirects: 0 };
     const expectedTag = indexable ? undefined : 'noindex, nofollow';
-    for (const path of ['/', '/studio', '/pricing', '/dashboard', '/docs', '/api/health']) {
+    for (const path of ['/', '/studio', '/pricing', '/dashboard', '/docs', '/vs/markdownify-mcp', '/api/health']) {
       const response = await request.get(path, options);
       expect(response.status(), path).toBe(200);
       expect.soft(response.headers()['x-robots-tag'], path).toBe(expectedTag);
@@ -30,7 +30,7 @@ for (const { name, host, forwarded, indexable } of cases) {
     const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]));
     expect(urls.every((url) => url.origin === 'https://anymd.sylphx.com')).toBe(true);
     const paths = urls.map((url) => url.pathname);
-    expect(paths).toEqual(expect.arrayContaining(['/', '/studio', '/pricing', '/docs', '/docs/cli', '/vision', '/vs', '/vs/docling', '/privacy']));
+    expect(paths).toEqual(expect.arrayContaining(['/', '/studio', '/pricing', '/docs', '/docs/cli', '/vision', '/vs', '/vs/docling', '/vs/markdownify-mcp', '/privacy']));
     expect(new Set(paths).size).toBe(paths.length);
     for (const alias of ['/pro', '/playground', '/guide/cli', '/docs/getting-started', '/vs/index']) expect(paths).not.toContain(alias);
     expect(paths.some((path) => /^\/(sign-in|account|billing|dashboard|recover|cli-auth|api)(?:\/|$)/.test(path))).toBe(false);

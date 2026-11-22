@@ -1,17 +1,14 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
-import { checkoutContext, clearCheckoutContexts, clearGoogleCookies, startGoogle, stopGoogle, track, type GoogleConsent, type Purchase } from '@/lib/analytics';
+import { clearGoogleCookies, startGoogle, stopGoogle, track, type GoogleConsent } from '@/lib/analytics';
 import { consentFor, consentKey, parseChoice, traceRegion, type Choice, type Region } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
 import { clickCookie, clickIds } from '@/lib/attribution';
 
-const purchaseKey = 'anymd.ga4.purchase.';
 const CookieContext = createContext<{
   open: (from: HTMLButtonElement) => void;
-  ready: () => boolean;
   checkoutChoice: () => Choice;
-  beginCheckout: (currency: string, receipt?: {checkoutId: string; processorSessionId: string}) => Promise<void>;
-  purchase: (purchase: Purchase, processorSessionId: string) => void;
+  beginCheckout: (currency: string) => Promise<void>;
 }>();
 
 function savedChoice() {
@@ -30,13 +27,11 @@ export function CookieConsent(props: ParentProps) {
   const [region, setRegion] = createSignal<Region>();
   const [gpc, setGpc] = createSignal(false);
   const [manual, setManual] = createSignal(false);
-  const [ready, setReady] = createSignal(false);
   let active: GoogleConsent | undefined;
   let lastPath: string | undefined;
   let trigger: HTMLButtonElement | undefined;
   let firstAction: HTMLButtonElement | undefined;
   const [canSave, setCanSave] = createSignal(false);
-  const purchases = new Set<string>();
   const hasGpc = () => (navigator as Navigator & {globalPrivacyControl?: boolean}).globalPrivacyControl === true;
   const eligibleHost = () => location.origin === canonicalOrigin || ['localhost', '127.0.0.1'].includes(location.hostname);
   const visible = () => manual() || (region() === 'opt-in' && choice() === null);
@@ -92,20 +87,17 @@ export function CookieConsent(props: ParentProps) {
     if (active && (!allowed || active.ad_storage !== consent.ad_storage)) {
       stopGoogle();
       active = undefined;
-      setReady(false);
       clearGoogleCookies(!allowed);
       // The executed script may still own callbacks. Replace the entire page
       // after a saved change instead of sending denied-mode pings to Google.
-      if (!allowed) clearCheckoutContexts();
       if (canSave()) location.reload();
       return;
     }
-    if (!allowed) { clearGoogleCookies(true); clearCheckoutContexts(); return; }
+    if (!allowed) { clearGoogleCookies(true); return; }
     if (!active) {
       if (consent.ad_storage === 'denied') clearGoogleCookies(false);
       startGoogle(consent, pathname);
       active = consent;
-      setReady(true);
     }
     if (pathname !== lastPath) {
       lastPath = pathname;
@@ -113,6 +105,16 @@ export function CookieConsent(props: ParentProps) {
       if (pathname === '/pricing' || pathname === '/pro') track('pricing_view', pathname);
     }
   });
+
+  // Reserve the painted bar height, including wrapping and the safe-area inset.
+  function reserveSpace(bar: HTMLElement) {
+    const root = document.documentElement;
+    const measure = () => root.style.setProperty('--cookie-space', Math.ceil(bar.getBoundingClientRect().height) + 'px');
+    measure();
+    const resize = new ResizeObserver(measure);
+    resize.observe(bar);
+    onCleanup(() => { resize.disconnect(); root.style.removeProperty('--cookie-space'); });
+  }
 
   function choose(next: Choice) {
     try { localStorage.setItem(consentKey, next); } catch {
@@ -137,7 +139,6 @@ export function CookieConsent(props: ParentProps) {
       setManual(true);
       queueMicrotask(() => firstAction?.focus());
     },
-    ready,
     checkoutChoice(): Choice {
       const resolved = region();
       if (!resolved || !eligibleHost() || !canSave() || hasGpc()) return 'reject';
@@ -148,40 +149,28 @@ export function CookieConsent(props: ParentProps) {
         return consent.ad_storage === 'granted' && consent.ad_user_data === 'granted' ? 'all' : 'analytics';
       } catch { return 'reject'; }
     },
-    async beginCheckout(currency: string, receipt?: {checkoutId: string; processorSessionId: string}) {
+    async beginCheckout(currency: string) {
       if (!active) return;
-      if (receipt) checkoutContext(receipt.processorSessionId, receipt.checkoutId);
       await new Promise<void>(resolve => {
         const done = () => { clearTimeout(timeout); resolve(); };
         const timeout = setTimeout(done, 250);
         track('begin_checkout', route.pathname, {currency, event_callback: done, event_timeout: 250, items:[{item_id:'anymd-pro', item_name:'Anymd Pro', quantity:1}]});
       });
     },
-    purchase(purchase: Purchase, processorSessionId: string) {
-      if (!active || purchases.has(purchase.transaction_id)) return;
-      checkoutContext(processorSessionId, null);
-      const key = purchaseKey + purchase.transaction_id;
-      try {
-        if (localStorage.getItem(key)) return;
-        localStorage.setItem(key, '1');
-      } catch { /* local storage unavailable: use in-page and GA deduplication */ }
-      purchases.add(purchase.transaction_id);
-      track('purchase', route.pathname, {...purchase, items:[{item_id:'anymd-pro', item_name:'Anymd Pro', quantity:1, price:purchase.value}]});
-    },
   };
   return <CookieContext.Provider value={context}>{props.children}
     <Show when={visible()}>
-      <aside class="cookie-panel" aria-labelledby="cookie-heading" onKeyDown={event => { if (manual() && event.key === 'Escape') close(); }}>
-        <div><h2 id="cookie-heading">Cookie settings</h2>
-          <p>Optional cookies help us understand how people use Anymd and measure ads. We never use them to personalize ads. <A href="/privacy" class="inline-link">Privacy notice</A></p>
-          {gpc() && <p>Your browser’s Global Privacy Control is on. Optional tracking stays off while it’s enabled.</p>}
+      <aside ref={reserveSpace} class="cookie-panel" aria-labelledby="cookie-heading" onKeyDown={event => { if (manual() && event.key === 'Escape') close(); }}>
+        <div class="cookie-row"><div><h2 id="cookie-heading">Cookie settings</h2>
+          <p>Optional analytics and ads. <A href="/privacy" class="inline-link">Privacy notice</A></p>
+          {gpc() && <p>Global Privacy Control is on. Optional tracking stays off.</p>}
         </div>
         <div class="cookie-actions">
           <button ref={firstAction} class="button" type="button" onClick={() => choose('reject')}>Reject optional</button>
           <button class="button" type="button" onClick={() => choose('analytics')}>Analytics only</button>
           <button class="button" type="button" onClick={() => choose('all')}>Allow analytics &amp; ads</button>
           {manual() && <button class="cookie-close" type="button" onClick={close}>Close without changing</button>}
-        </div>
+        </div></div>
       </aside>
     </Show>
   </CookieContext.Provider>;

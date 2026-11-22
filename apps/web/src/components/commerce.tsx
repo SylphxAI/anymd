@@ -57,7 +57,7 @@ export function Checkout() {
           const result = await request('checkout', {currency:code, consent:consent(), checkoutIntent:intent, measurementConsent:analytics.checkoutChoice()});
           if (!result.url) throw new Error('Checkout did not return a link.');
           // Measurement must never prevent purchase.
-          await analytics.beginCheckout(code, result.receipt).catch(() => undefined);
+          await analytics.beginCheckout(code).catch(() => undefined);
           location.assign(result.url);
         }
         catch (err) { setNotice(err instanceof Error ? err.message : 'Checkout is unavailable.'); setPending(false); }

@@ -1,8 +1,8 @@
 import { canonicalOrigin } from './app-origin';
 import { clickCookie, clickIds, measurementId } from './attribution';
 import { consentFor, consentKey, parseChoice } from './consent';
-import { checkoutIdPattern } from './purchase';
 
+const checkoutIdPattern = /^chk-[0-9a-f]{24}$/;
 const bindingTimeout = 750;
 const gaSessionCookie = '_ga_' + measurementId.slice(2);
 

@@ -3,7 +3,6 @@ import { consentFor } from './consent';
 
 export const gaDisable = `ga-disable-${measurementId}` as const;
 export type GoogleConsent = ReturnType<typeof consentFor>;
-export type Purchase = {transaction_id: string; currency: string; value: number};
 
 type GoogleWindow = Window & { [gaDisable]?: boolean; dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
 const allowedSections = new Set(['studio', 'docs', 'vs', 'pro', 'pricing', 'privacy', 'playground', 'legal', 'guide', 'tasks', 'security', 'use-cases', 'vision', 'sign-in', 'account', 'billing', 'dashboard', 'recover', 'cli-auth']);
@@ -55,28 +54,10 @@ export function clearGoogleCookies(analytics: boolean) {
   }
 }
 
-export function track(name: string, pathname: string, parameters: Record<string, unknown> = {}) {
+export function track(name: 'page_view' | 'pricing_view' | 'begin_checkout', pathname: string, parameters: Record<string, unknown> = {}) {
   const w = google();
   const context = {page_location: pageLocation(pathname), page_referrer: '', page_title: 'Anymd'};
   if (w[gaDisable] || !w.gtag) return;
   w.gtag('set', context);
   w.gtag('event', name, {...parameters, ...context, send_to: measurementId});
-}
-
-const checkoutPrefix = 'anymd.ga4.checkout.';
-
-export function checkoutContext(processorSessionId: string, checkoutId?: string | null) {
-  const key = checkoutPrefix + processorSessionId;
-  try {
-    if (checkoutId === null) sessionStorage.removeItem(key);
-    else if (checkoutId !== undefined) sessionStorage.setItem(key, checkoutId);
-    else return sessionStorage.getItem(key);
-  } catch { /* optional measurement must not affect checkout */ }
-  return null;
-}
-
-export function clearCheckoutContexts() {
-  try {
-    for (const key of Object.keys(sessionStorage)) if (key.startsWith(checkoutPrefix)) sessionStorage.removeItem(key);
-  } catch { /* storage unavailable */ }
 }

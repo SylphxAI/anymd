@@ -62,6 +62,7 @@ Permissive MIT-licensed native Rust binary (CLI + built-in MCP server for PDF, W
 - [anymd vs Kreuzberg](https://anymd.sylphx.com/vs/kreuzberg)
 - [anymd vs LlamaParse](https://anymd.sylphx.com/vs/llamaparse)
 - [anymd vs Marker](https://anymd.sylphx.com/vs/marker)
+- [anymd vs Markdownify MCP](https://anymd.sylphx.com/vs/markdownify-mcp)
 - [anymd vs MarkItDown](https://anymd.sylphx.com/vs/markitdown)
 - [anymd vs Mistral OCR](https://anymd.sylphx.com/vs/mistral-ocr)
 - [anymd vs pdftotext](https://anymd.sylphx.com/vs/pdftotext)
