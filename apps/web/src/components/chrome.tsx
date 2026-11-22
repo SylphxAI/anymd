@@ -2,6 +2,7 @@ import { ArrowUpRight, Braces, Menu } from 'lucide-solid';
 import { GithubMark } from './github-mark';
 import { A } from '@solidjs/router';
 import { For } from 'solid-js';
+import { useCookieConsent } from './cookie-consent';
 import { SessionAction } from './session';
 
 const links = [['Studio', '/studio'], ['Docs', '/docs'], ['Pricing', '/pricing']] as const;
@@ -27,10 +28,11 @@ export function Header() {
 }
 
 export function Footer() {
+  const cookies = useCookieConsent();
   return (
     <footer class="site-footer"><div class="wrap footer-row">
       <div><A class="brand" href="/"><span><Braces size={18} /></span>anymd<span class="brand-dot">.</span></A><p>Documents in. Markdown out.</p></div>
-      <div class="footer-links"><A href="/docs">Docs</A><A href="/vs">Comparisons</A><A href="/recover">Recover purchase</A><A href="/legal/privacy">Privacy</A><A href="/legal/pro-terms">Pro terms</A><a href="https://github.com/SylphxAI/anymd">GitHub <ArrowUpRight size={13} /></a></div>
+      <div class="footer-links"><A href="/docs">Docs</A><A href="/vs">Comparisons</A><A href="/recover">Recover purchase</A><A href="/privacy">Privacy</A><button class="footer-cookie" type="button" onClick={event => cookies.open(event.currentTarget)}>Cookie settings</button><A href="/legal/pro-terms">Pro terms</A><a href="https://github.com/SylphxAI/anymd">GitHub <ArrowUpRight size={13} /></a></div>
     </div></footer>
   );
 }

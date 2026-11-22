@@ -11,6 +11,7 @@ docs.set('vision', vision[prefix + 'vision.md']);
 export function canonicalDocPath(slug: string): string {
   if (slug === 'guide/getting-started') return '/docs';
   if (slug === 'vs/index') return '/vs';
+  if (slug === 'legal/privacy') return '/privacy';
   return slug.startsWith('guide/') ? '/docs/' + slug.slice('guide/'.length) : '/' + slug;
 }
 

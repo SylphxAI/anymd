@@ -30,7 +30,7 @@ for (const { name, host, forwarded, indexable } of cases) {
     const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]));
     expect(urls.every((url) => url.origin === 'https://anymd.sylphx.com')).toBe(true);
     const paths = urls.map((url) => url.pathname);
-    expect(paths).toEqual(expect.arrayContaining(['/', '/studio', '/pricing', '/docs', '/docs/cli', '/vision', '/vs', '/vs/docling', '/legal/privacy']));
+    expect(paths).toEqual(expect.arrayContaining(['/', '/studio', '/pricing', '/docs', '/docs/cli', '/vision', '/vs', '/vs/docling', '/privacy']));
     expect(new Set(paths).size).toBe(paths.length);
     for (const alias of ['/pro', '/playground', '/guide/cli', '/docs/getting-started', '/vs/index']) expect(paths).not.toContain(alias);
     expect(paths.some((path) => /^\/(sign-in|account|billing|dashboard|recover|cli-auth|api)(?:\/|$)/.test(path))).toBe(false);
