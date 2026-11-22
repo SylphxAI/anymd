@@ -80,7 +80,7 @@ jobs:
         run: |
           echo "value=$(node -p 'require("./packages/anymd/package.json").version')" >> "$GITHUB_OUTPUT"
       # Missing Access or Broker authority must fail, never skip enabled channels.
-      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@c91f178e6dc73835cca9929d7daa7979fd3a7a4b # v0.8.14
+      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@0db554b5882d1f0e77d070089af544c6789f6c4c # mcp-kit #55
         with:
           name: anymd
           version: ${{ steps.version.outputs.value }}
