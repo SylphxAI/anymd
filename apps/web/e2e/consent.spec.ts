@@ -9,9 +9,8 @@ async function isolate(page: Page, country: string | null, gpc = false) {
   const requests: string[] = [];
   await page.context().route(url => googleHost.test(url.hostname), route => {
     requests.push(route.request().url());
-    // No test traffic reaches Google's property. Read the app's actual gtag
-    // queue, and simulate its checkout callback so no network is needed.
-    return route.fulfill({contentType:'application/javascript', body: 'for (const command of window.dataLayer) if (command[2]?.event_callback) command[2].event_callback();'});
+    // Never load Google code. Leave the app's actual gtag queue inspectable.
+    return route.fulfill({contentType:'application/javascript', body:''});
   });
   await page.route('**/cdn-cgi/trace', route => {
     const host = new URL(route.request().url()).hostname;
@@ -100,10 +99,41 @@ test('GPC overrides the non-EEA defaults and an explicit allow choice', async ({
   expect(google).toEqual([]);
 });
 
+test('checkout works with no consent and sends no GA commands or analytics storage writes', async ({ page }) => {
+  const hits = await isolate(page, 'FR');
+  await page.addInitScript(() => {
+    const writes: string[] = [];
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) { writes.push(key); return setItem.call(this, key, value); };
+    Object.defineProperty(window, '__storageWrites', {value:writes});
+  });
+  await page.route('**/api/auth/session*', route => route.fulfill({json:{authConfigured:true, user:{name:'Test', email:'test@example.invalid'}}}));
+  await page.route('**/api/anymd/checkout', async route => {
+    expect(route.request().postDataJSON().measurementConsent).toBe('reject');
+    expect(await commands(page)).toEqual([]);
+    expect(await page.evaluate(() => Reflect.get(window, '__storageWrites'))).toEqual([]);
+    await route.fulfill({json:{url:'/pro/thanks?session_id=cs_test_NOT_FOR_GOOGLE'}});
+  });
+  await page.goto('/pricing?entry_surface=studio_cite_preview');
+  await expect(panel(page)).toBeVisible();
+  await expect(page.getByRole('checkbox')).toBeVisible();
+  // Hide the banner with the test DOM only: no preference is saved.
+  await panel(page).evaluate(element => { element.style.display = 'none'; });
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', {name:'Continue to secure checkout'}).click();
+  await expect(page).toHaveURL('/pro/thanks?session_id=cs_test_NOT_FOR_GOOGLE');
+  await expect(panel(page)).toBeVisible();
+  expect(await commands(page)).toEqual([]);
+  expect(await page.evaluate(() => ({writes:Reflect.get(window, '__storageWrites'), gtag:typeof Reflect.get(window, 'gtag')}))).toEqual({writes:[], gtag:'undefined'});
+  expect(hits).toEqual([]);
+});
+
 test('checkout binds consented campaign data across sign-in without waiting for Events', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth, Money, and Events fixtures');
   await isolate(page, 'US');
   await page.goto('/pricing?gclid=Ad-Click_123');
+  await page.getByRole('button', {name:'Cookie settings', exact:true}).click();
+  await panel(page).getByRole('button', {name:'Allow analytics & ads'}).click();
   await expect(page.getByRole('contentinfo').getByRole('link', {name:'Recover purchase'})).toHaveCount(0);
   await expect(page.getByRole('contentinfo').getByRole('button', {name:'Cookie settings'})).toBeVisible();
   await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
@@ -132,7 +162,7 @@ test('checkout binds consented campaign data across sign-in without waiting for 
 
 test('consented checkout emits begin_checkout but the return never measures a purchase', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
-  const google = await isolate(page, 'US');
+  const google = await isolate(page, 'FR');
   const measurementRequests: string[] = [];
   page.on('request', request => {
     if (new URL(request.url()).pathname === '/api/anymd/purchase-measurement') measurementRequests.push(request.url());
@@ -143,11 +173,13 @@ test('consented checkout emits begin_checkout but the return never measures a pu
     const event = entries.map(args => Array.from(args)).find(args => args[0] === 'event' && args[1] === 'begin_checkout');
     if (event) sessionStorage.setItem('test.checkout.event', JSON.stringify(event));
   }));
-  await page.goto('/sign-in?next=%2Fpricing');
+  await page.goto('/pricing?entry_surface=studio_cite_preview&email=private%40example.invalid');
+  await panel(page).getByRole('button', {name:'Analytics only'}).click();
+  await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
   await page.getByLabel('Email address').fill('test@example.invalid');
   await page.getByRole('button', {name:'Continue', exact:true}).click();
   await page.getByLabel('6-digit code').fill('123456');
-  await expect(page).toHaveURL('/pricing');
+  await expect(page).toHaveURL('/pricing?entry_surface=studio_cite_preview');
   await expect.poll(async () => (await events(page, 'pricing_view')).length).toBe(1);
   const processorSessionId = 'cs_test_Fixture123';
   const thanks = '/pro/thanks?session_id=' + processorSessionId;
@@ -164,7 +196,11 @@ test('consented checkout emits begin_checkout but the return never measures a pu
   await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
   expect(await events(page, 'purchase')).toEqual([]);
   const start = await page.evaluate(() => JSON.parse(sessionStorage.getItem('test.checkout.event') || 'null'));
-  expect(start).toMatchObject(['event', 'begin_checkout', expect.objectContaining({currency:'USD'})]);
+  expect(start).toEqual(['event', 'begin_checkout', {
+    value:29, currency:'USD', plan_sku:'anymd_pro', entry_surface:'studio_cite_preview',
+    items:[{item_id:'anymd_pro', item_name:'Anymd Pro', quantity:1, price:29}],
+    event_timeout:250, page_location:origin + '/pricing', page_referrer:'', page_title:'Anymd', send_to:'G-R4TD2Z8RR7',
+  }]);
   expect(await page.evaluate(() => Object.keys(sessionStorage).some(key => key.startsWith('anymd.ga4.checkout.')))).toBe(false);
 
   // A tab opened before the change may still carry the old local checkout state.
