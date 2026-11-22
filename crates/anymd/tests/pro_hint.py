@@ -130,7 +130,9 @@ with tempfile.TemporaryDirectory() as temp:
         assert result == expected and not marker(state).exists(), result
     code, stdout, stderr = cli(state, *read_args)
     assert (code, stdout) == expected[:2] and PRO not in stdout, (code, stdout)
-    assert stderr.count(PRO) == 1 and PDF_SURFACE in stderr and b"anymd pro buy" in stderr, stderr
+    assert stderr.count(PRO) == 1 and PDF_SURFACE in stderr, stderr
+    assert b"(US$29 once)" in stderr and b"then run `anymd login`" in stderr, stderr
+    assert b"anymd pro buy" not in stderr, stderr
     assert marker(state).is_file() and cli(state, *read_args) == expected
 
     state = tmp / "ineligible"

@@ -49,7 +49,7 @@ fn show_once(
     };
     let _ = writeln!(
         stderr,
-        "anymd Pro: {feature}. Run `anymd pro buy` or visit {}?entry_surface={surface}",
+        "anymd Pro: {feature} (US$29 once). Visit {}?entry_surface={surface}, then run `anymd login`.",
         pro::PRO_URL
     );
 }
@@ -67,9 +67,13 @@ mod tests {
         assert!(stderr.is_empty());
         assert!(!state.path().join(MARKER).exists());
         show_once(EvidenceKind::MultiPagePdf, || false, dir, &mut stderr);
-        assert!(String::from_utf8(stderr)
-            .unwrap()
-            .contains("entry_surface=cli_pdf"));
+        assert_eq!(
+            String::from_utf8(stderr).unwrap(),
+            format!(
+                "anymd Pro: verify PDF quotes (US$29 once). Visit {}?entry_surface=cli_pdf, then run `anymd login`.\n",
+                pro::PRO_URL
+            )
+        );
         assert!(state.path().join(MARKER).is_file());
     }
 
