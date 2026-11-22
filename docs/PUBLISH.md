@@ -29,8 +29,8 @@
    The shared npm release skips targets already published for that version.
    That does not prove crates.io or PyPI delivery is complete: their jobs can
    still recover missing delivery without a version bump, subject to the
-   source and trust checks below. The `crates` job runs only on a manual
-   dispatch until crates.io trusted publishing is configured (see below).
+   source and trust checks below. Both check the exact version on public
+   `main` pushes and on manual dispatches from `main`.
 
 ## Official MCP Registry
 
@@ -115,42 +115,32 @@ served by the community source.
 
 ## crates.io
 
-The `crates` job in `release.yml` runs after the release job succeeds and calls
-`scripts/publish-crates.sh`, which publishes the eight crates in dependency order
-(the three forks, `anymd-pdf`, `anymd-formats`, `anymd-core`, `anymd-ocr-vlm`, `anymd`) with a
-short-lived crates.io trusted-publishing token, and skips any version already on
-crates.io. `set-version.ts` moves the workspace version and the internal
-`version` pins together; the forks have their own versions
-(`anymd-pdf-extract` 0.12.2, `anymd-adobe-cmap-parser` 0.4.1, `anymd-oar-ocr-vl` 0.9.2), and their
-version is raised by hand in `vendor/*/Cargo.toml` (and in the `[workspace.dependencies]`
-pin) when the fork changes. `check:versions` compares each already-published fork
-with its crates.io package (sources, manifest, README and license), without
-compiling. A changed payload must have a new version and a matching workspace
-pin; registry errors fail the check. CI packs every crate on each pull request
-(`cargo package` for each crate) and fails a package over 9 MB (the limit is 10 MB).
+On a push or manual dispatch from public `main`, the `crates` job runs after the
+shared release job succeeds, including when npm is already current. It reads
+the exact Cargo versions of the eight crates, including the three independently
+versioned forks, in dependency order from `scripts/publish-crates.sh --list`.
+If all versions are already available, it does not request a credential.
+Otherwise it uses crates.io OIDC to publish only absent versions and confirms
+each one on crates.io. A yanked version or an unreadable registry response
+fails the job; neither is treated as permission to publish. A later push or
+manual dispatch from `main` resumes a partial release without republishing
+versions already delivered.
 
-crates.io mints a trusted-publishing credential only for a crate that already has a
-trusted-publisher record, so the record comes first. `release.yml` trusts
-`release.yml` in `SylphxAI/anymd` with environment `crates-io`; the
-dispatch-only `ensure-trusted-publishers.yml` creates that record for every crate
-in `scripts/publish-crates.sh --list` through a `CARGO_REGISTRY_TOKEN` that
-carries the trusted-publishing scope, and reads each record back. The tool is
-idempotent, so a repeat dispatch leaves an existing record alone and prints it as
-`present`. Until every crate in that list has its record, the `crates` job runs
-only when `release.yml` is dispatched by hand, because on a push it would fail
-before publishing anything. To finish the setup:
+`set-version.ts` moves the workspace version and the internal version pins
+together. When a fork changes, bump it in `vendor/*/Cargo.toml` and in its
+`[workspace.dependencies]` pin. `check:versions` compares each already-published
+fork with its crates.io sources, manifest, README and license. A changed payload
+must have a new version and a matching pin. CI packs every crate on each pull
+request and fails a package over 9 MB (the registry limit is 10 MB).
 
-1. Merge this change to `main`. The push-triggered run skips `crates` and the
-   rest of the release is unaffected.
-2. Dispatch `ensure-trusted-publishers.yml`. It reads `CARGO_REGISTRY_TOKEN` and
-   prints `crate: trusted publisher created` or `present` per crate, a non-zero
-   exit if any crate failed.
-3. Revoke the setup credential and remove the repository entry. No workflow
-   reads it after this point: `release.yml` mints its own short-lived
-   credential from the records, and the setup workflow fails with a message
-   naming the missing scope rather than skipping silently.
-4. Release as usual. A missing record fails `crates` loudly, before anything is
-   published, so a release never half-publishes the set.
+Each crate needs a trusted-publisher record for `SylphxAI/anymd`, `release.yml`,
+environment `crates-io`. If records need repair, a crate owner can check them
+on crates.io or dispatch `ensure-trusted-publishers.yml` from `main` using a
+setup-only `CARGO_REGISTRY_TOKEN` with the trusted-publishing scope. The setup
+workflow reads back each record and reports `created`, `present` or an error.
+Revoke and remove that setup credential afterward. The release workflow does
+not read it. Missing publishing authority fails the release job; fixing the
+records and dispatching `release.yml` on `main` retries the current version.
 
 ## npm trusted publishing
 
@@ -249,22 +239,33 @@ API before `twine check`. Locally, use
 existing native binary for fixture tests and install the extras to run framework
 tests. Neither these checks nor the examples download models.
 
-PyPI uses the trusted publisher for owner `SylphxAI`, repository `anymd`,
-workflow `release.yml`, environment `pypi`. That publisher must be registered
-on PyPI before OIDC token exchange can succeed. As of 2026-10-30 the `anymd`
-project does not exist on PyPI. The `pypi` job runs after the wheels job succeeds
-and builds artifacts, including exact-tag recovery on an ordinary push to `main` after
-upstream release jobs skip. It explicitly overrides skipped-ancestor propagation
-without publishing after failed wheels or workflow cancellation. A complete
-version is a no-op; missing or invalid publisher authority fails the job rather
-than silently skipping it. The 8.5.6 release failed with `invalid-publisher`
-because PyPI found no publisher matching those claims. Register the publisher on
-PyPI before retrying publication. The user install pages mark Python publication as pending.
-After registration, a fresh
-recovery run can build missing wheels under the exact-tag checks above and
-pass them through the existing CLI/API smoke tests and OIDC `pypi` job. The
-publisher skips files already present; neither publisher registration nor a
-successful image/crates job proves that the five Python wheels were delivered.
+For the first release of `anymd`, a PyPI account holder who will own the project
+must add a pending GitHub publisher on the
+[PyPI trusted publishing page](https://pypi.org/manage/account/publishing/).
+If the project already exists, configure its publisher in that project's
+publishing settings instead. Use these exact fields:
+
+| PyPI field | Value |
+| --- | --- |
+| PyPI Project Name | `anymd` |
+| Owner | `SylphxAI` |
+| Repository name | `anymd` |
+| Workflow name | `release.yml` |
+| Environment name | `pypi` |
+
+The project name matches the wheel metadata, not the npm scope. A valid GitHub
+token followed by PyPI's `invalid-publisher` error means PyPI could not match
+that job to a publisher. Check the account or project dashboard for a missing
+or mismatched record. Creating the GitHub `pypi` environment alone does not
+register anything on PyPI. There is no token fallback.
+
+After confirming the record, dispatch `release.yml` from `main` without a
+version bump. The job recovers the five wheels from the exact release if needed,
+then submits them via OIDC. It skips existing files and verifies that PyPI lists
+all five expected non-yanked wheels for the exact version before reporting
+success. If the initial probe already sees all five, the wheel build and publish
+are no-ops. Until this check passes in a production run, leave Python publication
+marked as pending on the install pages.
 
 ## Doc-VLM builds
 

@@ -16,10 +16,11 @@ from workflow_condition import condition, eligible, job
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def eligible_publisher(gate, result, built, cancelled, skipped_ancestor, visibility="public"):
+def eligible_publisher(gate, result, built, cancelled, skipped_ancestor, visibility="public", ref="refs/heads/main"):
     """Contract model; live skipped-ancestor counterexample: run 41438511024."""
     return eligible(gate, {
         "github.repository_visibility": visibility,
+        "github.ref": ref,
         "needs.wheels.result": result,
         "needs.wheels.outputs.built": built,
     }, success=not cancelled and not skipped_ancestor and result == "success", cancelled=cancelled)
@@ -47,9 +48,9 @@ class PyPIDelivery(unittest.TestCase):
         for case in itertools.product(
                 ("success", "failure", "cancelled", "skipped"),
                 ("true", "false", ""), (False, True), (False, True),
-                ("public", "private", "internal", "")):
-            result, built, cancelled, _, visibility = case
-            expected = (visibility == "public" and result == "success"
+                ("public", "private", "internal", ""), ("refs/heads/main", "refs/heads/feature", "refs/tags/v8.5.15")):
+            result, built, cancelled, _, visibility, ref = case
+            expected = (visibility == "public" and ref == "refs/heads/main" and result == "success"
                         and built == "true" and not cancelled)
             with self.subTest(case=case):
                 self.assertEqual(eligible_publisher(self.gate, *case), expected)
@@ -61,6 +62,7 @@ class PyPIDelivery(unittest.TestCase):
         self.assertIn("pypa/gh-action-pypi-publish@", self.pypi)
         self.assertIn("packages-dir: dist", self.pypi)
         self.assertIn("skip-existing: true", self.pypi)
+        self.assertLess(self.pypi.index("pypa/gh-action-pypi-publish@"), self.pypi.index("--verify-pypi"))
         self.assertEqual(len(re.findall(r"^    if:", self.pypi, re.M)), 1)
         for hidden_failure in ("continue-on-error", "secrets.", "password:", "username:"):
             self.assertNotIn(hidden_failure, self.pypi)

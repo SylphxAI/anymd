@@ -111,6 +111,26 @@ class RecoveryTests(unittest.TestCase):
                 self.assertIn(f"Version: {VERSION}", wheel.read(f"anymd-{VERSION}.dist-info/METADATA").decode())
         self.assertEqual(sum(call[:3] == ("gh", "attestation", "verify") for call in self.calls), 5)
 
+    def test_pypi_verifier_waits_for_partial_delivery(self):
+        with patch.object(recovery, "pypi_complete", side_effect=[False, False, True]) as probe, \
+             patch.object(recovery.time, "sleep") as sleep:
+            recovery.verify_pypi(VERSION)
+        self.assertEqual([call.args for call in probe.call_args_list], [(VERSION,)] * 3)
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [5, 10])
+
+    def test_pypi_verifier_fails_after_bounded_wait(self):
+        with patch.object(recovery, "pypi_complete", return_value=False) as probe, \
+             patch.object(recovery.time, "sleep"):
+            with self.assertRaisesRegex(ValueError, "did not confirm all 5 wheels"):
+                recovery.verify_pypi(VERSION)
+        self.assertEqual(probe.call_count, 5)
+
+    def test_pypi_verifier_does_not_hide_registry_errors(self):
+        with patch.object(recovery, "pypi_complete", side_effect=ValueError("wrong version")) as probe:
+            with self.assertRaisesRegex(ValueError, "wrong version"):
+                recovery.verify_pypi(VERSION)
+        probe.assert_called_once_with(VERSION)
+
     def test_complete_pypi_is_noop(self):
         self.assertFalse(self.deliver(complete=True))
         self.assertFalse(self.calls)

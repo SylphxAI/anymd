@@ -18,6 +18,7 @@ import stat
 import subprocess
 import tarfile
 import tempfile
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -60,6 +61,17 @@ def pypi_complete(version):
         if not entry.get("yanked", False):
             present.add(name)
     return present == expected
+
+
+def verify_pypi(version):
+    """Allow a bounded propagation window for the exact version's wheel set."""
+    for delay in (0, 5, 10, 20, 30):
+        if delay:
+            time.sleep(delay)
+        if pypi_complete(version):
+            print(f"verified all {len(PLATFORMS)} wheels for anymd {version} on PyPI")
+            return
+    raise ValueError(f"PyPI did not confirm all {len(PLATFORMS)} wheels for anymd {version}")
 
 
 def run(*args, cwd=None):
@@ -165,10 +177,15 @@ def image_source(artifacts, version):
     return sources[0]
 
 
-def deliver(root, artifacts, out):
+def release_version(root):
     version = json.loads((root / "packages/anymd/package.json").read_text())["version"]
     if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?", version):
         raise ValueError("invalid release version")
+    return version
+
+
+def deliver(root, artifacts, out):
+    version = release_version(root)
     binaries = [artifacts / f"native-{platform}" / exe for platform, _, exe in PLATFORMS]
     present = [binary.is_file() and binary.stat().st_size > 0 for binary in binaries]
     if any(binary.exists() for binary in binaries) and not all(present):
@@ -203,12 +220,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", type=Path, default=Path("artifacts"))
     parser.add_argument("--out", type=Path, default=Path("dist"))
-    parser.add_argument("--image-source", action="store_true", help="verify staged Linux identities and print their source")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--image-source", action="store_true", help="verify staged Linux identities and print their source")
+    mode.add_argument("--verify-pypi", action="store_true", help="verify the published version's wheel set on PyPI")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
+    if args.verify_pypi:
+        verify_pypi(release_version(root))
+        return
     if args.image_source:
-        version = json.loads((root / "packages/anymd/package.json").read_text())["version"]
-        print(image_source(args.artifacts.resolve(), version))
+        print(image_source(args.artifacts.resolve(), release_version(root)))
         return
     built = deliver(root, args.artifacts.resolve(), args.out.resolve())
     result = f"built={str(built).lower()}\n"
