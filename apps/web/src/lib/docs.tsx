@@ -3,7 +3,7 @@ import { HttpStatusCode } from '@solidjs/start';
 import { For, Show } from 'solid-js';
 import { PageMeta } from '@/components/page-meta';
 
-const nav = [['Getting started','getting-started'],['CLI','cli'],['MCP tools','tools'],['Formats','formats'],['Cite-check','cite-check'],['Video timeline','video-timeline'],['Benchmarks','benchmarks'],['Migration','migration']];
+const nav = [['Getting started','getting-started'],['CLI','cli'],['MCP tools','tools'],['Formats','formats'],['Cite-check','cite-check'],['Video timeline','video-timeline'],['Benchmarks','benchmarks'],['Migration','migration']] as const;
 
 export const loadDoc = query(async (slug: string, legacyDocs = false) => {
   'use server';
