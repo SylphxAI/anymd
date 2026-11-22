@@ -91,18 +91,11 @@ jobs:
           homebrew-tap: SylphxAI/homebrew-tap
           scoop-bucket: SylphxAI/scoop-bucket
 
-  # crates.io takes no git or path-only dependencies, so the two patched
-  # upstream forks and the internal crates are published first, in order
-  # (scripts/publish-crates.sh). A version already on crates.io is skipped, so
-  # every push to main is safe and a failed run can be rerun.
-  #
-  # crates.io mints a trusted-publishing credential only for a crate that
-  # already has a record, and the records are created by a dispatch of
-  # ensure-trusted-publishers.yml. Until that dispatch has covered the whole
-  # publish set, an ordinary push would fail this job before it publishes
-  # anything, so it runs only when release.yml is dispatched by hand.
+  # Reconcile independently of whether the shared workflow published to npm.
+  # Probe exact manifest versions before acquiring the crates.io credential.
+  # Missing crates are published in dependency order and read back.
   crates:
-    if: ${{ github.repository_visibility == 'public' && (github.event_name == 'workflow_dispatch' && needs.release.result == 'success') }}
+    if: ${{ !cancelled() && github.repository_visibility == 'public' && github.ref == 'refs/heads/main' && needs.release.result == 'success' }}
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -121,15 +114,17 @@ jobs:
         with:
           toolchain: '1.100.0'
 
+      - name: Check for missing crates.io versions
+        id: crates-plan
+        run: bash scripts/publish-crates.sh --plan >> "$GITHUB_OUTPUT"
+
       - name: Authenticate to crates.io with OIDC
         id: crates-auth
-        # Trusted publishing: crates.io issues a short-lived token for this
-        # exact workflow, repository and environment. No long-lived token is
-        # used or needed, and a missing record fails loudly here, before the
-        # job publishes anything.
+        if: steps.crates-plan.outputs.needed == 'true'
         uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
 
       - name: Publish to crates.io
+        if: steps.crates-plan.outputs.needed == 'true'
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-auth.outputs.token }}
         run: bash scripts/publish-crates.sh
@@ -503,7 +498,7 @@ jobs:
   # delivery is incomplete. No Rust rebuild.
   wheels:
     needs: [release, trust]
-    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.release.result == 'success') }}
+    if: ${{ !cancelled() && github.repository_visibility == 'public' && github.ref == 'refs/heads/main' && needs.release.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -554,13 +549,22 @@ jobs:
   # Complete versions are skipped by the wheel probe; missing authority fails.
   pypi:
     needs: wheels
-    if: ${{ github.repository_visibility == 'public' && (always() && !cancelled() && needs.wheels.result == 'success' && needs.wheels.outputs.built == 'true') }}
+    if: ${{ !cancelled() && github.repository_visibility == 'public' && github.ref == 'refs/heads/main' && needs.wheels.result == 'success' && needs.wheels.outputs.built == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: pypi
     permissions:
+      contents: read
       id-token: write
     steps:
+      - name: Checkout the registry verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/recover-wheels.py
+            packages/anymd/package.json
+
       - name: Download the wheels
         uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
         with:
@@ -573,6 +577,9 @@ jobs:
         with:
           packages-dir: dist
           skip-existing: true
+
+      - name: Verify the published wheel set on PyPI
+        run: python3 scripts/recover-wheels.py --verify-pypi
 
   # Multi-arch image on GHCR from the release's Linux binaries (no Rust
   # compile), tagged with the version and latest.
