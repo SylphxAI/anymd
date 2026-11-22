@@ -26,9 +26,9 @@ __pycache__/
 # Local benchmark and regression corpora (bench/fetch.py, scripts/fetch-markdown-corpus.sh)
 .cache/
 
-# Next.js and browser-test output
-apps/web/.next/
-apps/web/next-env.d.ts
+# SolidStart and browser-test output
+apps/web/.output/
+apps/web/.nitro/
 apps/web/*.tsbuildinfo
 apps/web/test-results/
 apps/web/playwright-report/

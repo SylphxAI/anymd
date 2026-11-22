@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes, timingSafeEqual } from 'node:crypto';
 
-export const challengePattern = /^[a-f0-9]{64}$/;
-export const statePattern = /^[a-f0-9]{32}$/;
+import { challengePattern } from './cli-params';
+export { challengePattern, statePattern } from './cli-params';
 const lifetime = 60_000;
 const aad = 'anymd-cli-grant/v1';
 

@@ -1,5 +1,6 @@
 **/node_modules
-**/.next
+**/.output
+**/.nitro
 **/target
 **/__pycache__
 **/.env*

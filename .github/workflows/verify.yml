@@ -127,7 +127,10 @@ jobs:
         with:
           tool: wasm-bindgen@0.2.130
 
-      - name: Build standalone Next web app with WASM
+      - name: Typecheck web
+        run: python3 scripts/render-web-money.py && bun run --cwd apps/web typecheck
+
+      - name: Build SolidStart web app with WASM
         run: bun run web:wasm && bun run web:build
 
       - name: Check legacy redirects

@@ -39,7 +39,7 @@ def build(out):
         if route:
             (out / f'{route}.html').write_text(page(dst), encoding='utf-8')
     (out / '404.html').write_text(page('/', fallback=True), encoding='utf-8')
-    # One URL-only pointer for non-browser clients; the actual index is on Next.
+    # One URL-only pointer for non-browser clients; the actual index is on the canonical web app.
     (out / 'llms.txt').write_text(f'Anymd moved: {ORIGIN}/llms.txt\n', encoding='utf-8')
 
 

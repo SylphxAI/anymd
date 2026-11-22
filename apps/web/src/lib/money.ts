@@ -1,4 +1,3 @@
-import 'server-only';
 import { type Config, moneyAccessToken, requireAuth, session, type User } from './auth';
 import { appOrigin, canonicalOrigin, HttpError } from './http';
 import { productionMoney } from './money-production.generated';

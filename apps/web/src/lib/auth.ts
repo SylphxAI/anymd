@@ -1,6 +1,5 @@
-import 'server-only';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { cookies } from 'next/headers';
+import { getCookie, setCookie } from '@solidjs/start/http';
 import { parseCapabilities } from './auth-capabilities';
 import { appOrigin, asText, HttpError, safeNext } from './http';
 
@@ -71,12 +70,12 @@ export async function verifySessionUser(config: Config, request: Request, token:
 }
 
 export async function session(request: Request, config: Config) {
-  const token = await sessionToken();
+  const token = sessionToken();
   if (!token) return null;
   const user = await verifySessionUser(config, request, token);
   return user ? { user, token } : null;
 }
-export async function sessionToken() { return (await cookies()).get(sessionName)?.value; }
+function sessionToken() { return getCookie(sessionName); }
 
 export async function moneyAccessToken(request: Request, config: Config, token: string) {
   const body = await authCall(config, request, '/v1/client/token', token, {}, true);
@@ -90,7 +89,7 @@ export async function acceptTicket(request: Request, config: Config, ticket: unk
   const body = await authCall(config, request, '/v1/client/tickets:redeem', config.sk, {ticket});
   const token = asText(body?.session?.token);
   if (!token || !await verifySessionUser(config, request, token)) throw new HttpError(401, 'auth_refused');
-  (await cookies()).set(sessionName, token, cookieOptions(request, '/', 30 * 86400));
+  setCookie(sessionName, token, cookieOptions(request, '/', 30 * 86400));
 }
 
 export function cookieOptions(request: Request, path: string, maxAge: number) {
@@ -99,8 +98,8 @@ export function cookieOptions(request: Request, path: string, maxAge: number) {
 
 export async function signOut(request: Request) {
   const config = authConfig();
-  const token = await sessionToken();
-  (await cookies()).set(sessionName, '', cookieOptions(request, '/', 0));
+  const token = sessionToken();
+  setCookie(sessionName, '', cookieOptions(request, '/', 0));
   if (config && token) await authCall(config, request, '/v1/client/sign-out', token, {}).catch(() => {});
 }
 
@@ -121,14 +120,13 @@ export async function oauthStart(request: Request, config: Config, provider: 'go
   const next = safeNext(new URL(request.url).searchParams.get('next'));
   const origin = appOrigin(request);
   const payload = Buffer.from(JSON.stringify({nonce, next, exp: Date.now() + 600_000})).toString('base64url');
-  (await cookies()).set(stateCookie, `${payload}.${stateMac(config, origin, payload)}`, cookieOptions(request, statePath, 600));
+  setCookie(stateCookie, `${payload}.${stateMac(config, origin, payload)}`, cookieOptions(request, statePath, 600));
   const callback = `${origin}${statePath}?state=${nonce}`;
   return `${config.origin}/v1/client/oauth/${provider}/start?${new URLSearchParams({publishable_key: config.pk, redirect_url: callback, session_mode:'server'})}`;
 }
 export async function oauthFinish(request: Request, config: Config) {
-  const jar = await cookies();
-  const [payload, mac] = (jar.get(stateCookie)?.value ?? '').split('.');
-  jar.set(stateCookie, '', cookieOptions(request, statePath, 0));
+  const [payload, mac] = (getCookie(stateCookie) ?? '').split('.');
+  setCookie(stateCookie, '', cookieOptions(request, statePath, 0));
   const expected = Buffer.from(stateMac(config, appOrigin(request), payload));
   if (!mac || mac.length !== expected.length || !timingSafeEqual(Buffer.from(mac), expected)) throw new HttpError(401, 'auth_refused');
   const state = JSON.parse(Buffer.from(payload, 'base64url').toString());

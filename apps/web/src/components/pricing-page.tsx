@@ -1,0 +1,38 @@
+import { PageMeta } from '@/components/page-meta';
+import { useSearchParams } from '@solidjs/router';
+import { single } from '@/lib/request-query';
+import { Check } from 'lucide-solid';
+import { A } from '@solidjs/router';
+import { Checkout } from '@/components/commerce';
+
+
+const freeFeatures = [
+  'PDF, Office, EPUB, web and media conversion',
+  'Command-line tools and MCP server',
+  'Page boundaries and structured Markdown',
+];
+const proFeatures = [
+  'Everything in Free OSS',
+  'PDF cite-check with exact page & bounding-box proof',
+  'Hashed video-frame timeline extraction & citations',
+  'Local CLI & MCP sync via anymd login across your machines · 100-year licence',
+];
+
+function PlanFeatures({ points }: { points: string[] }) {
+  return <ul class="stack my-3">{points.map((point) => <li class="flex gap-2"><Check aria-hidden="true" size={17} class="mt-1 shrink-0 text-[var(--accent)]" />{point}</li>)}</ul>;
+}
+
+export function Pricing(props: { title?: string }) {
+  const [query] = useSearchParams();
+  const sessionId = () => single(query.session_id);
+  return <section class="wrap page-shell"><PageMeta title={props.title ?? 'Pricing'} canonical="/pricing" />
+    <header class="page-heading"><span class="eyebrow">PLANS / 01</span><h1>Open source first.</h1><p>Convert documents for free. Add Pro when you need to show exactly where a quote or video frame came from.</p></header>
+    {query.checkout === 'cancelled' && <p role="status" class="notice mb-5">Checkout was closed. No changes were made to your plan.</p>}
+    {sessionId() && <p class="notice mb-5"><A class="inline-link" href={'/recover?session_id=' + encodeURIComponent(sessionId() ?? '')}>Check or link your purchase</A></p>}
+    <div class="columns">
+      <article class="panel stack"><span class="eyebrow">CORE TOOLKIT</span><h2>Free OSS</h2><div class="price">Free</div><p class="muted">MIT licensed. Run locally, with no account or API key.</p><PlanFeatures points={freeFeatures} /><A class="button justify-self-start" href="/docs">Install MCP / CLI</A></article>
+      <article class="panel stack"><span class="eyebrow">SOURCE VERIFICATION</span><h2>Anymd Pro</h2><PlanFeatures points={proFeatures} /><Checkout /></article>
+    </div>
+    <p class="mt-6 muted">Already purchased? <A href="/recover" class="inline-link">Link a previous purchase</A>.</p>
+  </section>;
+}

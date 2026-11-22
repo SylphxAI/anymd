@@ -27,6 +27,22 @@ test('converts a local document and locates an exact source quote', async ({ pag
   await expect(page.getByText(/No exact match/i)).toBeVisible();
 });
 
+test('converts a dropped document without sending it to the server', async ({ page }) => {
+  await page.goto('/studio');
+  const dataTransfer = await page.evaluateHandle(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(['<h1>Local drop fixture</h1>'], 'local.html', { type: 'text/html' }));
+    return transfer;
+  });
+  const writes: string[] = [];
+  page.context().on('request', (request) => {
+    if (!['GET', 'HEAD'].includes(request.method())) writes.push(request.url());
+  });
+  await page.getByText('Drop a document here', { exact: true }).dispatchEvent('drop', { dataTransfer });
+  await expect(page.getByLabel('Markdown output')).toContainText('# Local drop fixture');
+  expect(writes).toEqual([]);
+});
+
 test('CLI consent page strips the query without suppressing the form origin', async ({ page }) => {
   await page.goto('/cli-auth');
   await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'strict-origin');
