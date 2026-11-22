@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/release.yml"
-KIT = "be0572b016902c1f2e40f8db336dc7012a0288b6"
+KIT = "c91f178e6dc73835cca9929d7daa7979fd3a7a4b"
 
 
 def job(workflow, name):
