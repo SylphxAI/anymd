@@ -13,6 +13,9 @@ test('conversion requires an explicit choice and GPC always wins', () => {
 
 test('only known public entry surfaces leave the browser', () => {
   assert.equal(checkoutSurface('/pricing','?entry_surface=studio_cite_preview'), 'studio_cite_preview');
+  assert.equal(checkoutSurface('/pricing','?entry_surface=cli_pdf'), 'cli_pdf');
+  assert.equal(checkoutSurface('/pricing','?entry_surface=cli_video'), 'cli_video');
+  assert.equal(checkoutSurface('/pricing','?entry_surface=cli_unrecognized'), 'pricing');
   assert.equal(checkoutSurface('/pro','?entry_surface=seo_vs-marker&entry_surface=npm_citra'), 'pro');
   assert.equal(checkoutSurface('/pricing','?entry_surface=seo_private-investor-name&email=secret%40example.invalid'), 'pricing');
 });

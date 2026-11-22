@@ -173,13 +173,13 @@ test('consented checkout emits begin_checkout but the return never measures a pu
     const event = entries.map(args => Array.from(args)).find(args => args[0] === 'event' && args[1] === 'begin_checkout');
     if (event) sessionStorage.setItem('test.checkout.event', JSON.stringify(event));
   }));
-  await page.goto('/pricing?entry_surface=studio_cite_preview&email=private%40example.invalid');
+  await page.goto('/pricing?entry_surface=cli_pdf&email=private%40example.invalid');
   await panel(page).getByRole('button', {name:'Analytics only'}).click();
   await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
   await page.getByLabel('Email address').fill('test@example.invalid');
   await page.getByRole('button', {name:'Continue', exact:true}).click();
   await page.getByLabel('6-digit code').fill('123456');
-  await expect(page).toHaveURL('/pricing?entry_surface=studio_cite_preview');
+  await expect(page).toHaveURL('/pricing?entry_surface=cli_pdf');
   await expect.poll(async () => (await events(page, 'pricing_view')).length).toBe(1);
   const processorSessionId = 'cs_test_Fixture123';
   const thanks = '/pro/thanks?session_id=' + processorSessionId;
@@ -197,7 +197,7 @@ test('consented checkout emits begin_checkout but the return never measures a pu
   expect(await events(page, 'purchase')).toEqual([]);
   const start = await page.evaluate(() => JSON.parse(sessionStorage.getItem('test.checkout.event') || 'null'));
   expect(start).toEqual(['event', 'begin_checkout', {
-    value:29, currency:'USD', plan_sku:'anymd_pro', entry_surface:'studio_cite_preview',
+    value:29, currency:'USD', plan_sku:'anymd_pro', entry_surface:'cli_pdf',
     items:[{item_id:'anymd_pro', item_name:'Anymd Pro', quantity:1, price:29}],
     event_timeout:250, page_location:origin + '/pricing', page_referrer:'', page_title:'Anymd', send_to:'G-R4TD2Z8RR7',
   }]);

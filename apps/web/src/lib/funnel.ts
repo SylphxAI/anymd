@@ -3,7 +3,7 @@ import type { Choice } from './consent';
 
 // Only product-owned labels may leave the browser. Never send raw URL input.
 const surfaces = [
-  'pricing', 'pro', 'studio_cite_preview', 'npm_citra', 'npm_pdf_reader_mcp',
+  'pricing', 'pro', 'studio_cite_preview', 'cli_pdf', 'cli_video', 'npm_citra', 'npm_pdf_reader_mcp',
   'seo_pdf-and-office-to-markdown-mcp', 'seo_verifiable-video-and-cite-check-ai-agents',
   'seo_vs-docling', 'seo_vs-hub', 'seo_vs-kreuzberg', 'seo_vs-llamaparse',
   'seo_vs-markdownify-mcp', 'seo_vs-marker', 'seo_vs-markitdown',
