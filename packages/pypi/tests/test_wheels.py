@@ -114,6 +114,10 @@ assert convert(sys.argv[1]).text == 'matching wheel\\n'
                             )
                         )
                         self.assertEqual(metadata["Requires-Python"], ">=3.8")
+                        self.assertIn(
+                            "Homepage, https://anymd.sylphx.com",
+                            metadata.get_all("Project-URL"),
+                        )
                         record = list(
                             csv.reader(
                                 io.StringIO(archive.read(info + "RECORD").decode())

@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version = "1.95"
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
 description = "anymd: any file to clean Markdown for AI agents. Pure-Rust MCP server + CLI binary for @sylphx/anymd"
 authors.workspace = true
 readme.workspace = true

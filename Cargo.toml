@@ -17,6 +17,7 @@ version = "8.5.14"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/SylphxAI/anymd"
+homepage = "https://anymd.sylphx.com"
 authors = ["Sylphx <hi@sylphx.com>"]
 readme = "README.md"
 

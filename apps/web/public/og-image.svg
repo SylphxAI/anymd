@@ -41,5 +41,5 @@
   <text x="160" y="560" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="26" fill="#eaf2dd">npx -y @sylphx/anymd</text>
 
   <!-- url -->
-  <text x="1104" y="560" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" fill="#7d8a72">sylphxai.github.io/anymd</text>
+  <text x="1104" y="560" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" fill="#7d8a72">anymd.sylphx.com</text>
 </svg>

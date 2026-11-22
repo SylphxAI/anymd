@@ -130,7 +130,7 @@ The anymd core stays free and open source (MIT), forever; nothing that was free 
 
 ### Minor Changes
 
-- anymd Pro licence check. `anymd pro status` and `anymd pro activate <token>` manage an offline-verified (Ed25519) licence, read from `ANYMD_PRO_TOKEN` or `<config dir>/anymd/pro-token`. Pro unlocks only the new operations below; everything that was free before 8.4.0 stays free, MIT and ungated. Without a licence, the Pro operations return a short message with the link instead of doing any work. See [anymd Pro](https://sylphxai.github.io/anymd/pro).
+- anymd Pro licence check. `anymd pro status` and `anymd pro activate <token>` manage an offline-verified (Ed25519) licence, read from `ANYMD_PRO_TOKEN` or `<config dir>/anymd/pro-token`. Pro unlocks only the new operations below; everything that was free before 8.4.0 stays free, MIT and ungated. Without a licence, the Pro operations return a short message with the link instead of doing any work. See [anymd Pro](https://anymd.sylphx.com/pro).
 
 - (anymd Pro) Add bounded local video timelines and decoded frames to `inspect`, with matching `read` and `outline` projections. Cuts are heuristic FFmpeg scene-score 0.4 detections, not semantic scenes or confidence values. Chapters and timed subtitle/ASR cues retain their playback clock and source hash. Optional OCR and captions are sampled single-frame observations; OCR reuses the existing request permit, and captions need a user-configured local-command adapter, with no built-in captioning. Malformed subtitle files become a subtitles gap instead of failing the request. Frames, manifests and successful captions share the existing generated-image cache budget. Ordinary reads remain unchanged without `timeline`.
 
@@ -245,7 +245,7 @@ The anymd core stays free and open source (MIT), forever; nothing that was free 
   
   - The npm package is now `@sylphx/anymd` with the `anymd` bin; the MCP registry
     name is `io.github.SylphxAI/anymd`; the repository is `SylphxAI/anymd`; docs
-    live at https://sylphxai.github.io/anymd/.
+    are at <https://anymd.sylphx.com>.
   - Native optional packages are renamed `@sylphx/anymd-<platform>` and ship the
     binary `anymd` (`anymd.exe` on Windows).
   - The MCP server identifies itself as `anymd`.
