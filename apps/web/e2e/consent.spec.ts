@@ -269,12 +269,21 @@ for (const [scenario, choice, country, gpc] of [
       }
       const callback = page.waitForResponse(response => new URL(response.url()).pathname === '/api/auth/callback');
       const trace = page.waitForResponse('**/cdn-cgi/trace');
-      await page.goto(live ? '/api/auth/callback' : '/api/auth/google?next=' + encodeURIComponent(next));
+      const landing = await page.goto(live ? '/api/auth/callback' : '/api/auth/google?next=' + encodeURIComponent(next));
       const response = await callback;
       expect(response.status()).toBe(303);
-      const handoff = (await response.headerValues('set-cookie')).filter(value => value.startsWith(signupCookie + '='));
-      if (signUp) expect(handoff).toEqual([expect.stringMatching(/^anymd_signup=google\.cli_video;/)]);
-      else expect(handoff).toEqual([]);
+      if (live) {
+        // Chromium applies the stub's cookie even though Playwright omits
+        // Set-Cookie from the fulfilled response. Check the landing request.
+        expect(landing?.ok()).toBe(true);
+        const jar = await landing?.request().headerValue('cookie');
+        const handoff = (jar ?? '').split(';').map(cookie => cookie.trim()).filter(cookie => cookie.startsWith(signupCookie + '='));
+        expect(handoff).toEqual(signUp ? [signupCookie + '=google.cli_video'] : []);
+      } else {
+        const handoff = (await response.headerValues('set-cookie')).filter(value => value.startsWith(signupCookie + '='));
+        if (signUp) expect(handoff).toEqual([expect.stringMatching(/^anymd_signup=google\.cli_video;/)]);
+        else expect(handoff).toEqual([]);
+      }
       await trace;
       await expect(page).toHaveURL(next);
       if (gaAllowed) await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
