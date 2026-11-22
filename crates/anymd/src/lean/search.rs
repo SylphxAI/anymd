@@ -2,7 +2,7 @@
 
 use rmcp::model::CallToolResult;
 
-use crate::document::Unit;
+use crate::document::{EvidenceKind, Unit};
 use crate::schema::{PdfSource, SearchArgs, SearchPdfArgs};
 use crate::source_access::SourceAccessPolicy;
 
@@ -19,6 +19,13 @@ pub fn search(
     args: &SearchArgs,
     policy: &SourceAccessPolicy,
 ) -> Result<CallToolResult, rmcp::ErrorData> {
+    search_with_evidence(args, policy).map(|(result, _)| result)
+}
+
+pub(crate) fn search_with_evidence(
+    args: &SearchArgs,
+    policy: &SourceAccessPolicy,
+) -> Result<(CallToolResult, Option<EvidenceKind>), rmcp::ErrorData> {
     let mode = args.mode.as_deref().unwrap_or("auto").to_ascii_lowercase();
     if !matches!(mode.as_str(), "auto" | "literal" | "ranked") {
         return Err(rmcp::ErrorData::invalid_params(
@@ -65,6 +72,7 @@ pub fn search_pdf(
         },
         policy,
     )
+    .map(|(result, _)| result)
 }
 
 /// True when search needs the geometry/OCR JSON route.
@@ -86,7 +94,7 @@ fn run_search(
     mode: &str,
     options: SearchOptions,
     policy: &SourceAccessPolicy,
-) -> Result<CallToolResult, rmcp::ErrorData> {
+) -> Result<(CallToolResult, Option<EvidenceKind>), rmcp::ErrorData> {
     let query = query.trim();
     if query.is_empty() {
         return Err(rmcp::ErrorData::invalid_params(
@@ -102,9 +110,10 @@ fn run_search(
         for note in notes {
             out.push_str(&format!("- {note}\n"));
         }
-        return Ok(finish(out, true));
+        return Ok((finish(out, true), None));
     }
     let docs = load_search_docs(files, policy, &mut notes);
+    let evidence = docs.iter().find_map(|doc| doc.evidence);
     let units_searched: usize = docs.iter().map(|d| d.units.len()).sum();
     let scope = format!(
         "{} file{}, {} section{} searched",
@@ -191,7 +200,7 @@ fn run_search(
         out.push_str(&notes.join("; "));
         out.push_str(" -->\n");
     }
-    Ok(finish(out, docs.is_empty()))
+    Ok((finish(out, docs.is_empty()), evidence))
 }
 
 fn hit_locator(hit: &Hit<'_>) -> String {

@@ -74,6 +74,31 @@ pub struct Opened {
     ocr_ran: Mutex<Vec<u32>>,
 }
 
+/// Evidence relevant to the CLI, derived from the opened source rather than
+/// its filename or the rendered output.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EvidenceKind {
+    MultiPagePdf,
+    Video,
+}
+
+impl Opened {
+    pub(crate) fn evidence_kind(&self, units_processed: usize) -> Option<EvidenceKind> {
+        match self.format {
+            "pdf" if units_processed > 1 => Some(EvidenceKind::MultiPagePdf),
+            "video"
+                if self
+                    .metadata
+                    .iter()
+                    .any(|(key, value)| key == "kind" && value == "video") =>
+            {
+                Some(EvidenceKind::Video)
+            }
+            _ => None,
+        }
+    }
+}
+
 /// A source spec is a URL when it starts with http:// or https://.
 pub fn is_url(spec: &str) -> bool {
     let lower = spec.trim_start().to_ascii_lowercase();

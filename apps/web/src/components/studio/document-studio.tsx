@@ -1,5 +1,5 @@
 import { ArrowRight, Braces, Check, FileText, LockKeyhole, Upload } from 'lucide-solid';
-import { A } from '@solidjs/router';
+import CitePreview from './cite-preview';
 import { createSignal, onCleanup, Show } from 'solid-js';
 import { CopyButton } from '../copy';
 
@@ -104,6 +104,6 @@ export default function DocumentStudio(props: { compact?: boolean }) {
       <button class="button justify-self-start" type="submit">Find quote <ArrowRight size={15} /></button>
       {match() && <p class="notice" role="status">{match()?.length ? <><Check class="inline" size={16} /> Found in {match()?.join(', ')}.</> : 'No exact match within a single source unit.'}</p>}
     </form>}
-    {!props.compact && <div class="studio-bottom studio-upgrade"><span>Need PDF evidence or hashed video frames? Use the native CLI or MCP server.</span><A class="inline-link" href="/pricing">See Anymd Pro <ArrowRight size={14} /></A></div>}
+    {!props.compact && <CitePreview />}
   </div>;
 }

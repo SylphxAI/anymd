@@ -312,6 +312,13 @@ fn headings(markdown: &str) -> Vec<(usize, String, usize)> {
 }
 
 pub fn render(args: &OutlineArgs, policy: &SourceAccessPolicy) -> Result<String, String> {
+    render_with_evidence(args, policy).map(|(text, _)| text)
+}
+
+pub(crate) fn render_with_evidence(
+    args: &OutlineArgs,
+    policy: &SourceAccessPolicy,
+) -> Result<(String, Option<crate::document::EvidenceKind>), String> {
     if !matches!(args.format.as_deref(), None | Some("json" | "tree")) {
         return Err("format must be json or tree".into());
     }
@@ -354,11 +361,12 @@ pub fn render(args: &OutlineArgs, policy: &SourceAccessPolicy) -> Result<String,
         Opened::open(&args.source, policy, &options)?
     };
     let outline = Outline::build(&opened)?;
-    if args.format.as_deref() == Some("tree") {
-        Ok(outline.tree())
+    let text = if args.format.as_deref() == Some("tree") {
+        outline.tree()
     } else {
-        serde_json::to_string_pretty(&outline).map_err(|e| e.to_string())
-    }
+        serde_json::to_string_pretty(&outline).map_err(|e| e.to_string())?
+    };
+    Ok((text, opened.evidence_kind(opened.total as usize)))
 }
 
 pub fn tool(

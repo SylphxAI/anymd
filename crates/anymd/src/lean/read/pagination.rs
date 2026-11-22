@@ -70,6 +70,7 @@ pub(in crate::lean) struct SourceRead {
     pub(in crate::lean) header: Vec<(String, String)>,
     pub(in crate::lean) body: String,
     pub(in crate::lean) next: Option<Cursor>,
+    pub(in crate::lean) shown: usize,
     pub(in crate::lean) error: Option<String>,
 }
 
@@ -86,6 +87,7 @@ pub(in crate::lean) fn failed(label: &str, message: String) -> SourceRead {
         ],
         body: String::new(),
         next: None,
+        shown: 0,
         error: Some(message),
     }
 }
@@ -141,6 +143,7 @@ pub(in crate::lean) fn read_opened(
             header,
             body: String::new(),
             next: None,
+            shown: 0,
             error: Some(message),
         };
     }
@@ -340,6 +343,7 @@ Install `tesseract` for automatic OCR, or pass ocr: true. -->\n\n",
         header,
         body,
         next,
+        shown: shown.len(),
         error: None,
     }
 }

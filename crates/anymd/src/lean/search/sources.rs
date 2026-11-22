@@ -15,6 +15,7 @@ pub(super) struct SearchDoc {
     pub(super) noun: &'static str,
     pub(super) total: u32,
     pub(super) units: std::sync::Arc<Vec<Unit>>,
+    pub(super) evidence: Option<crate::document::EvidenceKind>,
     pub(super) outline: crate::outline::Outline,
 }
 
@@ -111,6 +112,7 @@ pub(super) fn load_search_docs(
                                     label: label.clone(),
                                     noun: opened.unit_noun,
                                     total: opened.total,
+                                    evidence: opened.evidence_kind(units.len()),
                                     units,
                                     outline,
                                 })

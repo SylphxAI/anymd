@@ -6,7 +6,7 @@ use anymd_core::text_rules::yaml_value;
 use ignore::WalkBuilder;
 use rmcp::model::CallToolResult;
 
-use crate::document::{is_url, readable_extension, OpenOptions, Opened};
+use crate::document::{is_url, readable_extension, EvidenceKind, OpenOptions, Opened};
 use crate::page_selection::selected_pages;
 use crate::schema::{PageSpecifier, PdfSource, ReadArgs, ReadPdfArgs};
 use crate::source_access::SourceAccessPolicy;
@@ -53,6 +53,14 @@ pub fn read_text(
     policy: &SourceAccessPolicy,
     render: &ReadRender,
 ) -> Result<(String, bool), String> {
+    read_text_with_evidence(args, policy, render).map(|(text, failed, _)| (text, failed))
+}
+
+pub(crate) fn read_text_with_evidence(
+    args: &ReadArgs,
+    policy: &SourceAccessPolicy,
+    render: &ReadRender,
+) -> Result<(String, bool, Option<EvidenceKind>), String> {
     let budget = match (args.max_tokens, render.unlimited) {
         (None, true) => usize::MAX,
         (value, _) => budget_from(value),
@@ -101,7 +109,7 @@ pub fn read_text(
             if args.node.is_some() {
                 return Err("node requires a document, not a directory".into());
             }
-            return Ok((list_directory(source, Path::new(&admitted)), false));
+            return Ok((list_directory(source, Path::new(&admitted)), false, None));
         }
     }
     let inherits_env = matches!(
@@ -135,23 +143,27 @@ pub fn read_text(
         Some(evidence) => Ok(Opened::from_video(source, &evidence)),
         None => Opened::open(source, policy, &options),
     };
-    let read = match opened {
-        Ok(mut opened) => read_opened(
-            &mut opened,
-            selection,
-            cursor,
-            budget,
-            cursor.is_none(),
-            args.node.as_deref(),
-        ),
-        Err(message) => failed(source, message),
+    let (read, evidence) = match opened {
+        Ok(mut opened) => {
+            let read = read_opened(
+                &mut opened,
+                selection,
+                cursor,
+                budget,
+                cursor.is_none(),
+                args.node.as_deref(),
+            );
+            let evidence = opened.evidence_kind(read.shown);
+            (read, evidence)
+        }
+        Err(message) => (failed(source, message), None),
     };
     if read
         .error
         .as_deref()
         .is_some_and(crate::ocr_vlm::is_setup_notice)
     {
-        return Ok((format!("{}\n", crate::ocr_vlm::SETUP_NOTICE), true));
+        return Ok((format!("{}\n", crate::ocr_vlm::SETUP_NOTICE), true, None));
     }
     let mut out = if render.front_matter || read.error.is_some() {
         front_matter(&read.header)
@@ -169,7 +181,11 @@ pub fn read_text(
             None => note,
         });
     }
-    Ok((out.trim_end().to_string() + "\n", read.error.is_some()))
+    Ok((
+        out.trim_end().to_string() + "\n",
+        read.error.is_some(),
+        evidence,
+    ))
 }
 
 fn list_directory(label: &str, root: &Path) -> String {

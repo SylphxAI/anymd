@@ -1,0 +1,13 @@
+{
+  "page": 1,
+  "bbox": {
+    "bottom": 729.75,
+    "left": 27.75,
+    "right": 246.4334,
+    "top": 751.7475
+  },
+  "quote": "Quarterly Field Report",
+  "sha256": "f1042ff682abe03d2fd508f4ed252e9e206a2ca69f826af76c375b991a848b03",
+  "verdict": "verified_exact",
+  "geometry_level": "char_estimated"
+}
