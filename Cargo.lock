@@ -151,7 +151,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "anymd"
-version = "8.5.14"
+version = "8.5.15"
 dependencies = [
  "anyhow",
  "anymd-core",
@@ -190,7 +190,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-core"
-version = "8.5.14"
+version = "8.5.15"
 dependencies = [
  "anymd-pdf",
  "anymd-pdf-extract",
@@ -213,7 +213,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-formats"
-version = "8.5.14"
+version = "8.5.15"
 dependencies = [
  "calamine",
  "csv",
@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-ocr-vlm"
-version = "8.5.14"
+version = "8.5.15"
 dependencies = [
  "anyhow",
  "anymd-oar-ocr-vl",
@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-pdf"
-version = "8.5.14"
+version = "8.5.15"
 dependencies = [
  "anymd-pdf-extract",
  "flate2",
@@ -303,7 +303,7 @@ dependencies = [
 
 [[package]]
 name = "anymd-wasm"
-version = "8.5.14"
+version = "8.5.15"
 dependencies = [
  "anymd-core",
  "anymd-formats",

@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.5.15
+
+### Patch Changes
+
+- Use <https://anymd.sylphx.com> as the homepage in public package and registry metadata.
+- Pass the positional argument `mcp` when clients launch anymd from the Official MCP Registry listing.
+
 ## 8.5.14
 
 ### Patch Changes
