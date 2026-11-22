@@ -199,9 +199,12 @@ test('the compact consent bar leaves conversion controls reachable without a cho
     const box = (await bar.boundingBox())!;
     expect(box.height, path).toBeLessThanOrEqual(mobile ? 104 : 72);
     expect(await page.locator('#app').evaluate(el => Number.parseInt(getComputedStyle(el).paddingBottom, 10))).toBeGreaterThanOrEqual(box.height);
-    for (const control of controls()) {
+    const items = controls();
+    for (const control of items) {
       await expect(control).toBeVisible();
       expect.soft(boxesOverlap((await control.boundingBox())!, box), `${path} ${await control.textContent()} at rest`).toBe(false);
+    }
+    for (const control of items) {
       await control.evaluate(el => el.scrollIntoView({block:'center'}));
       expect(boxesOverlap((await control.boundingBox())!, (await bar.boundingBox())!)).toBe(false);
       if ((await control.getAttribute('href')) !== null) await control.click({trial:true});

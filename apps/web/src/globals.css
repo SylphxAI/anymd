@@ -211,6 +211,10 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
   .comparison-table { font-size:.875rem; }
 }
 
+@media(min-width:691px) {
+  .pricing-page { padding-top:42px; }
+  .pricing-page .page-heading { margin-bottom:20px; }
+}
 .pricing-page .columns > .panel { gap:12px; }
 .pricing-page .columns h2 { margin-bottom:2px; }
 .plan-features { display:grid; gap:8px; margin-block:6px; }
