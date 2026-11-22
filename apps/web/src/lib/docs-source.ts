@@ -35,6 +35,10 @@ md.renderer.rules.link_open = (tokens, index, options, env, self) => {
     const target = localUrl(String(href), slug);
     link.attrSet('href', target);
     if (isBackendHref(target, canonicalOrigin)) link.attrJoin('rel', 'external');
+    // Bold pricing links are CTA buttons; ordinary inline links keep prose styling.
+    if (target.startsWith('/pricing?entry_surface=seo_') && tokens[index - 1]?.type === 'strong_open') {
+      link.attrJoin('class', 'button button-primary font-semibold! text-[var(--accent-ink)]! no-underline!');
+    }
   }
   return self.renderToken(tokens, index, options);
 };

@@ -5,17 +5,13 @@ description: "Fast local Rust MCP server and CLI turning PDF, DOCX, PPTX, XLSX, 
 image: https://anymd.sylphx.com/og-image.png
 ---
 
-<p class="pro-trust">Free MIT Rust MCP server &amp; CLI · No API key</p>
+Free MIT Rust MCP server & CLI · No API key
 
 # Any file to clean Markdown for AI agents—locally in milliseconds.
 
-Python document converters take minutes to load models or scramble multi-column PDFs and tables. `anymd` is a native Rust binary and MCP server that parses PDF, Word, PowerPoint, Excel, EPUB, HTML, OCR images, and audio/video directly on your machine—scoring **96.4** across 38 documents in **11.5 seconds** on [AgentDocBench](/guide/benchmarks?entry_surface=seo_pdf-and-office-to-markdown-mcp).
+Python document converters take minutes to load models or scramble multi-column PDFs and tables. `anymd` is a native Rust binary and MCP server that parses PDF, Word, PowerPoint, Excel, EPUB, HTML, OCR images, and audio/video directly on your machine—scoring **96.4** across 38 documents in **11.5 seconds** on [AgentDocBench](/docs/benchmarks?entry_surface=seo_pdf-and-office-to-markdown-mcp).
 
-<p>
-  <a class="pro-buy" href="/anymd/guide/getting-started?entry_surface=seo_pdf-and-office-to-markdown-mcp">Install via npx -y @sylphx/anymd setup</a>
-  &nbsp;&nbsp;
-  <a href="/anymd/guide/benchmarks?entry_surface=seo_pdf-and-office-to-markdown-mcp">See AgentDocBench results</a>
-</p>
+[Install via npx -y @sylphx/anymd setup](/docs?entry_surface=seo_pdf-and-office-to-markdown-mcp) &nbsp;&nbsp; [See AgentDocBench results](/docs/benchmarks?entry_surface=seo_pdf-and-office-to-markdown-mcp)
 
 ## Why teams switch to `anymd`
 
@@ -29,7 +25,7 @@ Run `npx -y @sylphx/anymd setup` (or install via `cargo install anymd`, `brew in
 
 ### 3. 100% local privacy—plus verifiable PDF quote checks and video frames with Pro
 
-Files stay on your machine (`--allow-dir` locks MCP scope to one folder). Need deterministic PDF quote verification (`cite_check`) or SHA-256 verifiable video frames? [anymd Pro](https://anymd.sylphx.com/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp) unlocks both offline in the same binary for a one-time **US$29** payment. See [Local core and anymd Pro](/guide/hosted?entry_surface=seo_pdf-and-office-to-markdown-mcp).
+Files stay on your machine (`--allow-dir` locks MCP scope to one folder). Need deterministic PDF quote verification (`cite_check`) or SHA-256 verifiable video frames? [anymd Pro](/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp) unlocks both offline in the same binary for a one-time **US$29** payment. See [Local core and anymd Pro](/docs/hosted?entry_surface=seo_pdf-and-office-to-markdown-mcp).
 
 ## Measured on AgentDocBench (38 Docs / 12 Categories)
 
@@ -57,4 +53,6 @@ No. Everything runs locally on your machine under the MIT licence, and no networ
 `anymd` is compiled native Rust (`anymd-core`, `anymd-pdf`, `anymd-formats`) that parses XML/ZIP and PDF glyph coordinates in parallel page by page without loading heavy Python ML frameworks for native text documents.
 
 **Is the core MCP server free forever, or gated behind Pro?**
-Reading, outlining, searching, OCR, transcripts, the CLI, and all four core MCP tools (`read`, `outline`, `search`, `inspect`) remain 100% free and MIT licensed. Only offline `cite_check` and verifiable video frame/timeline inspection require [anymd Pro](https://anymd.sylphx.com/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp) ($29 one-time).
+Reading, outlining, searching, OCR, transcripts, the CLI, and all four core MCP tools (`read`, `outline`, `search`, `inspect`) remain 100% free and MIT licensed. Only offline `cite_check` and verifiable video frame/timeline inspection require [anymd Pro](/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp) ($29 one-time).
+
+Need to verify PDF quotes or cite exact video frames? **[See Anymd Pro](/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp)**.

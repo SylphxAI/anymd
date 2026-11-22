@@ -8,9 +8,10 @@ import { RegisterPasskey } from './sign-in';
 import { currencyOptions, consentText } from '@/lib/catalog';
 
 type Account = { plan: 'Free OSS' | 'Anymd Pro'; entitlementActive: boolean; features: string[] };
+const cliLogin = 'anymd login';
 const nativeConfig = JSON.stringify({ mcpServers: { anymd: { command: 'npx', args: ['-y', '@sylphx/anymd'] } } }, null, 2);
 const messages: Record<string, string> = {
-  no_customer: 'There is no billing record for this account yet. If you bought Pro before signing in, link your purchase first.',
+  no_customer: 'There is no billing record for this account yet. If you bought Pro before account checkout, recover your purchase first.',
   not_found: 'We couldn’t find a purchase to link. Check the link from your receipt, or contact support.',
   already_claimed: 'This purchase is already linked. Check your plan or contact support if it’s linked to the wrong account.',
   auth_unconfigured: 'Sign-in is not connected to this environment yet.',
@@ -45,6 +46,7 @@ export function Checkout() {
   };
   return <div class="stack">
     <div><div class="eyebrow">ONE-TIME PAYMENT</div><div class="price">{price()}</div><p class="muted">Tax included. No subscription.</p></div>
+    <p class="muted">Sign in and pay securely. Then run <code>{cliLogin}</code> with the same account to activate Pro.</p>
     <label><span class="mb-1 block text-sm font-semibold">Billing currency</span><select class="field" aria-label="Billing currency" value={currency()} onChange={(event) => {intent = undefined; setConsent(false); setCurrency(event.currentTarget.value);}}><For each={currencyOptions}>{(item) => <option value={item.code}>{item.code} · {item.label}</option>}</For></select></label>
     <Show when={user()} fallback={<A class="button button-primary" href="/sign-in?next=/pricing">Sign in to buy Pro <ArrowRight size={16} /></A>}>
       <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{consentText} This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.</span></label>
@@ -117,15 +119,23 @@ export function AccountPanel(props: { billing?: boolean }) {
           }}>{pending() ? 'Opening billing…' : 'Manage billing and invoices'} <ArrowUpRight size={15} /></button><SignOut /></div>
           {notice() && <p role="status" class="notice">{notice()}</p>}
           {activeSession()?.methods?.passkey === true && <RegisterPasskey />}
-          <A href="/recover" class="inline-link">Link a previous purchase</A>
+          <A href="/recover" class="inline-link">Recover a legacy purchase</A>
         </section>
-        <section class="panel stack"><span class="eyebrow"><Terminal size={16} /> LOCAL TOOLS</span><h2>Connect CLI or MCP</h2><p class="muted">Use this MCP configuration in Claude Desktop, Cursor or Windsurf. Local file conversion requires no account.</p>
-          <pre class="code-box"><code>{nativeConfig}</code></pre><div class="flex flex-wrap items-center gap-3"><CopyButton text={nativeConfig} label="Copy MCP config" /><A href="/docs" class="inline-link">Install the CLI</A></div>
-          <p class="muted text-sm">Browser sign-in for the CLI isn’t available yet. Existing offline Pro activations keep working.</p>
+        <section class="panel stack"><span class="eyebrow"><Terminal size={16} /> LOCAL TOOLS</span><h2>Connect CLI or MCP</h2>
+          <CliLogin />
+          <p class="muted">Use this MCP configuration in Claude Desktop, Cursor or Windsurf. Free local conversion requires no account.</p>
+          <pre class="code-box"><code>{nativeConfig}</code></pre><div class="flex flex-wrap items-center gap-3"><CopyButton text={nativeConfig} label="Copy MCP config" /></div>
         </section>
       </div>
     </Match>
   </Switch>;
+}
+
+export function CliLogin() {
+  return <div class="stack">
+    <p class="muted">To activate Pro on this machine, run the command below and sign in with the account you used to buy Pro.</p>
+    <div class="flex flex-wrap items-center gap-3"><code>{cliLogin}</code><CopyButton text={cliLogin} label="Copy login command" /><A href="/docs" class="inline-link">Install the CLI</A></div>
+  </div>;
 }
 
 export function Claim(props: { checkoutSessionId?: string }) {

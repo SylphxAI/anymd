@@ -5,17 +5,13 @@ description: "anymd vs PyMuPDF4LLM: MIT-licensed Rust MCP server and CLI for PDF
 image: https://anymd.sylphx.com/og-image.png
 ---
 
-<p class="pro-trust">Comparison · MIT Rust binary &amp; MCP vs AGPL-3.0 Python library</p>
+Comparison · MIT Rust binary & MCP vs AGPL-3.0 Python library
 
 # anymd vs PyMuPDF4LLM
 
-Both tools run locally on a CPU and turn PDFs into Markdown for LLMs without an API key. [PyMuPDF4LLM](https://github.com/pymupdf/RAG) is a fast Python library from Artifex Software built on PyMuPDF (MuPDF), distributed under the **AGPL-3.0** copyleft licence (with paid commercial licences available from Artifex). anymd is one **MIT-licensed** native Rust binary—both a CLI and a built-in MCP server—that handles PDFs alongside Word, PowerPoint, Excel/CSV, EPUB, HTML/URLs, local OCR, and audio/video with no Python runtime. On the 38 public documents of [AgentDocBench](/guide/benchmarks?entry_surface=seo_vs-pymupdf4llm), anymd scores **96.4** overall (**92.2** table cells F1) in **11.5 s** on 4 CPUs (**0.87 s** across the 20 born-digital PDFs).
+Both tools run locally on a CPU and turn PDFs into Markdown for LLMs without an API key. [PyMuPDF4LLM](https://github.com/pymupdf/RAG) is a fast Python library from Artifex Software built on PyMuPDF (MuPDF), distributed under the **AGPL-3.0** copyleft licence (with paid commercial licences available from Artifex). anymd is one **MIT-licensed** native Rust binary—both a CLI and a built-in MCP server—that handles PDFs alongside Word, PowerPoint, Excel/CSV, EPUB, HTML/URLs, local OCR, and audio/video with no Python runtime. On the 38 public documents of [AgentDocBench](/docs/benchmarks?entry_surface=seo_vs-pymupdf4llm), anymd scores **96.4** overall (**92.2** table cells F1) in **11.5 s** on 4 CPUs (**0.87 s** across the 20 born-digital PDFs).
 
-<p>
-  <a class="pro-buy" href="/anymd/guide/getting-started?entry_surface=seo_vs-pymupdf4llm">Install anymd free</a>
-  &nbsp;&nbsp;
-  <a href="/anymd/pricing?entry_surface=seo_vs-pymupdf4llm">Get Pro (US$29 once)</a>
-</p>
+[Install anymd free](/docs?entry_surface=seo_vs-pymupdf4llm) &nbsp;&nbsp; [Get Pro (US$29 once)](/pricing?entry_surface=seo_vs-pymupdf4llm)
 
 ```bash
 npx -y @sylphx/anymd setup --client cursor,claude-code,codex
@@ -38,9 +34,9 @@ npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 
 ## Local benchmark baseline and honest scope
 
-[AgentDocBench](/guide/benchmarks?entry_surface=seo_vs-pymupdf4llm) tests document converters on 38 public documents across 12 categories on GitHub-hosted 4-CPU runners. anymd 8.2.0 scores **96.4** overall (**97.7** verbatim sentences, **98.8** reading order, **92.2** table cells F1) and finishes all **38/38** documents in **11.5 s** (**0.87 s** on the 20 born-digital PDFs, **368,659** output tokens).
+[AgentDocBench](/docs/benchmarks?entry_surface=seo_vs-pymupdf4llm) tests document converters on 38 public documents across 12 categories on GitHub-hosted 4-CPU runners. anymd 8.2.0 scores **96.4** overall (**97.7** verbatim sentences, **98.8** reading order, **92.2** table cells F1) and finishes all **38/38** documents in **11.5 s** (**0.87 s** on the 20 born-digital PDFs, **368,659** output tokens).
 
-**PyMuPDF4LLM is not yet in AgentDocBench.** Rather than guessing or citing third-party charts, we publish only our committed repository results here. Because PyMuPDF4LLM runs locally on CPU, anyone can add a `bench/adapters/pymupdf4llm.py` adapter and [submit it to AgentDocBench](/guide/benchmarks#submit-a-tool) to measure both tools side by side on the same 38 files.
+**PyMuPDF4LLM is not yet in AgentDocBench.** Rather than guessing or citing third-party charts, we publish only our committed repository results here. Because PyMuPDF4LLM runs locally on CPU, anyone can add a `bench/adapters/pymupdf4llm.py` adapter and [submit it to AgentDocBench](/docs/benchmarks#submit-a-tool) to measure both tools side by side on the same 38 files.
 
 ## Why agent builders pick anymd over PyMuPDF4LLM
 
@@ -85,7 +81,7 @@ For MCP clients, replace `pymupdf4llm-mcp` with `npx -y @sylphx/anymd`, or run `
 docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
 ```
 
-More install options are in [Getting started](/guide/getting-started?entry_surface=seo_vs-pymupdf4llm).
+More install options are in [Getting started](/docs/getting-started?entry_surface=seo_vs-pymupdf4llm).
 
 ## Check what your agent cites with anymd Pro
 
@@ -94,11 +90,9 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 - **Cite-check** compares up to 100 quotes per request with the page and area each one cites, and reports whether it matches, doesn't match, or needs more evidence. It uses the text and its position on the page, not an AI opinion.
 - **Video timelines and frames** show scenes, chapters and subtitle or transcript timings, and the frame behind a cited moment with its actual decoded timestamp and a SHA-256 hash of the image.
 
-Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Buy on the web at [anymd Pro](/pricing?entry_surface=seo_vs-pymupdf4llm) or run `anymd pro buy` in your terminal.
+**One-time US$29 purchase. No subscription.** Sign in, pay securely, then run `anymd login` with the same account to activate Pro on your machine. After activation, Pro works offline.
 
-<p>
-  <a class="pro-buy" href="/anymd/pricing?entry_surface=seo_vs-pymupdf4llm">See anymd Pro</a>
-</p>
+**[See Anymd Pro](/pricing?entry_surface=seo_vs-pymupdf4llm)**
 
 ## FAQ
 
@@ -120,4 +114,4 @@ From the command line or MCP clients, yes: `anymd report.pdf -o report.md` produ
 **Is anymd free?**
 Yes. anymd is MIT licensed, including the CLI, the MCP server, OCR and transcripts. anymd Pro is an optional one-time purchase, US$29 or the local price in 16 currencies, that adds PDF cite-check and video timelines and frames.
 
-<p class="cit-fine">PyMuPDF and PyMuPDF4LLM are projects of Artifex Software; anymd is not affiliated with or endorsed by Artifex Software. anymd benchmark figures come from the AgentDocBench results committed in the anymd repository. PyMuPDF4LLM licensing and feature details come from its public documentation and repository.</p>
+PyMuPDF and PyMuPDF4LLM are projects of Artifex Software; anymd is not affiliated with or endorsed by Artifex Software. anymd benchmark figures come from the AgentDocBench results committed in the anymd repository. PyMuPDF4LLM licensing and feature details come from its public documentation and repository.

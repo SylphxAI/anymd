@@ -5,17 +5,15 @@ description: "anymd vs LlamaParse: local Rust MCP server and CLI with no API key
 image: https://anymd.sylphx.com/og-image.png
 ---
 
-<p class="pro-trust">Comparison · Local Rust MCP &amp; CLI vs hosted LlamaCloud API</p>
+Comparison · Local Rust MCP & CLI vs hosted LlamaCloud API
 
 # anymd vs LlamaParse
 
-Both tools turn PDFs and office documents into clean Markdown for AI agents and RAG pipelines. [LlamaParse](https://developers.llamaindex.ai/python/cloud/llamaparse/) is LlamaIndex's hosted document parsing API on LlamaCloud: you create an account, pass an API key, upload files to LlamaCloud, and pay in per-page credits. anymd is one native Rust binary, MIT licensed, that converts files locally on your machine with no API key, no uploads, and built-in MCP tools (`read`, `outline`, `search`, `inspect`). On the 38 public documents of [AgentDocBench](/guide/benchmarks?entry_surface=seo_vs-llamaparse), anymd scores **96.4** overall (**92.2** table cells F1) and converts all 38 in **11.5 s** on 4 CPUs.
+Both tools turn PDFs and office documents into clean Markdown for AI agents and RAG pipelines. [LlamaParse](https://developers.llamaindex.ai/python/cloud/llamaparse/) is LlamaIndex's hosted document parsing API on LlamaCloud: you create an account, pass an API key, upload files to LlamaCloud, and pay in per-page credits. anymd is one native Rust binary, MIT licensed, that converts files locally on your machine with no API key, no uploads, and built-in MCP tools (`read`, `outline`, `search`, `inspect`). On the 38 public documents of [AgentDocBench](/docs/benchmarks?entry_surface=seo_vs-llamaparse), anymd scores **96.4** overall (**92.2** table cells F1) and converts all 38 in **11.5 s** on 4 CPUs.
 
-<p>
-  <a class="pro-buy" href="/anymd/guide/getting-started?entry_surface=seo_vs-llamaparse">Install anymd free</a>
-  &nbsp;&nbsp;
-  <a href="/anymd/pricing?entry_surface=seo_vs-llamaparse">Get Pro (US$29 once)</a>
-</p>
+[Install anymd free](/docs?entry_surface=seo_vs-llamaparse)
+
+**[See Anymd Pro (US$29 once)](/pricing?entry_surface=seo_vs-llamaparse)**
 
 ```bash
 npx -y @sylphx/anymd setup --client cursor,claude-code,codex
@@ -38,7 +36,7 @@ npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 
 ## Local benchmark baseline and honest scope
 
-[AgentDocBench](/guide/benchmarks?entry_surface=seo_vs-llamaparse) measures local open-source converters on 38 public documents across 12 categories on GitHub-hosted 4-CPU runners with no API keys or external uploads. On that corpus, anymd 8.2.0 scores **96.4** overall (**97.7** verbatim sentences, **98.8** reading order, **92.2** table cells F1), converts all **38/38** documents in **11.5 s** (**0.87 s** across the 20 born-digital PDFs), and outputs **368,659** tokens.
+[AgentDocBench](/docs/benchmarks?entry_surface=seo_vs-llamaparse) measures local open-source converters on 38 public documents across 12 categories on GitHub-hosted 4-CPU runners with no API keys or external uploads. On that corpus, anymd 8.2.0 scores **96.4** overall (**97.7** verbatim sentences, **98.8** reading order, **92.2** table cells F1), converts all **38/38** documents in **11.5 s** (**0.87 s** across the 20 born-digital PDFs), and outputs **368,659** tokens.
 
 **LlamaParse is not in AgentDocBench** because it is a hosted API that requires an account, an API key and document uploads rather than a local offline tool. This page compares architecture, privacy, latency, MCP support and cost honestly rather than quoting unverified scores. All raw AgentDocBench outputs for anymd and six local alternatives are public in [`bench/`](https://github.com/SylphxAI/anymd/tree/main/bench).
 
@@ -50,7 +48,7 @@ Contracts, financials, medical PDFs and internal slide decks never leave your la
 
 ### Predictable cost: free MIT core, or US$29 once
 
-Metered credit tiers add up quickly when agents re-read folders, parse long reports or run in CI. On LlamaParse's pay-as-you-go tiers, 10,000 pages in Cost-effective mode (3 credits/page) costs US$45 and in Agentic mode (10 credits/page) costs US$150—every run unless cached. anymd's converter, CLI, MCP server, local OCR and transcripts are free and MIT licensed forever. When you want offline PDF `cite_check` and SHA-256 verifiable video frames, [anymd Pro](/pricing?entry_surface=seo_vs-llamaparse) is a single **US$29** payment for a 100-year offline licence.
+Metered credit tiers add up quickly when agents re-read folders, parse long reports or run in CI. On LlamaParse's pay-as-you-go tiers, 10,000 pages in Cost-effective mode (3 credits/page) costs US$45 and in Agentic mode (10 credits/page) costs US$150—every run unless cached. anymd's converter, CLI, MCP server, local OCR and transcripts are free and MIT licensed forever. When you want offline PDF `cite_check` and SHA-256 verifiable video frames, [anymd Pro](/pricing?entry_surface=seo_vs-llamaparse) is a single **US$29** payment with offline use after activation.
 
 ### Millisecond local reads inside your MCP client
 
@@ -85,7 +83,7 @@ For MCP agents, run `npx -y @sylphx/anymd setup` to register `anymd` across your
 docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
 ```
 
-More install options are in [Getting started](/guide/getting-started?entry_surface=seo_vs-llamaparse).
+More install options are in [Getting started](/docs/getting-started?entry_surface=seo_vs-llamaparse).
 
 ## Check what your agent cites with anymd Pro
 
@@ -94,11 +92,9 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 - **Cite-check** compares up to 100 quotes per request with the page and area each one cites, and reports whether it matches, doesn't match, or needs more evidence. It uses the text and its position on the page, not an AI opinion.
 - **Video timelines and frames** show scenes, chapters and subtitle or transcript timings, and the frame behind a cited moment with its actual decoded timestamp and a SHA-256 hash of the image.
 
-Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Buy on the web at [anymd Pro](/pricing?entry_surface=seo_vs-llamaparse) or run `anymd pro buy` in your terminal.
+**One-time US$29 purchase. No subscription.** Sign in, pay securely, then run `anymd login` with the same account to activate Pro on your machine. After activation, Pro works offline.
 
-<p>
-  <a class="pro-buy" href="/anymd/pricing?entry_surface=seo_vs-llamaparse">See anymd Pro</a>
-</p>
+**[See Anymd Pro](/pricing?entry_surface=seo_vs-llamaparse)**
 
 ## FAQ
 
@@ -106,7 +102,7 @@ Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence 
 No. anymd runs locally on your machine under the MIT licence with no account and no API key. Network requests happen only when you pass an explicit http(s) URL or opt in to downloading a local OCR or transcript model.
 
 **How does anymd pricing compare with LlamaParse?**
-anymd's converter, CLI, MCP server, OCR and transcripts are free and MIT licensed, with no per-page credits. Optional anymd Pro is a one-time payment of US$29 (or the local price in 16 currencies) for a 100-year offline licence. LlamaParse offers 10,000 free credits per month and charges per page in credits (1 to 25 credits per page depending on tier) or monthly subscriptions.
+anymd's converter, CLI, MCP server, OCR and transcripts are free and MIT licensed, with no per-page credits. Optional anymd Pro is a one-time payment of US$29 (or the local price in 16 currencies) with offline use after activation. LlamaParse offers 10,000 free credits per month and charges per page in credits (1 to 25 credits per page depending on tier) or monthly subscriptions.
 
 **Why isn't LlamaParse on the AgentDocBench scoreboard?**
 AgentDocBench runs local converters without API keys or cloud uploads on GitHub-hosted 4-CPU runners. LlamaParse is a hosted cloud API, so we do not fabricate a score for it here.
@@ -120,4 +116,4 @@ Yes. Run `npx -y @sylphx/anymd setup` to configure Claude Code, Codex, Cursor, V
 **Is anymd free?**
 Yes. anymd is MIT licensed, including the CLI, the MCP server, OCR and transcripts. anymd Pro is an optional one-time purchase, US$29 or the local price in 16 currencies, that adds PDF cite-check and video timelines and frames.
 
-<p class="cit-fine">LlamaParse and LlamaCloud are products of LlamaIndex; anymd is not affiliated with or endorsed by LlamaIndex. anymd benchmark figures come from the AgentDocBench results committed in the anymd repository. LlamaParse pricing and tier details come from LlamaIndex's public documentation and may change over time.</p>
+LlamaParse and LlamaCloud are products of LlamaIndex; anymd is not affiliated with or endorsed by LlamaIndex. anymd benchmark figures come from the AgentDocBench results committed in the anymd repository. LlamaParse pricing and tier details come from LlamaIndex's public documentation and may change over time.

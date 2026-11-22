@@ -181,7 +181,7 @@ def render(corpus, tools):
         add(f"| {name} | {secs(math.fsum(seconds))} | {secs(median)} | {sum(r['tokens'] for r in rows):,} |")
     add("")
 
-    add("<details><summary>Every document (score · time)</summary>\n")
+    add("### Every document (score · time)\n")
     add("| Document | Category | " + " | ".join(order) + " |")
     add("|---|---|" + "---|" * len(order))
     for doc in corpus:
@@ -195,7 +195,7 @@ def render(corpus, tools):
             else:
                 cells.append(f"{pct(row['metrics'].get('score'))} · {secs(row['seconds'])}")
         add(f"| `{doc['id']}` | {doc['category']} | " + " | ".join(cells) + " |")
-    add("\n</details>\n")
+    add("")
 
     add("### Tools\n")
     add("| Tool | Version | Timed runs | Run |")

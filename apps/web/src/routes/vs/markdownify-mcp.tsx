@@ -87,6 +87,12 @@ export default function MarkdownifyComparison() {
       <p>See <A class="inline-link" href="/docs">setup by client</A>, <A class="inline-link" href="/docs/tools">MCP tools</A> and the <A class="inline-link" href="/docs/formats">full format list</A>.</p>
     </section>
 
+    <section class="comparison-section" aria-labelledby="pro-title">
+      <h2 id="pro-title">Verify what your agent cites</h2>
+      <p>Anymd Pro checks PDF quotes against the cited page and captures exact video frames. Pay US$29 once, with no subscription. Sign in, pay securely, then run <code>anymd login</code> with the same account to activate Pro.</p>
+      <A class="button button-primary" href="/pricing?entry_surface=seo_vs-markdownify-mcp">See Anymd Pro <ArrowRight size={16} /></A>
+    </section>
+
     <section class="comparison-section" aria-labelledby="faq-title">
       <h2 id="faq-title">Frequently asked questions</h2>
       <Faq questions={questions} />
