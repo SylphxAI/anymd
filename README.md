@@ -153,8 +153,6 @@ Any client that speaks MCP over stdio: command `npx`, args `["-y", "@sylphx/anym
 npm install -g @sylphx/anymd     # or run it once with: npx -y @sylphx/anymd <file>
 ```
 
-Python wheels carry the same prebuilt binary and are on PyPI as `anymd` from the first release after publication.
-
 Use npm on Windows, macOS and Linux. On macOS and Linux, Homebrew is also available:
 
 ```bash
@@ -299,28 +297,28 @@ For PDFs, anymd reads glyph positions rather than text runs. Glyphs are grouped 
 
 ## anymd Pro
 
-**US$29, one payment. No subscription, no account.** Pro adds two tools for agents that must show where an answer came from. The core stays free and MIT licensed, and nothing that was free has moved to Pro.
+**One-time US$29 purchase. No subscription.** Pro adds two tools for agents that must show where an answer came from. The core stays free and MIT licensed, and nothing that was free has moved to Pro.
 
 - **PDF `cite_check`.** Give it a quote and the page and area your agent cited. It answers whether the quote is there, is not there, or cannot be decided, using the text and its position on the page rather than an AI opinion, and returns the boxes on the page that support a match. [How cite-check works](https://anymd.sylphx.com/guide/cite-check)
 - **Video timelines and exact frames.** Scene changes, chapters and subtitle or transcript timings for up to 10 minutes per request (`inspect` `video_timeline`, and the `timeline` option of `read` and `outline`). `render_frame` returns the frame behind a citation with the requested time, the actual decoded timestamp and a SHA-256 hash of the image, so anyone can check which moment it shows. [How video timelines work](https://anymd.sylphx.com/guide/video-timeline)
 
 **[Get anymd Pro for US$29 →](https://anymd.sylphx.com/pricing?utm_source=github&utm_medium=readme&utm_content=pro_section)**
 
-Pay in any of 16 currencies at checkout; the price includes applicable tax. One licence per person, valid offline for 100 years, with future releases included. It needs anymd 8.4.0 or later. Delivery is instant: copy your licence token from the checkout confirmation page, or [recover it](https://anymd.sylphx.com/recover) later. We also email a link to retrieve it. From a terminal, `anymd pro buy` shows the live price in your currency before you accept the immediate-supply terms, opens checkout in your browser, and saves the licence on this machine automatically. Pro funds anymd's development.
+Sign in and pay securely in one of 16 currencies (tax included). Then run `anymd login` and use the same account in your browser to activate Pro on this machine. The Pro tools work offline after activation. If you bought Pro before account checkout, use [purchase recovery](https://anymd.sylphx.com/recover). Pro funds anymd's development.
 
 | | anymd | anymd Pro |
 |---|---|---|
 | Price | Free, MIT | US$29 once (16 currencies, tax included) |
-| Runs | On your machine | On your machine, licence checked offline |
+| Runs | On your machine | On your machine, offline after activation |
 | You get | `read`, `outline`, `search`, `inspect`, OCR, transcripts, MCP server and CLI | Everything in anymd, plus `cite_check` and video timelines with exact frames |
-| Start | `npx -y @sylphx/anymd setup` | [Buy Pro](https://anymd.sylphx.com/pricing?utm_source=github&utm_medium=readme&utm_content=plans) or `anymd pro buy` |
+| Start | `npx -y @sylphx/anymd setup` | [Buy Pro](https://anymd.sylphx.com/pricing?utm_source=github&utm_medium=readme&utm_content=plans), then run `anymd login` |
 
 ## Local core and Pro
 
 anymd runs on your machine in both tiers:
 
 - **Local core (free, MIT, this repository).** The `anymd` binary, the MCP server, the CLI and the `anymd-core`, `anymd-pdf` and `anymd-formats` crates. It converts on your machine, uploads nothing, and needs no API key.
-- **anymd Pro ([US$29 once](https://anymd.sylphx.com/pricing?utm_source=github&utm_medium=readme&utm_content=hosted), 100-year offline licence).** Unlocks deterministic PDF `cite_check` and SHA-256 verifiable video timelines and frame extraction in the same local binary, with no account and no recurring subscription.
+- **anymd Pro ([US$29 once](https://anymd.sylphx.com/pricing?utm_source=github&utm_medium=readme&utm_content=hosted), no subscription).** Unlocks deterministic PDF `cite_check` and SHA-256 verifiable video timelines and frame extraction in the same local binary. Sign in to buy, then activate with `anymd login`.
 
 For Rust importers, the `anymd-core`, `anymd-pdf` and `anymd-formats` crate APIs are stable within a major version: no breaking change ships without a major version bump.
 

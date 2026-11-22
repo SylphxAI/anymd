@@ -20,7 +20,7 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
   return <Show when={doc() !== undefined}>
     <Show when={doc()} fallback={<NotFound />}>{article => <section class="wrap page-shell article-layout">
       <PageMeta title={props.index ? 'Documentation' : article().title} canonical={article().canonical} description={props.index ? undefined : article().description} />
-      <nav class="docs-nav" aria-label="Documentation"><span class="eyebrow">REFERENCE</span><For each={nav}>{([label, href]) => <A href={href === 'getting-started' ? '/docs' : '/docs/' + href}>{label}</A>}</For><A href="/vs">Comparisons</A></nav>
+      <nav class="docs-nav" aria-label="Documentation"><span class="eyebrow">REFERENCE</span><For each={nav}>{([label, href]) => <A href={href === 'getting-started' ? '/docs' : '/docs/' + href}>{label}</A>}</For><A href="/tasks">Task guides</A><A href="/vs">Comparisons</A></nav>
       {/* Only trusted repository Markdown, rendered with inline HTML disabled. */}
       <article class="prose" innerHTML={article().html} />
     </section>}</Show>

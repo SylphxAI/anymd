@@ -160,7 +160,7 @@ test('consented checkout emits begin_checkout but the return never measures a pu
   expect(response.ok()).toBe(true);
   expect(await response.json()).toEqual({url:'https://checkout.stripe.com/c/pay/' + processorSessionId});
   await expect(page).toHaveURL(thanks);
-  await expect(page.getByRole('heading', {name:'Link this purchase'})).toBeVisible();
+  await expect(page.getByRole('heading', {name:'Activate Anymd Pro'})).toBeVisible();
   await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
   expect(await events(page, 'purchase')).toEqual([]);
   const start = await page.evaluate(() => JSON.parse(sessionStorage.getItem('test.checkout.event') || 'null'));
@@ -170,7 +170,7 @@ test('consented checkout emits begin_checkout but the return never measures a pu
   // A tab opened before the change may still carry the old local checkout state.
   await page.evaluate(id => sessionStorage.setItem('anymd.ga4.checkout.' + id, 'chk-' + '1'.repeat(24)), processorSessionId);
   await page.reload();
-  await expect(page.getByRole('heading', {name:'Link this purchase'})).toBeVisible();
+  await expect(page.getByRole('heading', {name:'Activate Anymd Pro'})).toBeVisible();
   await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
   expect(await events(page, 'purchase')).toEqual([]);
   expect(measurementRequests).toEqual([]);

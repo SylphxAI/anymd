@@ -66,7 +66,7 @@ test('pricing and its Pro alias show four concrete benefits before checkout', as
       'Everything in Free OSS',
       'PDF cite-check with exact page & bounding-box proof',
       'Hashed video-frame timeline extraction & citations',
-      'Local CLI & MCP sync via anymd login across your machines · 100-year licence',
+      'Works offline after activation on each machine',
     ]);
     await expect(plan.locator('li svg[aria-hidden="true"]')).toHaveCount(4);
     expect(await benefits.last().evaluate((last) => last.getBoundingClientRect().bottom)).toBeLessThanOrEqual(

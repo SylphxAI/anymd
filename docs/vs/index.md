@@ -5,17 +5,13 @@ description: "anymd, Docling, Kreuzberg, Unstructured, MarkItDown, Marker and pd
 image: https://anymd.sylphx.com/og-image.png
 ---
 
-<p class="pro-trust">Comparisons · 7 tools · Same 38 public documents · Open benchmark</p>
+Comparisons · 7 tools · Same 38 public documents · Open benchmark
 
 # Document to Markdown converters, compared
 
-Seven converters, the same 38 public documents, the same 4-CPU machine. On [AgentDocBench](/guide/benchmarks?entry_surface=seo_vs-hub), anymd scores **96.4** and converts all 38 documents in **11.5 s**. Every figure on this page is generated from the raw results in the anymd repository, including the categories where another tool wins. Start with the scoreboard, or open the head-to-head page for the tool you use today.
+Seven converters, the same 38 public documents, the same 4-CPU machine. On [AgentDocBench](/docs/benchmarks?entry_surface=seo_vs-hub), anymd scores **96.4** and converts all 38 documents in **11.5 s**. Every figure on this page is generated from the raw results in the anymd repository, including the categories where another tool wins. Start with the scoreboard, or open the head-to-head page for the tool you use today.
 
-<p>
-  <a class="pro-buy" href="/anymd/guide/getting-started?entry_surface=seo_vs-hub">Install anymd free</a>
-  &nbsp;&nbsp;
-  <a href="/anymd/guide/benchmarks?entry_surface=seo_vs-hub">See the full benchmark</a>
-</p>
+[Install anymd free](/docs?entry_surface=seo_vs-hub) &nbsp;&nbsp; [See the full benchmark](/docs/benchmarks?entry_surface=seo_vs-hub)
 
 ```bash
 npx -y @sylphx/anymd setup --client cursor,claude-code,codex
@@ -84,7 +80,7 @@ Three popular tools are not in the local AgentDocBench run above—two are meter
 
 ## How the scores were measured
 
-Every tool ran on GitHub-hosted Linux x86_64 runners with 4 CPUs, through its own CLI or Python API with default options unless its page says otherwise. Time is the wall time of a fresh process per file, start-up and model loading included. The scoring does not know which tool produced an output. GPUs, long-running servers and releases newer than the ones listed were not measured. The corpus, ground truth, scoring and raw results are public in [`bench/`](https://github.com/SylphxAI/anymd/tree/main/bench), and anyone can rerun them or [submit a tool](/guide/benchmarks#submit-a-tool).
+Every tool ran on GitHub-hosted Linux x86_64 runners with 4 CPUs, through its own CLI or Python API with default options unless its page says otherwise. Time is the wall time of a fresh process per file, start-up and model loading included. The scoring does not know which tool produced an output. GPUs, long-running servers and releases newer than the ones listed were not measured. The corpus, ground truth, scoring and raw results are public in [`bench/`](https://github.com/SylphxAI/anymd/tree/main/bench), and anyone can rerun them or [submit a tool](/docs/benchmarks#submit-a-tool).
 
 ## Check what your agent cites with anymd Pro
 
@@ -93,11 +89,9 @@ Converting a file with anymd is free. When an agent quotes a PDF or a video, [an
 - **Cite-check** compares up to 100 quotes per request with the page and area each one cites, and reports whether it matches, doesn't match, or needs more evidence. It uses the text and its position on the page, not an AI opinion.
 - **Video timelines and frames** show scenes, chapters and subtitle or transcript timings, and the frame behind a cited moment with its actual decoded timestamp and a SHA-256 hash of the image.
 
-Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account.
+**One-time US$29 purchase. No subscription.** Sign in, pay securely, then run `anymd login` with the same account to activate Pro on your machine. After activation, Pro works offline.
 
-<p>
-  <a class="pro-buy" href="/anymd/pricing?entry_surface=seo_vs-hub">See anymd Pro</a>
-</p>
+**[See Anymd Pro](/pricing?entry_surface=seo_vs-hub)**
 
 ## FAQ
 
@@ -116,4 +110,4 @@ It lives in the anymd repository, so you can check it: the scoring does not know
 **Is anymd free?**
 Yes. anymd is MIT licensed, including the CLI, the MCP server, OCR and transcripts. anymd Pro is an optional one-time purchase, US$29 or the local price in 16 currencies, that adds PDF cite-check and video timelines and frames.
 
-<p class="cit-fine">Docling, Kreuzberg, Unstructured, MarkItDown, Marker and Poppler are projects of their respective owners; anymd is not affiliated with or endorsed by any of them. Benchmark figures come from the AgentDocBench results committed in the anymd repository.</p>
+Docling, Kreuzberg, Unstructured, MarkItDown, Marker and Poppler are projects of their respective owners; anymd is not affiliated with or endorsed by any of them. Benchmark figures come from the AgentDocBench results committed in the anymd repository.

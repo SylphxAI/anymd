@@ -66,7 +66,7 @@ Overall is the mean of the category scores below, so every category weighs the s
 | marker | 5,256.3 s | 161.7 s | 181,132 |
 | pdftotext | 0.66 s | 0.02 s | 147,183 |
 
-<details><summary>Every document (score · time)</summary>
+### Every document (score · time)
 
 | Document | Category | anymd | docling | kreuzberg | unstructured | markitdown | marker | pdftotext |
 |---|---|---|---|---|---|---|---|---|
@@ -108,8 +108,6 @@ Overall is the mean of the category scores below, so every category weighs the s
 | `html-bls-ooh-software-developers` | html | 98.7 · 0.00 s | 93.7 · 9.44 s | 100.0 · 0.07 s | 94.4 · 4.84 s | 94.4 · 1.10 s | 83.2 · 182.9 s | unsupported |
 | `html-markitdown-wikipedia` | html | 100.0 · 0.01 s | 88.9 · 10.6 s | 100.0 · 0.10 s | 100.0 · 6.22 s | 100.0 · 1.37 s | 98.5 · 85.5 s | unsupported |
 | `html-wikipedia-roman-numerals` | html | 100.0 · 0.02 s | 88.9 · 7.47 s | 100.0 · 0.14 s | 100.0 · 3.90 s | 100.0 · 1.66 s | timeout | unsupported |
-
-</details>
 
 ### Tools
 

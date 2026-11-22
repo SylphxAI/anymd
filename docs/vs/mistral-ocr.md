@@ -5,17 +5,13 @@ description: "anymd vs Mistral OCR: local Rust MCP server and CLI with no API ke
 image: https://anymd.sylphx.com/og-image.png
 ---
 
-<p class="pro-trust">Comparison · Local Rust MCP &amp; CLI vs metered Mistral OCR API</p>
+Comparison · Local Rust MCP & CLI vs metered Mistral OCR API
 
 # anymd vs Mistral OCR
 
-Both tools extract Markdown from PDFs and images for LLMs. [Mistral OCR](https://docs.mistral.ai/capabilities/OCR/basic_ocr/) (`mistral-ocr-latest`) is Mistral AI's hosted vision-OCR API: you send documents to Mistral's cloud with an API key and pay per 1,000 pages. anymd is one native Rust binary, MIT licensed, that parses born-digital PDFs, Office files, spreadsheets, EPUB, HTML, local OCR scans, and audio/video directly on your machine with no API key, no uploads, and built-in MCP tools (`read`, `outline`, `search`, `inspect`). On the 38 public documents of [AgentDocBench](/guide/benchmarks?entry_surface=seo_vs-mistral-ocr), anymd scores **96.4** overall (**92.2** table cells F1) in **11.5 s** on 4 CPUs.
+Both tools extract Markdown from PDFs and images for LLMs. [Mistral OCR](https://docs.mistral.ai/capabilities/OCR/basic_ocr/) (`mistral-ocr-latest`) is Mistral AI's hosted vision-OCR API: you send documents to Mistral's cloud with an API key and pay per 1,000 pages. anymd is one native Rust binary, MIT licensed, that parses born-digital PDFs, Office files, spreadsheets, EPUB, HTML, local OCR scans, and audio/video directly on your machine with no API key, no uploads, and built-in MCP tools (`read`, `outline`, `search`, `inspect`). On the 38 public documents of [AgentDocBench](/docs/benchmarks?entry_surface=seo_vs-mistral-ocr), anymd scores **96.4** overall (**92.2** table cells F1) in **11.5 s** on 4 CPUs.
 
-<p>
-  <a class="pro-buy" href="/anymd/guide/getting-started?entry_surface=seo_vs-mistral-ocr">Install anymd free</a>
-  &nbsp;&nbsp;
-  <a href="/anymd/pricing?entry_surface=seo_vs-mistral-ocr">Get Pro (US$29 once)</a>
-</p>
+[Install anymd free](/docs?entry_surface=seo_vs-mistral-ocr) &nbsp;&nbsp; [Get Pro (US$29 once)](/pricing?entry_surface=seo_vs-mistral-ocr)
 
 ```bash
 npx -y @sylphx/anymd setup --client cursor,claude-code,codex
@@ -38,7 +34,7 @@ npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 
 ## Local benchmark baseline and honest scope
 
-[AgentDocBench](/guide/benchmarks?entry_surface=seo_vs-mistral-ocr) evaluates local converters on 38 public documents across 12 categories on GitHub-hosted 4-CPU runners with no API keys or remote uploads. anymd 8.2.0 scores **96.4** overall (**97.7** verbatim sentences, **98.8** reading order, **92.2** table cells F1), converts all **38/38** documents in **11.5 s** (**0.87 s** on the 20 born-digital PDFs), and returns **368,659** tokens.
+[AgentDocBench](/docs/benchmarks?entry_surface=seo_vs-mistral-ocr) evaluates local converters on 38 public documents across 12 categories on GitHub-hosted 4-CPU runners with no API keys or remote uploads. anymd 8.2.0 scores **96.4** overall (**97.7** verbatim sentences, **98.8** reading order, **92.2** table cells F1), converts all **38/38** documents in **11.5 s** (**0.87 s** on the 20 born-digital PDFs), and returns **368,659** tokens.
 
 **Mistral OCR is not in AgentDocBench** because it is a hosted cloud API requiring credentials and file uploads. We also publish anymd's scan-only limitations openly: on OmniDocBench v1.6 page images, anymd's default English Tesseract path scores **21.4** (and **77.9** on AgentDocBench's three scanned PDFs). When your corpus is mostly degraded scans, handwriting or dense photographed equations and cloud upload is allowed, a hosted vision OCR model like Mistral OCR is built for that workload.
 
@@ -85,7 +81,7 @@ For MCP clients, run `npx -y @sylphx/anymd setup` to wire Claude Code, Codex, Cu
 docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd report.pdf > report.md
 ```
 
-More install options are in [Getting started](/guide/getting-started?entry_surface=seo_vs-mistral-ocr).
+More install options are in [Getting started](/docs/getting-started?entry_surface=seo_vs-mistral-ocr).
 
 ## Check what your agent cites with anymd Pro
 
@@ -94,11 +90,9 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 - **Cite-check** compares up to 100 quotes per request with the page and area each one cites, and reports whether it matches, doesn't match, or needs more evidence. It uses the text and its position on the page, not an AI opinion.
 - **Video timelines and frames** show scenes, chapters and subtitle or transcript timings, and the frame behind a cited moment with its actual decoded timestamp and a SHA-256 hash of the image.
 
-Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence for one person. Pro works offline, with no subscription and no account. Buy on the web at [anymd Pro](/pricing?entry_surface=seo_vs-mistral-ocr) or run `anymd pro buy` in your terminal.
+**One-time US$29 purchase. No subscription.** Sign in, pay securely, then run `anymd login` with the same account to activate Pro on your machine. After activation, Pro works offline.
 
-<p>
-  <a class="pro-buy" href="/anymd/pricing?entry_surface=seo_vs-mistral-ocr">See anymd Pro</a>
-</p>
+**[See Anymd Pro](/pricing?entry_surface=seo_vs-mistral-ocr)**
 
 ## FAQ
 
@@ -106,7 +100,7 @@ Pay once, **US$29** or the local price in 16 currencies, for a 100-year licence 
 No. anymd runs locally on your machine under the MIT licence with no API key and no file uploads. Network calls happen only when you pass an explicit http(s) URL or explicitly download a local OCR or ASR model.
 
 **How does anymd compare with Mistral OCR on pricing?**
-anymd's local converter, CLI, MCP server, OCR and transcripts are free and MIT licensed. Optional anymd Pro is US$29 once (or the local price in 16 currencies) for a 100-year offline licence. Mistral OCR charges per 1,000 pages (US$2.00 for OCR 3 and US$4.00 for mistral-ocr-latest, with a 50% batch discount).
+anymd's local converter, CLI, MCP server, OCR and transcripts are free and MIT licensed. Optional anymd Pro is US$29 once (or the local price in 16 currencies) with offline use after activation. Mistral OCR charges per 1,000 pages (US$2.00 for OCR 3 and US$4.00 for mistral-ocr-latest, with a 50% batch discount).
 
 **Can anymd OCR scanned PDFs without Mistral OCR?**
 Yes. anymd runs local Tesseract OCR automatically on image-only pages, and `anymd setup ocr` installs pinned local document-VLM weights (PaddleOCR-VL-1.6 and PP-DocLayoutV3) for offline tables and formulas. On heavily degraded scans or handwriting where cloud upload is allowed, Mistral OCR can still be faster and more accurate.
@@ -120,4 +114,4 @@ On born-digital PDFs, anymd reads the embedded text layer directly in native Rus
 **Is anymd free?**
 Yes. anymd is MIT licensed, including the CLI, the MCP server, OCR and transcripts. anymd Pro is an optional one-time purchase, US$29 or the local price in 16 currencies, that adds PDF cite-check and video timelines and frames.
 
-<p class="cit-fine">Mistral OCR is a product of Mistral AI; anymd is not affiliated with or endorsed by Mistral AI. anymd benchmark figures come from the AgentDocBench and OmniDocBench results committed in the anymd repository. Mistral OCR pricing and model details come from Mistral AI's public documentation and may change over time.</p>
+Mistral OCR is a product of Mistral AI; anymd is not affiliated with or endorsed by Mistral AI. anymd benchmark figures come from the AgentDocBench and OmniDocBench results committed in the anymd repository. Mistral OCR pricing and model details come from Mistral AI's public documentation and may change over time.
