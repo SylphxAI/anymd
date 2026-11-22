@@ -1,10 +1,11 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
 import { clearGoogleCookies, startGoogle, stopGoogle, track, type GoogleConsent } from '@/lib/analytics';
-import { consentFor, consentKey, parseChoice, traceRegion, type Choice, type Region } from '@/lib/consent';
+import { consentFor, consentKey, explicitAnalytics, parseChoice, traceRegion, type Choice, type Region } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
-import { checkoutParameters, explicitAnalytics } from '@/lib/funnel';
+import { checkoutParameters } from '@/lib/funnel';
 import { clickCookie, clickIds } from '@/lib/attribution';
+import { parseSignupSignal, signupCookie, type SignupSignal } from '@/lib/signup';
 
 const CookieContext = createContext<{
   open: (from: HTMLButtonElement) => void;
@@ -22,6 +23,18 @@ function writeMeasurementCookie(name: string, value: string, age: number) {
   } catch { /* unavailable cookie storage never blocks checkout */ }
 }
 
+function takeSignup() {
+  const prefix = signupCookie + '=';
+  try {
+    const read = () => document.cookie.split(';').map(cookie => cookie.trim()).find(cookie => cookie.startsWith(prefix));
+    const cookie = read();
+    if (!cookie) return;
+    writeMeasurementCookie(signupCookie, '', 0);
+    // Do not emit if the browser didn't clear the signal.
+    if (!read()) return parseSignupSignal(cookie.slice(prefix.length));
+  } catch { /* unavailable storage should not block the landing page */ }
+}
+
 export function CookieConsent(props: ParentProps) {
   const route = useLocation();
   const [choice, setChoice] = createSignal<Choice | null>(null);
@@ -30,6 +43,7 @@ export function CookieConsent(props: ParentProps) {
   const [manual, setManual] = createSignal(false);
   let active: GoogleConsent | undefined;
   let lastPath: string | undefined;
+  let pendingSignup: SignupSignal | undefined;
   let trigger: HTMLButtonElement | undefined;
   let firstAction: HTMLButtonElement | undefined;
   const [canSave, setCanSave] = createSignal(false);
@@ -41,6 +55,8 @@ export function CookieConsent(props: ParentProps) {
     stopGoogle();
     try { setChoice(parseChoice(localStorage.getItem(consentKey))); setCanSave(true); } catch { /* fail closed when preferences are inaccessible */ }
     setGpc(hasGpc());
+    const signup = takeSignup();
+    if (explicitAnalytics(choice(), gpc())) pendingSignup = signup;
     const controller = new AbortController();
     const settle = (value: Region) => { if (!controller.signal.aborted) setRegion(value); };
     if (!eligibleHost()) settle('opt-in');
@@ -75,6 +91,9 @@ export function CookieConsent(props: ParentProps) {
     const current = choice();
     const privacySignal = gpc();
     if (!resolved) return;
+    // Discard even if recording is no longer allowed; do not replay on opt-in.
+    const signup = pendingSignup;
+    pendingSignup = undefined;
     const consent = consentFor(resolved, current, privacySignal);
     const allowed = eligibleHost() && canSave() && consent.analytics_storage === 'granted';
     if (!allowed || consent.ad_storage !== 'granted' || consent.ad_user_data !== 'granted') {
@@ -99,6 +118,7 @@ export function CookieConsent(props: ParentProps) {
       startGoogle(consent, pathname);
       active = consent;
     }
+    if (signup && explicitAnalytics(savedChoice(), hasGpc())) track('sign_up', pathname, signup);
     if (pathname !== lastPath) {
       lastPath = pathname;
       track('page_view', pathname);

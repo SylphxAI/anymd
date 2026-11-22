@@ -1,5 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { getCookie, setCookie } from '@solidjs/start/http';
+import { consentKey } from './consent';
+import { signupCookie, signupSignal, type SignupMethod } from './signup';
 import { parseCapabilities } from './auth-capabilities';
 import { appOrigin, asText, HttpError, safeNext } from './http';
 
@@ -84,12 +86,15 @@ export async function moneyAccessToken(request: Request, config: Config, token: 
   return jwt;
 }
 
-export async function acceptTicket(request: Request, config: Config, ticket: unknown) {
+export async function acceptTicket(request: Request, config: Config, ticket: unknown, method: SignupMethod | undefined, next: string) {
   if (typeof ticket !== 'string' || !/^[\w-]{20,512}$/.test(ticket)) throw new HttpError(401, 'auth_refused');
   const body = await authCall(config, request, '/v1/client/tickets:redeem', config.sk, {ticket});
   const token = asText(body?.session?.token);
   if (!token || !await verifySessionUser(config, request, token)) throw new HttpError(401, 'auth_refused');
   setCookie(sessionName, token, cookieOptions(request, '/', 30 * 86400));
+  // Only a verified redemption can produce this optional redirect handoff.
+  const signup = method && signupSignal(body?.is_new_user, getCookie(consentKey), request.headers.get('sec-gpc') === '1', method, next);
+  if (signup) setCookie(signupCookie, signup.method + '.' + signup.entry_surface, {...cookieOptions(request, '/', 60), httpOnly:false});
 }
 
 export function cookieOptions(request: Request, path: string, maxAge: number) {
@@ -119,7 +124,7 @@ export async function oauthStart(request: Request, config: Config, provider: 'go
   const nonce = randomBytes(24).toString('base64url');
   const next = safeNext(new URL(request.url).searchParams.get('next'));
   const origin = appOrigin(request);
-  const payload = Buffer.from(JSON.stringify({nonce, next, exp: Date.now() + 600_000})).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({nonce, next, provider, exp: Date.now() + 600_000})).toString('base64url');
   setCookie(stateCookie, `${payload}.${stateMac(config, origin, payload)}`, cookieOptions(request, statePath, 600));
   const callback = `${origin}${statePath}?state=${nonce}`;
   return `${config.origin}/v1/client/oauth/${provider}/start?${new URLSearchParams({publishable_key: config.pk, redirect_url: callback, session_mode:'server'})}`;
@@ -132,6 +137,8 @@ export async function oauthFinish(request: Request, config: Config) {
   const state = JSON.parse(Buffer.from(payload, 'base64url').toString());
   const query = new URL(request.url).searchParams;
   if (state.exp <= Date.now() || state.nonce !== query.get('state')) throw new HttpError(401, 'auth_refused');
-  await acceptTicket(request, config, query.get('sylphx_ticket'));
-  return safeNext(state.next);
+  const next = safeNext(state.next);
+  const provider = state.provider === 'google' || state.provider === 'github' ? state.provider : undefined;
+  await acceptTicket(request, config, query.get('sylphx_ticket'), provider, next);
+  return next;
 }
