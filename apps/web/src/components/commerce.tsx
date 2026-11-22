@@ -1,6 +1,7 @@
 import { ArrowRight, ArrowUpRight, Check, Terminal } from 'lucide-solid';
 import { A } from '@solidjs/router';
 import { createEffect, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from 'solid-js';
+import { useCookieConsent } from './cookie-consent';
 import { CopyButton } from './copy';
 import { SignOut, useSession } from './session';
 import { RegisterPasskey } from './sign-in';
@@ -30,6 +31,7 @@ function checkoutIntent() {
 }
 
 export function Checkout() {
+  const analytics = useCookieConsent();
   const session = useSession();
   const [currency, setCurrency] = createSignal('USD');
   let intent: string | undefined;
@@ -49,7 +51,15 @@ export function Checkout() {
       <button class="button button-primary" disabled={pending() || !consent()} type="button" onClick={async () => {
         if (pending() || !consent() || !user()) return;
         setPending(true); setNotice('');
-        try { intent ??= checkoutIntent(); const result = await request('checkout', {currency:currency(), consent:consent(), checkoutIntent:intent}); if (!result.url) throw new Error('Checkout did not return a link.'); location.assign(result.url); }
+        try {
+          intent ??= checkoutIntent();
+          const code = currency();
+          const result = await request('checkout', {currency:code, consent:consent(), checkoutIntent:intent});
+          if (!result.url) throw new Error('Checkout did not return a link.');
+          // Measurement must never prevent purchase.
+          await analytics.beginCheckout(code, result.receipt).catch(() => undefined);
+          location.assign(result.url);
+        }
         catch (err) { setNotice(err instanceof Error ? err.message : 'Checkout is unavailable.'); setPending(false); }
       }}>{pending() ? 'Opening checkout…' : 'Continue to secure checkout'} <ArrowRight size={16} /></button>
     </Show>

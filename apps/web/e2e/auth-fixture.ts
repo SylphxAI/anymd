@@ -8,6 +8,26 @@ const challenges = new Map<string, string>();
 serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');
+  const checkoutCollection = '/v1/orgs/org_fixture/projects/prj_fixture/envs/env_fixture/checkout_sessions';
+  if (url.pathname.startsWith(checkoutCollection) && request.headers.get('authorization') === 'Bearer ' + ['sylphx', 'sk', 'test', 'fixture'].join('_')) {
+    const name = checkoutCollection.slice(4) + '/chk-111111111111111111111111';
+    const processor_session_id = 'cs_test_Fixture123';
+    if (request.method === 'POST' && url.pathname === checkoutCollection && !url.search) {
+      const data = await request.json();
+      if (data.subject?.end_user === 'usr_fixture001' && data.line_items?.[0]?.price === 'anymd_pro' &&
+          new URL(data.success_url).searchParams.get('session_id') === '{CHECKOUT_SESSION_ID}' && request.headers.has('idempotency-key')) {
+        return Response.json({name, processor_session_id, url:'https://checkout.stripe.com/c/pay/' + processor_session_id});
+      }
+    }
+    if (request.method === 'GET' && url.pathname.startsWith(checkoutCollection + '/chk-')) {
+      const other = url.pathname.endsWith('222222222222222222222222');
+      const unpaid = url.pathname.endsWith('333333333333333333333333');
+      return Response.json({ name:url.pathname.slice(4), processor_session_id, subject:{end_user:other ? 'usr_other' : 'usr_fixture001'},
+        line_items:[{price:'anymd_pro', quantity:1}], state:unpaid ? 'open' : 'complete', payment_status:unpaid ? 'unpaid' : 'paid',
+        livemode:false, amount_total:'2900', currency_code:'USD', buyer_email:'test@example.invalid' });
+    }
+  }
+
   if (url.pathname === '/v1/client/config' && url.searchParams.get('publishable_key') === 'pk_fixture' && request.headers.get('authorization') === 'Bearer pk_fixture') {
     return Response.json(request.headers.get('user-agent') === 'anymd-test-otp-passkey' ? {
       social: [{ provider: 'google', credentials: 'shared' }],

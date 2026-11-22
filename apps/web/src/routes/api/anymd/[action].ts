@@ -1,8 +1,9 @@
 import type { APIEvent } from '@solidjs/start/server';
-import { currencyOptions, price, product, tokenProduct } from '@/lib/catalog';
+import { currencyOptions, currencyScale, price, product } from '@/lib/catalog';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
 import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/lib/http';
 import { checkoutKey, entitlement, moneyCall, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
+import { checkoutIdPattern, paidPurchase, processorSessionPattern } from '@/lib/purchase';
 
 
 export async function GET({request, params}: APIEvent) {
@@ -40,19 +41,40 @@ export async function POST({request, params}: APIEvent) {
       const result = await moneyCall(ctx.money, `checkout_sessions/${id}:claim`, ctx.token, claim_secret ? {claim_secret} : {}, request.headers.get('user-agent') ?? undefined);
       return json({claimed:result.claimed === true && result.claimed_by === ctx.user.id});
     }
+    if (action === 'purchase-measurement') {
+      const id = field(data, 'checkoutId', checkoutIdPattern);
+      const processorSessionId = field(data, 'processorSessionId', processorSessionPattern);
+      const key = checkoutKey(request, ctx.money);
+      const live = key.startsWith('sylphx_sk_live_');
+      if (live !== processorSessionId.startsWith('cs_live_')) return json({purchase:null});
+      const checkout = await moneyCall(ctx.money, `checkout_sessions/${id}`, key, undefined, undefined, undefined, true);
+      const currency = currencyOptions.find(({code}) => code === checkout.currency_code)?.code;
+      const purchase = currency ? paidPurchase(checkout, {
+        name: `${ctx.money.parent}/checkout_sessions/${id}`, processorSessionId,
+        user: ctx.user.id, price: price.key, live, currencyScale: currencyScale(currency),
+      }) : null;
+      return json({purchase});
+    }
     if (action === 'checkout') {
-      if (!currencyOptions.some(({code}) => code === data.currency) || data.consent !== true) throw new HttpError(400, 'invalid_request');
+      const currency = currencyOptions.find(({code}) => code === data.currency)?.code;
+      if (!currency || data.consent !== true) throw new HttpError(400, 'invalid_request');
       const key = field(data,'checkoutIntent', /^[a-f0-9]{64}$/);
       const keyForMoney = checkoutKey(request, ctx.money);
       // The BFF has already authenticated this exact subject. The privileged
       // server door alone may carry merchant-owned hosted waiver policy.
       const result = await moneyCall(ctx.money, 'checkout_sessions', keyForMoney, {
-        subject, line_items:[{price:price.key, quantity:1}], currency_code:data.currency,
+        subject, line_items:[{price:price.key, quantity:1}], currency_code:currency,
         success_url:`${origin}/pro/thanks?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url:`${origin}/pricing?checkout=cancelled`,
         consent_collection:{terms_required:true, terms_text:consentText, terms_version:consentVersion},
       }, undefined, `anymd-${ctx.user.id}-${key}`, true);
-      return json({url:processorUrl(result.url,'checkout')});
+      const url = processorUrl(result.url, 'checkout');
+      const prefix = ctx.money.parent + '/checkout_sessions/';
+      const id = typeof result.name === 'string' && result.name.startsWith(prefix) ? result.name.slice(prefix.length) : '';
+      const processorSessionId = result.processor_session_id;
+      const receipt = checkoutIdPattern.test(id) && typeof processorSessionId === 'string' && processorSessionPattern.test(processorSessionId)
+        ? {checkoutId:id, processorSessionId} : undefined;
+      return json({url, receipt});
     }
     if (action === 'billing-portal') {
       const jwt = await ctx.accessToken();
