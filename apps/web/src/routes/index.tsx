@@ -3,7 +3,8 @@ import { ArrowRight, ArrowUpRight, AudioLines, FileText, Globe, ShieldCheck, Ter
 import { A } from '@solidjs/router';
 import { CopyButton } from '@/components/copy';
 import { Faq, StructuredData, faqSchema, softwareSchema, freeOffer, proOffer, type Question } from '@/components/search-details';
-import { usdPriceLabel } from '@/lib/catalog';
+import { useBrowserLocales } from '@/lib/browser-locales';
+import { defaultCurrency, formatPrice, proAmount } from '@/lib/catalog';
 import DocumentStudio from '@/components/studio/document-studio';
 
 const npmSetup = 'npx -y @sylphx/anymd setup';
@@ -17,15 +18,16 @@ const questions = [
 ] satisfies Question[];
 
 export default function Home() {
+  const locales = useBrowserLocales();
   return <>
     <PageMeta canonical="/" />
-    <StructuredData nodes={[softwareSchema(freeOffer, proOffer), faqSchema('/', questions)]} />
+    <StructuredData nodes={[softwareSchema(freeOffer(), proOffer()), faqSchema('/', questions)]} />
     <section class="hero wrap">
       <div class="hero-copy">
         <div class="eyebrow"><span class="status-dot" /> OPEN SOURCE · RUST · MCP</div>
         <h1>Documents in.<br/><em>Markdown out.</em></h1>
         <p class="hero-summary">Turn PDFs, Word files, web pages and audio into clean Markdown your agents can use. One local engine, for the terminal and every MCP client.</p>
-        <div class="hero-actions"><A href="/studio" class="button button-primary">Try Studio Free <ArrowRight size={16} /></A><A href="/pricing" class="button">Get Anymd Pro — {usdPriceLabel}</A></div>
+        <div class="hero-actions"><A href="/studio" class="button button-primary">Try Studio Free <ArrowRight size={16} /></A><A href="/pricing" class="button">Get Anymd Pro — {formatPrice(proAmount(defaultCurrency), defaultCurrency, locales())}</A></div>
         <div class="hero-install" role="group" aria-label="Installation options">
           <div class="install-line">
             <code><span aria-hidden="true">$ </span>{npmSetup}</code>

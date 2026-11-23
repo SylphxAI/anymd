@@ -141,7 +141,7 @@ test('checkout works with no consent and sends no GA commands or analytics stora
 test('checkout binds consented campaign data across sign-in without waiting for Events', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth, Money, and Events fixtures');
   await isolate(page, 'US');
-  await page.goto('/pricing?gclid=Ad-Click_123');
+  await page.goto('/pricing?gclid=Ad-Click_123&currency=HKD');
   await page.getByRole('button', {name:'Cookie settings', exact:true}).click();
   await panel(page).getByRole('button', {name:'Allow analytics & ads'}).click();
   await expect(page.getByRole('contentinfo').getByRole('link', {name:'Recover purchase'})).toHaveCount(0);
@@ -155,13 +155,16 @@ test('checkout binds consented campaign data across sign-in without waiting for 
   ]);
   await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
   await page.getByRole('link', {name:'Continue with Google'}).click();
-  await expect(page).toHaveURL('/pricing');
+  await expect(page).toHaveURL('/pricing?currency=HKD');
+  await expect(page.getByLabel('Billing currency')).toHaveValue('HKD');
   await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
   await page.route('https://checkout.stripe.com/**', route => route.fulfill({status:200, body:'Hosted checkout fixture'}));
   await page.getByRole('checkbox').check();
   const creation = page.waitForResponse('**/api/anymd/checkout');
   await page.getByRole('button', {name:'Continue to secure checkout'}).click();
-  expect((await creation).ok()).toBe(true);
+  const created = await creation;
+  expect(created.ok()).toBe(true);
+  expect(created.request().postDataJSON()).toMatchObject({ currency: 'HKD' });
   await expect.poll(async () => (await page.request.get('http://127.0.0.1:3031/test/attribution?client=' + client)).json()).toEqual({
     responseStarted:false,
     body:{checkout_session_id:'chk-111111111111111111111111', consent:all,

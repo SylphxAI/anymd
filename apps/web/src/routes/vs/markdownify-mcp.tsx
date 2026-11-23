@@ -49,7 +49,7 @@ const questions = [
 export default function MarkdownifyComparison() {
   return <article class="wrap comparison-page">
     <PageMeta title={title} description={description} canonical={path} />
-    <StructuredData nodes={[softwareSchema(freeOffer), faqSchema(path, questions)]} />
+    <StructuredData nodes={[softwareSchema(freeOffer()), faqSchema(path, questions)]} />
     <header class="comparison-hero">
       <div>
         <A class="eyebrow inline-link" href="/vs">Converter comparisons</A>

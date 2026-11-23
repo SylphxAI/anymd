@@ -1,15 +1,16 @@
 import { For } from 'solid-js';
 import { canonicalOrigin } from '@/lib/app-origin';
-import { usdPrice } from '@/lib/catalog';
+import { type Currency, defaultCurrency, proAmount } from '@/lib/catalog';
 
 export type Question = { question: string; answer: string };
 
-function offer(name: string, price: number, path: string) {
-  return { '@type': 'Offer', name, price, priceCurrency: 'USD', url: canonicalOrigin + path };
+function offer(name: string, price: number, path: string, currency: Currency) {
+  return { '@type': 'Offer', name, price, priceCurrency: currency, url: canonicalOrigin + path };
 }
 
-export const freeOffer = offer('Free OSS', 0, '/docs');
-export const proOffer = offer('Anymd Pro', usdPrice, '/pricing');
+export const freeOffer = (currency: Currency = defaultCurrency) => offer('Free OSS', 0, '/docs', currency);
+export const proOffer = (currency: Currency = defaultCurrency) => offer('Anymd Pro', proAmount(currency),
+  currency === defaultCurrency ? '/pricing' : '/pricing?currency=' + currency, currency);
 
 export function softwareSchema(...offers: ReturnType<typeof offer>[]) {
   return {

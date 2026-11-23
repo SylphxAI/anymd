@@ -1,10 +1,11 @@
 import type { APIEvent } from '@solidjs/start/server';
 import { bindCheckoutAttribution } from '@/lib/checkout-attribution';
-import { currencyOptions, price, product } from '@/lib/catalog';
+import { isCurrency, price, product } from '@/lib/catalog';
 import { knownEntrySurface } from '@/lib/entry-surface';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
 import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/lib/http';
-import { checkoutKey, entitlement, moneyCall, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
+import { checkoutKey, entitlement, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
+import { moneyCall } from '@/lib/money-http';
 
 export async function GET({request, params}: APIEvent) {
   if ((params).action !== 'account') return json({code:'not_found'},404);
@@ -42,18 +43,20 @@ export async function POST({request, params}: APIEvent) {
       return json({claimed:result.claimed === true && result.claimed_by === ctx.user.id});
     }
     if (action === 'checkout') {
-      const currency = currencyOptions.find(({code}) => code === data.currency)?.code;
-      if (!currency || data.consent !== true) throw new HttpError(400, 'invalid_request');
+      const {currency} = data;
+      if (!isCurrency(currency) || data.consent !== true) throw new HttpError(400, 'invalid_request');
       const key = field(data,'checkoutIntent', /^[a-f0-9]{64}$/);
       const keyForMoney = checkoutKey(request, ctx.money);
       const entrySurface = knownEntrySurface(data.entrySurface) ?? 'pricing';
+      const cancel = new URLSearchParams({checkout:'cancelled', currency});
+      if (entrySurface !== 'pricing') cancel.set('entry_surface', entrySurface);
       // The BFF has already authenticated this exact subject. The privileged
       // server door alone may carry merchant-owned hosted waiver policy.
       const result = await moneyCall(ctx.money, 'checkout_sessions', keyForMoney, {
         subject, line_items:[{price:price.key, quantity:1}], currency_code:currency,
         metadata:{entry_surface:entrySurface},
         success_url:`${origin}/pro/thanks?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url:`${origin}/pricing?checkout=cancelled`,
+        cancel_url:`${origin}/pricing?${cancel}`,
         consent_collection:{terms_required:true, terms_text:consentText, terms_version:consentVersion},
       }, undefined, `anymd-${ctx.user.id}-${key}`, true);
       const url = processorUrl(result.url, 'checkout');
