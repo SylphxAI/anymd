@@ -29,7 +29,7 @@ npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 | Output tokens, all 38 documents | **368,659** | 538,388 |
 | Scanned PDFs | Local OCR with tesseract, or a local document model after `anymd setup ocr` | No OCR by default; an OCR plugin that calls an LLM, or Azure Document Intelligence |
 | Audio and video | Metadata, chapters, subtitles, and local speech-to-text after a one-time model download | Audio metadata and transcription, which its README says rely on web-hosted services; video through Azure Content Understanding |
-| Python API | Prepared, not on PyPI yet | Yes |
+| Python API | Yes. `pip install anymd` from [PyPI](https://pypi.org/project/anymd/); wraps the native CLI. | Yes |
 | Inputs only MarkItDown reads | — | ZIP archives, Outlook messages, YouTube URLs |
 | Plugins | None | Third-party plugins |
 | Price | Free, MIT. Optional [anymd Pro](/pricing?entry_surface=seo_vs-markitdown), one payment | Free, MIT |
@@ -105,7 +105,7 @@ OCR and speech-to-text run locally. anymd goes online only when you pass a URL o
 
 ## When MarkItDown is the better fit
 
-- You want an in-process Python library today. anymd's Python package is prepared but not yet on PyPI.
+- You want an in-process Python converter. The [anymd Python API](/docs/python) calls the native CLI.
 - You need ZIP archives, Outlook messages or YouTube URLs, or one of MarkItDown's third-party plugins.
 - Your pipeline already uses Azure Document Intelligence or Azure Content Understanding.
 
@@ -140,7 +140,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 ## FAQ
 
 **Is anymd a drop-in replacement for MarkItDown?**
-On the command line, mostly: `anymd report.pdf -o report.md` works like `markitdown report.pdf -o report.md`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. anymd's Python package is not on PyPI yet, so code that imports `markitdown` cannot switch today.
+On the command line, mostly: `anymd report.pdf -o report.md` works like `markitdown report.pdf -o report.md`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. Python code can switch to `anymd.convert()` for Markdown, but it is not a drop-in replacement for the `markitdown` API.
 
 **Is anymd faster than MarkItDown?**
 On AgentDocBench, anymd converted all 38 documents in 11.5 seconds and MarkItDown in 75.6 seconds, each timed as a fresh process per file with start-up included.

@@ -138,7 +138,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 ## FAQ
 
 **Is anymd a drop-in replacement for Marker?**
-For Markdown output, mostly: `anymd report.pdf -o report.md` replaces `marker_single report.pdf --output_format markdown`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. Code that imports `marker` cannot switch today, because anymd's Python package is not on PyPI yet.
+For Markdown output, mostly: `anymd report.pdf -o report.md` replaces `marker_single report.pdf --output_format markdown`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. The [anymd Python API](/docs/python) returns Markdown but does not implement Marker's Python API.
 
 **Is anymd faster than Marker?**
 On a 4-CPU runner, yes: on the 30 documents both converted, anymd took 4.64 seconds and Marker 7,104.5 seconds, each timed as a fresh process per file with start-up and model loading included. Marker on a GPU was not measured.

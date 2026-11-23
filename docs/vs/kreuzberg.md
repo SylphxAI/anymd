@@ -104,7 +104,7 @@ On the same 4-CPU runner, anymd converted the 38 documents in 11.5 s and Kreuzbe
 
 ## When Kreuzberg is the better fit
 
-- You want an in-process library in Python, TypeScript, Go, Java, C#, Ruby or another of its bindings. anymd's Python package is prepared but not yet on PyPI.
+- You need an in-process library or one of Kreuzberg's non-Python bindings. The [anymd Python API](/docs/python) calls the native CLI.
 - You read email, Korean HWP, archives or source code, which anymd does not read.
 - You want chunking, embeddings and language detection in the same library as extraction.
 - Your corpus is mostly HTML or EPUB, where Kreuzberg scored slightly higher on this benchmark.
@@ -138,7 +138,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 ## FAQ
 
 **Is anymd a drop-in replacement for Kreuzberg?**
-From the command line or an MCP client, mostly: `anymd report.pdf -o report.md` replaces `kreuzberg extract report.pdf --content-format markdown`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. Code that calls Kreuzberg as a library cannot switch today, because anymd's Python package is not on PyPI yet.
+From the command line or an MCP client, mostly: `anymd report.pdf -o report.md` replaces `kreuzberg extract report.pdf --content-format markdown`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. In Python, `anymd.convert()` can return Markdown, but it does not implement Kreuzberg's API.
 
 **Which one is more accurate?**
 On AgentDocBench, anymd scores 96.4 overall and Kreuzberg 81.7. anymd scores higher on 25 documents and Kreuzberg on 4, and 9 are tied. The largest gap is tables, with table cells F1 of 92.2 against 38.4. Kreuzberg scores slightly higher on HTML and EPUB.

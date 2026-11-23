@@ -2,7 +2,7 @@
 
 :root {
   color-scheme: light dark;
-  --canvas: #f9f8f4;
+  --canvas: #f8f7f4;
   --panel: #fffefa;
   --soft: #efeee8;
   --ink: #19211f;
@@ -48,7 +48,10 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .hero h1 em { font-style:normal; color:var(--accent); }
 .hero-summary { max-width:480px; font-size:clamp(16px,1.42vw,20px); color:var(--muted); margin:0 0 25px; }
 .hero-actions { display:flex; flex-wrap:wrap; gap:9px; }
-.install-line { margin-top:21px; display:flex; align-items:center; flex-wrap:wrap; gap:9px 12px; font-size:12px; color:var(--muted); }
+.hero-install { display:grid; gap:4px; margin-top:21px; }
+.install-line { display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; font-size:12px; color:var(--muted); }
+.install-command { display:inline-flex; align-items:center; gap:5px; max-width:100%; }
+.install-pypi { display:inline-flex; align-items:center; gap:2px; min-height:32px; color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
 .install-line code { overflow-wrap:anywhere; }
 .install-line code span { color:var(--accent); font-weight:bold; }
 .copy-button { font-size:12px; padding:6px 8px; min-height:32px; background:transparent; }
@@ -243,7 +246,8 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
   .hero-copy { padding-bottom:0; }
   .hero h1 { margin-block:10px 11px; }
   .hero-summary { line-height:1.4; margin-bottom:14px; }
-  .install-line { margin-top:12px; }
+  .hero-install { gap:2px; margin-top:8px; }
+  .hero-install .copy-button, .install-pypi { min-height:30px; }
   .studio-compact .studio-bar, .studio-compact .studio-controls, .studio-compact .studio-label { padding-block:8px; }
   .studio-compact .studio-demo { font-size:.75rem; line-height:1.45; min-height:0; padding:10px; }
   .studio-page { padding-top:22px; }

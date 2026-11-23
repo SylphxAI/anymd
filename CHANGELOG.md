@@ -71,7 +71,7 @@
 
 ### Documentation
 
-- Clarify output preservation and shell redirection, and mark the Python package as awaiting PyPI publication instead of offering unavailable `pip` and `uvx` installs.
+- Clarify output preservation and shell redirection.
 
 ## 8.5.6
 

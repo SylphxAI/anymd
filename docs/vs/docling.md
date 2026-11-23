@@ -22,7 +22,7 @@ npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 | | anymd | Docling |
 |---|---|---|
 | What it is | One native Rust binary: CLI and MCP server | Python library and CLI, with a separate `docling-mcp` server |
-| Install | `npx -y @sylphx/anymd setup`, Homebrew, Scoop, Cargo or Docker | `pip install docling`, Python 3.10 or newer; the standard install brings PyTorch and its layout and table models |
+| Install | `npx -y @sylphx/anymd setup`, `pip install anymd` or `uvx anymd` ([PyPI](https://pypi.org/project/anymd/)), Homebrew, Scoop, Cargo or Docker | `pip install docling`, Python 3.10 or newer; the standard install brings PyTorch and its layout and table models |
 | MCP tools | Built in: `read`, `outline`, `search`, `inspect` | `docling-mcp`, installed separately |
 | AgentDocBench overall | **96.4** | 93.0 |
 | Time, all 38 documents, 4 CPUs | **11.5 s** | 2,432.4 s |
@@ -30,7 +30,7 @@ npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 | Scanned PDFs | Local OCR with tesseract, or a local document model after `anymd setup ocr` | Several OCR engines, and vision-language models such as GraniteDocling |
 | Audio and video | Metadata, chapters, subtitles, and local speech-to-text after a one-time model download | Speech-to-text transcripts; video with a transcript and representative keyframes |
 | Output | Markdown with `<!-- page N -->` anchors; JSON with geometry through `inspect` | Markdown, HTML, lossless JSON (`DoclingDocument`), DocTags and more |
-| Python API | Prepared, not on PyPI yet | Yes, with LangChain, LlamaIndex, Crew AI and Haystack integrations |
+| Python API | Yes. Wraps the native CLI, with LangChain and LlamaIndex loaders. | Yes, with LangChain, LlamaIndex, Crew AI and Haystack integrations |
 | Inputs only Docling reads | — | Email (EML, MSG), calendar files, Apple Pages, Numbers and Keynote, XBRL, LaTeX, OpenDocument text and slides |
 | Licence | MIT | MIT code; each model has its own licence |
 | Price | Free, MIT. Optional [anymd Pro](/pricing?entry_surface=seo_vs-docling), one payment | Free |
@@ -86,9 +86,9 @@ The benchmark lives in the anymd repository. The scoring does not know which too
 
 ## Why agent builders pick anymd
 
-### One binary, no Python, PyTorch or GPU
+### One Rust binary, no PyTorch or GPU
 
-`npx -y @sylphx/anymd setup` adds anymd to Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf and Gemini CLI at once. Homebrew (`brew install sylphxai/tap/anymd`), Scoop (`scoop install anymd` from the `SylphxAI/scoop-bucket` bucket), Cargo (`cargo install anymd`) and Docker (`ghcr.io/sylphxai/anymd`) install the same binary. There is no virtual environment, no PyTorch install and no model download to convert a born-digital document.
+`npx -y @sylphx/anymd setup` adds anymd to Claude Code, Codex, Cursor, VS Code, Claude Desktop, Windsurf and Gemini CLI at once. Homebrew (`brew install sylphxai/tap/anymd`), Scoop (`scoop install anymd` from the `SylphxAI/scoop-bucket` bucket), Cargo (`cargo install anymd`) and Docker (`ghcr.io/sylphxai/anymd`) install the same binary. The native binary runs without Python. The optional Python API calls that same binary without PyTorch, and born-digital conversion needs no model download.
 
 ### Fast enough to call while the agent waits
 
@@ -104,7 +104,7 @@ The MCP tools add what an agent needs for long files: `<!-- page N -->` anchors 
 
 ## When Docling is the better fit
 
-- You want an in-process Python library today, with its LangChain, LlamaIndex, Crew AI or Haystack integrations. anymd's Python package is prepared but not yet on PyPI.
+- You want an in-process Python library or depend on Docling's Crew AI or Haystack integrations.
 - You need a lossless structured document model (`DoclingDocument` JSON) or DocTags rather than Markdown.
 - You read email, calendar, Apple iWork, XBRL or LaTeX files, or want to run vision-language models such as GraniteDocling on a GPU.
 - Your corpus is mostly scans, designed reports or EPUB, where Docling scored slightly higher on this benchmark.
@@ -113,8 +113,12 @@ The MCP tools add what an agent needs for long files: `<!-- page N -->` anchors 
 
 ```bash
 docling report.pdf --to md --output out/   # Docling
-anymd report.pdf -o report.md              # anymd, after npm install -g @sylphx/anymd
+pip install anymd                         # anymd CLI and Python API
+anymd report.pdf -o report.md
+# Or run once: uvx anymd report.pdf -o report.md
 ```
+
+The [PyPI wheel](https://pypi.org/project/anymd/) also includes a [Python API](/docs/python) for scripts that need Markdown, without a PyTorch dependency.
 
 For MCP, replace the `docling-mcp` entry in your client with `npx -y @sylphx/anymd`, or run `npx -y @sylphx/anymd setup` to add it to every client. With Docker:
 
@@ -138,13 +142,13 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 ## FAQ
 
 **Is anymd a drop-in replacement for Docling?**
-For Markdown output, mostly: `anymd report.pdf -o report.md` replaces `docling report.pdf --to md`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. Code that imports `docling` cannot switch today, because anymd's Python package is not on PyPI yet and anymd does not produce `DoclingDocument` JSON.
+For Markdown output, mostly: `anymd report.pdf -o report.md` replaces `docling report.pdf --to md`, and `npx -y @sylphx/anymd setup` adds anymd to your MCP clients. Python code can switch to `anymd.convert()` for Markdown, but the API is not a drop-in replacement and does not return `DoclingDocument` or DocTags.
 
 **Is anymd faster than Docling?**
 On AgentDocBench, anymd converted all 38 documents in 11.5 seconds and Docling in 2,432.4 seconds on the same 4-CPU runner, each timed as a fresh process per file with start-up and model loading included. Docling on a GPU was not measured.
 
 **Does anymd need Python, PyTorch or a GPU?**
-No. anymd is a native Rust binary. The `npx` install needs Node 18 or newer; Homebrew, Scoop and Docker install the same binary without Node.
+No. anymd is a native Rust binary. The `npx` install needs Node 18 or newer; Homebrew, Scoop and Docker install the same binary without Node. The optional PyPI package requires Python 3.8 or newer and runs the same binary.
 
 **Which one is more accurate?**
 They are close: 96.4 overall for anymd and 93.0 for Docling. anymd scores higher on 22 documents and Docling on 10. Docling is ahead on scanned documents, designed reports and EPUB.

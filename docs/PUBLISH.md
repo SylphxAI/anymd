@@ -239,11 +239,9 @@ API before `twine check`. Locally, use
 existing native binary for fixture tests and install the extras to run framework
 tests. Neither these checks nor the examples download models.
 
-For the first release of `anymd`, a PyPI account holder who will own the project
-must add a pending GitHub publisher on the
-[PyPI trusted publishing page](https://pypi.org/manage/account/publishing/).
-If the project already exists, configure its publisher in that project's
-publishing settings instead. Use these exact fields:
+[anymd on PyPI](https://pypi.org/project/anymd/) uses GitHub OIDC Trusted
+Publishing. To restore the publisher, use the project's publishing settings
+with these exact fields:
 
 | PyPI field | Value |
 | --- | --- |
@@ -264,8 +262,7 @@ version bump. The job recovers the five wheels from the exact release if needed,
 then submits them via OIDC. It skips existing files and verifies that PyPI lists
 all five expected non-yanked wheels for the exact version before reporting
 success. If the initial probe already sees all five, the wheel build and publish
-are no-ops. Until this check passes in a production run, leave Python publication
-marked as pending on the install pages.
+are no-ops. Check the exact version on PyPI before announcing a release.
 
 ## Doc-VLM builds
 

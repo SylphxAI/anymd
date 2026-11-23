@@ -26,7 +26,7 @@ npx -y @sylphx/anymd setup --client cursor,claude-code,codex
 | What it is | One local native Rust binary: CLI and MCP server | Hosted document parsing API on LlamaCloud, with Python, TypeScript, Go and Java SDKs |
 | Where files run | On your machine, offline by default; nothing is uploaded | Uploaded to LlamaCloud servers for parsing |
 | API key and account | None | LlamaCloud account and API key required |
-| Install | `npx -y @sylphx/anymd setup`, Homebrew, Scoop, Cargo or Docker | `pip install llama-cloud` / `llama-parse` and a `LLAMA_CLOUD_API_KEY` |
+| Install | `npx -y @sylphx/anymd setup`, `pip install anymd` or `uvx anymd` ([PyPI](https://pypi.org/project/anymd/)), Homebrew, Scoop, Cargo or Docker | `pip install llama-cloud` / `llama-parse` and a `LLAMA_CLOUD_API_KEY` |
 | MCP tools | Built in: `read`, `outline`, `search`, `inspect` | Not bundled in a single local binary; wired via LlamaCloud integrations or custom wrappers |
 | Formats | PDF, Word, PowerPoint, Excel, CSV, EPUB, HTML and URLs, images with local OCR, audio and video | PDF, Word, PowerPoint, Excel, HTML, images and dozens of office formats via LlamaCloud |
 | Output | Markdown with `<!-- page N -->` anchors; JSON with geometry through `inspect` | Markdown, plain text, structured JSON, layout bounding boxes and extracted images |
@@ -74,8 +74,12 @@ docs = LlamaParse(result_type="markdown").load_data("report.pdf")
 
 ```bash
 # anymd (runs locally, no API key, free MIT)
+pip install anymd
 anymd report.pdf -o report.md
+# Or run once: uvx anymd report.pdf -o report.md
 ```
+
+The [PyPI wheel](https://pypi.org/project/anymd/) also includes a [Python API](/docs/python) for scripts that need Markdown.
 
 For MCP agents, run `npx -y @sylphx/anymd setup` to register `anymd` across your local editors and CLI agents, or run it in Docker:
 

@@ -13,6 +13,31 @@ test('public and account entry points render without horizontal overflow', async
   expect(await index.text()).toContain('anymd Pro');
 });
 
+test.describe('Python installation without JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+
+  const pypi = 'https://pypi.org/project/anymd/';
+  for (const route of ['/', '/vs/llamaparse', '/vs/docling', '/docs/python']) {
+    test(`shows PyPI install options on ${route}`, async ({ page }) => {
+      expect((await page.goto(route))?.status()).toBe(200);
+      const content = route === '/'
+        ? page.getByRole('group', { name: 'Installation options' })
+        : page.getByRole('main');
+      await expect(content.locator('code').filter({ hasText: 'pip install anymd' }).first()).toBeVisible();
+      await expect(content.locator('code').filter({ hasText: 'uvx anymd' }).first()).toBeVisible();
+      await expect(content.locator(`a[href="${pypi}"]`).first()).toBeVisible();
+      await expect(content).not.toContainText(/not yet published to PyPI|not on PyPI yet/i);
+      if (route === '/') await expect(content.getByText('npx -y @sylphx/anymd setup')).toBeVisible();
+    });
+  }
+
+  test('lists the Python install options in llms.txt', async ({ request }) => {
+    const response = await request.get('/llms.txt');
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toContain('Python (PyPI): `pip install anymd` or `uvx anymd` (' + pypi + ')');
+  });
+});
+
 test('converts a local document and locates an exact source quote', async ({ page }) => {
   await page.goto('/studio');
   await page.getByRole('button', { name: 'Sample document' }).click();
