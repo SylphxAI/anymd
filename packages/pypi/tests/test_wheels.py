@@ -1,142 +1,86 @@
-"""Verify API inclusion, optional dependencies and wheel RECORD hashes."""
+"""Test the anymd payload in a wheel from the pinned release builder."""
 
-import base64
-import csv
-import hashlib
 import importlib.util
-import io
+import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
 import zipfile
-from email.parser import Parser
+from email.parser import BytesParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-spec = importlib.util.spec_from_file_location(
-    "build_wheels", ROOT / "scripts/build-wheels.py"
-)
-builder = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(builder)
+PACKAGE = ROOT / "packages/pypi"
 
 
+def fixture():
+    """Use the release wheel writer and inputs with Verify's current native binary."""
+    spec = importlib.util.spec_from_file_location("pypi_wheels", ROOT / ".wheel-kit/scripts/pypi-wheels.py")
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    temp = Path(os.environ["RUNNER_TEMP"])
+    inputs = json.loads((temp / "wheel-config.json").read_text())
+    os.environ.update({f"WHEELS_{key.upper().replace('-', '_')}": value for key, value in inputs.items()})
+    name, version = inputs["name"], "0.0.0"
+    directory = inputs["python-package-dir"]
+    files = {p.relative_to(ROOT).as_posix(): p.read_bytes() for p in (ROOT / directory / name).rglob("*.py")}
+    out = Path(tempfile.mkdtemp(prefix="anymd-wheel-", dir=temp))
+    return builder.write_wheel(
+        out, name, version, builder.PLATFORMS["linux-x64-gnu"], name,
+        (ROOT / "target/release/anymd").read_bytes(),
+        builder.metadata(name, version, (ROOT / inputs["readme"]).read_bytes()),
+        (ROOT / "LICENSE").read_bytes(), builder.package_files(files, directory, name),
+    )
+
+
+@unittest.skipUnless(os.environ.get("ANYMD_WHEEL"), "set ANYMD_WHEEL to a wheel built by Verify")
 class WheelTests(unittest.TestCase):
-    @unittest.skipUnless(sys.platform == "linux", "POSIX script fixture and Linux wheel tag")
-    def test_user_install_uses_record_binary_without_user_scripts_on_path(self):
+    def test_anymd_api_typing_marker_and_optional_dependencies(self):
+        with zipfile.ZipFile(os.environ["ANYMD_WHEEL"]) as wheel:
+            for module in ("__init__.py", "_api.py", "langchain.py", "llamaindex.py"):
+                path = "anymd/" + module
+                self.assertEqual(wheel.read(path), (PACKAGE / path).read_bytes())
+            self.assertIn("anymd/py.typed", wheel.namelist())
+            info = next(path for path in wheel.namelist() if path.endswith(".dist-info/METADATA"))
+            metadata = BytesParser().parsebytes(wheel.read(info))
+            self.assertEqual(metadata["Requires-Python"], ">=3.8")
+            self.assertEqual(metadata.get_all("Provides-Extra"), ["langchain", "llamaindex"])
+            self.assertEqual(metadata.get_all("Requires-Dist"), [
+                'langchain-core>=0.3,<2; extra == "langchain"',
+                'llama-index-core>=0.12,<1; extra == "llamaindex"',
+            ])
+
+    def test_user_install_needs_neither_user_scripts_on_path_nor_a_fallback_binary(self):
         with tempfile.TemporaryDirectory() as directory:
             out = Path(directory)
-            environment = dict(os.environ, PYTHONUSERBASE=str(out / "user"))
+            env = dict(os.environ, PYTHONUSERBASE=str(out / "user"))
             for key in ("PYTHONPATH", "PYTHONNOUSERSITE", "ANYMD_BIN"):
-                environment.pop(key, None)
-            # Enable an isolated user site without writing to the desk's Python
-            # installation. The wheel binary is an executable fixture, not a build.
+                env.pop(key, None)
             subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", str(out / "venv")], check=True)
             python = out / "venv/bin/python"
-            fixture = out / "native"
-            fixture.write_text(
-                '#!' + str(python) + '\nimport sys\n'
-                'print("---\\nsource: " + sys.argv[1] + "\\n---\\n\\nmatching wheel")\n',
-                encoding="utf-8",
-            )
-            wheel = builder.build("0.0.0", "manylinux_2_17_x86_64", fixture, out)
-            subprocess.run([str(python), "-m", "pip", "install", "--user", "--no-deps",
-                            "--no-index", "--ignore-installed", str(wheel)],
-                           env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            source = out / "source.txt"
-            source.write_text("input", encoding="utf-8")
-            # Empty PATH proves discovery does not depend on user/bin. The second
-            # pass also places a competing executable in default scripts and PATH.
-            environment["PATH"] = ""
+            subprocess.run([str(python), "-m", "pip", "install", "--user", "--no-deps", "--no-index",
+                            "--ignore-installed", str(Path(env["ANYMD_WHEEL"]).resolve())], env=env, check=True)
             code = '''
 import sys
+from pathlib import Path
 from anymd import convert
 from anymd._api import _binary
-from importlib import metadata
-assert str(metadata.distribution('anymd').locate_file('')).startswith(sys.argv[2])
-assert _binary(None).startswith(sys.argv[2])
-assert convert(sys.argv[1]).text == 'matching wheel\\n'
+assert Path(_binary(None)).is_relative_to(sys.argv[2])
+assert "<!-- page 1 -->" in convert(sys.argv[1]).text
 '''
-            for competing in (False, True):
-                with self.subTest(competing=competing):
-                    if competing:
-                        wrong = out / "venv/bin/anymd"
-                        wrong.write_text('#!' + str(python) + '\nraise SystemExit("wrong binary")\n', encoding="utf-8")
-                        wrong.chmod(0o755)
-                        environment["PATH"] = str(wrong.parent)
-                    subprocess.run([str(python), "-c", code, str(source), str(out / "user")],
-                                   env=environment, cwd=out, check=True)
-
-    def test_platform_wheels_include_api_and_only_optional_deps(self):
-        with tempfile.TemporaryDirectory() as directory:
-            out = Path(directory)
-            binary = out / "native"
-            binary.write_bytes(b"native fixture")
-            for tag, exe in (
-                ("manylinux_2_17_x86_64.manylinux2014_x86_64", "anymd"),
-                ("win_amd64", "anymd.exe"),
-            ):
-                with self.subTest(tag=tag):
-                    wheel = builder.build("8.2.0", tag, binary, out)
-                    original = wheel.read_bytes()
-                    self.assertEqual(
-                        builder.build("8.2.0", tag, binary, out).read_bytes(), original
-                    )
-                    with zipfile.ZipFile(wheel) as archive:
-                        names = set(archive.namelist())
-                        for name in (
-                            "__init__.py",
-                            "_api.py",
-                            "langchain.py",
-                            "llamaindex.py",
-                            "py.typed",
-                        ):
-                            self.assertIn("anymd/" + name, names)
-                        script = "anymd-8.2.0.data/scripts/" + exe
-                        self.assertEqual(archive.read(script), b"native fixture")
-                        self.assertEqual(
-                            (archive.getinfo(script).external_attr >> 16) & 0o777, 0o755
-                        )
-                        info = "anymd-8.2.0.dist-info/"
-                        metadata = Parser().parsestr(
-                            archive.read(info + "METADATA").decode()
-                        )
-                        self.assertEqual(
-                            metadata.get_all("Provides-Extra"),
-                            ["langchain", "llamaindex"],
-                        )
-                        self.assertEqual(len(metadata.get_all("Requires-Dist")), 2)
-                        self.assertTrue(
-                            all(
-                                "extra ==" in requirement
-                                for requirement in metadata.get_all("Requires-Dist")
-                            )
-                        )
-                        self.assertEqual(metadata["Requires-Python"], ">=3.8")
-                        self.assertIn(
-                            "Homepage, https://anymd.sylphx.com",
-                            metadata.get_all("Project-URL"),
-                        )
-                        record = list(
-                            csv.reader(
-                                io.StringIO(archive.read(info + "RECORD").decode())
-                            )
-                        )
-                        self.assertEqual({row[0] for row in record}, names)
-                        for name, digest, size in record:
-                            if name.endswith("/RECORD"):
-                                self.assertEqual((digest, size), ("", ""))
-                                continue
-                            data = archive.read(name)
-                            expected = (
-                                base64.urlsafe_b64encode(hashlib.sha256(data).digest())
-                                .rstrip(b"=")
-                                .decode()
-                            )
-                            self.assertEqual(digest, "sha256=" + expected)
-                            self.assertEqual(int(size), len(data))
+            competing = out / "venv/bin/anymd"
+            competing.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+            competing.chmod(0o755)
+            for path in ("", str(competing.parent)):
+                with self.subTest(path=path):
+                    subprocess.run([str(python), "-c", code, str(ROOT / "test/fixtures/sample.pdf"), str(out / "user")],
+                                   env=dict(env, PATH=path), cwd=out, check=True)
 
 
 if __name__ == "__main__":
-    unittest.main()
+    if sys.argv[1:] == ["--fixture"]:
+        print(fixture())
+    else:
+        unittest.main()

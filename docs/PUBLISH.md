@@ -195,49 +195,27 @@ Ordinary pushes build the image only if that version is missing from GHCR.
 A manual dispatch can rebuild it. The image job is independent of Python
 delivery; it is not evidence that wheels were built or published.
 
-The wheel job uses `scripts/recover-wheels.py` to probe the exact version on
-PyPI. The helper skips
-wheel building only when all five expected, non-yanked platform wheels are
-listed. A version-specific 404 or an incomplete wheel list triggers recovery;
-non-404 probe errors and mismatched version or wheel names fail.
-
-Recovery downloads all five binary archives from the matching GitHub release
-`vX.Y.Z`, never a latest release or a global binary. It resolves the actual tag
-commit, checks its npm and Cargo versions, verifies the archives against the
-existing trust job's SHA256SUMS and GitHub asset digests, and verifies each
-archive's trust attestation against that tag's source commit and `release.yml`
-signer. Missing targets, corrupt assets, failed attestations or a recovered
-host binary reporting another version stop recovery. The wheel job waits for
-the trust job to finish and requires its trust pack when building wheels.
-Downloaded native files have their executable mode restored before the version
-check and wheel packaging; their bytes are unchanged. Wheels pass to the PyPI
-publish job through run-store.
-
-The existing wheel builder packages the Python API, README and licence fetched
-from that exact tag commit alongside those binaries. It must not substitute
-newer API or licence files from `main`. The `v8.2.0` tag lacks the Python API,
-so its recovery fails with an explicit requirement for a new release containing
-the API. The 8.3 release must include that API source in its own tag before
-this recovery path can be used; no historical tag is retrofitted. Offline
-fixtures cover these decisions and source identities, but do not establish
-live PyPI delivery.
+The [mcp-kit wheel action](https://github.com/SylphxAI/mcp-kit/tree/main/.github/actions/pypi-wheels)
+checks PyPI for the exact version and skips building if all five expected wheels
+are present and not yanked. Otherwise it packages the five archives from the
+matching GitHub release. It requires the trust job's `SHA256SUMS`, checks the
+GitHub asset digests, and verifies each archive's attestation against the tag
+commit and `release.yml` signer. The same tag supplies the Python API, README,
+and licence. Tags that lack the Python API are not retrofitted. Wheels pass to
+the caller's PyPI Trusted Publisher through run-store. The action then verifies
+the published wheel set.
 
 ## Python wheel payload
 
-`scripts/build-wheels.py` packages the same release binary as a scripts entry
-and includes `packages/pypi/anymd` as an importable Python package in that wheel.
-The wrapper never downloads another binary or implements conversion. Base
-requirements stay empty; `langchain` and `llamaindex` extras declare their
-optional core framework dependencies. All payload files are hashed in `RECORD`.
-No separate Python version or release workflow is introduced.
+The wheel installs the native executable on PATH and includes
+`packages/pypi/anymd` as an importable package with `py.typed`. The base package
+has no dependencies; `langchain` and `llamaindex` are optional extras. The release
+smoke converts a PDF through both the installed CLI and the Python API.
 
-CI runs the standard-library API/packaging tests, then installs a wheel built
-from its native binary with both extras and tests the actual adapters and small
-PDF/CSV fixtures. The release smoke checks both the installed CLI and Python
-API before `twine check`. Locally, use
-`python3 -m unittest discover -s packages/pypi/tests -v`; set `ANYMD_BIN` to an
-existing native binary for fixture tests and install the extras to run framework
-tests. Neither these checks nor the examples download models.
+Verify uses the same pinned wheel writer with its freshly built native binary
+and exercises the installed API and framework adapters. Locally, run
+`python3 -m unittest discover -s packages/pypi/tests -v`; set `ANYMD_BIN` for
+native fixture tests and install the extras to test the adapters.
 
 [anymd on PyPI](https://pypi.org/project/anymd/) uses GitHub OIDC Trusted
 Publishing. To restore the publisher, use the project's publishing settings
