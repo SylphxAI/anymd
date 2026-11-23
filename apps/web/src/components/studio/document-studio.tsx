@@ -10,7 +10,7 @@ const SAMPLE = {brief:{name:'brief.html', url:'/samples/brief.html'}, pdf:{name:
 const normalize = (s: string) => s.normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
 
 function formatStats(result: Result) {
-  return result.units + ' ' + result.unit_noun + (result.units === 1 ? '' : 's') + ' · ~' + result.tokens.toLocaleString('en-US') + ' tokens';
+  return result.units.toLocaleString() + ' ' + result.unit_noun + (result.units === 1 ? '' : 's') + ' · ~' + result.tokens.toLocaleString() + ' tokens';
 }
 
 export default function DocumentStudio(props: { compact?: boolean }) {

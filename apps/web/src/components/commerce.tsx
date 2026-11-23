@@ -1,11 +1,12 @@
 import { ArrowRight, ArrowUpRight, Check, Terminal } from 'lucide-solid';
-import { A, useLocation } from '@solidjs/router';
+import { A, useLocation, useSearchParams } from '@solidjs/router';
 import { createEffect, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from 'solid-js';
 import { useCookieConsent } from './cookie-consent';
 import { CopyButton } from './copy';
 import { SignOut, useSession } from './session';
 import { RegisterPasskey } from './sign-in';
-import { currencyOptions, consentText } from '@/lib/catalog';
+import { currencies, consentText, type Currency, formatPrice, isCurrency, proAmount } from '@/lib/catalog';
+import { single } from '@/lib/request-query';
 import { checkoutSurface } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
 
@@ -20,6 +21,8 @@ const messages: Record<string, string> = {
   checkout_unconfigured: 'Checkout isn’t connected to this environment yet. No charge was made.',
   billing_unconfigured: 'Payments are not connected to this environment yet.',
   unauthorized: 'Your session expired. Sign in and try again.',
+  billing_refused: 'Billing couldn’t authorize that request. If you think this is a mistake, contact support.',
+  rate_limited: 'Too many billing requests. Wait a moment before trying again.',
 };
 
 async function request(path: string, data: object) {
@@ -33,28 +36,39 @@ function checkoutIntent() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function Checkout() {
+export function Checkout(props: { currency: Currency; locales: readonly string[] | undefined }) {
   const route = useLocation();
+  const [query, setQuery] = useSearchParams();
   const entrySurface = () => checkoutSurface(route.pathname, route.search);
   const checkoutNext = () => {
     const surface = entrySurface();
-    return surface === 'pricing' ? '/pricing' : encodeURIComponent('/pricing?entry_surface=' + surface);
+    const params = new URLSearchParams();
+    if (surface !== 'pricing') params.set('entry_surface', surface);
+    const selected = single(query.currency);
+    if (isCurrency(selected)) params.set('currency', selected);
+    return encodeURIComponent(params.size ? '/pricing?' + params : '/pricing');
   };
   const analytics = useCookieConsent();
   const session = useSession();
-  const [currency, setCurrency] = createSignal('USD');
   let intent: { key: string; entrySurface: EntrySurface } | undefined;
   const [consent, setConsent] = createSignal(false);
   const [pending, setPending] = createSignal(false);
   const [notice, setNotice] = createSignal('');
-  const price = () => currencyOptions.find((item) => item.code === currency())?.label;
+  const priceLabel = (code: Currency) => formatPrice(proAmount(code), code, props.locales);
+  createEffect(on([() => props.currency, entrySurface], () => {
+    intent = undefined;
+    setConsent(false);
+  }, {defer:true}));
   const user = () => {
     const state = session();
     return state && state !== 'error' && state.user;
   };
   return <div class="stack">
-    <div><div class="eyebrow">ONE-TIME PAYMENT</div><div class="price">{price()}</div><p class="muted">Tax included. No subscription.</p></div>
-    <label><span class="mb-1 block text-sm font-semibold">Billing currency</span><select class="field" aria-label="Billing currency" value={currency()} onChange={(event) => {intent = undefined; setConsent(false); setCurrency(event.currentTarget.value);}}><For each={currencyOptions}>{(item) => <option value={item.code}>{item.code} · {item.label}</option>}</For></select></label>
+    <div><div class="eyebrow">ONE-TIME PAYMENT</div><div class="price">{priceLabel(props.currency)}</div><p class="muted">Tax included. No subscription.</p></div>
+    <label><span class="mb-1 block text-sm font-semibold">Billing currency</span><select class="field" aria-label="Billing currency" disabled={pending()} onChange={(event) => {
+      const code = event.currentTarget.value;
+      if (isCurrency(code)) setQuery({currency:code});
+    }}><For each={currencies}>{(code) => <option value={code} selected={code === props.currency}>{code} · {priceLabel(code)}</option>}</For></select></label>
     <Show when={user()} fallback={<A class="button button-primary" href={'/sign-in?next=' + checkoutNext()}>Sign in to buy Pro <ArrowRight size={16} /></A>}>
       <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{consentText} This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.</span></label>
       <button class="button button-primary" disabled={pending() || !consent()} type="button" onClick={async () => {
@@ -62,7 +76,7 @@ export function Checkout() {
         setPending(true); setNotice('');
         try {
           const checkout = intent ??= {key:checkoutIntent(), entrySurface:entrySurface()};
-          const code = currency();
+          const code = props.currency;
           const result = await request('checkout', {
             currency:code, consent:consent(), checkoutIntent:checkout.key,
             entrySurface:checkout.entrySurface, measurementConsent:analytics.checkoutChoice(),

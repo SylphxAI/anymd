@@ -1,4 +1,4 @@
-import { currencyScale, price } from './catalog';
+import { isCurrency, price, proAmount } from './catalog';
 import { knownEntrySurface, type EntrySurface } from './entry-surface';
 
 export function checkoutSurface(pathname: string, search: string) {
@@ -7,9 +7,8 @@ export function checkoutSurface(pathname: string, search: string) {
 }
 
 export function checkoutParameters(currency: string, entrySurface: EntrySurface) {
-  const amounts = price.unit_amounts;
-  if (!Object.hasOwn(amounts, currency)) return;
-  const value = Number(amounts[currency as keyof typeof amounts]) / currencyScale(currency);
+  if (!isCurrency(currency)) return;
+  const value = proAmount(currency);
   if (!Number.isFinite(value) || value <= 0) return;
   return {value, currency, plan_sku:price.key, entry_surface:entrySurface, items:[{item_id:price.key, item_name:'Anymd Pro', quantity:1, price:value}]};
 }

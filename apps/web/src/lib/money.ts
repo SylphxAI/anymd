@@ -2,6 +2,7 @@ import { type Config, moneyAccessToken, requireAuth, session, type User } from '
 import { appOrigin, canonicalOrigin, HttpError } from './http';
 import { productionMoney } from './money-production.generated';
 import { product, tokenProduct } from './catalog';
+import { moneyCall } from './money-http';
 
 type Money = typeof productionMoney;
 
@@ -43,38 +44,6 @@ export async function moneyContext(request: Request) {
 export function moneyContextForSession(request: Request, config: Config, active: {user: User; token: string}) {
   const money = moneyConfig(request);
   return money ? { config, ...active, money, accessToken: () => moneyAccessToken(request, config, active.token) } : null;
-}
-
-const serviceErrors = new Map([
-  ['no_customer', 'no_customer'],
-  ['resource_already_exists', 'already_claimed'],
-  ['not_found', 'not_found'],
-  ['resource_not_found', 'not_found'],
-]);
-
-export async function moneyCall(money: Money, path: string, token: string, data?: object, userAgent?: string, idempotency?: string, privileged = false) {
-  const response = await fetch(`${money.origin}/v1/${privileged ? '' : 'money/'}${money.parent}/${path}`, {
-    method:data === undefined ? 'GET' : 'POST',
-    headers:{
-      Authorization: `Bearer ${token}`,
-      ...(privileged ? {} : {'X-Sylphx-Key': money.pk}),
-      ...(userAgent ? {'User-Agent':userAgent} : {}),
-      ...(data === undefined ? {} : {'Content-Type':'application/json'}),
-      ...(idempotency ? {'Idempotency-Key':idempotency} : {}),
-    },
-    body:data === undefined ? undefined : JSON.stringify(data), cache:'no-store', redirect:'error', signal:AbortSignal.timeout(12_000),
-  });
-  const result = await response.json().catch(() => null);
-  if (!response.ok) {
-    const details = Array.isArray(result?.error?.details) ? result.error.details : [];
-    const codes = [result?.code, result?.reason, result?.error?.code, result?.error?.status, ...details.map((d: { reason?: unknown }) => d?.reason)];
-    const known = codes.find((code) => typeof code === 'string' && serviceErrors.has(code.toLowerCase()));
-    const code = known ? serviceErrors.get(known.toLowerCase())! : response.status === 403 ? 'billing_refused' : response.status === 429 ? 'rate_limited' : 'billing_unavailable';
-    // Do not send processor responses, PII or diagnostic content to the page.
-    throw new HttpError(response.status >= 500 ? 502 : response.status, code);
-  }
-  if (!result || typeof result !== 'object') throw new HttpError(502, 'billing_unavailable');
-  return result;
 }
 
 export function processorUrl(value: unknown, door: 'checkout' | 'billing-portal') {
