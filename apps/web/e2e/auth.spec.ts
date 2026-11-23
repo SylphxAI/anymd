@@ -117,10 +117,11 @@ test.describe('OTP and passkey enabled', () => {
 test('OAuth uses only approved callback origins and refuses disabled GitHub', async ({ request, baseURL }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires the local Google-only social Auth fixture');
   for (const [host, forwarded, origin] of [
-    ['anymd-web.default.svc.cluster.local:3000', 'web-16b143.sylphx.app', 'https://web-16b143.sylphx.app'],
-    ['anymd-web.default.svc.cluster.local:3000', '', baseURL],
+    ['web.fixture.svc.cluster.local:3000', 'anymd.sylphx.com', 'https://anymd.sylphx.com'],
+    ['web.fixture.svc.cluster.local:3000', '', baseURL],
     ['anymd.sylphx.com', 'anymd.sylphx.com', 'https://anymd.sylphx.com'],
-    ['evil.example', 'web-16b143.sylphx.app.evil.example', baseURL],
+    ['web.fixture.svc.cluster.local:3000', 'preview.example.test', baseURL],
+    ['evil.example', 'anymd.sylphx.com.evil.example', baseURL],
   ]) {
     const response = await request.get('/api/auth/google?next=/dashboard', { headers: { host, 'x-forwarded-host': forwarded }, maxRedirects: 0 });
     expect(response.status()).toBe(303);

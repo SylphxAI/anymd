@@ -45,7 +45,7 @@ def alive(pid):
 
 
 class ObserverReadTests(unittest.TestCase):
-    """Desk-safe mocked reads: never call alive(), spawn or signal a process."""
+    """Host-safe mocked reads: never call alive(), spawn or signal a process."""
 
     def test_process_disappears_during_read(self):
         from unittest.mock import Mock
