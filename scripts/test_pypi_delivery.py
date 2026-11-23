@@ -3,7 +3,7 @@
 GitHub applies an implicit success() to job conditions without a status
 function, including skipped ancestors in a dependency chain. Recovery may
 succeed after those ancestors skip, so publication must use its direct wheel
-result and output instead. The recovery helper's offline tests own the
+result and output instead. The shared action's tests own the
 complete-version no-op and immutable tagged-payload checks.
 """
 import itertools
@@ -31,6 +31,7 @@ class PyPIDelivery(unittest.TestCase):
         self.workflow = (ROOT / ".github/workflows/release.yml").read_text()
         self.pypi = job(self.workflow, "pypi")
         self.gate = condition(self.workflow, "pypi")
+        self.wheels = job(self.workflow, "wheels")
 
     def test_recovered_wheels_override_skipped_ancestor_propagation(self):
         self.assertIn("needs: wheels", self.pypi)
@@ -62,10 +63,25 @@ class PyPIDelivery(unittest.TestCase):
         self.assertIn("pypa/gh-action-pypi-publish@", self.pypi)
         self.assertIn("packages-dir: dist", self.pypi)
         self.assertIn("skip-existing: true", self.pypi)
-        self.assertLess(self.pypi.index("pypa/gh-action-pypi-publish@"), self.pypi.index("--verify-pypi"))
+        self.assertLess(self.pypi.index("pypa/gh-action-pypi-publish@"), self.pypi.index("mode: verify"))
         self.assertEqual(len(re.findall(r"^    if:", self.pypi, re.M)), 1)
         for hidden_failure in ("continue-on-error", "secrets.", "password:", "username:"):
             self.assertNotIn(hidden_failure, self.pypi)
+
+
+    def test_tagged_build_and_readback_share_the_same_pinned_action(self):
+        action = r"uses: SylphxAI/mcp-kit/\.github/actions/pypi-wheels@([0-9a-f]{40}) # main"
+        build = re.findall(action, self.wheels)
+        self.assertEqual(len(build), 1)
+        self.assertEqual(build, re.findall(action, self.pypi))
+        self.assertIn("mode: build", self.wheels)
+        self.assertIn("needs: [release, trust]", self.wheels)
+        self.assertIn("attestations: read", self.wheels)
+        self.assertIn("require-sha256sums: 'true'", self.wheels)
+        self.assertIn("attestation-workflow: .github/workflows/release.yml", self.wheels)
+        self.assertIn("python-package-dir: packages/pypi", self.wheels)
+        self.assertIn("langchain=langchain-core>=0.3,<2", self.wheels)
+        self.assertIn("llamaindex=llama-index-core>=0.12,<1", self.wheels)
 
 
 if __name__ == "__main__":

@@ -513,25 +513,35 @@ jobs:
         with:
           persist-credentials: false
 
-      # The shared release workflow publishes the native assets. Bind the
-      # wheel payload to the verified tag instead of the kit's transient data.
-      - name: Build the wheels
+      - name: Build and smoke-test the tagged wheels
         id: build
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/recover-wheels.py --out dist
-
-      - name: Smoke the Linux wheel (pip install, then convert a PDF)
-        if: steps.build.outputs.built == 'true'
-        run: |
-          set -euo pipefail
-          python3 -m venv /tmp/venv
-          /tmp/venv/bin/pip install dist/*manylinux_2_17_x86_64*.whl
-          /tmp/venv/bin/anymd version
-          /tmp/venv/bin/anymd test/fixtures/sample.pdf | grep -q '<!-- page 1 -->'
-          /tmp/venv/bin/python -c 'from anymd import convert; assert "<!-- page 1 -->" in convert("test/fixtures/sample.pdf").text'
-          /tmp/venv/bin/pip install twine
-          /tmp/venv/bin/twine check dist/*.whl
+        uses: SylphxAI/mcp-kit/.github/actions/pypi-wheels@be5dbc46f8d1ca200f0b9e04398191653f64bc67 # main
+        with:
+          mode: build
+          name: anymd
+          package-json: packages/anymd/package.json
+          summary: 'Any file to clean Markdown for AI agents: PDF, Word, PowerPoint, Excel, EPUB, HTML, images (OCR), audio and video. A fast Rust CLI and MCP server.'
+          homepage: https://anymd.sylphx.com
+          source-url: https://github.com/SylphxAI/anymd
+          readme: packages/pypi/README.md
+          license-expression: MIT
+          keywords: markdown,pdf,mcp,model-context-protocol,document-conversion,ai-agents
+          classifiers: |
+            Programming Language :: Rust
+            Topic :: Text Processing :: Markup :: Markdown
+          python-package-dir: packages/pypi
+          extras: |
+            langchain=langchain-core>=0.3,<2
+            llamaindex=llama-index-core>=0.12,<1
+          require-sha256sums: 'true'
+          attestation-workflow: .github/workflows/release.yml
+          # The kit resolves FETCH_HEAD to the attested tag before running smoke.
+          # The kit fetches the attested tag into FETCH_HEAD before smoke.
+          smoke-command: |
+            git show FETCH_HEAD:Cargo.toml | python -c 'import os, sys, tomllib; assert tomllib.loads(sys.stdin.read())["workspace"]["package"]["version"] == os.environ["WHEEL_VERSION"]'
+            anymd version | grep -Fx "anymd $WHEEL_VERSION"
+            anymd test/fixtures/sample.pdf | grep -q '<!-- page 1 -->'
+            python -c 'from anymd import convert; assert "<!-- page 1 -->" in convert("test/fixtures/sample.pdf").text'
 
       - name: Upload the wheels
         if: steps.build.outputs.built == 'true'
@@ -557,13 +567,12 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Checkout the registry verifier
+      - name: Checkout the package version
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          sparse-checkout: |
-            scripts/recover-wheels.py
-            packages/anymd/package.json
+          sparse-checkout: packages/anymd/package.json
+          sparse-checkout-cone-mode: false
 
       - name: Download the wheels
         uses: SylphxAI/.github/.github/actions/run-store@724d4c9c87e736ced2068bc22eb57385adabd14d # main
@@ -579,7 +588,11 @@ jobs:
           skip-existing: true
 
       - name: Verify the published wheel set on PyPI
-        run: python3 scripts/recover-wheels.py --verify-pypi
+        uses: SylphxAI/mcp-kit/.github/actions/pypi-wheels@be5dbc46f8d1ca200f0b9e04398191653f64bc67 # main
+        with:
+          mode: verify
+          name: anymd
+          package-json: packages/anymd/package.json
 
   # Multi-arch image on GHCR from the release's Linux binaries (no Rust
   # compile), tagged with the version and latest.
@@ -639,7 +652,7 @@ jobs:
           cp artifacts/native-linux-arm64-gnu/anymd dist/arm64/
           git fetch --no-tags origin "refs/tags/v$v:refs/tags/v$v"
           tag_source=$(git rev-parse "v$v^{commit}")
-          binary_source=$(python3 scripts/recover-wheels.py --artifacts artifacts --image-source)
+          binary_source=$(python3 scripts/verify-image-source.py artifacts "$v")
           test "$binary_source" = "$tag_source"
           # Packaging executes from this workflow's reviewed checkout; payload
           # notices and native identities remain bound to the original source.

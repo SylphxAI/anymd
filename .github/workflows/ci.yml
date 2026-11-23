@@ -177,7 +177,7 @@ jobs:
       - name: Public copy matches product.json and benchmark results
         run: bun run check:copy
 
-      - name: Test Python API, benchmark harness, and wheel packaging without framework dependencies
+      - name: Test Python API and benchmark harness without framework dependencies
         run: |
           python3 -m unittest discover -s packages/pypi/tests -v
           python3 -m unittest discover -s bench/navigation -p 'test_*.py' -v

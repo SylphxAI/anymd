@@ -63,7 +63,7 @@ jobs:
               apps/web/*) web=true ;;
               # The web WASM build uses anymd-core, anymd-formats and anymd-pdf.
               # Keep their sources, manifests, and web copy inputs shared.
-              crates/anymd/src/*.rs|crates/anymd-ocr-vlm/src/*.rs|packages/anymd/*|packages/aliases/*|packages/npm/*|packages/pypi/*|scripts/build-wheels.py|scripts/recover-wheels.py)
+              crates/anymd/src/*.rs|crates/anymd-ocr-vlm/src/*.rs|packages/anymd/*|packages/aliases/*|packages/npm/*|packages/pypi/*|scripts/verify-image-source.py)
                 native=true ;;
               *) web=true; native=true ;;
             esac
@@ -240,16 +240,38 @@ jobs:
       - name: Verify portable ASR CPU configuration
         run: python3 scripts/check-native-cpu.py target/release/build
 
+      - name: Read the wheel action inputs from the release workflow
+        id: wheel-config
+        run: |
+          bun -e '
+            const { jobs } = Bun.YAML.parse(await Bun.file(".github/workflows/release.yml").text());
+            const { uses, with: inputs } = jobs.wheels.steps.find(step => step.id === "build");
+            const pin = uses.match(/^SylphxAI\/mcp-kit\/\.github\/actions\/pypi-wheels@([a-f0-9]{40})$/)?.[1];
+            if (!pin) throw new Error("Expected a pinned mcp-kit wheel action");
+            console.log("ref=" + pin);
+            await Bun.write(process.env.RUNNER_TEMP + "/wheel-config.json", JSON.stringify(inputs));
+          ' >> "$GITHUB_OUTPUT"
+
+      - name: Check out the pinned wheel builder for the test fixture
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: SylphxAI/mcp-kit
+          ref: ${{ steps.wheel-config.outputs.ref }}
+          path: .wheel-kit
+          persist-credentials: false
+          sparse-checkout: scripts/pypi-wheels.py
+          sparse-checkout-cone-mode: false
+
       - name: Test installed Python wheel and optional framework adapters
         run: |
-          python3 scripts/build-wheels.py --version 0.0.0 --out "${RUNNER_TEMP}/python-wheels" \
-            --binary "manylinux_2_17_x86_64=target/release/anymd"
-          python3 -m venv "${RUNNER_TEMP}/anymd-python"
-          "${RUNNER_TEMP}/anymd-python/bin/pip" install \
-            "${RUNNER_TEMP}/python-wheels/anymd-0.0.0-py3-none-manylinux_2_17_x86_64.whl[langchain,llamaindex]"
-          "${RUNNER_TEMP}/anymd-python/bin/python" -c \
+          wheel=$(python3 packages/pypi/tests/test_wheels.py --fixture)
+          python3 -m venv "${{ runner.temp }}/anymd-python"
+          venv="${{ runner.temp }}/anymd-python"
+          "$venv/bin/pip" install "${wheel}[langchain,llamaindex]"
+          "$venv/bin/anymd" test/fixtures/sample.pdf | grep -q '<!-- page 1 -->'
+          "$venv/bin/python" -c \
             'from anymd import convert; assert "<!-- page 1 -->" in convert("test/fixtures/sample.pdf").text'
-          ANYMD_BIN="$PWD/target/release/anymd" "${RUNNER_TEMP}/anymd-python/bin/python" \
+          ANYMD_WHEEL="$wheel" ANYMD_BIN="$PWD/target/release/anymd" "$venv/bin/python" \
             -m unittest discover -s packages/pypi/tests -v
 
       - name: Test Markdown corpus downloader
