@@ -29,9 +29,10 @@ docker run -i --rm ghcr.io/sylphxai/anymd    # MCP server on stdio (amd64 and ar
 
 The image uses glibc 2.17 or newer, so Alpine (musl) needs `cargo install anymd` instead.
 
-Python wheels and a [Python API](python.md) are prepared in this repository but
-are not published to PyPI yet. Use npm or Docker until publication; `pip install
-anymd` and `uvx anymd` do not currently install this project.
+Prefer Python? Run `pip install anymd` from [PyPI](https://pypi.org/project/anymd/)
+to install the CLI and [Python API](python.md), or run `uvx anymd report.pdf`
+without installing the CLI into your Python environment. Wheels are available
+for macOS and Linux on x64 and arm64, and Windows on x64.
 
 On Windows, Scoop installs the same prebuilt binary: add the bucket with `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` and run `scoop install anymd`. On macOS and Linux, `brew install sylphxai/tap/anymd`.
 

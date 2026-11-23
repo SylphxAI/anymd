@@ -109,7 +109,7 @@ Not yet. AgentDocBench results are published only for tools measured on the same
 Yes. One `anymd` call handles PDF, Word (`.docx`), PowerPoint (`.pptx`), Excel and spreadsheets (`.xlsx`, `.xls`, `.ods`, CSV/TSV), EPUB, HTML and URLs, images with local OCR, and audio/video.
 
 **Is anymd a drop-in replacement for PyMuPDF4LLM in Python?**
-From the command line or MCP clients, yes: `anymd report.pdf -o report.md` produces clean Markdown with `<!-- page N -->` anchors and `npx -y @sylphx/anymd setup` configures MCP clients directly. Code importing `pymupdf4llm` in-process in Python cannot swap imports yet until anymd's Python wheel is published on PyPI.
+From the command line or MCP clients, yes: `anymd report.pdf -o report.md` produces clean Markdown with `<!-- page N -->` anchors and `npx -y @sylphx/anymd setup` configures MCP clients directly. Python code can use the [anymd Python API](/docs/python) for Markdown, but it calls the native CLI and does not implement the `pymupdf4llm` API.
 
 **Is anymd free?**
 Yes. anymd is MIT licensed, including the CLI, the MCP server, OCR and transcripts. anymd Pro is an optional one-time purchase, US$29 or the local price in 16 currencies, that adds PDF cite-check and video timelines and frames.

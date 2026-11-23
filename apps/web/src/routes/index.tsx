@@ -1,12 +1,14 @@
 import { PageMeta } from '@/components/page-meta';
-import { ArrowRight, AudioLines, FileText, Globe, ShieldCheck, Terminal } from 'lucide-solid';
+import { ArrowRight, ArrowUpRight, AudioLines, FileText, Globe, ShieldCheck, Terminal } from 'lucide-solid';
 import { A } from '@solidjs/router';
 import { CopyButton } from '@/components/copy';
 import { Faq, StructuredData, faqSchema, softwareSchema, freeOffer, proOffer, type Question } from '@/components/search-details';
 import { usdPriceLabel } from '@/lib/catalog';
 import DocumentStudio from '@/components/studio/document-studio';
 
-const install = 'npx -y @sylphx/anymd setup';
+const npmSetup = 'npx -y @sylphx/anymd setup';
+const pipInstall = 'pip install anymd';
+const uvxRun = 'uvx anymd';
 
 const questions = [
   { question: 'Can I convert a file for free?', answer: 'Yes. Try supported files in Studio or install the free, open-source CLI and MCP server. You do not need an account for local conversion.' },
@@ -24,7 +26,17 @@ export default function Home() {
         <h1>Documents in.<br/><em>Markdown out.</em></h1>
         <p class="hero-summary">Turn PDFs, Word files, web pages and audio into clean Markdown your agents can use. One local engine, for the terminal and every MCP client.</p>
         <div class="hero-actions"><A href="/studio" class="button button-primary">Try Studio Free <ArrowRight size={16} /></A><A href="/pricing" class="button">Get Anymd Pro — {usdPriceLabel}</A></div>
-        <div class="install-line"><code><span>$ </span>{install}</code><CopyButton text={install} label="Copy install command" /></div>
+        <div class="hero-install" role="group" aria-label="Installation options">
+          <div class="install-line">
+            <code><span aria-hidden="true">$ </span>{npmSetup}</code>
+            <CopyButton text={npmSetup} label="Copy install command" compact />
+          </div>
+          <div class="install-line">
+            <div class="install-command"><code>{pipInstall}</code><CopyButton text={pipInstall} label="Copy pip install command" compact /></div>
+            <div class="install-command"><span>or</span><code>{uvxRun}</code><CopyButton text={uvxRun} label="Copy uvx command" compact /></div>
+            <a class="install-pypi" href="https://pypi.org/project/anymd/">PyPI <ArrowUpRight size={12} aria-hidden="true" /></a>
+          </div>
+        </div>
       </div>
       <div class="hero-preview"><DocumentStudio compact /><A href="/studio" class="preview-link">Open Studio <ArrowRight size={15} /></A></div>
     </section>

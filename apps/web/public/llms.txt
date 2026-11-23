@@ -47,6 +47,7 @@ Permissive MIT-licensed native Rust binary (CLI + built-in MCP server for PDF, W
 ## Install and Setup
 
 - npm: `npx -y @sylphx/anymd setup --client cursor,claude-code,codex`
+- Python (PyPI): `pip install anymd` or `uvx anymd` (https://pypi.org/project/anymd/)
 - Cargo: `cargo install anymd`
 - Homebrew: `brew install sylphxai/tap/anymd`
 - Windows (Scoop): `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket`, then `scoop install anymd`

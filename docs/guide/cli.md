@@ -4,7 +4,7 @@ description: "Convert files to Markdown and search folders from the terminal wit
 
 # CLI
 
-The same binary is a command-line converter, like MarkItDown but much faster. Install it with `npm install -g @sylphx/anymd`, or run it once with `npx -y @sylphx/anymd <file>`. From Python, the `anymd` wheels carry the same binary once they are published to PyPI (the [Python page](python.md) says when); with Docker, `docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd <file>`. On macOS and Linux, `brew install sylphxai/tap/anymd`. On Windows with Scoop, `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` and then `scoop install anymd`.
+The same binary is a command-line converter, like MarkItDown but much faster. Install it with `npm install -g @sylphx/anymd`, or run it once with `npx -y @sylphx/anymd <file>`. From [PyPI](https://pypi.org/project/anymd/), `pip install anymd` installs the same binary and the [Python API](python.md). Run `uvx anymd <file>` to use the CLI without a separate install. With Docker, `docker run --rm -v "$PWD:/data" ghcr.io/sylphxai/anymd <file>`. On macOS and Linux, `brew install sylphxai/tap/anymd`. On Windows with Scoop, `scoop bucket add sylphx https://github.com/SylphxAI/scoop-bucket` and then `scoop install anymd`.
 
 ```bash
 anymd report.pdf > report.md                 # a file

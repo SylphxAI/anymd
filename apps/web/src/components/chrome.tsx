@@ -32,7 +32,7 @@ export function Footer() {
   return (
     <footer class="site-footer"><div class="wrap footer-row">
       <div><A class="brand" href="/"><span><Braces size={18} /></span>anymd<span class="brand-dot">.</span></A><p>Documents in. Markdown out.</p></div>
-      <div class="footer-links"><A href="/docs">Docs</A><A href="/vs">Comparisons</A><A href="/privacy">Privacy</A><button class="footer-cookie" type="button" onClick={event => cookies.open(event.currentTarget)}>Cookie settings</button><A href="/legal/pro-terms">Pro terms</A><a href="https://github.com/SylphxAI/anymd">GitHub <ArrowUpRight size={13} /></a></div>
+      <div class="footer-links"><A href="/docs">Docs</A><A href="/vs">Comparisons</A><A href="/privacy">Privacy</A><button class="footer-cookie" type="button" onClick={event => cookies.open(event.currentTarget)}>Cookie settings</button><A href="/legal/pro-terms">Pro terms</A><a href="https://github.com/SylphxAI/anymd">GitHub <ArrowUpRight size={13} /></a><a href="https://pypi.org/project/anymd/">PyPI <ArrowUpRight size={13} /></a></div>
     </div></footer>
   );
 }

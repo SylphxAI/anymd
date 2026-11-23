@@ -143,7 +143,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 ## FAQ
 
 **Is anymd a drop-in replacement for Unstructured?**
-For Markdown output from the command line or an MCP client, yes: `anymd report.pdf -o report.md`, or `npx -y @sylphx/anymd setup` for your MCP clients. Code that calls `partition()` and works with elements cannot switch today, because anymd's Python package is not on PyPI yet and anymd returns Markdown, not elements.
+For Markdown output from the command line or an MCP client, yes: `anymd report.pdf -o report.md`, or `npx -y @sylphx/anymd setup` for your MCP clients. Code that calls `partition()` and works with elements still needs Unstructured: the [anymd Python API](/docs/python) returns Markdown, not elements.
 
 **Is anymd faster than Unstructured?**
 On AgentDocBench, anymd converted all 38 documents in 11.5 seconds and Unstructured in 346.5 seconds on the same 4-CPU runner, each timed as a fresh process per file with start-up included.
