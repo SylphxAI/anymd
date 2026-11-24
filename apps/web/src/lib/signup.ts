@@ -1,5 +1,5 @@
 import { canonicalOrigin } from './app-origin';
-import { explicitAnalytics, parseChoice } from './consent';
+import { explicitAnalytics } from './consent';
 import { knownEntrySurface } from './entry-surface';
 
 export const signupCookie = 'anymd_signup';
@@ -8,8 +8,8 @@ const directSurfaces = ['sign_in', 'cli_auth', 'recover'] as const;
 export type SignupMethod = typeof methods[number];
 export type SignupSignal = {method: SignupMethod; entry_surface: NonNullable<ReturnType<typeof knownEntrySurface>> | typeof directSurfaces[number]};
 
-export function signupSignal(isNewUser: unknown, choice: unknown, gpc: boolean, method: SignupMethod, next: string): SignupSignal | undefined {
-  if (isNewUser !== true || !explicitAnalytics(parseChoice(choice), gpc)) return;
+export function signupSignal(isNewUser: unknown, choice: unknown, headers: Headers | undefined, method: SignupMethod, next: string): SignupSignal | undefined {
+  if (isNewUser !== true || !explicitAnalytics(choice, headers)) return;
   const {pathname, searchParams} = new URL(next, canonicalOrigin);
   const values = searchParams.getAll('entry_surface');
   const surface = values.length === 1 && knownEntrySurface(values[0]);

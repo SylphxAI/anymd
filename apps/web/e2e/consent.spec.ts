@@ -4,8 +4,41 @@ import { signupCookie } from '../src/lib/signup';
 
 const tag = 'https://www.googletagmanager.com/gtag/js?id=G-R4TD2Z8RR7';
 const googleHost = /(?:^|\.)(?:googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|google\.com)$/;
-const all = {analytics_storage:'granted', ad_storage:'granted', ad_user_data:'granted', ad_personalization:'denied'};
-const analyticsOnly = {...all, ad_storage:'denied', ad_user_data:'denied'};
+const denied = {analytics_storage:'denied', ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied'};
+const analyticsOnly = {...denied, analytics_storage:'granted'};
+const all = {analytics_storage:'granted', ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted'};
+const eventsOrigin = 'https://api.sylphx.com';
+const eventsEndpoint = eventsOrigin + '/v1/events/attribution_bindings';
+const checkoutSessionId = 'chk-111111111111111111111111';
+const apiKey = ['sylphx', 'pk', 'test', 'fixture'].join('_');
+const fbc = 'fb.1.1700000000000.Other_Click';
+const fbp = 'fb.1.1700000000000.12345';
+
+async function captureBindings(page: Page) {
+  const bindings: unknown[] = [];
+  await page.route(eventsEndpoint, async route => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({status:204, headers:{'Access-Control-Allow-Origin':'*', 'Access-Control-Allow-Methods':'POST', 'Access-Control-Allow-Headers':'content-type, x-sylphx-key'}});
+      return;
+    }
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().headers()['x-sylphx-key']).toBe(apiKey);
+    bindings.push(route.request().postDataJSON());
+    // An Events failure must not stop checkout.
+    await route.fulfill({status:503, headers:{'Access-Control-Allow-Origin':'*'}});
+  });
+  return bindings;
+}
+
+async function setAttributionCookies(page: Page) {
+  const url = new URL(page.url()).origin;
+  await page.context().addCookies([
+    {name:'_ga', value:'GA1.1.123.1700000000', url},
+    {name:'_ga_R4TD2Z8RR7', value:'GS2.1.s1700000001$o1$g1', url},
+    {name:'_ga_OTHER', value:'GS1.1.700', url},
+    {name:'_fbc', value:fbc, url}, {name:'_fbp', value:fbp, url},
+  ]);
+}
 
 async function isolate(page: Page, country: string | null, gpc = false) {
   const requests: string[] = [];
@@ -33,7 +66,13 @@ async function moneyCheckoutMetadata(page: Page, checkoutIntent: string) {
   return response.json();
 }
 
-for (const [label, code] of [['EEA', 'DE'], ['UK', 'GB'], ['Switzerland', 'CH'], ['unknown', null]] as const) {
+const optInRegions = [
+  ['EEA', 'DE'], ['UK', 'GB'], ['Switzerland', 'CH'], ['unknown', null],
+  ['Åland', 'AX'], ['French Guiana', 'GF'], ['Guadeloupe', 'GP'], ['Martinique', 'MQ'],
+  ['Saint Martin', 'MF'], ['Réunion', 'RE'], ['Mayotte', 'YT'],
+] as const;
+
+for (const [label, code] of optInRegions) {
   test(label + ' makes no Google requests before choice or after rejection', async ({ page }) => {
     const google = await isolate(page, code);
     await page.goto('/pricing');
@@ -69,6 +108,7 @@ test('analytics-only opt-in emits clean pricing event; withdrawal stops future G
   await page.goto('/pricing?session_id=cs_test_NOT_FOR_GOOGLE#private');
   expect(google).toEqual([]);
   await panel(page).getByRole('button', {name:'Analytics only'}).click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('anymd.signal.v1.consent'))).toBe('analytics_only');
   await expect.poll(() => google).toEqual([tag]);
   expect((await commands(page))[0]).toEqual(['consent','default',analyticsOnly]);
   const pricing = await events(page, 'pricing_view');
@@ -82,18 +122,20 @@ test('analytics-only opt-in emits clean pricing event; withdrawal stops future G
   await page.getByRole('contentinfo').getByRole('link', {name:'Privacy', exact:true}).click();
   await expect(page).toHaveURL('/privacy');
   await expect(page.getByRole('main')).toContainText('Global Privacy Control');
-  await expect(page.getByRole('main')).toContainText('22 November 2026');
+  await expect(page.getByRole('main')).toContainText('23 November 2026');
   expect(google).toEqual([tag]);
 });
 
-test('non-EEA starts with full measurement and globally denied personalization', async ({ page }) => {
-  const google = await isolate(page, 'US');
-  await page.goto('/pricing');
-  await expect.poll(() => google).toEqual([tag]);
-  await expect(panel(page)).toHaveCount(0);
-  expect((await commands(page))[0]).toEqual(['consent','default',all]);
-  expect(await events(page, 'pricing_view')).toHaveLength(1);
-});
+for (const country of ['US','CA','AU']) {
+  test(country + ' starts with all four permissions without a banner click', async ({ page }) => {
+    const google = await isolate(page, country);
+    await page.goto('/pricing');
+    await expect.poll(() => google).toEqual([tag]);
+    await expect(panel(page)).toHaveCount(0);
+    expect((await commands(page))[0]).toEqual(['consent','default',all]);
+    expect(await events(page, 'pricing_view')).toHaveLength(1);
+  });
+}
 
 test('GPC overrides the non-EEA defaults and an explicit allow choice', async ({ page }) => {
   const google = await isolate(page, 'US', true);
@@ -109,6 +151,27 @@ test('GPC overrides the non-EEA defaults and an explicit allow choice', async ({
   expect(google).toEqual([]);
 });
 
+test('HTTP Global Privacy Control alone keeps the Google tag off', async ({ page }) => {
+  const google = await isolate(page, 'CA');
+  await page.setExtraHTTPHeaders({'Sec-GPC':'1'});
+  await page.goto('/pricing');
+  await expect(page.locator('html')).toHaveAttribute('data-signal-gpc', '1');
+  await page.getByRole('button', {name:'Cookie settings', exact:true}).click();
+  await expect(panel(page)).toContainText('Global Privacy Control');
+  await panel(page).getByRole('button', {name:'Allow analytics & ads'}).click();
+  expect(await commands(page)).toEqual([]);
+  expect(google).toEqual([]);
+});
+
+test('an existing rejection survives the first load in an opt-out region', async ({ page }) => {
+  const google = await isolate(page, 'AU');
+  await page.addInitScript(() => localStorage.setItem('anymd.cookie-settings.v1', 'reject'));
+  await page.goto('/pricing?gclid=Do_Not_Store');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('anymd.signal.v1.consent'))).toBe('denied');
+  expect(await page.evaluate(() => localStorage.getItem('anymd.signal.v1.touch'))).toBeNull();
+  expect(google).toEqual([]);
+});
+
 test('checkout works with no consent and sends no GA commands or analytics storage writes', async ({ page }) => {
   const hits = await isolate(page, 'FR');
   await page.addInitScript(() => {
@@ -117,12 +180,13 @@ test('checkout works with no consent and sends no GA commands or analytics stora
     Storage.prototype.setItem = function (key, value) { writes.push(key); return setItem.call(this, key, value); };
     Object.defineProperty(window, '__storageWrites', {value:writes});
   });
+  const bindings = await captureBindings(page);
   await page.route('**/api/auth/session*', route => route.fulfill({json:{authConfigured:true, user:{name:'Test', email:'test@example.invalid'}}}));
   await page.route('**/api/anymd/checkout', async route => {
-    expect(route.request().postDataJSON()).toMatchObject({measurementConsent:'reject', entrySurface:'studio_cite_preview'});
+    expect(route.request().postDataJSON()).toMatchObject({entrySurface:'studio_cite_preview'});
     expect(await commands(page)).toEqual([]);
     expect(await page.evaluate(() => Reflect.get(window, '__storageWrites'))).toEqual([]);
-    await route.fulfill({json:{url:'/pro/thanks?session_id=cs_test_NOT_FOR_GOOGLE'}});
+    await route.fulfill({json:{url:'/pro/thanks?session_id=cs_test_NOT_FOR_GOOGLE', attribution:{checkoutSessionId, apiKey, baseUrl:eventsOrigin, gpc:false}}});
   });
   await page.goto('/pricing?entry_surface=studio_cite_preview');
   await expect(panel(page)).toBeVisible();
@@ -136,23 +200,24 @@ test('checkout works with no consent and sends no GA commands or analytics stora
   expect(await commands(page)).toEqual([]);
   expect(await page.evaluate(() => ({writes:Reflect.get(window, '__storageWrites'), gtag:typeof Reflect.get(window, 'gtag')}))).toEqual({writes:[], gtag:'undefined'});
   expect(hits).toEqual([]);
+  expect(bindings).toEqual([{checkout_session_id:checkoutSessionId, consent:denied}]);
 });
 
-test('checkout binds consented campaign data across sign-in without waiting for Events', async ({ page }) => {
-  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth, Money, and Events fixtures');
+test('implicit US consent binds complete attribution after real sign-in and Money checkout', async ({ page }) => {
+  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
   await isolate(page, 'US');
-  await page.goto('/pricing?gclid=Ad-Click_123&currency=HKD');
-  await page.getByRole('button', {name:'Cookie settings', exact:true}).click();
-  await panel(page).getByRole('button', {name:'Allow analytics & ads'}).click();
-  await expect(page.getByRole('contentinfo').getByRole('link', {name:'Recover purchase'})).toHaveCount(0);
-  await expect(page.getByRole('contentinfo').getByRole('button', {name:'Cookie settings'})).toBeVisible();
+  const bindings = await captureBindings(page);
+  await page.route('**/api/anymd/checkout', async route => {
+    const response = await route.fetch();
+    const json = await response.json();
+    expect(json.attribution).toEqual({checkoutSessionId, apiKey, baseUrl:'http://127.0.0.1:3031', gpc:false});
+    // The SDK requires HTTPS. Point it at the browser-intercepted Events origin.
+    await route.fulfill({response, json:{...json, attribution:{...json.attribution, baseUrl:eventsOrigin}}});
+  });
+  await page.goto('/pricing?gclid=Ad-Click_123&gbraid=Braided_1&wbraid=Braided_2&utm_source=search&currency=HKD&proof=private');
   await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
-  const client = String(100000000 + Math.floor(Math.random() * 900000000)) + '.1700000000';
-  const origin = new URL(page.url()).origin;
-  await page.context().addCookies([
-    {name:'_ga', value:'GA1.1.' + client, url:origin},
-    {name:'_ga_R4TD2Z8RR7', value:'GS2.1.s1700000001$o1$g1', url:origin},
-  ]);
+  await expect(panel(page)).toHaveCount(0);
+  await setAttributionCookies(page);
   await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
   await page.getByRole('link', {name:'Continue with Google'}).click();
   await expect(page).toHaveURL('/pricing?currency=HKD');
@@ -164,14 +229,46 @@ test('checkout binds consented campaign data across sign-in without waiting for 
   await page.getByRole('button', {name:'Continue to secure checkout'}).click();
   const created = await creation;
   expect(created.ok()).toBe(true);
-  expect(created.request().postDataJSON()).toMatchObject({ currency: 'HKD' });
-  await expect.poll(async () => (await page.request.get('http://127.0.0.1:3031/test/attribution?client=' + client)).json()).toEqual({
-    responseStarted:false,
-    body:{checkout_session_id:'chk-111111111111111111111111', consent:all,
-      ga_client_id:client, ga_session_id:'1700000001', gclid:'Ad-Click_123', page_location:'https://anymd.sylphx.com/pricing'},
-  });
+  expect(created.request().postDataJSON()).toMatchObject({currency:'HKD'});
   await expect(page).toHaveURL(url => url.origin === 'https://checkout.stripe.com');
+  expect(bindings).toEqual([{
+    checkout_session_id:checkoutSessionId, consent:all,
+    ga_client_id:'123.1700000000', ga_session_id:'1700000001', gclid:'Ad-Click_123', gbraid:'Braided_1', wbraid:'Braided_2', fbc, fbp,
+    page_location:'https://anymd.sylphx.com/pricing?utm_source=search',
+  }]);
 });
+
+for (const [label, choice, serverGpc, expected] of [
+  ['Canada implicit grant', null, false, all],
+  ['Australia implicit grant', null, false, all],
+  ['explicit rejection', 'Reject optional', false, denied],
+  ['analytics-only opt-in', 'Analytics only', false, analyticsOnly],
+  ['server GPC override', 'Allow analytics & ads', true, denied],
+] as const) {
+  test('browser checkout: ' + label, async ({ page }) => {
+    const bindings = await captureBindings(page);
+    await isolate(page, label.startsWith('Australia') ? 'AU' : 'CA');
+    await page.route('**/api/auth/session*', route => route.fulfill({json:{authConfigured:true, user:{name:'Test', email:'test@example.invalid'}}}));
+    await page.route('**/api/anymd/checkout', route => route.fulfill({json:{url:'/pro/thanks?session_id=cs_test_Fixture123', attribution:{checkoutSessionId, apiKey, baseUrl:eventsOrigin, gpc:serverGpc}}}));
+    await page.goto('/pricing?gclid=Ad-Click_123&utm_source=search&proof=private');
+    await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
+    if (choice) {
+      await page.getByRole('button', {name:'Cookie settings', exact:true}).click();
+      await panel(page).getByRole('button', {name:choice}).click();
+      await expect(page.locator('#anymd-google-tag')).toHaveCount(choice === 'Reject optional' ? 0 : 1);
+      await expect(panel(page)).toHaveCount(0);
+    }
+    await setAttributionCookies(page);
+    await page.getByRole('checkbox').check();
+    await page.getByRole('button', {name:'Continue to secure checkout'}).click();
+    await expect(page).toHaveURL('/pro/thanks?session_id=cs_test_Fixture123');
+    expect(bindings).toEqual([{
+      checkout_session_id:checkoutSessionId, consent:expected,
+      ...(expected.analytics_storage === 'granted' && {ga_client_id:'123.1700000000', ga_session_id:'1700000001', page_location:'https://anymd.sylphx.com/pricing?utm_source=search'}),
+      ...(expected.ad_storage === 'granted' && {gclid:'Ad-Click_123', fbc, fbp}),
+    }]);
+  });
+}
 
 test('checkout accepts only existing funnel labels in Money metadata', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
@@ -202,6 +299,7 @@ test('checkout accepts only existing funnel labels in Money metadata', async ({ 
 test('consented checkout emits begin_checkout but the return never measures a purchase', async ({ page }) => {
   test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires loopback Auth and Money fixtures');
   const google = await isolate(page, 'FR');
+  await captureBindings(page);
   const measurementRequests: string[] = [];
   page.on('request', request => {
     if (new URL(request.url()).pathname === '/api/anymd/purchase-measurement') measurementRequests.push(request.url());
@@ -229,7 +327,7 @@ test('consented checkout emits begin_checkout but the return never measures a pu
   await page.getByRole('button', {name:'Continue to secure checkout'}).click();
   const response = await checkout;
   expect(response.ok()).toBe(true);
-  expect(await response.json()).toEqual({url:'https://checkout.stripe.com/c/pay/' + processorSessionId});
+  expect(await response.json()).toMatchObject({url:'https://checkout.stripe.com/c/pay/' + processorSessionId});
   const {checkoutIntent} = response.request().postDataJSON();
   expect(await moneyCheckoutMetadata(page, checkoutIntent)).toEqual({entry_surface:'cli_pdf'});
   await expect(page).toHaveURL(thanks);

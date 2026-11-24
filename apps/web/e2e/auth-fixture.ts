@@ -12,26 +12,12 @@ function issueTicket(request: Request) {
 const token = randomBytes(24).toString('base64url');
 const flow = randomBytes(32).toString('base64url');
 const challenges = new Map<string, string>();
-const bindings = new Map<string, { body: unknown; responseStarted: boolean }>();
 const checkoutMetadata = new Map<string, unknown>();
 const fixtureUser = 'usr_fixture001';
 serve({ hostname: '127.0.0.1', port: 3031, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');
-  if (url.pathname === '/test/attribution') return Response.json(bindings.get(url.searchParams.get('client') ?? '') ?? null);
   if (url.pathname === '/test/checkout-metadata') return Response.json(checkoutMetadata.get(url.searchParams.get('intent') ?? '') ?? null);
-  if (url.pathname === '/v1/events/attribution_bindings' && request.method === 'POST' &&
-      request.headers.get('x-sylphx-key') === ['sylphx', 'pk', 'test', 'fixture'].join('_')) {
-    const body = await request.json();
-    if (typeof body.ga_client_id !== 'string') return new Response(null, {status:400});
-    const binding = {body, responseStarted:false};
-    bindings.set(body.ga_client_id, binding);
-    // Reject before the BFF's deadline. If the route awaited Events, checkout
-    // could not finish while this response is still in flight.
-    await Bun.sleep(650);
-    binding.responseStarted = true;
-    return new Response('fixture upstream failure', {status:503});
-  }
   if (url.pathname === '/v1/client/oauth/google/start' && url.searchParams.get('session_mode') === 'server') {
     const callback = new URL(url.searchParams.get('redirect_url')!);
     if (callback.origin !== 'http://localhost:3000' || callback.pathname !== '/api/auth/callback') return new Response(null, {status:400});

@@ -7,6 +7,8 @@ import { legacyRedirect } from './lib/legacy-redirect';
 export default createMiddleware({ onRequest({ request, response }) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
+  // SSR carries Sec-GPC into the browser even when the navigator API is absent.
+  response.headers.append('Vary', 'Sec-GPC');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   if (!isCanonicalHost(request.headers)) response.headers.set('X-Robots-Tag', noindexTag);
   // Keep auth and payment proof URLs out of outbound referrers.

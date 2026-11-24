@@ -1,21 +1,31 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
-import { clearGoogleCookies, startGoogle, stopGoogle, track, type GoogleConsent } from '@/lib/analytics';
-import { consentFor, consentKey, explicitAnalytics, parseChoice, traceRegion, type Choice, type Region } from '@/lib/consent';
+import { bindCheckoutAttribution, createSignalBrowser, detectSignalRegion, resolveEffectiveConsent, type SignalConsent } from '@sylphx/sdk/signal';
+import { clearGoogleCookies, measurementId, startGoogle, stopGoogle, track } from '@/lib/analytics';
+import { consentKey, savedSignalChoice, signalChoiceKey, signalChoices, signalStorage, type Choice } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
 import { checkoutParameters } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
-import { clickCookie, clickIds } from '@/lib/attribution';
 import { parseSignupSignal, signupCookie, type SignupSignal } from '@/lib/signup';
 
+type CheckoutBinding = {checkoutSessionId: string; apiKey: string; baseUrl: string; gpc: boolean};
+type SignalBrowser = ReturnType<typeof createSignalBrowser>;
 const CookieContext = createContext<{
   open: (from: HTMLButtonElement) => void;
-  checkoutChoice: () => Choice;
+  bindCheckout: (binding?: CheckoutBinding) => Promise<void>;
   beginCheckout: (currency: string, entrySurface: EntrySurface) => Promise<void>;
 }>();
 
-function savedChoice() {
-  try { return parseChoice(localStorage.getItem(consentKey)); } catch { return null; }
+function migrateChoice() {
+  const legacy = localStorage.getItem(consentKey);
+  if (legacy !== null && localStorage.getItem(signalChoiceKey) === null) {
+    // Existing decisions must not revert to regional defaults on upgrade.
+    localStorage.setItem(signalChoiceKey, savedSignalChoice(legacy) ?? 'denied');
+  }
+}
+
+function hasChoice() {
+  try { return localStorage.getItem(signalChoiceKey) !== null; } catch { return false; }
 }
 
 function writeMeasurementCookie(name: string, value: string, age: number) {
@@ -38,88 +48,77 @@ function takeSignup() {
 
 export function CookieConsent(props: ParentProps) {
   const route = useLocation();
-  const [choice, setChoice] = createSignal<Choice | null>(null);
-  const [region, setRegion] = createSignal<Region>();
+  const [browser, setBrowser] = createSignal<SignalBrowser>();
+  const [changed, setChanged] = createSignal(0);
+  const [strict, setStrict] = createSignal(false);
   const [gpc, setGpc] = createSignal(false);
   const [manual, setManual] = createSignal(false);
-  let active: GoogleConsent | undefined;
+  let active: SignalConsent | undefined;
   let lastPath: string | undefined;
   let pendingSignup: SignupSignal | undefined;
+  let canReload = true;
   let trigger: HTMLButtonElement | undefined;
   let firstAction: HTMLButtonElement | undefined;
-  const [canSave, setCanSave] = createSignal(false);
-  const hasGpc = () => (navigator as Navigator & {globalPrivacyControl?: boolean}).globalPrivacyControl === true;
   const eligibleHost = () => location.origin === canonicalOrigin || ['localhost', '127.0.0.1'].includes(location.hostname);
-  const visible = () => manual() || (region() === 'opt-in' && choice() === null);
+  const visible = () => { changed(); return manual() || (strict() && !hasChoice()); };
 
   onMount(() => {
     stopGoogle();
-    try { setChoice(parseChoice(localStorage.getItem(consentKey))); setCanSave(true); } catch { /* fail closed when preferences are inaccessible */ }
-    setGpc(hasGpc());
-    const signup = takeSignup();
-    if (explicitAnalytics(choice(), gpc())) pendingSignup = signup;
-    const controller = new AbortController();
-    const settle = (value: Region) => { if (!controller.signal.aborted) setRegion(value); };
-    if (!eligibleHost()) settle('opt-in');
-    else fetch('/cdn-cgi/trace', {credentials:'omit', referrerPolicy:'no-referrer', redirect:'error', cache:'no-store', signal:AbortSignal.any([controller.signal, AbortSignal.timeout(1800)])})
-      .then(async response => settle(response.ok ? traceRegion(await response.text(), location.hostname) : 'opt-in'))
-      .catch(() => settle('opt-in'));
+    const headerGpc = document.documentElement.dataset.signalGpc === '1';
+    setGpc(resolveEffectiveConsent({storedChoice:'granted', gpc:headerGpc}).analytics_storage === 'denied');
+    let disposed = false;
+    let instance: SignalBrowser | undefined;
     const sync = (event: StorageEvent) => {
-      if (event.key === consentKey || event.key === null) {
-        setChoice(savedChoice());
-      }
+      if (event.key === signalChoiceKey || event.key === null) setChanged(value => value + 1);
     };
     const restore = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        stopGoogle();
-        // Start in a fresh document so a BFCache restore cannot resume an old tag.
-        location.reload();
-      }
+      if (event.persisted) { stopGoogle(); location.reload(); }
     };
     window.addEventListener('storage', sync);
     window.addEventListener('pageshow', restore);
     onCleanup(() => {
-      controller.abort();
+      disposed = true;
+      instance?.dispose();
       window.removeEventListener('storage', sync);
       window.removeEventListener('pageshow', restore);
+    });
+    const eligible = eligibleHost();
+    void (eligible ? detectSignalRegion() : Promise.resolve(undefined)).then(region => {
+      if (disposed) return;
+      pendingSignup = takeSignup();
+      setStrict(resolveEffectiveConsent({region}).analytics_storage === 'denied' && !gpc());
+      let storageUsable = true;
+      try { migrateChoice(); } catch { storageUsable = false; }
+      instance = createSignalBrowser({region:region ?? 'XX', gpc:headerGpc || !eligible || !storageUsable, storageKey:signalStorage});
+      setBrowser(instance);
     });
   });
 
   createEffect(() => {
-    const resolved = region();
+    const signal = browser();
     const pathname = route.pathname;
-    const search = route.search;
-    const current = choice();
-    const privacySignal = gpc();
-    if (!resolved) return;
-    // Discard even if recording is no longer allowed; do not replay on opt-in.
-    const signup = pendingSignup;
-    pendingSignup = undefined;
-    const consent = consentFor(resolved, current, privacySignal);
-    const allowed = eligibleHost() && canSave() && consent.analytics_storage === 'granted';
-    if (!allowed || consent.ad_storage !== 'granted' || consent.ad_user_data !== 'granted') {
-      if (document.cookie.split(';').some(cookie => cookie.trimStart().startsWith(clickCookie + '='))) writeMeasurementCookie(clickCookie, '', 0);
-    } else {
-      const params = new URLSearchParams(search);
-      const ids = clickIds(key => params.getAll(key).length === 1 ? params.get(key) : null);
-      if (Object.keys(ids).length) writeMeasurementCookie(clickCookie, encodeURIComponent(JSON.stringify(ids)), 30 * 86_400);
-    }
+    changed();
+    void route.search; // A search-only navigation can carry a new campaign touch.
+    if (!signal) return;
+    const consent = signal.getConsent();
+    signal.capture();
+    const allowed = consent.analytics_storage === 'granted';
     if (active && (!allowed || active.ad_storage !== consent.ad_storage)) {
       stopGoogle();
       active = undefined;
       clearGoogleCookies(!allowed);
-      // The executed script may still own callbacks. Replace the entire page
-      // after a saved change instead of sending denied-mode pings to Google.
-      if (canSave()) location.reload();
+      // Executed tags may still own callbacks. Never send a denied-mode ping.
+      if (canReload) location.reload();
       return;
     }
-    if (!allowed) { clearGoogleCookies(true); return; }
+    if (!allowed) { pendingSignup = undefined; clearGoogleCookies(true); return; }
     if (!active) {
       if (consent.ad_storage === 'denied') clearGoogleCookies(false);
       startGoogle(consent, pathname);
       active = consent;
     }
-    if (signup && explicitAnalytics(savedChoice(), hasGpc())) track('sign_up', pathname, signup);
+    if (pendingSignup && hasChoice()) track('sign_up', pathname, pendingSignup);
+    pendingSignup = undefined;
     if (pathname !== lastPath) {
       lastPath = pathname;
       track('page_view', pathname);
@@ -138,15 +137,21 @@ export function CookieConsent(props: ParentProps) {
   }
 
   function choose(next: Choice) {
-    try { localStorage.setItem(consentKey, next); setCanSave(true); } catch {
-      // Prefer an unset choice to an old grant if storage ran out of space.
-      try { localStorage.removeItem(consentKey); } catch { /* disable measurement in this document */ }
-      setCanSave(false);
-    }
-    // The server can honor a restrictive choice even if a stale page submits
-    // a broader one. An unset cookie never grants measurement.
-    writeMeasurementCookie(consentKey, canSave() ? next : 'reject', 31_536_000);
-    setChoice(next);
+    const signal = browser();
+    if (!signal) return;
+    signal.setConsent(signalChoices[next]);
+    // Preserve the Auth handoff and a rollback's ability to read the choice.
+    const persisted = (() => {
+      try {
+        if (localStorage.getItem(signalChoiceKey) !== signalChoices[next]) return false;
+        localStorage.setItem(consentKey, next);
+        return true;
+      } catch { return false; }
+    })();
+    canReload = persisted;
+    if (!persisted) signal.setConsent('denied');
+    writeMeasurementCookie(consentKey, persisted ? next : 'reject', 31_536_000);
+    setChanged(value => value + 1);
     close();
   }
   function close() {
@@ -160,19 +165,17 @@ export function CookieConsent(props: ParentProps) {
       setManual(true);
       queueMicrotask(() => firstAction?.focus());
     },
-    checkoutChoice(): Choice {
-      const resolved = region();
-      if (!resolved || !eligibleHost() || !canSave() || hasGpc()) return 'reject';
-      try {
-        // Read at submit time: another tab may just have withdrawn consent.
-        const saved = parseChoice(localStorage.getItem(consentKey));
-        return saved === 'analytics' || saved === 'all' ? saved : 'reject';
-      } catch { return 'reject'; }
+    async bindCheckout(binding?: CheckoutBinding) {
+      if (!binding) return;
+      const {checkoutSessionId, apiKey, baseUrl, gpc} = binding;
+      const checkout = {checkoutSessionId};
+      const options = {apiKey, baseUrl, gaMeasurementId:measurementId, pageLocation:new URL('/pricing', canonicalOrigin), signal:AbortSignal.timeout(750)};
+      const signal = browser();
+      if (gpc || !signal) await bindCheckoutAttribution(checkout, {...options, privacy:{storedChoice:'denied'}});
+      else await signal.bindCheckoutAttribution(checkout, options);
     },
     async beginCheckout(currency: string, entrySurface: EntrySurface) {
-      // Regional page-view defaults are not an opt-in to funnel events. Read
-      // the persisted choice again in case a different tab withdrew it.
-      if (active?.analytics_storage !== 'granted' || !canSave() || !explicitAnalytics(savedChoice(), hasGpc())) return;
+      if (!active || browser()?.getConsent().analytics_storage !== 'granted') return;
       const parameters = checkoutParameters(currency, entrySurface);
       if (!parameters) return;
       await new Promise<void>(resolve => {
@@ -190,9 +193,9 @@ export function CookieConsent(props: ParentProps) {
           {gpc() && <p>Global Privacy Control is on. Optional tracking stays off.</p>}
         </div>
         <div class="cookie-actions">
-          <button ref={firstAction} class="button" type="button" onClick={() => choose('reject')}>Reject optional</button>
-          <button class="button" type="button" onClick={() => choose('analytics')}>Analytics only</button>
-          <button class="button" type="button" onClick={() => choose('all')}>Allow analytics &amp; ads</button>
+          <button ref={firstAction} class="button" type="button" disabled={!browser()} onClick={() => choose('reject')}>Reject optional</button>
+          <button class="button" type="button" disabled={!browser()} onClick={() => choose('analytics')}>Analytics only</button>
+          <button class="button" type="button" disabled={!browser()} onClick={() => choose('all')}>Allow analytics &amp; ads</button>
           {manual() && <button class="cookie-close" type="button" onClick={close}>Close without changing</button>}
         </div></div>
       </aside>
