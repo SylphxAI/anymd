@@ -4,7 +4,8 @@ import { createEffect, createSignal, For, Match, on, onCleanup, onMount, Show, S
 import { useCookieConsent } from './cookie-consent';
 import { CopyButton } from './copy';
 import { SignOut, useSession } from './session';
-import { RegisterPasskey } from './sign-in';
+import { SylphxPasskeyEnroll } from '@sylphx/auth-solid';
+import { authRoute } from '@/lib/auth-route';
 import { currencies, consentText, type Currency, formatPrice, isCurrency, proAmount } from '@/lib/catalog';
 import { single } from '@/lib/request-query';
 import { checkoutSurface } from '@/lib/funnel';
@@ -155,7 +156,7 @@ export function AccountPanel(props: { billing?: boolean }) {
             catch (err) { setNotice(err instanceof Error ? err.message : 'Billing is unavailable.'); setPending(false); }
           }}>{pending() ? 'Opening billing…' : 'Manage billing and invoices'} <ArrowUpRight size={15} /></button><SignOut /></div>
           {notice() && <p role="status" class="notice">{notice()}</p>}
-          {activeSession()?.methods?.passkey === true && <RegisterPasskey />}
+          <SylphxPasskeyEnroll enabled={activeSession()?.methods?.passkey === true} routePrefix={authRoute} class="button" />
           <A href="/recover" class="inline-link">Recover a legacy purchase</A>
         </section>
         <section class="panel stack"><span class="eyebrow"><Terminal size={16} /> LOCAL TOOLS</span><h2>Connect CLI or MCP</h2>

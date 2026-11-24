@@ -1,9 +1,9 @@
 import { A, useLocation } from '@solidjs/router';
-import type { Capabilities } from '@/lib/auth-capabilities';
+import { authRoute } from '@/lib/auth-route';
 import { localeFromPath, localizedPath } from '@/lib/marketing-locale';
 import { createEffect, createSignal, on, onCleanup, Show } from 'solid-js';
 
-export type Session = { authConfigured: boolean; user: { name: string | null; email: string | null } | null } & Partial<Capabilities>;
+export type Session = { authConfigured: boolean; user: { name: string | null; email: string | null } | null; methods?: { emailOtp: boolean; passkey: boolean } };
 
 export function useSession(includeProviders = false) {
   const route = useLocation();
@@ -12,7 +12,7 @@ export function useSession(includeProviders = false) {
     setState(null);
     const controller = new AbortController();
     onCleanup(() => controller.abort());
-    fetch('/api/auth/session' + (includeProviders ? '?providers' : ''), { cache: 'no-store', signal: controller.signal })
+    fetch(authRoute + '/session' + (includeProviders ? '?providers' : ''), { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error('Session unavailable');
         const session = await response.json();
@@ -54,7 +54,7 @@ export function SignOut() {
   const [failed, setFailed] = createSignal(false);
   return <><button class="button" type="button" onClick={async () => {
     try {
-      const response = await fetch('/api/auth/sign-out', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const response = await fetch(authRoute + '/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       if (!response.ok) throw new Error('Sign-out failed');
       // Reload session consumers even when signing out on the homepage.
       location.replace(localizedPath('/', localeFromPath(route.pathname)));

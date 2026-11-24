@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './fixture-test';
 
 const seoPaths = [
   '/vs', '/vs/docling', '/vs/kreuzberg', '/vs/llamaparse', '/vs/markdownify-mcp',
