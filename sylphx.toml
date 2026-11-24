@@ -7,7 +7,7 @@ default_env = "production"
 
 [build]
 strategy = "dockerfile"
-dockerfile = "Dockerfile"
+dockerfile = "Dockerfile.web"
 context = "."
 
 # Auth's organization, publishable key and server secret come from the
@@ -22,11 +22,11 @@ type = "web"
 port = 3000
 instance_type = "micro"
 path_prefixes = ["/", "/api/health", "/api/auth", "/api/anymd"]
-watch_paths = ["apps/web/**", "docs/**", "crates/**", "vendor/**", "config/money-catalogue.json", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "scripts/build-wasm.sh", "scripts/render-web-money.py", "bun.lock", "package.json", "Dockerfile", ".dockerignore", "sylphx.toml"]
+watch_paths = ["apps/web/**", "docs/**", "crates/**", "vendor/**", "config/money-catalogue.json", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "scripts/build-wasm.sh", "scripts/render-web-money.py", "bun.lock", "package.json", "Dockerfile.web", ".dockerignore", "sylphx.toml"]
 
 [services.build]
 strategy = "dockerfile"
-dockerfile = "Dockerfile"
+dockerfile = "Dockerfile.web"
 context = "."
 
 [services.health]

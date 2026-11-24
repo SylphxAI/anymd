@@ -1,33 +1,23 @@
-FROM rust:1.100.0-bookworm AS wasm
+# MCP over stdio. Sylphx Platform builds the web app from Dockerfile.web.
+FROM rust:1.100.0-bookworm AS build
 WORKDIR /source
-RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/* \
-    && rustup target add wasm32-unknown-unknown
-COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+RUN apt-get update && apt-get install -y --no-install-recommends cmake \
+    && rm -rf /var/lib/apt/lists/*
+COPY Cargo.toml Cargo.lock rust-toolchain.toml README.md LICENSE ./
+COPY .cargo ./.cargo
 COPY crates ./crates
 COPY vendor ./vendor
-COPY scripts/build-wasm.sh ./scripts/build-wasm.sh
-RUN bash scripts/build-wasm.sh
+RUN cargo build --release --locked -p anymd --bin anymd
 
-FROM oven/bun:1.4.4-debian AS bun
-FROM node:24-bookworm-slim AS build
-COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
-WORKDIR /source
-RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
-COPY package.json bun.lock ./
-COPY apps/web/package.json ./apps/web/package.json
-RUN bun install --frozen-lockfile
-COPY docs ./docs
-COPY config/money-catalogue.json ./config/money-catalogue.json
-COPY crates/anymd/src/money_docs.toml ./crates/anymd/src/money_docs.toml
-COPY scripts/render-web-money.py ./scripts/render-web-money.py
-COPY apps/web ./apps/web
-COPY --from=wasm /source/apps/web/public/wasm ./apps/web/public/wasm
-RUN bun run web:build
-
-FROM node:24-bookworm-slim AS web
-WORKDIR /app
-ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0
-COPY --from=build --chown=node:node /source/apps/web/.output ./apps/web/.output
-EXPOSE 3000
-USER node
-CMD ["node", "apps/web/.output/server/index.mjs"]
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 10001 anymd
+COPY --from=build /source/target/release/anymd /usr/local/bin/anymd
+COPY LICENSE /usr/share/licenses/anymd/LICENSE
+WORKDIR /data
+USER anymd
+LABEL org.opencontainers.image.source="https://github.com/SylphxAI/anymd" \
+      org.opencontainers.image.licenses="MIT" \
+      io.modelcontextprotocol.server.name="io.github.SylphxAI/anymd"
+ENTRYPOINT ["anymd", "mcp"]

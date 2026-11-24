@@ -17,6 +17,7 @@ Need verifiable PDF quote checks and video frames? Get [anymd Pro](https://anymd
 [![stars](https://mark.sylphx.com/github/stars/SylphxAI/anymd?style=flat-square&labelColor=0a0d07&color=c3f53c)](https://github.com/SylphxAI/anymd/stargazers)
 [![MCP registry](https://mark.sylphx.com/badge/MCP-io.github.SylphxAI%2Fanymd-c3f53c?style=flat-square&labelColor=0a0d07)](https://registry.modelcontextprotocol.io/v0/servers?search=anymd)
 [![license](https://mark.sylphx.com/badge/license-MIT-c3f53c?style=flat-square&labelColor=0a0d07)](https://github.com/SylphxAI/anymd/blob/main/LICENSE)
+[![SylphxAI/anymd MCP server](https://glama.ai/mcp/servers/SylphxAI/anymd/badges/score.svg)](https://glama.ai/mcp/servers/SylphxAI/anymd)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SylphxAI/anymd/badge)](https://scorecard.dev/viewer/?uri=github.com/SylphxAI/anymd) <!-- repomap:agent-ready -->[![agent-ready 93/100](https://mark.sylphx.com/badge/agent--ready-93%2F100-brightgreen?style=flat-square&labelColor=0a0d07)](https://github.com/SylphxAI/repomap#agent-readiness-score)<!-- /repomap:agent-ready -->
 
 [Install](#install) · [Benchmarks](#benchmarks) · [Tools](#mcp-tools) · [CLI](#cli) · [Formats](#formats) · [Docs](https://anymd.sylphx.com/?utm_source=github&utm_medium=readme) · [Pro, US$29 once](https://anymd.sylphx.com/pricing?utm_source=github&utm_medium=readme&utm_content=nav)
@@ -344,9 +345,11 @@ See [SECURITY.md](https://github.com/SylphxAI/anymd/blob/main/SECURITY.md) to re
 
 ## Also from Sylphx
 
+Built by [Sylphx](https://sylphx.com).
+
 <!-- generated:also-from -->
-- [**repomap**](https://github.com/SylphxAI/repomap): A map of your codebase for AI agents: code graph, search, call paths and change impact.
-- [**lockdocs**](https://github.com/SylphxAI/lockdocs): Exact-version library docs from your lockfile. Local, offline, no rate limits.
+- [**Repomap**](https://github.com/SylphxAI/repomap): Local Rust MCP server for mapping a codebase, tracing calls and seeing what a change affects.
+- [**Lockdocs**](https://github.com/SylphxAI/lockdocs): Local Rust MCP server for finding library docs that match the versions in your lockfile.
 - [**skills**](https://github.com/SylphxAI/skills): Battle-tested agent skills for Claude Code and Codex, installed in one command.
 - [**readme-mark**](https://github.com/SylphxAI/readme-mark): Beautiful README images from one URL: banners, badges, icons and stats cards.
 - [**Sylphx apps**](https://sylphx.com/apps): Apps and tools from Sylphx.
