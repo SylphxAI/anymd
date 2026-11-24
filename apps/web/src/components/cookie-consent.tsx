@@ -4,6 +4,7 @@ import { bindCheckoutAttribution, createSignalBrowser, detectSignalRegion, resol
 import { clearGoogleCookies, measurementId, startGoogle, stopGoogle, track } from '@/lib/analytics';
 import { consentKey, savedSignalChoice, signalChoiceKey, signalChoices, signalStorage, type Choice } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
+import { localeFromPath } from '@/lib/marketing-locale';
 import { checkoutParameters } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
 import { parseSignupSignal, signupCookie, type SignupSignal } from '@/lib/signup';
@@ -48,6 +49,7 @@ function takeSignup() {
 
 export function CookieConsent(props: ParentProps) {
   const route = useLocation();
+  const zh = () => localeFromPath(route.pathname) === 'zh-TW';
   const [browser, setBrowser] = createSignal<SignalBrowser>();
   const [changed, setChanged] = createSignal(0);
   const [strict, setStrict] = createSignal(false);
@@ -188,15 +190,15 @@ export function CookieConsent(props: ParentProps) {
   return <CookieContext.Provider value={context}>{props.children}
     <Show when={visible()}>
       <aside ref={reserveSpace} class="cookie-panel" aria-labelledby="cookie-heading" onKeyDown={event => { if (manual() && event.key === 'Escape') close(); }}>
-        <div class="cookie-row"><div><h2 id="cookie-heading">Cookie settings</h2>
-          <p>Optional analytics and ads. <A href="/privacy" class="inline-link">Privacy notice</A></p>
-          {gpc() && <p>Global Privacy Control is on. Optional tracking stays off.</p>}
+        <div class="cookie-row"><div><h2 id="cookie-heading">{zh() ? 'Cookie 設定' : 'Cookie settings'}</h2>
+          <p>{zh() ? '選用分析與廣告。' : 'Optional analytics and ads. '}<A href="/privacy" class="inline-link">{zh() ? '隱私權說明' : 'Privacy notice'}</A></p>
+          {gpc() && <p>{zh() ? '已啟用全球隱私權控制（GPC）。選用追蹤維持關閉。' : 'Global Privacy Control is on. Optional tracking stays off.'}</p>}
         </div>
         <div class="cookie-actions">
-          <button ref={firstAction} class="button" type="button" disabled={!browser()} onClick={() => choose('reject')}>Reject optional</button>
-          <button class="button" type="button" disabled={!browser()} onClick={() => choose('analytics')}>Analytics only</button>
-          <button class="button" type="button" disabled={!browser()} onClick={() => choose('all')}>Allow analytics &amp; ads</button>
-          {manual() && <button class="cookie-close" type="button" onClick={close}>Close without changing</button>}
+          <button ref={firstAction} class="button" type="button" disabled={!browser()} onClick={() => choose('reject')}>{zh() ? '拒絕選用項目' : 'Reject optional'}</button>
+          <button class="button" type="button" disabled={!browser()} onClick={() => choose('analytics')}>{zh() ? '僅限分析' : 'Analytics only'}</button>
+          <button class="button" type="button" disabled={!browser()} onClick={() => choose('all')}>{zh() ? '允許分析與廣告' : 'Allow analytics & ads'}</button>
+          {manual() && <button class="cookie-close" type="button" onClick={close}>{zh() ? '關閉，不變更設定' : 'Close without changing'}</button>}
         </div></div>
       </aside>
     </Show>

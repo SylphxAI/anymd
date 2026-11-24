@@ -1,5 +1,6 @@
 import { A, useLocation } from '@solidjs/router';
 import type { Capabilities } from '@/lib/auth-capabilities';
+import { localeFromPath, localizedPath } from '@/lib/marketing-locale';
 import { createEffect, createSignal, on, onCleanup, Show } from 'solid-js';
 
 export type Session = { authConfigured: boolean; user: { name: string | null; email: string | null } | null } & Partial<Capabilities>;
@@ -29,23 +30,34 @@ export function GoogleMark() {
 export function SessionAction() {
   const session = useSession();
   const route = useLocation();
+  const zh = () => localeFromPath(route.pathname) === 'zh-TW';
   const signedIn = () => {
     const state = session();
     return state && state !== 'error' && state.user;
   };
-  return <Show when={signedIn()} fallback={<A class="button sign-in-button" href={'/sign-in?next=' + encodeURIComponent(route.pathname === '/' ? '/dashboard' : route.pathname)}>Sign in</A>}>
-    <A href="/dashboard" class="button">Dashboard</A>
+  return <Show when={signedIn()} fallback={<A class="button sign-in-button" href={'/sign-in?next=' + encodeURIComponent(route.pathname === '/' ? '/dashboard' : route.pathname)}>{zh() ? '登入' : 'Sign in'}</A>}>
+    <Show when={zh()} fallback={<A href="/dashboard" class="button">Dashboard</A>}>
+      <details class="session-menu">
+        <summary class="button sign-in-button">帳號</summary>
+        <div class="session-menu-panel">
+          <A href="/dashboard" class="button">帳號總覽</A>
+          <SignOut />
+        </div>
+      </details>
+    </Show>
   </Show>;
 }
 
 export function SignOut() {
+  const route = useLocation();
+  const zh = () => localeFromPath(route.pathname) === 'zh-TW';
   const [failed, setFailed] = createSignal(false);
   return <><button class="button" type="button" onClick={async () => {
     try {
       const response = await fetch('/api/auth/sign-out', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       if (!response.ok) throw new Error('Sign-out failed');
       // Reload session consumers even when signing out on the homepage.
-      location.replace('/');
+      location.replace(localizedPath('/', localeFromPath(route.pathname)));
     } catch { setFailed(true); }
-  }}>Sign out</button>{failed() && <span role="alert">Could not sign out. Please try again.</span>}</>;
+  }}>{zh() ? '登出' : 'Sign out'}</button>{failed() && <span role="alert">{zh() ? '無法登出，請再試一次。' : 'Could not sign out. Please try again.'}</span>}</>;
 }

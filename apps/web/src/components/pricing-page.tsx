@@ -39,7 +39,7 @@ export function Pricing(props: { title?: string }) {
         <div class="pro-plan-title"><span class="eyebrow">{t().proLabel}</span><h2>{t().pro}</h2></div>
         {locale() === 'zh-TW' && <p class="pro-plan-payment muted">{t().oneTime}</p>}
         <PlanFeatures points={t().proFeatures} />
-        <div class="pricing-checkout" lang="en"><Checkout currency={currency()} locales={locales()} /></div>
+        <div class="pricing-checkout"><Checkout currency={currency()} locales={locales()} locale={locale()} /></div>
       </article>
     </div>
     <section class="pricing-faq" aria-labelledby="faq-title">

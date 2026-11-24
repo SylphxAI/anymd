@@ -35,6 +35,10 @@ code, pre, .eyebrow { font-family:var(--mono); }
 .main-nav { gap:28px; color:var(--muted); font-size:14px; font-weight:600; }
 .main-nav a:hover, .footer-links a:hover { color:var(--accent); }
 .mobile-menu { display:none; }
+.session-menu { position:relative; }
+.session-menu summary { list-style:none; white-space:nowrap; }
+.session-menu summary::-webkit-details-marker { display:none; }
+.session-menu-panel { position:absolute; z-index:10; top:100%; right:0; width:max-content; display:grid; gap:6px; padding:8px; border:1px solid var(--line); border-radius:7px; background:var(--panel); }
 .button { display:inline-flex; min-height:42px; gap:8px; align-items:center; justify-content:center; padding:8px 15px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:var(--panel); font-size:14px; font-weight:650; line-height:1.25; text-decoration:none; }
 .button:hover:not(:disabled) { border-color:var(--accent); }
 .button-primary { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
@@ -252,7 +256,6 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
 .pricing-checkout > .stack > :first-child { order:-3; }
 .pro-plan-payment { order:-2; }
 .pro-plan > .plan-features { order:-1; }
-.pricing-page:lang(zh-TW) .pricing-checkout > .stack > :first-child > :not(.price) { display:none; }
 .language-switch { color:var(--muted); display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; font-size:.85rem; font-weight:650; min-height:44px; }
 .language-switch:hover { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
 .marketing-shell:lang(zh-TW) :is(h1,h2,h3) { letter-spacing:-.025em; line-height:1.15; }

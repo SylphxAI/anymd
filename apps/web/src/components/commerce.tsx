@@ -9,6 +9,7 @@ import { currencies, consentText, type Currency, formatPrice, isCurrency, proAmo
 import { single } from '@/lib/request-query';
 import { checkoutSurface } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
+import { localizedPath, type Locale } from '@/lib/marketing-locale';
 
 type Account = { plan: 'Free OSS' | 'Anymd Pro'; entitlementActive: boolean; features: string[] };
 const cliLogin = 'anymd login';
@@ -36,17 +37,21 @@ function checkoutIntent() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function Checkout(props: { currency: Currency; locales: readonly string[] | undefined }) {
+export function Checkout(props: { currency: Currency; locales: readonly string[] | undefined; locale: Locale }) {
   const route = useLocation();
+  const zh = () => props.locale === 'zh-TW';
+  const currencyLabel = () => zh() ? '結帳幣別' : 'Billing currency';
   const [query, setQuery] = useSearchParams();
   const entrySurface = () => checkoutSurface(route.pathname, route.search);
   const checkoutNext = () => {
     const surface = entrySurface();
     const params = new URLSearchParams();
-    if (surface !== 'pricing') params.set('entry_surface', surface);
+    // Auth recognizes the localized return as a pricing signup via this allowlisted surface.
+    if (surface !== 'pricing' || zh()) params.set('entry_surface', surface);
     const selected = single(query.currency);
     if (isCurrency(selected)) params.set('currency', selected);
-    return encodeURIComponent(params.size ? '/pricing?' + params : '/pricing');
+    const path = localizedPath('/pricing', props.locale);
+    return encodeURIComponent(params.size ? path + '?' + params : path);
   };
   const analytics = useCookieConsent();
   const session = useSession();
@@ -64,13 +69,15 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
     return state && state !== 'error' && state.user;
   };
   return <div class="stack">
-    <div><div class="eyebrow">ONE-TIME PAYMENT</div><div class="price">{priceLabel(props.currency)}</div><p class="muted">Tax included. No subscription.</p></div>
-    <label><span class="mb-1 block text-sm font-semibold">Billing currency</span><select class="field" aria-label="Billing currency" disabled={pending()} onChange={(event) => {
+    <div>{!zh() && <div class="eyebrow">ONE-TIME PAYMENT</div>}<div class="price">{priceLabel(props.currency)}</div>{!zh() && <p class="muted">Tax included. No subscription.</p>}</div>
+    <label><span class="mb-1 block text-sm font-semibold">{currencyLabel()}</span><select class="field" aria-label={currencyLabel()} disabled={pending()} onChange={(event) => {
       const code = event.currentTarget.value;
       if (isCurrency(code)) setQuery({currency:code});
     }}><For each={currencies}>{(code) => <option value={code} selected={code === props.currency}>{code} · {priceLabel(code)}</option>}</For></select></label>
-    <Show when={user()} fallback={<A class="button button-primary" href={'/sign-in?next=' + checkoutNext()}>Sign in to buy Pro <ArrowRight size={16} /></A>}>
-      <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{consentText} This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.</span></label>
+    <Show when={user()} fallback={<A class="button button-primary" href={'/sign-in?next=' + checkoutNext()}>{zh() ? '登入以購買 Pro' : 'Sign in to buy Pro'} <ArrowRight size={16} aria-hidden="true" /></A>}>
+      <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{zh()
+        ? '我要求在付款後立即取得授權。我了解，授權一旦交付，我將喪失取消這筆交易及據此要求退款的權利。這適用於依法享有 14 天取消權的情況，不影響我的其他法定權利。'
+        : consentText + ' This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.'}</span></label>
       <button class="button button-primary" disabled={pending() || !consent()} type="button" onClick={async () => {
         if (pending() || !consent() || !user()) return;
         setPending(true); setNotice('');
@@ -89,11 +96,14 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
           ]);
           location.assign(result.url);
         }
-        catch (err) { setNotice(err instanceof Error ? err.message : 'Checkout is unavailable.'); setPending(false); }
-      }}>{pending() ? 'Opening checkout…' : 'Continue to secure checkout'} <ArrowRight size={16} /></button>
+        catch (err) {
+          setNotice(zh() ? '目前無法開啟結帳。如果你已付款，請先到帳號頁面確認，再試一次。' : err instanceof Error ? err.message : 'Checkout is unavailable.');
+          setPending(false);
+        }
+      }}>{pending() ? (zh() ? '正在開啟結帳…' : 'Opening checkout…') : (zh() ? '前往安全結帳' : 'Continue to secure checkout')} <ArrowRight size={16} aria-hidden="true" /></button>
     </Show>
     {notice() && <p role="alert" class="notice">{notice()}</p>}
-    <p class="muted text-sm">See the <A class="inline-link" href="/legal/pro-terms">Pro terms</A> for licence, delivery and cancellation details.</p>
+    <p class="muted text-sm">{zh() ? '詳閱 ' : 'See the '}<A class="inline-link" href="/legal/pro-terms">{zh() ? 'Pro 條款' : 'Pro terms'}</A>{zh() ? '以了解授權、交付與取消說明。' : ' for licence, delivery and cancellation details.'}</p>
   </div>;
 }
 
