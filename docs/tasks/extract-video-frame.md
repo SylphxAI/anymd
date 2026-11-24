@@ -47,8 +47,8 @@ On your own video, ordinary `read` can also expose embedded subtitles and chapte
 
 ## Pro: request the frame, not a keyframe thumbnail
 
-Activate an existing licence using the [activation instructions](/pricing#activate)
-and restart your MCP client. The example script starts a fresh server each time.
+Activate Pro with `anymd login`, using the account you used to buy it.
+Then restart your MCP client. The example script starts a fresh server each time.
 Do not put a licence token in a source file or a shared command transcript.
 
 ```sh

@@ -13,5 +13,4 @@ tmp
 apps/web/test-results
 apps/web/playwright-report
 apps/web/public/wasm
-docs/public/wasm
 apps/web/src/lib/money-production.generated.ts

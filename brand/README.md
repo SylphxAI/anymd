@@ -74,19 +74,17 @@ This folder is the source of truth for the anymd brand: every surface is a copy 
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| `citrus` | `#C3F53C` | the mark's tile; the accent; docs `--vp-c-brand-1` and `-2` in the dark theme |
+| `citrus` | `#C3F53C` | the mark's tile; the accent |
 | `citrus-deep` | `#9FD21C` | the accent pressed or hovered |
 | `citrus-ink` | `#243503` | text and icons on a citrus ground |
 | `paper` | `#FBFCF8` | page ground; light theme |
 | `ink` | `#0A0D07` | page ground; dark theme, the docs default |
 | `mark-ink` | `#0A0D0A` | the document in the mark |
 | `mark-fold` | `#2B3A05` | the folded corner in the mark |
-| `brand-text` | `#3F6100` | links and accent text on the light ground; docs `--vp-c-brand-1` |
-| `brand-text-hover` | `#4A7000` | the same, hovered; docs `--vp-c-brand-2` |
-| `brand-solid` | `#82B800` | borders and solid accents on the light ground; docs `--vp-c-brand-3` |
-| `brand-solid-dark` | `#86B321` | the ramp's darkest step on the dark ground; docs `--vp-c-brand-3` in the dark theme |
-
-The docs site reads them through `docs/.vitepress/theme/custom.css`, which imports `brand/tokens.css` and sets each theme variable to `var(--brand-color-<name>)`.
+| `brand-text` | `#3F6100` | links and accent text on the light ground |
+| `brand-text-hover` | `#4A7000` | the same, hovered |
+| `brand-solid` | `#82B800` | borders and solid accents on the light ground |
+| `brand-solid-dark` | `#86B321` | the ramp's darkest step on the dark ground |
 
 ## Type
 

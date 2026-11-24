@@ -44,7 +44,7 @@ you find candidate evidence; it does not validate a caller-supplied bounding box
 
 ## Pro: check quote and location together
 
-With an [existing licence activated](/pricing#activate), run:
+After activating Pro with `anymd login`, run:
 
 ```sh
 node mcp-call.mjs inspect '{"operation":"cite_check","sources":[{"path":"citation.pdf"}],"citations":[{"id":"supported","quote":"Deterministic quote","page":1,"bounding_box":{"left":0,"bottom":0,"right":612,"top":792}},{"id":"wrong-location","quote":"Deterministic quote","page":1,"bounding_box":{"left":0,"bottom":0,"right":10,"top":10}}]}'
