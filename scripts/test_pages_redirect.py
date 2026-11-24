@@ -13,7 +13,7 @@ class PagesRedirect(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             out = Path(tmp) / 'pages'
             redirect.build(out)
-            for route in ('pricing.html', 'recover/index.html', 'pro/thanks/index.html', 'vs/docling.html', 'guide/cli/index.html', '404.html'):
+            for route in ('index.html', 'pricing.html', 'recover/index.html', 'pro/thanks/index.html', 'vs/docling.html', 'guide/cli/index.html', '404.html'):
                 page = (out / route).read_text()
                 self.assertIn("location.replace('https://anymd.sylphx.com'", page)
                 self.assertIn('location.search + location.hash', page)

@@ -162,12 +162,6 @@ npm compares it with the publishing repository.
 The alias packages depend on `@sylphx/anymd` at the same version and run its
 launcher, so `citra` and `pdf-reader-mcp` behave exactly like `anymd`.
 
-## Repository slug
-
-Project site URLs do not redirect on rename. Renaming the repository moves the
-docs site path behind `websiteUrl` and `homepage`, and needs `base` in
-the public web app’s links updated with it.
-
 ## Recover a partial release
 
 Re-running an old run keeps its original commit and workflow, so it cannot

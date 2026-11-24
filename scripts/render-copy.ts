@@ -3,10 +3,7 @@
  * Render public copy from one source: product.json (names, descriptions, keywords,
  * sibling projects). Benchmark numbers are generated separately by bench/leaderboard.py.
  *
- * Generated regions are fenced in Markdown as
- *   <!-- generated:NAME --> … <!-- /generated:NAME -->
- * and in YAML front matter as
- *   # generated:NAME … # /generated:NAME
+ * Generated regions are fenced as <!-- generated:NAME --> … <!-- /generated:NAME -->.
  * Edit product.json, never the fenced text.
  *
  * Usage:
@@ -59,27 +56,16 @@ const alsoFromList = (p: Product) =>
 const readmeFormerly = (p: Product) =>
   `<sub>Formerly **${p.formerly}**. [Migrating from ${p.formerly}](https://anymd.sylphx.com/guide/migration)</sub>`;
 
-const docsFormerly = (p: Product) =>
-  `<p class="cit-fine" style="text-align:center">Formerly <strong>${p.formerly}</strong>. See <a href="./guide/migration">Migration</a>.</p>`;
-
 // Keep the Pro upgrade alternative focused on verifiable citations and video evidence.
 const hostedLine = (p: Product) =>
   `Need verifiable PDF quote checks and video frames? Get [${p.hosted.name}](${p.hosted.url}) to ${p.hosted.blurb}`;
-
-const docsHosted = (p: Product) =>
-  `<p class="cit-fine">Need verifiable PDF quote checks and video frames? Get <a href="${p.hosted.url}">${p.hosted.name}</a> to ${p.hosted.blurb} See <a href="./pricing">anymd Pro</a>.</p>`;
-
-const docsHero = (p: Product) =>
-  [`  text: ${JSON.stringify(p.tagline)}`, `  tagline: ${JSON.stringify(subtitle(p))}`].join('\n');
 
 // ---------- regions ----------
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export const fillRegion = (text: string, name: string, body: string, yaml = false): string => {
-  const [open, close] = yaml
-    ? [`# generated:${name}`, `# /generated:${name}`]
-    : [`<!-- generated:${name} -->`, `<!-- /generated:${name} -->`];
+export const fillRegion = (text: string, name: string, body: string): string => {
+  const [open, close] = [`<!-- generated:${name} -->`, `<!-- /generated:${name} -->`];
   const re = new RegExp(`([ \\t]*${escape(open)}\\n)[\\s\\S]*?\\n([ \\t]*${escape(close)})`);
   if (!re.test(text)) throw new Error(`missing region ${open}`);
   return text.replace(re, (_m, a: string, b: string) => `${a}${body}\n${b}`);
@@ -106,15 +92,6 @@ export const targets = (p: Product): Target[] => [
         ['formerly', readmeFormerly(p)],
         ['also-from', alsoFromList(p)],
       ].reduce((acc, [n, body]) => fillRegion(acc, n as string, body as string), t),
-  },
-  {
-    path: 'docs/index.md',
-    render: (t) => {
-      let out = fillRegion(t, 'hero', docsHero(p), true);
-      out = fillRegion(out, 'formerly', docsFormerly(p));
-      out = fillRegion(out, 'hosted', docsHosted(p));
-      return fillRegion(out, 'also-from', alsoFromList(p));
-    },
   },
   jsonTarget('packages/anymd/package.json', (j) => {
     j['description'] = p.description;
