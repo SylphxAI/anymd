@@ -1,5 +1,5 @@
 import type { APIEvent } from '@solidjs/start/server';
-import { bindCheckoutAttribution } from '@/lib/checkout-attribution';
+import { resolveEffectiveConsent } from '@sylphx/sdk/signal';
 import { isCurrency, price, product } from '@/lib/catalog';
 import { knownEntrySurface } from '@/lib/entry-surface';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
@@ -62,8 +62,12 @@ export async function POST({request, params}: APIEvent) {
       const url = processorUrl(result.url, 'checkout');
       const prefix = ctx.money.parent + '/checkout_sessions/';
       const id = typeof result.name === 'string' && result.name.startsWith(prefix) ? result.name.slice(prefix.length) : '';
-      void bindCheckoutAttribution(ctx.money, request.headers, id, data.measurementConsent);
-      return json({url});
+      // The browser binds the verified Money session with its Signal snapshot.
+      const attribution = /^chk-[0-9a-f]{24}$/.test(id) && ctx.money.pk.startsWith('sylphx_pk_') ? {
+        checkoutSessionId:id, apiKey:ctx.money.pk, baseUrl:ctx.money.origin,
+        gpc:resolveEffectiveConsent({storedChoice:'granted'}, request.headers).analytics_storage === 'denied',
+      } : undefined;
+      return json({url, attribution});
     }
     if (action === 'billing-portal') {
       const jwt = await ctx.accessToken();

@@ -79,11 +79,14 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
           const code = props.currency;
           const result = await request('checkout', {
             currency:code, consent:consent(), checkoutIntent:checkout.key,
-            entrySurface:checkout.entrySurface, measurementConsent:analytics.checkoutChoice(),
+            entrySurface:checkout.entrySurface,
           });
           if (!result.url) throw new Error('Checkout did not return a link.');
           // Measurement must never prevent purchase.
-          await analytics.beginCheckout(code, checkout.entrySurface).catch(() => undefined);
+          await Promise.allSettled([
+            result.attribution?.gpc ? undefined : analytics.beginCheckout(code, checkout.entrySurface),
+            analytics.bindCheckout(result.attribution),
+          ]);
           location.assign(result.url);
         }
         catch (err) { setNotice(err instanceof Error ? err.message : 'Checkout is unavailable.'); setPending(false); }

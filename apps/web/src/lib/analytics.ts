@@ -1,10 +1,9 @@
-import { measurementId } from './attribution';
-import { consentFor } from './consent';
+import type { SignalConsent } from '@sylphx/sdk/signal';
 import type { checkoutParameters } from './funnel';
 import type { SignupSignal } from './signup';
 
+export const measurementId = 'G-R4TD2Z8RR7';
 export const gaDisable = `ga-disable-${measurementId}` as const;
-export type GoogleConsent = ReturnType<typeof consentFor>;
 
 type GoogleWindow = Window & { [gaDisable]?: boolean; dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
 const allowedSections = new Set(['studio', 'docs', 'vs', 'pro', 'pricing', 'privacy', 'playground', 'legal', 'guide', 'tasks', 'security', 'use-cases', 'vision', 'sign-in', 'account', 'billing', 'dashboard', 'recover', 'cli-auth']);
@@ -19,7 +18,7 @@ export function pageLocation(pathname: string) {
 
 function google() { return window as GoogleWindow; }
 
-export function startGoogle(consent: GoogleConsent, pathname: string) {
+export function startGoogle(consent: SignalConsent, pathname: string) {
   const w = google();
   w[gaDisable] = false;
   w.dataLayer = [];
@@ -51,7 +50,7 @@ export function clearGoogleCookies(analytics: boolean) {
   const labels = location.hostname.split('.');
   const domains = ['', ...labels.map((_, i) => '; Domain=' + labels.slice(i).join('.'))];
   for (const name of names) {
-    if (!/^_gcl_[\w-]+$/.test(name) && !(analytics && /^(?:_ga(?:_[\w-]+)?|_gid|_gat(?:_[\w-]+)?)$/.test(name))) continue;
+    if (!/^(?:_gcl_[\w-]+|_fbc|_fbp|anymd_attribution)$/.test(name) && !(analytics && /^(?:_ga(?:_[\w-]+)?|_gid|_gat(?:_[\w-]+)?)$/.test(name))) continue;
     for (const domain of domains) document.cookie = name + '=; Max-Age=0; Path=/' + domain;
   }
 }

@@ -93,7 +93,7 @@ export async function acceptTicket(request: Request, config: Config, ticket: unk
   if (!token || !await verifySessionUser(config, request, token)) throw new HttpError(401, 'auth_refused');
   setCookie(sessionName, token, cookieOptions(request, '/', 30 * 86400));
   // Only a verified redemption can produce this optional redirect handoff.
-  const signup = method && signupSignal(body?.is_new_user, getCookie(consentKey), request.headers.get('sec-gpc') === '1', method, next);
+  const signup = method && signupSignal(body?.is_new_user, getCookie(consentKey), request.headers, method, next);
   if (signup) setCookie(signupCookie, signup.method + '.' + signup.entry_surface, {...cookieOptions(request, '/', 60), httpOnly:false});
 }
 
