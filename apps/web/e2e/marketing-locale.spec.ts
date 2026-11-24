@@ -24,7 +24,11 @@ test.describe('crawler-visible locale metadata', () => {
     ] as const) {
       const response = await page.goto(route);
       expect(response?.status(), route).toBe(200);
-      const rawHead = (await response!.text()).match(/<head(?:\s[^>]*)?>([\s\S]*?)<\/head>/)?.[1] ?? '';
+      const html = await response!.text();
+      const lang = canonical.startsWith('/zh-TW') ? 'zh-TW' : 'en';
+      expect(html.match(/<html[^>]*\blang="([^"]+)"/)?.[1], route).toBe(lang);
+      await expect(page.locator('html')).toHaveAttribute('lang', lang);
+      const rawHead = html.match(/<head(?:\s[^>]*)?>([\s\S]*?)<\/head>/)?.[1] ?? '';
       expect(rawHead.match(/rel="canonical"/g), route).toHaveLength(1);
       const alternates = [['en', origin + en], ...(tw ? [['zh-TW', origin + tw]] : []), ['x-default', origin + en]];
       expect(rawHead.match(/hreflang=/g), route).toHaveLength(alternates.length);
@@ -32,7 +36,7 @@ test.describe('crawler-visible locale metadata', () => {
       expect(await page.locator('head link[rel="alternate"][hreflang]').evaluateAll(nodes =>
         nodes.map(node => [node.getAttribute('hreflang'), node.getAttribute('href')]))).toEqual(alternates);
       if (canonical.startsWith('/zh-TW')) {
-        await expect(page.locator('[lang="zh-TW"] main')).toBeVisible();
+        await expect(page.getByRole('main')).toBeVisible();
         await expect(page.getByRole('heading', { level: 1 })).toContainText(canonical.endsWith('pricing') ? '免費轉檔，按需升級' : '讀取文件，');
       }
     }
@@ -53,10 +57,11 @@ test('switches languages and shows priced plans and readable examples at this vi
   await expect(consent).toBeVisible();
   for (const [path, tryStudio, openStudio, demo, third, output] of [
     ['/', 'Try Studio Free', 'Open Studio', 'Conversion examples', 'Video frame', 'Frame citation'],
-    ['/zh-TW', '免費試用 Studio', '開啟 Studio', '轉換範例', '影片影格', '影格引用'],
+    ['/zh-TW', '免費試用 Studio（英文）', '開啟 Studio（英文）', '轉換範例', '影片影格', '影格引用'],
   ] as const) {
     if (path === '/zh-TW') await page.getByRole('link', { name: '繁體中文', exact: true }).click();
     await expect(page).toHaveURL(path);
+    await expect(page.locator('html')).toHaveAttribute('lang', path === '/' ? 'en' : 'zh-TW');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
     for (const name of [tryStudio, openStudio]) {
       const cta = page.getByRole('link', { name, exact: true });
@@ -81,15 +86,93 @@ test('switches languages and shows priced plans and readable examples at this vi
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('免費轉檔，按需升級');
   await expect(page.getByText('Bought Pro before account checkout?')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
-  const currency = page.getByLabel('Billing currency');
+  const currency = page.getByLabel('結帳幣別');
   await expect(currency.locator('option[value=TWD]')).toHaveText('TWD · NT$959');
   await currency.selectOption('TWD');
   await expect(page.getByText('NT$959', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'English', exact: true }).click();
   await expect(page).toHaveURL('/pricing?currency=TWD');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(consent.getByRole('heading')).toHaveText('Cookie settings');
   await expect(page.getByLabel('Billing currency')).toHaveValue('TWD');
   await expect(page.locator('head link[rel="canonical"]')).toHaveCount(1);
   await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', origin + '/pricing');
+});
+
+for (const prefix of ['/zh-TW', '/zh-Hant']) {
+  test(prefix + ' localizes checkout, Studio links and all three consent choices', async ({ page }) => {
+    await page.route('**/cdn-cgi/trace', route => route.fulfill({ body: 'loc=GB\n' }));
+    for (const path of [prefix, prefix + '/pricing']) {
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
+      const header = page.getByRole('banner');
+      await expect(header.getByRole('link', { name: '登入', exact: true })).toBeVisible();
+      const mobileMenu = header.getByLabel('開啟導覽選單');
+      if (await mobileMenu.isVisible()) await mobileMenu.click();
+      await expect(header.getByRole('link', { name: '轉檔工作室（英文）', exact: true })).toHaveAttribute('href', '/studio');
+      if (await mobileMenu.isVisible()) await mobileMenu.click();
+
+      const consent = page.getByRole('complementary', { name: 'Cookie 設定' });
+      await expect(consent).toContainText('選用分析與廣告。');
+      await expect(consent.getByRole('link', { name: '隱私權說明' })).toHaveAttribute('href', '/privacy');
+      await expect(consent.getByRole('button')).toHaveCount(3);
+      for (const name of ['拒絕選用項目', '僅限分析', '允許分析與廣告']) {
+        await expect(consent.getByRole('button', { name, exact: true })).toBeEnabled();
+      }
+      if (path === prefix) {
+        for (const name of ['免費試用 Studio（英文）', '開啟 Studio（英文）']) {
+          await expect(page.getByRole('link', { name, exact: true })).toHaveAttribute('href', '/studio');
+        }
+      } else {
+        const pro = page.locator('.pro-plan');
+        await expect(pro.getByRole('link', { name: '登入以購買 Pro', exact: true })).toBeVisible();
+        await expect(pro.getByRole('link', { name: 'Pro 條款' })).toHaveAttribute('href', '/legal/pro-terms');
+        await expect(pro).toContainText('詳閱 Pro 條款以了解授權、交付與取消說明。');
+        await expect(pro.getByLabel('結帳幣別').locator('option[value=TWD]')).toHaveText('TWD · NT$959');
+        await consent.getByRole('button', { name: '拒絕選用項目' }).click();
+        await expect(consent).toHaveCount(0);
+        expect(await page.evaluate(() => localStorage.getItem('anymd.signal.v1.consent'))).toBe('denied');
+        const settings = page.getByRole('button', { name: 'Cookie 設定', exact: true });
+        await settings.click();
+        await expect(consent.getByRole('button', { name: '拒絕選用項目' })).toBeFocused();
+        await consent.getByRole('button', { name: '關閉，不變更設定' }).click();
+        await expect(settings).toBeFocused();
+      }
+    }
+  });
+}
+
+test('returns from sign-in to the localized purchase and keeps checkout states in Traditional Chinese', async ({ page }) => {
+  await page.route('**/cdn-cgi/trace', route => route.fulfill({ body: 'loc=GB\n' }));
+  await page.goto('/zh-Hant/pricing?currency=TWD');
+  await page.getByRole('button', { name: '拒絕選用項目' }).click();
+  await page.getByRole('link', { name: '登入以購買 Pro', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.getByRole('link', { name: 'Continue with Google' }).click();
+  await expect(page).toHaveURL('/zh-TW/pricing?entry_surface=pricing&currency=TWD');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
+  const header = page.getByRole('banner');
+  await header.getByText('帳號', { exact: true }).click();
+  await expect(header.getByRole('link', { name: '帳號總覽', exact: true })).toHaveAttribute('href', '/dashboard');
+  await expect(header.getByRole('button', { name: '登出', exact: true })).toBeVisible();
+  await header.getByText('帳號', { exact: true }).click();
+  await expect(page.getByLabel('結帳幣別')).toHaveValue('TWD');
+  const buy = page.getByRole('button', { name: '前往安全結帳', exact: true });
+  await expect(buy).toBeDisabled();
+  await page.getByRole('checkbox', { name: /我要求在付款後立即取得授權/ }).check();
+  await page.route('**/api/anymd/checkout', async route => {
+    expect(route.request().postDataJSON()).toMatchObject({ currency: 'TWD', consent: true, entrySurface: 'pricing' });
+    await expect(page.getByRole('button', { name: '正在開啟結帳…' })).toBeDisabled();
+    await route.fulfill({ status: 503, json: { code: 'billing_unavailable' } });
+  });
+  await buy.click();
+  await expect(page.getByRole('alert')).toContainText('目前無法開啟結帳');
+  await expect(buy).toBeEnabled();
+  await header.getByText('帳號', { exact: true }).click();
+  await header.getByRole('button', { name: '登出', exact: true }).click();
+  await expect(page).toHaveURL('/zh-TW');
+  await expect(header.getByRole('link', { name: '登入', exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
 });
 
 test('downloads the actual local conversion without an upload', async ({ page }) => {

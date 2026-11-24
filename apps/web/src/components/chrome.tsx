@@ -7,7 +7,7 @@ import { SessionAction } from './session';
 import { isCurrency } from '@/lib/catalog';
 import { languageSwitchTarget, localeFromPath } from '@/lib/marketing-locale';
 
-const zhNav: Record<string, string> = { Studio: '轉檔工作室', Docs: '文件', Comparisons: '工具比較', Pricing: '定價' };
+const zhNav: Record<string, string> = { Studio: '轉檔工作室（英文）', Docs: '文件', Comparisons: '工具比較', Pricing: '定價' };
 
 const links = [['Studio', '/studio'], ['Docs', '/docs'], ['Comparisons', '/vs'], ['Pricing', '/pricing']] as const;
 
@@ -28,11 +28,11 @@ export function Header() {
         <A href={zh() ? '/zh-TW' : '/'} class="brand" aria-label={zh() ? 'Anymd 首頁' : 'Anymd home'}><span><Braces size={20} strokeWidth={2.4} /></span>anymd<span class="brand-dot">.</span></A>
         <nav aria-label={zh() ? '主要導覽' : 'Main'} class="main-nav"><For each={links}>{([text, href]) => <A href={navHref(href)}>{zh() ? zhNav[text] : text}</A>}</For></nav>
         <div class="header-actions">
-          <a href="https://github.com/SylphxAI/anymd" class="github-header" aria-label="Anymd GitHub repository"><GithubMark size={18} /></a>
+          <a href="https://github.com/SylphxAI/anymd" class="github-header" aria-label={zh() ? 'Anymd 的 GitHub 儲存庫' : 'Anymd GitHub repository'}><GithubMark size={18} /></a>
           <A class="language-switch" href={pricing()
             ? (switchCurrency() ? (zh() ? '/pricing?' + switchCurrency() : '/zh-TW/pricing?' + switchCurrency()) : (zh() ? '/pricing' : '/zh-TW/pricing'))
             : (zh() ? '/' : '/zh-TW')} hreflang={other()} lang={other()}><Globe size={15} aria-hidden="true" />{zh() ? 'English' : '繁體中文'}</A>
-          <span lang="en"><SessionAction /></span>
+          <SessionAction />
           <details class="mobile-menu"><summary aria-label={zh() ? '開啟導覽選單' : 'Open navigation'}><Menu size={22} /></summary><nav aria-label={zh() ? '行動版導覽' : 'Mobile'}><For each={links}>{([text, href]) => <A href={navHref(href)} onClick={(event) => {
             if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey) {
               event.currentTarget.closest('details')?.removeAttribute('open');
