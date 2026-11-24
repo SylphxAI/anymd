@@ -1,4 +1,5 @@
-import { A, useLocation } from '@solidjs/router';
+import { CampaignLink } from '@/lib/attribution-link';
+import { useLocation } from '@solidjs/router';
 import { authRoute } from '@/lib/auth-route';
 import { localeFromPath, localizedPath } from '@/lib/marketing-locale';
 import { createEffect, createSignal, on, onCleanup, Show } from 'solid-js';
@@ -35,12 +36,12 @@ export function SessionAction() {
     const state = session();
     return state && state !== 'error' && state.user;
   };
-  return <Show when={signedIn()} fallback={<A class="button sign-in-button" href={'/sign-in?next=' + encodeURIComponent(route.pathname === '/' ? '/dashboard' : route.pathname)}>{zh() ? '登入' : 'Sign in'}</A>}>
-    <Show when={zh()} fallback={<A href="/dashboard" class="button">Dashboard</A>}>
+  return <Show when={signedIn()} fallback={<CampaignLink class="button sign-in-button" href={'/sign-in?next=' + encodeURIComponent(route.pathname === '/' ? '/dashboard' : route.pathname)}>{zh() ? '登入' : 'Sign in'}</CampaignLink>}>
+    <Show when={zh()} fallback={<CampaignLink href="/dashboard" class="button">Dashboard</CampaignLink>}>
       <details class="session-menu">
         <summary class="button sign-in-button">帳號</summary>
         <div class="session-menu-panel">
-          <A href="/dashboard" class="button">帳號總覽</A>
+          <CampaignLink href="/dashboard" class="button">帳號總覽</CampaignLink>
           <SignOut />
         </div>
       </details>
