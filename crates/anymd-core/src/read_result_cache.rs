@@ -33,12 +33,16 @@ struct CacheEntry {
 struct CacheState {
     entries: HashMap<String, CacheEntry>,
     clock: u64,
+    #[cfg(test)]
+    hits: u64,
 }
 
-static CACHE: OnceLock<Mutex<CacheState>> = OnceLock::new();
+#[derive(Default)]
+pub(crate) struct ReadResultCache(Mutex<CacheState>);
 
-fn cache() -> &'static Mutex<CacheState> {
-    CACHE.get_or_init(|| Mutex::new(CacheState::default()))
+pub(crate) fn shared_cache() -> &'static ReadResultCache {
+    static CACHE: OnceLock<ReadResultCache> = OnceLock::new();
+    CACHE.get_or_init(ReadResultCache::default)
 }
 
 fn path_identity(path: &Path) -> Option<(PathBuf, u64, SystemTime)> {
@@ -100,89 +104,72 @@ fn make_key(path: &Path, input: &ReadPdfInput, pages_spec: &Option<Value>) -> Op
     Some(format!("{}|{}|{}|{}", abs.display(), len, mtime, fp))
 }
 
-pub fn get_cached_local_result(
-    path: &Path,
-    input: &ReadPdfInput,
-    pages_spec: &Option<Value>,
-) -> Option<ReadPdfSourceResult> {
-    let key = make_key(path, input, pages_spec)?;
-    let mut state = cache().lock().ok()?;
-    state.clock = state.clock.saturating_add(1);
-    let now = state.clock;
-    let entry = state.entries.get_mut(&key)?;
-    entry.last_used = now;
-    Some(entry.result.clone())
-}
-
-pub fn store_cached_local_result(
-    path: &Path,
-    input: &ReadPdfInput,
-    pages_spec: &Option<Value>,
-    result: &ReadPdfSourceResult,
-) {
-    if !result.success || result.data.is_none() {
-        return;
+impl ReadResultCache {
+    pub(crate) fn get(
+        &self,
+        path: &Path,
+        input: &ReadPdfInput,
+        pages_spec: &Option<Value>,
+    ) -> Option<ReadPdfSourceResult> {
+        let key = make_key(path, input, pages_spec)?;
+        let mut state = self.0.lock().ok()?;
+        state.clock = state.clock.saturating_add(1);
+        let now = state.clock;
+        let entry = state.entries.get_mut(&key)?;
+        entry.last_used = now;
+        let result = entry.result.clone();
+        #[cfg(test)]
+        {
+            state.hits += 1;
+        }
+        Some(result)
     }
-    let Some(key) = make_key(path, input, pages_spec) else {
-        return;
-    };
-    let Ok(mut state) = cache().lock() else {
-        return;
-    };
-    state.clock = state.clock.saturating_add(1);
-    let now = state.clock;
-    state.entries.insert(
-        key.clone(),
-        CacheEntry {
-            key,
-            result: result.clone(),
-            last_used: now,
-        },
-    );
-    while state.entries.len() > MAX_ENTRIES {
-        let victim = state
-            .entries
-            .values()
-            .min_by_key(|entry| entry.last_used)
-            .map(|entry| entry.key.clone());
-        if let Some(key) = victim {
-            state.entries.remove(&key);
-        } else {
-            break;
+
+    pub(crate) fn store(
+        &self,
+        path: &Path,
+        input: &ReadPdfInput,
+        pages_spec: &Option<Value>,
+        result: &ReadPdfSourceResult,
+    ) {
+        if !result.success || result.data.is_none() {
+            return;
+        }
+        let Some(key) = make_key(path, input, pages_spec) else {
+            return;
+        };
+        let Ok(mut state) = self.0.lock() else {
+            return;
+        };
+        state.clock = state.clock.saturating_add(1);
+        let now = state.clock;
+        state.entries.insert(
+            key.clone(),
+            CacheEntry {
+                key,
+                result: result.clone(),
+                last_used: now,
+            },
+        );
+        while state.entries.len() > MAX_ENTRIES {
+            let victim = state
+                .entries
+                .values()
+                .min_by_key(|entry| entry.last_used)
+                .map(|entry| entry.key.clone());
+            if let Some(key) = victim {
+                state.entries.remove(&key);
+            } else {
+                break;
+            }
         }
     }
-}
 
-#[cfg(test)]
-pub fn clear_for_tests() {
-    if let Ok(mut state) = cache().lock() {
-        state.entries.clear();
-        state.clock = 0;
+    /// The same cache that stores the entries also owns the test hit count.
+    #[cfg(test)]
+    pub(crate) fn hits(&self) -> u64 {
+        self.0.lock().expect("cache lock").hits
     }
-    test_hits().store(0, std::sync::atomic::Ordering::Relaxed);
-}
-
-/// Lookups that returned a stored result. The counter is cfg(test) because
-/// `cargo publish` compiles this file without cfg(test) and must stay free of
-/// test-only items.
-#[cfg(test)]
-fn test_hits() -> &'static std::sync::atomic::AtomicU64 {
-    use std::sync::OnceLock;
-    static HITS: OnceLock<std::sync::atomic::AtomicU64> = OnceLock::new();
-    HITS.get_or_init(|| std::sync::atomic::AtomicU64::new(0))
-}
-
-/// How many lookups have returned a stored result since the last
-/// [`clear_for_tests`]. A clone of the stored value cannot prove reuse, so
-/// tests count the hit itself.
-#[cfg(test)]
-pub fn note_hit_for_tests() {
-    test_hits().fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-}
-
-#[cfg(test)]
-pub fn hits_for_tests() -> u64 {
-    test_hits().load(std::sync::atomic::Ordering::Relaxed)
 }
 
 #[cfg(test)]
@@ -194,7 +181,7 @@ mod tests {
 
     #[test]
     fn caches_identical_local_requests() {
-        clear_for_tests();
+        let cache = ReadResultCache::default();
         let mut file = NamedTempFile::new().unwrap();
         writeln!(file, "%PDF-1.4").unwrap();
         let path = file.path();
@@ -204,7 +191,7 @@ mod tests {
             ..Default::default()
         };
         let pages = None;
-        assert!(get_cached_local_result(path, &input, &pages).is_none());
+        assert!(cache.get(path, &input, &pages).is_none());
         let result = ReadPdfSourceResult {
             source: path.display().to_string(),
             success: true,
@@ -250,8 +237,8 @@ mod tests {
                 structured_fusion_context: None,
             }),
         };
-        store_cached_local_result(path, &input, &pages, &result);
-        let hit = get_cached_local_result(path, &input, &pages).expect("cache hit");
+        cache.store(path, &input, &pages, &result);
+        let hit = cache.get(path, &input, &pages).expect("cache hit");
         assert!(hit.success);
         assert_eq!(hit.data.as_ref().unwrap().num_pages, Some(1));
     }

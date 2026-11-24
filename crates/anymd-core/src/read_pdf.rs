@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+use crate::read_result_cache::{shared_cache, ReadResultCache};
 use crate::text_index::{
     extract_pdf_text_from_document, PdfInfo, TextIndexError, TextIndexErrorCode,
 };
@@ -827,7 +828,11 @@ fn build_data(
     data
 }
 
-fn read_source(source: &ReadPdfSource, input: &ReadPdfInput) -> ReadPdfSourceResult {
+fn read_source(
+    source: &ReadPdfSource,
+    input: &ReadPdfInput,
+    cache: &ReadResultCache,
+) -> ReadPdfSourceResult {
     if let Err(error) = validate_source(source) {
         return ReadPdfSourceResult {
             source: source
@@ -843,7 +848,8 @@ fn read_source(source: &ReadPdfSource, input: &ReadPdfInput) -> ReadPdfSourceRes
 
     if let Some(path) = source.path.as_ref().filter(|p| !p.is_empty()) {
         let path_buf = PathBuf::from(path);
-        return match read_local_pdf_filtered(path_buf.as_path(), input, &source.pages, path) {
+        return match read_local_pdf_filtered(path_buf.as_path(), input, &source.pages, path, cache)
+        {
             Ok(result) => result,
             Err(error) => ReadPdfSourceResult {
                 source: path.clone(),
@@ -857,7 +863,8 @@ fn read_source(source: &ReadPdfSource, input: &ReadPdfInput) -> ReadPdfSourceRes
     if let Some(url) = source.url.as_ref().filter(|u| !u.is_empty()) {
         match fetch_url_to_temp_file(url) {
             Ok(temp) => {
-                let result = read_local_pdf_filtered(temp.as_path(), input, &source.pages, url);
+                let result =
+                    read_local_pdf_filtered(temp.as_path(), input, &source.pages, url, cache);
                 cleanup_temp_file(temp.as_path());
                 match result {
                     Ok(mut ok) => {
@@ -894,14 +901,11 @@ fn read_local_pdf_filtered(
     input: &ReadPdfInput,
     pages_spec: &Option<Value>,
     source_label: &str,
+    cache: &ReadResultCache,
 ) -> Result<ReadPdfSourceResult, ReadPdfError> {
-    if let Some(mut cached) =
-        crate::read_result_cache::get_cached_local_result(path, input, pages_spec)
-    {
+    if let Some(mut cached) = cache.get(path, input, pages_spec) {
         // Preserve the caller's source label (path or original display form).
         cached.source = source_label.to_string();
-        #[cfg(test)]
-        crate::read_result_cache::note_hit_for_tests();
         return Ok(cached);
     }
     let parsed = crate::cos_document::ParsedPdf::load(path, DEFAULT_MAX_FILE_BYTES)?;
@@ -1084,11 +1088,18 @@ fn read_local_pdf_filtered(
         error: None,
         data: Some(data),
     };
-    crate::read_result_cache::store_cached_local_result(path, input, pages_spec, &result);
+    cache.store(path, input, pages_spec, &result);
     Ok(result)
 }
 
 pub fn read_pdf(input: &ReadPdfInput) -> Result<ReadPdfResponse, ReadPdfError> {
+    read_pdf_with_cache(input, shared_cache())
+}
+
+fn read_pdf_with_cache(
+    input: &ReadPdfInput,
+    cache: &ReadResultCache,
+) -> Result<ReadPdfResponse, ReadPdfError> {
     if input.sources.is_empty() {
         return Err(ReadPdfError::invalid_params(
             "sources must include at least one PDF source.",
@@ -1129,7 +1140,7 @@ pub fn read_pdf(input: &ReadPdfInput) -> Result<ReadPdfResponse, ReadPdfError> {
 
     let mut results = Vec::new();
     for source in &input.sources {
-        results.push(read_source(source, input));
+        results.push(read_source(source, input, cache));
     }
 
     if results.iter().all(|result| !result.success) {
