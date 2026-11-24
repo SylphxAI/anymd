@@ -1,4 +1,5 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
+import { test } from './fixture-test';
 import { randomBytes } from 'node:crypto';
 import { signupCookie } from '../src/lib/signup';
 
@@ -59,7 +60,7 @@ const commands = (page: Page) => page.evaluate(() => ((window as Window & {dataL
 const events = async (page: Page, name: string) => (await commands(page)).filter(x => x[0] === 'event' && x[1] === name);
 
 async function moneyCheckoutMetadata(page: Page, checkoutIntent: string) {
-  const url = new URL('http://127.0.0.1:3031/test/checkout-metadata');
+  const url = new URL('https://127.0.0.1:3031/test/checkout-metadata');
   url.searchParams.set('intent', checkoutIntent);
   const response = await page.request.get(url.href);
   expect(response.ok()).toBe(true);
@@ -210,7 +211,7 @@ test('implicit US consent binds complete attribution after real sign-in and Mone
   await page.route('**/api/anymd/checkout', async route => {
     const response = await route.fetch();
     const json = await response.json();
-    expect(json.attribution).toEqual({checkoutSessionId, apiKey, baseUrl:'http://127.0.0.1:3031', gpc:false});
+    expect(json.attribution).toEqual({checkoutSessionId, apiKey, baseUrl:'https://127.0.0.1:3031', gpc:false});
     // The SDK requires HTTPS. Point it at the browser-intercepted Events origin.
     await route.fulfill({response, json:{...json, attribution:{...json.attribution, baseUrl:eventsOrigin}}});
   });
@@ -407,7 +408,8 @@ for (const [scenario, choice, country, gpc] of [
       }
       const callback = page.waitForResponse(response => new URL(response.url()).pathname === '/api/auth/callback');
       const trace = page.waitForResponse('**/cdn-cgi/trace');
-      const landing = await page.goto(live ? '/api/auth/callback' : '/api/auth/google?next=' + encodeURIComponent(next));
+      const landing = await page.goto(live ? '/api/auth/callback' : '/sign-in?next=' + encodeURIComponent(next));
+      if (!live) await page.getByRole('link', {name:'Continue with Google'}).click();
       const response = await callback;
       expect(response.status()).toBe(303);
       if (live) {

@@ -1,13 +1,13 @@
 import { query } from '@solidjs/router';
-import { noCapabilities } from './auth-capabilities';
 
 export const signInOptions = query(async () => {
   'use server';
   const { getWebRequest } = await import('@solidjs/start/http');
-  const { authConfig, clientCapabilities } = await import('./auth');
+  const { authConfig } = await import('./auth');
+  const { entryOptions, noEntry } = await import('./auth-handler');
   const config = authConfig();
-  const capabilities = config ? await clientCapabilities(getWebRequest(), config).catch(() => noCapabilities) : noCapabilities;
-  return { authConfigured: Boolean(config), ...capabilities };
+  const entry = config ? await entryOptions(getWebRequest(), config).catch(() => noEntry) : noEntry;
+  return { authConfigured: Boolean(config), entry };
 }, 'sign-in-options');
 
 export const cliAccount = query(async () => {

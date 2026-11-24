@@ -1,15 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { parseCapabilities } from './auth-capabilities';
 import { safeNext } from './safe-next';
-import { completeCode, maskEmail, normalizeCode, signInAlias, signInEntry } from './sign-in-flow';
-
-test('tenant capabilities select email OTP, passkey, or no method without a lookup', () => {
-  assert.equal(signInEntry(parseCapabilities({ methods: { email_otp: false, passkey: false, password: true } }).methods), 'unavailable');
-  assert.equal(signInEntry(parseCapabilities({ methods: { email_otp: true, passkey: true, password: true } }).methods), 'email_otp');
-  assert.equal(signInEntry(parseCapabilities({ methods: { passkey: true } }).methods), 'other');
-  assert.equal(signInEntry(parseCapabilities({ methods: { sign_up: true } }).methods), 'unavailable');
-});
+import { completeCode, maskEmail, normalizeCode, signInAlias } from './sign-in-flow';
 
 test('OTP input accepts pasted digits without revealing the full recipient', () => {
   assert.equal(normalizeCode('012 345\n'), '012345');

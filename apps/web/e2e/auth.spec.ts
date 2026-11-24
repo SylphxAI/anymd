@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './fixture-test';
 import { generateKeyPairSync } from 'node:crypto';
 
 const fixtureOnly = Boolean(process.env.PLAYWRIGHT_BASE_URL);
@@ -86,7 +87,7 @@ test.describe('OTP and passkey enabled', () => {
   });
 
   for (const conditional of [true, false]) {
-    test(conditional ? 'uses a Chromium passkey from conditional autofill' : 'uses a Chromium passkey from step 2', async ({ context, page }) => {
+    test(conditional ? 'uses a Chromium passkey from conditional autofill' : 'uses a Chromium passkey explicitly', async ({ context, page }) => {
       if (!conditional) await page.addInitScript(() => {
         PublicKeyCredential.isConditionalMediationAvailable = async () => false;
       });
@@ -104,8 +105,6 @@ test.describe('OTP and passkey enabled', () => {
       } });
       await page.goto('/sign-in?next=/dashboard%23passkey');
       if (!conditional) {
-        await page.getByLabel('Email address').fill('test@example.invalid');
-        await page.getByRole('button', { name: 'Continue', exact: true }).click();
         await page.getByRole('button', { name: 'Use a passkey' }).click();
       }
       await expect(page).toHaveURL('/dashboard#passkey');
@@ -123,16 +122,50 @@ test('OAuth uses only approved callback origins and refuses disabled GitHub', as
     ['web.fixture.svc.cluster.local:3000', 'preview.example.test', baseURL],
     ['evil.example', 'anymd.sylphx.com.evil.example', baseURL],
   ]) {
-    const response = await request.get('/api/auth/google?next=/dashboard', { headers: { host, 'x-forwarded-host': forwarded }, maxRedirects: 0 });
+    const response = await request.get('/api/auth/google?next=/dashboard', { headers: {
+      host, 'x-forwarded-host': forwarded, 'sec-fetch-site':'same-origin', 'sec-fetch-mode':'navigate', 'sec-fetch-dest':'document',
+    }, maxRedirects: 0 });
     expect(response.status()).toBe(303);
     const location = new URL(response.headers().location);
-    expect(location.pathname).toBe('/v1/client/oauth/google/start');
-    const callback = new URL(location.searchParams.get('redirect_url') ?? '');
+    expect(location.origin + location.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
+    const callback = new URL(location.searchParams.get('fixture_callback') ?? '');
     expect(callback.origin + callback.pathname).toBe(origin + '/api/auth/callback');
-    expect(callback.searchParams.get('state')).toBeTruthy();
+    expect(callback.searchParams.get('flow')).toMatch(/^[\w-]{43}$/);
   }
-  const github = await request.get('/api/auth/github', { maxRedirects: 0 });
+  const github = await request.get('/api/auth/github', { maxRedirects: 0, headers:{
+    'sec-fetch-site':'same-origin', 'sec-fetch-mode':'navigate', 'sec-fetch-dest':'document',
+  } });
   expect(github.status()).toBe(303);
-  expect(github.headers().location).toBe('/sign-in?error=provider_unavailable');
+  expect(github.headers().location).toBe('/sign-in?error=method_unavailable&next=%2Fdashboard');
   expect(github.headers()['set-cookie']).toBeUndefined();
+});
+
+test('new SDK session is HttpOnly and sign-out revokes it', async ({ page, context }) => {
+  test.skip(fixtureOnly, 'Requires the local Auth fixture');
+  await page.goto('/sign-in');
+  await page.getByRole('link', {name:'Continue with Google'}).click();
+  await expect(page).toHaveURL('/dashboard');
+  const credential = (await context.cookies()).find(cookie => cookie.name === '__Host-auth_session');
+  expect(credential).toMatchObject({httpOnly:true, secure:true, sameSite:'Lax', path:'/'});
+  await page.getByRole('button', {name:'Sign out', exact:true}).click();
+  await expect(page).toHaveURL('/');
+  expect((await context.cookies()).some(cookie => cookie.name === '__Host-auth_session')).toBe(false);
+  const status = await page.request.get('/api/auth/session', {headers:{Cookie:credential!.name + '=' + credential!.value}});
+  expect(await status.json()).toMatchObject({authConfigured:true, user:null});
+});
+
+test('legacy sessions still open the native CLI consent page', async ({ page, context, baseURL }) => {
+  test.skip(fixtureOnly, 'Requires the local Auth fixture');
+  await context.addCookies([{name:'anymd_session', value:'identity_org_session_fixture_legacy', url:baseURL!}]);
+  const args = new URLSearchParams({port:'32101', state:'a'.repeat(32), challenge:'b'.repeat(64)});
+  await page.goto('/cli-auth?' + args);
+  await expect(page.getByText('test@example.invalid')).toBeVisible();
+  await expect(page.getByRole('button', {name:'Connect this CLI'})).toBeVisible();
+});
+
+test('OAuth refuses a callback with no bound flow and issues no session', async ({ request }) => {
+  const response = await request.get('/api/auth/callback?' + new URLSearchParams({flow:'a'.repeat(43)}), {maxRedirects:0});
+  expect(response.status()).toBe(303);
+  expect(response.headers().location).toContain('/sign-in?error=');
+  expect(response.headersArray().filter(header => header.name.toLowerCase() === 'set-cookie').map(header => header.value)).not.toContainEqual(expect.stringMatching(/^__Host-auth_session=/));
 });

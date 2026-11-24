@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { expect, test } from '@playwright/test';
+import { test } from './fixture-test';
+import { expect } from '@playwright/test';
 
 const origin = 'https://anymd.sylphx.com';
 
