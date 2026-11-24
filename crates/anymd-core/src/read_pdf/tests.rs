@@ -1283,32 +1283,42 @@ fn tables_and_pages(response: &ReadPdfResponse) -> (serde_json::Value, Option<u3
 
 #[test]
 fn warm_cache_reuses_identical_local_table_reads() {
-    crate::read_result_cache::clear_for_tests();
+    let cache = ReadResultCache::default();
     let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../test/fixtures/differential/v3014-selectable-table-v1.pdf");
     if !fixture.exists() {
         return;
     }
     let input = table_read_input(&fixture);
-    let first = tables_and_pages(&read_pdf(&input).expect("first"));
+    let first = tables_and_pages(&read_pdf_with_cache(&input, &cache).expect("first"));
     assert!(
         first.0.as_array().is_some_and(|tables| !tables.is_empty()),
         "fixture must contain a selectable table"
     );
     assert!(first.1.is_some(), "page count is part of the cached result");
     assert_eq!(
-        crate::read_result_cache::hits_for_tests(),
+        cache.hits(),
         0,
         "the first read parses; it must not be a cache hit"
     );
 
-    let second = tables_and_pages(&read_pdf(&input).expect("second"));
+    // An independent reader of the exact same fixture and options starts cold
+    // and can warm its own cache without affecting this reader's entry or hits.
+    let other_cache = ReadResultCache::default();
+    let read_other = || tables_and_pages(&read_pdf_with_cache(&input, &other_cache).expect("read"));
+    assert_eq!(read_other(), first);
+    assert_eq!(other_cache.hits(), 0);
+    assert_eq!(read_other(), first);
+    assert_eq!(other_cache.hits(), 1);
+    assert_eq!(cache.hits(), 0);
+
+    let second = tables_and_pages(&read_pdf_with_cache(&input, &cache).expect("second"));
     assert_eq!(
         second, first,
         "a warm read returns the same tables and pages"
     );
     assert_eq!(
-        crate::read_result_cache::hits_for_tests(),
+        cache.hits(),
         1,
         "the second identical read must reuse the stored result"
     );
@@ -1316,7 +1326,7 @@ fn warm_cache_reuses_identical_local_table_reads() {
 
 #[test]
 fn changed_local_pdf_misses_the_read_cache() {
-    crate::read_result_cache::clear_for_tests();
+    let cache = ReadResultCache::default();
     let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../test/fixtures/differential/v3014-selectable-table-v1.pdf");
     let other = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../test/fixtures/sample.pdf");
@@ -1327,7 +1337,7 @@ fn changed_local_pdf_misses_the_read_cache() {
     let fixture = dir.path().join("table.pdf");
     std::fs::copy(&source, &fixture).expect("copy");
     let input = table_read_input(&fixture);
-    let first = tables_and_pages(&read_pdf(&input).expect("first"));
+    let first = tables_and_pages(&read_pdf_with_cache(&input, &cache).expect("first"));
 
     // mtime and size are both in the cache key. Copying a different PDF
     // changes the bytes and, on a coarse Windows timestamp, may not change
@@ -1341,18 +1351,18 @@ fn changed_local_pdf_misses_the_read_cache() {
         })
         .expect("touch");
 
-    let changed = tables_and_pages(&read_pdf(&input).expect("changed"));
+    let changed = tables_and_pages(&read_pdf_with_cache(&input, &cache).expect("changed"));
     assert_ne!(
         changed, first,
         "replacing the file must return that file's tables, not the cached ones"
     );
     assert_eq!(
-        crate::read_result_cache::hits_for_tests(),
+        cache.hits(),
         0,
         "a changed file must not reuse the stored result"
     );
 
-    let again = tables_and_pages(&read_pdf(&input).expect("again"));
+    let again = tables_and_pages(&read_pdf_with_cache(&input, &cache).expect("again"));
     assert_eq!(again, changed, "the replacement is cached on its own");
-    assert_eq!(crate::read_result_cache::hits_for_tests(), 1);
+    assert_eq!(cache.hits(), 1);
 }
