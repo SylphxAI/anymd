@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+import { contentSecurityPolicy } from './lib/content-security-policy';
 import { resolveEffectiveConsent } from '@sylphx/sdk/signal';
 import { getRequestEvent } from 'solid-js/web';
 import { createHandler, StartServer } from '@solidjs/start/server';
@@ -20,4 +22,10 @@ export default createHandler(() => <StartServer document={({ assets, children, s
     </head>
     <body><div id="app">{children}</div>{scripts}</body>
   </html>;
-}} />, { mode: 'async' });
+}} />, (event) => {
+  const nonce = randomBytes(16).toString('base64');
+  // The Vite development client needs a WebSocket and injected styles. Test
+  // and serve the actual enforced policy from the production build.
+  if (import.meta.env.PROD) event.response.headers.set('Content-Security-Policy', contentSecurityPolicy(nonce));
+  return { mode: 'async', nonce };
+});

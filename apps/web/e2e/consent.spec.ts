@@ -427,7 +427,7 @@ for (const [scenario, choice, country, gpc] of [
       await trace;
       await expect(page).toHaveURL(next);
       if (gaAllowed) await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
-      else if (choice === null) await expect(panel(page)).toBeVisible();
+      else if (choice === null && !gpc) await expect(panel(page)).toBeVisible();
       else await expect(page.locator('#anymd-google-tag')).toHaveCount(0);
       const origin = new URL(page.url()).origin;
       expect(await events(page, 'sign_up')).toEqual(signUp ? [['event', 'sign_up', {
@@ -516,4 +516,62 @@ test('the compact consent bar leaves conversion controls reachable without a cho
   }
   await expect(page.locator('#anymd-google-tag')).toHaveCount(0);
   expect(google).toEqual([]);
+});
+
+const campaign = {
+  gclid:'Synthetic-Click_1', gbraid:'Synthetic-Braid_2', wbraid:'Synthetic-Braid_3',
+  utm_source:'search', utm_medium:'cpc', utm_campaign:'PDF & video', utm_term:'bounding box', utm_content:'frame proof',
+};
+
+for (const acceptOn of ['/pricing', '/sign-in']) {
+  test('retains campaign through internal links and captures only on opt-in at ' + acceptOn, async ({ page }) => {
+    const google = await isolate(page, 'FR');
+    await page.addInitScript(() => {
+      const writes: string[] = [];
+      const setItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) { writes.push(key); setItem.call(this, key, value); };
+      Object.defineProperty(window, '__campaignWrites', {value:writes});
+    });
+    const query = new URLSearchParams({...campaign, unrelated:'do-not-forward'});
+    await page.goto('/?' + query);
+    const banner = panel(page);
+    await expect(banner.getByRole('button', {name:'Allow analytics & ads'})).toBeEnabled();
+    const desktop = page.viewportSize()!.width > 690;
+    if (!desktop) await page.locator('summary[aria-label="Open navigation"]').click();
+    await page.getByRole('navigation', {name:desktop ? 'Main' : 'Mobile', exact:true}).getByRole('link', {name:'Pricing'}).click();
+    await expect(page).toHaveURL(url => url.pathname === '/pricing');
+    expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual(campaign);
+    if (acceptOn === '/sign-in') {
+      await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
+      await expect(page).toHaveURL(url => url.pathname === '/sign-in');
+      expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual({next:'/pricing', ...campaign});
+      // Hard reload simulates following the same SSR-rendered link in a new tab.
+      await page.reload();
+      await expect(banner.getByRole('button', {name:'Allow analytics & ads'})).toBeEnabled();
+    }
+    expect(await page.evaluate(() => Reflect.get(window, '__campaignWrites'))).toEqual([]);
+    expect((await page.context().cookies()).filter(cookie => /^(?:_ga|_gcl_|anymd\.cookie|anymd_attribution)/.test(cookie.name))).toEqual([]);
+    expect(google).toEqual([]);
+    await banner.getByRole('button', {name:'Allow analytics & ads'}).click();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('anymd.signal.v1.touch') ?? 'null')?.touch)).toEqual(campaign);
+    await expect.poll(() => google).toEqual([tag]);
+  });
+}
+
+test('queues one sanitized manual page_view per path, not for search-only changes', async ({ page }) => {
+  await isolate(page, 'FR');
+  await page.goto('/?utm_source=synthetic');
+  await panel(page).getByRole('button', {name:'Analytics only'}).click();
+  const origin = new URL(page.url()).origin;
+  const views = async () => (await events(page, 'page_view')).map(x => (x[2] as {page_location:string}).page_location);
+  await expect.poll(views).toEqual([origin + '/']);
+  const desktop = page.viewportSize()!.width > 690;
+  if (!desktop) await page.locator('summary[aria-label="Open navigation"]').click();
+  await page.getByRole('navigation', {name:desktop ? 'Main' : 'Mobile', exact:true}).getByRole('link', {name:'Pricing'}).click();
+  await expect.poll(views).toEqual([origin + '/', origin + '/pricing']);
+  await page.getByLabel('Billing currency').selectOption('EUR');
+  await expect(page).toHaveURL('/pricing?currency=EUR');
+  expect(await views()).toEqual([origin + '/', origin + '/pricing']);
+  await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
+  await expect.poll(views).toEqual([origin + '/', origin + '/pricing', origin + '/sign-in']);
 });

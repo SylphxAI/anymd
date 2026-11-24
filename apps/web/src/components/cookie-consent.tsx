@@ -12,6 +12,7 @@ import { parseSignupSignal, signupCookie, type SignupSignal } from '@/lib/signup
 type CheckoutBinding = {checkoutSessionId: string; apiKey: string; baseUrl: string; gpc: boolean};
 type SignalBrowser = ReturnType<typeof createSignalBrowser>;
 const CookieContext = createContext<{
+  carryCampaign: () => boolean;
   open: (from: HTMLButtonElement) => void;
   bindCheckout: (binding?: CheckoutBinding) => Promise<void>;
   beginCheckout: (currency: string, entrySurface: EntrySurface) => Promise<void>;
@@ -162,6 +163,11 @@ export function CookieConsent(props: ParentProps) {
     trigger = undefined;
   }
   const context = {
+    carryCampaign() {
+      const signal = browser();
+      changed();
+      return !signal || (strict() && !hasChoice());
+    },
     open(from: HTMLButtonElement) {
       trigger = from;
       setManual(true);
@@ -190,8 +196,8 @@ export function CookieConsent(props: ParentProps) {
   return <CookieContext.Provider value={context}>{props.children}
     <Show when={visible()}>
       <aside ref={reserveSpace} class="cookie-panel" aria-labelledby="cookie-heading" onKeyDown={event => { if (manual() && event.key === 'Escape') close(); }}>
-        <div class="cookie-row"><div><h2 id="cookie-heading">{zh() ? 'Cookie 設定' : 'Cookie settings'}</h2>
-          <p>{zh() ? '選用分析與廣告。' : 'Optional analytics and ads. '}<A href="/privacy" class="inline-link">{zh() ? '隱私權說明' : 'Privacy notice'}</A></p>
+        <div class="cookie-row"><div class="cookie-summary"><h2 id="cookie-heading">{zh() ? 'Cookie 設定' : 'Cookie settings'}</h2>
+          <p>{zh() ? '選用分析與廣告。' : 'Optional analytics & ads. '}<A href="/privacy" class="inline-link">{zh() ? '隱私權說明' : 'Privacy notice'}</A></p>
           {gpc() && <p>{zh() ? '已啟用全球隱私權控制（GPC）。選用追蹤維持關閉。' : 'Global Privacy Control is on. Optional tracking stays off.'}</p>}
         </div>
         <div class="cookie-actions">

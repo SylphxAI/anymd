@@ -34,7 +34,10 @@ function violations(file: ts.SourceFile, checker?: ts.TypeChecker) {
   const opaque = Symbol('value may be set by a JSX spread');
   function visit(node: ts.Node) {
     if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
-      ts.isIdentifier(node.tagName) && ['a', 'A'].includes(node.tagName.text)) {
+      ts.isIdentifier(node.tagName) && ['a', 'A', 'CampaignLink'].includes(node.tagName.text)) {
+      // The wrapper opts backend links out at runtime (including computed hrefs).
+      // Its consumers still undergo the same static check as ordinary anchors.
+      if (node.tagName.text === 'A' && file.fileName.endsWith('/src/lib/attribution-link.tsx')) return;
       let href: ts.JsxAttribute | typeof opaque | undefined;
       let rel: ts.JsxAttribute | typeof opaque | undefined;
       for (const attr of node.attributes.properties) {

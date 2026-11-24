@@ -1,8 +1,10 @@
+import { CampaignLink } from '@/lib/attribution-link';
 import { PageMeta } from '@/components/page-meta';
 import { A, useLocation, useSearchParams } from '@solidjs/router';
 import { For } from 'solid-js';
 import { single } from '@/lib/request-query';
 import { Check } from 'lucide-solid';
+import { ProProof } from '@/components/pro-proof';
 import { Checkout } from '@/components/commerce';
 import { Faq, StructuredData, faqSchema, softwareSchema, freeOffer, proOffer } from '@/components/search-details';
 import { useBrowserLocales } from '@/lib/browser-locales';
@@ -34,13 +36,13 @@ export function Pricing(props: { title?: string }) {
     {query.checkout === 'cancelled' && <p role="status" class="notice mb-5">{t().cancelled}</p>}
     {sessionId() && <p class="notice mb-5"><A class="inline-link" href={'/recover?session_id=' + encodeURIComponent(sessionId() ?? '')}>{t().recover}</A></p>}
     <div class="columns">
-      <article class="panel stack"><span class="eyebrow">{t().freeLabel}</span><h2>{t().free}</h2><div class="price">{formatPrice(0, currency(), locales())}</div><p class="muted">{t().freeDetails}</p><PlanFeatures points={t().freeFeatures} /><A class="button justify-self-start" href="/docs">{t().install}</A></article>
       <article class="panel stack pro-plan">
         <div class="pro-plan-title"><span class="eyebrow">{t().proLabel}</span><h2>{t().pro}</h2></div>
-        {locale() === 'zh-TW' && <p class="pro-plan-payment muted">{t().oneTime}</p>}
+        <Checkout currency={currency()} locales={locales()} locale={locale()} />
+        <ProProof zh={locale() === 'zh-TW'} />
         <PlanFeatures points={t().proFeatures} />
-        <div class="pricing-checkout"><Checkout currency={currency()} locales={locales()} locale={locale()} /></div>
       </article>
+      <article class="panel stack"><span class="eyebrow">{t().freeLabel}</span><h2>{t().free}</h2><div class="price">{formatPrice(0, currency(), locales())}</div><p class="muted">{t().freeDetails}</p><PlanFeatures points={t().freeFeatures} /><CampaignLink class="button justify-self-start" href="/docs">{t().install}</CampaignLink></article>
     </div>
     <section class="pricing-faq" aria-labelledby="faq-title">
       <h2 id="faq-title">{t().faq}</h2>

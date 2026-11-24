@@ -1,5 +1,6 @@
+import { CampaignLink } from '@/lib/attribution-link';
 import { ArrowRight, ArrowUpRight, FileText, Globe, Terminal } from 'lucide-solid';
-import { A, useLocation } from '@solidjs/router';
+import { useLocation } from '@solidjs/router';
 import { For } from 'solid-js';
 import { CopyButton } from '@/components/copy';
 import { HomeConversionDemo } from '@/components/home-conversion-demo';
@@ -29,7 +30,7 @@ export default function Home() {
         <div class="eyebrow"><span class="status-dot" /> {t().eyebrow}</div>
         <h1>{t().title}<br/><em>{t().accent}</em></h1>
         <p class="hero-summary">{t().summary}</p>
-        <div class="hero-actions"><A href="/studio" class="button button-primary">{t().tryStudio} <ArrowRight size={16} /></A><A href={pricing()} class="button">{t().getPro} — {price()}</A></div>
+        <div class="hero-actions"><CampaignLink href="/studio" class="button button-primary">{t().tryStudio} <ArrowRight size={16} /></CampaignLink><CampaignLink href={pricing()} class="button">{t().getPro} — {price()}</CampaignLink></div>
         <div class="hero-install" role="group" aria-label={t().install}>
           <div class="install-line">
             <code><span aria-hidden="true">$ </span>{npmSetup}</code>
@@ -43,7 +44,7 @@ export default function Home() {
         </div>
       </div>
       <div class="hero-preview">
-        <A href="/studio" class="preview-link">{t().openStudio} <ArrowRight size={15} /></A>
+        <CampaignLink href="/studio" class="preview-link">{t().openStudio} <ArrowRight size={15} /></CampaignLink>
         <HomeConversionDemo locale={locale()} />
       </div>
     </section>
@@ -53,7 +54,7 @@ export default function Home() {
     <section class="wrap home-workflow"><div><span class="eyebrow">{t().workflow}</span><h2>{t().workflowTitle}<br/>{t().workflowAccent}</h2></div><div class="workflow-steps">
       <For each={t().steps}>{([title, detail], index) => <div><span>0{index() + 1}</span><div><h3>{title}</h3><p>{detail}</p></div></div>}</For>
     </div></section>
-    <section class="wrap home-bottom"><div class="pro-panel"><div><span class="eyebrow"><Terminal size={16} /> ANYMD PRO</span><h2>{t().proTitle}</h2><p>{t().proDetail}</p></div><A href={pricing()} class="button button-primary">{t().seePrice} <ArrowRight size={16} /></A></div></section>
+    <section class="wrap home-bottom"><div class="pro-panel"><div><span class="eyebrow"><Terminal size={16} /> ANYMD PRO</span><h2>{t().proTitle}</h2><p>{t().proDetail}</p></div><CampaignLink href={pricing()} class="button button-primary">{t().seePrice} <ArrowRight size={16} /></CampaignLink></div></section>
     <section class="wrap home-faq" aria-labelledby="faq-title">
       <h2 id="faq-title">{t().faq}</h2>
       <Faq questions={t().questions} />

@@ -1,3 +1,4 @@
+import { CampaignLink } from '@/lib/attribution-link';
 import { ArrowRight, ArrowUpRight, Check, Terminal } from 'lucide-solid';
 import { A, useLocation, useSearchParams } from '@solidjs/router';
 import { createEffect, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from 'solid-js';
@@ -10,6 +11,7 @@ import { currencies, consentText, type Currency, formatPrice, isCurrency, proAmo
 import { single } from '@/lib/request-query';
 import { checkoutSurface } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
+import { pricingCopy } from '@/lib/marketing-copy';
 import { localizedPath, type Locale } from '@/lib/marketing-locale';
 
 type Account = { plan: 'Free OSS' | 'Anymd Pro'; entitlementActive: boolean; features: string[] };
@@ -69,13 +71,13 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
     const state = session();
     return state && state !== 'error' && state.user;
   };
-  return <div class="stack">
-    <div>{!zh() && <div class="eyebrow">ONE-TIME PAYMENT</div>}<div class="price">{priceLabel(props.currency)}</div>{!zh() && <p class="muted">Tax included. No subscription.</p>}</div>
+  return <div class="stack checkout-stack">
+    <div class="checkout-price">{!zh() && <div class="eyebrow">ONE-TIME PAYMENT</div>}<div class="price">{priceLabel(props.currency)}</div><p class="muted">{zh() ? pricingCopy['zh-TW'].oneTime : 'Tax included. No subscription.'}</p></div>
     <label><span class="mb-1 block text-sm font-semibold">{currencyLabel()}</span><select class="field" aria-label={currencyLabel()} disabled={pending()} onChange={(event) => {
       const code = event.currentTarget.value;
       if (isCurrency(code)) setQuery({currency:code});
     }}><For each={currencies}>{(code) => <option value={code} selected={code === props.currency}>{code} · {priceLabel(code)}</option>}</For></select></label>
-    <Show when={user()} fallback={<A class="button button-primary" href={'/sign-in?next=' + checkoutNext()}>{zh() ? '登入以購買 Pro' : 'Sign in to buy Pro'} <ArrowRight size={16} aria-hidden="true" /></A>}>
+    <Show when={user()} fallback={<CampaignLink class="button button-primary" href={'/sign-in?next=' + checkoutNext()}>{zh() ? '登入以購買 Pro' : 'Sign in to buy Pro'} <ArrowRight size={16} aria-hidden="true" /></CampaignLink>}>
       <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{zh()
         ? '我要求在付款後立即取得授權。我了解，授權一旦交付，我將喪失取消這筆交易及據此要求退款的權利。這適用於依法享有 14 天取消權的情況，不影響我的其他法定權利。'
         : consentText + ' This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.'}</span></label>
