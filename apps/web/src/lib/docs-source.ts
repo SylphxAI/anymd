@@ -26,6 +26,7 @@ function localUrl(href: string, slug: string) {
 
 type RenderContext = { slug: string; headings: Map<string, number> };
 
+const copyExamples = new Set(['guide/cli', 'guide/tools', 'guide/python']);
 const md = new MarkdownIt({ html: false, linkify: true });
 // Standalone source comments mark generated sections. Consume the comment line
 // without enabling HTML or touching examples inside Markdown code blocks.
@@ -36,6 +37,16 @@ md.block.ruler.before('paragraph', 'source_comment', (state, start, _end, silent
   if (!silent) state.line = start + 1;
   return true;
 }, { alt: ['paragraph'] });
+// Keep markdown-it's escaped code output; Doc enhances the button on hydration.
+for (const rule of ['fence', 'code_block'] as const) {
+  const render = md.renderer.rules[rule]!;
+  md.renderer.rules[rule] = (tokens, index, options, env, self) => {
+    const html = render(tokens, index, options, env, self);
+    return copyExamples.has((env as RenderContext).slug)
+      ? '<div class="doc-code">' + html + '<button type="button" class="button copy-button doc-copy">Copy code</button></div>\n'
+      : html;
+  };
+}
 md.renderer.rules.link_open = (tokens, index, options, env, self) => {
   const { slug } = env as RenderContext;
   const link = tokens[index];
@@ -64,15 +75,29 @@ md.renderer.rules.heading_open = (tokens, index, options, env, self) => {
   return self.renderToken(tokens, index, options);
 };
 
+function docSummary(raw: string) {
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/;
+  const metadata = raw.match(frontmatter)?.[1];
+  const markdown = raw.replace(frontmatter, '');
+  const title = markdown.match(/^# (.+)$/m)?.[1];
+  const description = metadata?.match(/^description: *(.*)$/m)?.[1]?.replace(/^['"]|['"]$/g, '');
+  return { markdown, title, description };
+}
+
+const searchIndex = [...docs].flatMap(([slug, raw]) => {
+  if (!slug.startsWith('guide/')) return [];
+  const { title, description } = docSummary(raw);
+  const path = canonicalDocPath(slug);
+  return title && path !== '/docs' ? [{ title, description, path }] : [];
+});
+
 export function renderDoc(input: string, legacyDocs: boolean) {
   const slug = !legacyDocs && input === 'vs' ? 'vs/index'
     : legacyDocs && !input.includes('/') && !docs.has(input) ? 'guide/' + input : input;
   const raw = docs.get(slug);
   if (!raw) return null;
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/;
-  const metadata = raw.match(frontmatter)?.[1];
-  const markdown = raw.replace(frontmatter, '');
-  const title = markdown.match(/^# (.+)$/m)?.[1] ?? slug;
-  const description = metadata?.match(/^description: *(.*)$/m)?.[1]?.replace(/^['"]|['"]$/g, '');
-  return { title, description, canonical: canonicalDocPath(slug), html: md.render(markdown, { slug, headings: new Map<string, number>() }) };
+  const { markdown, title, description } = docSummary(raw);
+  const canonical = canonicalDocPath(slug);
+  return { title: title ?? slug, description, canonical, searchIndex: canonical === '/docs' ? searchIndex : undefined,
+    html: md.render(markdown, { slug, headings: new Map<string, number>() }) };
 }

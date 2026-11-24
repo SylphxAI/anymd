@@ -56,7 +56,7 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .install-line code span { color:var(--accent); font-weight:bold; }
 .copy-button { font-size:12px; padding:6px 8px; min-height:32px; background:transparent; }
 .hero-preview { position:relative; }
-.preview-link { display:flex; margin-top:10px; justify-content:flex-end; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:var(--accent); }
+.preview-link { display:flex; margin-bottom:10px; min-height:32px; justify-content:flex-end; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:var(--accent); }
 .format-strip { border-block:1px solid var(--line); background:var(--soft); }
 .formats { min-height:76px; display:flex; align-items:center; flex-wrap:wrap; gap:14px clamp(14px,3vw,44px); padding-block:16px; }
 .formats>span:not(.eyebrow) { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:14px; font-weight:600; }
@@ -96,6 +96,13 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .docs-nav a { display:block; color:var(--muted); padding-block:5px; }
 .docs-nav a:hover { color:var(--accent); }
 .prose { min-width:0; overflow-wrap:anywhere; }
+.docs-search { margin-bottom:24px; padding:16px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+.docs-search [role='status'] { margin-block:8px; font-size:.875rem; }
+.docs-search li + li { margin-top:8px; }
+.doc-code { display:grid; justify-items:start; margin-block:15px; }
+.doc-code pre { width:100%; margin:0; }
+.doc-copy { display:none; margin-top:4px; }
+[data-interactive] .doc-copy { display:inline-flex; }
 .prose :is(h1,h2,h3,h4) { scroll-margin-top:20px; }
 .prose h1 { font-size:clamp(34px,5vw,56px); margin-bottom:24px; }
 .prose h2 { font-size:31px; margin:35px 0 13px; }
@@ -151,10 +158,9 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .studio-drag { outline: 2px solid var(--accent); outline-offset: 2px; }
 .studio-label { padding: .65rem .85rem; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .4rem; color: var(--muted); overflow-wrap: anywhere; }
 .studio-code { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; min-height: 15rem; max-height: 28rem; padding: .9rem; font: .85rem/1.6 var(--mono); }
-.studio-compact .studio-code { min-height: 13rem; max-height: 16rem; }
-.studio-demo span { color: var(--accent); font-weight: 650; }
 .studio-empty { min-height: 13rem; display: grid; align-content: center; justify-items: center; gap: .65rem; text-align: center; padding: 1.25rem; }
 .studio-bottom { color: var(--muted); }
+.studio-export { display:flex; flex-wrap:wrap; gap:6px; }
 .studio-quote { border-top: 1px solid var(--line); padding: 1rem; }
 .studio-quote h2 { font-size: 1.42rem; }
 .cite-preview { display:grid; gap:14px; padding:clamp(16px, 3vw, 28px); border-top:1px solid var(--line); background:var(--soft); }
@@ -240,6 +246,16 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
 }
 .pricing-page .columns > .panel { gap:12px; }
 .pricing-page .columns h2 { margin-bottom:2px; }
+.pro-plan-title { order:-4; }
+/* Keep checkout behavior in the commerce component; promote its actual price. */
+.pricing-checkout, .pricing-checkout > .stack { display:contents; }
+.pricing-checkout > .stack > :first-child { order:-3; }
+.pro-plan-payment { order:-2; }
+.pro-plan > .plan-features { order:-1; }
+.pricing-page:lang(zh-TW) .pricing-checkout > .stack > :first-child > :not(.price) { display:none; }
+.language-switch { color:var(--muted); display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; font-size:.85rem; font-weight:650; min-height:44px; }
+.language-switch:hover { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
+.marketing-shell:lang(zh-TW) :is(h1,h2,h3) { letter-spacing:-.025em; line-height:1.15; }
 .plan-features { display:grid; gap:8px; margin-block:6px; }
 @media(max-width:690px) {
   .hero { padding-top:26px; gap:12px; }
@@ -248,8 +264,7 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
   .hero-summary { line-height:1.4; margin-bottom:14px; }
   .hero-install { gap:2px; margin-top:8px; }
   .hero-install .copy-button, .install-pypi { min-height:30px; }
-  .studio-compact .studio-bar, .studio-compact .studio-controls, .studio-compact .studio-label { padding-block:8px; }
-  .studio-compact .studio-demo { font-size:.75rem; line-height:1.45; min-height:0; padding:10px; }
+
   .studio-page { padding-top:22px; }
   .studio-page .page-heading { margin-bottom:14px; }
   .studio-page .page-heading h1 { margin-block:6px 8px; }

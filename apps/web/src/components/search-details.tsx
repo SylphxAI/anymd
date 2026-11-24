@@ -9,8 +9,8 @@ function offer(name: string, price: number, path: string, currency: Currency) {
 }
 
 export const freeOffer = (currency: Currency = defaultCurrency) => offer('Free OSS', 0, '/docs', currency);
-export const proOffer = (currency: Currency = defaultCurrency) => offer('Anymd Pro', proAmount(currency),
-  currency === defaultCurrency ? '/pricing' : '/pricing?currency=' + currency, currency);
+export const proOffer = (currency: Currency = defaultCurrency, path = '/pricing') => offer('Anymd Pro', proAmount(currency),
+  currency === defaultCurrency ? path : path + '?currency=' + currency, currency);
 
 export function softwareSchema(...offers: ReturnType<typeof offer>[]) {
   return {

@@ -82,7 +82,7 @@ test('shows one-time 16-currency pricing', async ({ page }) => {
   await expect(page.getByText('HK$229', { exact: true })).toBeVisible();
 });
 
-test('pricing and its Pro alias show four concrete benefits before checkout', async ({ page }) => {
+test('pricing and its Pro alias put the price above the four concrete benefits', async ({ page }) => {
   for (const path of ['/pricing', '/pro']) {
     await page.goto(path);
     const plan = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Anymd Pro', exact: true }) });
@@ -94,8 +94,8 @@ test('pricing and its Pro alias show four concrete benefits before checkout', as
       'Works offline after activation on each machine',
     ]);
     await expect(plan.locator('li svg[aria-hidden="true"]')).toHaveCount(4);
-    expect(await benefits.last().evaluate((last) => last.getBoundingClientRect().bottom)).toBeLessThanOrEqual(
-      await plan.getByText('$29', { exact: true }).evaluate((price) => price.getBoundingClientRect().top),
+    expect(await plan.getByText('$29', { exact: true }).evaluate((price) => price.getBoundingClientRect().bottom)).toBeLessThanOrEqual(
+      await benefits.first().evaluate((first) => first.getBoundingClientRect().top),
     );
   }
 });

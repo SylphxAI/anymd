@@ -1,0 +1,78 @@
+import { expect, test } from '@playwright/test';
+
+test('shows a useful OCR state and no empty exports or quote search for a scanned PDF', async ({ page }) => {
+  await page.goto('/studio');
+  await page.locator('input[type=file]').setInputFiles({ name: 'image-only.pdf', mimeType: 'application/pdf', buffer: imageOnlyPdf() });
+  await expect(page.getByRole('status').filter({ hasText: 'No selectable text found in this PDF.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Use OCR in the native CLI' })).toHaveAttribute('href', '/docs/cli');
+  for (const label of ['Copy Markdown', 'Download .md', 'Find quote']) await expect(page.getByRole('button', { name: label, exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Sample document' }).click();
+  await expect(page.getByLabel('Markdown output')).toContainText('Field Notes');
+  await expect(page.getByRole('button', { name: 'Find quote' })).toBeVisible();
+});
+
+test('copies code exactly and exposes Python API in the reference nav', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('anymd.cookie-settings.v1', 'reject');
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (text: string) => sessionStorage.setItem('copied', text) } });
+  });
+  for (const path of ['/docs/cli', '/docs/tools', '/docs/python']) {
+    await page.goto(path);
+    await expect(page.getByRole('navigation', { name: 'Documentation' }).getByRole('link', { name: 'Python API' })).toHaveAttribute('href', '/docs/python');
+    const code = page.locator('article pre > code');
+    const copy = page.getByRole('button', { name: 'Copy code', exact: true });
+    await expect(code.first()).toBeVisible();
+    await expect(copy).toHaveCount(await code.count());
+    await copy.first().click();
+    await expect(page.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => sessionStorage.getItem('copied'))).toBe(await code.first().textContent());
+  }
+});
+
+test('describes one activation flow and exposes distinct route descriptions', async ({ page }) => {
+  for (const path of ['/pricing', '/docs/hosted', '/legal/pro-terms']) {
+    await page.goto(path);
+    await expect(page.getByRole('main')).toContainText('anymd login');
+    await expect(page.getByRole('main')).not.toContainText('anymd pro buy');
+  }
+  const descriptions = new Set<string | null>();
+  for (const path of ['/', '/docs', '/pricing']) {
+    await page.goto(path);
+    const description = page.locator('head meta[name=description]');
+    await expect(description).toHaveAttribute('content', /Markdown|Install/);
+    descriptions.add(await description.getAttribute('content'));
+  }
+  expect(descriptions.size).toBe(3);
+});
+
+// A one-page PDF with a one-pixel raster image and no text operators.
+function imageOnlyPdf() {
+  const drawing = 'q 90 0 0 90 5 5 cm /Im0 Do Q\n';
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length 3 >>\nstream\n00>\nendstream',
+    '<< /Length ' + drawing.length + ' >>\nstream\n' + drawing + 'endstream',
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = objects.map((object, index) => {
+    const offset = pdf.length;
+    pdf += (index + 1) + ' 0 obj\n' + object + '\nendobj\n';
+    return offset;
+  });
+  return Buffer.from(pdf + 'xref\n0 6\n0000000000 65535 f \n' + offsets.map(offset => String(offset).padStart(10, '0') + ' 00000 n \n').join('') +
+    'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + pdf.length + '\n%%EOF\n');
+}
+
+test('filters the canonical guide index in the browser', async ({ page }) => {
+  await page.goto('/docs');
+  const search = page.getByRole('searchbox', { name: 'Search documentation' });
+  await search.fill('  pyTHon  ');
+  const results = page.getByRole('region', { name: 'Filter documentation' });
+  await expect(results.locator('a[href="/docs/python"]')).toBeVisible();
+  await search.fill('qqq-no-such-guide');
+  await expect(results.getByRole('status')).toHaveText('No guides found. Try a different term.');
+  await search.clear();
+  await expect(results.getByRole('status')).toHaveCount(0);
+});
