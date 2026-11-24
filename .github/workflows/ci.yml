@@ -93,6 +93,7 @@ jobs:
     outputs:
       code: ${{ steps.result.outputs.code }}
       navigation: ${{ steps.nav.outputs.navigation || 'false' }}
+      mcp-image: ${{ steps.nav.outputs.mcp || 'false' }}
     steps:
       - name: Changed files that need the full CI
         id: filter
@@ -109,7 +110,7 @@ jobs:
               - '!SECURITY.md'
               - '!.github/ISSUE_TEMPLATE/**'
 
-      - name: Changed files that need navigation parity
+      - name: Changed files that need focused checks
         id: nav
         if: github.event_name == 'pull_request'
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -120,6 +121,10 @@ jobs:
               - 'test/production/outline.contract.test.ts'
               - 'scripts/check-navigation-regression.py'
               - '.github/workflows/navigation.yml'
+            mcp:
+              - Dockerfile
+              - .dockerignore
+              - .github/workflows/ci.yml
 
       # Merge queue, manual and every other event always run everything.
       - name: Decide
@@ -273,6 +278,45 @@ jobs:
     uses: ./.github/workflows/verify.yml
     secrets: inherit
 
+  mcp-image:
+    name: Build and smoke-test the MCP image
+    needs: changes
+    if: needs.changes.outputs.mcp-image == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the root Dockerfile from source
+        run: docker build --tag anymd-mcp .
+      - name: Initialize MCP and list the four tools over stdio
+        run: |
+          timeout 30s python3 - <<'PYTEST'
+          import json
+          import subprocess
+
+          with subprocess.Popen(['docker', 'run', '--rm', '-i', 'anymd-mcp'],
+                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True) as server:
+              def send(method, **fields):
+                  server.stdin.write(json.dumps({'jsonrpc': '2.0', 'method': method, **fields}) + '\n')
+                  server.stdin.flush()
+
+              send('initialize', id=1, params={'protocolVersion': '2024-11-05', 'capabilities': {},
+                                              'clientInfo': {'name': 'container-smoke', 'version': '1'}})
+              ready = json.loads(server.stdout.readline())
+              assert ready['id'] == 1 and 'tools' in ready['result']['capabilities'], ready
+              send('notifications/initialized')
+              send('tools/list', id=2)
+              response = json.loads(server.stdout.readline())
+              assert response['id'] == 2, response
+              names = sorted(tool['name'] for tool in response['result']['tools'])
+              assert names == ['inspect', 'outline', 'read', 'search'], names
+              print('MCP tools:', ', '.join(names))
+              server.stdin.close()
+              assert server.wait(timeout=5) == 0
+          PYTEST
+
   # No new departure from the default stack (docs/stack-conformance.md in
   # SylphxAI/.github): a backend service off Rust or a migration engine other
   # than atlas fails unless .github/stack-departures.txt, which may only
@@ -295,7 +339,7 @@ jobs:
   ci-ok:
     name: ci-ok
     if: ${{ github.repository_visibility == 'public' && (always() && !cancelled()) }}
-    needs: [main-state, changes, plain-language, identifiers, chat-senders, validate, security-secrets, conversion-limits, plugin-scan, navigation, suite, stack]
+    needs: [main-state, changes, plain-language, identifiers, chat-senders, validate, security-secrets, conversion-limits, plugin-scan, navigation, suite, mcp-image, stack]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -48,14 +48,14 @@
   ],
   "alsoFrom": [
     {
-      "name": "repomap",
+      "name": "Repomap",
       "url": "https://github.com/SylphxAI/repomap",
-      "description": "A map of your codebase for AI agents: code graph, search, call paths and change impact."
+      "description": "Local Rust MCP server for mapping a codebase, tracing calls and seeing what a change affects."
     },
     {
-      "name": "lockdocs",
+      "name": "Lockdocs",
       "url": "https://github.com/SylphxAI/lockdocs",
-      "description": "Exact-version library docs from your lockfile. Local, offline, no rate limits."
+      "description": "Local Rust MCP server for finding library docs that match the versions in your lockfile."
     },
     {
       "name": "skills",

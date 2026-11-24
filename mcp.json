@@ -1,5 +1,5 @@
 {
   "mcpServers": {
-    "anymd": { "command": "npx", "args": ["-y", "@sylphx/anymd"] }
+    "anymd": { "command": "npx", "args": ["-y", "@sylphx/anymd", "mcp"] }
   }
 }
