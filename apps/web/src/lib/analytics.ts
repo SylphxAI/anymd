@@ -26,11 +26,13 @@ export function startGoogle(consent: SignalConsent, pathname: string) {
   // No tag exists in the denied state. Set the full policy before configuring
   // the tag; do not send an 'update' ping on withdrawal.
   w.gtag('consent', 'default', consent);
-  w.gtag('set', {page_location: pageLocation(pathname), page_referrer: '', page_title: 'Anymd', allow_ad_personalization_signals: false, ads_data_redaction: true, url_passthrough: false});
+  // Suppress bootstrap page views before 'js', as well as for this config.
+  // The live tag can emit one before processing the destination-level setting.
+  w.gtag('set', {page_location: pageLocation(pathname), page_referrer: '', page_title: 'Anymd', allow_ad_personalization_signals: false, ads_data_redaction: true, url_passthrough: false, send_page_view: false});
   w.gtag('js', new Date());
   // The app owns page_view (with a redacted URL). The GA4 stream must also
   // have Enhanced Measurement’s browser history page views disabled;
-  // send_page_view:false only disables the initial config hit.
+  // send_page_view:false does not disable the stream's history listener.
   w.gtag('config', measurementId, {send_page_view: false, allow_google_signals: consent.ad_storage === 'granted', allow_ad_personalization_signals: false});
   const tag = document.createElement('script');
   tag.id = 'anymd-google-tag';

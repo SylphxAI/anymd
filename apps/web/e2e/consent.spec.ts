@@ -520,7 +520,7 @@ test('the compact consent bar leaves conversion controls reachable without a cho
 
 const campaign = {
   gclid:'Synthetic-Click_1', gbraid:'Synthetic-Braid_2', wbraid:'Synthetic-Braid_3',
-  utm_source:'search', utm_medium:'cpc', utm_campaign:'PDF & video', utm_term:'bounding box', utm_content:'frame proof',
+  utm_source:'search', utm_medium:'cpc', utm_campaign:'PDF & video', utm_id:'campaign-2026', utm_term:'bounding box', utm_content:'frame proof',
 };
 
 for (const acceptOn of ['/pricing', '/sign-in']) {
@@ -565,6 +565,11 @@ test('queues one sanitized manual page_view per path, not for search-only change
   const origin = new URL(page.url()).origin;
   const views = async () => (await events(page, 'page_view')).map(x => (x[2] as {page_location:string}).page_location);
   await expect.poll(views).toEqual([origin + '/']);
+  const bootstrap = await commands(page);
+  const js = bootstrap.findIndex(command => command[0] === 'js');
+  expect(js).toBeGreaterThan(0);
+  expect(bootstrap.slice(0, js)).toContainEqual(['set', expect.objectContaining({send_page_view:false})]);
+  expect(bootstrap).toContainEqual(['config', 'G-R4TD2Z8RR7', expect.objectContaining({send_page_view:false})]);
   const desktop = page.viewportSize()!.width > 690;
   if (!desktop) await page.locator('summary[aria-label="Open navigation"]').click();
   await page.getByRole('navigation', {name:desktop ? 'Main' : 'Mobile', exact:true}).getByRole('link', {name:'Pricing'}).click();
@@ -574,4 +579,6 @@ test('queues one sanitized manual page_view per path, not for search-only change
   expect(await views()).toEqual([origin + '/', origin + '/pricing']);
   await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
   await expect.poll(views).toEqual([origin + '/', origin + '/pricing', origin + '/sign-in']);
+  await page.getByRole('link', {name:'Anymd home'}).click();
+  await expect.poll(views).toEqual([origin + '/', origin + '/pricing', origin + '/sign-in', origin + '/']);
 });
