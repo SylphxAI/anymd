@@ -49,6 +49,10 @@ test('prices have stable SSR labels and honor locale without changing the curren
   expect(formatPrice(proAmount('JPY'), 'JPY')).toBe('¥4,639');
   expect(formatPrice(proAmount('JPY'), 'JPY', 'ja-JP')).toBe('￥4,639');
   expect(formatPrice(proAmount('IDR'), 'IDR', 'id-ID')).toBe('Rp 529.000');
+  expect(formatPrice(proAmount('TWD'), 'TWD', 'zh-TW')).toBe('NT$959');
+  expect(formatPrice(proAmount('CAD'), 'CAD', 'en-CA')).toBe('CA$41.99');
+  expect(formatPrice(proAmount('AUD'), 'AUD', 'en-AU')).toBe('A$42.99');
+  expect(formatPrice(proAmount('USD'), 'USD')).toBe('$29');
 });
 
 const portal = 'portal_sessions:userCreate';

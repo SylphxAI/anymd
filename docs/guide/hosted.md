@@ -23,7 +23,7 @@ This is the default mode, and it is not a trial and not feature-limited: nothing
 - **PDF `cite_check`**: verify that a quoted passage appears on the cited page and area using extracted text and coordinates, not an AI opinion.
 - **Video timelines and frames (`video_timeline`, `render_frame`)**: bounded scene/chapter/transcript timelines and exact decoded frames with SHA-256 hashes.
 
-Buy on the web at [anymd Pro pricing](https://anymd.sylphx.com/pricing) or run `anymd pro buy` in your terminal.
+Sign in at [anymd Pro pricing](/pricing) and complete checkout. Then run `anymd login` on each machine and sign in with the same account in your browser. Pro works offline after activation.
 
 ## Which to pick
 
@@ -42,7 +42,3 @@ The public converter API of `anymd-core`, `anymd-pdf` and `anymd-formats` is sta
 - a breaking API change ships only in a major version, and importers move to it deliberately, not automatically.
 
 This is why there is one converter and one set of crates across local CLI, MCP and embedded deployments.
-
-## Get anymd Pro
-
-[anymd Pro](/pricing) runs 100% offline with no account, works with future releases, and is delivered instantly on the checkout confirmation page or automatically via `anymd pro buy`.

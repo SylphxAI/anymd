@@ -15,14 +15,18 @@ export function isCurrency(value: unknown): value is Currency {
   return typeof value === 'string' && Object.hasOwn(price.unit_amounts, value);
 }
 
+const dollarSymbols: Partial<Record<Currency, string>> = { TWD: 'NT$', HKD: 'HK$', CAD: 'CA$', AUD: 'A$', NZD: 'NZ$', SGD: 'S$' };
 const zeroDecimals = new Set<Currency>(['JPY', 'KRW', 'VND']);
 export const proAmount = (code: Currency) => Number(price.unit_amounts[code]) / (zeroDecimals.has(code) ? 1 : 100);
 
 // The server and initial hydration use the same English locale. Interactive
 // labels switch to the browser's language preferences only after hydration.
 export function formatPrice(amount: number, currency: Currency, locales: string | readonly string[] = 'en') {
-  return new Intl.NumberFormat(locales, {
+  const formatter = new Intl.NumberFormat(locales, {
     style: 'currency', currency, minimumFractionDigits: 0,
     maximumFractionDigits: zeroDecimals.has(currency) ? 0 : 2,
-  }).format(amount);
+  });
+  // Some locales omit the country on their own dollar (e.g. zh-TW, en-CA).
+  const dollar = dollarSymbols[currency];
+  return dollar ? formatter.formatToParts(amount).map(part => part.type === 'currency' && part.value === '$' ? dollar : part.value).join('') : formatter.format(amount);
 }

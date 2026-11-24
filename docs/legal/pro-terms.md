@@ -31,7 +31,7 @@ The current price shown at checkout, paid once, including any VAT or sales tax w
 
 ## Delivery
 
-Delivery is instant after payment: your licence token is shown immediately on the checkout confirmation page (or saved automatically on your machine when you purchase with `anymd pro buy`), and we also email a link to retrieve it at the address you give at checkout. Activation is described on the [anymd Pro page](/pricing).
+Sign in at [anymd Pro pricing](/pricing) and complete checkout. Pro access is added to your account after payment. Run `anymd login` on each machine and sign in with that same account in your browser to receive the licence token. Pro works offline on that machine after activation.
 
 ## Refunds and cancellation
 
