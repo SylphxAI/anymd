@@ -74,7 +74,7 @@ serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT,
     const signup = tickets.get(ticket);
     if (!signup) return new Response(null, { status:401 });
     tickets.delete(ticket);
-    const token = 'identity_org_session_' + randomBytes(24).toString('base64url');
+    const token = randomBytes(24).toString('base64url');
     activeSessions.add(token);
     return Response.json({session:{token, expires_at:Math.floor(Date.now()/1000)+3600}, user:{id:fixtureUser, email_verified:true}, ...signup});
   }
