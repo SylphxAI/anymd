@@ -4,12 +4,14 @@ import { explicitAnalytics } from './consent';
 import { checkoutParameters, checkoutSurface } from './funnel';
 
 test('conversion requires an explicit choice and GPC always wins', () => {
-  assert.equal(explicitAnalytics(null, false), false);
-  assert.equal(explicitAnalytics('reject', false), false);
-  assert.equal(explicitAnalytics('analytics', false), true);
-  assert.equal(explicitAnalytics('all', false), true);
-  assert.equal(explicitAnalytics('analytics', true), false);
-  assert.equal(explicitAnalytics('all', true), false);
+  const headers = new Headers();
+  assert.equal(explicitAnalytics(null, headers), false);
+  assert.equal(explicitAnalytics('reject', headers), false);
+  assert.equal(explicitAnalytics('analytics', headers), true);
+  assert.equal(explicitAnalytics('all', headers), true);
+  headers.set('Sec-GPC', '1');
+  assert.equal(explicitAnalytics('analytics', headers), false);
+  assert.equal(explicitAnalytics('all', headers), false);
 });
 
 test('only known public entry surfaces leave the browser', () => {

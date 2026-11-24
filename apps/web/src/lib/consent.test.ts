@@ -47,11 +47,30 @@ test('EEA, UK, Switzerland, and unknown regions never send tracking fields witho
   }
 });
 
+for (const country of ['AX', 'GF', 'GP', 'MQ', 'MF', 'RE', 'YT']) {
+  test(`${country} stays opt-in from the region trace through checkout binding`, async () => {
+    const region = await detectSignalRegion(async () => new Response(`loc=${country}\n`));
+    assert.equal(region, country);
+    assert.deepEqual(resolveEffectiveConsent({region}), denied);
+    assert.deepEqual(await binding({region}), {...identity, consent:denied});
+  });
+}
+
+test('legacy Analytics only maps to analytics_only and binds GA but no ad identifiers', async () => {
+  const storedChoice = savedSignalChoice('analytics');
+  assert.equal(storedChoice, 'analytics_only');
+  for (const region of ['DE', 'US']) {
+    assert.deepEqual(resolveEffectiveConsent({region, storedChoice}), analytics);
+    assert.deepEqual(await binding({region, storedChoice}), {...identity, consent:analytics, ...ga});
+  }
+});
+
 test('explicit choices survive migration; GPC overrides opt-in and opt-out defaults', async () => {
   assert.deepEqual(await binding({region:'US', storedChoice:savedSignalChoice('reject')}), {...identity, consent:denied});
-  assert.deepEqual(await binding({region:'DE', storedChoice:savedSignalChoice('analytics')}), {...identity, consent:analytics, ...ga});
   assert.deepEqual(await binding({region:'CH', storedChoice:savedSignalChoice('all')}), {...identity, consent:full, ...ga, ...ads});
-  for (const storedChoice of [undefined,'denied','analytics_only','granted'] as const) {
-    assert.deepEqual(await binding({region:'US', storedChoice}, '0, 1'), {...identity, consent:denied});
+  for (const region of ['DE', 'US']) {
+    for (const storedChoice of [undefined,'denied','analytics_only','granted'] as const) {
+      assert.deepEqual(await binding({region, storedChoice}, '0, 1'), {...identity, consent:denied});
+    }
   }
 });

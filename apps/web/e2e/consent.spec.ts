@@ -66,7 +66,13 @@ async function moneyCheckoutMetadata(page: Page, checkoutIntent: string) {
   return response.json();
 }
 
-for (const [label, code] of [['EEA', 'DE'], ['UK', 'GB'], ['Switzerland', 'CH'], ['unknown', null]] as const) {
+const optInRegions = [
+  ['EEA', 'DE'], ['UK', 'GB'], ['Switzerland', 'CH'], ['unknown', null],
+  ['Åland', 'AX'], ['French Guiana', 'GF'], ['Guadeloupe', 'GP'], ['Martinique', 'MQ'],
+  ['Saint Martin', 'MF'], ['Réunion', 'RE'], ['Mayotte', 'YT'],
+] as const;
+
+for (const [label, code] of optInRegions) {
   test(label + ' makes no Google requests before choice or after rejection', async ({ page }) => {
     const google = await isolate(page, code);
     await page.goto('/pricing');
@@ -102,6 +108,7 @@ test('analytics-only opt-in emits clean pricing event; withdrawal stops future G
   await page.goto('/pricing?session_id=cs_test_NOT_FOR_GOOGLE#private');
   expect(google).toEqual([]);
   await panel(page).getByRole('button', {name:'Analytics only'}).click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('anymd.signal.v1.consent'))).toBe('analytics_only');
   await expect.poll(() => google).toEqual([tag]);
   expect((await commands(page))[0]).toEqual(['consent','default',analyticsOnly]);
   const pricing = await events(page, 'pricing_view');
