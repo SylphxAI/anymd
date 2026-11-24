@@ -24,7 +24,7 @@ serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT,
   if (url.pathname === '/v1/client/oauth/google/start' && url.searchParams.get('session_mode') === 'server' &&
       request.headers.get('authorization') === 'Bearer ' + fixturePublishable) {
     const callback = new URL(url.searchParams.get('redirect_url')!);
-    if (![fixtureApp, 'https://anymd.sylphx.com'].includes(callback.origin) || callback.pathname !== '/api/auth/callback') return new Response(null, {status:400});
+    if (![fixtureApp, 'https://anymd.sylphx.com', 'https://web-5645d7.sylphx.app'].includes(callback.origin) || callback.pathname !== '/api/auth/callback') return new Response(null, {status:400});
     callback.searchParams.set('auth_ticket', issueTicket(request));
     return Response.redirect(providerAuthorize + '?' + new URLSearchParams({fixture_callback:callback.href}), 303);
   }
