@@ -20,8 +20,8 @@
         "@solidjs/meta": "0.29.4",
         "@solidjs/router": "0.16.3",
         "@solidjs/start": "2.2.3",
-        "@sylphx/auth": "0.1.2",
-        "@sylphx/auth-solid": "0.1.3",
+        "@sylphx/auth": "0.1.3",
+        "@sylphx/auth-solid": "0.1.4",
         "@sylphx/sdk": "0.32.36",
         "lucide-solid": "0.545.0",
         "markdown-it": "^15.0.3",
@@ -229,9 +229,9 @@
 
     "@solidjs/start": ["@solidjs/start@2.2.3", "", { "dependencies": { "@babel/core": "^7.29.7", "@babel/traverse": "^7.29.7", "@babel/types": "^7.29.7", "@jridgewell/trace-mapping": "^0.3.31", "@solidjs/meta": "^0.29.4", "@types/babel__traverse": "^7.28.0", "@types/micromatch": "^4.0.10", "cookie-es": "^3.1.1", "defu": "^6.1.7", "error-stack-parser-es": "^2.0.1", "fast-glob": "^3.3.3", "h3": "^2.0.1-rc.26", "html-to-image": "^1.11.13", "micromatch": "^4.0.8", "oxc-parser": "^0.141.0", "path-to-regexp": "^8.4.2", "pathe": "^2.0.3", "radix3": "^1.1.2", "seroval": "^1.8.0", "seroval-plugins": "^1.8.0", "shiki": "^4.3.1", "srvx": "^0.12.4", "terracotta": "^1.2.4", "vite-plugin-solid": "^2.11.13" }, "peerDependencies": { "@solidjs/router": ">=0.16.0 <2.0.0-0", "solid-js": "^1.9.15", "vite": "^8 || ^9" }, "optionalPeers": ["@solidjs/router"] }, "sha512-tJvjep/21Zh8629kVPcRYql/pdhiFSFtxdoZr7Yic3SS2t5WosUqiooNj86/AlV3JMf1M3hIztHi+HZbykviEw=="],
 
-    "@sylphx/auth": ["@sylphx/auth@0.1.2", "", {}, "sha512-ZYzD/Y+jtgcQt2SrCNNcqXv+ZftZE/7ONWfOr178vBJeYMFI4PCVDFuj5p9M/UleGtqfguGz759HG5vP1c2bdQ=="],
+    "@sylphx/auth": ["@sylphx/auth@0.1.3", "", {}, "sha512-lbJTk1xKWfQPSJlfAp5iOOzXDERrDA1u5g3xPWCM/saYaYs3wzcsnjsaRP6eRx8yj3dwB80B/jzu+guvdx0i8Q=="],
 
-    "@sylphx/auth-solid": ["@sylphx/auth-solid@0.1.3", "", { "dependencies": { "@sylphx/auth": "0.1.2" }, "peerDependencies": { "solid-js": "^1.9.20" } }, "sha512-Yt0o0k8SCd8pJtCOwW75M8UwZ05pewIxRXAFaEu9ckXG4ztmUadiVG2G0+zv6LDPLqvKBhR/Of935CIi6Rm4WA=="],
+    "@sylphx/auth-solid": ["@sylphx/auth-solid@0.1.4", "", { "dependencies": { "@sylphx/auth": "0.1.3" }, "peerDependencies": { "solid-js": "^1.9.20" } }, "sha512-et3fwvWhkfLlVv8DsL75bgTiLr0U7/0rRzFF4SpNcQlfK8/evPD8jaD0tTwVdBjgPS3LagYCjqzIoUPCobpdHQ=="],
 
     "@sylphx/sdk": ["@sylphx/sdk@0.32.36", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"] }, "sha512-HwURU78LKiOOhGClxH8HcbLOwjAckCce+6rlqCHeYWVjP/PuNFNefcEY9ZXq/mNbICAxDJ8zmiMver8F9cip5g=="],
 

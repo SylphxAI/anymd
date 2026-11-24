@@ -35,8 +35,7 @@ export async function handleAuth(request: Request, config: Config) {
     loginPath: '/sign-in',
     defaultReturnTo: '/dashboard',
     allowReturnTo: path => safeNext(path) === path,
-    // Use the app's existing public-origin binding when ingress terminates TLS.
-    isPublicRequest: incoming => appOrigin(incoming) === origin,
+    trustSylphxEdge: true,
     allowedMethods: ['oauth', 'otp', 'passkey'],
     providers: ['google', 'github'],
     directOAuth: true,
@@ -58,12 +57,10 @@ export async function handleAuth(request: Request, config: Config) {
 }
 
 export async function entryOptions(request: Request, config: Config): Promise<EntryConfig> {
-  // SSR and the public session projection use the same discovery as browser entry.
-  const headers = new Headers({ 'User-Agent': request.headers.get('user-agent') || 'anymd-web' });
-  for (const name of ['host', 'x-forwarded-host']) {
-    const value = request.headers.get(name);
-    if (value) headers.set(name, value);
-  }
-  const response = await handleAuth(new Request(appOrigin(request) + authRoute + '/config', {headers, signal:request.signal}), config);
+  // This server-side read keeps the transport authority, not the browser's navigation context.
+  const headers = new Headers(request.headers);
+  headers.delete('origin');
+  headers.delete('sec-fetch-site');
+  const response = await handleAuth(new Request(new URL(authRoute + '/config', request.url), {headers, signal:request.signal}), config);
   return response.ok ? response.json() : noEntry;
 }

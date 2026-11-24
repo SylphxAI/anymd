@@ -113,24 +113,36 @@ test.describe('OTP and passkey enabled', () => {
   }
 });
 
-test('OAuth uses only approved callback origins and refuses disabled GitHub', async ({ request, baseURL }) => {
-  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), 'Requires the local Google-only social Auth fixture');
-  for (const [host, forwarded, origin] of [
-    ['web.fixture.svc.cluster.local:3000', 'anymd.sylphx.com', 'https://anymd.sylphx.com'],
-    ['web.fixture.svc.cluster.local:3000', '', baseURL],
-    ['anymd.sylphx.com', 'anymd.sylphx.com', 'https://anymd.sylphx.com'],
-    ['web.fixture.svc.cluster.local:3000', 'preview.example.test', baseURL],
-    ['evil.example', 'anymd.sylphx.com.evil.example', baseURL],
-  ]) {
-    const response = await request.get('/api/auth/google?next=/dashboard', { headers: {
-      host, 'x-forwarded-host': forwarded, 'sec-fetch-site':'same-origin', 'sec-fetch-mode':'navigate', 'sec-fetch-dest':'document',
-    }, maxRedirects: 0 });
+test('Auth accepts trusted Hosting and direct HTTPS, not invalid forwarding headers', async ({ request, baseURL }) => {
+  test.skip(fixtureOnly, 'Requires the local Google-only social Auth fixture');
+  const edge = { 'sylphx-edge':'public', 'x-forwarded-proto':'https' };
+  const nav = { 'sec-fetch-site':'same-origin', 'sec-fetch-mode':'navigate', 'sec-fetch-dest':'document' };
+  for (const origin of [baseURL!, 'https://anymd.sylphx.com', 'https://web-5645d7.sylphx.app']) {
+    const headers = origin === baseURL ? nav : {...nav, ...edge, 'x-forwarded-host':new URL(origin).host};
+    const response = await request.get('/api/auth/google?next=/dashboard', {headers, maxRedirects:0});
     expect(response.status()).toBe(303);
     const location = new URL(response.headers().location);
     expect(location.origin + location.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
     const callback = new URL(location.searchParams.get('fixture_callback') ?? '');
     expect(callback.origin + callback.pathname).toBe(origin + '/api/auth/callback');
     expect(callback.searchParams.get('flow')).toMatch(/^[\w-]{43}$/);
+    const session = await request.get('/api/auth/session?providers', {headers});
+    expect(await session.json()).toMatchObject({providers:['google'], methods:{emailOtp:true, passkey:true}});
+  }
+  for (const headers of [
+    {...edge, 'x-forwarded-host':'other-tenant.sylphx.app'},
+    {...edge, 'x-forwarded-host':'anymd.sylphx.com, other-tenant.sylphx.app'},
+    {'x-forwarded-host':'anymd.sylphx.com'},
+    {...edge, 'x-forwarded-host':'anymd.sylphx.com', 'x-forwarded-proto':'http'},
+  ]) {
+    const config = await request.get('/api/auth/config', {headers});
+    expect(config.status()).toBe(403);
+    const response = await request.get('/api/auth/google?next=/dashboard', {headers:{...nav, ...headers}, maxRedirects:0});
+    expect(response.status()).toBe(303);
+    expect(response.headers().location).toBe('/sign-in?error=method_unavailable&next=%2Fdashboard');
+    expect(response.headers()['set-cookie']).toBeUndefined();
+    const session = await request.get('/api/auth/session?providers', {headers});
+    expect(await session.json()).toMatchObject({providers:[], methods:{emailOtp:false, passkey:false}});
   }
   const github = await request.get('/api/auth/github', { maxRedirects: 0, headers:{
     'sec-fetch-site':'same-origin', 'sec-fetch-mode':'navigate', 'sec-fetch-dest':'document',
