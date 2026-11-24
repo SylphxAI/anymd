@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import { carryCampaign } from './campaign';
 
 test('preserves destination encoding, currency and return path without forwarding unrelated parameters', () => {
-  assert.equal(carryCampaign('/sign-in?next=%2Fpricing%3Fcurrency%3DEUR#main', '?utm_campaign=PDF+%26+video&gclid=Test_42&session_id=private'),
-    '/sign-in?next=%2Fpricing%3Fcurrency%3DEUR&gclid=Test_42&utm_campaign=PDF+%26+video#main');
+  assert.equal(carryCampaign('/sign-in?next=%2Fpricing%3Fcurrency%3DEUR#main', '?utm_campaign=PDF+%26+video&utm_id=spring-2026&gclid=Test_42&session_id=private'),
+    '/sign-in?next=%2Fpricing%3Fcurrency%3DEUR&gclid=Test_42&utm_campaign=PDF+%26+video&utm_id=spring-2026#main');
 });
 
 test('campaign links do not decorate off-site or API destinations', () => {

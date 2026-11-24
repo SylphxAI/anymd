@@ -1,4 +1,4 @@
-const fields = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
+const fields = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_id', 'utm_term', 'utm_content'] as const;
 
 export function carryCampaign(href: string, search: string) {
   // Restrict to app paths, never OAuth, API, media URLs or protocol-relative links.
