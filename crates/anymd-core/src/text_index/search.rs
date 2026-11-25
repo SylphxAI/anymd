@@ -1,6 +1,11 @@
 //! Literal text search over extracted PDF pages: matching, whole-word checks, snippets and match geometry.
 
-use super::*;
+use std::path::Path;
+
+use super::{
+    extract_pdf_text, PositionedTextItem, TextBoundingBox, TextIndexError, TextSearchMatch,
+    TextSearchResult, TEXT_INDEX_ROUTE,
+};
 
 #[allow(clippy::too_many_arguments)]
 pub fn search_pdf_text(
