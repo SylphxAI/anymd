@@ -1,19 +1,18 @@
 ---
 title: Extract a video frame at a timestamp with anymd
-description: Retrieve a decoded video frame over MCP, keeping the requested time, actual PTS and PNG hash. Runnable free and Pro examples with anymd 8.5.5.
+description: Retrieve a decoded video frame over MCP, keeping the requested time, actual PTS and PNG hash. Runnable free and Pro examples.
 ---
 
 # Extract a video frame at a timestamp
 
-If you need to cite what a video shows at 1.031 seconds, a nearby keyframe is
-not the same evidence. anymd Pro's `render_frame` operation returns the first
-decodable frame at or after the requested playback time within its bounded
-decode interval. It keeps both the request and the actual decoded timestamp.
-It does not promise a frame exists at every millisecond.
+Free reads return metadata and subtitles. Anymd Pro decodes the first
+available frame at or after the requested time within a bounded interval and
+returns its actual timestamp and PNG SHA-256.
 
-The free MIT core reads video metadata, chapters and subtitles. Pro adds
-timestamped decoded frames and [bounded timelines](./build-video-timeline).
-[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_extract_video_frame).
+> Sample video (10 fps): request 1031 ms → decoded frame at 1100 ms,
+> with the PNG hash.
+
+**[See Anymd Pro — US$29 one-time](/pricing?entry_surface=task_extract_video_frame)**
 
 ## Make a small local video
 
@@ -23,7 +22,7 @@ model, API key or transcription download is needed.
 
 ```sh
 mkdir anymd-frames && cd anymd-frames
-npm install --no-save @sylphx/anymd@8.5.5
+npm install --no-save @sylphx/anymd
 curl -fsSLO https://anymd.sylphx.com/examples/mcp-call.mjs
 ffmpeg -hide_banner -loglevel error -f lavfi \
   -i 'testsrc2=size=320x240:rate=10:duration=2' -c:v ffv1 demo.mkv
@@ -77,7 +76,7 @@ Request 1–20 timestamps. Output is downscaled to at most 2 MP and 4 MiB per
 frame, with a shared 40 MP / 32 MiB request budget. Keep those limits in mind
 before treating the image as an original-resolution source.
 
-See the [video reference](/guide/video-timeline#frames) for decoding and budget
+See the [video reference](/docs/video-timeline#frames) for decoding and budget
 semantics, or [build a timeline](./build-video-timeline) before picking frames.
 
-[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_extract_video_frame).
+[See Anymd Pro pricing](/pricing?entry_surface=task_extract_video_frame).

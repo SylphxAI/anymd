@@ -1,10 +1,11 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
 import { bindCheckoutAttribution, createSignalBrowser, detectSignalRegion, resolveEffectiveConsent, type SignalConsent } from '@sylphx/sdk/signal';
-import { type BehavioralEvent, clearGoogleCookies, isPricingPage, measurementId, startGoogle, stopGoogle, track, trackBehavioral } from '@/lib/analytics';
+import { type BehavioralEvent, clearGoogleCookies, configureGoogleAds, isPricingPage, measurementId, startGoogle, stopGoogle, track, trackBehavioral, updateGoogleConsent } from '@/lib/analytics';
 import { consentKey, savedSignalChoice, signalChoiceKey, signalChoices, signalStorage, type Choice } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
 import { localeFromPath } from '@/lib/marketing-locale';
+import { fullAdConsent } from '@/lib/google-ads';
 import { checkoutParameters } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
 import { parseSignupSignal, signupCookie, type SignupSignal } from '@/lib/signup';
@@ -13,6 +14,7 @@ type CheckoutBinding = {checkoutSessionId: string; apiKey: string; baseUrl: stri
 type SignalBrowser = ReturnType<typeof createSignalBrowser>;
 const CookieContext = createContext<{
   carryCampaign: () => boolean;
+  purchaseAds: () => ReturnType<typeof configureGoogleAds>;
   open: (from: HTMLButtonElement) => void;
   bindCheckout: (binding?: CheckoutBinding) => Promise<void>;
   beginCheckout: (currency: string, entrySurface: EntrySurface) => Promise<void>;
@@ -57,6 +59,7 @@ export function CookieConsent(props: ParentProps) {
   const [strict, setStrict] = createSignal(false);
   const [gpc, setGpc] = createSignal(false);
   const [manual, setManual] = createSignal(false);
+  const [ads, setAds] = createSignal<ReturnType<typeof configureGoogleAds>>();
   let active: SignalConsent | undefined;
   let lastPath: string | undefined;
   let pendingSignup: SignupSignal | undefined;
@@ -107,7 +110,9 @@ export function CookieConsent(props: ParentProps) {
     const consent = signal.getConsent();
     signal.capture();
     const allowed = consent.analytics_storage === 'granted';
-    if (active && (!allowed || active.ad_storage !== consent.ad_storage)) {
+    const adGranted = hasChoice() && fullAdConsent(consent, gpc());
+    if (active && (!allowed || (fullAdConsent(active) && !fullAdConsent(consent)) || (ads() && !adGranted))) {
+      setAds(undefined);
       stopGoogle();
       active = undefined;
       clearGoogleCookies(!allowed);
@@ -120,6 +125,15 @@ export function CookieConsent(props: ParentProps) {
       if (consent.ad_storage === 'denied') clearGoogleCookies(false);
       startGoogle(consent, pathname);
       active = consent;
+    } else if (!fullAdConsent(active) && adGranted) {
+      // An explicit upgrade needs no reload: a payment return may already
+      // have removed its session proof from the URL. Never update on denial.
+      updateGoogleConsent(consent);
+      active = consent;
+    }
+    if (adGranted && !ads()) {
+      const configured = configureGoogleAds(consent, gpc());
+      if (configured) setAds(configured);
     }
     if (pendingSignup && hasChoice()) track('sign_up', pathname, pendingSignup);
     pendingSignup = undefined;
@@ -164,6 +178,10 @@ export function CookieConsent(props: ParentProps) {
     trigger = undefined;
   }
   const context = {
+    purchaseAds() {
+      changed();
+      return hasChoice() && fullAdConsent(browser()?.getConsent(), gpc()) ? ads() : undefined;
+    },
     carryCampaign() {
       const signal = browser();
       changed();

@@ -1,5 +1,6 @@
 import type { SignalConsent } from '@sylphx/sdk/signal';
 import type { checkoutParameters } from './funnel';
+import { fullAdConsent, googleAdsConfig, type PurchaseConversion } from './google-ads';
 import type { SignupSignal } from './signup';
 import { localeFromPath, localizedPath } from './marketing-locale';
 
@@ -52,6 +53,29 @@ export function startGoogle(consent: SignalConsent, pathname: string) {
   tag.referrerPolicy = 'no-referrer';
   tag.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
   document.head.append(tag);
+}
+
+// The provider passes effective Signal consent only after a stored choice.
+export function configureGoogleAds(consent: SignalConsent | undefined, gpc: boolean) {
+  const {googleAdsId, googleAdsPurchaseLabel} = document.documentElement.dataset;
+  const ads = googleAdsConfig(googleAdsId, googleAdsPurchaseLabel);
+  const w = google();
+  if (!ads || !fullAdConsent(consent, gpc) || w[gaDisable] || !w.gtag) return;
+  w.gtag('config', ads.googleAdsId, {send_page_view:false});
+  return ads;
+}
+
+export function updateGoogleConsent(consent: SignalConsent) {
+  google().gtag?.('consent', 'update', consent);
+}
+
+export function trackPurchaseConversion(ads: NonNullable<ReturnType<typeof googleAdsConfig>>, purchase: PurchaseConversion) {
+  const w = google();
+  if (w[gaDisable] || !w.gtag) return false;
+  w.gtag('event', 'conversion', {send_to:ads.googleAdsId + '/' + ads.googleAdsPurchaseLabel,
+    value:purchase.value, currency:purchase.currency, transaction_id:purchase.transactionId,
+    page_location:pageLocation('/pro/thanks'), page_referrer:'', page_title:'Anymd'});
+  return true;
 }
 
 export function stopGoogle() {

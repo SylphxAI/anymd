@@ -1,18 +1,18 @@
 ---
 title: Check whether a PDF quote is on the cited page
-description: Check a quote, physical PDF page and bounding box against extracted evidence. Runnable free search and Pro cite-check examples with anymd 8.5.5.
+description: Check a quote, physical PDF page and bounding box against extracted evidence. Runnable free search and Pro cite-check examples.
 ---
 
 # Check whether a PDF quote is on the cited page
 
-Finding a phrase in a PDF is not the same as checking its citation. anymd Pro's
-`cite_check` operation tests whether a quote occurs in extracted evidence on
-the specified physical page, inside a specified box. It checks quote and location
-support, **not whether the statement is true**, and does not independently
-confirm OCR accuracy.
+Free search finds candidate quotes. Anymd Pro checks whether the quote is on
+the cited PDF page and inside the supplied box. It doesn't verify the claim
+itself or independently confirm OCR accuracy.
 
-Free reading, searching and PDF inspection stay MIT licensed and ungated.
-[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_check_pdf_citation).
+> Sample PDF: “Deterministic quote” on page 1 → `verified_exact` in the page
+> box, `unmatched` in the empty box.
+
+**[See Anymd Pro — US$29 one-time](/pricing?entry_surface=task_check_pdf_citation)**
 
 ## Make a PDF you can reproduce
 
@@ -21,13 +21,13 @@ Python's standard library; no font files, model, OCR engine or API key are neede
 
 ```sh
 mkdir anymd-citations && cd anymd-citations
-npm install --no-save @sylphx/anymd@8.5.5
+npm install --no-save @sylphx/anymd
 curl -fsSLO https://anymd.sylphx.com/examples/mcp-call.mjs
 curl -fsSLO https://anymd.sylphx.com/examples/make-citation-pdf.py
 python3 make-citation-pdf.py
 ```
 
-The [generator](https://anymd.sylphx.com/examples/make-citation-pdf.py) writes `citation.pdf`, a one-page
+The [generator](/examples/make-citation-pdf.py) writes `citation.pdf`, a one-page
 612 × 792 PDF with native text `Deterministic quote` at (50, 700). The
 [MCP client](/examples/mcp-call.mjs) starts the installed release, confines file
 access to this directory and prints the tool result. It does not upload the PDF.
@@ -78,7 +78,7 @@ PDF coordinates. For a source you have already hashed, pass
 `expected_source_sha256`; a mismatch returns insufficient evidence without
 extraction. There can be several supported occurrences: presence is not uniqueness.
 
-The [cite-check reference](/guide/cite-check) covers request limits, optional
+The [cite-check reference](/docs/cite-check) covers request limits, optional
 OCR, geometry granularity, hash checks and failure cases.
 
-[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_check_pdf_citation).
+[See Anymd Pro pricing](/pricing?entry_surface=task_check_pdf_citation).

@@ -1,6 +1,7 @@
 import MarkdownIt from 'markdown-it';
 import { canonicalOrigin } from './app-origin';
 import { isBackendHref } from './backend-href';
+import { carryCampaign } from './campaign';
 
 const source = import.meta.glob('../../../../docs/{guide,legal,security,tasks,use-cases,vs}/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const prefix = '../../../../docs/';
@@ -19,12 +20,13 @@ export function canonicalDocPath(slug: string): string {
 function localUrl(href: string, slug: string) {
   href = href.replace(/^https?:\/\/sylphxai\.github\.io\/anymd(?=\/|$)/, '').replace(/^\/anymd(?=\/|$)/, '');
   if (!href) return '/';
-  if (href.startsWith('#') || /^[a-z]+:/i.test(href) || href.startsWith('//')) return href;
+  if (href.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) return href;
   const url = new URL(href, canonicalOrigin + '/' + slug);
+  if (url.origin !== canonicalOrigin) return href;
   return url.pathname.replace(/\/(?:index\.md|index\.html)$/, '/').replace(/\.(?:md|html)$/, '') + url.search + url.hash;
 }
 
-type RenderContext = { slug: string; headings: Map<string, number> };
+type RenderContext = { slug: string; headings: Map<string, number>; campaignSearch: string };
 
 const md = new MarkdownIt({ html: false, linkify: true });
 // Standalone source comments mark generated sections. Consume the comment line
@@ -47,15 +49,16 @@ for (const rule of ['fence', 'code_block'] as const) {
   };
 }
 md.renderer.rules.link_open = (tokens, index, options, env, self) => {
-  const { slug } = env as RenderContext;
+  const { slug, campaignSearch } = env as RenderContext;
   const link = tokens[index];
   const href = link.attrGet('href');
   if (href) {
     const target = localUrl(String(href), slug);
-    link.attrSet('href', target);
+    // Keep attribution on page links, not example downloads.
+    link.attrSet('href', target.startsWith('/examples/') ? target : carryCampaign(target, campaignSearch));
     if (isBackendHref(target, canonicalOrigin)) link.attrJoin('rel', 'external');
     // Bold pricing links are CTA buttons; ordinary inline links keep prose styling.
-    if (target.startsWith('/pricing?entry_surface=seo_') && tokens[index - 1]?.type === 'strong_open') {
+    if (/^\/pricing\?entry_surface=(?:seo|task)_/.test(target) && tokens[index - 1]?.type === 'strong_open') {
       link.attrJoin('class', 'button button-primary font-semibold! text-[var(--accent-ink)]! no-underline!');
     }
   }
@@ -90,7 +93,7 @@ const searchIndex = [...docs].flatMap(([slug, raw]) => {
   return title && path !== '/docs' ? [{ title, description, path }] : [];
 });
 
-export function renderDoc(input: string, legacyDocs: boolean) {
+export function renderDoc(input: string, legacyDocs: boolean, campaignSearch = '') {
   const slug = !legacyDocs && input === 'vs' ? 'vs/index'
     : legacyDocs && !input.includes('/') && !docs.has(input) ? 'guide/' + input : input;
   const raw = docs.get(slug);
@@ -98,5 +101,5 @@ export function renderDoc(input: string, legacyDocs: boolean) {
   const { markdown, title, description } = docSummary(raw);
   const canonical = canonicalDocPath(slug);
   return { title: title ?? slug, description, canonical, searchIndex: canonical === '/docs' ? searchIndex : undefined,
-    html: md.render(markdown, { slug, headings: new Map<string, number>() }) };
+    html: md.render(markdown, { slug, headings: new Map<string, number>(), campaignSearch } satisfies RenderContext) };
 }

@@ -196,7 +196,7 @@ test('checkout works with no consent and sends no GA commands or analytics stora
   await panel(page).evaluate(element => { element.style.display = 'none'; });
   await page.getByRole('checkbox').check();
   await page.getByRole('button', {name:'Continue to secure checkout'}).click();
-  await expect(page).toHaveURL('/pro/thanks?session_id=cs_test_NOT_FOR_GOOGLE');
+  await expect(page).toHaveURL('/pro/thanks');
   await expect(panel(page)).toBeVisible();
   expect(await commands(page)).toEqual([]);
   expect(await page.evaluate(() => ({writes:Reflect.get(window, '__storageWrites'), gtag:typeof Reflect.get(window, 'gtag')}))).toEqual({writes:[], gtag:'undefined'});
@@ -262,7 +262,7 @@ for (const [label, choice, serverGpc, expected] of [
     await setAttributionCookies(page);
     await page.getByRole('checkbox').check();
     await page.getByRole('button', {name:'Continue to secure checkout'}).click();
-    await expect(page).toHaveURL('/pro/thanks?session_id=cs_test_Fixture123');
+    await expect(page).toHaveURL('/pro/thanks');
     expect(bindings).toEqual([{
       checkout_session_id:checkoutSessionId, consent:expected,
       ...(expected.analytics_storage === 'granted' && {ga_client_id:'123.1700000000', ga_session_id:'1700000001', page_location:'https://anymd.sylphx.com/pricing?utm_source=search'}),
@@ -331,7 +331,8 @@ test('consented checkout emits begin_checkout but the return never measures a pu
   expect(await response.json()).toMatchObject({url:'https://checkout.stripe.com/c/pay/' + processorSessionId});
   const {checkoutIntent} = response.request().postDataJSON();
   expect(await moneyCheckoutMetadata(page, checkoutIntent)).toEqual({entry_surface:'cli_pdf'});
-  await expect(page).toHaveURL(thanks);
+  await expect(page).toHaveURL('/pro/thanks');
+  await expect(page.getByRole('link', {name:'Link a legacy purchase'})).toHaveAttribute('href', '/recover?session_id=' + processorSessionId);
   await expect(page.getByRole('heading', {name:'Activate Anymd Pro'})).toBeVisible();
   await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
   expect(await events(page, 'purchase')).toEqual([]);
