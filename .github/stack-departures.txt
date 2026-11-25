@@ -18,9 +18,6 @@
 # stack-rule-adopted-v1 model-pin
 architecture C1 privileged-branch crates/anymd-core/src/ssrf.rs 56ea2d1fbf596d8e2320199edc6c2d16a1dea0fafcda48b6ffe137847e5e074e 1
 architecture C4 undeclared-setting crates/anymd-core/src/url_fetch.rs 8ffae6b5e4e926c2df6ab7634c1c8c6eab8e7f26dd01826c903d0b662a623169 1
-architecture C4 undeclared-setting crates/anymd-ocr-vlm/bench/measure.py d0ab763d652389370565bdd64c256cd4308d2d953728f4d665e39bf265ea6474 1
-architecture C4 undeclared-setting crates/anymd/src/document.rs 6ea1ddae04ea02bb6854641d4deff3752ac4048a36463661bb2ac46d28dc43e2 1
-architecture C4 undeclared-setting crates/anymd/src/document.rs 70f3b21e0d0cb0e7fd9e75d663c145e66454592605fa193da39cad7ce304abfc 1
 architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 015b5fc09ccd2a9d562f57d15b58376cb6a831bd35b30fad7d81ff5c2fc774ca 1
 architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 4044f932a4526d7204196507fc574ce0716e4e0189f9c7c3abfba773b11d7e9f 1
 architecture C4 undeclared-setting crates/anymd/src/http_transport.rs 4ad64f295daeeeeb519ab09eb6dc8bf32ca3e56a51ff340557e73d5f771a7138 1
@@ -34,8 +31,6 @@ architecture C4 undeclared-setting crates/anymd/src/http_transport.rs b34a39de6f
 architecture C4 undeclared-setting crates/anymd/src/http_transport.rs b50862515c55a6b5b061936d85d1611ab8a9343f523b76f9ef63cf113e04b2de 1
 architecture C4 undeclared-setting crates/anymd/src/http_transport.rs c5940fac64db353e098a8e7af2828703950e6af612ad6f23c30190d98f31c536 1
 architecture C4 undeclared-setting crates/anymd/src/http_transport.rs eaca5b563a1398e02804be6db4860518a2b9c447ec8dc93925f14b732b7edb95 1
-architecture C4 undeclared-setting crates/anymd/src/ocr_vlm.rs 5311536c62b68a7aef7ee103dd13edade953e3fb073771638e33a1cb3ca5a68f 1
-architecture C4 undeclared-setting crates/anymd/src/ocr_vlm.rs cb2b0b9894f8150af46442679382ed4fbfee206edb6f31a48c815f19ae5b3a69 1
 architecture C4 undeclared-setting packages/anymd/bin/anymd.js 51a8d9ce3b4ef64c1e8a10bcead9354e47cc6df777b9aaaf753a5239447340c3 1
 architecture C4 undeclared-setting scripts/money-access-verify.py 828bca5856d8ca8ed6a2db1c23a9e1849d2018cd31f9f99db479b6aa8090a148 1
 architecture C4 undeclared-setting scripts/money-access-verify.py 968a11cf5eaf3d77969d83ef07584bd29e6f604ea28b814659b39ab415cfd5eb 1
