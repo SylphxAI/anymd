@@ -1,6 +1,6 @@
 import { serve } from 'bun';
 import { randomBytes } from 'node:crypto';
-import { fixtureApp, fixtureAuth, fixturePublishable, fixtureSecret, fixtureTenant, providerAuthorize } from './origins';
+import { fixtureApp, fixtureAuth, fixtureLegacySession, fixtureMoneyParent, fixturePublishable, fixtureSecret, fixtureTenant, providerAuthorize } from './origins';
 
 const tickets = new Map<string, {is_new_user?: boolean}>();
 function issueTicket(request: Request) {
@@ -11,7 +11,7 @@ function issueTicket(request: Request) {
   return ticket;
 }
 const activeSessions = new Set<string>();
-const legacySession = 'identity_org_session_fixture_legacy';
+const legacySession = fixtureLegacySession;
 activeSessions.add(legacySession);
 const flow = randomBytes(32).toString('base64url');
 const challenges = new Map<string, string>();
@@ -28,8 +28,27 @@ serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT,
     callback.searchParams.set('auth_ticket', issueTicket(request));
     return Response.redirect(providerAuthorize + '?' + new URLSearchParams({fixture_callback:callback.href}), 303);
   }
-  const checkoutCollection = '/v1/orgs/org_fixture/projects/prj_fixture/envs/env_fixture/checkout_sessions';
+  const checkoutCollection = '/v1/' + fixtureMoneyParent + '/checkout_sessions';
+  if (url.pathname === '/v1/money/checkout_sessions:redeem' && request.method === 'POST' &&
+      request.headers.get('authorization') === 'Bearer ' + ['sylphx', 'pk', 'test', 'fixture'].join('_')) {
+    const data = await request.json();
+    const scenario = /^cs_live_Fixture([A-Za-z]+)$/.exec(data.checkout_session)?.[1];
+    if (!scenario) return new Response(null, {status:404});
+    const checkout_session = fixtureMoneyParent + '/checkout_sessions/chk-' + scenario;
+    if (scenario === 'WrongTenant') return Response.json({checkout_session:'orgs/org_other/projects/prj_fixture/envs/env_fixture/checkout_sessions/chk-external', paid:true});
+    return Response.json({checkout_session, paid:scenario !== 'RedeemUnpaid'}, {status:scenario === 'RedeemCreated' ? 201 : 200});
+  }
   if (url.pathname.startsWith(checkoutCollection) && request.headers.get('authorization') === 'Bearer ' + ['sylphx', 'sk', 'test', 'fixture'].join('_')) {
+    const scenario = /^\/chk-([A-Za-z]+)$/.exec(url.pathname.slice(checkoutCollection.length))?.[1];
+    if (request.method === 'GET' && scenario) return Response.json({
+      name:scenario === 'WrongName' ? fixtureMoneyParent + '/checkout_sessions/chk-other' : url.pathname.slice(4),
+      subject:{end_user:scenario === 'WrongUser' ? 'usr_other001' : fixtureUser},
+      processor_session_id:'cs_live_Fixture' + (scenario === 'WrongSid' ? 'Other' : scenario),
+      livemode:scenario !== 'NotLive', state:scenario === 'Incomplete' ? 'open' : 'complete',
+      payment_status:scenario === 'Unpaid' ? 'unpaid' : 'paid', denied_reason:scenario === 'Denied' ? 'refund' : '',
+      amount_total:scenario === 'JPY' ? '4639' : scenario === 'BadAmount' ? -2900 : 2999,
+      currency_code:scenario === 'JPY' ? 'JPY' : scenario === 'BadCurrency' ? 'usd' : 'USD',
+    });
     const name = checkoutCollection.slice(4) + '/chk-111111111111111111111111';
     const processor_session_id = 'cs_test_Fixture123';
     if (request.method === 'POST' && url.pathname === checkoutCollection && !url.search) {

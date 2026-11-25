@@ -1,15 +1,16 @@
-import { A, createAsync, query } from '@solidjs/router';
+import { A, createAsync, query, useLocation } from '@solidjs/router';
 import { HttpStatusCode } from '@solidjs/start';
 import { createSignal, For, onCleanup, onMount, Show } from 'solid-js';
 import { useCookieConsent } from '@/components/cookie-consent';
 import { PageMeta } from '@/components/page-meta';
+import { carryCampaign } from './campaign';
 
 const nav = [['Getting started','getting-started'],['CLI','cli'],['Python API','python'],['MCP tools','tools'],['Formats','formats'],['Cite-check','cite-check'],['Video timeline','video-timeline'],['Benchmarks','benchmarks'],['Migration','migration']] as const;
 
-export const loadDoc = query(async (slug: string, legacyDocs = false) => {
+export const loadDoc = query(async (slug: string, legacyDocs = false, campaignSearch = '') => {
   'use server';
   const { renderDoc } = await import('./docs-source');
-  return renderDoc(slug, legacyDocs);
+  return renderDoc(slug, legacyDocs, campaignSearch);
 }, 'documentation');
 
 function NotFound() {
@@ -34,6 +35,7 @@ function DocSearch(props: { entries: { title: string; description?: string; path
 
 export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean }) {
   const consent = useCookieConsent();
+  const route = useLocation();
   const [interactive, setInteractive] = createSignal(false);
   const [feedback, setFeedback] = createSignal('');
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -63,7 +65,10 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
     setFeedback(message);
     timeout = setTimeout(reset, 1800);
   }
-  const doc = createAsync(() => loadDoc(props.name, props.legacyDocs), { deferStream: true });
+  // Like CampaignLink, put allowed values in the actual SSR href. Filter
+  // before passing the search into the query key, not just when making links.
+  const campaignSearch = () => consent.carryCampaign() ? carryCampaign('/', route.search).slice(1) : '';
+  const doc = createAsync(() => loadDoc(props.name, props.legacyDocs, campaignSearch()), { deferStream: true });
   return <Show when={doc() !== undefined}>
     <Show when={doc()} fallback={<NotFound />}>{article => <section class="wrap page-shell article-layout">
       <PageMeta title={props.index ? 'Documentation' : article().title} canonical={article().canonical} description={article().description} />

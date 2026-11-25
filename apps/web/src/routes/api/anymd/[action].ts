@@ -5,6 +5,7 @@ import { knownEntrySurface } from '@/lib/entry-surface';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
 import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/lib/http';
 import { checkoutKey, entitlement, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
+import { purchaseConversion } from '@/lib/purchase-conversion';
 import { moneyCall } from '@/lib/money-http';
 
 export async function GET({request, params}: APIEvent) {
@@ -20,6 +21,7 @@ export async function GET({request, params}: APIEvent) {
 }
 
 export async function POST({request, params}: APIEvent) {
+  if (params.action === 'purchase-conversion') return purchaseConversion(request);
   try {
     const data = await sameOriginJson(request);
     const {action} = params;

@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig } from '@playwright/test';
-import { fixtureApp, fixtureAuth, fixturePublishable, fixtureSecret, fixtureTenant } from './e2e/origins';
+import { fixtureAdsId, fixtureAdsLabel, fixtureApp, fixtureAuth, fixtureMoneyParent, fixturePublishable, fixtureSecret, fixtureTenant } from './e2e/origins';
 
 const live = process.env.PLAYWRIGHT_BASE_URL;
 const tls = live ? undefined : loopbackTls();
@@ -33,11 +33,12 @@ export default defineConfig({
     { command: 'bun run start', url: baseURL + '/api/health', timeout: 30_000, ignoreHTTPSErrors: true, env: {
       ...tls,
       ANYMD_APP_ORIGIN: baseURL, SYLPHX_AUTH_URL: fixtureAuth,
-      ANYMD_MONEY_TEST_URL: fixtureAuth, ANYMD_MONEY_TEST_PARENT: 'orgs/org_fixture/projects/prj_fixture/envs/env_fixture',
+      ANYMD_MONEY_TEST_URL: fixtureAuth, ANYMD_MONEY_TEST_PARENT: fixtureMoneyParent,
       ANYMD_MONEY_TEST_KEY: ['sylphx', 'pk', 'test', 'fixture'].join('_'),
       ANYMD_MONEY_TEST_API_KEY: ['sylphx', 'sk', 'test', 'fixture'].join('_'),
       SYLPHX_PUBLISHABLE_KEY: fixturePublishable, SYLPHX_AUTH_SECRET_KEY: fixtureSecret,
       SYLPHX_AUTH_ORGANIZATION_ID: fixtureTenant,
+      ANYMD_GOOGLE_ADS_ID: fixtureAdsId, ANYMD_GOOGLE_ADS_PURCHASE_LABEL: fixtureAdsLabel,
     } },
   ],
 });
