@@ -1,10 +1,12 @@
-import { A } from '@solidjs/router';
 import { ArrowDown, ArrowRight, Terminal } from 'lucide-solid';
 import { For } from 'solid-js';
+import { useCookieConsent } from '@/components/cookie-consent';
 import { CopyButton } from '@/components/copy';
 import { PageMeta } from '@/components/page-meta';
 import { Faq, StructuredData, faqSchema, freeOffer, softwareSchema } from '@/components/search-details';
+import { CampaignLink } from '@/lib/attribution-link';
 
+const surface = 'seo_vs-markdownify-mcp';
 const path = '/vs/markdownify-mcp';
 const title = 'Markdownify MCP alternative: Anymd for local conversion';
 const description = 'Compare Anymd and Markdownify MCP for PDF, Office, web and media conversion. Try local Rust and WebAssembly conversion, or set up the CLI and MCP server.';
@@ -47,23 +49,24 @@ const questions = [
 ] as const;
 
 export default function MarkdownifyComparison() {
+  const consent = useCookieConsent();
   return <article class="wrap comparison-page">
     <PageMeta title={title} description={description} canonical={path} />
     <StructuredData nodes={[softwareSchema(freeOffer()), faqSchema(path, questions)]} />
     <header class="comparison-hero">
       <div>
-        <A class="eyebrow inline-link" href="/vs">Converter comparisons</A>
+        <CampaignLink class="eyebrow inline-link" href="/vs">Converter comparisons</CampaignLink>
         <h1>Anymd vs <em>Markdownify MCP</em></h1>
         <p>Choose Anymd for fast local file conversion from one Rust CLI and MCP server. Choose Markdownify MCP if your agent needs dedicated Bing search or YouTube transcript tools.</p>
         <div class="hero-actions">
-          <A href="/studio" class="button button-primary">Try a file locally <ArrowRight size={16} /></A>
+          <CampaignLink href="/studio" class="button button-primary">Try a file locally <ArrowRight size={16} /></CampaignLink>
           <a href="#install" class="button">Get the CLI and MCP server <ArrowDown size={16} /></a>
         </div>
       </div>
       <div class="comparison-terminal">
         <div><Terminal size={18} /> <span>Run in your terminal</span></div>
         <pre><code>{convert}</code></pre>
-        <CopyButton text={convert} label="Copy command" />
+        <CopyButton text={convert} analytics={{surface:'markdownify_mcp', command_kind:'convert_command'}} label="Copy command" />
         <p>Or try Studio: it runs the Rust converter in your browser with WebAssembly. Your document is not uploaded.</p>
       </div>
     </header>
@@ -74,23 +77,23 @@ export default function MarkdownifyComparison() {
         <thead><tr><th scope="col">What to check</th><th scope="col">Anymd</th><th scope="col">Markdownify MCP</th></tr></thead>
         <tbody><For each={comparison}>{([label, anymd, markdownify]) => <tr><th scope="row">{label}</th><td>{anymd}</td><td>{markdownify}</td></tr>}</For></tbody>
       </table>
-      <p class="muted">This comparison covers <a class="inline-link" href="https://github.com/zcaceres/markdownify-mcp">zcaceres/markdownify-mcp</a>. <A class="inline-link" href="/docs/benchmarks">AgentDocBench</A> measures Anymd and the standalone MarkItDown converter, not the Markdownify MCP server. There is no direct speed result for the two MCP servers.</p>
+      <p class="muted">This comparison covers <a class="inline-link" href="https://github.com/zcaceres/markdownify-mcp">zcaceres/markdownify-mcp</a>. <CampaignLink class="inline-link" href="/docs/benchmarks">AgentDocBench</CampaignLink> measures Anymd and the standalone MarkItDown converter, not the Markdownify MCP server. There is no direct speed result for the two MCP servers.</p>
     </section>
 
     <section class="comparison-section" id="install" aria-labelledby="install-title">
       <h2 id="install-title">Install Anymd locally</h2>
       <p>The CLI and MCP server are free and open source. npm installs the launcher and native binary for your platform. If you do not use Node.js, download the <a class="inline-link" href="https://github.com/SylphxAI/anymd/releases/latest">standalone binary</a> instead.</p>
       <div class="comparison-install">
-        <div class="panel stack"><h3>Convert from the CLI</h3><pre class="code-box"><code>{cli}</code></pre><CopyButton text={cli} label="Copy CLI commands" /></div>
-        <div class="panel stack"><h3>Connect an MCP client</h3><p>Add this to a client that accepts <code>mcpServers</code>. Replace <code>/path/to/docs</code> with the folder the server may read.</p><pre class="code-box"><code>{mcp}</code></pre><CopyButton text={mcp} label="Copy MCP configuration" /></div>
+        <div class="panel stack"><h3>Convert from the CLI</h3><pre class="code-box"><code>{cli}</code></pre><CopyButton text={cli} analytics={{surface:'markdownify_mcp', command_kind:'cli_install'}} label="Copy CLI commands" /></div>
+        <div class="panel stack"><h3>Connect an MCP client</h3><p>Add this to a client that accepts <code>mcpServers</code>. Replace <code>/path/to/docs</code> with the folder the server may read.</p><pre class="code-box"><code>{mcp}</code></pre><CopyButton text={mcp} analytics={{surface:'markdownify_mcp', command_kind:'mcp_config'}} label="Copy MCP configuration" /></div>
       </div>
-      <p>See <A class="inline-link" href="/docs">setup by client</A>, <A class="inline-link" href="/docs/tools">MCP tools</A> and the <A class="inline-link" href="/docs/formats">full format list</A>.</p>
+      <p>See <CampaignLink class="inline-link" href="/docs">setup by client</CampaignLink>, <CampaignLink class="inline-link" href="/docs/tools">MCP tools</CampaignLink> and the <CampaignLink class="inline-link" href="/docs/formats">full format list</CampaignLink>.</p>
     </section>
 
     <section class="comparison-section" aria-labelledby="pro-title">
       <h2 id="pro-title">Verify what your agent cites</h2>
       <p>Anymd Pro checks PDF quotes against the cited page and captures exact video frames. Pay US$29 once, with no subscription. Sign in, pay securely, then run <code>anymd login</code> with the same account to activate Pro.</p>
-      <A class="button button-primary" href="/pricing?entry_surface=seo_vs-markdownify-mcp">See Anymd Pro <ArrowRight size={16} /></A>
+      <CampaignLink class="button button-primary" href={'/pricing?entry_surface=' + surface} onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:surface})}>See Anymd Pro <ArrowRight size={16} /></CampaignLink>
     </section>
 
     <section class="comparison-section" aria-labelledby="faq-title">

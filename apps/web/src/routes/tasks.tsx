@@ -1,7 +1,7 @@
-import { A } from '@solidjs/router';
 import { ArrowRight } from 'lucide-solid';
 import { For } from 'solid-js';
 import { PageMeta } from '@/components/page-meta';
+import { CampaignLink } from '@/lib/attribution-link';
 
 const guides = [
   { href: '/tasks/check-pdf-citation', title: 'Check a PDF citation', description: 'Verify that a quote appears on the cited page and in the cited area.' },
@@ -19,12 +19,12 @@ export default function TasksRoute() {
     </header>
     <ul class="stack max-w-3xl">
       <For each={guides}>{(guide) => <li>
-        <A href={guide.href} class="panel flex items-center justify-between gap-4 hover:border-[var(--accent)]">
+        <CampaignLink href={guide.href} class="panel flex items-center justify-between gap-4 hover:border-[var(--accent)]">
           <div><h2>{guide.title}</h2><p class="muted mt-2">{guide.description}</p></div>
           <ArrowRight size={20} aria-hidden="true" class="shrink-0 text-[var(--accent)]" />
-        </A>
+        </CampaignLink>
       </li>}</For>
     </ul>
-    <p class="mt-6"><A class="inline-link" href="/docs">Back to documentation</A></p>
+    <p class="mt-6"><CampaignLink class="inline-link" href="/docs">Back to documentation</CampaignLink></p>
   </section>;
 }

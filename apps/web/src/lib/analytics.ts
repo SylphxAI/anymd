@@ -121,14 +121,15 @@ export type CopyDetails =
   | { surface: 'studio_output' | 'studio_timestamp' | 'home_demo' | 'docs_code' }
   | { surface: 'home_install'; command_kind: 'npm' | 'pip' | 'uvx' }
   | { surface: 'dashboard_mcp'; command_kind: 'mcp_config' }
-  | { surface: 'dashboard_cli'; command_kind: 'cli_login' };
+  | { surface: 'dashboard_cli'; command_kind: 'cli_login' }
+  | { surface: 'markdownify_mcp'; command_kind: 'convert_command' | 'cli_install' | 'mcp_config' };
 export type BehavioralEvent =
   | [name: 'document_converted', payload: Conversion & { unit_count: number; token_count: number; duration_ms: number }]
   | [name: 'output_copied', payload: CopyDetails]
   | [name: 'output_downloaded', payload: Conversion]
   | [name: 'quote_searched', payload: { matched: boolean }]
   | [name: 'paywall_view', payload: { entry_surface: 'studio_cite_preview' }]
-  | [name: 'pro_cta_clicked', payload: { entry_surface: 'home_hero' | 'home_pro_panel' | 'studio_cite_preview' }]
+  | [name: 'pro_cta_clicked', payload: { entry_surface: 'home_hero' | 'home_pro_panel' | 'studio_cite_preview' | 'seo_vs-markdownify-mcp' }]
   | [name: 'cli_authorized', payload: { entry_surface: 'cli_auth' }];
 
 const count = (value: number) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -148,13 +149,17 @@ export function behavioralParameters(...[name, payload]: BehavioralEvent) {
         case 'studio_output': case 'studio_timestamp': case 'home_demo': case 'docs_code': return {surface:payload.surface};
         case 'home_install': return {surface:'home_install', command_kind:['npm', 'pip', 'uvx'].find(kind => kind === payload.command_kind)};
         case 'dashboard_mcp': return {surface:'dashboard_mcp', command_kind:'mcp_config'};
+        case 'markdownify_mcp': {
+          const kind = ['convert_command', 'cli_install', 'mcp_config'].find(value => value === payload.command_kind);
+          return kind ? {surface:payload.surface, command_kind:kind} : undefined;
+        }
         case 'dashboard_cli': return {surface:'dashboard_cli', command_kind:'cli_login'};
       }
       return;
     }
     case 'quote_searched': return {matched:payload.matched === true};
     case 'paywall_view': return {entry_surface:'studio_cite_preview'};
-    case 'pro_cta_clicked': return ['home_hero', 'home_pro_panel', 'studio_cite_preview'].includes(payload.entry_surface) ? {entry_surface:payload.entry_surface} : undefined;
+    case 'pro_cta_clicked': return ['home_hero', 'home_pro_panel', 'studio_cite_preview', 'seo_vs-markdownify-mcp'].includes(payload.entry_surface) ? {entry_surface:payload.entry_surface} : undefined;
     case 'cli_authorized': return {entry_surface:'cli_auth'};
   }
 }
