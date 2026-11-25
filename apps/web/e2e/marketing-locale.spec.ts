@@ -108,7 +108,7 @@ test('switches languages and shows priced plans and readable examples at this vi
   await currency.selectOption('TWD');
   await expect(page.getByText('NT$959', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'English', exact: true }).click();
-  await expect(page).toHaveURL('/pricing?currency=TWD');
+  await expect(page).toHaveURL('/pricing?entry_surface=home_hero&currency=TWD');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(consent.getByRole('heading')).toHaveText('Cookie settings');
   await expect(page.getByLabel('Billing currency')).toHaveValue('TWD');

@@ -7,7 +7,8 @@ import { StructuredData, techArticleSchema } from '@/components/search-details';
 import { CampaignLink } from './attribution-link';
 import { carryCampaign } from './campaign';
 import { defaultCurrency, formatPrice, proAmount } from './catalog';
-import { showsArticleBridge } from './docs-bridge';
+import { articleBridgeSurface, inlineProCtaSurface, showsArticleBridge } from './docs-bridge';
+import type { ProCtaSurface } from './entry-surface';
 import { campaignDocHtml } from './docs-campaign';
 import type { renderDoc } from './docs-source';
 
@@ -55,10 +56,9 @@ function DocSearch(props: { entries: { title: string; description?: string; path
   </section>;
 }
 
-const bridgeSurface = 'article_bridge';
 const bridgePrice = formatPrice(proAmount(defaultCurrency), defaultCurrency);
 
-function ArticleBridge() {
+function ArticleBridge(props: { surface: ProCtaSurface }) {
   const consent = useCookieConsent();
   return <section class="panel mt-8" aria-labelledby="article-bridge-title">
     <span class="eyebrow">NEXT STEP</span>
@@ -66,7 +66,7 @@ function ArticleBridge() {
     <p class="muted">Convert a document to Markdown in your browser without uploading it.</p>
     <div class="mt-4 flex flex-wrap gap-2">
       <CampaignLink href="/studio" class="button button-primary">Open Document Studio</CampaignLink>
-      <CampaignLink href={'/pricing?entry_surface=' + bridgeSurface} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:bridgeSurface})}>Anymd Pro — {bridgePrice} once</CampaignLink>
+      <CampaignLink href={'/pricing?entry_surface=' + props.surface} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:props.surface})}>Anymd Pro — {bridgePrice} once</CampaignLink>
     </div>
   </section>;
 }
@@ -103,6 +103,14 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
     setFeedback(message);
     timeout = setTimeout(reset, 1800);
   }
+  function onArticleClick(event: MouseEvent) {
+    const link = event.target instanceof Element && event.target.closest('a[data-doc-href]');
+    if (link && event.currentTarget instanceof HTMLElement && event.currentTarget.contains(link)) {
+      const surface = inlineProCtaSurface(link.getAttribute('data-doc-href'));
+      if (surface) consent.trackBehavioral('pro_cta_clicked', {entry_surface:surface});
+    }
+    void copyCode(event);
+  }
   const campaignSearch = createMemo(() => consent.carryCampaign() ? route.search : '');
   const doc = createAsync(() => loadDoc(props.name, props.legacyDocs), { deferStream: true });
   const article = createMemo(() => {
@@ -136,8 +144,8 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
       {/* Only trusted repository Markdown, rendered with inline HTML disabled. */}
       <div class="min-w-0">
         <Show when={props.index && interactive() && value().searchIndex}>{entries => <DocSearch entries={entries()} />}</Show>
-        <article ref={body} class="prose" data-interactive={interactive() ? 'true' : undefined} onClick={copyCode} innerHTML={html()} />
-        <Show when={showsArticleBridge(value())}><ArticleBridge /></Show>
+        <article ref={body} class="prose" data-interactive={interactive() ? 'true' : undefined} onClick={onArticleClick} innerHTML={html()} />
+        <Show when={showsArticleBridge(value())}><ArticleBridge surface={articleBridgeSurface(value().canonical)} /></Show>
         <span class="sr-only" role="status">{feedback()}</span>
       </div>
     </section>}</Match>

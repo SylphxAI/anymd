@@ -1,4 +1,6 @@
 import { canonicalOrigin } from './app-origin';
+import { isCurrency } from './catalog';
+import { checkoutSurface } from './funnel';
 
 export const locales = ['en', 'zh-TW'] as const;
 export type Locale = (typeof locales)[number];
@@ -38,4 +40,13 @@ export function languageSwitchTarget(path: string, locale: Locale) {
   const en = localizedPath(path, 'en');
   const page = en === '/pro' ? '/pricing' : en;
   return isTranslated(page) ? (locale === 'zh-TW' ? translatedPaths[page] : page) : undefined;
+}
+
+export function pricingSwitchQuery(search: string) {
+  const params = new URLSearchParams();
+  const surface = checkoutSurface('/pricing', search);
+  if (surface !== 'pricing') params.set('entry_surface', surface);
+  const currencies = new URLSearchParams(search).getAll('currency');
+  if (currencies.length === 1 && isCurrency(currencies[0])) params.set('currency', currencies[0]);
+  return params.toString();
 }

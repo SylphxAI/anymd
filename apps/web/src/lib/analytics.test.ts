@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolveEffectiveConsent } from '@sylphx/sdk/signal';
-import { gaDisable, isPricingPage, measurementId, pageLocation, trackBehavioral } from './analytics';
+import { behavioralParameters, type BehavioralEvent, gaDisable, isPricingPage, measurementId, pageLocation, trackBehavioral } from './analytics';
 
 const origin = 'https://anymd.sylphx.com';
 
@@ -69,6 +69,7 @@ test('comparison copy and Pro CTA events accept only known labels and never send
   const path = '/vs/markdownify-mcp?gclid=private#proof';
   trackBehavioral(consent, path, 'output_copied', copied);
   trackBehavioral(consent, path, 'pro_cta_clicked', pro);
+  trackBehavioral(consent, '/vs/docling', 'pro_cta_clicked', {entry_surface:'seo_vs-docling'});
   const bridge = {entry_surface:'article_bridge', utm_source:'private source'} as const;
   trackBehavioral(consent, path, 'pro_cta_clicked', bridge);
   // Untyped callers cannot smuggle arbitrary labels through the runtime projection.
@@ -77,6 +78,16 @@ test('comparison copy and Pro CTA events accept only known labels and never send
   assert.deepEqual(commands, [
     ['set', context], ['event', 'output_copied', {...context, send_to:measurementId, surface:'markdownify_mcp', command_kind:'mcp_config'}],
     ['set', context], ['event', 'pro_cta_clicked', {...context, send_to:measurementId, entry_surface:'seo_vs-markdownify-mcp'}],
+    ['set', context], ['event', 'pro_cta_clicked', {...context, send_to:measurementId, entry_surface:'seo_vs-docling'}],
     ['set', context], ['event', 'pro_cta_clicked', {...context, send_to:measurementId, entry_surface:'article_bridge'}],
   ]);
 }));
+
+test('Pro CTA projection accepts organic labels and rejects non-CTA or arbitrary values', () => {
+  for (const entry_surface of ['seo_vs-hub', 'seo_verifiable-video-and-cite-check-ai-agents', 'task_check_pdf_citation'] as const) {
+    assert.deepEqual(behavioralParameters('pro_cta_clicked', {entry_surface}), {entry_surface});
+  }
+  for (const entry_surface of ['pricing', 'pro', 'cli_pdf', 'npm_citra', 'seo_vs-private-input', 'task_private_input', 'private-input']) {
+    assert.equal(behavioralParameters(...(['pro_cta_clicked', {entry_surface}] as BehavioralEvent)), undefined);
+  }
+});

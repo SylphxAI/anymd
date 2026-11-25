@@ -143,14 +143,14 @@ test('home and reference copies and home Pro clicks emit predefined labels', asy
   await expectEvent(page, 'output_copied', '/docs', [{surface:'docs_code'}]);
 });
 
-test('the article bridge reports the existing Pro event after opt-in', async ({ page }) => {
+test('generic documentation reports the article_bridge Pro event after opt-in', async ({ page }) => {
   await isolate(page);
-  await page.goto('/tasks/check-pdf-citation?utm_source=docs&proof=private-task');
+  await page.goto('/docs?utm_source=docs&proof=private-doc');
   await page.getByRole('button', {name:'Analytics only', exact:true}).click();
   await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
   const bridge = page.getByRole('region', {name:'Try a file of your own'});
   await bridge.getByRole('link', {name:'Anymd Pro — $29 once'}).click();
-  await expectEvent(page, 'pro_cta_clicked', '/tasks', [{entry_surface:'article_bridge'}]);
+  await expectEvent(page, 'pro_cta_clicked', '/docs', [{entry_surface:'article_bridge'}]);
   await expect(page).toHaveURL(url => url.pathname === '/pricing' && url.searchParams.get('entry_surface') === 'article_bridge');
 });
 

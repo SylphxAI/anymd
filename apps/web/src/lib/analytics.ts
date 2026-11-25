@@ -1,5 +1,6 @@
 import type { SignalConsent } from '@sylphx/sdk/signal';
 import type { checkoutParameters } from './funnel';
+import { knownProCtaSurface, type ProCtaSurface } from './entry-surface';
 import { fullAdConsent, googleAdsConfig, type PurchaseConversion } from './google-ads';
 import type { SignupSignal } from './signup';
 import { localeFromPath, localizedPath } from './marketing-locale';
@@ -123,7 +124,6 @@ export type CopyDetails =
   | { surface: 'dashboard_mcp'; command_kind: 'mcp_config' }
   | { surface: 'dashboard_cli'; command_kind: 'cli_login' }
   | { surface: 'markdownify_mcp'; command_kind: 'convert_command' | 'cli_install' | 'mcp_config' };
-const proCtaSurfaces = ['home_hero', 'home_pro_panel', 'studio_cite_preview', 'seo_vs-markdownify-mcp', 'article_bridge'] as const;
 
 export type BehavioralEvent =
   | [name: 'document_converted', payload: Conversion & { unit_count: number; token_count: number; duration_ms: number }]
@@ -131,7 +131,7 @@ export type BehavioralEvent =
   | [name: 'output_downloaded', payload: Conversion]
   | [name: 'quote_searched', payload: { matched: boolean }]
   | [name: 'paywall_view', payload: { entry_surface: 'studio_cite_preview' }]
-  | [name: 'pro_cta_clicked', payload: { entry_surface: typeof proCtaSurfaces[number] }]
+  | [name: 'pro_cta_clicked', payload: { entry_surface: ProCtaSurface }]
   | [name: 'cli_authorized', payload: { entry_surface: 'cli_auth' }];
 
 const count = (value: number) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -161,7 +161,10 @@ export function behavioralParameters(...[name, payload]: BehavioralEvent) {
     }
     case 'quote_searched': return {matched:payload.matched === true};
     case 'paywall_view': return {entry_surface:'studio_cite_preview'};
-    case 'pro_cta_clicked': return proCtaSurfaces.includes(payload.entry_surface) ? {entry_surface:payload.entry_surface} : undefined;
+    case 'pro_cta_clicked': {
+      const surface = knownProCtaSurface(payload.entry_surface);
+      return surface ? {entry_surface:surface} : undefined;
+    }
     case 'cli_authorized': return {entry_surface:'cli_auth'};
   }
 }
