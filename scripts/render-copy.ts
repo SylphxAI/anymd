@@ -54,7 +54,7 @@ const alsoFromList = (p: Product) =>
   p.alsoFrom.map((x) => `- [**${x.name}**](${x.url}): ${x.description}`).join('\n');
 
 const readmeFormerly = (p: Product) =>
-  `<sub>Formerly **${p.formerly}**. [Migrating from ${p.formerly}](https://anymd.sylphx.com/guide/migration)</sub>`;
+  `<sub>Formerly **${p.formerly}**. [Migrating from ${p.formerly}](https://anymd.sylphx.com/docs/migration?utm_source=github&utm_medium=readme&utm_content=formerly)</sub>`;
 
 // Keep the Pro upgrade alternative focused on verifiable citations and video evidence.
 const hostedLine = (p: Product) =>
