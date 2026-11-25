@@ -5,8 +5,11 @@ import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 import { consentKey } from './consent';
 
-// SolidStart resolves this build-time marker; it has no runtime behavior.
-mock.module('server-only', () => ({}));
+// The root test suite runs before the web build generates the production binding.
+// Keep this fixture distinct from the test tenant so Money's isolation check still runs.
+mock.module('./money-production.generated', () => ({productionMoney:{
+  origin:'https://production.example.invalid', parent:'orgs/org_prod/projects/prj_prod/envs/env_prod', pk:'unused',
+}}));
 
 const origin = 'http://localhost:3000';
 const auth = 'https://auth.example.invalid';
