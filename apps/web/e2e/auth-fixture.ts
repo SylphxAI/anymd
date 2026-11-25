@@ -21,6 +21,11 @@ const fixtureUser = 'usr_fixture001';
 serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT, key:process.env.NITRO_SSL_KEY}, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');
+  if (url.pathname === '/v1/whoami' && request.method === 'GET' &&
+      request.headers.get('accept') === 'application/json' &&
+      request.headers.get('authorization') === 'Bearer ' + ['sylphx', 'sk', 'test', 'fixture'].join('_')) {
+    return Response.json({ env: fixtureMoneyParent });
+  }
   if (url.pathname === '/test/checkout-batches') return Response.json(checkoutBatches.get(url.searchParams.get('event') ?? '') ?? []);
   if (url.pathname === '/v1/analytics/events:batch' && request.method === 'POST' &&
       request.headers.get('x-sylphx-key') === fixturePublishable && !request.headers.has('authorization')) {
