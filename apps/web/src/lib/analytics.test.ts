@@ -21,6 +21,8 @@ test('analytics uses only known sections and canonical localized page locations'
     ['/zh-TW', '/zh-TW', false],
     ['/zh-Hant/', '/zh-TW', false],
     ['/zh-TW/pricing', '/zh-TW/pricing', true],
+    ['/zh-TW/studio?file=private#private', '/zh-TW/studio', false],
+    ['/zh-Hant/studio?file=private', '/zh-TW/studio', false],
     ['/zh-Hant/pricing/?session_id=private#proof', '/zh-TW/pricing', true],
     ['/zh-TW/secret-token', '/other', false],
     ['/arbitrary/path', '/other', false],

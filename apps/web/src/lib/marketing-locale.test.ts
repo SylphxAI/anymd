@@ -9,10 +9,15 @@ for (const [path, locale, en, tw] of [
   ['/zh-TW/', 'zh-TW', '/', '/zh-TW'],
   ['/zh-Hant/pricing/?currency=TWD', 'zh-TW', '/pricing', '/zh-TW/pricing'],
   ['/pricing?currency=TWD#plans', 'en', '/pricing', '/zh-TW/pricing'],
+  ['/studio?utm_source=fixture#studio-cite-heading', 'en', '/studio', '/zh-TW/studio'],
+  ['/zh-TW/studio/', 'zh-TW', '/studio', '/zh-TW/studio'],
+  ['/zh-Hant/studio?gclid=fixture', 'zh-TW', '/studio', '/zh-TW/studio'],
   ['/zh-TW//pricing/?currency=TWD', 'zh-TW', '/pricing', '/zh-TW/pricing'],
 ] as const) {
   test('normalizes ' + path + ' to one reciprocal locale set', () => {
     assert.equal(localeFromPath(path), locale);
+    assert.equal(languageSwitchTarget(path, 'en'), en);
+    assert.equal(languageSwitchTarget(path, 'zh-TW'), tw);
     assert.deepEqual(pageLinks(path, locale), {
       canonical: origin + (locale === 'en' ? en : tw),
       alternates: [

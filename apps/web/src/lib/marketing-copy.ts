@@ -23,7 +23,7 @@ export const homeCopy = {
   'zh-TW': {
     eyebrow: '開放原始碼 · RUST · MCP', title: '讀取文件，', accent: '輸出 Markdown',
     summary: '將 PDF、Word 文件、網頁和音訊轉成易讀的 Markdown，讓 AI 工具直接使用。終端機和 MCP 用戶端共用同一套本機轉檔引擎。',
-    tryStudio: '免費試用 Studio（英文）', getPro: '選購 Anymd Pro', openStudio: '開啟 Studio（英文）',
+    tryStudio: '免費試用轉檔工作室', getPro: '選購 Anymd Pro', openStudio: '開啟轉檔工作室',
     install: '安裝方式', copyInstall: '複製安裝指令', copyPip: '複製 pip 安裝指令', copyUvx: '複製 uvx 指令', or: '或', copied: '已複製', copyFailed: '請選取指令後手動複製',
     formats: '支援的輸入格式', localFiles: 'STUDIO · 本機檔案', audio: '音訊', urls: '網頁網址：CLI／MCP',
     workflow: '01 / 使用流程', workflowTitle: '從原始文件', workflowAccent: '到可查證的引用',

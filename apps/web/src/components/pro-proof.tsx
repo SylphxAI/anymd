@@ -1,5 +1,6 @@
 import { ScanLine } from 'lucide-solid';
 import { CampaignLink } from '@/lib/attribution-link';
+import { translatedPaths } from '@/lib/marketing-locale';
 import { PdfQuoteCrop } from './studio/pdf-quote-crop';
 import frame from './pro-demo-frame.png';
 
@@ -16,7 +17,7 @@ export function ProProof(props: { zh: boolean }) {
         <div class="proof-image proof-pdf"><PdfQuoteCrop label={props.zh ? 'PDF 第 1 頁。「Quarterly Field Report」的引文以方框標示。' : 'Page 1 of the sample PDF with “Quarterly Field Report” boxed'} /></div>
         <p><a href="/samples/sample.pdf#page=1" class="inline-link">sample.pdf</a> · {props.zh ? '第 1 頁' : 'page 1'}</p>
         <p class="proof-detail">{props.zh ? '逐字核對並標出引文在原頁的位置。' : 'Exact wording, marked on the original page.'}</p>
-        <CampaignLink href="/studio#studio-cite-heading" class="inline-link">{props.zh ? '查看引文座標' : 'Inspect citation proof'}</CampaignLink>
+        <CampaignLink href={(props.zh ? translatedPaths['/studio'] : '/studio') + '#studio-cite-heading'} class="inline-link">{props.zh ? '查看引文座標' : 'Inspect citation proof'}</CampaignLink>
       </figure>
       <figure class="proof-tile">
         <figcaption><span class="eyebrow">02 / VIDEO</span><strong>{props.zh ? '帶有時間戳的影格' : 'Decoded video frame'}</strong></figcaption>
