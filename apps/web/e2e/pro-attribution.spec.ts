@@ -99,3 +99,23 @@ test('pricing language switch keeps both allowlisted values and strips unknown o
   }
   expect(requests).toEqual([]);
 });
+
+test('header and checkout sign-in share the safe pricing return before consent with GPC', async ({page}) => {
+  const {requests} = await observe(page, 'US');
+  await page.setExtraHTTPHeaders({'Sec-GPC':'1'});
+  for (const [incoming, next, label, buyLabel] of [
+    ['/pricing?entry_surface=seo_vs-docling&currency=HKD', '/pricing?entry_surface=seo_vs-docling&currency=HKD', 'Sign in', 'Sign in to buy Pro'],
+    ['/zh-TW/pricing?entry_surface=home_hero&currency=HKD', '/zh-TW/pricing?entry_surface=home_hero&currency=HKD', '登入', '登入以購買 Pro'],
+    ['/pricing?entry_surface=injected_bad&currency=ZZZ&email=private', '/pricing', 'Sign in', 'Sign in to buy Pro'],
+    ['/zh-TW/pricing?entry_surface=home_hero&entry_surface=home_hero&currency=HKD&currency=USD', '/zh-TW/pricing?entry_surface=pricing', '登入', '登入以購買 Pro'],
+  ] as const) {
+    const response = await page.goto(incoming + '&utm_campaign=qa_sentinel');
+    expect(response?.status()).toBe(200);
+    const href = '/sign-in?next=' + encodeURIComponent(next);
+    const signIn = page.locator('.site-header').getByRole('link', {name:label, exact:true});
+    await expect(signIn).toBeVisible();
+    await expect(signIn).toHaveAttribute('href', href);
+    await expect(page.getByRole('link', {name:buyLabel, exact:true})).toHaveAttribute('href', href);
+  }
+  expect(requests).toEqual([]);
+});

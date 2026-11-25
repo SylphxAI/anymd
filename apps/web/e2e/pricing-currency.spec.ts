@@ -48,7 +48,9 @@ test.describe('localized checkout', () => {
     await expect(page).toHaveURL('/pricing?currency=JPY&entry_surface=cli_pdf&checkout=cancelled#g');
     await expect(plans).toHaveText(['4 639 JPY', '0 JPY']);
     const signIn = page.getByRole('link', { name: 'Sign in to buy Pro' });
-    await expect(signIn).toHaveAttribute('href', '/sign-in?next=' + encodeURIComponent('/pricing?entry_surface=cli_pdf&currency=JPY'));
+    const href = '/sign-in?next=' + encodeURIComponent('/pricing?entry_surface=cli_pdf&currency=JPY');
+    await expect(signIn).toHaveAttribute('href', href);
+    await expect(page.locator('.site-header').getByRole('link', {name:'Sign in', exact:true})).toHaveAttribute('href', href);
     await page.goBack();
     await expect(currency).toHaveValue('EUR');
     await expect(plans).toHaveText(['26,99 €', '0 €']);

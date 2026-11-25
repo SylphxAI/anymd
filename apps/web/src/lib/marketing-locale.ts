@@ -42,11 +42,28 @@ export function languageSwitchTarget(path: string, locale: Locale) {
   return isTranslated(page) ? (locale === 'zh-TW' ? translatedPaths[page] : page) : undefined;
 }
 
-export function pricingSwitchQuery(search: string) {
+function pricingQuery(pathname: string, search: string, includeDefaultSurface = false) {
   const params = new URLSearchParams();
-  const surface = checkoutSurface('/pricing', search);
-  if (surface !== 'pricing') params.set('entry_surface', surface);
+  const surface = checkoutSurface(pathname, search);
+  if (includeDefaultSurface || surface !== 'pricing') params.set('entry_surface', surface);
   const currencies = new URLSearchParams(search).getAll('currency');
   if (currencies.length === 1 && isCurrency(currencies[0])) params.set('currency', currencies[0]);
   return params.toString();
+}
+
+export function pricingSwitchQuery(search: string) {
+  return pricingQuery('/pricing', search);
+}
+
+export function pricingReturnPath(pathname: string, search: string) {
+  const locale = localeFromPath(pathname);
+  const path = localizedPath('/pricing', locale);
+  // Auth recognizes the localized return as a pricing signup via this surface.
+  const query = pricingQuery(pathname, search, locale === 'zh-TW');
+  return query ? path + '?' + query : path;
+}
+
+export function signInReturnPath(pathname: string, search: string) {
+  if (localizedPath(pathname, 'en') === '/pricing') return pricingReturnPath(pathname, search);
+  return pathname === '/' ? '/dashboard' : pathname;
 }
