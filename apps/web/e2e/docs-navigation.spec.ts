@@ -60,13 +60,13 @@ test('rejecting optional cookies updates links in place without fetching or remo
   const studio = bridge.getByRole('link', {name:'Open Document Studio'});
   const pro = bridge.getByRole('link', {name:'Anymd Pro — $29 once'});
   await expect(studio).toHaveAttribute('href', '/studio?gclid=REJ_TEST&utm_source=google');
-  await expect(pro).toHaveAttribute('href', '/pricing?entry_surface=article_bridge&gclid=REJ_TEST&utm_source=google');
+  await expect(pro).toHaveAttribute('href', base + '&gclid=REJ_TEST&utm_source=google');
   await h1.evaluate(node => node.dataset.retained = 'true');
   const text = await article.textContent();
   await page.getByRole('button', {name:'Reject optional', exact:true}).click();
   await expect(cta).toHaveAttribute('href', base);
   await expect(studio).toHaveAttribute('href', '/studio');
-  await expect(pro).toHaveAttribute('href', '/pricing?entry_surface=article_bridge');
+  await expect(pro).toHaveAttribute('href', base);
   await expect(h1).toHaveAttribute('data-retained', 'true');
   expect(await article.textContent()).toBe(text);
   await expect(page.locator('main a[href*="gclid="], main a[href*="utm_source="]')).toHaveCount(0);

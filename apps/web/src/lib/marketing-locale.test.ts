@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { languageSwitchTarget, localeFromPath, pageLinks } from './marketing-locale';
+import { languageSwitchTarget, localeFromPath, pageLinks, pricingSwitchQuery } from './marketing-locale';
 
 const origin = 'https://anymd.sylphx.com';
 
@@ -28,6 +28,15 @@ for (const [path, locale, en, tw] of [
     });
   });
 }
+
+test('pricing language switches retain only singleton, allowlisted currency and attribution', () => {
+  assert.equal(pricingSwitchQuery('?entry_surface=seo_vs-docling&currency=HKD&proof=private'), 'entry_surface=seo_vs-docling&currency=HKD');
+  assert.equal(pricingSwitchQuery('?currency=HKD&entry_surface=task_check_pdf_citation'), 'entry_surface=task_check_pdf_citation&currency=HKD');
+  assert.equal(pricingSwitchQuery('?entry_surface=injected_bad&currency=HKD'), 'currency=HKD');
+  assert.equal(pricingSwitchQuery('?entry_surface=home_hero&currency=ZZZ'), 'entry_surface=home_hero');
+  assert.equal(pricingSwitchQuery('?entry_surface=pricing'), '');
+  assert.equal(pricingSwitchQuery('?entry_surface=home_hero&entry_surface=home_hero&currency=HKD&currency=HKD'), '');
+});
 
 test('does not advertise untranslated docs or invent a switch target', () => {
   assert.equal(localeFromPath('/zh-TW/docs'), 'en');

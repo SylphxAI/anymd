@@ -5,8 +5,7 @@ import { useLocation } from '@solidjs/router';
 import { For } from 'solid-js';
 import { useCookieConsent } from './cookie-consent';
 import { SessionAction } from './session';
-import { isCurrency } from '@/lib/catalog';
-import { languageSwitchTarget, localeFromPath, translatedPaths } from '@/lib/marketing-locale';
+import { languageSwitchTarget, localeFromPath, pricingSwitchQuery, translatedPaths } from '@/lib/marketing-locale';
 
 const zhNav: Record<string, string> = { Studio: '轉檔工作室', Docs: '文件', Comparisons: '工具比較', Pricing: '定價' };
 
@@ -17,12 +16,8 @@ export function Header() {
   const locale = () => localeFromPath(route.pathname);
   const zh = () => locale() === 'zh-TW';
   const other = () => zh() ? 'en' : 'zh-TW';
-  const switchCurrency = () => {
-    const currencies = new URLSearchParams(route.search).getAll('currency');
-    return currencies.length === 1 && isCurrency(currencies[0]) ? 'currency=' + currencies[0] : '';
-  };
   const switchTarget = () => languageSwitchTarget(route.pathname, other()) ?? (zh() ? '/' : translatedPaths['/']);
-  const carryCurrency = () => languageSwitchTarget(route.pathname, 'en') === '/pricing' && switchCurrency();
+  const switchQuery = () => languageSwitchTarget(route.pathname, 'en') === '/pricing' && pricingSwitchQuery(route.search);
   const navHref = (href: (typeof links)[number][1]) =>
     zh() && (href === '/pricing' || href === '/studio') ? translatedPaths[href] : href;
   return (
@@ -32,7 +27,7 @@ export function Header() {
         <nav aria-label={zh() ? '主要導覽' : 'Main'} class="main-nav"><For each={links}>{([text, href]) => <CampaignLink href={navHref(href)}>{zh() ? zhNav[text] : text}</CampaignLink>}</For></nav>
         <div class="header-actions">
           <a href="https://github.com/SylphxAI/anymd" class="github-header" aria-label={zh() ? 'Anymd 的 GitHub 儲存庫' : 'Anymd GitHub repository'}><GithubMark size={18} /></a>
-          <CampaignLink class="language-switch" href={carryCurrency() ? (zh() ? '/pricing?' + switchCurrency() : translatedPaths['/pricing'] + '?' + switchCurrency()) : switchTarget()} hreflang={other()} lang={other()}><Globe size={15} aria-hidden="true" />{zh() ? 'English' : '繁體中文'}</CampaignLink>
+          <CampaignLink class="language-switch" href={switchQuery() ? (zh() ? '/pricing?' + switchQuery() : '/zh-TW/pricing?' + switchQuery()) : switchTarget()} hreflang={other()} lang={other()}><Globe size={15} aria-hidden="true" />{zh() ? 'English' : '繁體中文'}</CampaignLink>
           <SessionAction />
           <details class="mobile-menu"><summary aria-label={zh() ? '開啟導覽選單' : 'Open navigation'}><Menu size={22} /></summary><nav aria-label={zh() ? '行動版導覽' : 'Mobile'}><For each={links}>{([text, href]) => <CampaignLink href={navHref(href)} onClick={(event) => {
             if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey) {
