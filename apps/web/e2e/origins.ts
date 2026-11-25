@@ -4,3 +4,7 @@ export const fixtureTenant = 'organization-00000000-0000-0000-0000-000000000000'
 export const fixturePublishable = ['sylphx', 'pk', 'fixture'].join('_');
 export const fixtureSecret = ['sylphx', 'sk', 'fixture'].join('_');
 export const providerAuthorize = 'https://accounts.google.com/o/oauth2/v2/auth';
+export const fixtureMoneyParent = 'orgs/org_fixture/projects/prj_fixture/envs/env_fixture';
+export const fixtureAdsId = 'AW-123456789';
+export const fixtureAdsLabel = 'Fixture_Label-1';
+export const fixtureLegacySession = 'identity_org_session_fixture_legacy';

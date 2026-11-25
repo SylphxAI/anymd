@@ -3,6 +3,7 @@ import { contentSecurityPolicy } from './lib/content-security-policy';
 import { resolveEffectiveConsent } from '@sylphx/sdk/signal';
 import { getRequestEvent } from 'solid-js/web';
 import { createHandler, StartServer } from '@solidjs/start/server';
+import { googleAdsConfig } from './lib/google-ads';
 import { localeFromPath } from './lib/marketing-locale';
 
 export default createHandler(() => <StartServer document={({ assets, children, scripts }) => {
@@ -12,7 +13,9 @@ export default createHandler(() => <StartServer document={({ assets, children, s
   const request = getRequestEvent()?.request;
   const locale = localeFromPath(request ? new URL(request.url).pathname : '/');
   const gpc = resolveEffectiveConsent({storedChoice:'granted'}, request?.headers).analytics_storage === 'denied';
-  return <html lang={locale} data-signal-gpc={gpc ? '1' : undefined}>
+  const ads = googleAdsConfig(process.env.ANYMD_GOOGLE_ADS_ID, process.env.ANYMD_GOOGLE_ADS_PURCHASE_LABEL);
+  return <html lang={locale} data-signal-gpc={gpc ? '1' : undefined}
+    data-google-ads-id={ads?.googleAdsId} data-google-ads-purchase-label={ads?.googleAdsPurchaseLabel}>
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -1,5 +1,5 @@
 // A one-call stdio MCP client for the task guides. Node.js 18+, no client SDK.
-// Run from a directory with @sylphx/anymd@8.5.5 installed locally.
+// Run from a directory with @sylphx/anymd installed locally.
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -12,7 +12,7 @@ if (!['read', 'outline', 'search', 'inspect'].includes(tool) || !rawArguments) {
 const args = JSON.parse(rawArguments);
 const root = resolve('node_modules/@sylphx/anymd');
 const installed = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
-if (installed.version !== '8.5.5') throw new Error('Install @sylphx/anymd@8.5.5 first');
+if (installed.name !== '@sylphx/anymd') throw new Error('Install @sylphx/anymd first');
 
 const server = spawn(
   process.execPath,

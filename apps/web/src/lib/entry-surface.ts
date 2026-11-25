@@ -1,6 +1,7 @@
 // Only product-owned labels may reach analytics or checkout metadata.
 const surfaces = [
   'pricing', 'pro', 'studio_cite_preview', 'cli_pdf', 'cli_video', 'npm_citra', 'npm_pdf_reader_mcp',
+  'task_check_pdf_citation', 'task_extract_video_frame',
   'seo_pdf-and-office-to-markdown-mcp', 'seo_verifiable-video-and-cite-check-ai-agents',
   'seo_vs-docling', 'seo_vs-hub', 'seo_vs-kreuzberg', 'seo_vs-llamaparse',
   'seo_vs-markdownify-mcp', 'seo_vs-marker', 'seo_vs-markitdown',
