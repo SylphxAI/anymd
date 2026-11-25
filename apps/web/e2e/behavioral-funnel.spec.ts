@@ -131,13 +131,48 @@ test('home and reference copies and home Pro clicks emit predefined labels', asy
   await expectEvent(page, 'output_copied', '/', [{surface:'home_install', command_kind:'npm'}, {surface:'home_demo'}]);
   await page.locator('.hero-actions').getByRole('link', {name:/Anymd Pro/}).click();
   await expectEvent(page, 'pro_cta_clicked', '/', [{entry_surface:'home_hero'}]);
+  // The click event can land before the client-side route commits to history.
+  await expect(page).toHaveURL('/pricing');
   await page.goBack();
+  await expect(page).toHaveURL('/');
   await page.locator('.pro-panel').getByRole('link').click();
   await expectEvent(page, 'pro_cta_clicked', '/', [{entry_surface:'home_hero'}, {entry_surface:'home_pro_panel'}]);
   await page.goto('/docs');
   await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
   await page.getByRole('button', {name:'Copy code', exact:true}).first().click();
   await expectEvent(page, 'output_copied', '/docs', [{surface:'docs_code'}]);
+});
+
+test('task guide copies exact code without page overflow and measures only after opt-in', async ({ page, context }) => {
+  const hits = await isolate(page);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/tasks/check-pdf-citation?proof=private-task#private');
+
+  const article = page.locator('article');
+  const code = article.locator('pre > code');
+  await expect(code.first()).toContainText('python3 make-citation-pdf.py');
+  const buttons = article.getByRole('button', {name:'Copy code', exact:true});
+  await expect(code).toHaveCount(3);
+  await expect(buttons).toHaveCount(3);
+  for (const button of await buttons.all()) await expect(button).toBeVisible();
+  // The Playwright projects exercise both 390px and 1440px widths.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+
+  const optIn = page.getByRole('button', {name:'Analytics only', exact:true});
+  await expect(optIn).toBeEnabled();
+  const first = article.locator('.doc-code').first();
+  await first.getByRole('button', {name:'Copy code', exact:true}).click();
+  await expect(first.getByRole('button', {name:'Copied', exact:true})).toBeVisible();
+  expect(await readQueue(page)).toEqual([]);
+  expect(hits).toEqual([]);
+
+  await optIn.click();
+  await expectEvent(page, 'page_view', '/tasks', [{}]);
+  const last = article.locator('.doc-code').last();
+  await last.getByRole('button', {name:'Copy code', exact:true}).click();
+  await expect(last.getByRole('button', {name:'Copied', exact:true})).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await code.last().textContent());
+  await expectEvent(page, 'output_copied', '/tasks', [{surface:'docs_code'}]);
 });
 
 test('signed-in copy and CLI form events exclude account info and all native proofs', async ({ page, context, baseURL }) => {
