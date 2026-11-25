@@ -47,8 +47,8 @@ base64 = "0.23.1"
 chrono = { version = "0.4.45", features = ["serde"] }
 ed25519-dalek = "3.0.0"
 command-group = { version = "5.0.1", features = ["with-tokio"] }
-anymd-core = { workspace = true }
-anymd-formats = { workspace = true }
+anymd-core = { workspace = true, features = ["formats"] }
+anymd-formats = { workspace = true, features = ["native"] }
 ignore = "0.4.34"
 url = "2.5.8"
 rmcp = { version = "3.11.0", features = ["server", "macros", "schemars", "transport-io", "transport-streamable-http-server"] }

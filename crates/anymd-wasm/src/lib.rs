@@ -5,27 +5,8 @@
 //! paged documents. Everything runs in the caller's process: in a browser the
 //! file never leaves the page.
 
-use std::path::Path;
-
-use anymd_formats::{Converted, Format, Options};
+use anymd_core::document::{open_bytes, OpenBytesOptions, OpenError, OpenedDocument};
 use wasm_bindgen::prelude::*;
-
-/// PDF pages converted per pass (the CLI's chunk size).
-const PAGE_CHUNK: usize = 12;
-
-/// One citable unit (page, slide, sheet, chapter).
-struct Unit {
-    label: String,
-    markdown: String,
-}
-
-struct Document {
-    format: &'static str,
-    title: Option<String>,
-    metadata: Vec<(String, String)>,
-    units: Vec<Unit>,
-    paged: bool,
-}
 
 /// Convert a file to Markdown with front matter and unit markers.
 #[wasm_bindgen]
@@ -37,13 +18,13 @@ pub fn convert(bytes: &[u8], filename: &str) -> Result<String, JsError> {
 /// `{ markdown, format, title, units, unit_noun, tokens, source_units }`.
 #[wasm_bindgen(js_name = convertDetailed)]
 pub fn convert_detailed(bytes: &[u8], filename: &str) -> Result<String, JsError> {
-    let document = open(bytes, filename).map_err(|message| JsError::new(&message))?;
-    let markdown = render(&document, filename);
+    let document = open_for_wasm(bytes, filename).map_err(|message| JsError::new(&message))?;
+    let markdown = document.render_markdown(filename);
     let value = serde_json::json!({
         "format": document.format,
         "title": document.title,
         "units": document.units.len(),
-        "unit_noun": noun(&document),
+        "unit_noun": document.unit_noun,
         "tokens": estimate_tokens(&markdown),
         "markdown": markdown,
         "source_units": document.units.iter().map(|unit| serde_json::json!({"label": unit.label, "text": unit.markdown})).collect::<Vec<_>>(),
@@ -65,164 +46,25 @@ pub fn version() -> String {
 
 /// Rust-side entry (also used by native tests).
 pub fn convert_markdown(bytes: &[u8], filename: &str) -> Result<String, String> {
-    let document = open(bytes, filename)?;
-    Ok(render(&document, filename))
+    let document = open_for_wasm(bytes, filename)?;
+    Ok(document.render_markdown(filename))
 }
 
-fn open(bytes: &[u8], filename: &str) -> Result<Document, String> {
-    let path = (!filename.is_empty()).then(|| Path::new(filename));
-    let head = &bytes[..bytes.len().min(8192)];
-    let format = anymd_formats::detect(path, head).ok_or_else(|| {
-        "Unrecognized file type (binary data with no known signature).".to_string()
-    })?;
-    let mut document = if format == Format::Pdf {
-        open_pdf(bytes)?
-    } else {
-        let converted = anymd_formats::convert(format, bytes, &Options::default())
-            .map_err(|error| error.to_string())?;
-        from_converted(format, converted)
-    };
-    // No declared title: the first `# ` heading of unit 1 (as the CLI does).
-    if document.title.is_none() {
-        document.title = document.units.first().and_then(|unit| {
-            unit.markdown
-                .lines()
-                .find_map(|line| line.strip_prefix("# "))
-                .map(|title| title.trim().to_string())
-        });
-    }
-    Ok(document)
-}
-
-fn open_pdf(bytes: &[u8]) -> Result<Document, String> {
-    let doc = anymd_pdf::load_document_bytes(bytes).map_err(|error| error.message)?;
-    let total = anymd_pdf::page_count(&doc);
-    // Same 12-page chunks as the CLI, so heading levels match its output.
-    let numbers: Vec<u32> = (1..=total).collect();
-    let mut units = Vec::with_capacity(numbers.len());
-    for chunk in numbers.chunks(PAGE_CHUNK) {
-        let converted =
-            anymd_pdf::pdf_to_markdown(&doc, Some(chunk)).map_err(|error| error.message)?;
-        units.extend(converted.pages.into_iter().map(|page| Unit {
-            label: format!("page {}", page.number),
-            markdown: page.markdown,
-        }));
-    }
-    Ok(Document {
-        format: "pdf",
-        title: anymd_pdf::info_title(&doc),
-        metadata: Vec::new(),
-        units,
-        paged: true,
+fn open_for_wasm(bytes: &[u8], filename: &str) -> Result<OpenedDocument, String> {
+    open_bytes(
+        bytes,
+        &OpenBytesOptions {
+            filename: Some(filename.into()),
+            ..Default::default()
+        },
+    )
+    .map_err(|error| match error {
+        // Keep the browser's existing converter and PDF diagnostics.
+        OpenError::PdfParse(source) => source.to_string(),
+        OpenError::Conversion { source, .. } => source.to_string(),
+        error => error.to_string(),
     })
 }
-
-fn from_converted(format: Format, converted: Converted) -> Document {
-    Document {
-        format: format.name(),
-        title: converted.title,
-        metadata: converted.metadata,
-        units: converted
-            .sections
-            .into_iter()
-            .map(|section| Unit {
-                label: section.label,
-                markdown: section.markdown,
-            })
-            .collect(),
-        paged: false,
-    }
-}
-
-fn noun(document: &Document) -> &'static str {
-    let first_word = |unit: &Unit| {
-        unit.label
-            .split_whitespace()
-            .next()
-            .unwrap_or("")
-            .to_string()
-    };
-    let shared = document
-        .units
-        .first()
-        .map(first_word)
-        .filter(|word| document.units.iter().all(|unit| first_word(unit) == *word));
-    match shared.as_deref() {
-        Some("slide") => "slide",
-        Some("sheet") => "sheet",
-        Some("chapter") => "chapter",
-        _ if document.paged => "page",
-        _ => "section",
-    }
-}
-
-fn render(document: &Document, filename: &str) -> String {
-    let total = document.units.len();
-    // One-unit documents (a web page, a DOCX, an image) need no unit markers.
-    let markers = total > 1 || document.paged;
-    let mut body = String::new();
-    for unit in &document.units {
-        if markers {
-            body.push_str(&format!("<!-- {} -->\n\n", unit.label));
-        }
-        body.push_str(unit.markdown.trim());
-        body.push_str("\n\n");
-    }
-    if document.paged && total > 0 {
-        let visible: usize = document
-            .units
-            .iter()
-            .map(|unit| {
-                unit.markdown
-                    .chars()
-                    .filter(|c| c.is_alphanumeric())
-                    .count()
-            })
-            .sum();
-        if visible < total * 20 {
-            body.push_str(
-                "<!-- These pages have little or no selectable text (scanned or image-only). \
-The anymd CLI can OCR them with a local `tesseract`. -->\n\n",
-            );
-        }
-    }
-
-    let label = if filename.is_empty() {
-        "input"
-    } else {
-        filename
-    };
-    let mut header = vec![("source".to_string(), label.to_string())];
-    if document.format != "pdf" {
-        header.push(("format".into(), document.format.to_string()));
-    }
-    if let Some(title) = &document.title {
-        header.push(("title".into(), title.clone()));
-    }
-    for (key, value) in document.metadata.iter().take(6) {
-        if key != "title" && key != "format" && !value.is_empty() && value.len() <= 200 {
-            header.push((key.replace(' ', "_"), value.clone()));
-        }
-    }
-    if markers {
-        let key = format!("{}s", noun(document));
-        header.retain(|(existing, _)| *existing != key);
-        header.push((key, total.to_string()));
-    }
-
-    let mut out = String::from("---\n");
-    for (key, value) in &header {
-        out.push_str(key);
-        out.push_str(": ");
-        out.push_str(&yaml_value(value));
-        out.push('\n');
-    }
-    out.push_str("---\n\n");
-    out.push_str(&body);
-    out.trim_end().to_string() + "\n"
-}
-
-use anymd_core::text_rules::yaml_value;
 
 #[cfg(test)]
 mod tests {
@@ -238,6 +80,22 @@ mod tests {
         );
         assert!(out.contains("Hello"), "{out}");
         assert!(!out.contains("<!-- "), "{out}");
+    }
+
+    #[test]
+    fn detailed_conversion_keeps_the_browser_response_shape() {
+        let bytes = "# 中文\n\nRésumé 😀\n".as_bytes();
+        let markdown =
+            "---\nsource: note.md\nformat: text\ntitle: 中文\n---\n\n# 中文\n\nRésumé 😀\n";
+        let detailed = convert_detailed(bytes, "note.md").unwrap();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&detailed).unwrap(),
+            serde_json::json!({
+                "format": "text", "title": "中文", "units": 1, "unit_noun": "section",
+                "tokens": estimate_tokens(markdown), "markdown": markdown,
+                "source_units": [{"label": "document", "text": "# 中文\n\nRésumé 😀\n"}]
+            })
+        );
     }
 
     #[test]

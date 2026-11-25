@@ -18,6 +18,7 @@ path = "src/lib.rs"
 
 [dependencies]
 hex = "0.4.3"
+anymd-formats = { workspace = true, default-features = false, optional = true }
 anymd-pdf = { workspace = true }
 base64 = "0.23.1"
 flate2 = "1.1.11"
@@ -43,6 +44,8 @@ ureq = { version = "3.5.2", default-features = false, features = ["rustls", "gzi
 # native builds and the CLI have them, the browser build does not.
 default = ["native"]
 native = ["dep:ureq"]
+# In-memory multi-format conversion without enabling native tools.
+formats = ["dep:anymd-formats"]
 
 [dev-dependencies]
 # The url_fetch tests run a real TLS server on a local port.

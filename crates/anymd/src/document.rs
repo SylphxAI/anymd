@@ -6,7 +6,10 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
+use anymd_core::document::{format_from_content_type, scanned_pdf_pages, units_from_sections};
 use anymd_core::markdown_layout::{self, load_document, load_document_bytes, SPARSE_PAGE_CHARS};
+pub use anymd_core::outline::Unit;
+use anymd_core::outline::{noun_for_units, title_from_units, DocumentInfo, Outline};
 use anymd_core::url_fetch::fetch_url;
 use anymd_formats::images::{self, ImageStore};
 use anymd_formats::{ConvertError, Format};
@@ -33,16 +36,6 @@ pub struct OpenOptions {
     pub images: Option<ImageStore>,
     /// How Word tracked changes and comments come out.
     pub revisions: anymd_formats::Revisions,
-}
-
-/// One citable unit of a document.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Unit {
-    /// 1-based position used by `pages` selections and cursors.
-    pub number: u32,
-    /// Marker label: "page 3", "slide 2", "sheet Revenue", "chapter 4: …".
-    pub label: String,
-    pub markdown: String,
 }
 
 enum Body {
@@ -103,55 +96,6 @@ impl Opened {
 pub fn is_url(spec: &str) -> bool {
     let lower = spec.trim_start().to_ascii_lowercase();
     lower.starts_with("http://") || lower.starts_with("https://")
-}
-
-fn format_from_content_type(content_type: &str) -> Option<Format> {
-    let mime = content_type
-        .split(';')
-        .next()
-        .unwrap_or("")
-        .trim()
-        .to_ascii_lowercase();
-    Some(match mime.as_str() {
-        "application/pdf" | "application/x-pdf" => Format::Pdf,
-        "text/html" | "application/xhtml+xml" => Format::Html,
-        "text/csv" => Format::Csv,
-        "text/tab-separated-values" => Format::Tsv,
-        "application/epub+zip" => Format::Epub,
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => Format::Docx,
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation" => Format::Pptx,
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        | "application/vnd.ms-excel"
-        | "application/vnd.oasis.opendocument.spreadsheet" => Format::Xlsx,
-        "text/vtt" | "application/x-subrip" => Format::Subtitles,
-        "text/plain" | "text/markdown" | "application/json" | "text/xml" | "application/xml" => {
-            Format::Text
-        }
-        m if m.starts_with("image/") => Format::Image,
-        m if m.starts_with("video/") || m.starts_with("audio/") => Format::Video,
-        _ => return None,
-    })
-}
-
-fn noun_for(units: &[Unit], format: Format) -> &'static str {
-    let first_word = |unit: &Unit| {
-        unit.label
-            .split_whitespace()
-            .next()
-            .unwrap_or("")
-            .to_string()
-    };
-    let shared = units
-        .first()
-        .map(first_word)
-        .filter(|word| units.iter().all(|unit| first_word(unit) == *word));
-    match (shared.as_deref(), format) {
-        (Some("slide"), _) => "slide",
-        (Some("sheet"), _) => "sheet",
-        (Some("chapter"), _) => "chapter",
-        (_, Format::Pdf) => "page",
-        _ => "section",
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -463,17 +407,8 @@ impl Opened {
         converted: anymd_formats::Converted,
         options: &OpenOptions,
     ) -> Self {
-        let units: Vec<Unit> = converted
-            .sections
-            .into_iter()
-            .enumerate()
-            .map(|(index, section)| Unit {
-                number: index as u32 + 1,
-                label: section.label,
-                markdown: section.markdown,
-            })
-            .collect();
-        let noun = noun_for(&units, format);
+        let units = units_from_sections(converted.sections);
+        let noun = noun_for_units(&units, format == Format::Pdf);
         Self {
             label: label.to_string(),
             format: format.name(),
@@ -490,12 +425,11 @@ impl Opened {
     }
 
     fn from_cached(label: &str, cached: &CachedDoc, options: &OpenOptions) -> Self {
-        let format = anymd_formats_format(cached.format);
         Self {
             label: label.to_string(),
             format: cached.format,
             title: cached.title.clone(),
-            unit_noun: noun_for(&cached.units, format),
+            unit_noun: noun_for_units(&cached.units, cached.format == "pdf"),
             total: cached.units.len() as u32,
             metadata: cached.metadata.clone(),
             options: options.clone(),
@@ -517,6 +451,29 @@ impl Opened {
             Body::Pdf { doc, .. } => markdown_layout::outline(doc),
             Body::Units(_) => self.native_outline.clone(),
         }
+    }
+
+    pub(crate) fn info(&self) -> DocumentInfo<'_> {
+        DocumentInfo {
+            source: &self.label,
+            format: self.format,
+            title: self.title.as_deref(),
+            unit_noun: self.unit_noun,
+            total: self.total,
+            paged: self.is_paged(),
+        }
+    }
+
+    pub fn build_outline(&self) -> Result<Outline, String> {
+        let units = self.all_units()?;
+        if units.is_empty() {
+            return Err("document has no readable units".into());
+        }
+        Ok(self.outline_from_units(&units))
+    }
+
+    pub fn outline_from_units(&self, units: &[Unit]) -> Outline {
+        Outline::from_units(self.info(), units, &self.outline())
     }
 
     pub(crate) fn note_ocr_ran(&self, page: u32) {
@@ -567,15 +524,7 @@ impl Opened {
                 }
                 .map_err(|error| error.message)?;
                 let _ = title;
-                let mut units: Vec<Unit> = converted
-                    .pages
-                    .into_iter()
-                    .map(|page| Unit {
-                        number: page.number,
-                        label: format!("page {}", page.number),
-                        markdown: page.markdown,
-                    })
-                    .collect();
+                let mut units: Vec<Unit> = converted.pages.into_iter().map(Unit::from).collect();
                 self.ocr_sparse_pages(&mut units, doc, bytes.as_deref(), path.as_deref())?;
                 Ok(units)
             }
@@ -588,28 +537,13 @@ impl Opened {
         let Body::Pdf { doc, .. } = &self.body else {
             return Vec::new();
         };
-        let blank: Vec<u32> = units
-            .iter()
-            .filter(|unit| !unit.markdown.chars().any(char::is_alphanumeric))
-            .map(|unit| unit.number)
-            .collect();
-        if blank.is_empty() {
-            return Vec::new();
-        }
-        markdown_layout::scanned_pages(doc, &blank)
+        scanned_pdf_pages(doc, units)
     }
 
     /// Title from page 1 when the PDF has no usable /Title.
     pub fn title_from_units(&mut self, units: &[Unit]) {
-        if self.title.is_some() {
-            return;
-        }
-        if let Some(first) = units.iter().find(|unit| unit.number == 1) {
-            self.title = first
-                .markdown
-                .lines()
-                .find_map(|line| line.strip_prefix("# "))
-                .map(|title| title.trim().to_string());
+        if self.title.is_none() {
+            self.title = title_from_units(units);
         }
     }
 
@@ -843,23 +777,6 @@ fn ocr_page(image: &anymd_core::render::RenderedPage) -> Result<String, String> 
         f64::from(image.height),
         points_per_pixel,
     ))
-}
-
-fn anymd_formats_format(name: &str) -> Format {
-    match name {
-        "pdf" => Format::Pdf,
-        "docx" => Format::Docx,
-        "pptx" => Format::Pptx,
-        "xlsx" => Format::Xlsx,
-        "csv" => Format::Csv,
-        "tsv" => Format::Tsv,
-        "epub" => Format::Epub,
-        "html" => Format::Html,
-        "image" => Format::Image,
-        "video" => Format::Video,
-        "subtitles" => Format::Subtitles,
-        _ => Format::Text,
-    }
 }
 
 fn visible_chars(markdown: &str) -> usize {
@@ -1139,38 +1056,6 @@ mod tests {
             cache_key(file.path(), false, &automatic),
             cache_key(file.path(), false, &disabled)
         );
-    }
-
-    #[test]
-    fn content_types_map_to_formats() {
-        assert_eq!(
-            format_from_content_type("application/pdf"),
-            Some(Format::Pdf)
-        );
-        assert_eq!(
-            format_from_content_type("text/html; charset=utf-8"),
-            Some(Format::Html)
-        );
-        assert_eq!(format_from_content_type("image/png"), Some(Format::Image));
-        assert_eq!(format_from_content_type("application/octet-stream"), None);
-    }
-
-    #[test]
-    fn nouns_follow_section_labels() {
-        let unit = |label: &str| Unit {
-            number: 1,
-            label: label.into(),
-            markdown: String::new(),
-        };
-        assert_eq!(
-            noun_for(&[unit("slide 1"), unit("slide 2")], Format::Pptx),
-            "slide"
-        );
-        assert_eq!(
-            noun_for(&[unit("sheet A"), unit("sheet B")], Format::Xlsx),
-            "sheet"
-        );
-        assert_eq!(noun_for(&[unit("document")], Format::Docx), "section");
     }
 
     #[test]

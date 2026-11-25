@@ -192,6 +192,7 @@ dependencies = [
 name = "anymd-core"
 version = "8.5.16"
 dependencies = [
+ "anymd-formats",
  "anymd-pdf",
  "anymd-pdf-extract",
  "base64 0.23.1",
@@ -306,8 +307,6 @@ name = "anymd-wasm"
 version = "8.5.16"
 dependencies = [
  "anymd-core",
- "anymd-formats",
- "anymd-pdf",
  "serde_json",
  "wasm-bindgen",
 ]

@@ -3,6 +3,8 @@
 mod accessibility;
 mod catalog_signals;
 mod cos_document;
+#[cfg(feature = "formats")]
+pub mod document;
 pub mod document_twin;
 mod form_attachment_signals;
 mod fusion_util;
@@ -11,6 +13,7 @@ pub use anymd_pdf as markdown_layout;
 pub mod compare_pdf;
 pub mod ocr_fusion;
 pub mod ocr_tables;
+pub mod outline;
 pub mod page_cache;
 mod page_signals;
 mod pages;

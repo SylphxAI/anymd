@@ -363,17 +363,5 @@ pub(crate) fn scan_marker(page: u32, ocr_ran: bool) -> String {
 }
 
 pub(super) fn front_matter(header: &[(String, String)]) -> String {
-    let mut out = String::from("---\n");
-    for (key, value) in header {
-        out.push_str(key);
-        out.push_str(": ");
-        if key == "scanned_pages" {
-            out.push_str(value);
-        } else {
-            out.push_str(&yaml_value(value));
-        }
-        out.push('\n');
-    }
-    out.push_str("---\n\n");
-    out
+    anymd_core::outline::front_matter(header, &["scanned_pages"])
 }
