@@ -54,7 +54,7 @@ test('comparison is discoverable and its local setup controls work', async ({ pa
 test('homepage leads with free Studio and a priced Pro alternative; sign-in is not indexable', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('link', { name: 'Try Studio Free' })).toHaveAttribute('href', '/studio');
-  await expect(page.getByRole('link', { name: 'Get Anymd Pro — $29' })).toHaveAttribute('href', '/pricing');
+  await expect(page.getByRole('link', { name: 'Get Anymd Pro — $29' })).toHaveAttribute('href', '/pricing?entry_surface=home_hero');
   await expect(page.getByRole('main').getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
   await page.goto('/sign-in');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');

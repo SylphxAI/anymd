@@ -132,7 +132,7 @@ test('home and reference copies and home Pro clicks emit predefined labels', asy
   await page.locator('.hero-actions').getByRole('link', {name:/Anymd Pro/}).click();
   await expectEvent(page, 'pro_cta_clicked', '/', [{entry_surface:'home_hero'}]);
   // The click event can land before the client-side route commits to history.
-  await expect(page).toHaveURL('/pricing');
+  await expect(page).toHaveURL('/pricing?entry_surface=home_hero');
   await page.goBack();
   await expect(page).toHaveURL('/');
   await page.locator('.pro-panel').getByRole('link').click();
