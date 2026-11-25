@@ -77,7 +77,12 @@ Permissive MIT-licensed native Rust binary (CLI + built-in MCP server for PDF, W
 - [Video timelines](https://anymd.sylphx.com/guide/video-timeline)
 - [Supported formats](https://anymd.sylphx.com/guide/formats)
 - [Benchmarks (AgentDocBench)](https://anymd.sylphx.com/guide/benchmarks)
-- [Playground](https://anymd.sylphx.com/playground)
+- [Document Studio](https://anymd.sylphx.com/studio) — browser-local WebAssembly conversion and PDF quote preview.
 - [anymd Pro ($29 once)](https://anymd.sylphx.com/pricing)
 - [anymd Pro pricing](https://anymd.sylphx.com/pricing)
 - [GitHub repository](https://github.com/SylphxAI/anymd)
+
+## Companion Sylphx tools
+
+- [Lockdocs](https://lockdocs.sylphx.com/) — exact-version library docs from your lockfile. Local Rust MCP server and CLI.
+- [RepoMap](https://sylphxai.github.io/repomap/) — local codebase graph, semantic search, call paths and change impact. Rust MCP server and CLI.
