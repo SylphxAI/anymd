@@ -1,15 +1,15 @@
 //! Normalization of region-analysis provider output into the public kind, table, formula and chart shapes.
 
-use super::*;
+use serde_json::{json, Map, Value};
 
 use crate::pdf_evidence_common::truncate_utf16;
 
-pub(super) fn normalized_string(value: Option<&Value>, maximum: usize) -> Option<String> {
+fn normalized_string(value: Option<&Value>, maximum: usize) -> Option<String> {
     let trimmed = value?.as_str()?.trim();
     (!trimmed.is_empty()).then(|| truncate_utf16(trimmed, maximum).0)
 }
 
-pub(super) fn confidence(value: Option<&Value>) -> Option<f64> {
+fn confidence(value: Option<&Value>) -> Option<f64> {
     let value = value?.as_f64()?;
     value.is_finite().then(|| {
         let normalized = if value > 1.0 { value / 100.0 } else { value };
@@ -17,15 +17,15 @@ pub(super) fn confidence(value: Option<&Value>) -> Option<f64> {
     })
 }
 
-pub(super) fn positive_integer(value: Option<&Value>) -> Option<u64> {
+fn positive_integer(value: Option<&Value>) -> Option<u64> {
     value?.as_u64().filter(|value| *value > 0)
 }
 
-pub(super) fn zero_integer(value: Option<&Value>) -> Option<u64> {
+fn zero_integer(value: Option<&Value>) -> Option<u64> {
     value?.as_u64()
 }
 
-pub(super) fn bounding_box(value: Option<&Value>) -> Option<Value> {
+fn bounding_box(value: Option<&Value>) -> Option<Value> {
     let object = value?.as_object()?;
     let left = object.get("left")?.as_f64()?;
     let bottom = object.get("bottom")?.as_f64()?;
@@ -39,7 +39,7 @@ pub(super) fn bounding_box(value: Option<&Value>) -> Option<Value> {
         .then(|| json!({"left": left, "bottom": bottom, "right": right, "top": top}))
 }
 
-pub(super) fn rows(value: Option<&Value>) -> Option<Vec<Value>> {
+fn rows(value: Option<&Value>) -> Option<Vec<Value>> {
     let rows = value?
         .as_array()?
         .iter()
@@ -64,7 +64,7 @@ pub(super) fn rows(value: Option<&Value>) -> Option<Vec<Value>> {
     (!rows.is_empty()).then_some(rows)
 }
 
-pub(super) fn table_cells(value: Option<&Value>, maximum: usize) -> Option<Vec<Value>> {
+fn table_cells(value: Option<&Value>, maximum: usize) -> Option<Vec<Value>> {
     let cells = value?
         .as_array()?
         .iter()
@@ -100,7 +100,7 @@ pub(super) fn table_cells(value: Option<&Value>, maximum: usize) -> Option<Vec<V
     (!cells.is_empty()).then_some(cells)
 }
 
-pub(super) fn normalize_table(value: Option<&Value>, maximum: usize) -> Option<Value> {
+fn normalize_table(value: Option<&Value>, maximum: usize) -> Option<Value> {
     let candidate = value?.as_object()?;
     let rows = rows(candidate.get("rows"));
     let cells = table_cells(candidate.get("cells"), maximum);
@@ -187,7 +187,7 @@ pub(super) fn normalize_table(value: Option<&Value>, maximum: usize) -> Option<V
     Some(Value::Object(output))
 }
 
-pub(super) fn normalize_formula(value: Option<&Value>, maximum: usize) -> Option<Value> {
+fn normalize_formula(value: Option<&Value>, maximum: usize) -> Option<Value> {
     let candidate = value?.as_object()?;
     let mut output = Map::new();
     for (source, target) in [
@@ -211,7 +211,7 @@ pub(super) fn normalize_formula(value: Option<&Value>, maximum: usize) -> Option
     (!output.is_empty()).then_some(Value::Object(output))
 }
 
-pub(super) fn data_points(value: Option<&Value>) -> Option<Value> {
+fn data_points(value: Option<&Value>) -> Option<Value> {
     let points = value?
         .as_array()?
         .iter()
@@ -233,7 +233,7 @@ pub(super) fn data_points(value: Option<&Value>) -> Option<Value> {
     (!points.is_empty()).then_some(Value::Array(points))
 }
 
-pub(super) fn chart_axis(value: Option<&Value>, maximum: usize) -> Option<Value> {
+fn chart_axis(value: Option<&Value>, maximum: usize) -> Option<Value> {
     let candidate = value?.as_object()?;
     let mut output = Map::new();
     for key in ["label", "unit"] {
@@ -253,7 +253,7 @@ pub(super) fn chart_axis(value: Option<&Value>, maximum: usize) -> Option<Value>
     (!output.is_empty()).then_some(Value::Object(output))
 }
 
-pub(super) fn chart_series(value: Option<&Value>, maximum: usize) -> Option<Value> {
+fn chart_series(value: Option<&Value>, maximum: usize) -> Option<Value> {
     let series = value?
         .as_array()?
         .iter()
@@ -274,7 +274,7 @@ pub(super) fn chart_series(value: Option<&Value>, maximum: usize) -> Option<Valu
     (!series.is_empty()).then_some(Value::Array(series))
 }
 
-pub(super) fn normalize_chart(value: Option<&Value>, maximum: usize) -> Option<Value> {
+fn normalize_chart(value: Option<&Value>, maximum: usize) -> Option<Value> {
     let candidate = value?.as_object()?;
     let mut output = Map::new();
     for key in ["title", "summary"] {
