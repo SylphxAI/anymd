@@ -88,7 +88,7 @@ test('comparison copies and Pro CTA send only allowlisted analytics after opt-in
   ]);
 });
 
-test('task index, docs sidebar and docs search preserve campaign in both hrefs and SPA navigation', async ({ page }) => {
+test('task index, docs sidebar and docs search preserve campaign in both hrefs and navigation', async ({ page }) => {
   const hits = await isolate(page);
   await page.goto('/tasks?' + touch);
   const guide = page.getByRole('link', {name:/Check a PDF citation/});

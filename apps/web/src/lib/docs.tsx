@@ -47,7 +47,7 @@ function DocSearch(props: { entries: { title: string; description?: string; path
     <label class="field-label">Search documentation<input class="field" type="search" placeholder="Python, OCR, MCP…" value={filter()} onInput={event => setFilter(event.currentTarget.value)} /></label>
     <Show when={terms().length}>
       <p class="muted" role="status">{matches().length ? matches().length + (matches().length === 1 ? ' guide found' : ' guides found') : 'No guides found. Try a different term.'}</p>
-      <ul><For each={matches()}>{(entry) => <li><CampaignLink href={entry.path} class="inline-link">{entry.title}</CampaignLink>{entry.description && <p class="muted">{entry.description}</p>}</li>}</For></ul>
+      <ul><For each={matches()}>{(entry) => <li><CampaignLink href={entry.path} class="inline-link" rel="external">{entry.title}</CampaignLink>{entry.description && <p class="muted">{entry.description}</p>}</li>}</For></ul>
     </Show>
   </section>;
 }
