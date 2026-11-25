@@ -9,6 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 BACKEND = (ROOT / "crates/anymd-formats/src/video/timeline.rs").read_text()
 VIDEO = (ROOT / "crates/anymd-formats/src/video.rs").read_text()
+TRANSCRIBE = (ROOT / "crates/anymd-formats/src/video/transcribe.rs").read_text()
 RUNNER = (ROOT / "crates/anymd-formats/src/tool.rs").read_text()
 EVIDENCE = (ROOT / "crates/anymd/src/video_evidence.rs").read_text()
 NATIVE = (ROOT / "crates/anymd-formats/tests/video_timeline.rs").read_text()
@@ -45,9 +46,9 @@ class VideoSourceContracts(unittest.TestCase):
         for prohibited in ("fetch_url", "read_dir", "ensure_model", "Semaphore", "ACTIVE_REQUESTS"):
             self.assertNotIn(prohibited, BACKEND)
             self.assertNotIn(prohibited, EVIDENCE)
-        structured = VIDEO[VIDEO.index("pub fn transcript_window("):VIDEO.index("fn transcribe_structured(")]
+        structured = TRANSCRIBE[TRANSCRIBE.index("pub fn transcript_window("):TRANSCRIBE.index("fn transcribe_structured(")]
         self.assertIn("transcribe_structured(path, false, Some(&window))", structured)
-        self.assertIn("existing isolated request worker", VIDEO)
+        self.assertIn("existing isolated request worker", TRANSCRIBE)
 
     def test_endpoint_overlap_provenance_and_initial_cut_policy(self):
         self.assertIn("pub end_ms: i64", BACKEND)
@@ -78,8 +79,8 @@ class VideoSourceContracts(unittest.TestCase):
         self.assertIn("fixture generation failed", NATIVE)
 
     def test_legacy_default_path_remains_separate(self):
-        self.assertIn("transcribe_structured(path, download, None)", VIDEO)
-        self.assertIn("if pcm.len() < SAMPLES_PER_CHUNK && window.is_none()", VIDEO)
+        self.assertIn("transcribe_structured(path, download, None)", TRANSCRIBE)
+        self.assertIn("if pcm.len() < SAMPLES_PER_CHUNK && window.is_none()", TRANSCRIBE)
         self.assertIn('pub mod timeline;', VIDEO)
         self.assertIn("run_captured(program, args, env, timeout, MAX_OUTPUT, MAX_OUTPUT, false)", RUNNER)
 
