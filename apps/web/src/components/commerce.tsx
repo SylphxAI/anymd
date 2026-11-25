@@ -8,11 +8,10 @@ import { SignOut, useSession } from './session';
 import { SylphxPasskeyEnroll } from '@sylphx/auth-solid';
 import { authRoute } from '@/lib/auth-route';
 import { currencies, consentText, type Currency, formatPrice, isCurrency, proAmount } from '@/lib/catalog';
-import { single } from '@/lib/request-query';
 import { checkoutSurface } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
 import { pricingCopy } from '@/lib/marketing-copy';
-import { localizedPath, type Locale } from '@/lib/marketing-locale';
+import { pricingReturnPath, type Locale } from '@/lib/marketing-locale';
 
 type Account = { plan: 'Free OSS' | 'Anymd Pro'; entitlementActive: boolean; features: string[] };
 const cliLogin = 'anymd login';
@@ -44,18 +43,8 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
   const route = useLocation();
   const zh = () => props.locale === 'zh-TW';
   const currencyLabel = () => zh() ? '結帳幣別' : 'Billing currency';
-  const [query, setQuery] = useSearchParams();
+  const [, setQuery] = useSearchParams();
   const entrySurface = () => checkoutSurface(route.pathname, route.search);
-  const checkoutNext = () => {
-    const surface = entrySurface();
-    const params = new URLSearchParams();
-    // Auth recognizes the localized return as a pricing signup via this allowlisted surface.
-    if (surface !== 'pricing' || zh()) params.set('entry_surface', surface);
-    const selected = single(query.currency);
-    if (isCurrency(selected)) params.set('currency', selected);
-    const path = localizedPath('/pricing', props.locale);
-    return encodeURIComponent(params.size ? path + '?' + params : path);
-  };
   const analytics = useCookieConsent();
   const session = useSession();
   let intent: { key: string; entrySurface: EntrySurface } | undefined;
@@ -77,7 +66,7 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
       const code = event.currentTarget.value;
       if (isCurrency(code)) setQuery({currency:code});
     }}><For each={currencies}>{(code) => <option value={code} selected={code === props.currency}>{code} · {priceLabel(code)}</option>}</For></select></label>
-    <Show when={user()} fallback={<CampaignLink class="button button-primary" href={'/sign-in?next=' + checkoutNext()}>{zh() ? '登入以購買 Pro' : 'Sign in to buy Pro'} <ArrowRight size={16} aria-hidden="true" /></CampaignLink>}>
+    <Show when={user()} fallback={<CampaignLink class="button button-primary" href={'/sign-in?next=' + encodeURIComponent(pricingReturnPath(route.pathname, route.search))}>{zh() ? '登入以購買 Pro' : 'Sign in to buy Pro'} <ArrowRight size={16} aria-hidden="true" /></CampaignLink>}>
       <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{zh()
         ? '我要求在付款後立即取得授權。我了解，授權一旦交付，我將喪失取消這筆交易及據此要求退款的權利。這適用於依法享有 14 天取消權的情況，不影響我的其他法定權利。'
         : consentText + ' This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.'}</span></label>

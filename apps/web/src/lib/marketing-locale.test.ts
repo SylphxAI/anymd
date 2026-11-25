@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { languageSwitchTarget, localeFromPath, pageLinks, pricingSwitchQuery } from './marketing-locale';
+import { languageSwitchTarget, localeFromPath, pageLinks, pricingReturnPath, pricingSwitchQuery, signInReturnPath } from './marketing-locale';
 
 const origin = 'https://anymd.sylphx.com';
 
@@ -36,6 +36,24 @@ test('pricing language switches retain only singleton, allowlisted currency and 
   assert.equal(pricingSwitchQuery('?entry_surface=home_hero&currency=ZZZ'), 'entry_surface=home_hero');
   assert.equal(pricingSwitchQuery('?entry_surface=pricing'), '');
   assert.equal(pricingSwitchQuery('?entry_surface=home_hero&entry_surface=home_hero&currency=HKD&currency=HKD'), '');
+});
+
+test('pricing sign-in keeps only singleton, allowlisted checkout values', () => {
+  assert.equal(signInReturnPath('/pricing', '?entry_surface=seo_vs-docling&currency=HKD&email=private'), '/pricing?entry_surface=seo_vs-docling&currency=HKD');
+  assert.equal(signInReturnPath('/zh-TW/pricing', '?entry_surface=home_hero&currency=HKD'), '/zh-TW/pricing?entry_surface=home_hero&currency=HKD');
+  assert.equal(signInReturnPath('/pricing', '?entry_surface=injected_bad&currency=ZZZ&email=private'), '/pricing');
+  assert.equal(signInReturnPath('/pricing', '?entry_surface=home_hero&entry%5Fsurface=home_hero&currency=HKD'), '/pricing?currency=HKD');
+  assert.equal(signInReturnPath('/pricing', '?entry_surface=home_hero&currency=HKD&currency=HKD'), '/pricing?entry_surface=home_hero');
+  assert.equal(signInReturnPath('/zh-TW/pricing', '?entry_surface=injected_bad&currency=ZZZ'), '/zh-TW/pricing?entry_surface=pricing');
+  assert.equal(signInReturnPath('/zh-Hant/pricing', ''), '/zh-TW/pricing?entry_surface=pricing');
+});
+
+test('non-pricing header returns stay unchanged, including the legacy Pro page', () => {
+  const search = '?entry_surface=home_hero&currency=HKD';
+  assert.equal(signInReturnPath('/', search), '/dashboard');
+  assert.equal(signInReturnPath('/docs', search), '/docs');
+  assert.equal(signInReturnPath('/pro', search), '/pro');
+  assert.equal(pricingReturnPath('/pro', ''), '/pricing?entry_surface=pro');
 });
 
 test('does not advertise untranslated docs or invent a switch target', () => {
