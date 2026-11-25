@@ -21,6 +21,35 @@ async function isolate(page: Page) {
   return hits;
 }
 
+for (const [home, pricing, signIn] of [
+  ['/', '/pricing', 'Sign in to buy Pro'],
+  ['/zh-TW', '/zh-TW/pricing', '登入以購買 Pro'],
+]) {
+  test(home + ' Pro links preserve their own entry surface and campaign through pricing and sign-in', async ({ page }) => {
+    const hits = await isolate(page);
+    for (const [selector, label, surface] of [
+      ['.hero-actions', /Anymd Pro/, 'home_hero'],
+      ['.pro-panel', /Pro/, 'home_pro_panel'],
+    ] as const) {
+      await test.step(surface, async () => {
+        const response = await page.goto(home + '?' + touch + '&entry_surface=cli_pdf');
+        const checkout = pricing + '?entry_surface=' + surface;
+        const href = checkout + '&' + touch;
+        expect(await response!.text()).toContain('href="' + href.replaceAll('&', '&amp;') + '"');
+        const cta = page.locator(selector).getByRole('link', {name:label});
+        await expect(cta).toBeVisible();
+        await expect(cta).toHaveAttribute('href', href);
+        await cta.click();
+        await expect(page).toHaveURL(href);
+        await expect(page.getByRole('link', {name:signIn, exact:true})).toHaveAttribute(
+          'href', '/sign-in?next=' + encodeURIComponent(checkout) + '&' + touch,
+        );
+      });
+    }
+    expect(hits).toEqual([]);
+  });
+}
+
 test('comparison pre-consent links carry only allowed campaign values into pricing', async ({ page }) => {
   const hits = await isolate(page);
   const response = await page.goto(comparison + '?' + touch + '&entry_surface=cli_pdf&email=private');

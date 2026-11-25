@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { carryCampaign } from './campaign';
 import { explicitAnalytics } from './consent';
 import { checkoutParameters, checkoutSurface } from './funnel';
 
@@ -23,6 +24,23 @@ test('only known public entry surfaces leave the browser', () => {
   assert.equal(checkoutSurface('/pro','?entry_surface=seo_vs-marker&entry_surface=npm_citra'), 'pro');
   assert.equal(checkoutSurface('/pricing','?entry_surface=seo_private-investor-name&email=secret%40example.invalid'), 'pricing');
 });
+
+for (const pathname of ['/pricing', '/zh-TW/pricing']) {
+  test(pathname + ' keeps homepage entry surfaces alongside campaign values', () => {
+    for (const surface of ['home_hero', 'home_pro_panel']) {
+      const href = carryCampaign(pathname + '?entry_surface=' + surface, '?gclid=TEST999&utm_source=docs&utm_campaign=pro');
+      const url = new URL(href, 'https://anymd.invalid');
+      assert.deepEqual(Object.fromEntries(url.searchParams), {
+        entry_surface: surface, gclid: 'TEST999', utm_source: 'docs', utm_campaign: 'pro',
+      });
+      const resolved = checkoutSurface(url.pathname, url.search);
+      assert.equal(resolved, surface);
+      assert.equal(checkoutParameters('USD', resolved)?.entry_surface, surface);
+    }
+    assert.equal(checkoutSurface(pathname, '?entry_surface=home_unknown&utm_source=docs'), 'pricing');
+    assert.equal(checkoutSurface(pathname, '?entry_surface=home_hero&entry_surface=home_pro_panel'), 'pricing');
+  });
+}
 
 test('checkout uses the selected catalogue price and currency scale', () => {
   assert.deepEqual(checkoutParameters('USD','npm_citra'), {
