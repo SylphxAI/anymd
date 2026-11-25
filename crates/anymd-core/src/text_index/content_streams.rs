@@ -1,6 +1,8 @@
 //! Page content stream checks that run before text extraction, including inline image length checks.
 
-use super::*;
+use pdf_extract::Document;
+
+use super::TextIndexError;
 
 /// Pre-validate every page content stream before `output_doc` parses it.
 ///

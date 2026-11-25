@@ -1,3 +1,7 @@
+use pdf_extract::{MediaBox, OutputDev, Transform};
+
+use super::segments::{GlyphExtent, RawTextPart};
+use super::types::canonical_coordinate;
 use super::*;
 
 fn raw_part(text: &str, x: f64, y: f64, width: f64) -> RawTextPart {
