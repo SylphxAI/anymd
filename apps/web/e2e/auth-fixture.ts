@@ -26,9 +26,10 @@ serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT,
       request.headers.get('x-sylphx-key') === fixturePublishable && !request.headers.has('authorization')) {
     const body = await request.json();
     const event = body.events?.[0];
-    if (body.consent === 'granted' && event?.event_name === 'checkout_started') {
+    if (body.consent === 'granted' && ['checkout_started', 'purchase_completed'].includes(event?.event_name)) {
       const rows = checkoutBatches.get(event.event_id) ?? [];
       checkoutBatches.set(event.event_id, [...rows, event]);
+      if (event.event_name === 'purchase_completed') return new Response(null, {status:204});
       await Bun.sleep(500);
     }
     return new Response(null, {status:503, headers:{'Access-Control-Allow-Origin':'*'}});
@@ -61,6 +62,7 @@ serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT,
       payment_status:scenario === 'Unpaid' ? 'unpaid' : 'paid', denied_reason:scenario === 'Denied' ? 'refund' : '',
       amount_total:scenario === 'JPY' ? '4639' : scenario === 'BadAmount' ? -2900 : 2999,
       currency_code:scenario === 'JPY' ? 'JPY' : scenario === 'BadCurrency' ? 'usd' : 'USD',
+      line_items:[{price:'anymd_pro', quantity:1}], metadata:{entry_surface:'pricing'},
     });
     const name = checkoutCollection.slice(4) + '/chk-111111111111111111111111';
     const processor_session_id = 'cs_test_Fixture123';

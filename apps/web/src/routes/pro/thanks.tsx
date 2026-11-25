@@ -1,5 +1,5 @@
 import { A, useSearchParams } from '@solidjs/router';
-import { createEffect, createSignal, onCleanup, onMount } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import { useCookieConsent } from '@/components/cookie-consent';
 import { trackPurchaseConversion } from '@/lib/analytics';
 import { liveCheckoutSession, type PurchaseConversion } from '@/lib/google-ads';
@@ -22,32 +22,41 @@ export default function Page() {
     }
     setReady(true);
   });
+  const adsConsent = createMemo(consent.purchaseAds);
+  const analyticsConsent = createMemo(consent.analyticsAllowed);
   createEffect(() => {
     const sid = receipt();
-    const ads = consent.purchaseAds();
-    if (!ready() || !liveCheckoutSession(sid) || !ads) return;
+    const ads = adsConsent();
+    const analytics = analyticsConsent();
+    if (!ready() || !liveCheckoutSession(sid) || (!ads && !analytics)) return;
     const controller = new AbortController();
     onCleanup(() => controller.abort());
-    const current = () => !controller.signal.aborted && consent.purchaseAds() === ads;
-    void (async () => {
-      // A bounded, per-tab cache keeps raw processor IDs out of storage.
-      const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('anymd-ads-return:' + sid));
-      const id = Array.from(new Uint8Array(hash).slice(0, 16), x => x.toString(16).padStart(2, '0')).join('');
+    const current = () => !controller.signal.aborted && consent.purchaseAds() === ads && consent.analyticsAllowed() === analytics;
+    void Promise.resolve().then(async () => {
       const key = 'anymd.ads.claims';
+      let id: string | undefined;
       let seen: string[] = [];
-      try { seen = (sessionStorage.getItem(key) ?? '').split('.').filter(entry => /^[a-f0-9]{32}$/.test(entry)); }
-      catch { /* The signed server cookie still deduplicates. */ }
-      if (!current() || seen.includes(id)) return;
+      if (ads) {
+        // A bounded, per-tab cache keeps raw processor IDs out of storage.
+        try {
+          const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('anymd-ads-return:' + sid));
+          id = Array.from(new Uint8Array(hash).slice(0, 16), x => x.toString(16).padStart(2, '0')).join('');
+          seen = (sessionStorage.getItem(key) ?? '').split('.').filter(entry => /^[a-f0-9]{32}$/.test(entry));
+        } catch { /* The signed server cookie still deduplicates. */ }
+      }
+      const claimAds = Boolean(ads) && (!id || !seen.includes(id));
+      if (!current() || (!claimAds && !analytics)) return;
       const response = await fetch('/api/anymd/purchase-conversion', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sid, ads_consent:true}),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({session_id:sid, analytics_consent:analytics, ads_consent:claimAds}),
         cache:'no-store', redirect:'error', referrerPolicy:'strict-origin', signal:controller.signal,
       });
-      if (response.status !== 200) return;
+      if (!claimAds || !ads || response.status !== 200) return;
       const result: PurchaseConversion = await response.json();
-      if (!current() || !trackPurchaseConversion(ads, result)) return;
+      if (!current() || !trackPurchaseConversion(ads, result) || !id) return;
       try { sessionStorage.setItem(key, [id, ...seen].slice(0, 32).join('.')); }
       catch { /* The signed server cookie still deduplicates. */ }
-    })().catch(() => { /* Measurement never blocks recovery or activation. */ });
+    }).catch(() => { /* Measurement never blocks recovery or activation. */ });
   });
   return <section class="wrap page-shell">
     <PageMeta title="Activate Anymd Pro" robots="noindex" />

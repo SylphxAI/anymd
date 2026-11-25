@@ -4,6 +4,8 @@ import { fullAdConsent, googleAdsConfig, liveCheckoutSession, type PurchaseConve
 import { appOrigin, failure, HttpError, json, sameOriginJson } from './http';
 import { checkoutKey, moneyContext } from './money';
 import { readSettledCheckout } from './money-http';
+import { signalConfig } from './signal-config';
+import { checkoutAnalyticsAllowed, signalPurchaseCompleted } from './signal-server';
 
 const path = '/api/anymd/purchase-conversion';
 const cookieName = '__Secure-anymd_ads_claims';
@@ -26,12 +28,14 @@ function claimedIds(request: Request, secret: string, scope: string) {
 export async function purchaseConversion(request: Request) {
   try {
     const data = await sameOriginJson(request);
-    if (data.ads_consent !== true || !fullAdConsent(resolveEffectiveConsent({storedChoice:'granted'}, request.headers))) {
-      throw new HttpError(403, 'ads_consent_required');
-    }
-    const ctx = await moneyContext(request);
+    const analytics = checkoutAnalyticsAllowed(request, data.analytics_consent);
+    const ads = data.ads_consent === true && fullAdConsent(resolveEffectiveConsent({storedChoice:'granted'}, request.headers));
+    if (!analytics && !ads) throw new HttpError(403, 'purchase_consent_required');
+    const signal = analytics ? signalConfig() : undefined;
+    const adsConfig = ads && googleAdsConfig(process.env.ANYMD_GOOGLE_ADS_ID, process.env.ANYMD_GOOGLE_ADS_PURCHASE_LABEL);
     const sid = data.session_id;
-    if (!liveCheckoutSession(sid) || !googleAdsConfig(process.env.ANYMD_GOOGLE_ADS_ID, process.env.ANYMD_GOOGLE_ADS_PURCHASE_LABEL)) return noClaim();
+    if (!liveCheckoutSession(sid) || (!signal && !adsConfig)) return noClaim();
+    const ctx = await moneyContext(request);
     const checkout = await readSettledCheckout(ctx.money, sid, checkoutKey(request, ctx.money));
     if (!checkout || checkout.subject?.end_user !== ctx.user.id || checkout.processor_session_id !== sid ||
         !(checkout.livemode === undefined || checkout.livemode === true) || checkout.state !== 'complete' ||
@@ -41,6 +45,9 @@ export async function purchaseConversion(request: Request) {
     if (typeof currency !== 'string' || currency.length !== 3 || !/^[A-Z]{3}$/.test(currency) ||
         typeof amount !== 'number' || !Number.isSafeInteger(amount) || amount <= 0) return noClaim();
     const decimals = new Intl.NumberFormat('en', {style:'currency', currency}).resolvedOptions().maximumFractionDigits ?? 2;
+    const value = amount / 10 ** decimals;
+    if (signal) await signalPurchaseCompleted(request, signal, checkout, value, currency);
+    if (!adsConfig) return noClaim();
     const transactionId = createHash('sha256').update('anymd-ads-purchase:' + checkout.name).digest('hex').slice(0, 32);
     const scope = JSON.stringify([appOrigin(request), ctx.money.parent, ctx.user.id]);
     const ids = claimedIds(request, ctx.config.sk, scope);
@@ -49,7 +56,7 @@ export async function purchaseConversion(request: Request) {
     // devices still share Google's canonical deduplication ID.
     const list = [transactionId, ...ids].slice(0, limit).join('.');
     const signed = list + '~' + sign(ctx.config.sk, scope, list);
-    const result: PurchaseConversion = {transactionId, value:amount / 10 ** decimals, currency};
+    const result: PurchaseConversion = {transactionId, value, currency};
     return json(result, 200, {'Set-Cookie':cookieName + '=' + signed + '; Path=' + path + '; Max-Age=7776000; HttpOnly; Secure; SameSite=Lax'});
   } catch (error) { return failure(error); }
 }

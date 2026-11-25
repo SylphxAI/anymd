@@ -236,6 +236,7 @@ export function CookieConsent(props: ParentProps) {
       if (parameters) void signal?.track({eventName:event[0], properties:{...parameters, path:analyticsPath(route.pathname)}});
     },
     analyticsAllowed() {
+      changed();
       return hasChoice() && browser()?.getConsent().analytics_storage === 'granted';
     },
     async beginCheckout(currency: string, entrySurface: EntrySurface, checkoutIntent: string) {

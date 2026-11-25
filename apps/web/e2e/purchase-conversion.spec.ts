@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { expect, type Page, test } from '@playwright/test';
 import { signalChoiceKey } from '../src/lib/consent';
-import { fixtureAdsId, fixtureAdsLabel, fixtureApp, fixtureLegacySession, fixtureMoneyParent } from './origins';
+import { fixtureAdsId, fixtureAdsLabel, fixtureApp, fixtureAuth, fixtureLegacySession, fixtureMoneyParent } from './origins';
 
 const path = '/api/anymd/purchase-conversion';
 const sid = 'cs_live_FixturePaid';
@@ -65,7 +65,7 @@ test('claims only verified paid live checkout, scopes browser dedup and preserve
   expect(await (await claim()).json()).toEqual(purchase);
 });
 
-test('the payment return strips its proof and emits one consented Google Ads conversion', async ({ page }) => {
+test('the return reports a verified Signal purchase before Ads consent and keeps the Ads upgrade', async ({ page }) => {
   const pings = await isolate(page);
   await signIn(page);
   const seen: unknown[] = [];
@@ -81,10 +81,16 @@ test('the payment return strips its proof and emits one consented Google Ads con
   expect(seen).toEqual([]);
   expect(pings).toEqual([]);
   // Upgrade in-place: going through Analytics only must never erase the proof needed for a later grant.
+  const analyticsClaim = page.waitForResponse('**' + path);
   await page.getByRole('button', {name:'Analytics only'}).click();
+  expect((await analyticsClaim).status()).toBe(204);
+  const eventId = createHash('sha256').update('anymd:purchase_completed:' + fixtureMoneyParent + '/checkout_sessions/chk-Paid').digest('hex');
+  const ingestLog = await page.request.get(fixtureAuth + '/test/checkout-batches?event=' + eventId);
+  expect(await ingestLog.json()).toContainEqual({event_name:'purchase_completed', event_id:eventId, distinct_id:eventId,
+    numeric_value:29.99, properties:{plan_sku:'anymd_pro', currency:'USD', entry_surface:'pricing'}});
   await expect.poll(() => commands(page)).toContainEqual(['config', ga4, expect.objectContaining({send_page_view:false})]);
   expect(await adsCommands(page)).toEqual([]);
-  expect(seen).toEqual([]);
+  expect(seen).toEqual([{session_id:sid, analytics_consent:true, ads_consent:false}]);
   await page.getByRole('button', {name:'Cookie settings', exact:true}).click();
   await page.getByRole('button', {name:'Allow analytics & ads'}).click();
   await expect.poll(() => adsCommands(page)).toEqual([
@@ -92,11 +98,14 @@ test('the payment return strips its proof and emits one consented Google Ads con
     ['event', 'conversion', {send_to:fixtureAdsId + '/' + fixtureAdsLabel, value:purchase.value, currency:'USD', transaction_id:purchase.transactionId,
       page_location:fixtureApp + '/pro', page_referrer:'', page_title:'Anymd'}],
   ]);
-  expect(seen).toEqual([{session_id:sid, ads_consent:true}]);
+  expect(seen).toEqual([
+    {session_id:sid, analytics_consent:true, ads_consent:false},
+    {session_id:sid, analytics_consent:true, ads_consent:true},
+  ]);
   await page.reload();
   await page.goto(landing);
   await expect.poll(() => adsCommands(page)).toEqual([['config', fixtureAdsId, {send_page_view:false}]]);
-  expect(seen).toHaveLength(1);
+  expect(seen.filter(row => (row as {ads_consent?: boolean}).ads_consent)).toHaveLength(1);
   // Simulate a new tab without client dedup state: the existing cookie is authoritative.
   const next = await page.context().newPage();
   await next.route('**/cdn-cgi/trace', route => route.fulfill({body:'loc=DE\n'}));
@@ -125,7 +134,7 @@ for (const [choice, gpc, region] of [['denied', '', 'DE'], ['analytics_only', ''
     if (gaAllowed) await expect.poll(() => hits).toEqual(['https://www.googletagmanager.com/gtag/js?id=' + ga4]);
     else expect(hits).toEqual([]);
     expect(await adsCommands(page)).toEqual([]);
-    expect(requests).toEqual([]);
+    expect(requests).toHaveLength(choice === 'analytics_only' && !gpc ? 1 : 0);
     expect((await page.context().cookies()).some(cookie => cookie.name === claimsCookie)).toBe(false);
   });
 }
