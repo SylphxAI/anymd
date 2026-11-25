@@ -209,6 +209,12 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .studio-export .copy-button { min-height:36px; }
 .studio-quote { border-top: 1px solid var(--line); padding: 1rem; }
 .studio-quote h2 { font-size: 1.42rem; }
+.studio-quote-samples { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .55rem; }
+.studio-quote-samples p { flex-basis: 100%; font-size: .85rem; }
+.studio-quote-samples .button { min-height: 44px; max-width: 100%; border-radius: 1.5rem; padding: .35rem .85rem; font: 500 .875rem/1.35 Georgia, 'Noto Serif TC', serif; text-align: start; overflow-wrap: anywhere; }
+.studio-quote-proof { padding: .7rem .85rem; border-inline-start: 2px solid var(--line); background: var(--soft); color: var(--muted); font-size: .9rem; }
+.studio-quote-proof-links { display: flex; flex-wrap: wrap; gap: 0 1rem; }
+.studio-quote-proof-links a { display: inline-flex; min-height: 44px; align-items: center; }
 .studio-quote-results { display: grid; gap: .65rem; min-width: 0; }
 .studio-excerpts { display: grid; gap: .55rem; }
 .studio-excerpts li { padding: .65rem .85rem; border-inline-start: 2px solid var(--accent); background: var(--canvas); overflow-wrap: anywhere; }

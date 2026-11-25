@@ -1,16 +1,17 @@
-import { ArrowRight, Braces, Check, Download, FileText, LockKeyhole, Upload } from 'lucide-solid';
+import { Braces, Download, FileText, LockKeyhole, Upload } from 'lucide-solid';
 import { A } from '@solidjs/router';
 import CitePreview from './cite-preview';
-import { createSignal, For, onCleanup, onMount, Show } from 'solid-js';
+import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import MarkdownPreview from './markdown-preview';
+import QuoteSearch from './quote-search';
 import type { ConversionSource } from '@/lib/analytics';
 import type { Locale } from '@/lib/marketing-locale';
 import { studioCopy, studioStats } from '@/lib/studio-copy';
-import { findQuoteMatches, normalizeQuote, type QuoteMatch } from '@/lib/studio-quote';
+import type { SourceUnit } from '@/lib/studio-quote';
 import { CopyButton } from '../copy';
 import { useCookieConsent } from '../cookie-consent';
 
-type WorkerResult = {markdown:string; format:string; tokens:number; unit_noun:string; units:number; source_units:{label:string; text:string}[]; ms:number};
+type WorkerResult = {markdown:string; format:string; tokens:number; unit_noun:string; units:number; source_units:SourceUnit[]; ms:number};
 type Result = WorkerResult & {sourceKind: ConversionSource; sourceBytes: number; markdownBytes: number};
 const accepted = '.pdf,.docx,.pptx,.xlsx,.html,.htm,.epub,.odt,.ods,.odp,.csv,.tsv,.txt,.md,.rtf,.eml';
 const maxBytes = 32 * 1024 * 1024;
@@ -41,8 +42,6 @@ export default function DocumentStudio(props: { locale: Locale }) {
   const [hydrated, setHydrated] = createSignal(false);
   const [pending, setPending] = createSignal(false);
   const [notice, setNotice] = createSignal('');
-  const [quote, setQuote] = createSignal('');
-  const [match, setMatch] = createSignal<QuoteMatch[] | null>(null);
   const [view, setView] = createSignal<'markdown' | 'preview'>('markdown');
   const [drag, setDrag] = createSignal(false);
   const [stamp, setStamp] = createSignal<string | null>(null);
@@ -71,7 +70,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
   async function convert(name: string, source: File | string) {
     stop(); const run = generation;
     releaseVideo();
-    setResult(null); setView('markdown'); setQuote(''); setMatch(null); setFile(name); setNotice(''); setStamp(null); setVideoUrl(null);
+    setResult(null); setView('markdown'); setFile(name); setNotice(''); setStamp(null); setVideoUrl(null);
     if (source instanceof File && source.type.startsWith('video/')) {
       localVideoUrl = URL.createObjectURL(source);
       setVideoUrl(localVideoUrl); setPending(false); return;
@@ -103,24 +102,12 @@ export default function DocumentStudio(props: { locale: Locale }) {
       w.postMessage({id:run, name, bytes:content}, [content]);
     } catch { fail(t().openError); }
   }
-
   function useFiles(files: FileList | null) {
     if (!hydrated() || !files?.length) return;
     void convert(files[0].name, files[0]);
     if (input) input.value = '';
   }
   function sample(key:'brief'|'pdf') { const choice = SAMPLE[key]; void convert(choice.name,choice.url); }
-
-  function searchQuote(event: SubmitEvent) {
-    event.preventDefault();
-    const output = result();
-    const needle = normalizeQuote(quote());
-    if (!output || needle.length < 3) return;
-    const matches = findQuoteMatches(output.source_units, needle);
-    setMatch(matches);
-    consent.trackBehavioral('quote_searched', {matched:matches.length > 0});
-  }
-
   return <div class="studio">
     <div class="studio-bar"><span class="studio-title"><Braces size={17} /> {t().bar}</span><span class="studio-private"><LockKeyhole size={13} /> {t().private}</span></div>
     <input ref={(element) => { input = element; }} type="file" hidden accept={`${accepted},video/*`} onChange={(e)=>useFiles(e.currentTarget.files)} />
@@ -128,7 +115,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
       <button class="button button-primary" type="button" disabled={!hydrated()} onClick={()=>input?.click()}><Upload size={15} /> {t().open}</button>
       <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('brief')}>{t().sampleDoc}</button>
       <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('pdf')}>{t().samplePdf}</button>
-      <button class="button" type="button" disabled={!hydrated()} onClick={()=>{stop();releaseVideo();setFile('demo.mp4');setVideoUrl('/demo.mp4');setResult(null);setMatch(null);setNotice('');setPending(false);setStamp(null);}}>{t().sampleVideo}</button>
+      <button class="button" type="button" disabled={!hydrated()} onClick={()=>{stop();releaseVideo();setFile('demo.mp4');setVideoUrl('/demo.mp4');setResult(null);setNotice('');setPending(false);setStamp(null);}}>{t().sampleVideo}</button>
     </div>
     <div class={'studio-workspace' + (drag() ? ' studio-drag' : '')} onDragOver={(e)=>{e.preventDefault();if (hydrated()) setDrag(true);}} onDragLeave={()=>setDrag(false)} onDrop={(e)=>{e.preventDefault();setDrag(false);useFiles(e.dataTransfer?.files ?? null);}}>
       <div class="studio-output-header">
@@ -156,22 +143,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
       </div> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{hydrated() ? t().drop : t().loading}</strong><span class="muted">{t().formats}</span></div>}
     </div>
     <div class="studio-bottom"><span>{t().localMarkdown}</span><span>RUST / WASM</span></div>
-    {result() && !noSelectableText() && <form class="studio-quote stack" onSubmit={searchQuote}>
-      <div><h2>{t().quoteTitle}</h2><p class="muted">{t().quoteHelp}</p></div>
-      <label class="field-label">{t().quoteLabel}<input class="field" required minLength={3} maxLength={500} placeholder={t().quotePlaceholder} value={quote()} onInput={(e)=>{setQuote(e.currentTarget.value);setMatch(null);}} /></label>
-      <button class="button justify-self-start" type="submit">{t().find} <ArrowRight size={15} /></button>
-      <Show when={match()}>{matches => <div class="studio-quote-results">
-        <p class="notice" role="status">{matches().length ? <><Check class="inline" size={16} aria-hidden="true" /> {t().found(matches().map(item => item.label))}</> : t().noMatch}</p>
-        <Show when={matches().length}>
-          <ul class="studio-excerpts">
-            <For each={matches()}>{item => <li>
-              <span class="studio-excerpt-label">{t().sourceLabel(item.label)}</span>
-              <p>{item.before}<mark>{item.matched}</mark>{item.after}</p>
-            </li>}</For>
-          </ul>
-        </Show>
-      </div>}</Show>
-    </form>}
+    <Show keyed when={noSelectableText() ? null : result()}>{output => <QuoteSearch locale={props.locale} output={output} />}</Show>
     <CitePreview locale={props.locale} />
   </div>;
 }

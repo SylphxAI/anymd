@@ -26,8 +26,8 @@ test('only known public entry surfaces leave the browser', () => {
 });
 
 for (const pathname of ['/pricing', '/zh-TW/pricing']) {
-  test(pathname + ' keeps homepage entry surfaces alongside campaign values', () => {
-    for (const surface of ['home_hero', 'home_pro_panel']) {
+  test(pathname + ' keeps Pro CTA entry surfaces alongside campaign values', () => {
+    for (const surface of ['home_hero', 'home_pro_panel', 'studio_quote_match']) {
       const href = carryCampaign(pathname + '?entry_surface=' + surface, '?gclid=TEST999&utm_source=docs&utm_campaign=pro');
       const url = new URL(href, 'https://anymd.invalid');
       assert.deepEqual(Object.fromEntries(url.searchParams), {

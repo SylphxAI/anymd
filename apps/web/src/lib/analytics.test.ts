@@ -83,11 +83,11 @@ test('comparison copy and Pro CTA events accept only known labels and never send
   ]);
 }));
 
-test('Pro CTA projection accepts organic labels and rejects non-CTA or arbitrary values', () => {
-  for (const entry_surface of ['seo_vs-hub', 'seo_verifiable-video-and-cite-check-ai-agents', 'task_check_pdf_citation'] as const) {
+test('Pro CTA projection accepts product-owned labels and rejects non-CTA or arbitrary values', () => {
+  for (const entry_surface of ['seo_vs-hub', 'seo_verifiable-video-and-cite-check-ai-agents', 'task_check_pdf_citation', 'studio_quote_match'] as const) {
     assert.deepEqual(behavioralParameters('pro_cta_clicked', {entry_surface}), {entry_surface});
   }
-  for (const entry_surface of ['pricing', 'pro', 'cli_pdf', 'npm_citra', 'seo_vs-private-input', 'task_private_input', 'private-input']) {
+  for (const entry_surface of ['pricing', 'pro', 'cli_pdf', 'npm_citra', 'seo_vs-private-input', 'task_private_input', 'studio_quote_match_private', 'private-input']) {
     assert.equal(behavioralParameters(...(['pro_cta_clicked', {entry_surface}] as BehavioralEvent)), undefined);
   }
 });
