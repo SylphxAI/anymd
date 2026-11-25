@@ -1,3 +1,4 @@
+use super::structured::html_escape;
 use super::*;
 use lopdf::{EncryptionState, EncryptionVersion, Permissions};
 

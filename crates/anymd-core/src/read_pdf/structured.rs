@@ -1,6 +1,8 @@
 //! Structured Markdown and HTML rendering of read_pdf output, and its rebuild after OCR fusion.
 
-use super::*;
+use serde_json::{json, Value};
+
+use super::types::{ReadPdfData, StructuredFusionContext};
 
 pub(super) fn render_structured_markdown(
     pages: &[crate::document_twin::PageText],
