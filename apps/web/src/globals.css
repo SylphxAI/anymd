@@ -103,9 +103,9 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .docs-search { margin-bottom:24px; padding:16px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
 .docs-search [role='status'] { margin-block:8px; font-size:.875rem; }
 .docs-search li + li { margin-top:8px; }
-.doc-code { display:grid; justify-items:start; margin-block:15px; }
-.doc-code pre { width:100%; margin:0; }
-.doc-copy { display:none; margin-top:4px; }
+.doc-code { display:grid; justify-items:start; gap:4px; margin-block:15px; }
+.prose .doc-code pre { width:100%; margin:0; }
+.doc-copy { display:none; min-height:36px; }
 [data-interactive] .doc-copy { display:inline-flex; }
 .prose :is(h1,h2,h3,h4) { scroll-margin-top:20px; }
 .prose h1 { font-size:clamp(34px,5vw,56px); margin-bottom:24px; }
@@ -160,11 +160,15 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .studio-controls .button { font-size: .82rem; padding: .45rem .72rem; min-height: 2.35rem; }
 .studio-workspace { margin: 0 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--bg); min-width: 0; }
 .studio-drag { outline: 2px solid var(--accent); outline-offset: 2px; }
-.studio-label { padding: .65rem .85rem; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .4rem; color: var(--muted); overflow-wrap: anywhere; }
+.studio-output-header { border-bottom: 1px solid var(--line); }
+.studio-label { padding: .55rem .85rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .4rem; color: var(--muted); overflow-wrap: anywhere; }
 .studio-code { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; min-height: 15rem; max-height: 28rem; padding: .9rem; font: .85rem/1.6 var(--mono); }
 .studio-empty { min-height: 13rem; display: grid; align-content: center; justify-items: center; gap: .65rem; text-align: center; padding: 1.25rem; }
 .studio-bottom { color: var(--muted); }
+.studio-output-actions { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:.4rem 1rem; padding:0 .85rem .55rem; }
+.studio-stats { font:.75rem/1.5 var(--mono); color:var(--muted); }
 .studio-export { display:flex; flex-wrap:wrap; gap:6px; }
+.studio-export .copy-button { min-height:36px; }
 .studio-quote { border-top: 1px solid var(--line); padding: 1rem; }
 .studio-quote h2 { font-size: 1.42rem; }
 .cite-preview { display:grid; gap:14px; padding:clamp(16px, 3vw, 28px); border-top:1px solid var(--line); background:var(--soft); }

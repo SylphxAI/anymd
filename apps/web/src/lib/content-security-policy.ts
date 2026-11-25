@@ -28,7 +28,7 @@ export function contentSecurityPolicy(nonce: string) {
     // Solid/UI and Vite use inline styles (not scripts) for runtime presentation.
     "style-src 'self' 'unsafe-inline'", "font-src 'self'",
     "img-src 'self' data: blob: " + [googleTag, ...analytics, ...ads].join(' '),
-    "media-src 'self' blob:", "worker-src 'self'",
+    "media-src 'self' blob:", "worker-src 'self'", "manifest-src 'self'",
     'connect-src ' + connect.join(' '),
     "frame-src " + googleTag, "form-action 'self'" + (auth.length ? " " + auth.join(" ") : ""),
   ].join('; ');

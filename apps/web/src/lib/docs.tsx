@@ -1,6 +1,7 @@
 import { A, createAsync, query } from '@solidjs/router';
 import { HttpStatusCode } from '@solidjs/start';
 import { createSignal, For, onCleanup, onMount, Show } from 'solid-js';
+import { useCookieConsent } from '@/components/cookie-consent';
 import { PageMeta } from '@/components/page-meta';
 
 const nav = [['Getting started','getting-started'],['CLI','cli'],['Python API','python'],['MCP tools','tools'],['Formats','formats'],['Cite-check','cite-check'],['Video timeline','video-timeline'],['Benchmarks','benchmarks'],['Migration','migration']] as const;
@@ -32,6 +33,7 @@ function DocSearch(props: { entries: { title: string; description?: string; path
 }
 
 export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean }) {
+  const consent = useCookieConsent();
   const [interactive, setInteractive] = createSignal(false);
   const [feedback, setFeedback] = createSignal('');
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -56,6 +58,7 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
     try { await navigator.clipboard.writeText(code); message = 'Copied'; }
     catch { message = 'Select and copy'; }
     if (run !== attempt) return;
+    if (message === 'Copied') consent.trackBehavioral('output_copied', {surface:'docs_code'});
     button.textContent = message;
     setFeedback(message);
     timeout = setTimeout(reset, 1800);

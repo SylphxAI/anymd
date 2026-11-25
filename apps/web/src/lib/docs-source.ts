@@ -26,7 +26,6 @@ function localUrl(href: string, slug: string) {
 
 type RenderContext = { slug: string; headings: Map<string, number> };
 
-const copyExamples = new Set(['guide/cli', 'guide/tools', 'guide/python']);
 const md = new MarkdownIt({ html: false, linkify: true });
 // Standalone source comments mark generated sections. Consume the comment line
 // without enabling HTML or touching examples inside Markdown code blocks.
@@ -42,7 +41,7 @@ for (const rule of ['fence', 'code_block'] as const) {
   const render = md.renderer.rules[rule]!;
   md.renderer.rules[rule] = (tokens, index, options, env, self) => {
     const html = render(tokens, index, options, env, self);
-    return copyExamples.has((env as RenderContext).slug)
+    return (env as RenderContext).slug.startsWith('guide/')
       ? '<div class="doc-code">' + html + '<button type="button" class="button copy-button doc-copy">Copy code</button></div>\n'
       : html;
   };

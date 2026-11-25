@@ -164,7 +164,7 @@ export function AccountPanel(props: { billing?: boolean }) {
         <section class="panel stack"><span class="eyebrow"><Terminal size={16} /> LOCAL TOOLS</span><h2>Connect CLI or MCP</h2>
           <CliLogin />
           <p class="muted">Use this MCP configuration in Claude Desktop, Cursor or Windsurf. Free local conversion requires no account.</p>
-          <pre class="code-box"><code>{nativeConfig}</code></pre><div class="flex flex-wrap items-center gap-3"><CopyButton text={nativeConfig} label="Copy MCP config" /></div>
+          <pre class="code-box"><code>{nativeConfig}</code></pre><div class="flex flex-wrap items-center gap-3"><CopyButton text={nativeConfig} analytics={{surface:'dashboard_mcp', command_kind:'mcp_config'}} label="Copy MCP config" /></div>
         </section>
       </div>
     </Match>
@@ -174,7 +174,7 @@ export function AccountPanel(props: { billing?: boolean }) {
 export function CliLogin() {
   return <div class="stack">
     <p class="muted">To activate Pro on this machine, run the command below and sign in with the account you used to buy Pro.</p>
-    <div class="flex flex-wrap items-center gap-3"><code>{cliLogin}</code><CopyButton text={cliLogin} label="Copy login command" /><A href="/docs" class="inline-link">Install the CLI</A></div>
+    <div class="flex flex-wrap items-center gap-3"><code>{cliLogin}</code><CopyButton text={cliLogin} analytics={{surface:'dashboard_cli', command_kind:'cli_login'}} label="Copy login command" /><A href="/docs" class="inline-link">Install the CLI</A></div>
   </div>;
 }
 

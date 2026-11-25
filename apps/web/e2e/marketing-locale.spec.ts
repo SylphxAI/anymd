@@ -74,6 +74,14 @@ test('switches languages and shows priced plans and readable examples at this vi
       }), name).toBe(true);
     }
     const tablist = page.getByRole('tablist', { name: demo });
+    const tabs = tablist.getByRole('tab');
+    await expect(tabs).toHaveCount(3);
+    const lineBands = await tabs.locator('span').evaluateAll(labels => labels.map(label => {
+      const text = document.createRange();
+      text.selectNodeContents(label);
+      return Array.from(text.getClientRects(), rect => Math.round(rect.top));
+    }));
+    expect(lineBands).toEqual([[lineBands[0][0]], [lineBands[0][0]], [lineBands[0][0]]]);
     await tablist.getByRole('tab', { name: 'PDF', exact: true }).focus();
     await page.keyboard.press('ArrowRight');
     await expect(page.getByRole('tabpanel').locator('pre')).toContainText('<!-- slide 2 -->');
