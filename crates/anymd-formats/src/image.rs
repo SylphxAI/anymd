@@ -706,7 +706,11 @@ mod tests {
             md.starts_with("|Property|Value|\n|-|-|\n|Format|PNG|\n|Dimensions|64 × 32 px|"),
             "{md}"
         );
-        assert!(md.contains("`ocr: true`"));
+        if cfg!(feature = "native") {
+            assert!(md.contains("`ocr: true`"), "{md}");
+        } else {
+            assert!(md.contains("`anymd --ocr`"), "{md}");
+        }
     }
 
     #[test]
