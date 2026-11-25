@@ -12,12 +12,11 @@ pub(crate) use package::{
 pub(crate) use render::{collapse_ws, Blocks, Inline, ListIndent, Media};
 pub(crate) use xml::{core_properties, parse_xml, Element, Node};
 
-// Preserve crate-visible names that have no callers outside the submodules yet.
-#[allow(unused_imports)]
+#[allow(unused_imports, reason = "retain the original package imports")]
 pub(crate) use package::{check_limits, Rel, MAX_ENTRY_BYTES};
-#[allow(unused_imports)]
+#[allow(unused_imports, reason = "retain the original render imports")]
 pub(crate) use render::{image_markdown, Span};
-#[allow(unused_imports)]
+#[allow(unused_imports, reason = "retain the original XML import")]
 pub(crate) use xml::local;
 
 #[cfg(test)]
