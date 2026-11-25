@@ -10,7 +10,7 @@ import { Faq, StructuredData, faqSchema, softwareSchema, freeOffer, proOffer } f
 import { useBrowserLocales } from '@/lib/browser-locales';
 import { defaultCurrency, formatPrice, proAmount } from '@/lib/catalog';
 import { homeCopy } from '@/lib/marketing-copy';
-import { localeFromPath, localizedPath } from '@/lib/marketing-locale';
+import { localeFromPath, localizedPath, translatedPaths } from '@/lib/marketing-locale';
 
 const npmSetup = 'npx -y @sylphx/anymd setup';
 const pipInstall = 'pip install anymd';
@@ -32,7 +32,7 @@ export default function Home() {
         <div class="eyebrow"><span class="status-dot" /> {t().eyebrow}</div>
         <h1>{t().title}<br/><em>{t().accent}</em></h1>
         <p class="hero-summary">{t().summary}</p>
-        <div class="hero-actions"><CampaignLink href="/studio" class="button button-primary">{t().tryStudio} <ArrowRight size={16} /></CampaignLink><CampaignLink href={locale() === 'zh-TW' ? pricing() : '/pricing?entry_surface=home_hero'} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:'home_hero'})}>{t().getPro} — {price()}</CampaignLink></div>
+        <div class="hero-actions"><CampaignLink href={locale() === 'zh-TW' ? translatedPaths['/studio'] : '/studio'} class="button button-primary">{t().tryStudio} <ArrowRight size={16} /></CampaignLink><CampaignLink href={locale() === 'zh-TW' ? pricing() : '/pricing?entry_surface=home_hero'} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:'home_hero'})}>{t().getPro} — {price()}</CampaignLink></div>
         <div class="hero-install" role="group" aria-label={t().install}>
           <div class="install-line">
             <code><span aria-hidden="true">$ </span>{npmSetup}</code>
@@ -46,7 +46,7 @@ export default function Home() {
         </div>
       </div>
       <div class="hero-preview">
-        <CampaignLink href="/studio" class="preview-link">{t().openStudio} <ArrowRight size={15} /></CampaignLink>
+        <CampaignLink href={locale() === 'zh-TW' ? translatedPaths['/studio'] : '/studio'} class="preview-link">{t().openStudio} <ArrowRight size={15} /></CampaignLink>
         <HomeConversionDemo locale={locale()} />
       </div>
     </section>

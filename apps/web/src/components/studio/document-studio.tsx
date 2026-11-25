@@ -3,6 +3,8 @@ import { A } from '@solidjs/router';
 import CitePreview from './cite-preview';
 import { createSignal, onCleanup, Show } from 'solid-js';
 import type { ConversionSource } from '@/lib/analytics';
+import type { Locale } from '@/lib/marketing-locale';
+import { studioCopy, studioStats } from '@/lib/studio-copy';
 import { CopyButton } from '../copy';
 import { useCookieConsent } from '../cookie-consent';
 
@@ -26,11 +28,8 @@ function downloadMarkdown(filename: string, markdown: string) {
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
-function formatStats(result: Result) {
-  return result.units.toLocaleString() + ' ' + result.unit_noun + (result.units === 1 ? '' : 's') + ' · ~' + result.tokens.toLocaleString() + ' tokens';
-}
-
-export default function DocumentStudio() {
+export default function DocumentStudio(props: { locale: Locale }) {
+  const t = () => studioCopy[props.locale];
   const consent = useCookieConsent();
   const [result, setResult] = createSignal<Result | null>(null);
   const noSelectableText = () => {
@@ -74,12 +73,12 @@ export default function DocumentStudio() {
       setVideoUrl(localVideoUrl); setPending(false); return;
     }
     if (source instanceof File && (source.size === 0 || source.size > maxBytes)) {
-      setPending(false); setNotice('Choose a non-empty document up to 32 MB. Use the native CLI for larger files.'); return;
+      setPending(false); setNotice(t().sizeError); return;
     }
     const sourceKind = typeof source === 'string' ? 'sample' : 'local_file';
     setPending(true);
     const fail = (message: string) => { if (generation !== run) return; stop(); setPending(false); setNotice(message); };
-    timer = setTimeout(() => fail('Conversion timed out. Try a smaller document or use the native CLI.'), 35_000);
+    timer = setTimeout(() => fail(t().timeoutError), 35_000);
     try {
       controller = new AbortController();
       const content = typeof source === 'string' ? await fetch(source, {signal:controller.signal}).then((r) => { if (!r.ok) throw new Error(); return r.arrayBuffer(); }) : await source.arrayBuffer();
@@ -87,16 +86,16 @@ export default function DocumentStudio() {
       const w = new Worker('/studio-worker.js', {type:'module'}); worker = w;
       w.onmessage = ({data}) => {
         if (run !== generation || data.id !== run) return;
-        if (data.outcome !== 'ok') { fail('Couldn’t read this document. Check its format, or try the same file with the native CLI.'); return; }
+        if (data.outcome !== 'ok') { fail(t().readError); return; }
         const output: WorkerResult = data.result;
         setResult({...output, sourceKind}); setPending(false); stop();
         consent.trackBehavioral('document_converted', {
           file_format:output.format, source_kind:sourceKind, unit_count:output.units, token_count:output.tokens, duration_ms:output.ms,
         });
       };
-      w.onerror = () => fail('The browser converter could not start. Try again or use the native CLI.');
+      w.onerror = () => fail(t().startError);
       w.postMessage({id:run, name, bytes:content}, [content]);
-    } catch { fail('Couldn’t open this file. Try again or choose another.'); }
+    } catch { fail(t().openError); }
   }
 
   function useFiles(files: FileList | null) {
@@ -117,37 +116,37 @@ export default function DocumentStudio() {
   }
 
   return <div class="studio">
-    <div class="studio-bar"><span class="studio-title"><Braces size={17} /> DOCUMENT STUDIO</span><span class="studio-private"><LockKeyhole size={13} /> Runs in your browser</span></div>
+    <div class="studio-bar"><span class="studio-title"><Braces size={17} /> {t().bar}</span><span class="studio-private"><LockKeyhole size={13} /> {t().private}</span></div>
     <input ref={(element) => { input = element; }} type="file" hidden accept={`${accepted},video/*`} onChange={(e)=>useFiles(e.currentTarget.files)} />
     <div class="studio-controls">
-      <button class="button button-primary" type="button" onClick={()=>input?.click()}><Upload size={15} /> Open a file</button>
-      <button class="button" type="button" onClick={()=>sample('brief')}>Sample document</button>
-      <button class="button" type="button" onClick={()=>sample('pdf')}>Sample PDF</button><button class="button" type="button" onClick={()=>{stop();releaseVideo();setFile('demo.mp4');setVideoUrl('/demo.mp4');setResult(null);setMatch(null);setNotice('');setPending(false);setStamp(null);}}>Sample video</button>
+      <button class="button button-primary" type="button" onClick={()=>input?.click()}><Upload size={15} /> {t().open}</button>
+      <button class="button" type="button" onClick={()=>sample('brief')}>{t().sampleDoc}</button>
+      <button class="button" type="button" onClick={()=>sample('pdf')}>{t().samplePdf}</button><button class="button" type="button" onClick={()=>{stop();releaseVideo();setFile('demo.mp4');setVideoUrl('/demo.mp4');setResult(null);setMatch(null);setNotice('');setPending(false);setStamp(null);}}>{t().sampleVideo}</button>
     </div>
     <div class={'studio-workspace' + (drag() ? ' studio-drag' : '')} onDragOver={(e)=>{e.preventDefault();setDrag(true);}} onDragLeave={()=>setDrag(false)} onDrop={(e)=>{e.preventDefault();setDrag(false);useFiles(e.dataTransfer?.files ?? null);}}>
       <div class="studio-output-header">
-        <div class="studio-label"><span><FileText size={15} aria-hidden="true" /> {file() ?? 'INPUT / OUTPUT'}</span><Show when={result()}>{(output) => <span>{output().format.toUpperCase()} · {output().ms} ms</span>}</Show></div>
+        <div class="studio-label"><span><FileText size={15} aria-hidden="true" /> {file() ?? t().inputOutput}</span><Show when={result()}>{(output) => <span>{output().format.toUpperCase()} · {output().ms} ms</span>}</Show></div>
         <Show when={noSelectableText() ? null : result()}>{output => <div class="studio-output-actions">
-          <span class="studio-stats">{formatStats(output())}</span>
+          <span class="studio-stats">{studioStats(props.locale, output().units, output().unit_noun, output().tokens)}</span>
           <div class="studio-export">
-            <CopyButton text={output().markdown} label="Copy Markdown" analytics={{surface:'studio_output'}} />
+            <CopyButton text={output().markdown} label={t().copyMarkdown} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_output'}} />
             <button type="button" class="button copy-button" onClick={() => {
               const {markdown, format, sourceKind} = output();
               downloadMarkdown(file() ?? 'document', markdown);
               consent.trackBehavioral('output_downloaded', {file_format:format, source_kind:sourceKind});
-            }}><Download size={15} aria-hidden="true" />Download .md</button>
+            }}><Download size={15} aria-hidden="true" />{t().download}</button>
           </div>
         </div>}</Show>
       </div>
-      {pending() ? <div class="studio-empty" role="status">Converting locally… <button type="button" class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>Cancel</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : noSelectableText() ? <div class="studio-empty" role="status"><strong>No selectable text found in this PDF.</strong><span class="muted">Scanned PDFs require OCR. <A href="/docs/cli" class="inline-link">Use OCR in the native CLI</A> to extract text.</span></div> : result() ? <pre class="studio-code" tabIndex={0} aria-label="Markdown output">{result()?.markdown}</pre> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label="Local source video"/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>Mark current timestamp</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label="Copy timestamp" analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>Drop a document here</strong><span class="muted">PDF, Office, HTML, EPUB, text and more. Up to 32 MB. No uploads.</span></div>}
+      {pending() ? <div class="studio-empty" role="status">{t().converting} <button type="button" class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>{t().cancel}</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : noSelectableText() ? <div class="studio-empty" role="status"><strong>{t().scanned}</strong><span class="muted">{t().ocr}<A href="/docs/cli" class="inline-link">{t().ocrLink}</A>{t().ocrEnd}</span></div> : result() ? <pre class="studio-code" tabIndex={0} aria-label={t().markdown}>{result()?.markdown}</pre> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{t().drop}</strong><span class="muted">{t().formats}</span></div>}
     </div>
-    <div class="studio-bottom"><span>LOCAL FILE → MARKDOWN</span><span>RUST / WASM</span></div>
+    <div class="studio-bottom"><span>{t().localMarkdown}</span><span>RUST / WASM</span></div>
     {result() && !noSelectableText() && <form class="studio-quote stack" onSubmit={searchQuote}>
-      <div><h2>Find a quote in the source</h2><p class="muted">Matches extracted text within a single page, slide or section. Ignores case and spacing; it does not verify a paraphrase or run OCR.</p></div>
-      <label class="field-label">Quote from the document<input class="field" required minLength={3} maxLength={500} placeholder="Paste a phrase to find…" value={quote()} onInput={(e)=>{setQuote(e.currentTarget.value);setMatch(null);}} /></label>
-      <button class="button justify-self-start" type="submit">Find quote <ArrowRight size={15} /></button>
-      {match() && <p class="notice" role="status">{match()?.length ? <><Check class="inline" size={16} /> Found in {match()?.join(', ')}.</> : 'No exact match within a single source unit.'}</p>}
+      <div><h2>{t().quoteTitle}</h2><p class="muted">{t().quoteHelp}</p></div>
+      <label class="field-label">{t().quoteLabel}<input class="field" required minLength={3} maxLength={500} placeholder={t().quotePlaceholder} value={quote()} onInput={(e)=>{setQuote(e.currentTarget.value);setMatch(null);}} /></label>
+      <button class="button justify-self-start" type="submit">{t().find} <ArrowRight size={15} /></button>
+      {match() && <p class="notice" role="status">{match()?.length ? <><Check class="inline" size={16} /> {t().found(match() ?? [])}</> : t().noMatch}</p>}
     </form>}
-    <CitePreview />
+    <CitePreview locale={props.locale} />
   </div>;
 }

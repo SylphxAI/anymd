@@ -11,7 +11,7 @@ type GoogleWindow = Window & { [gaDisable]?: boolean; dataLayer?: unknown[]; gta
 const allowedSections = new Set(['studio', 'docs', 'vs', 'pro', 'pricing', 'privacy', 'playground', 'legal', 'guide', 'tasks', 'security', 'use-cases', 'vision', 'sign-in', 'account', 'billing', 'dashboard', 'recover', 'cli-auth']);
 
 export function analyticsPath(pathname: string) {
-  // Only the two translated routes are allowed, not every child of a locale.
+  // Only known translated routes are allowed, not every child of a locale.
   if (localeFromPath(pathname) === 'zh-TW') return localizedPath(pathname, 'zh-TW');
   const path = pathname.split(/[?#]/, 1)[0];
   const section = path.split('/')[1];

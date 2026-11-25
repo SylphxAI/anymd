@@ -16,8 +16,9 @@ test.describe('crawler-visible locale metadata', () => {
       ['/pricing?currency=EUR', '/pricing', '/pricing', '/zh-TW/pricing'],
       ['/zh-TW/pricing/?currency=TWD&session_id=fixture', '/zh-TW/pricing', '/pricing', '/zh-TW/pricing'],
       ['/pro?currency=EUR', '/pricing', '/pricing', '/zh-TW/pricing'],
-      ['/studio', '/studio', '/studio', null],
-      ['/playground', '/studio', '/studio', null],
+      ['/studio?utm_source=fixture', '/studio', '/studio', '/zh-TW/studio'],
+      ['/zh-TW/studio?utm_source=fixture', '/zh-TW/studio', '/studio', '/zh-TW/studio'],
+      ['/playground', '/studio', '/studio', '/zh-TW/studio'],
       ['/docs/cli', '/docs/cli', '/docs/cli', null],
       ['/vs/markdownify-mcp', '/vs/markdownify-mcp', '/vs/markdownify-mcp', null],
       ['/tasks', '/tasks', '/tasks', null],
@@ -38,7 +39,8 @@ test.describe('crawler-visible locale metadata', () => {
         nodes.map(node => [node.getAttribute('hreflang'), node.getAttribute('href')]))).toEqual(alternates);
       if (canonical.startsWith('/zh-TW')) {
         await expect(page.getByRole('main')).toBeVisible();
-        await expect(page.getByRole('heading', { level: 1 })).toContainText(canonical.endsWith('pricing') ? '免費轉檔，按需升級' : '讀取文件，');
+        const heading = canonical.endsWith('/studio') ? '轉檔工作室' : canonical.endsWith('/pricing') ? '免費轉檔，按需升級' : '讀取文件，';
+        await expect(page.getByRole('heading', { level: 1 })).toContainText(heading);
       }
     }
     for (const [path, status] of [['/sign-in', 200], ['/recover', 200], ['/zh-TW/does-not-exist', 404]] as const) {
@@ -47,7 +49,13 @@ test.describe('crawler-visible locale metadata', () => {
       await expect(page.locator('head link[rel="alternate"][hreflang]')).toHaveCount(0);
     }
     const sitemap = await (await request.get('/sitemap.xml')).text();
-    for (const path of ['/zh-TW', '/zh-TW/pricing']) expect(sitemap).toContain('<loc>' + origin + path + '</loc>');
+    for (const path of ['/zh-TW', '/zh-TW/pricing', '/studio', '/zh-TW/studio']) expect(sitemap).toContain('<loc>' + origin + path + '</loc>');
+    expect(sitemap).not.toContain('/zh-Hant/studio');
+    for (const method of ['GET', 'HEAD']) {
+      const alias = await request.fetch('/zh-Hant/studio?gclid=fixture&UTM_unknown=a%2Bb&utm_source=zh%20tw', { method, maxRedirects: 0 });
+      expect(alias.status()).toBe(308);
+      expect(alias.headers().location).toBe('/zh-TW/studio?gclid=fixture&UTM_unknown=a%2Bb&utm_source=zh%20tw');
+    }
   });
 });
 
@@ -58,7 +66,7 @@ test('switches languages and shows priced plans and readable examples at this vi
   await expect(consent).toBeVisible();
   for (const [path, tryStudio, openStudio, demo, third, output] of [
     ['/', 'Try Studio Free', 'Open Studio', 'Conversion examples', 'Video frame', 'Frame citation'],
-    ['/zh-TW', '免費試用 Studio（英文）', '開啟 Studio（英文）', '轉換範例', '影片影格', '影格引用'],
+    ['/zh-TW', '免費試用轉檔工作室', '開啟轉檔工作室', '轉換範例', '影片影格', '影格引用'],
   ] as const) {
     if (path === '/zh-TW') await page.getByRole('link', { name: '繁體中文', exact: true }).click();
     await expect(page).toHaveURL(path);
@@ -66,7 +74,7 @@ test('switches languages and shows priced plans and readable examples at this vi
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
     for (const name of [tryStudio, openStudio]) {
       const cta = page.getByRole('link', { name, exact: true });
-      await expect(cta).toHaveAttribute('href', '/studio');
+      await expect(cta).toHaveAttribute('href', path === '/' ? '/studio' : '/zh-TW/studio');
       // No scrolling or dismissing the bar: the first-visit viewport must hit the link.
       expect(await cta.evaluate(el => {
         const { x, y, width, height } = el.getBoundingClientRect();
@@ -118,7 +126,8 @@ for (const prefix of ['/zh-TW', '/zh-Hant']) {
       await expect(header.getByRole('link', { name: '登入', exact: true })).toBeVisible();
       const mobileMenu = header.getByLabel('開啟導覽選單');
       if (await mobileMenu.isVisible()) await mobileMenu.click();
-      await expect(header.getByRole('link', { name: '轉檔工作室（英文）', exact: true })).toHaveAttribute('href', '/studio');
+      await expect(header.getByRole('link', { name: '轉檔工作室', exact: true })).toHaveAttribute('href', '/zh-TW/studio');
+      await expect(header).not.toContainText('（英文）');
       if (await mobileMenu.isVisible()) await mobileMenu.click();
 
       const consent = page.getByRole('complementary', { name: 'Cookie 設定' });
@@ -129,8 +138,8 @@ for (const prefix of ['/zh-TW', '/zh-Hant']) {
         await expect(consent.getByRole('button', { name, exact: true })).toBeEnabled();
       }
       if (path === prefix) {
-        for (const name of ['免費試用 Studio（英文）', '開啟 Studio（英文）']) {
-          await expect(page.getByRole('link', { name, exact: true })).toHaveAttribute('href', '/studio');
+        for (const name of ['免費試用轉檔工作室', '開啟轉檔工作室']) {
+          await expect(page.getByRole('link', { name, exact: true })).toHaveAttribute('href', '/zh-TW/studio');
         }
       } else {
         const pro = page.locator('.pro-plan');
