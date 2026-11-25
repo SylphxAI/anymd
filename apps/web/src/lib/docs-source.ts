@@ -2,12 +2,8 @@ import MarkdownIt from 'markdown-it';
 import { canonicalOrigin } from './app-origin';
 import { isBackendHref } from './backend-href';
 
-const source = import.meta.glob('../../../../docs/{guide,legal,security,tasks,use-cases,vs}/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const source = import.meta.glob(['../../../../docs/{guide,legal,security,tasks,use-cases,vs}/*.md', '../../../../docs/vision.md'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const prefix = '../../../../docs/';
-const docs = new Map(Object.entries(source).map(([name, raw]) => [name.slice(prefix.length, -3), raw]));
-export const documents = [...docs.keys(), 'vision'];
-const vision = import.meta.glob('../../../../docs/vision.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-docs.set('vision', vision[prefix + 'vision.md']);
 
 export function canonicalDocPath(slug: string): string {
   if (slug === 'guide/getting-started') return '/docs';
@@ -83,12 +79,15 @@ function docSummary(raw: string) {
   const markdown = raw.replace(frontmatter, '');
   const title = markdown.match(/^# (.+)$/m)?.[1];
   const description = metadata?.match(/^description: *(.*)$/m)?.[1]?.replace(/^['"]|['"]$/g, '');
-  return { markdown, title, description };
+  const noindex = /^noindex:[ \t]*true[ \t]*$/m.test(metadata ?? '');
+  return { markdown, title, description, noindex };
 }
 
-const searchIndex = [...docs].flatMap(([slug, raw]) => {
-  if (!slug.startsWith('guide/')) return [];
-  const { title, description } = docSummary(raw);
+const docs = new Map(Object.entries(source).map(([name, raw]) => [name.slice(prefix.length, -3), docSummary(raw)]));
+export const indexableDocuments = [...docs].flatMap(([slug, { noindex }]) => noindex ? [] : [slug]);
+
+const searchIndex = [...docs].flatMap(([slug, { title, description, noindex }]) => {
+  if (noindex || !slug.startsWith('guide/')) return [];
   const path = canonicalDocPath(slug);
   return title && path !== '/docs' ? [{ title, description, path }] : [];
 });
@@ -96,10 +95,10 @@ const searchIndex = [...docs].flatMap(([slug, raw]) => {
 export function renderDoc(input: string, legacyDocs: boolean) {
   const slug = !legacyDocs && input === 'vs' ? 'vs/index'
     : legacyDocs && !input.includes('/') && !docs.has(input) ? 'guide/' + input : input;
-  const raw = docs.get(slug);
-  if (!raw) return null;
-  const { markdown, title, description } = docSummary(raw);
+  const doc = docs.get(slug);
+  if (!doc) return null;
+  const { markdown, title, description, noindex } = doc;
   const canonical = canonicalDocPath(slug);
-  return { title: title ?? slug, description, canonical, searchIndex: canonical === '/docs' ? searchIndex : undefined,
+  return { title: title ?? slug, description, canonical, noindex, searchIndex: canonical === '/docs' ? searchIndex : undefined,
     html: md.render(markdown, { slug, headings: new Map<string, number>() } satisfies RenderContext) };
 }

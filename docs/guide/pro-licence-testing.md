@@ -1,6 +1,7 @@
 ---
 title: Test Pro licence activation
 description: Check test licences without changing your production activation.
+noindex: true
 ---
 
 # Test Pro licence activation

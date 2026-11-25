@@ -26,6 +26,28 @@ for (const route of ['/', '/pricing', comparison]) {
   });
 }
 
+for (const [route, locale] of [['/studio', 'en'], ['/zh-TW/studio', 'zh-TW']]) {
+  test(`${route} serves localized free WebApplication metadata`, async ({ request }) => {
+    const response = await request.get(route + '?utm_source=github&utm_medium=readme&utm_content=nav');
+    expect(response.status()).toBe(200);
+    const html = await response.text();
+    const canonical = origin + route;
+    expect(html).toContain(`rel="canonical" href="${canonical}"`);
+    const script = html.match(/<script\b[^>]*\btype="application\/ld\+json"[^>]*>([^<]+)<\/script>/);
+    expect(script).not.toBeNull();
+    const data = JSON.parse(script?.[1] ?? 'null');
+    expect(data['@context']).toBe('https://schema.org');
+    expect(data['@graph']).toEqual([expect.objectContaining({
+      '@type': 'WebApplication',
+      url: canonical,
+      inLanguage: locale,
+      description: expect.stringMatching(/Markdown/),
+      browserRequirements: expect.stringMatching(/WebAssembly/),
+      offers: expect.objectContaining({ '@type': 'Offer', price: 0, priceCurrency: 'USD', url: canonical }),
+    })]);
+  });
+}
+
 test('comparison is discoverable and its local setup controls work', async ({ page }) => {
   for (const path of ['/vs', '/docs']) {
     await page.goto(path);

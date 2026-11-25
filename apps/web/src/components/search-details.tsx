@@ -24,6 +24,19 @@ export function softwareSchema(...offers: ReturnType<typeof offer>[]) {
   };
 }
 
+export function studioSchema(path: string, locale: string, title: string, description: string) {
+  return {
+    '@type': 'WebApplication',
+    name: 'Anymd ' + title,
+    url: canonicalOrigin + path,
+    inLanguage: locale,
+    applicationCategory: 'UtilitiesApplication',
+    browserRequirements: 'Requires a browser with WebAssembly support.',
+    description,
+    offers: offer('Free Studio', 0, path, defaultCurrency),
+  };
+}
+
 export function faqSchema(path: string, questions: readonly Question[]) {
   return {
     '@type': 'FAQPage',

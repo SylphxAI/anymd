@@ -109,7 +109,7 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
       <section class="wrap page-shell"><PageMeta title="Documentation unavailable" robots="noindex" /><h1>Documentation unavailable</h1><p>Reload the page to try again.</p></section>
     </Match>
     <Match when={article()}>{value => <section class="wrap page-shell article-layout">
-      <PageMeta title={props.index ? 'Documentation' : value().title} canonical={value().canonical} description={value().description} />
+      <PageMeta title={props.index ? 'Documentation' : value().title} canonical={value().canonical} description={value().description} robots={value().noindex ? 'noindex' : undefined} />
       <nav class="docs-nav" aria-label="Documentation"><span class="eyebrow">REFERENCE</span><For each={nav}>{([label, href]) => <CampaignLink href={href === 'getting-started' ? '/docs' : '/docs/' + href}>{label}</CampaignLink>}</For><CampaignLink href="/tasks">Task guides</CampaignLink><CampaignLink href="/vs">Comparisons</CampaignLink></nav>
       {/* Only trusted repository Markdown, rendered with inline HTML disabled. */}
       <div class="min-w-0"><Show when={props.index && interactive() && value().searchIndex}>{entries => <DocSearch entries={entries()} />}</Show><article ref={body} class="prose" data-interactive={interactive() ? 'true' : undefined} onClick={copyCode} innerHTML={html()} /><span class="sr-only" role="status">{feedback()}</span></div>
