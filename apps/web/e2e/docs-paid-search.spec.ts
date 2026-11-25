@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const landings = [
+  { gclid: 'TEST321', path: '/tasks/build-video-timeline', surface: 'task_build_video_timeline', proof: /red → blue at 1000 ms, with the source hash/ },
   { gclid: 'TEST123', path: '/tasks/check-pdf-citation', surface: 'task_check_pdf_citation', proof: /page 1 → verified_exact in the page\s+box, unmatched in the empty box/ },
   { gclid: 'TEST456', path: '/tasks/extract-video-frame', surface: 'task_extract_video_frame', proof: /1031 ms → decoded frame at 1100 ms,\s+with the PNG hash/ },
   { gclid: 'TEST789', path: '/use-cases/pdf-and-office-to-markdown-mcp', surface: 'seo_pdf-and-office-to-markdown-mcp', proof: /96\.4 overall score across 38 documents converted in 11\.5 seconds/ },
@@ -9,6 +10,9 @@ const ctaLabel = 'See Anymd Pro — US$29 one-time';
 
 for (const { gclid, path, surface, proof } of landings) {
   test(path + ' shows proof and carries the campaign to pricing before consent', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    page.on('pageerror', error => errors.push(error.message));
     const campaign = { gclid, gbraid:'Good_A', wbraid:'Good_B', utm_source:'google', utm_medium:'cpc', utm_campaign:'PDF & video' };
     const incoming = new URLSearchParams({ ...campaign, entry_surface:'cli_pdf', email:'do-not-forward@example.invalid', utm_content:'bad\u0000value' });
     incoming.append('utm_term', 'duplicate-one');
@@ -34,6 +38,11 @@ for (const { gclid, path, surface, proof } of landings) {
     const sample = article.locator('blockquote').filter({ hasText: proof });
     await expect(cta).toHaveClass(/button-primary/);
     await expect(cta).toHaveAttribute('href', href);
+    await expect(article).not.toContainText('8.5.5');
+    await expect(article.locator('a[href*="utm_source=docs_"]')).toHaveCount(0);
+    if (surface === 'task_build_video_timeline') {
+      await expect(article.getByRole('link', { name: 'See Anymd Pro pricing', exact: true })).toHaveAttribute('href', href);
+    }
     const nonPageLinks = await article.locator('a[href^="/examples/"], a[href^="https://"], a[href^="//"]').evaluateAll(links => links.map(link => (link as HTMLAnchorElement).href));
     expect(nonPageLinks.length).toBeGreaterThan(0);
     for (const link of nonPageLinks) {
@@ -57,5 +66,6 @@ for (const { gclid, path, surface, proof } of landings) {
     expect(await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('anymd.signal.') || key === 'anymd.cookie-settings.v1'))).toEqual([]);
     expect((await page.context().cookies()).filter(cookie => /^(?:_ga|_gcl_|anymd\.cookie|anymd_attribution)/.test(cookie.name))).toEqual([]);
     expect(googleRequests).toEqual([]);
+    expect(errors).toEqual([]);
   });
 }

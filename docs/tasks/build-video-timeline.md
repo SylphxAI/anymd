@@ -1,17 +1,17 @@
 ---
 title: Build a video timeline with scenes and timestamps
-description: Turn a local video into bounded scene and cue evidence over MCP. Compare free metadata reads with anymd Pro timelines using released anymd 8.5.5.
+description: Build a timestamped scene timeline from a local video over MCP. Runnable free metadata and Pro timeline examples.
 ---
 
 # Build a video timeline with scenes and timestamps
 
-Use a timeline when you need an ordered record of a video interval before
-choosing moments to inspect. anymd Pro combines detected cuts, chapters and
-available subtitle or transcript cues with the source hash and timing evidence.
-The cuts are an FFmpeg heuristic, not a semantic account of what happens.
+Free reads return metadata, chapters and subtitles. Anymd Pro adds detected
+cuts and available transcript cues with source and timing evidence.
+Cuts come from an FFmpeg heuristic; they don’t describe what happens in a scene.
 
-The free MIT core still reads video metadata, chapters and subtitles without
-a licence. [See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_build_video_timeline).
+> Sample video: red → blue at 1000 ms, with the source hash.
+
+**[See Anymd Pro — US$29 one-time](/pricing?entry_surface=task_build_video_timeline)**
 
 ## Create a two-scene fixture
 
@@ -20,7 +20,7 @@ No model or remote provider is used in this example.
 
 ```sh
 mkdir anymd-timeline && cd anymd-timeline
-npm install --no-save @sylphx/anymd@8.5.5
+npm install --no-save @sylphx/anymd
 curl -fsSLO https://anymd.sylphx.com/examples/mcp-call.mjs
 ffmpeg -hide_banner -loglevel error \
   -f lavfi -i 'color=c=red:size=320x240:rate=10:duration=1' \
@@ -87,4 +87,4 @@ To inspect a particular visual moment, [request a decoded frame](./extract-video
 The [timeline reference](/guide/video-timeline) covers clocks, sidecars, budgets
 and partial results in detail.
 
-[See current Pro pricing](https://anymd.sylphx.com/pricing?utm_source=docs_build_video_timeline).
+[See Anymd Pro pricing](/pricing?entry_surface=task_build_video_timeline).
