@@ -1,6 +1,8 @@
 //! Read presets and the checks that decide which read options a JSON request set explicitly.
 
-use super::*;
+use serde_json::Value;
+
+use super::types::ReadPdfInput;
 
 pub(super) fn json_has_explicit_read_options(input: &Value) -> bool {
     const KEYS: &[&str] = &[
