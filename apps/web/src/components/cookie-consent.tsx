@@ -1,5 +1,6 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
+import { ids } from '@sylphx/sdk';
 import { bindCheckoutAttribution, createSignalBrowser, detectSignalRegion, resolveEffectiveConsent, type SignalConsent } from '@sylphx/sdk/signal';
 import { analyticsPath, behavioralParameters, type BehavioralEvent, clearGoogleCookies, configureGoogleAds, isPricingPage, measurementId, startGoogle, stopGoogle, track, trackBehavioral, updateGoogleConsent } from '@/lib/analytics';
 import { consentKey, savedSignalChoice, signalChoiceKey, signalChoices, signalStorage, type Choice } from '@/lib/consent';
@@ -67,7 +68,7 @@ export function CookieConsent(props: ParentProps) {
   let signalVisit = 0;
   let signalRunId: string | undefined;
   // In-memory namespace plus logical milestone (no identifiers from Auth/URLs).
-  const milestone = (key: string) => (signalRunId ??= crypto.randomUUID()) + ':' + key;
+  const milestone = (key: string) => (signalRunId ??= ids.mint('evt').uuid()) + ':' + key;
   let pendingSignup: SignupSignal | undefined;
   let canReload = true;
   let trigger: HTMLButtonElement | undefined;
