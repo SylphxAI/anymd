@@ -32,7 +32,7 @@ export default function Home() {
         <div class="eyebrow"><span class="status-dot" /> {t().eyebrow}</div>
         <h1>{t().title}<br/><em>{t().accent}</em></h1>
         <p class="hero-summary">{t().summary}</p>
-        <div class="hero-actions"><CampaignLink href="/studio" class="button button-primary">{t().tryStudio} <ArrowRight size={16} /></CampaignLink><CampaignLink href={pricing()} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:'home_hero'})}>{t().getPro} — {price()}</CampaignLink></div>
+        <div class="hero-actions"><CampaignLink href="/studio" class="button button-primary">{t().tryStudio} <ArrowRight size={16} /></CampaignLink><CampaignLink href={locale() === 'zh-TW' ? pricing() : '/pricing?entry_surface=home_hero'} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:'home_hero'})}>{t().getPro} — {price()}</CampaignLink></div>
         <div class="hero-install" role="group" aria-label={t().install}>
           <div class="install-line">
             <code><span aria-hidden="true">$ </span>{npmSetup}</code>
