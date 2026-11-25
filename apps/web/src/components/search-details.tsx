@@ -24,6 +24,22 @@ export function softwareSchema(...offers: ReturnType<typeof offer>[]) {
   };
 }
 
+export function techArticleSchema(path: string, headline: string, description?: string) {
+  const url = canonicalOrigin + path;
+  const organization = { '@type': 'Organization', name: 'Sylphx Limited', url: 'https://sylphx.com' };
+  return {
+    '@type': 'TechArticle',
+    headline,
+    url,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    ...(description?.trim() ? { description } : {}),
+    inLanguage: 'en',
+    author: organization,
+    publisher: organization,
+    about: { '@type': 'SoftwareApplication', name: 'Anymd', url: canonicalOrigin + '/' },
+  };
+}
+
 export function studioSchema(path: string, locale: string, title: string, description: string) {
   return {
     '@type': 'WebApplication',
