@@ -5,6 +5,7 @@ import { mock } from 'bun:test';
 
 // Bun uses the root JSX default; these tests exercise schema nodes, not JSX.
 mock.module('react/jsx-dev-runtime', () => ({ jsxDEV() { throw new Error('Render Solid JSX with Vite'); } }));
+mock.module('@/lib/attribution-link', () => ({ CampaignLink() { throw new Error('Render Solid JSX with Vite'); } }));
 const { collectionPageSchema, faqSchema, techArticleSchema } = await import('./search-details');
 
 test('FAQPage preserves the visible answer text and omits link markup', () => {

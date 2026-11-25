@@ -1,8 +1,9 @@
 import { For } from 'solid-js';
 import { canonicalOrigin } from '@/lib/app-origin';
+import { CampaignLink } from '@/lib/attribution-link';
 import { type Currency, defaultCurrency, proAmount } from '@/lib/catalog';
 
-type AnswerPart = string | { text: string; href: string };
+type AnswerPart = string | { text: string; href: '/billing' | '/legal/pro-terms' | 'mailto:hi@sylphx.com' };
 export type Question = { question: string; answer: string | readonly AnswerPart[] };
 
 function offer(name: string, price: number, path: string, currency: Currency) {
@@ -91,7 +92,9 @@ export function StructuredData(props: { nodes: object[] }) {
 export function Faq(props: { questions: readonly Question[] }) {
   return <dl class="faq-list"><For each={props.questions}>{({ question, answer }) => <div>
     <dt>{question}</dt><dd>{typeof answer === 'string' ? answer : <For each={answer}>{part =>
-      typeof part === 'string' ? part : <a class="inline-link" href={part.href}>{part.text}</a>
+      typeof part === 'string' ? part : part.href === 'mailto:hi@sylphx.com'
+        ? <a class="inline-link" href={part.href} rel="external">{part.text}</a>
+        : <CampaignLink class="inline-link" href={part.href}>{part.text}</CampaignLink>
     }</For>}</dd>
   </div>}</For></dl>;
 }

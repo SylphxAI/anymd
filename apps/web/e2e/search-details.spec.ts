@@ -62,6 +62,7 @@ test.describe('crawler-visible pricing FAQs', () => {
       await expect(links).toHaveCount(3);
       await expect(links.nth(0)).toHaveAttribute('href', '/billing');
       await expect(links.nth(1)).toHaveAttribute('href', 'mailto:hi@sylphx.com');
+      await expect(links.nth(1)).toHaveAttribute('rel', 'external');
       await expect(links.nth(2)).toHaveAttribute('href', '/legal/pro-terms');
 
       const graph = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent() ?? '')['@graph'];
@@ -76,6 +77,23 @@ test.describe('crawler-visible pricing FAQs', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
     });
   }
+
+  test('pricing FAQ links retain supported campaign parameters unless GPC is on', async ({ page }) => {
+    const campaign = '?utm_source=faq_fixture';
+    const path = '/zh-TW/pricing' + campaign + '&unrelated=fixture';
+    const links = page.locator('.pricing-faq dd').last().getByRole('link');
+    await page.goto(path);
+    await expect(links.nth(0)).toHaveAttribute('href', '/billing' + campaign);
+    await expect(links.nth(1)).toHaveAttribute('href', 'mailto:hi@sylphx.com');
+    await expect(links.nth(2)).toHaveAttribute('href', '/legal/pro-terms' + campaign);
+
+    await page.setExtraHTTPHeaders({ 'Sec-GPC': '1' });
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-signal-gpc', '1');
+    await expect(links.nth(0)).toHaveAttribute('href', '/billing');
+    await expect(links.nth(1)).toHaveAttribute('href', 'mailto:hi@sylphx.com');
+    await expect(links.nth(2)).toHaveAttribute('href', '/legal/pro-terms');
+  });
 });
 
 for (const [route, locale] of [['/studio', 'en'], ['/zh-TW/studio', 'zh-TW']]) {

@@ -1,3 +1,4 @@
+import type { Question } from '@/components/search-details';
 import type { Locale } from './marketing-locale';
 
 export const homeCopy = {
@@ -106,4 +107,4 @@ export const pricingCopy = {
       },
     ],
   },
-} satisfies Record<Locale, object>;
+} satisfies Record<Locale, { questions: readonly Question[] } & Record<string, unknown>>;
