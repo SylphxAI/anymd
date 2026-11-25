@@ -7,6 +7,8 @@ import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/li
 import { checkoutKey, entitlement, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
 import { purchaseConversion } from '@/lib/purchase-conversion';
 import { moneyCall } from '@/lib/money-http';
+import { signalConfig } from '@/lib/signal-config';
+import { reportCheckoutStarted } from '@/lib/signal-server';
 
 export async function GET({request, params}: APIEvent) {
   if ((params).action !== 'account') return json({code:'not_found'},404);
@@ -65,8 +67,10 @@ export async function POST({request, params}: APIEvent) {
       const prefix = ctx.money.parent + '/checkout_sessions/';
       const id = typeof result.name === 'string' && result.name.startsWith(prefix) ? result.name.slice(prefix.length) : '';
       // The browser binds the verified Money session with its Signal snapshot.
-      const attribution = /^chk-[0-9a-f]{24}$/.test(id) && ctx.money.pk.startsWith('sylphx_pk_') ? {
-        checkoutSessionId:id, apiKey:ctx.money.pk, baseUrl:ctx.money.origin,
+      const signal = signalConfig();
+      void reportCheckoutStarted(request, data.analyticsGranted, id, currency, entrySurface);
+      const attribution = /^chk-[0-9a-f]{24}$/.test(id) && signal ? {
+        checkoutSessionId:id, ...signal,
         gpc:resolveEffectiveConsent({storedChoice:'granted'}, request.headers).analytics_storage === 'denied',
       } : undefined;
       return json({url, attribution});

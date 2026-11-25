@@ -1,3 +1,5 @@
+import { signalConfig } from './signal-config';
+
 const googleTag = 'https://www.googletagmanager.com';
 const ads = [
   'https://www.google.com',
@@ -18,7 +20,8 @@ function httpsOrigin(value: string | undefined) {
 export function contentSecurityPolicy(nonce: string) {
   const auth = httpsOrigin(process.env.SYLPHX_AUTH_URL);
   const money = httpsOrigin(process.env.ANYMD_MONEY_TEST_URL);
-  const connect = [...new Set(["'self'", 'https://api.sylphx.com', ...auth, ...money, googleTag, ...analytics, ...ads])];
+  const signal = signalConfig();
+  const connect = [...new Set(["'self'", 'https://api.sylphx.com', ...(signal ? [signal.baseUrl] : []), ...auth, ...money, googleTag, ...analytics, ...ads])];
   return [
     "default-src 'none'", "base-uri 'none'", "object-src 'none'", "frame-ancestors 'none'",
     // Only the SSR nonce and known script origins can execute JavaScript.
