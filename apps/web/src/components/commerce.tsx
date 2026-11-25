@@ -149,7 +149,7 @@ export function AccountPanel(props: { billing?: boolean }) {
           <p class="muted">Signed in as {user()?.email ?? user()?.name ?? 'your Anymd account'}.</p>
           {account() === 'error' && <p role="alert" class="notice">We couldn’t check your Pro access. No changes were made. Reload to check again.</p>}
           {!account() && <p role="status" class="muted">Checking Pro access…</p>}
-          {plan() === 'Free OSS' && <A href="/pricing" class="button button-primary justify-self-start">Upgrade to Anymd Pro <ArrowRight size={16} /></A>}
+          {plan() === 'Free OSS' && <CampaignLink href="/pricing" class="button button-primary justify-self-start">Upgrade to Anymd Pro <ArrowRight size={16} /></CampaignLink>}
           {plan() === 'Anymd Pro' && <p class="notice">Your account has Anymd Pro access.</p>}
           <div class="flex flex-wrap gap-2"><button disabled={pending()} type="button" class="button" onClick={async () => {
             if (pending() || !user()) return;
@@ -174,7 +174,7 @@ export function AccountPanel(props: { billing?: boolean }) {
 export function CliLogin() {
   return <div class="stack">
     <p class="muted">To activate Pro on this machine, run the command below and sign in with the account you used to buy Pro.</p>
-    <div class="flex flex-wrap items-center gap-3"><code>{cliLogin}</code><CopyButton text={cliLogin} analytics={{surface:'dashboard_cli', command_kind:'cli_login'}} label="Copy login command" /><A href="/docs" class="inline-link">Install the CLI</A></div>
+    <div class="flex flex-wrap items-center gap-3"><code>{cliLogin}</code><CopyButton text={cliLogin} analytics={{surface:'dashboard_cli', command_kind:'cli_login'}} label="Copy login command" /><CampaignLink href="/docs" class="inline-link">Install the CLI</CampaignLink></div>
   </div>;
 }
 

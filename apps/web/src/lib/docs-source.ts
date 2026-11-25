@@ -1,7 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import { canonicalOrigin } from './app-origin';
 import { isBackendHref } from './backend-href';
-import { carryCampaign } from './campaign';
 
 const source = import.meta.glob('../../../../docs/{guide,legal,security,tasks,use-cases,vs}/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const prefix = '../../../../docs/';
@@ -26,7 +25,7 @@ function localUrl(href: string, slug: string) {
   return url.pathname.replace(/\/(?:index\.md|index\.html)$/, '/').replace(/\.(?:md|html)$/, '') + url.search + url.hash;
 }
 
-type RenderContext = { slug: string; headings: Map<string, number>; campaignSearch: string };
+type RenderContext = { slug: string; headings: Map<string, number> };
 
 const md = new MarkdownIt({ html: false, linkify: true });
 // Standalone source comments mark generated sections. Consume the comment line
@@ -47,13 +46,16 @@ for (const rule of ['fence', 'code_block'] as const) {
   };
 }
 md.renderer.rules.link_open = (tokens, index, options, env, self) => {
-  const { slug, campaignSearch } = env as RenderContext;
+  const { slug } = env as RenderContext;
   const link = tokens[index];
   const href = link.attrGet('href');
   if (href) {
     const target = localUrl(String(href), slug);
-    // Keep attribution on page links, not example downloads.
-    link.attrSet('href', target.startsWith('/examples/') ? target : carryCampaign(target, campaignSearch));
+    link.attrSet('href', target);
+    // Mark local pages for presentation-time attribution, not backend URLs or downloads.
+    if (/^\/(?:[^/\\]|$)/.test(target) && !target.startsWith('/examples/') && !isBackendHref(target, canonicalOrigin)) {
+      link.attrSet('data-doc-href', target);
+    }
     if (isBackendHref(target, canonicalOrigin)) link.attrJoin('rel', 'external');
     // Bold pricing links are CTA buttons; ordinary inline links keep prose styling.
     if (/^\/pricing\?entry_surface=(?:seo|task)_/.test(target) && tokens[index - 1]?.type === 'strong_open') {
@@ -91,7 +93,7 @@ const searchIndex = [...docs].flatMap(([slug, raw]) => {
   return title && path !== '/docs' ? [{ title, description, path }] : [];
 });
 
-export function renderDoc(input: string, legacyDocs: boolean, campaignSearch = '') {
+export function renderDoc(input: string, legacyDocs: boolean) {
   const slug = !legacyDocs && input === 'vs' ? 'vs/index'
     : legacyDocs && !input.includes('/') && !docs.has(input) ? 'guide/' + input : input;
   const raw = docs.get(slug);
@@ -99,5 +101,5 @@ export function renderDoc(input: string, legacyDocs: boolean, campaignSearch = '
   const { markdown, title, description } = docSummary(raw);
   const canonical = canonicalDocPath(slug);
   return { title: title ?? slug, description, canonical, searchIndex: canonical === '/docs' ? searchIndex : undefined,
-    html: md.render(markdown, { slug, headings: new Map<string, number>(), campaignSearch } satisfies RenderContext) };
+    html: md.render(markdown, { slug, headings: new Map<string, number>() } satisfies RenderContext) };
 }

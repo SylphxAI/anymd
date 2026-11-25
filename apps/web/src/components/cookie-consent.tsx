@@ -1,5 +1,6 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
+import { getRequestEvent } from 'solid-js/web';
 import { ids } from '@sylphx/sdk';
 import { bindCheckoutAttribution, createSignalBrowser, detectSignalRegion, resolveEffectiveConsent, type SignalConsent } from '@sylphx/sdk/signal';
 import { analyticsPath, behavioralParameters, type BehavioralEvent, clearGoogleCookies, configureGoogleAds, isPricingPage, measurementId, startGoogle, stopGoogle, track, trackBehavioral, updateGoogleConsent } from '@/lib/analytics';
@@ -59,7 +60,8 @@ export function CookieConsent(props: ParentProps) {
   const [browser, setBrowser] = createSignal<SignalBrowser>();
   const [changed, setChanged] = createSignal(0);
   const [strict, setStrict] = createSignal(false);
-  const [gpc, setGpc] = createSignal(false);
+  const [gpc, setGpc] = createSignal(import.meta.env.SSR &&
+    resolveEffectiveConsent({storedChoice:'granted'}, getRequestEvent()?.request.headers).analytics_storage === 'denied');
   const [manual, setManual] = createSignal(false);
   const [ads, setAds] = createSignal<ReturnType<typeof configureGoogleAds>>();
   let active: SignalConsent | undefined;
@@ -207,7 +209,7 @@ export function CookieConsent(props: ParentProps) {
     carryCampaign() {
       const signal = browser();
       changed();
-      return !signal || (strict() && !hasChoice());
+      return !gpc() && (!signal || (strict() && !hasChoice()));
     },
     open(from: HTMLButtonElement) {
       trigger = from;
