@@ -7,7 +7,7 @@ test('Studio exports are in the first viewport above the consent bar immediately
   await expect(bar).toBeVisible();
   await expect(page.getByRole('button', {name:'Open a file'})).toHaveClass(/button-primary/);
   await page.getByRole('button', {name:'Sample PDF'}).click();
-  const stats = page.getByText(/^2 pages · ~[\d,]+ tokens$/);
+  const stats = page.getByText(/^2 pages · ~[\d,]+ tokens · 44\.3 KB → 1\.2 KB$/);
   const copy = page.getByRole('button', {name:'Copy Markdown', exact:true});
   const download = page.getByRole('button', {name:'Download .md', exact:true});
   await expect(stats).toBeVisible();

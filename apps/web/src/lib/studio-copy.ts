@@ -17,6 +17,8 @@ export const studioCopy = {
     openError: 'Couldn’t open this file. Try again or choose another.',
     scanned: 'No selectable text found in this PDF.',
     ocr: 'Scanned PDFs require OCR. ', ocrLink: 'Use OCR in the native CLI', ocrEnd: ' to extract text.',
+    view: 'Output view', preview: 'Preview', previewOutput: 'Markdown preview', previewTable: 'Preview table',
+    sourceLabel: (label: string) => label, metadataLabel: (key: string) => key,
     markdown: 'Markdown output', copyMarkdown: 'Copy Markdown', download: 'Download .md',
     copied: 'Copied', copyFailed: 'Select and copy the text',
     video: 'Local source video', mark: 'Mark current timestamp', copyTimestamp: 'Copy timestamp',
@@ -53,6 +55,8 @@ export const studioCopy = {
     openError: '無法開啟這個檔案。請再試一次，或選擇其他檔案。',
     scanned: '這份 PDF 沒有可選取的文字。',
     ocr: '掃描版 PDF 需要使用光學字元辨識（OCR）。', ocrLink: '使用本機 CLI 的 OCR 功能', ocrEnd: '擷取文字。',
+    view: '輸出檢視', preview: '預覽', previewOutput: 'Markdown 預覽', previewTable: '預覽表格',
+    sourceLabel: zhSourceLabel, metadataLabel: (key: string) => zhMetadata.get(key) ?? key,
     markdown: 'Markdown 輸出', copyMarkdown: '複製 Markdown', download: '下載 .md',
     copied: '已複製', copyFailed: '請選取文字後自行複製',
     video: '本機來源影片', mark: '標記目前的時間戳記', copyTimestamp: '複製時間戳記',
@@ -78,17 +82,28 @@ export const studioCopy = {
 function zhSourceLabel(label: string) {
   if (label === 'document') return '文件';
   const [, kind, number, title] = /^(page|slide|chapter) (\d+)(?:: (.+))?$/.exec(label) ?? [];
-  if (kind === 'page') return '第 ' + number + ' 頁';
-  if (kind === 'slide') return '第 ' + number + ' 張投影片';
+  if (kind === 'page') return '第 ' + number + ' 頁' + (title ? '：' + title : '');
+  if (kind === 'slide') return '第 ' + number + ' 張投影片' + (title ? '：' + title : '');
   if (kind === 'chapter') return '第 ' + number + ' 章' + (title ? '：' + title : '');
   return label.startsWith('sheet ') ? '工作表「' + label.slice(6) + '」' : label;
 }
 
 const zhUnit = new Map([['page', '頁'], ['slide', '張投影片'], ['sheet', '張工作表'], ['chapter', '章'], ['section', '節']]);
 
-export function studioStats(locale: Locale, units: number, noun: string, tokens: number) {
+const zhMetadata = new Map([
+  ['source', '來源'], ['format', '格式'], ['title', '標題'], ['pages', '頁數'], ['slides', '投影片數'],
+  ['sheets', '工作表數'], ['chapters', '章數'], ['sections', '節數'], ['author', '作者'],
+]);
+
+export function formatBytes(bytes: number, locale: Locale) {
+  const [value, unit] = bytes >= 1_000_000 ? [bytes / 1_000_000, 'MB'] : bytes >= 1_000 ? [bytes / 1_000, 'KB'] : [bytes, 'B'];
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value) + ' ' + unit;
+}
+
+export function studioStats(locale: Locale, units: number, noun: string, tokens: number, sourceBytes: number, markdownBytes: number) {
   const number = new Intl.NumberFormat(locale);
-  return locale === 'zh-TW'
+  const counts = locale === 'zh-TW'
     ? number.format(units) + ' ' + (zhUnit.get(noun) ?? '節') + ' · 約 ' + number.format(tokens) + ' 個 token'
     : number.format(units) + ' ' + noun + (units === 1 ? '' : 's') + ' · ~' + number.format(tokens) + ' tokens';
+  return counts + ' · ' + formatBytes(sourceBytes, locale) + ' → ' + formatBytes(markdownBytes, locale);
 }
