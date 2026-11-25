@@ -29,7 +29,7 @@ test('Traditional Chinese Studio converts, copies, downloads and finds a quote e
   await studio.getByRole('button', { name: '範例文件', exact: true }).click();
   const output = studio.getByLabel('Markdown 輸出');
   await expect(output).toContainText('Field Notes');
-  await expect(studio.getByText(/^1 節 · 約 [\d,]+ 個 token$/)).toBeVisible();
+  await expect(studio.getByText(/^1 節 · 約 [\d,]+ 個 token · 473 B → 298 B$/)).toBeVisible();
   const markdown = await output.textContent();
   await studio.getByRole('button', { name: '複製 Markdown' }).click();
   await expect(studio.getByRole('button', { name: '已複製' })).toBeVisible();

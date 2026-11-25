@@ -1,19 +1,20 @@
 import { ArrowRight, Braces, Check, Download, FileText, LockKeyhole, Upload } from 'lucide-solid';
 import { A } from '@solidjs/router';
 import CitePreview from './cite-preview';
-import { createSignal, onCleanup, Show } from 'solid-js';
+import { createSignal, For, onCleanup, Show } from 'solid-js';
+import MarkdownPreview from './markdown-preview';
 import type { ConversionSource } from '@/lib/analytics';
 import type { Locale } from '@/lib/marketing-locale';
 import { studioCopy, studioStats } from '@/lib/studio-copy';
+import { findQuoteMatches, normalizeQuote, type QuoteMatch } from '@/lib/studio-quote';
 import { CopyButton } from '../copy';
 import { useCookieConsent } from '../cookie-consent';
 
 type WorkerResult = {markdown:string; format:string; tokens:number; unit_noun:string; units:number; source_units:{label:string; text:string}[]; ms:number};
-type Result = WorkerResult & {sourceKind: ConversionSource};
+type Result = WorkerResult & {sourceKind: ConversionSource; sourceBytes: number; markdownBytes: number};
 const accepted = '.pdf,.docx,.pptx,.xlsx,.html,.htm,.epub,.odt,.ods,.odp,.csv,.tsv,.txt,.md,.rtf,.eml';
 const maxBytes = 32 * 1024 * 1024;
 const SAMPLE = {brief:{name:'brief.html', url:'/samples/brief.html'}, pdf:{name:'sample.pdf', url:'/samples/sample.pdf'}};
-const normalize = (s: string) => s.normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
 
 function downloadMarkdown(filename: string, markdown: string) {
   const stem = (filename.replace(/\.[^.]+$/, '') || 'document').replace(/[\/:\\]/g, '_');
@@ -40,7 +41,8 @@ export default function DocumentStudio(props: { locale: Locale }) {
   const [pending, setPending] = createSignal(false);
   const [notice, setNotice] = createSignal('');
   const [quote, setQuote] = createSignal('');
-  const [match, setMatch] = createSignal<string[] | null>(null);
+  const [match, setMatch] = createSignal<QuoteMatch[] | null>(null);
+  const [view, setView] = createSignal<'markdown' | 'preview'>('markdown');
   const [drag, setDrag] = createSignal(false);
   const [stamp, setStamp] = createSignal<string | null>(null);
   const [videoUrl, setVideoUrl] = createSignal<string | null>(null);
@@ -67,7 +69,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
   async function convert(name: string, source: File | string) {
     stop(); const run = generation;
     releaseVideo();
-    setResult(null); setQuote(''); setMatch(null); setFile(name); setNotice(''); setStamp(null); setVideoUrl(null);
+    setResult(null); setView('markdown'); setQuote(''); setMatch(null); setFile(name); setNotice(''); setStamp(null); setVideoUrl(null);
     if (source instanceof File && source.type.startsWith('video/')) {
       localVideoUrl = URL.createObjectURL(source);
       setVideoUrl(localVideoUrl); setPending(false); return;
@@ -83,12 +85,14 @@ export default function DocumentStudio(props: { locale: Locale }) {
       controller = new AbortController();
       const content = typeof source === 'string' ? await fetch(source, {signal:controller.signal}).then((r) => { if (!r.ok) throw new Error(); return r.arrayBuffer(); }) : await source.arrayBuffer();
       if (generation !== run) return;
+      const sourceBytes = content.byteLength;
       const w = new Worker('/studio-worker.js', {type:'module'}); worker = w;
       w.onmessage = ({data}) => {
         if (run !== generation || data.id !== run) return;
         if (data.outcome !== 'ok') { fail(t().readError); return; }
         const output: WorkerResult = data.result;
-        setResult({...output, sourceKind}); setPending(false); stop();
+        const markdownBytes = new TextEncoder().encode(output.markdown).length;
+        setResult({...output, sourceKind, sourceBytes, markdownBytes}); setPending(false); stop();
         consent.trackBehavioral('document_converted', {
           file_format:output.format, source_kind:sourceKind, unit_count:output.units, token_count:output.tokens, duration_ms:output.ms,
         });
@@ -108,9 +112,9 @@ export default function DocumentStudio(props: { locale: Locale }) {
   function searchQuote(event: SubmitEvent) {
     event.preventDefault();
     const output = result();
-    const needle = normalize(quote());
+    const needle = normalizeQuote(quote());
     if (!output || needle.length < 3) return;
-    const matches = output.source_units.filter(unit => normalize(unit.text).includes(needle)).map(unit => unit.label);
+    const matches = findQuoteMatches(output.source_units, needle);
     setMatch(matches);
     consent.trackBehavioral('quote_searched', {matched:matches.length > 0});
   }
@@ -127,7 +131,11 @@ export default function DocumentStudio(props: { locale: Locale }) {
       <div class="studio-output-header">
         <div class="studio-label"><span><FileText size={15} aria-hidden="true" /> {file() ?? t().inputOutput}</span><Show when={result()}>{(output) => <span>{output().format.toUpperCase()} · {output().ms} ms</span>}</Show></div>
         <Show when={noSelectableText() ? null : result()}>{output => <div class="studio-output-actions">
-          <span class="studio-stats">{studioStats(props.locale, output().units, output().unit_noun, output().tokens)}</span>
+          <div class="studio-view" role="group" aria-label={t().view}>
+            <button type="button" aria-pressed={view() === 'markdown'} onClick={() => setView('markdown')}>Markdown</button>
+            <button type="button" aria-pressed={view() === 'preview'} onClick={() => setView('preview')}>{t().preview}</button>
+          </div>
+          <span class="studio-stats">{studioStats(props.locale, output().units, output().unit_noun, output().tokens, output().sourceBytes, output().markdownBytes)}</span>
           <div class="studio-export">
             <CopyButton text={output().markdown} label={t().copyMarkdown} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_output'}} />
             <button type="button" class="button copy-button" onClick={() => {
@@ -138,14 +146,28 @@ export default function DocumentStudio(props: { locale: Locale }) {
           </div>
         </div>}</Show>
       </div>
-      {pending() ? <div class="studio-empty" role="status">{t().converting} <button type="button" class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>{t().cancel}</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : noSelectableText() ? <div class="studio-empty" role="status"><strong>{t().scanned}</strong><span class="muted">{t().ocr}<A href="/docs/cli" class="inline-link">{t().ocrLink}</A>{t().ocrEnd}</span></div> : result() ? <pre class="studio-code" tabIndex={0} aria-label={t().markdown}>{result()?.markdown}</pre> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{t().drop}</strong><span class="muted">{t().formats}</span></div>}
+      {pending() ? <div class="studio-empty" role="status">{t().converting} <button type="button" class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>{t().cancel}</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : noSelectableText() ? <div class="studio-empty" role="status"><strong>{t().scanned}</strong><span class="muted">{t().ocr}<A href="/docs/cli" class="inline-link">{t().ocrLink}</A>{t().ocrEnd}</span></div> : result() ? <div class="studio-output-pane">
+        <Show when={view() === 'preview'} fallback={<pre class="studio-code" tabIndex={0} aria-label={t().markdown}>{result()?.markdown}</pre>}>
+          <MarkdownPreview markdown={result()?.markdown ?? ''} locale={props.locale} />
+        </Show>
+      </div> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{t().drop}</strong><span class="muted">{t().formats}</span></div>}
     </div>
     <div class="studio-bottom"><span>{t().localMarkdown}</span><span>RUST / WASM</span></div>
     {result() && !noSelectableText() && <form class="studio-quote stack" onSubmit={searchQuote}>
       <div><h2>{t().quoteTitle}</h2><p class="muted">{t().quoteHelp}</p></div>
       <label class="field-label">{t().quoteLabel}<input class="field" required minLength={3} maxLength={500} placeholder={t().quotePlaceholder} value={quote()} onInput={(e)=>{setQuote(e.currentTarget.value);setMatch(null);}} /></label>
       <button class="button justify-self-start" type="submit">{t().find} <ArrowRight size={15} /></button>
-      {match() && <p class="notice" role="status">{match()?.length ? <><Check class="inline" size={16} /> {t().found(match() ?? [])}</> : t().noMatch}</p>}
+      <Show when={match()}>{matches => <div class="studio-quote-results">
+        <p class="notice" role="status">{matches().length ? <><Check class="inline" size={16} aria-hidden="true" /> {t().found(matches().map(item => item.label))}</> : t().noMatch}</p>
+        <Show when={matches().length}>
+          <ul class="studio-excerpts">
+            <For each={matches()}>{item => <li>
+              <span class="studio-excerpt-label">{t().sourceLabel(item.label)}</span>
+              <p>{item.before}<mark>{item.matched}</mark>{item.after}</p>
+            </li>}</For>
+          </ul>
+        </Show>
+      </div>}</Show>
     </form>}
     <CitePreview locale={props.locale} />
   </div>;
