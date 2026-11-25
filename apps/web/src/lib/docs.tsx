@@ -3,6 +3,7 @@ import { HttpStatusCode } from '@solidjs/start';
 import { createEffect, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch, untrack } from 'solid-js';
 import { useCookieConsent } from '@/components/cookie-consent';
 import { PageMeta } from '@/components/page-meta';
+import { StructuredData, techArticleSchema } from '@/components/search-details';
 import { CampaignLink } from './attribution-link';
 import { carryCampaign } from './campaign';
 import { campaignDocHtml } from './docs-campaign';
@@ -110,6 +111,9 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
     </Match>
     <Match when={article()}>{value => <section class="wrap page-shell article-layout">
       <PageMeta title={props.index ? 'Documentation' : value().title} canonical={value().canonical} description={value().description} robots={value().noindex ? 'noindex' : undefined} />
+      <Show when={!value().noindex}>
+        <StructuredData nodes={[techArticleSchema(value().canonical, props.index ? 'Documentation' : value().title, value().description)]} />
+      </Show>
       <nav class="docs-nav" aria-label="Documentation"><span class="eyebrow">REFERENCE</span><For each={nav}>{([label, href]) => <CampaignLink href={href === 'getting-started' ? '/docs' : '/docs/' + href}>{label}</CampaignLink>}</For><CampaignLink href="/tasks">Task guides</CampaignLink><CampaignLink href="/vs">Comparisons</CampaignLink></nav>
       {/* Only trusted repository Markdown, rendered with inline HTML disabled. */}
       <div class="min-w-0"><Show when={props.index && interactive() && value().searchIndex}>{entries => <DocSearch entries={entries()} />}</Show><article ref={body} class="prose" data-interactive={interactive() ? 'true' : undefined} onClick={copyCode} innerHTML={html()} /><span class="sr-only" role="status">{feedback()}</span></div>
