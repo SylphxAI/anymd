@@ -107,7 +107,7 @@ pub(super) fn load_search_docs(
                         .map(|(index, (label, spec))| {
                             let doc = Opened::open(spec, policy, options).and_then(|opened| {
                                 let units = opened.all_units()?;
-                                let outline = crate::outline::Outline::from_units(&opened, &units);
+                                let outline = opened.outline_from_units(&units);
                                 Ok(SearchDoc {
                                     label: label.clone(),
                                     noun: opened.unit_noun,

@@ -539,7 +539,8 @@ pub(crate) mod tests {
     }
     fn node_ids(evidence: &VideoEvidence) -> Vec<(String, String)> {
         let opened = crate::document::Opened::from_video("video", evidence);
-        crate::outline::Outline::build(&opened)
+        opened
+            .build_outline()
             .unwrap()
             .nodes
             .into_iter()

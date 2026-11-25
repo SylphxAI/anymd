@@ -1,5 +1,7 @@
 //! Page selection, Markdown rendering and token-budgeted continuation of an opened document.
 
+use anymd_core::{document::PAGE_CHUNK, outline::unit_marker};
+
 use crate::document::Opened;
 use crate::lean::{estimate_tokens, scan_marker};
 
@@ -8,7 +10,6 @@ pub const DEFAULT_MAX_TOKENS: usize = 20_000;
 pub const MIN_MAX_TOKENS: usize = 500;
 pub const MAX_MAX_TOKENS: usize = 1_000_000;
 
-const PAGE_CHUNK: usize = 12;
 const OUTLINE_LIMIT: usize = 60;
 
 /// Where a read resumes: 1-based page and a character offset inside it.
@@ -102,7 +103,7 @@ pub(in crate::lean) fn read_opened(
     node_id: Option<&str>,
 ) -> SourceRead {
     let navigation = match node_id {
-        Some(id) => match crate::outline::Outline::build(opened) {
+        Some(id) => match opened.build_outline() {
             Ok(outline) => match outline.nodes.iter().position(|n| n.id == id) {
                 Some(index) => Some((outline, index)),
                 None => {
@@ -132,23 +133,15 @@ pub(in crate::lean) fn read_opened(
         wanted.retain(|page| *page >= cursor.page);
     }
     let noun = opened.unit_noun;
-    let mut header = vec![("source".to_string(), opened.label.clone())];
     if wanted.is_empty() {
         let message = format!(
             "No requested {} exist (the document has {total}).",
             plural(noun, 2)
         );
-        header.push(("error".into(), message.clone()));
-        return SourceRead {
-            header,
-            body: String::new(),
-            next: None,
-            shown: 0,
-            error: Some(message),
-        };
+        return failed(&opened.label, message);
     }
     // One-unit documents (a web page, a DOCX, an image) need no unit markers.
-    let markers = total > 1 || opened.is_paged();
+    let markers = opened.info().has_markers();
 
     let mut body = String::new();
     let mut shown: Vec<u32> = Vec::new();
@@ -211,8 +204,8 @@ pub(in crate::lean) fn read_opened(
             let mut marker = match (markers, continued) {
                 (false, false) => String::new(),
                 (false, true) => "<!-- continued -->\n\n".to_string(),
-                (true, false) => format!("<!-- {} -->\n\n", unit.label),
-                (true, true) => format!("<!-- {} (continued) -->\n\n", unit.label),
+                (true, false) => unit_marker(&unit.label),
+                (true, true) => unit_marker(&format!("{} (continued)", unit.label)),
             };
             let is_scan = chunk_scans.contains(&unit.number) && !continued;
             if is_scan {
@@ -269,17 +262,7 @@ pub(in crate::lean) fn read_opened(
         }
     }
 
-    if opened.format != "pdf" {
-        header.push(("format".into(), opened.format.to_string()));
-    }
-    if let Some(title) = &opened.title {
-        header.push(("title".into(), title.clone()));
-    }
-    for (key, value) in opened.metadata.iter().take(6) {
-        if key != "title" && key != "format" && !value.is_empty() && value.len() <= 200 {
-            header.push((key.replace(' ', "_"), value.clone()));
-        }
-    }
+    let mut header = opened.info().header(&opened.metadata);
     if markers {
         header.push((plural(noun, 2), total.to_string()));
         let complete = shown.len() == total as usize && next.is_none();
