@@ -43,9 +43,7 @@ for (const rule of ['fence', 'code_block'] as const) {
   const render = md.renderer.rules[rule]!;
   md.renderer.rules[rule] = (tokens, index, options, env, self) => {
     const html = render(tokens, index, options, env, self);
-    return (env as RenderContext).slug.startsWith('guide/')
-      ? '<div class="doc-code">' + html + '<button type="button" class="button copy-button doc-copy">Copy code</button></div>\n'
-      : html;
+    return '<div class="doc-code">' + html + '<button type="button" class="button copy-button doc-copy">Copy code</button></div>\n';
   };
 }
 md.renderer.rules.link_open = (tokens, index, options, env, self) => {
