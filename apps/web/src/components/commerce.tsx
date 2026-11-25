@@ -89,12 +89,12 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
           const code = props.currency;
           const result = await request('checkout', {
             currency:code, consent:consent(), checkoutIntent:checkout.key,
-            entrySurface:checkout.entrySurface,
+            entrySurface:checkout.entrySurface, analyticsGranted:analytics.analyticsAllowed(),
           });
           if (!result.url) throw new Error('Checkout did not return a link.');
           // Measurement must never prevent purchase.
           await Promise.allSettled([
-            result.attribution?.gpc ? undefined : analytics.beginCheckout(code, checkout.entrySurface),
+            result.attribution?.gpc ? undefined : analytics.beginCheckout(code, checkout.entrySurface, checkout.key),
             analytics.bindCheckout(result.attribution),
           ]);
           location.assign(result.url);

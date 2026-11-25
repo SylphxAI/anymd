@@ -1,7 +1,8 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
+import { ids } from '@sylphx/sdk';
 import { bindCheckoutAttribution, createSignalBrowser, detectSignalRegion, resolveEffectiveConsent, type SignalConsent } from '@sylphx/sdk/signal';
-import { type BehavioralEvent, clearGoogleCookies, configureGoogleAds, isPricingPage, measurementId, startGoogle, stopGoogle, track, trackBehavioral, updateGoogleConsent } from '@/lib/analytics';
+import { analyticsPath, behavioralParameters, type BehavioralEvent, clearGoogleCookies, configureGoogleAds, isPricingPage, measurementId, startGoogle, stopGoogle, track, trackBehavioral, updateGoogleConsent } from '@/lib/analytics';
 import { consentKey, savedSignalChoice, signalChoiceKey, signalChoices, signalStorage, type Choice } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
 import { localeFromPath } from '@/lib/marketing-locale';
@@ -17,7 +18,8 @@ const CookieContext = createContext<{
   purchaseAds: () => ReturnType<typeof configureGoogleAds>;
   open: (from: HTMLButtonElement) => void;
   bindCheckout: (binding?: CheckoutBinding) => Promise<void>;
-  beginCheckout: (currency: string, entrySurface: EntrySurface) => Promise<void>;
+  analyticsAllowed: () => boolean;
+  beginCheckout: (currency: string, entrySurface: EntrySurface, checkoutIntent: string) => Promise<void>;
   trackBehavioral: (...event: BehavioralEvent) => void;
 }>();
 
@@ -62,6 +64,11 @@ export function CookieConsent(props: ParentProps) {
   const [ads, setAds] = createSignal<ReturnType<typeof configureGoogleAds>>();
   let active: SignalConsent | undefined;
   let lastPath: string | undefined;
+  let lastSignalPath: string | undefined;
+  let signalVisit = 0;
+  let signalRunId: string | undefined;
+  // In-memory namespace plus logical milestone (no identifiers from Auth/URLs).
+  const milestone = (key: string) => (signalRunId ??= ids.mint('evt').uuid()) + ':' + key;
   let pendingSignup: SignupSignal | undefined;
   let canReload = true;
   let trigger: HTMLButtonElement | undefined;
@@ -72,6 +79,8 @@ export function CookieConsent(props: ParentProps) {
   onMount(() => {
     stopGoogle();
     const headerGpc = document.documentElement.dataset.signalGpc === '1';
+    const {signalApiOrigin, signalPublishableKey} = document.documentElement.dataset;
+    const ingest = signalPublishableKey && signalApiOrigin ? {apiKey:signalPublishableKey, baseUrl:signalApiOrigin} : undefined;
     setGpc(resolveEffectiveConsent({storedChoice:'granted', gpc:headerGpc}).analytics_storage === 'denied');
     let disposed = false;
     let instance: SignalBrowser | undefined;
@@ -96,7 +105,7 @@ export function CookieConsent(props: ParentProps) {
       setStrict(resolveEffectiveConsent({region}).analytics_storage === 'denied' && !gpc());
       let storageUsable = true;
       try { migrateChoice(); } catch { storageUsable = false; }
-      instance = createSignalBrowser({region:region ?? 'XX', gpc:headerGpc || !eligible || !storageUsable, storageKey:signalStorage});
+      instance = createSignalBrowser({region:region ?? 'XX', gpc:headerGpc || !eligible || !storageUsable, storageKey:signalStorage, ingest});
       setBrowser(instance);
     });
   });
@@ -120,7 +129,7 @@ export function CookieConsent(props: ParentProps) {
       if (canReload) location.reload();
       return;
     }
-    if (!allowed) { pendingSignup = undefined; clearGoogleCookies(true); return; }
+    if (!allowed) { lastSignalPath = undefined; pendingSignup = undefined; clearGoogleCookies(true); return; }
     if (!active) {
       if (consent.ad_storage === 'denied') clearGoogleCookies(false);
       startGoogle(consent, pathname);
@@ -135,7 +144,20 @@ export function CookieConsent(props: ParentProps) {
       const configured = configureGoogleAds(consent, gpc());
       if (configured) setAds(configured);
     }
-    if (pendingSignup && hasChoice()) track('sign_up', pathname, pendingSignup);
+    if (hasChoice()) {
+      const path = analyticsPath(pathname);
+      // Until explicit opt-in, the current route stays in app state only.
+      // Don't queue SDK pageView before grant: its promotion uses the raw URL.
+      if (pathname !== lastSignalPath) {
+        lastSignalPath = pathname;
+        void signal.pageView(path);
+        if (isPricingPage(pathname)) void signal.track({eventName:'pricing_view', eventId:milestone('pricing_view:' + ++signalVisit), properties:{path}});
+      }
+      if (pendingSignup) {
+        track('sign_up', pathname, pendingSignup);
+        void signal.track({eventName:'sign_up', eventId:milestone('sign_up'), properties:{...pendingSignup, path}});
+      }
+    } else lastSignalPath = undefined;
     pendingSignup = undefined;
     if (pathname !== lastPath) {
       lastPath = pathname;
@@ -204,12 +226,24 @@ export function CookieConsent(props: ParentProps) {
     trackBehavioral(...event: BehavioralEvent) {
       // The new funnel requires an explicit choice even where the existing
       // Paid-UA flow permits regional defaults. Signal rechecks GPC on read.
-      if (hasChoice()) trackBehavioral(browser()?.getConsent(), route.pathname, ...event);
+      const signal = browser();
+      const consent = signal?.getConsent();
+      if (!hasChoice() || consent?.analytics_storage !== 'granted') return;
+      trackBehavioral(consent, route.pathname, ...event);
+      const parameters = behavioralParameters(...event);
+      if (parameters) void signal?.track({eventName:event[0], properties:{...parameters, path:analyticsPath(route.pathname)}});
     },
-    async beginCheckout(currency: string, entrySurface: EntrySurface) {
+    analyticsAllowed() {
+      return hasChoice() && browser()?.getConsent().analytics_storage === 'granted';
+    },
+    async beginCheckout(currency: string, entrySurface: EntrySurface, checkoutIntent: string) {
       if (!active || browser()?.getConsent().analytics_storage !== 'granted') return;
       const parameters = checkoutParameters(currency, entrySurface);
       if (!parameters) return;
+      if (hasChoice()) {
+        void browser()?.track({eventName:'begin_checkout', eventId:milestone('begin_checkout:' + checkoutIntent),
+          properties:{...parameters, path:analyticsPath(route.pathname)}});
+      }
       await new Promise<void>(resolve => {
         const done = () => { clearTimeout(timeout); resolve(); };
         const timeout = setTimeout(done, 250);

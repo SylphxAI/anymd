@@ -10,7 +10,7 @@ export const gaDisable = `ga-disable-${measurementId}` as const;
 type GoogleWindow = Window & { [gaDisable]?: boolean; dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
 const allowedSections = new Set(['studio', 'docs', 'vs', 'pro', 'pricing', 'privacy', 'playground', 'legal', 'guide', 'tasks', 'security', 'use-cases', 'vision', 'sign-in', 'account', 'billing', 'dashboard', 'recover', 'cli-auth']);
 
-function analyticsPath(pathname: string) {
+export function analyticsPath(pathname: string) {
   // Only the two translated routes are allowed, not every child of a locale.
   if (localeFromPath(pathname) === 'zh-TW') return localizedPath(pathname, 'zh-TW');
   const path = pathname.split(/[?#]/, 1)[0];
@@ -137,7 +137,7 @@ const conversion = (payload: Conversion) => ({
   source_kind: payload.source_kind === 'local_file' ? 'local_file' : 'sample',
 });
 
-function behavioralParameters(...[name, payload]: BehavioralEvent) {
+export function behavioralParameters(...[name, payload]: BehavioralEvent) {
   // Project fields instead of spreading callers' data: structural typing alone
   // doesn't exclude extra properties. Never forward the converter result itself.
   switch (name) {
@@ -159,8 +159,7 @@ function behavioralParameters(...[name, payload]: BehavioralEvent) {
   }
 }
 
-// CookieConsent supplies the current effective Signal consent, including GPC.
-// Keep this adapter as the single transport seam for custom Signal events.
+// Existing GA4 transport; Signal uses the same allowlisted projection.
 export function trackBehavioral(consent: SignalConsent | undefined, pathname: string, ...event: BehavioralEvent) {
   if (consent?.analytics_storage !== 'granted') return;
   const parameters = behavioralParameters(...event);

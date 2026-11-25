@@ -16,10 +16,23 @@ activeSessions.add(legacySession);
 const flow = randomBytes(32).toString('base64url');
 const challenges = new Map<string, string>();
 const checkoutMetadata = new Map<string, unknown>();
+const checkoutBatches = new Map<string, unknown[]>();
 const fixtureUser = 'usr_fixture001';
 serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT, key:process.env.NITRO_SSL_KEY}, async fetch(request: Request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return new Response('ok');
+  if (url.pathname === '/test/checkout-batches') return Response.json(checkoutBatches.get(url.searchParams.get('event') ?? '') ?? []);
+  if (url.pathname === '/v1/analytics/events:batch' && request.method === 'POST' &&
+      request.headers.get('x-sylphx-key') === fixturePublishable && !request.headers.has('authorization')) {
+    const body = await request.json();
+    const event = body.events?.[0];
+    if (body.consent === 'granted' && event?.event_name === 'checkout_started') {
+      const rows = checkoutBatches.get(event.event_id) ?? [];
+      checkoutBatches.set(event.event_id, [...rows, event]);
+      await Bun.sleep(500);
+    }
+    return new Response(null, {status:503, headers:{'Access-Control-Allow-Origin':'*'}});
+  }
   if (url.pathname === '/test/checkout-metadata') return Response.json(checkoutMetadata.get(url.searchParams.get('intent') ?? '') ?? null);
   if (url.pathname === '/v1/client/oauth/google/start' && url.searchParams.get('session_mode') === 'server' &&
       request.headers.get('authorization') === 'Bearer ' + fixturePublishable) {
@@ -59,7 +72,9 @@ serve({ hostname: '127.0.0.1', port: 3031, tls:{cert:process.env.NITRO_SSL_CERT,
       if (data.subject?.end_user === fixtureUser && data.line_items?.[0]?.price === 'anymd_pro' &&
           new URL(data.success_url).searchParams.get('session_id') === '{CHECKOUT_SESSION_ID}' && /^[a-f0-9]{64}$/.test(intent)) {
         checkoutMetadata.set(intent, data.metadata);
-        return Response.json({name, processor_session_id, url:'https://checkout.stripe.com/c/pay/' + processor_session_id});
+        // Opt-in isolated variant for Signal tests; leave checkout/conversion fixtures unchanged.
+        const sessionName = intent.startsWith('a04ef234') ? checkoutCollection.slice(4) + '/chk-' + intent.slice(8, 32) : name;
+        return Response.json({name:sessionName, processor_session_id, url:'https://checkout.stripe.com/c/pay/' + processor_session_id});
       }
     }
   }

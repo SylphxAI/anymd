@@ -5,6 +5,7 @@ import { getRequestEvent } from 'solid-js/web';
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { googleAdsConfig } from './lib/google-ads';
 import { localeFromPath } from './lib/marketing-locale';
+import { signalConfig } from './lib/signal-config';
 
 export default createHandler(() => <StartServer document={({ assets, children, scripts }) => {
   const key = process.env.ANYMD_OBS_PUBLISHABLE_KEY;
@@ -14,7 +15,9 @@ export default createHandler(() => <StartServer document={({ assets, children, s
   const locale = localeFromPath(request ? new URL(request.url).pathname : '/');
   const gpc = resolveEffectiveConsent({storedChoice:'granted'}, request?.headers).analytics_storage === 'denied';
   const ads = googleAdsConfig(process.env.ANYMD_GOOGLE_ADS_ID, process.env.ANYMD_GOOGLE_ADS_PURCHASE_LABEL);
+  const signal = signalConfig();
   return <html lang={locale} data-signal-gpc={gpc ? '1' : undefined}
+    data-signal-api-origin={signal?.baseUrl} data-signal-publishable-key={signal?.apiKey}
     data-google-ads-id={ads?.googleAdsId} data-google-ads-purchase-label={ads?.googleAdsPurchaseLabel}>
     <head>
       <meta charset="utf-8" />

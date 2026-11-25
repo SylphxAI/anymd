@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from './fixture-test';
 import { randomBytes } from 'node:crypto';
 import { signupCookie } from '../src/lib/signup';
+import { fixturePublishable } from './origins';
 
 const tag = 'https://www.googletagmanager.com/gtag/js?id=G-R4TD2Z8RR7';
 const googleHost = /(?:^|\.)(?:googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|google\.com)$/;
@@ -211,9 +212,9 @@ test('implicit US consent binds complete attribution after real sign-in and Mone
   await page.route('**/api/anymd/checkout', async route => {
     const response = await route.fetch();
     const json = await response.json();
-    expect(json.attribution).toEqual({checkoutSessionId, apiKey, baseUrl:'https://127.0.0.1:3031', gpc:false});
+    expect(json.attribution).toEqual({checkoutSessionId, apiKey:fixturePublishable, baseUrl:'https://127.0.0.1:3031', gpc:false});
     // The SDK requires HTTPS. Point it at the browser-intercepted Events origin.
-    await route.fulfill({response, json:{...json, attribution:{...json.attribution, baseUrl:eventsOrigin}}});
+    await route.fulfill({response, json:{...json, attribution:{...json.attribution, apiKey, baseUrl:eventsOrigin}}});
   });
   await page.goto('/pricing?gclid=Ad-Click_123&gbraid=Braided_1&wbraid=Braided_2&utm_source=search&currency=HKD&proof=private');
   await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
