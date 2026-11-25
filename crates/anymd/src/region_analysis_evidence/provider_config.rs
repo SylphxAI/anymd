@@ -1,12 +1,62 @@
 //! Region-analysis provider configuration from environment variables: command, HTTP and named presets.
 
-use super::*;
+use std::env;
 
-pub(super) fn not_configured_message() -> String {
+use serde_json::Value;
+
+const COMMAND_ENV: &str = "MCP_PDF_REGION_ANALYSIS_COMMAND";
+const ARGS_ENV: &str = "MCP_PDF_REGION_ANALYSIS_ARGS_JSON";
+const HTTP_ENV: &str = "MCP_PDF_REGION_ANALYSIS_HTTP_URL";
+const HTTP_HEADERS_ENV: &str = "MCP_PDF_REGION_ANALYSIS_HTTP_HEADERS_JSON";
+const PRESET_ENV: &str = "MCP_PDF_REGION_ANALYSIS_PRESET";
+const OLLAMA_URL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_OLLAMA_URL";
+const OLLAMA_MODEL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_OLLAMA_MODEL";
+const OPENAI_URL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_OPENAI_URL";
+const OPENAI_MODEL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_OPENAI_MODEL";
+const OPENAI_API_KEY_ENV: &str = "MCP_PDF_REGION_ANALYSIS_OPENAI_API_KEY";
+const LMSTUDIO_URL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_LMSTUDIO_URL";
+const LMSTUDIO_MODEL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_LMSTUDIO_MODEL";
+const LLAMACPP_URL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_LLAMACPP_URL";
+const LLAMACPP_MODEL_ENV: &str = "MCP_PDF_REGION_ANALYSIS_LLAMACPP_MODEL";
+const DEFAULT_OLLAMA_URL: &str = "http://127.0.0.1:11434/api/generate";
+const DEFAULT_LMSTUDIO_URL: &str = "http://127.0.0.1:1234/v1/chat/completions";
+const DEFAULT_LLAMACPP_URL: &str = "http://127.0.0.1:8080/v1/chat/completions";
+
+#[derive(Clone, Debug)]
+pub(super) enum ProviderConfig {
+    Command {
+        command: String,
+        args_template: Vec<String>,
+    },
+    Http {
+        url: String,
+        headers: Vec<(String, String)>,
+        preset: Option<String>,
+        model: Option<String>,
+    },
+}
+
+impl ProviderConfig {
+    pub(super) fn provider_label(&self) -> &'static str {
+        match self {
+            Self::Command { .. } => "command",
+            Self::Http { .. } => "http",
+        }
+    }
+
+    pub(super) fn engine_label(&self) -> &'static str {
+        match self {
+            Self::Command { .. } => "external-command",
+            Self::Http { .. } => "external-http",
+        }
+    }
+}
+
+fn not_configured_message() -> String {
     "Region analysis provider is not configured. Set MCP_PDF_REGION_ANALYSIS_COMMAND, MCP_PDF_REGION_ANALYSIS_HTTP_URL, or MCP_PDF_REGION_ANALYSIS_PRESET=ollama/openai-compatible/lmstudio/llamacpp to enable analyze_regions.".into()
 }
 
-pub(super) fn parse_http_headers(raw: Option<String>) -> Result<Vec<(String, String)>, String> {
+fn parse_http_headers(raw: Option<String>) -> Result<Vec<(String, String)>, String> {
     let Some(raw) = raw
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
@@ -39,7 +89,7 @@ pub(super) fn parse_http_headers(raw: Option<String>) -> Result<Vec<(String, Str
     Ok(headers)
 }
 
-pub(super) fn validate_http_url(url: &str, invalid_message: &str) -> Result<(), String> {
+fn validate_http_url(url: &str, invalid_message: &str) -> Result<(), String> {
     let lower = url.to_ascii_lowercase();
     if !(lower.starts_with("http://") || lower.starts_with("https://")) {
         return Err(invalid_message.to_string());
@@ -54,7 +104,7 @@ pub(super) fn validate_http_url(url: &str, invalid_message: &str) -> Result<(), 
     Ok(())
 }
 
-pub(super) fn command_provider_config(
+fn command_provider_config(
     command: String,
     args_value: Option<String>,
 ) -> Result<ProviderConfig, String> {
@@ -87,7 +137,7 @@ pub(super) fn command_provider_config(
     })
 }
 
-pub(super) fn http_provider_config(
+fn http_provider_config(
     url: String,
     headers: Vec<(String, String)>,
     preset: Option<String>,
