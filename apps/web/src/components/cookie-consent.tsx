@@ -1,7 +1,7 @@
 import { A, useLocation } from '@solidjs/router';
 import { createContext, createEffect, createSignal, onCleanup, onMount, Show, useContext, type ParentProps } from 'solid-js';
 import { bindCheckoutAttribution, createSignalBrowser, detectSignalRegion, resolveEffectiveConsent, type SignalConsent } from '@sylphx/sdk/signal';
-import { clearGoogleCookies, measurementId, startGoogle, stopGoogle, track } from '@/lib/analytics';
+import { type BehavioralEvent, clearGoogleCookies, isPricingPage, measurementId, startGoogle, stopGoogle, track, trackBehavioral } from '@/lib/analytics';
 import { consentKey, savedSignalChoice, signalChoiceKey, signalChoices, signalStorage, type Choice } from '@/lib/consent';
 import { canonicalOrigin } from '@/lib/app-origin';
 import { localeFromPath } from '@/lib/marketing-locale';
@@ -16,6 +16,7 @@ const CookieContext = createContext<{
   open: (from: HTMLButtonElement) => void;
   bindCheckout: (binding?: CheckoutBinding) => Promise<void>;
   beginCheckout: (currency: string, entrySurface: EntrySurface) => Promise<void>;
+  trackBehavioral: (...event: BehavioralEvent) => void;
 }>();
 
 function migrateChoice() {
@@ -125,7 +126,7 @@ export function CookieConsent(props: ParentProps) {
     if (pathname !== lastPath) {
       lastPath = pathname;
       track('page_view', pathname);
-      if (pathname === '/pricing' || pathname === '/pro') track('pricing_view', pathname);
+      if (isPricingPage(pathname)) track('pricing_view', pathname);
     }
   });
 
@@ -181,6 +182,11 @@ export function CookieConsent(props: ParentProps) {
       const signal = browser();
       if (gpc || !signal) await bindCheckoutAttribution(checkout, {...options, privacy:{storedChoice:'denied'}});
       else await signal.bindCheckoutAttribution(checkout, options);
+    },
+    trackBehavioral(...event: BehavioralEvent) {
+      // The new funnel requires an explicit choice even where the existing
+      // Paid-UA flow permits regional defaults. Signal rechecks GPC on read.
+      if (hasChoice()) trackBehavioral(browser()?.getConsent(), route.pathname, ...event);
     },
     async beginCheckout(currency: string, entrySurface: EntrySurface) {
       if (!active || browser()?.getConsent().analytics_storage !== 'granted') return;

@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { resolveEffectiveConsent } from '@sylphx/sdk/signal';
+import { gaDisable, isPricingPage, measurementId, pageLocation, trackBehavioral } from './analytics';
+
+const origin = 'https://anymd.sylphx.com';
+
+function withBrowser(run: (commands: unknown[][], google: {[gaDisable]: boolean}) => void) {
+  const commands: unknown[][] = [];
+  const google = {[gaDisable]:false, gtag: (...args: unknown[]) => commands.push(args)};
+  Object.assign(globalThis, {location:{origin}, window:google});
+  try { run(commands, google); }
+  finally {
+    Reflect.deleteProperty(globalThis, 'location');
+    Reflect.deleteProperty(globalThis, 'window');
+  }
+}
+
+test('analytics uses only known sections and canonical localized page locations', () => withBrowser(() => {
+  for (const [input, path, pricing] of [
+    ['/zh-TW', '/zh-TW', false],
+    ['/zh-Hant/', '/zh-TW', false],
+    ['/zh-TW/pricing', '/zh-TW/pricing', true],
+    ['/zh-Hant/pricing/?session_id=private#proof', '/zh-TW/pricing', true],
+    ['/zh-TW/secret-token', '/other', false],
+    ['/arbitrary/path', '/other', false],
+    ['/pricing?proof=private', '/pricing', true],
+    ['/pro', '/pro', true],
+    ['/pro/thanks?session_id=private', '/pro', false],
+    ['/cli-auth/private?challenge=private#proof', '/cli-auth', false],
+  ] as const) {
+    assert.equal(pageLocation(input), origin + path, input);
+    assert.equal(isPricingPage(input), pricing, input);
+  }
+}));
+
+test('behavioral transport drops all non-schema fields and non-allowlisted formats', () => withBrowser(commands => {
+  const payload = {
+    file_format:'private.pdf', source_kind:'local_file' as const, unit_count:2, token_count:370, duration_ms:49,
+    filename:'private.pdf', markdown:'private document contents', email:'private@example.invalid',
+  };
+  trackBehavioral(resolveEffectiveConsent({storedChoice:'analytics_only'}), '/studio?query=private#proof', 'document_converted', payload);
+  const context = {page_location:origin + '/studio', page_referrer:'', page_title:'Anymd'};
+  assert.deepEqual(commands, [
+    ['set', context],
+    ['event', 'document_converted', {
+      file_format:'other', source_kind:'local_file', unit_count:2, token_count:370, duration_ms:49, ...context, send_to:measurementId,
+    }],
+  ]);
+}));
+
+test('behavioral transport emits nothing before readiness, when denied, under GPC, or when stopped', () => withBrowser((commands, google) => {
+  const allowed = resolveEffectiveConsent({storedChoice:'granted'});
+  const denied = resolveEffectiveConsent({storedChoice:'denied'});
+  const gpc = resolveEffectiveConsent({storedChoice:'analytics_only'}, new Headers({'Sec-GPC':'1'}));
+  for (const consent of [undefined, denied, gpc]) trackBehavioral(consent, '/studio', 'quote_searched', {matched:false});
+  google[gaDisable] = true;
+  trackBehavioral(allowed, '/studio', 'quote_searched', {matched:false});
+  assert.deepEqual(commands, []);
+}));

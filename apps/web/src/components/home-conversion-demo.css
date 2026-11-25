@@ -227,3 +227,8 @@
   .home-conversion-demo-source { padding-bottom:5px; }
   .home-conversion-demo-output pre { min-height:0; max-height:6rem; overflow:auto; }
 }
+
+@media (max-width:420px) {
+  .home-conversion-demo-tabs { grid-template-columns: minmax(0, .6fr) minmax(0, 1.75fr) minmax(0, 1fr); }
+  .home-conversion-demo-tabs svg { display: none; }
+}

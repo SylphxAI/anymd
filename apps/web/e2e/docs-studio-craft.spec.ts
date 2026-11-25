@@ -1,5 +1,27 @@
 import { expect, test } from '@playwright/test';
 
+test('Studio exports are in the first viewport above the consent bar immediately after PDF conversion', async ({ page }, info) => {
+  await page.route('**/cdn-cgi/trace', route => route.fulfill({body:'loc=DE\n'}));
+  await page.goto('/studio');
+  const bar = page.getByRole('complementary', {name:'Cookie settings'});
+  await expect(bar).toBeVisible();
+  await expect(page.getByRole('button', {name:'Open a file'})).toHaveClass(/button-primary/);
+  await page.getByRole('button', {name:'Sample PDF'}).click();
+  const stats = page.getByText(/^2 pages · ~[\d,]+ tokens$/);
+  const copy = page.getByRole('button', {name:'Copy Markdown', exact:true});
+  const download = page.getByRole('button', {name:'Download .md', exact:true});
+  await expect(stats).toBeVisible();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  const dock = (await bar.boundingBox())!;
+  for (const target of [copy, download, stats]) {
+    await expect(target).toBeInViewport({ratio:1});
+    const bounds = (await target.boundingBox())!;
+    expect(bounds.y + bounds.height).toBeLessThan(dock.y);
+  }
+  await page.screenshot({path:info.outputPath('studio-first-viewport.png')});
+});
+
 test('shows a useful OCR state and no empty exports or quote search for a scanned PDF', async ({ page }) => {
   await page.goto('/studio');
   await page.locator('input[type=file]').setInputFiles({ name: 'image-only.pdf', mimeType: 'application/pdf', buffer: imageOnlyPdf() });
@@ -12,20 +34,19 @@ test('shows a useful OCR state and no empty exports or quote search for a scanne
 });
 
 test('copies code exactly and exposes Python API in the reference nav', async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('anymd.cookie-settings.v1', 'reject');
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (text: string) => sessionStorage.setItem('copied', text) } });
-  });
-  for (const path of ['/docs/cli', '/docs/tools', '/docs/python']) {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.addInitScript(() => localStorage.setItem('anymd.cookie-settings.v1', 'reject'));
+  for (const path of ['/docs', '/docs/cli', '/docs/tools', '/docs/python']) {
     await page.goto(path);
     await expect(page.getByRole('navigation', { name: 'Documentation' }).getByRole('link', { name: 'Python API' })).toHaveAttribute('href', '/docs/python');
     const code = page.locator('article pre > code');
     const copy = page.getByRole('button', { name: 'Copy code', exact: true });
     await expect(code.first()).toBeVisible();
     await expect(copy).toHaveCount(await code.count());
-    await copy.first().click();
+    await expect(copy.first()).toBeVisible();
+    await copy.first().press('Enter');
     await expect(page.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
-    expect(await page.evaluate(() => sessionStorage.getItem('copied'))).toBe(await code.first().textContent());
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await code.first().textContent());
   }
 });
 

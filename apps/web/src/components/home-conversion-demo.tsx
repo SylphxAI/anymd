@@ -1,5 +1,6 @@
 import { Braces, Check, Clapperboard, Copy, Files, FileText } from 'lucide-solid';
 import { createSignal, createUniqueId, For, onCleanup, Show } from 'solid-js';
+import { useCookieConsent } from './cookie-consent';
 import './home-conversion-demo.css';
 
 type Locale = 'en' | 'zh-TW';
@@ -128,6 +129,7 @@ const copy: Record<Locale, DemoCopy> = {
 const icons = { pdf: FileText, document: Files, video: Clapperboard };
 
 export function HomeConversionDemo(props: { locale: Locale }) {
+  const consent = useCookieConsent();
   const labels = () => copy[props.locale];
   const id = createUniqueId();
   const [active, setActive] = createSignal<Example>('pdf');
@@ -173,7 +175,9 @@ export function HomeConversionDemo(props: { locale: Locale }) {
     } catch {
       result = 'copyFailed';
     }
-    if (attempt === copyAttempt) setFeedback(result);
+    if (attempt !== copyAttempt) return;
+    if (result === 'copied') consent.trackBehavioral('output_copied', {surface:'home_demo'});
+    setFeedback(result);
   }
 
   return (

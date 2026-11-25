@@ -1,6 +1,7 @@
 import type { SignalConsent } from '@sylphx/sdk/signal';
 import type { checkoutParameters } from './funnel';
 import type { SignupSignal } from './signup';
+import { localeFromPath, localizedPath } from './marketing-locale';
 
 export const measurementId = 'G-R4TD2Z8RR7';
 export const gaDisable = `ga-disable-${measurementId}` as const;
@@ -8,12 +9,23 @@ export const gaDisable = `ga-disable-${measurementId}` as const;
 type GoogleWindow = Window & { [gaDisable]?: boolean; dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
 const allowedSections = new Set(['studio', 'docs', 'vs', 'pro', 'pricing', 'privacy', 'playground', 'legal', 'guide', 'tasks', 'security', 'use-cases', 'vision', 'sign-in', 'account', 'billing', 'dashboard', 'recover', 'cli-auth']);
 
+function analyticsPath(pathname: string) {
+  // Only the two translated routes are allowed, not every child of a locale.
+  if (localeFromPath(pathname) === 'zh-TW') return localizedPath(pathname, 'zh-TW');
+  const path = pathname.split(/[?#]/, 1)[0];
+  const section = path.split('/')[1];
+  return path === '/' ? '/' : allowedSections.has(section) ? '/' + section : '/other';
+}
+
 export function pageLocation(pathname: string) {
-  // GA sees only a section, never arbitrary path components, query strings or
-  // hashes. Auth and payment returns can include one-time proofs in the URL.
-  const section = pathname.split('/')[1];
-  const path = pathname === '/' ? '/' : allowedSections.has(section) ? '/' + section : '/other';
-  return location.origin + path;
+  // Never send arbitrary path components, query strings or hashes. Auth and
+  // payment returns can include one-time proofs in the URL.
+  return location.origin + analyticsPath(pathname);
+}
+
+export function isPricingPage(pathname: string) {
+  const path = pathname.split(/[?#]/, 1)[0].replace(/\/$/, '');
+  return path === '/pricing' || path === '/pro' || analyticsPath(path) === '/zh-TW/pricing';
 }
 
 function google() { return window as GoogleWindow; }
@@ -66,10 +78,68 @@ export function track(...[name, pathname, parameters]:
   | [name: 'page_view' | 'pricing_view', pathname: string]
   | [name: 'begin_checkout', pathname: string, parameters: CheckoutEvent]
   | [name: 'sign_up', pathname: string, parameters: SignupSignal]) {
+  return emit(name, pathname, parameters);
+}
+
+function emit(name: string, pathname: string, parameters?: object) {
   const w = google();
   if (w[gaDisable] || typeof w.gtag !== 'function') return false;
   const context = {page_location: pageLocation(pathname), page_referrer: '', page_title: 'Anymd'};
   w.gtag('set', context);
   w.gtag('event', name, {...parameters, ...context, send_to: measurementId});
   return true;
+}
+
+const fileFormats = new Set(['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'tsv', 'epub', 'html', 'image', 'video', 'text', 'subtitles']);
+export type ConversionSource = 'sample' | 'local_file';
+type Conversion = { file_format: string; source_kind: ConversionSource };
+export type CopyDetails =
+  | { surface: 'studio_output' | 'studio_timestamp' | 'home_demo' | 'docs_code' }
+  | { surface: 'home_install'; command_kind: 'npm' | 'pip' | 'uvx' }
+  | { surface: 'dashboard_mcp'; command_kind: 'mcp_config' }
+  | { surface: 'dashboard_cli'; command_kind: 'cli_login' };
+export type BehavioralEvent =
+  | [name: 'document_converted', payload: Conversion & { unit_count: number; token_count: number; duration_ms: number }]
+  | [name: 'output_copied', payload: CopyDetails]
+  | [name: 'output_downloaded', payload: Conversion]
+  | [name: 'quote_searched', payload: { matched: boolean }]
+  | [name: 'paywall_view', payload: { entry_surface: 'studio_cite_preview' }]
+  | [name: 'pro_cta_clicked', payload: { entry_surface: 'home_hero' | 'home_pro_panel' | 'studio_cite_preview' }]
+  | [name: 'cli_authorized', payload: { entry_surface: 'cli_auth' }];
+
+const count = (value: number) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+const conversion = (payload: Conversion) => ({
+  file_format: fileFormats.has(payload.file_format) ? payload.file_format : 'other',
+  source_kind: payload.source_kind === 'local_file' ? 'local_file' : 'sample',
+});
+
+function behavioralParameters(...[name, payload]: BehavioralEvent) {
+  // Project fields instead of spreading callers' data: structural typing alone
+  // doesn't exclude extra properties. Never forward the converter result itself.
+  switch (name) {
+    case 'document_converted': return {...conversion(payload), unit_count:count(payload.unit_count), token_count:count(payload.token_count), duration_ms:count(payload.duration_ms)};
+    case 'output_downloaded': return conversion(payload);
+    case 'output_copied': {
+      switch (payload.surface) {
+        case 'studio_output': case 'studio_timestamp': case 'home_demo': case 'docs_code': return {surface:payload.surface};
+        case 'home_install': return {surface:'home_install', command_kind:['npm', 'pip', 'uvx'].find(kind => kind === payload.command_kind)};
+        case 'dashboard_mcp': return {surface:'dashboard_mcp', command_kind:'mcp_config'};
+        case 'dashboard_cli': return {surface:'dashboard_cli', command_kind:'cli_login'};
+      }
+      return;
+    }
+    case 'quote_searched': return {matched:payload.matched === true};
+    case 'paywall_view': return {entry_surface:'studio_cite_preview'};
+    case 'pro_cta_clicked': return ['home_hero', 'home_pro_panel', 'studio_cite_preview'].includes(payload.entry_surface) ? {entry_surface:payload.entry_surface} : undefined;
+    case 'cli_authorized': return {entry_surface:'cli_auth'};
+  }
+}
+
+// CookieConsent supplies the current effective Signal consent, including GPC.
+// Keep this adapter as the single transport seam for custom Signal events.
+export function trackBehavioral(consent: SignalConsent | undefined, pathname: string, ...event: BehavioralEvent) {
+  if (consent?.analytics_storage !== 'granted') return;
+  const parameters = behavioralParameters(...event);
+  if (!parameters) return;
+  try { emit(event[0], pathname, parameters); } catch { /* Telemetry never blocks the action. */ }
 }

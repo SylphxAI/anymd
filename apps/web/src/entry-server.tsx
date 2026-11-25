@@ -16,6 +16,9 @@ export default createHandler(() => <StartServer document={({ assets, children, s
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta name="theme-color" content="#C3F53C" />
+      <link rel="manifest" href="/manifest.webmanifest" />
+      <link rel="apple-touch-icon" href="/apple-touch-icon-180.png" />
       <link rel="icon" href="/favicon.svg" />
       {key && release && url && <script src="/obs.js" data-capture-url={url} data-publishable-key={key} data-release={release} />}
       {assets}
