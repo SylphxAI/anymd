@@ -158,6 +158,7 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .studio-private { color: var(--muted); font-size: .75rem; }
 .studio-controls { padding: .75rem 1rem; display: flex; flex-wrap: wrap; gap: .45rem; }
 .studio-controls .button { font-size: .82rem; padding: .45rem .72rem; min-height: 2.35rem; }
+.studio-controls .button:disabled { cursor: progress; opacity: 1; color: var(--muted); background: var(--soft); border-color: var(--line); }
 .studio-workspace { margin: 0 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--canvas); min-width: 0; }
 .studio-drag { outline: 2px solid var(--accent); outline-offset: 2px; }
 .studio-output-header { border-bottom: 1px solid var(--line); }

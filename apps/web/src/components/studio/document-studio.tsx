@@ -1,7 +1,7 @@
 import { ArrowRight, Braces, Check, Download, FileText, LockKeyhole, Upload } from 'lucide-solid';
 import { A } from '@solidjs/router';
 import CitePreview from './cite-preview';
-import { createSignal, For, onCleanup, Show } from 'solid-js';
+import { createSignal, For, onCleanup, onMount, Show } from 'solid-js';
 import MarkdownPreview from './markdown-preview';
 import type { ConversionSource } from '@/lib/analytics';
 import type { Locale } from '@/lib/marketing-locale';
@@ -38,6 +38,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
     return output?.format === 'pdf' && !output.source_units.some(unit => unit.text.trim());
   };
   const [file, setFile] = createSignal<string | null>(null);
+  const [hydrated, setHydrated] = createSignal(false);
   const [pending, setPending] = createSignal(false);
   const [notice, setNotice] = createSignal('');
   const [quote, setQuote] = createSignal('');
@@ -64,6 +65,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
     if (localVideoUrl) URL.revokeObjectURL(localVideoUrl);
     localVideoUrl = undefined;
   }
+  onMount(() => setHydrated(true));
   onCleanup(() => { stop(); releaseVideo(); });
 
   async function convert(name: string, source: File | string) {
@@ -103,7 +105,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
   }
 
   function useFiles(files: FileList | null) {
-    if (!files?.length) return;
+    if (!hydrated() || !files?.length) return;
     void convert(files[0].name, files[0]);
     if (input) input.value = '';
   }
@@ -122,12 +124,13 @@ export default function DocumentStudio(props: { locale: Locale }) {
   return <div class="studio">
     <div class="studio-bar"><span class="studio-title"><Braces size={17} /> {t().bar}</span><span class="studio-private"><LockKeyhole size={13} /> {t().private}</span></div>
     <input ref={(element) => { input = element; }} type="file" hidden accept={`${accepted},video/*`} onChange={(e)=>useFiles(e.currentTarget.files)} />
-    <div class="studio-controls">
-      <button class="button button-primary" type="button" onClick={()=>input?.click()}><Upload size={15} /> {t().open}</button>
-      <button class="button" type="button" onClick={()=>sample('brief')}>{t().sampleDoc}</button>
-      <button class="button" type="button" onClick={()=>sample('pdf')}>{t().samplePdf}</button><button class="button" type="button" onClick={()=>{stop();releaseVideo();setFile('demo.mp4');setVideoUrl('/demo.mp4');setResult(null);setMatch(null);setNotice('');setPending(false);setStamp(null);}}>{t().sampleVideo}</button>
+    <div class="studio-controls" aria-busy={!hydrated() || pending()}>
+      <button class="button button-primary" type="button" disabled={!hydrated()} onClick={()=>input?.click()}><Upload size={15} /> {t().open}</button>
+      <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('brief')}>{t().sampleDoc}</button>
+      <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('pdf')}>{t().samplePdf}</button>
+      <button class="button" type="button" disabled={!hydrated()} onClick={()=>{stop();releaseVideo();setFile('demo.mp4');setVideoUrl('/demo.mp4');setResult(null);setMatch(null);setNotice('');setPending(false);setStamp(null);}}>{t().sampleVideo}</button>
     </div>
-    <div class={'studio-workspace' + (drag() ? ' studio-drag' : '')} onDragOver={(e)=>{e.preventDefault();setDrag(true);}} onDragLeave={()=>setDrag(false)} onDrop={(e)=>{e.preventDefault();setDrag(false);useFiles(e.dataTransfer?.files ?? null);}}>
+    <div class={'studio-workspace' + (drag() ? ' studio-drag' : '')} onDragOver={(e)=>{e.preventDefault();if (hydrated()) setDrag(true);}} onDragLeave={()=>setDrag(false)} onDrop={(e)=>{e.preventDefault();setDrag(false);useFiles(e.dataTransfer?.files ?? null);}}>
       <div class="studio-output-header">
         <div class="studio-label"><span><FileText size={15} aria-hidden="true" /> {file() ?? t().inputOutput}</span><Show when={result()}>{(output) => <span>{output().format.toUpperCase()} · {output().ms} ms</span>}</Show></div>
         <Show when={noSelectableText() ? null : result()}>{output => <div class="studio-output-actions">
@@ -150,7 +153,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
         <Show when={view() === 'preview'} fallback={<pre class="studio-code" tabIndex={0} aria-label={t().markdown}>{result()?.markdown}</pre>}>
           <MarkdownPreview markdown={result()?.markdown ?? ''} locale={props.locale} />
         </Show>
-      </div> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{t().drop}</strong><span class="muted">{t().formats}</span></div>}
+      </div> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{hydrated() ? t().drop : t().loading}</strong><span class="muted">{t().formats}</span></div>}
     </div>
     <div class="studio-bottom"><span>{t().localMarkdown}</span><span>RUST / WASM</span></div>
     {result() && !noSelectableText() && <form class="studio-quote stack" onSubmit={searchQuote}>
