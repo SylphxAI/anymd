@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-solid';
 import { For } from 'solid-js';
 import { PageMeta } from '@/components/page-meta';
+import { collectionPageSchema, StructuredData } from '@/components/search-details';
 import { CampaignLink } from '@/lib/attribution-link';
 
 const guides = [
@@ -9,12 +10,16 @@ const guides = [
   { href: '/tasks/extract-video-frame', title: 'Extract a video frame', description: 'Capture an exact frame and record its decoded timestamp and hash.' },
 ] as const;
 
+const path = '/tasks';
+const title = 'Task guides';
+
 export default function TasksRoute() {
   return <section class="wrap page-shell">
-    <PageMeta title="Task guides" canonical="/tasks" description="Step-by-step Anymd guides for verifying PDF quotes, building video timelines, and citing exact video frames." />
+    <PageMeta title={title} canonical={path} description="Step-by-step Anymd guides for verifying PDF quotes, building video timelines, and citing exact video frames." />
+    <StructuredData nodes={[collectionPageSchema(path, title, guides)]} />
     <header class="page-heading">
       <span class="eyebrow">DOCUMENTATION</span>
-      <h1>Task guides</h1>
+      <h1>{title}</h1>
       <p>Follow a worked example to verify a PDF quote or find the exact moment in a video.</p>
     </header>
     <ul class="stack max-w-3xl">

@@ -48,6 +48,48 @@ for (const [route, locale] of [['/studio', 'en'], ['/zh-TW/studio', 'zh-TW']]) {
   });
 }
 
+test('task index exposes the three visible guide links as a canonical ItemList', async ({ page, request }) => {
+  const response = await request.get('/tasks?utm_source=docs');
+  expect(response.ok()).toBe(true);
+  const ssr = await response.text();
+  expect(ssr).toContain('"@type":"CollectionPage"');
+  expect(ssr).toContain('"@type":"ItemList"');
+  await page.goto('/tasks?utm_source=docs');
+  const data = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent() ?? '');
+  const links = await page.locator('main ul h2').evaluateAll(headings => headings.map(heading => ({
+    title: heading.textContent,
+    path: new URL(heading.closest('a')!.href).pathname,
+  })));
+  expect(links).toHaveLength(3);
+  expect(data['@graph']).toEqual([{
+    '@type': 'CollectionPage',
+    name: 'Task guides',
+    url: origin + '/tasks',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: links.map(({ title, path }, index) => ({
+        '@type': 'ListItem', position: index + 1, name: title, url: origin + path,
+      })),
+    },
+  }]);
+});
+
+test('article bridge follows the article without widening the page and is absent on excluded routes', async ({ page }) => {
+  const bridge = page.getByRole('region', {name:'Try a file of your own'});
+  for (const path of ['/vs/docling', '/docs/cli', '/tasks/check-pdf-citation', '/use-cases/pdf-and-office-to-markdown-mcp']) {
+    expect((await page.goto(path))?.ok()).toBe(true);
+    await expect(page.locator('article.prose + section.panel')).toHaveAttribute('aria-labelledby', 'article-bridge-title');
+    await expect(bridge.getByRole('link', {name:'Open Document Studio'})).toBeVisible();
+    await expect(bridge.getByRole('link', {name:'Anymd Pro — $29 once'})).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  }
+  for (const path of ['/docs/pro-licence-testing', '/legal/terms', '/security/advisories', '/privacy']) {
+    expect((await page.goto(path))?.ok()).toBe(true);
+    await expect(page.locator('article.prose')).toBeVisible();
+    await expect(bridge).toHaveCount(0);
+  }
+});
+
 test('comparison is discoverable and its local setup controls work', async ({ page }) => {
   for (const path of ['/vs', '/docs']) {
     await page.goto(path);

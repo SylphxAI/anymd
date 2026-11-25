@@ -24,6 +24,23 @@ export function softwareSchema(...offers: ReturnType<typeof offer>[]) {
   };
 }
 
+export function collectionPageSchema(path: string, name: string, entries: readonly { href: string; title: string }[]) {
+  return {
+    '@type': 'CollectionPage',
+    name,
+    url: canonicalOrigin + path,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: entries.map(({ href, title }, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: title,
+        url: canonicalOrigin + href,
+      })),
+    },
+  };
+}
+
 export function techArticleSchema(path: string, headline: string, description?: string) {
   const url = canonicalOrigin + path;
   const organization = { '@type': 'Organization', name: 'Sylphx Limited', url: 'https://sylphx.com' };

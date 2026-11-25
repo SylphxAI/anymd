@@ -61,7 +61,7 @@ test('behavioral transport emits nothing before readiness, when denied, under GP
   assert.deepEqual(commands, []);
 }));
 
-test('comparison copy and Pro events accept only known labels and never send clipboard text', () => withBrowser(commands => {
+test('comparison copy and Pro CTA events accept only known labels and never send clipboard text', () => withBrowser(commands => {
   const consent = resolveEffectiveConsent({storedChoice:'analytics_only'});
   const context = {page_location:origin + '/vs', page_referrer:'', page_title:'Anymd'};
   const copied = {surface:'markdownify_mcp', command_kind:'mcp_config', text:'private clipboard input'} as const;
@@ -69,11 +69,14 @@ test('comparison copy and Pro events accept only known labels and never send cli
   const path = '/vs/markdownify-mcp?gclid=private#proof';
   trackBehavioral(consent, path, 'output_copied', copied);
   trackBehavioral(consent, path, 'pro_cta_clicked', pro);
+  const bridge = {entry_surface:'article_bridge', utm_source:'private source'} as const;
+  trackBehavioral(consent, path, 'pro_cta_clicked', bridge);
   // Untyped callers cannot smuggle arbitrary labels through the runtime projection.
   trackBehavioral(consent, path, 'output_copied', {...copied, command_kind:'private-input' as 'mcp_config'});
   trackBehavioral(consent, path, 'pro_cta_clicked', {entry_surface:'private-input' as 'seo_vs-markdownify-mcp'});
   assert.deepEqual(commands, [
     ['set', context], ['event', 'output_copied', {...context, send_to:measurementId, surface:'markdownify_mcp', command_kind:'mcp_config'}],
     ['set', context], ['event', 'pro_cta_clicked', {...context, send_to:measurementId, entry_surface:'seo_vs-markdownify-mcp'}],
+    ['set', context], ['event', 'pro_cta_clicked', {...context, send_to:measurementId, entry_surface:'article_bridge'}],
   ]);
 }));

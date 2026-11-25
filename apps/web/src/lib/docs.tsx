@@ -6,6 +6,8 @@ import { PageMeta } from '@/components/page-meta';
 import { StructuredData, techArticleSchema } from '@/components/search-details';
 import { CampaignLink } from './attribution-link';
 import { carryCampaign } from './campaign';
+import { defaultCurrency, formatPrice, proAmount } from './catalog';
+import { showsArticleBridge } from './docs-bridge';
 import { campaignDocHtml } from './docs-campaign';
 import type { renderDoc } from './docs-source';
 
@@ -50,6 +52,22 @@ function DocSearch(props: { entries: { title: string; description?: string; path
       <p class="muted" role="status">{matches().length ? matches().length + (matches().length === 1 ? ' guide found' : ' guides found') : 'No guides found. Try a different term.'}</p>
       <ul><For each={matches()}>{(entry) => <li><CampaignLink href={entry.path} class="inline-link" rel="external">{entry.title}</CampaignLink>{entry.description && <p class="muted">{entry.description}</p>}</li>}</For></ul>
     </Show>
+  </section>;
+}
+
+const bridgeSurface = 'article_bridge';
+const bridgePrice = formatPrice(proAmount(defaultCurrency), defaultCurrency);
+
+function ArticleBridge() {
+  const consent = useCookieConsent();
+  return <section class="panel mt-8" aria-labelledby="article-bridge-title">
+    <span class="eyebrow">NEXT STEP</span>
+    <h2 id="article-bridge-title" class="mt-2">Try a file of your own</h2>
+    <p class="muted">Convert a document to Markdown in your browser without uploading it.</p>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <CampaignLink href="/studio" class="button button-primary">Open Document Studio</CampaignLink>
+      <CampaignLink href={'/pricing?entry_surface=' + bridgeSurface} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:bridgeSurface})}>Anymd Pro — {bridgePrice} once</CampaignLink>
+    </div>
   </section>;
 }
 
@@ -116,7 +134,12 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
       </Show>
       <nav class="docs-nav" aria-label="Documentation"><span class="eyebrow">REFERENCE</span><For each={nav}>{([label, href]) => <CampaignLink href={href === 'getting-started' ? '/docs' : '/docs/' + href}>{label}</CampaignLink>}</For><CampaignLink href="/tasks">Task guides</CampaignLink><CampaignLink href="/vs">Comparisons</CampaignLink></nav>
       {/* Only trusted repository Markdown, rendered with inline HTML disabled. */}
-      <div class="min-w-0"><Show when={props.index && interactive() && value().searchIndex}>{entries => <DocSearch entries={entries()} />}</Show><article ref={body} class="prose" data-interactive={interactive() ? 'true' : undefined} onClick={copyCode} innerHTML={html()} /><span class="sr-only" role="status">{feedback()}</span></div>
+      <div class="min-w-0">
+        <Show when={props.index && interactive() && value().searchIndex}>{entries => <DocSearch entries={entries()} />}</Show>
+        <article ref={body} class="prose" data-interactive={interactive() ? 'true' : undefined} onClick={copyCode} innerHTML={html()} />
+        <Show when={showsArticleBridge(value())}><ArticleBridge /></Show>
+        <span class="sr-only" role="status">{feedback()}</span>
+      </div>
     </section>}</Match>
   </Switch>;
 }
