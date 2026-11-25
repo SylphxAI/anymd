@@ -3,6 +3,7 @@ import { appOrigin, canonicalOrigin, HttpError } from './http';
 import { productionMoney } from './money-production.generated';
 import { product, tokenProduct } from './catalog';
 import { moneyCall } from './money-http';
+import { testMoneyOrigin, testMoneyParent } from './money-target';
 
 type Money = typeof productionMoney;
 
@@ -25,11 +26,10 @@ export function moneyConfig(request: Request): Money | null {
   // separate environment; no browser option can choose a tenant or a key.
   if (liveMoneyHost(request)) return productionMoney;
   const pk = process.env.ANYMD_MONEY_TEST_KEY?.trim();
-  const parent = process.env.ANYMD_MONEY_TEST_PARENT?.trim();
-  if (!pk?.startsWith('sylphx_pk_test_') || !parent || parent === productionMoney.parent || !/^orgs\/org_[a-z0-9]+\/projects\/prj_[a-z0-9]+\/envs\/env_[a-z0-9]+$/.test(parent)) return null;
-  const endpoint = new URL(process.env.ANYMD_MONEY_TEST_URL || productionMoney.origin);
-  if (endpoint.protocol !== 'https:' && (endpoint.protocol !== 'http:' || !['localhost','127.0.0.1'].includes(endpoint.hostname))) return null;
-  return { origin: endpoint.origin, parent, pk };
+  const parent = testMoneyParent();
+  if (!pk?.startsWith('sylphx_pk_test_') || !parent || parent === productionMoney.parent) return null;
+  const origin = testMoneyOrigin();
+  return origin ? { origin, parent, pk } : null;
 }
 
 export async function moneyContext(request: Request) {
