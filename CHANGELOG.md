@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.5.17
+
+### Patch Changes
+
+- Share document conversion across Rust, WebAssembly, and mobile apps without depending on the server binary. `anymd-core` exports `anymd_core::outline` and, with the optional `formats` feature, `anymd_core::document` with `open_bytes` and `scanned_pages`.
+- See copy and download buttons and document stats at the top of Studio results. Copy code blocks directly from `/docs`.
+- Record how people move through the site only after they consent, without collecting personal information in those events. Add the icons and manifest needed to install the web app.
+
 ## 8.5.16
 
 ### Patch Changes
