@@ -5,7 +5,18 @@ import { mock } from 'bun:test';
 
 // Bun uses the root JSX default; these tests exercise schema nodes, not JSX.
 mock.module('react/jsx-dev-runtime', () => ({ jsxDEV() { throw new Error('Render Solid JSX with Vite'); } }));
-const { collectionPageSchema, techArticleSchema } = await import('./search-details');
+mock.module('@/lib/attribution-link', () => ({ CampaignLink() { throw new Error('Render Solid JSX with Vite'); } }));
+const { collectionPageSchema, faqSchema, techArticleSchema } = await import('./search-details');
+
+test('FAQPage preserves the visible answer text and omits link markup', () => {
+  assert.deepEqual(faqSchema('/pricing', [
+    { question: 'Is there a subscription?', answer: 'No.' },
+    { question: 'Where is my invoice?', answer: ['Open ', { text: 'Billing', href: '/billing' }, '.'] },
+  ]).mainEntity, [
+    { '@type': 'Question', name: 'Is there a subscription?', acceptedAnswer: { '@type': 'Answer', text: 'No.' } },
+    { '@type': 'Question', name: 'Where is my invoice?', acceptedAnswer: { '@type': 'Answer', text: 'Open Billing.' } },
+  ]);
+});
 
 test('CollectionPage identifies the task index and orders canonically linked guides', () => {
   assert.deepEqual(collectionPageSchema('/tasks', 'Task guides', [

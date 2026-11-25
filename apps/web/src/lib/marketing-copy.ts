@@ -1,3 +1,4 @@
+import type { Question } from '@/components/search-details';
 import type { Locale } from './marketing-locale';
 
 export const homeCopy = {
@@ -56,6 +57,22 @@ export const pricingCopy = {
       { question: 'How do I activate Pro?', answer: 'Sign in and pay securely, then run anymd login. Use the same account in your browser to activate the CLI and MCP server on that machine.' },
       { question: 'What can I do for free?', answer: 'Convert supported documents in Studio or use the open-source CLI and MCP server for local conversion. No account or API key is needed.' },
       { question: 'What does Pro add to the CLI and MCP server?', answer: 'Pro can verify PDF quotes against the exact page and location, and find and cite exact video frames. These tools run locally.' },
+      {
+        question: 'Does Anymd upload my documents? Can I use Pro offline?',
+        answer: 'Studio converts files in your browser without uploading them. The CLI and MCP server process documents locally unless you explicitly choose a remote provider. Once you activate Pro on a machine, you can use its local Pro features offline.',
+      },
+      {
+        question: 'Does Pro include updates? Where can I get an invoice or request a refund?',
+        answer: [
+          'Your one-time licence works with future releases that include the Pro features. Sign in and open ',
+          { text: 'Billing', href: '/billing' },
+          ' to find your invoices. To request a refund, email ',
+          { text: 'hi@sylphx.com', href: 'mailto:hi@sylphx.com' },
+          '. See the ',
+          { text: 'Pro terms', href: '/legal/pro-terms' },
+          ' for cancellation and refund rules. Your statutory rights still apply.',
+        ],
+      },
     ],
   },
   'zh-TW': {
@@ -72,6 +89,22 @@ export const pricingCopy = {
       { question: '如何啟用 Pro？', answer: '登入並完成付款後，請執行 anymd login，再以同一個帳號在瀏覽器登入，即可在該裝置啟用 CLI 和 MCP 伺服器的 Pro 功能。' },
       { question: '免費版可以做什麼？', answer: '你可以在 Studio 轉換支援的文件，也可以用開放原始碼的 CLI 和 MCP 伺服器在本機轉檔。不需要帳號或 API 金鑰。' },
       { question: 'CLI 和 MCP 伺服器的 Pro 版多了哪些功能？', answer: 'Pro 能核對 PDF 引文出自哪一頁、哪個位置，也能找出並引用影片中的確切影格。這些工具都在本機執行。' },
+      {
+        question: 'Anymd 會上傳我的文件嗎？Pro 可以離線使用嗎？',
+        answer: 'Studio 在瀏覽器中轉檔，不會上傳檔案。CLI 和 MCP 伺服器會在本機處理文件，除非你主動選用遠端服務。每台裝置啟用 Pro 後，就能離線使用 Pro 的本機功能。',
+      },
+      {
+        question: 'Pro 買斷後還能更新嗎？要去哪裡查看發票或申請退款？',
+        answer: [
+          'Pro 一次付費，授權也適用於日後仍提供 Pro 功能的版本。登入後可前往',
+          { text: '帳務頁面', href: '/billing' },
+          '查看發票。若要申請退款，請寄信至 ',
+          { text: 'hi@sylphx.com', href: 'mailto:hi@sylphx.com' },
+          '。取消購買及退款的適用條件請見 ',
+          { text: 'Pro 條款', href: '/legal/pro-terms' },
+          '。你的法定權利不受影響。',
+        ],
+      },
     ],
   },
-} satisfies Record<Locale, object>;
+} satisfies Record<Locale, { questions: readonly Question[] } & Record<string, unknown>>;
