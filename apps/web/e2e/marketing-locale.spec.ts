@@ -99,7 +99,7 @@ test('switches languages and shows priced plans and readable examples at this vi
     await page.evaluate(() => window.scrollTo(0, 0));
   }
   await page.getByRole('link', { name: /選購 Anymd Pro/ }).click();
-  await expect(page).toHaveURL('/zh-TW/pricing');
+  await expect(page).toHaveURL('/zh-TW/pricing?entry_surface=home_hero');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('免費轉檔，按需升級');
   await expect(page.getByText('Bought Pro before account checkout?')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
