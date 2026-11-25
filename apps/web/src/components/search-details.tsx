@@ -2,7 +2,8 @@ import { For } from 'solid-js';
 import { canonicalOrigin } from '@/lib/app-origin';
 import { type Currency, defaultCurrency, proAmount } from '@/lib/catalog';
 
-export type Question = { question: string; answer: string };
+type AnswerPart = string | { text: string; href: string };
+export type Question = { question: string; answer: string | readonly AnswerPart[] };
 
 function offer(name: string, price: number, path: string, currency: Currency) {
   return { '@type': 'Offer', name, price, priceCurrency: currency, url: canonicalOrigin + path };
@@ -77,7 +78,7 @@ export function faqSchema(path: string, questions: readonly Question[]) {
     mainEntity: questions.map(({ question, answer }) => ({
       '@type': 'Question',
       name: question,
-      acceptedAnswer: { '@type': 'Answer', text: answer },
+      acceptedAnswer: { '@type': 'Answer', text: typeof answer === 'string' ? answer : answer.map(part => typeof part === 'string' ? part : part.text).join('') },
     })),
   };
 }
@@ -89,6 +90,8 @@ export function StructuredData(props: { nodes: object[] }) {
 
 export function Faq(props: { questions: readonly Question[] }) {
   return <dl class="faq-list"><For each={props.questions}>{({ question, answer }) => <div>
-    <dt>{question}</dt><dd>{answer}</dd>
+    <dt>{question}</dt><dd>{typeof answer === 'string' ? answer : <For each={answer}>{part =>
+      typeof part === 'string' ? part : <a class="inline-link" href={part.href}>{part.text}</a>
+    }</For>}</dd>
   </div>}</For></dl>;
 }

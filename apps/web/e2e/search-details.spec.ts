@@ -26,6 +26,58 @@ for (const route of ['/', '/pricing', comparison]) {
   });
 }
 
+test.describe('crawler-visible pricing FAQs', () => {
+  test.use({ javaScriptEnabled: false });
+
+  const englishTitles = [
+    'How much does Anymd Pro cost?',
+    'How do I activate Pro?',
+    'What can I do for free?',
+    'What does Pro add to the CLI and MCP server?',
+    'Does Anymd upload my documents? Can I use Pro offline?',
+    'Does Pro include updates? Where can I get an invoice or request a refund?',
+  ];
+  const traditionalChineseTitles = [
+    'Anymd Pro 要多少錢？',
+    '如何啟用 Pro？',
+    '免費版可以做什麼？',
+    'CLI 和 MCP 伺服器的 Pro 版多了哪些功能？',
+    'Anymd 會上傳我的文件嗎？Pro 可以離線使用嗎？',
+    'Pro 買斷後還能更新嗎？要去哪裡查看發票或申請退款？',
+  ];
+
+  for (const [path, canonical, titles] of [
+    ['/pricing', '/pricing', englishTitles],
+    ['/zh-TW/pricing', '/zh-TW/pricing', traditionalChineseTitles],
+    ['/zh-Hant/pricing', '/zh-TW/pricing', traditionalChineseTitles],
+  ] as const) {
+    test(path + ' serves six matching FAQ entries with no horizontal overflow', async ({ page }) => {
+      expect((await page.goto(path))?.status()).toBe(200);
+      const faq = page.locator('.pricing-faq');
+      await expect(faq).toBeVisible();
+      await expect(faq.locator('dt')).toHaveText(titles);
+      const answers = faq.locator('dd');
+      await expect(answers).toHaveCount(6);
+      const links = answers.last().getByRole('link');
+      await expect(links).toHaveCount(3);
+      await expect(links.nth(0)).toHaveAttribute('href', '/billing');
+      await expect(links.nth(1)).toHaveAttribute('href', 'mailto:hi@sylphx.com');
+      await expect(links.nth(2)).toHaveAttribute('href', '/legal/pro-terms');
+
+      const graph = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent() ?? '')['@graph'];
+      const answerTexts = await answers.allTextContents();
+      expect(graph.filter((node: { '@type': string }) => node['@type'] === 'FAQPage')).toEqual([{
+        '@type': 'FAQPage',
+        '@id': origin + canonical + '#faq-title',
+        mainEntity: titles.map((title, index) => ({
+          '@type': 'Question', name: title, acceptedAnswer: { '@type': 'Answer', text: answerTexts[index] },
+        })),
+      }]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+    });
+  }
+});
+
 for (const [route, locale] of [['/studio', 'en'], ['/zh-TW/studio', 'zh-TW']]) {
   test(`${route} serves localized free WebApplication metadata`, async ({ request }) => {
     const response = await request.get(route + '?utm_source=github&utm_medium=readme&utm_content=nav');
