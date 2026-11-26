@@ -70,7 +70,7 @@ class PyPIDelivery(unittest.TestCase):
 
 
     def test_tagged_build_and_readback_share_the_same_pinned_action(self):
-        action = r"uses: SylphxAI/mcp-kit/\.github/actions/pypi-wheels@([0-9a-f]{40}) # main"
+        action = r"uses: SylphxAI/mcp-kit/\.github/actions/pypi-wheels@([0-9a-f]{40})(?=[ \t#\r\n]|$)"
         build = re.findall(action, self.wheels)
         self.assertEqual(len(build), 1)
         self.assertEqual(build, re.findall(action, self.pypi))
