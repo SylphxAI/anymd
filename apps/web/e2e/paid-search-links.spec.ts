@@ -57,9 +57,10 @@ test('comparison pre-consent links carry only allowed campaign values into prici
   const cta = article.getByRole('link', {name:'See Anymd Pro', exact:true});
   expect(await response!.text()).toContain('href="' + (pro + '&' + touch).replaceAll('&', '&amp;') + '"');
   await expect(banner(page).getByRole('button', {name:'Reject optional'})).toBeEnabled();
-  for (const path of ['/vs', '/studio', '/docs/benchmarks', '/docs', '/docs/tools', '/docs/formats']) {
+  for (const path of ['/vs', '/docs/benchmarks', '/docs', '/docs/tools', '/docs/formats']) {
     await expect(article.locator('a[href="' + path + '?' + touch + '"]')).toBeVisible();
   }
+  await expect(article.getByRole('link', {name:'Open the PDF sample'})).toHaveAttribute('href', '/studio?sample=pdf&' + touch);
   await expect(cta).toHaveAttribute('href', pro + '&' + touch);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
   await cta.click();
@@ -90,26 +91,34 @@ test('comparison copies and Pro CTA send only allowlisted analytics after opt-in
   const hits = await isolate(page);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto(comparison + '?' + touch + '&email=private#private');
-  const buttons = ['Copy command', 'Copy CLI commands', 'Copy MCP configuration'];
-  const copy = (label: string) => page.getByRole('button', {name:label, exact:true});
+  const commands = [
+    ['One-shot CLI', 'Copy command', 'convert_command'],
+    ['Global CLI', 'Copy CLI commands', 'cli_install'],
+    ['MCP JSON', 'Copy MCP configuration', 'mcp_config'],
+    ['Python uvx', 'Copy uvx command', 'uvx'],
+  ];
+  const setup = page.locator('#install');
+  const copy = (label: string) => setup.getByRole('button', {name:label, exact:true});
   await expect(banner(page).getByRole('button', {name:'Analytics only'})).toBeEnabled();
-  await copy(buttons[0]).click();
+  await copy('Copy command').click();
   await expect(copy('Copied')).toBeVisible();
   expect(await queue(page)).toEqual([]);
   expect(hits).toEqual([]);
   await banner(page).getByRole('button', {name:'Analytics only'}).click();
   await expect(page.locator('#anymd-google-tag')).toHaveCount(1);
-  await expect(copy(buttons[0])).toBeVisible();
+  await expect(copy('Copy command')).toBeVisible();
   const details = {page_location:baseURL + '/vs', page_referrer:'', page_title:'Anymd', send_to:'G-R4TD2Z8RR7'};
-  for (const [index, label] of buttons.entries()) {
-    const code = await copy(label).locator('..').locator('pre code').textContent();
+  const copies = async () => (await queue(page)).filter(row => row[1] === 'output_copied');
+  const commandEvents = commands.map(([, , command_kind]) => [
+    'event', 'output_copied', {...details, surface:'markdownify_mcp', command_kind},
+  ]);
+  for (const [index, [tab, label]] of commands.entries()) {
+    await setup.getByRole('tab', {name:tab, exact:true}).click();
     await copy(label).click();
-    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(code);
-    const kinds = ['convert_command', 'cli_install', 'mcp_config'].slice(0, index + 1);
-    await expect.poll(async () => (await queue(page)).filter(row => row[1] === 'output_copied')).toEqual(kinds.map(command_kind => [
-      'event', 'output_copied', {...details, surface:'markdownify_mcp', command_kind},
-    ]));
+    await expect.poll(copies).toEqual(commandEvents.slice(0, index + 1));
   }
+  await page.getByRole('button', {name:'Copy Markdown', exact:true}).click();
+  await expect.poll(copies).toEqual([...commandEvents, ['event', 'output_copied', {...details, surface:'markdownify_mcp_demo'}]]);
   await page.getByRole('link', {name:'See Anymd Pro', exact:true}).click();
   await expect(page).toHaveURL(pro);
   await expect.poll(async () => (await queue(page)).filter(row => row[1] === 'pro_cta_clicked')).toEqual([

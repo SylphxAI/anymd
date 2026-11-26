@@ -9,7 +9,7 @@ import './home-conversion-demo.css';
 
 const icons = { pdf: FileText, document: Files, video: Clapperboard };
 
-export function HomeConversionDemo(props: { locale: Locale }) {
+export function HomeConversionDemo(props: { locale: Locale; copySurface?: 'home_demo' | 'markdownify_mcp_demo' }) {
   const consent = useCookieConsent();
   const labels = () => homeDemoCopy[props.locale];
   const id = createUniqueId();
@@ -58,7 +58,7 @@ export function HomeConversionDemo(props: { locale: Locale }) {
       result = 'copyFailed';
     }
     if (attempt !== copyAttempt) return;
-    if (result === 'copied') consent.trackBehavioral('output_copied', {surface:'home_demo'});
+    if (result === 'copied') consent.trackBehavioral('output_copied', {surface:props.copySurface ?? 'home_demo'});
     setFeedback(result);
   }
 
