@@ -7,7 +7,14 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-BACKEND = (ROOT / "crates/anymd-formats/src/video/timeline.rs").read_text()
+TIMELINE_DIR = ROOT / "crates/anymd-formats/src/video/timeline"
+BACKEND = "\n".join(
+    path.read_text()
+    for path in (
+        TIMELINE_DIR.with_suffix(".rs"),
+        *(TIMELINE_DIR / f"{module}.rs" for module in ("types", "probe", "subtitles", "extract", "render")),
+    )
+)
 VIDEO = (ROOT / "crates/anymd-formats/src/video.rs").read_text()
 TRANSCRIBE = (ROOT / "crates/anymd-formats/src/video/transcribe.rs").read_text()
 RUNNER = (ROOT / "crates/anymd-formats/src/tool.rs").read_text()
