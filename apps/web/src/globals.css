@@ -168,6 +168,8 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .studio-drag { outline: 2px solid var(--accent); outline-offset: 2px; }
 .studio-output-header { border-bottom: 1px solid var(--line); }
 .studio-label { padding: .55rem .85rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .4rem; color: var(--muted); overflow-wrap: anywhere; }
+.studio-pdf-partial { padding: .65rem .85rem; border-bottom: 1px solid var(--line); background: var(--soft); font-size: .875rem; }
+.studio-pdf-partial p { margin-top: .2rem; }
 .studio-output-pane { height: clamp(16rem, 46vh, 28rem); min-width: 0; }
 .studio-code, .studio-preview { height: 100%; overflow: auto; overflow-wrap: anywhere; }
 .studio-code:focus-visible, .studio-preview:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }

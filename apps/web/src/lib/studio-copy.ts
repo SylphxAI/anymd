@@ -16,8 +16,12 @@ export const studioCopy = {
     readError: 'Couldn’t read this document. Check its format, or try the same file with the native CLI.',
     startError: 'The browser converter could not start. Try again or use the native CLI.',
     openError: 'Couldn’t open this file. Try again or choose another.',
-    scanned: 'No selectable text found in this PDF.',
-    ocr: 'Scanned PDFs require OCR. ', ocrLink: 'Use OCR in the native CLI', ocrEnd: ' to extract text.',
+    emptyPdf: 'No selectable text found in this PDF.',
+    partialPdf: (missing: string[], pages: number) =>
+      'Partial conversion: No selectable text found on ' + (missing.length <= 3
+        ? new Intl.ListFormat('en').format(missing)
+        : new Intl.NumberFormat('en').format(missing.length) + ' of ' + new Intl.NumberFormat('en').format(pages) + ' pages') + '.',
+    ocr: 'For text in images, see the ', ocrLink: 'local OCR instructions', ocrEnd: '.',
     view: 'Output view', preview: 'Preview', previewOutput: 'Markdown preview', previewTable: 'Preview table',
     sourceLabel: (label: string) => label, metadataLabel: (key: string) => key,
     markdown: 'Markdown output', copyMarkdown: 'Copy Markdown', download: 'Download .md',
@@ -59,8 +63,12 @@ export const studioCopy = {
     readError: '無法讀取這份文件。請確認檔案格式，或用本機 CLI 開啟同一個檔案。',
     startError: '瀏覽器無法啟動轉檔工具。請再試一次，或改用本機 CLI。',
     openError: '無法開啟這個檔案。請再試一次，或選擇其他檔案。',
-    scanned: '這份 PDF 沒有可選取的文字。',
-    ocr: '掃描版 PDF 需要使用光學字元辨識（OCR）。', ocrLink: '使用本機 CLI 的 OCR 功能', ocrEnd: '擷取文字。',
+    emptyPdf: '這份 PDF 沒有可選取的文字。',
+    partialPdf: (missing: string[], pages: number) =>
+      '部分轉檔結果：' + (missing.length <= 3
+        ? missing.map(zhSourceLabel).join('、')
+        : new Intl.NumberFormat('zh-TW').format(pages) + ' 頁中有 ' + new Intl.NumberFormat('zh-TW').format(missing.length) + ' 頁') + '未找到可選取的文字。',
+    ocr: '若圖片中有文字，請參閱', ocrLink: '本機 OCR 操作說明', ocrEnd: '。',
     view: '輸出檢視', preview: '預覽', previewOutput: 'Markdown 預覽', previewTable: '預覽表格',
     sourceLabel: zhSourceLabel, metadataLabel: (key: string) => zhMetadata.get(key) ?? key,
     markdown: 'Markdown 輸出', copyMarkdown: '複製 Markdown', download: '下載 .md',
