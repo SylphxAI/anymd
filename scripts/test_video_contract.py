@@ -11,7 +11,11 @@ BACKEND = (ROOT / "crates/anymd-formats/src/video/timeline.rs").read_text()
 VIDEO = (ROOT / "crates/anymd-formats/src/video.rs").read_text()
 TRANSCRIBE = (ROOT / "crates/anymd-formats/src/video/transcribe.rs").read_text()
 RUNNER = (ROOT / "crates/anymd-formats/src/tool.rs").read_text()
-EVIDENCE = (ROOT / "crates/anymd/src/video_evidence.rs").read_text()
+EVIDENCE_FACADE = (ROOT / "crates/anymd/src/video_evidence.rs").read_text()
+EVIDENCE_DIR = ROOT / "crates/anymd/src/video_evidence"
+EVIDENCE_ENRICH = (EVIDENCE_DIR / "enrich.rs").read_text()
+EVIDENCE_RENDER = (EVIDENCE_DIR / "render.rs").read_text()
+EVIDENCE = "\n".join((EVIDENCE_FACADE, EVIDENCE_ENRICH, EVIDENCE_RENDER, (EVIDENCE_DIR / "types.rs").read_text()))
 NATIVE = (ROOT / "crates/anymd-formats/tests/video_timeline.rs").read_text()
 
 
@@ -58,17 +62,18 @@ class VideoSourceContracts(unittest.TestCase):
         self.assertIn("eq(n", BACKEND)
         self.assertIn("scene", BACKEND)
         self.assertIn("0.4", BACKEND)
-        self.assertIn("cue.end_ms", EVIDENCE)
-        self.assertIn("timeline cues", EVIDENCE)
+        self.assertIn("cue.end_ms", EVIDENCE_RENDER)
+        self.assertIn("timeline cues", EVIDENCE_RENDER)
 
     def test_borrowed_budget_local_caption_cache_and_no_recaption_frame_route(self):
-        self.assertIn("pub trait FrameContext", EVIDENCE)
-        self.assertIn("context.charge_frame", EVIDENCE)
-        self.assertIn("context.local_caption_available()", EVIDENCE)
-        self.assertIn('description.provider != "external-command"', EVIDENCE)
-        frame_route = EVIDENCE[EVIDENCE.index("pub fn render_frames("):EVIDENCE.index("pub fn sections(")]
+        self.assertIn("pub trait FrameContext", EVIDENCE_FACADE)
+        self.assertIn("context.charge_frame", EVIDENCE_ENRICH)
+        self.assertIn("context.local_caption_available()", EVIDENCE_ENRICH)
+        self.assertIn('description.provider != "external-command"', EVIDENCE_ENRICH)
+        frame_route = EVIDENCE_RENDER[EVIDENCE_RENDER.index("pub fn render_frames("):EVIDENCE_RENDER.index("pub fn sections(")]
         self.assertNotIn("caption_cached(", frame_route)
         self.assertNotIn("context.ocr(", frame_route)
+        self.assertIn("context.charge_frame", frame_route)
         self.assertIn("timestamps_ms.len() > 20", frame_route)
 
     def test_real_fixture_is_ci_only_and_ignored_until_requested(self):
