@@ -36,7 +36,7 @@ for (const locale of locales) {
     await expect(link).toHaveAttribute('href', locale.studio + '?sample=pdf');
     const geometry = await link.evaluate(el => {
       const { top, right, bottom, left, width, height } = el.getBoundingClientRect();
-      const preview = el.parentElement!.querySelector('.home-conversion-demo-output')!.getBoundingClientRect();
+      const preview = el.closest('[role=tabpanel]')!.querySelector('.home-conversion-demo-output')!.getBoundingClientRect();
       const cookie = document.querySelector('.cookie-panel')!.getBoundingClientRect();
       return {
         height,

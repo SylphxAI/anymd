@@ -113,12 +113,18 @@
   overflow-wrap: anywhere;
 }
 
-.home-conversion-demo-source > div {
+.home-conversion-demo-file-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-conversion-demo-file {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 10px;
-  min-height: 1.375rem;
 }
 
 .home-conversion-demo-source code {
@@ -230,7 +236,6 @@
 .home-conversion-demo-link {
   min-height: 44px;
   max-width: 100%;
-  margin-bottom: 8px;
   font-size: .8rem;
   text-align: start;
   overflow-wrap: anywhere;
@@ -270,7 +275,10 @@
   .home-conversion-demo-panel { margin-top:6px; }
   .home-conversion-demo-source { padding-bottom:5px; }
   .home-conversion-demo-source p { min-height: 2.7em; }
-  .home-conversion-demo-pane { height: 6rem; }
+  .home-conversion-demo-file-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+  .home-conversion-demo-link { justify-self: end; padding: 4px 8px; }
+  .home-conversion-demo-pane { height: 4.25rem; }
+  .home-conversion-demo-pane > pre { padding-block: 5px; }
   .home-conversion-demo-output-bar .studio-view button { min-height: 2.25rem; }
 }
 

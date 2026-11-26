@@ -102,15 +102,17 @@ export function HomeConversionDemo(props: { locale: Locale; copySurface?: 'home_
             hidden={active() !== key}
           >
             <div class="home-conversion-demo-source">
-              <div>
-                <code>{example().file}</code>
-                <Show when={key === 'video'}><span class="home-conversion-demo-pro">{labels().nativePro}</span></Show>
+              <div class="home-conversion-demo-file-row">
+                <div class="home-conversion-demo-file">
+                  <code>{example().file}</code>
+                  <Show when={key === 'video'}><span class="home-conversion-demo-pro">{labels().nativePro}</span></Show>
+                </div>
+                <CampaignLink class="button home-conversion-demo-link" href={(props.locale === 'zh-TW' ? translatedPaths['/studio'] + '?sample=' : '/studio?sample=') + key}>
+                  <span>{example().trySample}</span><ArrowRight size={14} aria-hidden="true" />
+                </CampaignLink>
               </div>
               <p>{example().description}</p>
             </div>
-            <CampaignLink class="button home-conversion-demo-link" href={(props.locale === 'zh-TW' ? translatedPaths['/studio'] + '?sample=' : '/studio?sample=') + key}>
-              {example().trySample} <ArrowRight size={14} aria-hidden="true" />
-            </CampaignLink>
             <div class="home-conversion-demo-output">
               <div class="home-conversion-demo-output-bar">
                 <MarkdownViewToggle locale={props.locale} view={view()} onViewChange={setView} />
