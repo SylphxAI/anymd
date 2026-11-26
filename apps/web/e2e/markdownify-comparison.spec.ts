@@ -10,9 +10,9 @@ const setups = [
   ['Python uvx', 'Copy uvx command', 'uvx anymd report.pdf > report.md'],
 ];
 const examples = [
-  { tab: 'PDF', heading: 'River survey', key: 'pdf', cta: 'Try a PDF in Studio', needle: '<!-- page 3 -->' },
-  { tab: 'Multi-page document', heading: 'Field brief', key: 'document', cta: 'Try a document in Studio', needle: '<!-- slide 2 -->' },
-  { tab: 'Video frame', heading: 'Frame citation', key: 'video', cta: 'Try a video in Studio', needle: 'Decoded: 00:01.100' },
+  { tab: 'PDF', heading: 'River survey', key: 'pdf', cta: 'Convert sample.pdf in Studio', needle: '<!-- page 3 -->' },
+  { tab: 'Multi-page document', heading: 'Field brief', key: 'document', cta: 'Convert brief.html in Studio', needle: '<!-- slide 2 -->' },
+  { tab: 'Video frame', heading: 'Frame citation', key: 'video', cta: 'Open demo.mp4 in Studio', needle: 'Decoded: 00:01.100' },
 ];
 
 const categoryHeadings = ['Install', 'Documents', 'Images and media', 'Web content', 'Markdown output'];
@@ -150,7 +150,7 @@ test('comparison setup and format proof lead to a local Studio conversion before
   await expect(page.locator('article.comparison-page [style]')).toHaveCount(0);
   await activate(demo.getByRole('tab', { name: 'PDF', exact: true }));
   const pdf = page.waitForResponse(res => new URL(res.url()).pathname === '/samples/sample.pdf');
-  await activate(panel.getByRole('link', { name: 'Try a PDF in Studio' }));
+  await activate(panel.getByRole('link', { name: 'Convert sample.pdf in Studio' }));
   await expect(page).toHaveURL('/studio?sample=pdf&' + campaign);
   expect((await pdf).ok()).toBe(true);
   const studio = page.locator('.studio');

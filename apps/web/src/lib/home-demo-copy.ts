@@ -31,7 +31,7 @@ export const homeDemoCopy: Record<Locale, DemoCopy> = {
       pdf: {
         tab: 'PDF',
         file: 'water-survey.pdf',
-        trySample: 'Try a PDF in Studio',
+        trySample: 'Convert sample.pdf in Studio',
         description: 'Page markers and a table, kept in reading order.',
         markdown: `<!-- page 3 -->
 
@@ -45,7 +45,7 @@ export const homeDemoCopy: Record<Locale, DemoCopy> = {
       document: {
         tab: 'Multi-page document',
         file: 'field-brief.pptx',
-        trySample: 'Try a document in Studio',
+        trySample: 'Convert brief.html in Studio',
         description: 'Slide headings and lists stay in source order.',
         markdown: `<!-- slide 1 -->
 
@@ -60,7 +60,7 @@ export const homeDemoCopy: Record<Locale, DemoCopy> = {
       video: {
         tab: 'Video frame',
         file: 'demo.mkv',
-        trySample: 'Try a video in Studio',
+        trySample: 'Open demo.mp4 in Studio',
         description: 'A Markdown citation based on exact frame metadata.',
         markdown: `## Frame citation
 
@@ -85,7 +85,7 @@ export const homeDemoCopy: Record<Locale, DemoCopy> = {
       pdf: {
         tab: 'PDF',
         file: '水質調查.pdf',
-        trySample: '在工作室試用 PDF 範例',
+        trySample: '在工作室轉換 sample.pdf',
         description: '依閱讀順序整理內容，保留頁碼標記與表格。',
         markdown: `<!-- page 3 -->
 
@@ -99,7 +99,7 @@ export const homeDemoCopy: Record<Locale, DemoCopy> = {
       document: {
         tab: '多頁文件',
         file: '採樣簡報.pptx',
-        trySample: '在工作室試用文件範例',
+        trySample: '在工作室轉換 brief.html',
         description: '依原始投影片的順序保留標題和清單。',
         markdown: `<!-- slide 1 -->
 
@@ -114,7 +114,7 @@ export const homeDemoCopy: Record<Locale, DemoCopy> = {
       video: {
         tab: '影片影格',
         file: 'demo.mkv',
-        trySample: '在工作室試用影片範例',
+        trySample: '在工作室開啟 demo.mp4',
         description: '用精確影格的資訊撰寫 Markdown 引用。',
         markdown: `## 影格引用
 
