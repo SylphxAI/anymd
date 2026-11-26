@@ -86,12 +86,12 @@ test('Studio switches both ways and carries permitted campaign fields into local
   await expect(page).toHaveURL(pricing);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('免費轉檔，按需升級');
   const proofLink = page.getByRole('link', { name: '查看引文座標' });
-  await expect(proofLink).toHaveAttribute('href', tw + '?' + campaign + '#studio-cite-heading');
+  await expect(proofLink).toHaveAttribute('href', tw + '?sample=pdf&' + campaign + '#studio-cite-heading');
   await expect(optIn).toBeEnabled();
   expect(tags).toEqual([]);
   expect(await page.evaluate(() => localStorage.getItem('anymd.signal.v1.touch'))).toBeNull();
   await optIn.click();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('anymd.signal.v1.touch') ?? 'null')?.touch))
     .toEqual({ gclid: 'fixture', utm_source: 'locale' });
-  await expect(proofLink).toHaveAttribute('href', tw + '#studio-cite-heading');
+  await expect(proofLink).toHaveAttribute('href', tw + '?sample=pdf#studio-cite-heading');
 });

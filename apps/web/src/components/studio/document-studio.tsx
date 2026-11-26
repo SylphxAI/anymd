@@ -1,6 +1,6 @@
 import { Braces, Download, FileText, LockKeyhole, Upload } from 'lucide-solid';
 import { A, useLocation } from '@solidjs/router';
-import CitePreview from './cite-preview';
+import CitePreview, { citeHeadingId } from './cite-preview';
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import MarkdownPreview, { MarkdownViewToggle, type MarkdownView } from './markdown-preview';
 import QuoteSearch from './quote-search';
@@ -69,6 +69,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
     setHydrated(true);
     const [key, ...duplicates] = new URLSearchParams(location.search).getAll('sample');
     if (!duplicates.length && (key === 'pdf' || key === 'document' || key === 'video')) sample(key, 'link');
+    else if (key === undefined && location.hash === '#' + citeHeadingId) sample('pdf', 'link');
   });
   onCleanup(() => { stop(); releaseVideo(); });
 

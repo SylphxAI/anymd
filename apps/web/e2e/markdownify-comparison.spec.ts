@@ -15,6 +15,74 @@ const examples = [
   { tab: 'Video frame', heading: 'Frame citation', key: 'video', cta: 'Try a video in Studio', needle: 'Decoded: 00:01.100' },
 ];
 
+const categoryHeadings = ['Install', 'Documents', 'Images and media', 'Web content', 'Markdown output'];
+const toolHeadings = ['Anymd', 'Markdownify MCP'];
+
+test('comparison cards preserve all headings, labels and table roles at 390px', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/vs/markdownify-mcp');
+  const table = page.getByRole('table', { name: 'How the two tools compare' });
+  await expect(table.getByRole('columnheader')).toHaveText(['What to check', ...toolHeadings]);
+  expect(await table.locator('thead').evaluate(head => getComputedStyle(head).clipPath)).toBe('inset(50%)');
+  const rows = table.getByRole('row').filter({ has: page.getByRole('rowheader') });
+  await expect(rows).toHaveCount(categoryHeadings.length);
+  await expect(table.getByRole('rowheader')).toHaveText(categoryHeadings);
+
+  for (const [i, heading] of categoryHeadings.entries()) {
+    const row = rows.nth(i);
+    const title = row.getByRole('rowheader', { name: heading, exact: true });
+    const splitWords = await title.evaluate(header => {
+      const text = header.firstChild!;
+      const range = document.createRange();
+      // Check painted line fragments for every word, not just the heading box.
+      return [...(text.textContent ?? '').matchAll(/\S+/g)].filter(({ 0: word, index }) => {
+        range.setStart(text, index);
+        range.setEnd(text, index + word.length);
+        return range.getClientRects().length !== 1;
+      }).map(([word]) => word);
+    });
+    expect(splitWords, heading).toEqual([]);
+    const titleBox = (await title.boundingBox())!;
+    let bottom = titleBox.y + titleBox.height;
+    const cells = row.getByRole('cell');
+    await expect(cells).toHaveCount(toolHeadings.length);
+    for (const [j, label] of toolHeadings.entries()) {
+      const cell = cells.nth(j);
+      await expect(cell).toHaveAttribute('data-label', label);
+      const pseudo = await cell.evaluate(node => {
+        const style = getComputedStyle(node, '::before');
+        return { content: style.content, display: style.display };
+      });
+      expect(pseudo).toEqual({ content: JSON.stringify(label) + ' / ""', display: 'block' });
+      const box = (await cell.boundingBox())!;
+      expect(box.x).toBe(titleBox.x);
+      expect(box.width).toBe(titleBox.width);
+      expect(box.y).toBeGreaterThanOrEqual(bottom);
+      bottom = box.y + box.height;
+    }
+  }
+  expect(await page.evaluate(() => ({ viewport: innerWidth, scroll: document.documentElement.scrollWidth })))
+    .toEqual({ viewport: 390, scroll: 390 });
+});
+
+test('comparison remains a native three-column table above 660px', async ({ page }) => {
+  await page.setViewportSize({ width: 661, height: 900 });
+  await page.goto('/vs/markdownify-mcp');
+  const table = page.getByRole('table', { name: 'How the two tools compare' });
+  expect(await table.evaluate(node => [node.tagName, getComputedStyle(node).display])).toEqual(['TABLE', 'table']);
+  const columns = table.getByRole('columnheader');
+  await expect(columns).toHaveText(['What to check', ...toolHeadings]);
+  await expect(table.locator('thead th[scope="col"]')).toHaveCount(3);
+  await expect(table.locator('tbody th[scope="row"]')).toHaveText(categoryHeadings);
+  await expect(table.getByRole('rowheader')).toHaveText(categoryHeadings);
+  const [title, anymd, markdownify] = await Promise.all((await columns.all()).map(header => header.boundingBox()));
+  expect(title!.y).toBe(anymd!.y);
+  expect(anymd!.y).toBe(markdownify!.y);
+  expect(title!.x).toBeLessThan(anymd!.x);
+  expect(anymd!.x).toBeLessThan(markdownify!.x);
+  expect(await table.getByRole('cell').first().evaluate(node => getComputedStyle(node, '::before').content)).toBe('none');
+});
+
 test('comparison setup and format proof lead to a local Studio conversion before consent', async ({ page, context, hasTouch }) => {
   const errors: string[] = [];
   const signal: string[] = [];
