@@ -8,7 +8,6 @@ import { CampaignLink } from './attribution-link';
 import { carryCampaign } from './campaign';
 import { defaultCurrency, formatPrice, proAmount } from './catalog';
 import { articleBridgeSurface, inlineProCtaSurface, showsArticleBridge } from './docs-bridge';
-import type { ProCtaSurface } from './entry-surface';
 import { campaignDocHtml } from './docs-campaign';
 import type { renderDoc } from './docs-source';
 
@@ -58,17 +57,24 @@ function DocSearch(props: { entries: { title: string; description?: string; path
 
 const bridgePrice = formatPrice(proAmount(defaultCurrency), defaultCurrency);
 
-function ArticleBridge(props: { surface: ProCtaSurface }) {
+export function ArticleBridge(props: { canonical: string; noindex: boolean }) {
   const consent = useCookieConsent();
-  return <section class="panel mt-8" aria-labelledby="article-bridge-title">
+  const surface = () => articleBridgeSurface(props.canonical);
+  return <Show when={showsArticleBridge(props)}><section class="panel mt-8" aria-labelledby="article-bridge-title">
     <span class="eyebrow">NEXT STEP</span>
     <h2 id="article-bridge-title" class="mt-2">Try a file of your own</h2>
     <p class="muted">Convert a document to Markdown in your browser without uploading it.</p>
     <div class="mt-4 flex flex-wrap gap-2">
       <CampaignLink href="/studio" class="button button-primary">Open Document Studio</CampaignLink>
-      <CampaignLink href={'/pricing?entry_surface=' + props.surface} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:props.surface})}>Anymd Pro — {bridgePrice} once</CampaignLink>
+      <CampaignLink href={'/pricing?entry_surface=' + surface()} class="button" onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:surface()})}>Anymd Pro — {bridgePrice} once</CampaignLink>
     </div>
-  </section>;
+    <nav class="article-samples" aria-labelledby="article-samples-label">
+      <span id="article-samples-label" class="eyebrow">Try a sample</span>
+      <CampaignLink href="/studio?sample=pdf" class="inline-link">Sample PDF</CampaignLink>
+      <CampaignLink href="/studio?sample=pdf#studio-cite-heading" class="inline-link">PDF citation proof</CampaignLink>
+      <CampaignLink href="/studio?sample=document" class="inline-link">HTML brief</CampaignLink>
+    </nav>
+  </section></Show>;
 }
 
 export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean }) {
@@ -145,7 +151,7 @@ export function Doc(props: { name: string; legacyDocs?: boolean; index?: boolean
       <div class="min-w-0">
         <Show when={props.index && interactive() && value().searchIndex}>{entries => <DocSearch entries={entries()} />}</Show>
         <article ref={body} class="prose" data-interactive={interactive() ? 'true' : undefined} onClick={onArticleClick} innerHTML={html()} />
-        <Show when={showsArticleBridge(value())}><ArticleBridge surface={articleBridgeSurface(value().canonical)} /></Show>
+        <ArticleBridge canonical={value().canonical} noindex={value().noindex} />
         <span class="sr-only" role="status">{feedback()}</span>
       </div>
     </section>}</Match>
