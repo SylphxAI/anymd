@@ -1,13 +1,12 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
+import { captureStudioAssets, studioAsset } from './studio-assets';
 
 // For a read-only public run, use PLAYWRIGHT_BASE_URL with --reporter=line --last-failed-file /dev/null.
 const live = Boolean(process.env.PLAYWRIGHT_BASE_URL);
 const filename = 'epub-markitdown.epub';
 const fixture = new URL('../../../bench/files/' + filename, import.meta.url);
-const wasmPath = '/wasm/anymd_wasm_bg.wasm';
-const enginePaths = ['/studio-worker.js', '/wasm/anymd_wasm.js', wasmPath];
 const toc = 'Test EPUB Document';
 const first = 'Chapter 1: Test Content';
 const second = 'Chapter 2: More Content';
@@ -23,6 +22,7 @@ test('Studio keeps the authored EPUB contents once before both chapters without 
   expect(createHash('sha256').update(buffer).digest('hex')).toBe('33e65f39f54bd24f74d5f333d24213a68c62ee2f2854d12f8c4c59b15a4031a7');
 
   const origin = new URL(baseURL!).origin;
+  const assets = captureStudioAssets(origin);
   const unexpected: string[] = [];
   let fileSelected = false;
   await context.routeWebSocket('**/*', socket => {
@@ -33,7 +33,7 @@ test('Studio keeps the authored EPUB contents once before both chapters without 
     const request = route.request();
     const url = new URL(request.url());
     if (url.origin === origin && !url.search && request.method() === 'GET' && request.postData() === null) {
-      if (fileSelected && enginePaths.includes(url.pathname)) return route.continue();
+      if (fileSelected && studioAsset(origin, request.url())) return assets.capture(route);
       if (!fileSelected) {
         if (url.pathname === '/cdn-cgi/trace') return route.fulfill({ body: 'loc=US\n' });
         if (['/studio', '/favicon.svg', '/api/auth/session'].includes(url.pathname) || url.pathname.startsWith('/_build/assets/')) {
@@ -53,22 +53,7 @@ test('Studio keeps the authored EPUB contents once before both chapters without 
   await expect(open).toBeEnabled();
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), hasTouch ? open.tap() : open.click()]);
   fileSelected = true;
-  const [response] = await Promise.all([
-    context.waitForEvent('response', {
-      predicate: response => response.url() === origin + wasmPath,
-      timeout: 15_000,
-    }),
-    chooser.setFiles({ name: filename, mimeType: 'application/epub+zip', buffer }),
-  ]);
-  expect(response.ok()).toBe(true);
-  expect(response.headers()['content-type']).toContain('application/wasm');
-  if (live) {
-    const pageRevision = document?.headers()['x-sylphx-revision-sha'];
-    const wasmRevision = response.headers()['x-sylphx-revision-sha'];
-    console.log('Studio revision: %s; WASM revision: %s', pageRevision, wasmRevision);
-    expect(pageRevision).toMatch(/^[a-f0-9]{40}$/);
-    expect(wasmRevision).toBe(pageRevision);
-  }
+  await chooser.setFiles({ name: filename, mimeType: 'application/epub+zip', buffer });
 
   const output = studio.getByLabel('Markdown output', { exact: true });
   await expect(output).toBeVisible({ timeout: 15_000 });
@@ -88,4 +73,5 @@ test('Studio keeps the authored EPUB contents once before both chapters without 
     toc, 'Chapter 1', 'Chapter 2', first, second,
   ]);
   for (const item of await outline.all()) await expect(item).toBeVisible();
+  assets.prove(document, live);
 });
