@@ -6,6 +6,7 @@ import { MarkdownifySetup } from '@/components/markdownify-setup';
 import { PageMeta } from '@/components/page-meta';
 import { Faq, StructuredData, faqSchema, freeOffer, softwareSchema } from '@/components/search-details';
 import { CampaignLink } from '@/lib/attribution-link';
+import { ArticleBridge } from '@/lib/docs';
 
 const surface = 'seo_vs-markdownify-mcp';
 const path = '/vs/markdownify-mcp';
@@ -93,12 +94,16 @@ export default function MarkdownifyComparison() {
     <section class="comparison-section" aria-labelledby="pro-title">
       <h2 id="pro-title">Verify what your agent cites</h2>
       <p>Anymd Pro checks PDF quotes against the cited page and captures exact video frames. Pay US$29 once, with no subscription. Sign in, pay securely, then run <code>anymd login</code> with the same account to activate Pro.</p>
-      <CampaignLink class="button button-primary" href={'/pricing?entry_surface=' + surface} onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:surface})}>See Anymd Pro <ArrowRight size={16} /></CampaignLink>
+      <div class="hero-actions comparison-pro-actions">
+        <CampaignLink class="button button-primary" href={'/pricing?entry_surface=' + surface} onClick={() => consent.trackBehavioral('pro_cta_clicked', {entry_surface:surface})}>See Anymd Pro <ArrowRight size={16} /></CampaignLink>
+        <CampaignLink class="button" href="/studio?sample=pdf#studio-cite-heading">Inspect a cited PDF in Studio</CampaignLink>
+      </div>
     </section>
 
     <section class="comparison-section" aria-labelledby="faq-title">
       <h2 id="faq-title">Frequently asked questions</h2>
       <Faq questions={questions} />
     </section>
+    <ArticleBridge canonical={path} noindex={false} />
   </article>;
 }

@@ -11,7 +11,7 @@ test('the bridge appears on indexable docs, comparisons, task guides, and use ca
 
 test('the bridge attributes canonical organic pages and falls back on generic or unknown docs', () => {
   for (const [canonical, surface] of [
-    ['/vs', 'seo_vs-hub'], ['/vs/docling', 'seo_vs-docling'], ['/vs/unstructured', 'seo_vs-unstructured'],
+    ['/vs', 'seo_vs-hub'], ['/vs/docling', 'seo_vs-docling'], ['/vs/markdownify-mcp', 'seo_vs-markdownify-mcp'], ['/vs/unstructured', 'seo_vs-unstructured'],
     ['/use-cases/pdf-and-office-to-markdown-mcp', 'seo_pdf-and-office-to-markdown-mcp'],
     ['/tasks/check-pdf-citation', 'task_check_pdf_citation'], ['/tasks/extract-video-frame', 'task_extract_video_frame'],
     ...['/docs', '/docs/cli', '/vs/private-input', '/tasks/private-input', '/use-cases/private-input', '/vs/docling/more', '/vs/docling?proof=private'].map(path => [path, 'article_bridge']),
@@ -29,7 +29,7 @@ test('only a local pricing link with one allowlisted Pro CTA label supplies inli
 });
 
 test('the bridge excludes legal, security, and unrelated pages even when indexable', () => {
-  for (const canonical of ['/legal/terms', '/security/advisories', '/privacy', '/vision', '/tasks', '/studio', '/docs-extra/cli']) {
+  for (const canonical of ['/legal/terms', '/security/advisories', '/docs/security', '/privacy', '/vision', '/tasks', '/studio', '/docs-extra/cli']) {
     assert.equal(showsArticleBridge({ canonical, noindex: false }), false, canonical);
   }
 });
