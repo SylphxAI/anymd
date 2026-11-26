@@ -92,7 +92,11 @@ class VideoSourceContracts(unittest.TestCase):
 
 class SharedVideoContracts(unittest.TestCase):
     def test_existing_owners_and_supervised_worker(self):
-        request = (ROOT / "crates/anymd/src/video_request.rs").read_text()
+        facade = ROOT / "crates/anymd/src/video_request.rs"
+        modules = ("cache", "client", "inspect", "sidecars", "worker")
+        request = "\n".join(path.read_text() for path in (
+            facade, *(facade.with_suffix("") / f"{name}.rs" for name in modules)
+        ))
         for text in ("policy.admit_path", "fetch_url_deadline", "run_supervised", "acquire_ocr_permit", "FrameContext for Context", 'join("images")', "cache::touch", "transcript_window", "attach_evidence"):
             self.assertIn(text, request)
         self.assertNotIn("Command::new", request)
