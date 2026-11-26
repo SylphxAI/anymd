@@ -12,6 +12,7 @@ import { CopyButton } from '../copy';
 import { useCookieConsent } from '../cookie-consent';
 
 type WorkerResult = {markdown:string; format:string; tokens:number; unit_noun:string; units:number; source_units:SourceUnit[]; ms:number};
+type WorkerMessage = {id:number} & ({outcome:'ok'; result:WorkerResult} | {outcome:'start-error' | 'read-error'});
 type Result = WorkerResult & {sourceKind: ConversionSource; sourceBytes: number; markdownBytes: number};
 const accepted = '.pdf,.docx,.pptx,.xlsx,.html,.htm,.epub,.odt,.ods,.odp,.csv,.tsv,.txt,.md,.rtf,.eml';
 const maxBytes = 32 * 1024 * 1024;
@@ -94,10 +95,10 @@ export default function DocumentStudio(props: { locale: Locale }) {
       if (generation !== run) return;
       const sourceBytes = content.byteLength;
       const w = new Worker('/studio-worker.js', {type:'module'}); worker = w;
-      w.onmessage = ({data}) => {
+      w.onmessage = ({data}: MessageEvent<WorkerMessage>) => {
         if (run !== generation || data.id !== run) return;
-        if (data.outcome !== 'ok') { fail(t().readError); return; }
-        const output: WorkerResult = data.result;
+        if (data.outcome !== 'ok') { fail(data.outcome === 'start-error' ? t().startError : t().readError); return; }
+        const output = data.result;
         const markdownBytes = new TextEncoder().encode(output.markdown).length;
         setResult({...output, sourceKind, sourceBytes, markdownBytes}); setPending(false); stop();
         if (trigger === 'interaction') consent.trackBehavioral('document_converted', {
