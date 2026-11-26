@@ -1,163 +1,45 @@
-import { Braces, Check, Clapperboard, Copy, Files, FileText } from 'lucide-solid';
+import { CampaignLink } from '@/lib/attribution-link';
+import { homeDemoCopy, homeDemoExamples, type HomeDemoExample } from '@/lib/home-demo-copy';
+import { translatedPaths, type Locale } from '@/lib/marketing-locale';
+import { ArrowRight, Braces, Check, Clapperboard, Copy, Files, FileText } from 'lucide-solid';
 import { createSignal, createUniqueId, For, onCleanup, Show } from 'solid-js';
 import { useCookieConsent } from './cookie-consent';
+import MarkdownPreview, { MarkdownViewToggle, type MarkdownView } from './studio/markdown-preview';
 import './home-conversion-demo.css';
-
-type Locale = 'en' | 'zh-TW';
-const examples = ['pdf', 'document', 'video'] as const;
-type Example = (typeof examples)[number];
-
-type DemoCopy = {
-  title: string;
-  preview: string;
-  output: string;
-  copy: string;
-  copied: string;
-  copyFailed: string;
-  notice: string;
-  nativePro: string;
-  examples: Record<Example, { tab: string; file: string; description: string; markdown: string }>;
-};
-
-// Authored examples, not live output. Page and slide anchors mirror native read;
-// the frame citation summarizes the timestamps used in docs/tasks/extract-video-frame.md.
-const copy: Record<Locale, DemoCopy> = {
-  en: {
-    title: 'Conversion examples',
-    preview: 'Illustrative preview',
-    output: 'Markdown output',
-    copy: 'Copy Markdown',
-    copied: 'Markdown copied.',
-    copyFailed: 'Couldn’t copy. Select the example text to copy it manually.',
-    notice: 'This preview does not convert files.',
-    nativePro: 'Pro · Native CLI / MCP',
-    examples: {
-      pdf: {
-        tab: 'PDF',
-        file: 'water-survey.pdf',
-        description: 'Page markers and a table, kept in reading order.',
-        markdown: `<!-- page 3 -->
-
-## River survey
-
-|Site|Turbidity (NTU)|
-|-|-|
-|North bank|4.2|
-|South bank|2.8|`,
-      },
-      document: {
-        tab: 'Multi-page document',
-        file: 'field-brief.pptx',
-        description: 'Slide headings and lists stay in source order.',
-        markdown: `<!-- slide 1 -->
-
-## Field brief
-- Sample both banks after the rain.
-
-<!-- slide 2 -->
-
-## Next visit
-- Recheck the south bank in two weeks.`,
-      },
-      video: {
-        tab: 'Video frame',
-        file: 'demo.mkv',
-        description: 'A Markdown citation based on exact frame metadata.',
-        markdown: `## Frame citation
-
-- Source: demo.mkv
-- Requested: 00:01.031
-- Decoded: 00:01.100
-- Image: 320 × 240 PNG
-- PNG SHA-256: omitted in this preview`,
-      },
-    },
-  },
-  'zh-TW': {
-    title: '轉換範例',
-    preview: '示意預覽',
-    output: 'Markdown 輸出',
-    copy: '複製 Markdown',
-    copied: '已複製 Markdown。',
-    copyFailed: '無法複製，請選取範例文字後手動複製。',
-    notice: '此預覽不會轉換檔案。',
-    nativePro: 'Pro · 本機 CLI／MCP',
-    examples: {
-      pdf: {
-        tab: 'PDF',
-        file: '水質調查.pdf',
-        description: '依閱讀順序整理內容，保留頁碼標記與表格。',
-        markdown: `<!-- page 3 -->
-
-## 河川水質調查
-
-|採樣地點|濁度（NTU）|
-|-|-|
-|北岸|4.2|
-|南岸|2.8|`,
-      },
-      document: {
-        tab: '多頁文件',
-        file: '採樣簡報.pptx',
-        description: '依原始投影片的順序保留標題和清單。',
-        markdown: `<!-- slide 1 -->
-
-## 採樣計畫
-- 雨後到兩岸採集水樣。
-
-<!-- slide 2 -->
-
-## 下次勘查
-- 兩週後回到南岸複測。`,
-      },
-      video: {
-        tab: '影片影格',
-        file: 'demo.mkv',
-        description: '用精確影格的資訊撰寫 Markdown 引用。',
-        markdown: `## 影格引用
-
-- 來源：demo.mkv
-- 指定時間：00:01.031
-- 實際解碼時間：00:01.100
-- 影像：320 × 240 PNG
-- PNG 的 SHA-256：此預覽省略`,
-      },
-    },
-  },
-};
 
 const icons = { pdf: FileText, document: Files, video: Clapperboard };
 
 export function HomeConversionDemo(props: { locale: Locale }) {
   const consent = useCookieConsent();
-  const labels = () => copy[props.locale];
+  const labels = () => homeDemoCopy[props.locale];
   const id = createUniqueId();
-  const [active, setActive] = createSignal<Example>('pdf');
+  const [active, setActive] = createSignal<HomeDemoExample>('pdf');
+  const [view, setView] = createSignal<MarkdownView>('markdown');
   const [feedback, setFeedback] = createSignal<'copied' | 'copyFailed'>();
-  const tabButtons: Partial<Record<Example, HTMLButtonElement>> = {};
+  const tabButtons: Partial<Record<HomeDemoExample, HTMLButtonElement>> = {};
   let copyAttempt = 0;
 
-  const tabId = (key: Example) => id + '-tab-' + key;
-  const panelId = (key: Example) => id + '-panel-' + key;
+  const tabId = (key: HomeDemoExample) => id + '-tab-' + key;
+  const panelId = (key: HomeDemoExample) => id + '-panel-' + key;
   const titleId = id + '-title';
 
   onCleanup(() => { copyAttempt++; });
 
-  function selectExample(key: Example) {
+  function selectExample(key: HomeDemoExample) {
     if (key === active()) return;
     copyAttempt++;
     setFeedback(undefined);
     setActive(key);
   }
 
-  function navigateTabs(event: KeyboardEvent, key: Example) {
-    const index = examples.indexOf(key);
-    let next: Example;
+  function navigateTabs(event: KeyboardEvent, key: HomeDemoExample) {
+    const index = homeDemoExamples.indexOf(key);
+    let next: HomeDemoExample;
     switch (event.key) {
-      case 'ArrowLeft': next = examples[(index + examples.length - 1) % examples.length]; break;
-      case 'ArrowRight': next = examples[(index + 1) % examples.length]; break;
-      case 'Home': next = examples[0]; break;
-      case 'End': next = examples[examples.length - 1]; break;
+      case 'ArrowLeft': next = homeDemoExamples[(index + homeDemoExamples.length - 1) % homeDemoExamples.length]; break;
+      case 'ArrowRight': next = homeDemoExamples[(index + 1) % homeDemoExamples.length]; break;
+      case 'Home': next = homeDemoExamples[0]; break;
+      case 'End': next = homeDemoExamples[homeDemoExamples.length - 1]; break;
       default: return;
     }
     event.preventDefault();
@@ -188,7 +70,7 @@ export function HomeConversionDemo(props: { locale: Locale }) {
         <span class="home-conversion-demo-preview">{labels().preview}</span>
       </div>
       <div class="home-conversion-demo-tabs" role="tablist" aria-labelledby={titleId}>
-        <For each={examples}>{(key) => {
+        <For each={homeDemoExamples}>{(key) => {
           const Icon = icons[key];
           return (
             <button
@@ -208,7 +90,7 @@ export function HomeConversionDemo(props: { locale: Locale }) {
           );
         }}</For>
       </div>
-      <For each={examples}>{(key) => {
+      <For each={homeDemoExamples}>{(key) => {
         const example = () => labels().examples[key];
         return (
           <div
@@ -228,7 +110,7 @@ export function HomeConversionDemo(props: { locale: Locale }) {
             </div>
             <div class="home-conversion-demo-output">
               <div class="home-conversion-demo-output-bar">
-                <span>{labels().output}</span>
+                <MarkdownViewToggle locale={props.locale} view={view()} onViewChange={setView} />
                 <button type="button" class="home-conversion-demo-copy" onClick={() => void copyMarkdown(example().markdown)}>
                   <Show when={feedback() === 'copied'} fallback={<Copy size={14} aria-hidden="true" />}>
                     <Check size={14} aria-hidden="true" />
@@ -236,13 +118,22 @@ export function HomeConversionDemo(props: { locale: Locale }) {
                   {labels().copy}
                 </button>
               </div>
-              <pre tabIndex={0} aria-label={props.locale === 'en' && key === 'pdf' ? 'Example Markdown' : labels().output}><code><For each={example().markdown.split('\n')}>{(line, index) => (
-                <span classList={{
-                  'home-conversion-demo-anchor': line.startsWith('<!--'),
-                  'home-conversion-demo-heading': line.startsWith('## '),
-                }}>{index() > 0 ? '\n' : ''}{line}</span>
-              )}</For></code></pre>
+              <div class="home-conversion-demo-pane">
+                <Show when={active() === key && view() === 'preview'} fallback={
+                  <pre tabIndex={0} aria-label={props.locale === 'en' && key === 'pdf' ? 'Example Markdown' : labels().output}><code><For each={example().markdown.split('\n')}>{(line, index) => (
+                    <span classList={{
+                      'home-conversion-demo-anchor': line.startsWith('<!--'),
+                      'home-conversion-demo-heading': line.startsWith('## '),
+                    }}>{index() > 0 ? '\n' : ''}{line}</span>
+                  )}</For></code></pre>
+                }>
+                  <MarkdownPreview markdown={example().markdown} locale={props.locale} />
+                </Show>
+              </div>
             </div>
+            <CampaignLink class="home-conversion-demo-link inline-link" href={(props.locale === 'zh-TW' ? translatedPaths['/studio'] + '?sample=' : '/studio?sample=') + key}>
+              {example().trySample} <ArrowRight size={14} aria-hidden="true" />
+            </CampaignLink>
           </div>
         );
       }}</For>
