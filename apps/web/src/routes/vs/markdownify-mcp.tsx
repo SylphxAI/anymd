@@ -12,6 +12,8 @@ const path = '/vs/markdownify-mcp';
 const title = 'Markdownify MCP alternative: Anymd for local conversion';
 const description = 'Compare Anymd and Markdownify MCP for PDF, Office, web and media conversion. Try local Rust and WebAssembly conversion, or set up the CLI and MCP server.';
 
+const anymdLabel = 'Anymd';
+const markdownifyLabel = 'Markdownify MCP';
 const comparison = [
   ['Install','One Rust executable for the CLI and MCP server. Install with npm or download a release binary.','The upstream setup uses Bun to install and build the TypeScript server. It also installs Python MarkItDown in a virtual environment.'],
   ['Documents','PDF, Word, PowerPoint, Excel, EPUB, HTML, OpenDocument and more.','PDF, Word, PowerPoint and Excel tools, plus a tool to retrieve existing Markdown.'],
@@ -59,9 +61,24 @@ export default function MarkdownifyComparison() {
 
     <section class="comparison-section" aria-labelledby="comparison-title">
       <h2 id="comparison-title">How the two tools compare</h2>
-      <table class="comparison-table" aria-labelledby="comparison-title">
-        <thead><tr><th scope="col">What to check</th><th scope="col">Anymd</th><th scope="col">Markdownify MCP</th></tr></thead>
-        <tbody><For each={comparison}>{([label, anymd, markdownify]) => <tr><th scope="row">{label}</th><td>{anymd}</td><td>{markdownify}</td></tr>}</For></tbody>
+      {/* Keep table roles when the narrow layout replaces native table display. */}
+      <table class="comparison-table" role="table" aria-labelledby="comparison-title">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" scope="col">What to check</th>
+            <th role="columnheader" scope="col">{anymdLabel}</th>
+            <th role="columnheader" scope="col">{markdownifyLabel}</th>
+          </tr>
+        </thead>
+        <tbody role="rowgroup">
+          <For each={comparison}>{([label, anymd, markdownify]) =>
+            <tr role="row">
+              <th role="rowheader" scope="row">{label}</th>
+              <td role="cell" data-label={anymdLabel}>{anymd}</td>
+              <td role="cell" data-label={markdownifyLabel}>{markdownify}</td>
+            </tr>
+          }</For>
+        </tbody>
       </table>
       <p class="muted">This comparison covers <a class="inline-link" href="https://github.com/zcaceres/markdownify-mcp">zcaceres/markdownify-mcp</a>. <CampaignLink class="inline-link" href="/docs/benchmarks">AgentDocBench</CampaignLink> measures Anymd and the standalone MarkItDown converter, not the Markdownify MCP server. There is no direct speed result for the two MCP servers.</p>
     </section>

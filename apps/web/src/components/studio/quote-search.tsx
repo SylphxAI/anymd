@@ -17,8 +17,10 @@ const surface = { entry_surface: 'studio_quote_match' } as const;
 
 function revealProof() {
   const proof = document.getElementById(citeProofId);
-  if (proof instanceof HTMLDetailsElement) proof.open = true;
+  const opening = proof instanceof HTMLDetailsElement && !proof.open;
+  if (opening) proof.open = true;
   document.getElementById(citeHeadingId)?.focus({ preventScroll: true });
+  return opening;
 }
 
 export default function QuoteSearch(props: {
@@ -67,7 +69,9 @@ export default function QuoteSearch(props: {
           <aside class="studio-quote-proof">
             <p>{t().quoteProofStart}<code>cite_check</code>{t().quoteProofEnd}</p>
             <div class="studio-quote-proof-links">
-              <a class="inline-link" href={'#' + citeHeadingId} onClick={revealProof}>{t().quoteSeeProof}</a>
+              <a class="inline-link" href={'#' + citeHeadingId} onClick={event => {
+                if (revealProof() && event.isTrusted) consent.trackBehavioral('paywall_view', {entry_surface:'studio_cite_preview'});
+              }}>{t().quoteSeeProof}</a>
               <CampaignLink class="inline-link" href={(props.locale === 'zh-TW' ? translatedPaths['/pricing'] : '/pricing') + '?entry_surface=' + surface.entry_surface}
                 onClick={() => consent.trackBehavioral('pro_cta_clicked', surface)}>{t().quoteSeePro}</CampaignLink>
             </div>
