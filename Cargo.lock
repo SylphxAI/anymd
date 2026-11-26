@@ -4378,9 +4378,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sylphx-mcp-kit"
-version = "0.8.13"
+version = "0.8.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e12f81629105543ec6d3f366bff21692f7b786cfa3bbd9cb73f0d8f4336ccc35"
+checksum = "67f30e80132ad32d3c39d268837ef765b78b46fc8788c8c2adf2d6ae9bf431ba"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
