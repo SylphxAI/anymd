@@ -16,7 +16,9 @@ BACKEND = "\n".join(
     )
 )
 VIDEO = (ROOT / "crates/anymd-formats/src/video.rs").read_text()
-TRANSCRIBE = (ROOT / "crates/anymd-formats/src/video/transcribe.rs").read_text()
+TRANSCRIBE_DIR = ROOT / "crates/anymd-formats/src/video/transcribe"
+TRANSCRIPT_WINDOW = (TRANSCRIBE_DIR / "window.rs").read_text()
+TRANSCRIPT_PIPELINE = (TRANSCRIBE_DIR / "pipeline.rs").read_text()
 RUNNER = (ROOT / "crates/anymd-formats/src/tool.rs").read_text()
 EVIDENCE_FACADE = (ROOT / "crates/anymd/src/video_evidence.rs").read_text()
 EVIDENCE_DIR = ROOT / "crates/anymd/src/video_evidence"
@@ -57,9 +59,8 @@ class VideoSourceContracts(unittest.TestCase):
         for prohibited in ("fetch_url", "read_dir", "ensure_model", "Semaphore", "ACTIVE_REQUESTS"):
             self.assertNotIn(prohibited, BACKEND)
             self.assertNotIn(prohibited, EVIDENCE)
-        structured = TRANSCRIBE[TRANSCRIBE.index("pub fn transcript_window("):TRANSCRIBE.index("fn transcribe_structured(")]
-        self.assertIn("transcribe_structured(path, false, Some(&window))", structured)
-        self.assertIn("existing isolated request worker", TRANSCRIBE)
+        self.assertIn("transcribe_structured(path, false, Some(&window))", TRANSCRIPT_WINDOW)
+        self.assertIn("existing isolated request worker", TRANSCRIPT_WINDOW)
 
     def test_endpoint_overlap_provenance_and_initial_cut_policy(self):
         self.assertIn("pub end_ms: i64", BACKEND)
@@ -91,8 +92,8 @@ class VideoSourceContracts(unittest.TestCase):
         self.assertIn("fixture generation failed", NATIVE)
 
     def test_legacy_default_path_remains_separate(self):
-        self.assertIn("transcribe_structured(path, download, None)", TRANSCRIBE)
-        self.assertIn("if pcm.len() < SAMPLES_PER_CHUNK && window.is_none()", TRANSCRIBE)
+        self.assertIn("transcribe_structured(path, download, None)", TRANSCRIPT_PIPELINE)
+        self.assertIn("if pcm.len() < SAMPLES_PER_CHUNK && window.is_none()", TRANSCRIPT_PIPELINE)
         self.assertIn('pub mod timeline;', VIDEO)
         self.assertIn("run_captured(program, args, env, timeout, MAX_OUTPUT, MAX_OUTPUT, false)", RUNNER)
 
