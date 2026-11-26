@@ -15,6 +15,8 @@ MCP server. Pro adds PDF quote checks and verifiable video frames.
 
 **[See Anymd Pro — US$29 one-time](/pricing?entry_surface=seo_pdf-and-office-to-markdown-mcp)**
 
+[Try the free PDF sample](/studio?sample=pdf&entry_surface=seo_pdf-and-office-to-markdown-mcp)
+
 [Install the free CLI and MCP server](/docs?entry_surface=seo_pdf-and-office-to-markdown-mcp)
 
 ## Why teams switch to `anymd`
