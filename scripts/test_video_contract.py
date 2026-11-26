@@ -95,7 +95,7 @@ class SharedVideoContracts(unittest.TestCase):
         self.assertNotIn("ensure_model", request)
 
     def test_four_tools_additive_dispatch_and_manifest_cursor(self):
-        schema = (ROOT / "crates/anymd/src/schema.rs").read_text()
+        schema = (ROOT / "crates/anymd/src/schema/inspect.rs").read_text()
         lib = (ROOT / "crates/anymd/src/lib.rs").read_text()
         lean_read = (ROOT / "crates/anymd/src/lean/read/text.rs").read_text()
         for text in ("VideoTimeline", "RenderFrame", "TimelineSelection", "expected_source_sha256"):
