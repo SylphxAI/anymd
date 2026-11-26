@@ -1,6 +1,10 @@
 export const completeCode = /^[0-9]{6}$/;
 const aliases = new Set(['/login', '/signup', '/sign-up', '/register', '/forgot-password']);
 
+export function isSignInPath(pathname: string) {
+  return /^\/+(?:zh-(?:tw|hant)\/+)?sign-in(?:\/|$)/i.test(pathname);
+}
+
 export function signInAlias(pathname: string) {
   return aliases.has(pathname.replace(/\/+$/, '').toLowerCase());
 }

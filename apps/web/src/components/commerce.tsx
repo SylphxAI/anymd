@@ -11,7 +11,7 @@ import { currencies, consentText, type Currency, formatPrice, isCurrency, proAmo
 import { checkoutSurface } from '@/lib/funnel';
 import type { EntrySurface } from '@/lib/entry-surface';
 import { pricingCopy } from '@/lib/marketing-copy';
-import { pricingReturnPath, type Locale } from '@/lib/marketing-locale';
+import { pricingReturnPath, signInPath, type Locale } from '@/lib/marketing-locale';
 
 type Account = { plan: 'Free OSS' | 'Anymd Pro'; entitlementActive: boolean; features: string[] };
 const cliLogin = 'anymd login';
@@ -66,7 +66,7 @@ export function Checkout(props: { currency: Currency; locales: readonly string[]
       const code = event.currentTarget.value;
       if (isCurrency(code)) setQuery({currency:code});
     }}><For each={currencies}>{(code) => <option value={code} selected={code === props.currency}>{code} · {priceLabel(code)}</option>}</For></select></label>
-    <Show when={user()} fallback={<CampaignLink class="button button-primary" href={'/sign-in?next=' + encodeURIComponent(pricingReturnPath(route.pathname, route.search))}>{zh() ? '登入以購買 Pro' : 'Sign in to buy Pro'} <ArrowRight size={16} aria-hidden="true" /></CampaignLink>}>
+    <Show when={user()} fallback={<CampaignLink class="button button-primary" href={signInPath(props.locale) + '?next=' + encodeURIComponent(pricingReturnPath(route.pathname, route.search))}>{zh() ? '登入以購買 Pro' : 'Sign in to buy Pro'} <ArrowRight size={16} aria-hidden="true" /></CampaignLink>}>
       <label class="terms-control"><input type="checkbox" checked={consent()} onChange={(event) => setConsent(event.currentTarget.checked)} /><span>{zh()
         ? '我要求在付款後立即取得授權。我了解，授權一旦交付，我將喪失取消這筆交易及據此要求退款的權利。這適用於依法享有 14 天取消權的情況，不影響我的其他法定權利。'
         : consentText + ' This applies to the 14-day right to cancel where available. Your other statutory rights are unaffected.'}</span></label>

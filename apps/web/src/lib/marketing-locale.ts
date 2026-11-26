@@ -1,10 +1,11 @@
 import { canonicalOrigin } from './app-origin';
 import { isCurrency } from './catalog';
 import { checkoutSurface } from './funnel';
+import { safeNext } from './safe-next';
 
 export const locales = ['en', 'zh-TW'] as const;
 export type Locale = (typeof locales)[number];
-export const translatedPaths = { '/': '/zh-TW', '/pricing': '/zh-TW/pricing', '/studio': '/zh-TW/studio' } as const;
+export const translatedPaths = { '/': '/zh-TW', '/pricing': '/zh-TW/pricing', '/studio': '/zh-TW/studio', '/sign-in': '/zh-TW/sign-in' } as const;
 type TranslatedPath = keyof typeof translatedPaths;
 const isTranslated = (path: string): path is TranslatedPath => Object.hasOwn(translatedPaths, path);
 
@@ -55,6 +56,18 @@ export function pricingSwitchQuery(search: string) {
   return pricingQuery('/pricing', search);
 }
 
+export function signInPath(locale: Locale) {
+  return locale === 'zh-TW' ? translatedPaths['/sign-in'] : '/sign-in' as const;
+}
+
+export function languageSwitchQuery(pathname: string, search: string) {
+  const target = languageSwitchTarget(pathname, 'en');
+  if (target === '/sign-in' && new URLSearchParams(search).has('next')) {
+    return 'next=' + encodeURIComponent(signInReturnPath(pathname, search));
+  }
+  return target === '/pricing' ? pricingSwitchQuery(search) : '';
+}
+
 export function pricingReturnPath(pathname: string, search: string) {
   const locale = localeFromPath(pathname);
   const path = localizedPath('/pricing', locale);
@@ -64,6 +77,11 @@ export function pricingReturnPath(pathname: string, search: string) {
 }
 
 export function signInReturnPath(pathname: string, search: string) {
-  if (localizedPath(pathname, 'en') === '/pricing') return pricingReturnPath(pathname, search);
+  const page = localizedPath(pathname, 'en');
+  if (page === '/sign-in') {
+    const values = new URLSearchParams(search).getAll('next');
+    return safeNext(values.length === 1 ? values[0] : undefined);
+  }
+  if (page === '/pricing') return pricingReturnPath(pathname, search);
   return pathname === '/' ? '/dashboard' : pathname;
 }

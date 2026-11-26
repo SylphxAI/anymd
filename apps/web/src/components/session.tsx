@@ -1,7 +1,7 @@
 import { CampaignLink } from '@/lib/attribution-link';
 import { useLocation } from '@solidjs/router';
 import { authRoute } from '@/lib/auth-route';
-import { localeFromPath, localizedPath, signInReturnPath } from '@/lib/marketing-locale';
+import { localeFromPath, localizedPath, signInPath, signInReturnPath } from '@/lib/marketing-locale';
 import { createEffect, createSignal, on, onCleanup, Show } from 'solid-js';
 
 export type Session = { authConfigured: boolean; user: { name: string | null; email: string | null } | null; methods?: { emailOtp: boolean; passkey: boolean } };
@@ -31,12 +31,13 @@ export function GoogleMark() {
 export function SessionAction() {
   const session = useSession();
   const route = useLocation();
-  const zh = () => localeFromPath(route.pathname) === 'zh-TW';
+  const locale = () => localeFromPath(route.pathname);
+  const zh = () => locale() === 'zh-TW';
   const signedIn = () => {
     const state = session();
     return state && state !== 'error' && state.user;
   };
-  return <Show when={signedIn()} fallback={<CampaignLink class="button sign-in-button" href={'/sign-in?next=' + encodeURIComponent(signInReturnPath(route.pathname, route.search))}>{zh() ? '登入' : 'Sign in'}</CampaignLink>}>
+  return <Show when={signedIn()} fallback={<CampaignLink class="button sign-in-button" href={signInPath(locale()) + '?next=' + encodeURIComponent(signInReturnPath(route.pathname, route.search))}>{zh() ? '登入' : 'Sign in'}</CampaignLink>}>
     <Show when={zh()} fallback={<CampaignLink href="/dashboard" class="button">Dashboard</CampaignLink>}>
       <details class="session-menu">
         <summary class="button sign-in-button">帳號</summary>

@@ -165,8 +165,8 @@ test('returns from sign-in to the localized purchase and keeps checkout states i
   await page.goto('/zh-Hant/pricing?currency=TWD');
   await page.getByRole('button', { name: '拒絕選用項目' }).click();
   await page.getByRole('link', { name: '登入以購買 Pro', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await page.getByRole('link', { name: 'Continue with Google' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
+  await page.getByRole('link', { name: '使用 Google 登入' }).click();
   await expect(page).toHaveURL('/zh-TW/pricing?entry_surface=pricing&currency=TWD');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   const header = page.getByRole('banner');
