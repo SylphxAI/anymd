@@ -32,7 +32,7 @@ concurrency:
 
 jobs:
   release:
-    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@0db554b5882d1f0e77d070089af544c6789f6c4c # mcp-kit #55
+    uses: SylphxAI/mcp-kit/.github/workflows/release.yml@ee5d7e5d9fd51422171e35c99c0c7a27ef2bb51f # mcp-kit #61
     # actions: write lets the kit delete intermediate native artifacts after publishing.
     # packages: write is only used by the kit's optional GHCR image job, which
     # anymd skips; GitHub still checks every called job's permissions.
@@ -42,7 +42,7 @@ jobs:
       id-token: write
       packages: write
     with:
-      kit-ref: 0db554b5882d1f0e77d070089af544c6789f6c4c
+      kit-ref: ee5d7e5d9fd51422171e35c99c0c7a27ef2bb51f # mcp-kit #61
       name: anymd
       cargo-package: anymd
       # MCP Bundle (.mcpb) for Claude Desktop, attached to the GitHub release.
@@ -80,7 +80,7 @@ jobs:
         run: |
           echo "value=$(node -p 'require("./packages/anymd/package.json").version')" >> "$GITHUB_OUTPUT"
       # Missing Access or Broker authority must fail, never skip enabled channels.
-      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@0db554b5882d1f0e77d070089af544c6789f6c4c # mcp-kit #55
+      - uses: SylphxAI/mcp-kit/.github/actions/package-managers@ee5d7e5d9fd51422171e35c99c0c7a27ef2bb51f # mcp-kit #61
         with:
           name: anymd
           version: ${{ steps.version.outputs.value }}
@@ -515,7 +515,7 @@ jobs:
 
       - name: Build and smoke-test the tagged wheels
         id: build
-        uses: SylphxAI/mcp-kit/.github/actions/pypi-wheels@be5dbc46f8d1ca200f0b9e04398191653f64bc67 # main
+        uses: SylphxAI/mcp-kit/.github/actions/pypi-wheels@ee5d7e5d9fd51422171e35c99c0c7a27ef2bb51f # mcp-kit #61
         with:
           mode: build
           name: anymd
@@ -588,7 +588,7 @@ jobs:
           skip-existing: true
 
       - name: Verify the published wheel set on PyPI
-        uses: SylphxAI/mcp-kit/.github/actions/pypi-wheels@be5dbc46f8d1ca200f0b9e04398191653f64bc67 # main
+        uses: SylphxAI/mcp-kit/.github/actions/pypi-wheels@ee5d7e5d9fd51422171e35c99c0c7a27ef2bb51f # mcp-kit #61
         with:
           mode: verify
           name: anymd
