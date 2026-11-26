@@ -4,6 +4,16 @@ import type { Locale } from '@/lib/marketing-locale';
 import { studioCopy } from '@/lib/studio-copy';
 import { type Block, parseInline, parseMarkdown } from '@/lib/studio-markdown';
 
+export type MarkdownView = 'markdown' | 'preview';
+
+export function MarkdownViewToggle(props: { locale: Locale; view: MarkdownView; onViewChange: (view: MarkdownView) => void }) {
+  const copy = () => studioCopy[props.locale];
+  return <div class="studio-view" role="group" aria-label={copy().view}>
+    <button type="button" aria-pressed={props.view === 'markdown'} onClick={() => props.onViewChange('markdown')}>Markdown</button>
+    <button type="button" aria-pressed={props.view === 'preview'} onClick={() => props.onViewChange('preview')}>{copy().preview}</button>
+  </div>;
+}
+
 function InlineText(props: { text: string }) {
   const spans = createMemo(() => parseInline(props.text));
   return <For each={spans()}>{span => {

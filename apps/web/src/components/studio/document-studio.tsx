@@ -1,8 +1,8 @@
 import { Braces, Download, FileText, LockKeyhole, Upload } from 'lucide-solid';
-import { A } from '@solidjs/router';
+import { A, useLocation } from '@solidjs/router';
 import CitePreview from './cite-preview';
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
-import MarkdownPreview from './markdown-preview';
+import MarkdownPreview, { MarkdownViewToggle, type MarkdownView } from './markdown-preview';
 import QuoteSearch from './quote-search';
 import type { ConversionSource } from '@/lib/analytics';
 import type { Locale } from '@/lib/marketing-locale';
@@ -15,7 +15,7 @@ type WorkerResult = {markdown:string; format:string; tokens:number; unit_noun:st
 type Result = WorkerResult & {sourceKind: ConversionSource; sourceBytes: number; markdownBytes: number};
 const accepted = '.pdf,.docx,.pptx,.xlsx,.html,.htm,.epub,.odt,.ods,.odp,.csv,.tsv,.txt,.md,.rtf,.eml';
 const maxBytes = 32 * 1024 * 1024;
-const SAMPLE = {brief:{name:'brief.html', url:'/samples/brief.html'}, pdf:{name:'sample.pdf', url:'/samples/sample.pdf'}};
+const SAMPLE = {document:{name:'brief.html', url:'/samples/brief.html'}, pdf:{name:'sample.pdf', url:'/samples/sample.pdf'}};
 
 function downloadMarkdown(filename: string, markdown: string) {
   const stem = (filename.replace(/\.[^.]+$/, '') || 'document').replace(/[\/:\\]/g, '_');
@@ -31,6 +31,7 @@ function downloadMarkdown(filename: string, markdown: string) {
 }
 
 export default function DocumentStudio(props: { locale: Locale }) {
+  const location = useLocation();
   const t = () => studioCopy[props.locale];
   const consent = useCookieConsent();
   const [result, setResult] = createSignal<Result | null>(null);
@@ -42,7 +43,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
   const [hydrated, setHydrated] = createSignal(false);
   const [pending, setPending] = createSignal(false);
   const [notice, setNotice] = createSignal('');
-  const [view, setView] = createSignal<'markdown' | 'preview'>('markdown');
+  const [view, setView] = createSignal<MarkdownView>('markdown');
   const [drag, setDrag] = createSignal(false);
   const [stamp, setStamp] = createSignal<string | null>(null);
   const [videoUrl, setVideoUrl] = createSignal<string | null>(null);
@@ -64,10 +65,14 @@ export default function DocumentStudio(props: { locale: Locale }) {
     if (localVideoUrl) URL.revokeObjectURL(localVideoUrl);
     localVideoUrl = undefined;
   }
-  onMount(() => setHydrated(true));
+  onMount(() => {
+    setHydrated(true);
+    const [key, ...duplicates] = new URLSearchParams(location.search).getAll('sample');
+    if (!duplicates.length && (key === 'pdf' || key === 'document' || key === 'video')) sample(key, 'link');
+  });
   onCleanup(() => { stop(); releaseVideo(); });
 
-  async function convert(name: string, source: File | string) {
+  async function convert(name: string, source: File | string, trigger: 'interaction' | 'link' = 'interaction') {
     stop(); const run = generation;
     releaseVideo();
     setResult(null); setView('markdown'); setFile(name); setNotice(''); setStamp(null); setVideoUrl(null);
@@ -94,7 +99,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
         const output: WorkerResult = data.result;
         const markdownBytes = new TextEncoder().encode(output.markdown).length;
         setResult({...output, sourceKind, sourceBytes, markdownBytes}); setPending(false); stop();
-        consent.trackBehavioral('document_converted', {
+        if (trigger === 'interaction') consent.trackBehavioral('document_converted', {
           file_format:output.format, source_kind:sourceKind, unit_count:output.units, token_count:output.tokens, duration_ms:output.ms,
         });
       };
@@ -107,24 +112,29 @@ export default function DocumentStudio(props: { locale: Locale }) {
     void convert(files[0].name, files[0]);
     if (input) input.value = '';
   }
-  function sample(key:'brief'|'pdf') { const choice = SAMPLE[key]; void convert(choice.name,choice.url); }
+  function sample(key: 'document' | 'pdf' | 'video', trigger: 'interaction' | 'link' = 'interaction') {
+    if (key === 'video') {
+      stop(); releaseVideo(); setFile('demo.mp4'); setVideoUrl('/demo.mp4');
+      setResult(null); setNotice(''); setPending(false); setStamp(null);
+      return;
+    }
+    const { name, url } = SAMPLE[key];
+    void convert(name, url, trigger);
+  }
   return <div class="studio">
     <div class="studio-bar"><span class="studio-title"><Braces size={17} /> {t().bar}</span><span class="studio-private"><LockKeyhole size={13} /> {t().private}</span></div>
     <input ref={(element) => { input = element; }} type="file" hidden accept={`${accepted},video/*`} onChange={(e)=>useFiles(e.currentTarget.files)} />
     <div class="studio-controls" aria-busy={!hydrated() || pending()}>
       <button class="button button-primary" type="button" disabled={!hydrated()} onClick={()=>input?.click()}><Upload size={15} /> {t().open}</button>
-      <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('brief')}>{t().sampleDoc}</button>
+      <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('document')}>{t().sampleDoc}</button>
       <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('pdf')}>{t().samplePdf}</button>
-      <button class="button" type="button" disabled={!hydrated()} onClick={()=>{stop();releaseVideo();setFile('demo.mp4');setVideoUrl('/demo.mp4');setResult(null);setNotice('');setPending(false);setStamp(null);}}>{t().sampleVideo}</button>
+      <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('video')}>{t().sampleVideo}</button>
     </div>
     <div class={'studio-workspace' + (drag() ? ' studio-drag' : '')} onDragOver={(e)=>{e.preventDefault();if (hydrated()) setDrag(true);}} onDragLeave={()=>setDrag(false)} onDrop={(e)=>{e.preventDefault();setDrag(false);useFiles(e.dataTransfer?.files ?? null);}}>
       <div class="studio-output-header">
         <div class="studio-label"><span><FileText size={15} aria-hidden="true" /> {file() ?? t().inputOutput}</span><Show when={result()}>{(output) => <span>{output().format.toUpperCase()} · {output().ms} ms</span>}</Show></div>
         <Show when={noSelectableText() ? null : result()}>{output => <div class="studio-output-actions">
-          <div class="studio-view" role="group" aria-label={t().view}>
-            <button type="button" aria-pressed={view() === 'markdown'} onClick={() => setView('markdown')}>Markdown</button>
-            <button type="button" aria-pressed={view() === 'preview'} onClick={() => setView('preview')}>{t().preview}</button>
-          </div>
+          <MarkdownViewToggle locale={props.locale} view={view()} onViewChange={setView} />
           <span class="studio-stats">{studioStats(props.locale, output().units, output().unit_noun, output().tokens, output().sourceBytes, output().markdownBytes)}</span>
           <div class="studio-export">
             <CopyButton text={output().markdown} label={t().copyMarkdown} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_output'}} />
