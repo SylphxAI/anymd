@@ -18,7 +18,17 @@ type WorkerMessage = {id:number} & ({outcome:'ok'; result:WorkerResult} | {outco
 type Result = WorkerResult & {sourceKind: ConversionSource; sourceBytes: number; markdownBytes: number};
 const accepted = '.pdf,.docx,.pptx,.xlsx,.html,.htm,.epub,.odt,.ods,.odp,.csv,.tsv,.txt,.md,.rtf,.eml';
 const maxBytes = 32 * 1024 * 1024;
-const SAMPLE = {document:{name:'brief.html', url:'/samples/brief.html'}, pdf:{name:'sample.pdf', url:'/samples/sample.pdf'}};
+const SAMPLE = {
+  document: { name:'brief.html', url:'/samples/brief.html', format:'html' },
+  pdf: { name:'sample.pdf', url:'/samples/sample.pdf', format:'pdf' },
+} as const;
+
+function sampleFromLink(search: string, hash = '') {
+  const [key, ...duplicates] = new URLSearchParams(search).getAll('sample');
+  if (duplicates.length) return;
+  if (key === 'pdf' || key === 'document' || key === 'video') return key;
+  if (key === undefined && hash === '#' + citeHeadingId) return 'pdf';
+}
 
 function downloadMarkdown(filename: string, markdown: string) {
   const stem = (filename.replace(/\.[^.]+$/, '') || 'document').replace(/[\/:\\]/g, '_');
@@ -35,6 +45,10 @@ function downloadMarkdown(filename: string, markdown: string) {
 
 export default function DocumentStudio(props: { locale: Locale }) {
   const location = useLocation();
+  // Only the query is available to SSR. Fragment-only links still activate on mount.
+  const linkedSample = sampleFromLink(location.search);
+  const linkedDocument = linkedSample && linkedSample !== 'video' ? SAMPLE[linkedSample] : undefined;
+  const linkedQuote = linkedDocument && { format:linkedDocument.format, sourceKind:'sample' as const };
   const t = () => studioCopy[props.locale];
   const consent = useCookieConsent();
   const [result, setResult] = createSignal<Result | null>(null);
@@ -54,9 +68,11 @@ export default function DocumentStudio(props: { locale: Locale }) {
     if (noSelectableText()) return t().emptyPdf;
     if (coverage.missing.length) return t().partialPdf(coverage.missing, coverage.pages);
   });
-  const [file, setFile] = createSignal<string | null>(null);
+  const outputReady = () => noSelectableText() ? null : result();
+  const [file, setFile] = createSignal<string | null>(linkedDocument?.name ?? null);
   const [hydrated, setHydrated] = createSignal(false);
-  const [pending, setPending] = createSignal(false);
+  const [pending, setPending] = createSignal<false | 'interaction' | 'link'>(linkedDocument ? 'link' : false);
+  const linkedPending = () => pending() === 'link' && !!linkedDocument;
   const [notice, setNotice] = createSignal('');
   const [view, setView] = createSignal<MarkdownView>('markdown');
   const [drag, setDrag] = createSignal(false);
@@ -82,9 +98,8 @@ export default function DocumentStudio(props: { locale: Locale }) {
   }
   onMount(() => {
     setHydrated(true);
-    const [key, ...duplicates] = new URLSearchParams(location.search).getAll('sample');
-    if (!duplicates.length && (key === 'pdf' || key === 'document' || key === 'video')) sample(key, 'link');
-    else if (key === undefined && location.hash === '#' + citeHeadingId) sample('pdf', 'link');
+    const key = linkedSample ?? sampleFromLink(location.search, location.hash);
+    if (key) sample(key, 'link');
   });
   onCleanup(() => { stop(); releaseVideo(); });
 
@@ -100,7 +115,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
       setPending(false); setNotice(t().sizeError); return;
     }
     const sourceKind = typeof source === 'string' ? 'sample' : 'local_file';
-    setPending(true);
+    setPending(trigger);
     const fail = (message: string) => { if (generation !== run) return; stop(); setPending(false); setNotice(message); };
     timer = setTimeout(() => fail(t().timeoutError), 35_000);
     try {
@@ -140,7 +155,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
   return <div class="studio">
     <div class="studio-bar"><span class="studio-title"><Braces size={17} /> {t().bar}</span><span class="studio-private"><LockKeyhole size={13} /> {t().private}</span></div>
     <input ref={(element) => { input = element; }} type="file" hidden accept={`${accepted},video/*`} onChange={(e)=>useFiles(e.currentTarget.files)} />
-    <div class="studio-controls" aria-busy={!hydrated() || pending()}>
+    <div class="studio-controls" aria-busy={!hydrated() || !!pending()}>
       <button class="button button-primary" type="button" disabled={!hydrated()} onClick={()=>input?.click()}><Upload size={15} /> {t().open}</button>
       <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('document')}>{t().sampleDoc}</button>
       <button class="button" type="button" disabled={!hydrated()} onClick={()=>sample('pdf')}>{t().samplePdf}</button>
@@ -149,18 +164,22 @@ export default function DocumentStudio(props: { locale: Locale }) {
     <div class={'studio-workspace' + (drag() ? ' studio-drag' : '')} onDragOver={(e)=>{e.preventDefault();if (hydrated()) setDrag(true);}} onDragLeave={()=>setDrag(false)} onDrop={(e)=>{e.preventDefault();setDrag(false);useFiles(e.dataTransfer?.files ?? null);}}>
       <div class="studio-output-header">
         <div class="studio-label"><span><FileText size={15} aria-hidden="true" /> {file() ?? t().inputOutput}</span><Show when={result()}>{(output) => <span>{output().format.toUpperCase()} · {output().ms} ms</span>}</Show></div>
-        <Show when={noSelectableText() ? null : result()}>{output => <div class="studio-output-actions">
-          <MarkdownViewToggle locale={props.locale} view={view()} onViewChange={setView} />
-          <span class="studio-stats">{studioStats(props.locale, output().units, output().unit_noun, output().tokens, output().sourceBytes, output().markdownBytes)}</span>
-          <div class="studio-export">
-            <CopyButton text={output().markdown} label={t().copyMarkdown} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_output'}} />
-            <button type="button" class="button copy-button" onClick={() => {
-              const {markdown, format, sourceKind} = output();
-              downloadMarkdown(file() ?? 'document', markdown);
-              consent.trackBehavioral('output_downloaded', {file_format:format, source_kind:sourceKind});
-            }}><Download size={15} aria-hidden="true" />{t().download}</button>
+        <Show when={linkedPending() || outputReady()}>
+          <div class="studio-output-actions" inert={linkedPending()}>
+            <MarkdownViewToggle locale={props.locale} view={view()} onViewChange={setView} />
+            <span class="studio-stats"><Show when={outputReady()} fallback={' '}>{output => studioStats(props.locale, output().units, output().unit_noun, output().tokens, output().sourceBytes, output().markdownBytes)}</Show></span>
+            <div class="studio-export">
+              <CopyButton text={outputReady()?.markdown ?? ''} label={t().copyMarkdown} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_output'}} />
+              <button type="button" class="button copy-button" onClick={() => {
+                const output = outputReady();
+                if (!output) return;
+                const {markdown, format, sourceKind} = output;
+                downloadMarkdown(file() ?? 'document', markdown);
+                consent.trackBehavioral('output_downloaded', {file_format:format, source_kind:sourceKind});
+              }}><Download size={15} aria-hidden="true" />{t().download}</button>
+            </div>
           </div>
-        </div>}</Show>
+        </Show>
       </div>
       <div role="status" classList={{ 'studio-empty': noSelectableText(), 'studio-pdf-partial': !!pdfTextNotice() && !noSelectableText() }}>
         <Show when={pdfTextNotice()}>{message => <>
@@ -168,14 +187,14 @@ export default function DocumentStudio(props: { locale: Locale }) {
           <p class="muted">{t().ocr}<A href="/docs/cli#local-document-ocr" class="inline-link">{t().ocrLink}</A>{t().ocrEnd}</p>
         </>}</Show>
       </div>
-      {pending() ? <div class="studio-empty" role="status">{t().converting} <button type="button" class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>{t().cancel}</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : result() && !noSelectableText() ? <div class="studio-output-pane">
+      {pending() ? <div class="studio-empty" classList={{ 'studio-output-pane': linkedPending() }} role="status">{t().converting} <button type="button" disabled={!hydrated()} class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>{t().cancel}</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : outputReady() ? <div class="studio-output-pane">
         <Show when={view() === 'preview'} fallback={<pre class="studio-code" tabIndex={0} aria-label={t().markdown}>{result()?.markdown}</pre>}>
           <MarkdownPreview markdown={result()?.markdown ?? ''} locale={props.locale} />
         </Show>
       </div> : noSelectableText() ? null : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{hydrated() ? t().drop : t().loading}</strong><span class="muted">{t().formats}</span></div>}
     </div>
     <div class="studio-bottom"><span>{t().localMarkdown}</span><span>RUST / WASM</span></div>
-    <Show keyed when={noSelectableText() ? null : result()}>{output => <QuoteSearch locale={props.locale} output={output} />}</Show>
+    <Show keyed when={outputReady() ?? (linkedPending() ? linkedQuote : undefined)}>{output => <QuoteSearch locale={props.locale} output={output} />}</Show>
     <CitePreview locale={props.locale} />
   </div>;
 }
