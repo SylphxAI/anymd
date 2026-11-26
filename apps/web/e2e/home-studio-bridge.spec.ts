@@ -1,15 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const locales = [
-  { home: '/', studio: '/studio', preview: 'Preview', drop: 'Drop a document here', examples: [
-    ['PDF', 'River survey', 'Try a PDF in Studio'],
-    ['Multi-page document', 'Field brief', 'Try a document in Studio'],
-    ['Video frame', 'Frame citation', 'Try a video in Studio'],
+  { home: '/', studio: '/studio', preview: 'Preview', copy: 'Copy Markdown', drop: 'Drop a document here', examples: [
+    ['PDF', 'River survey', 'Convert sample.pdf in Studio'],
+    ['Multi-page document', 'Field brief', 'Convert brief.html in Studio'],
+    ['Video frame', 'Frame citation', 'Open demo.mp4 in Studio'],
   ] },
-  { home: '/zh-TW', studio: '/zh-TW/studio', preview: '預覽', drop: '將文件拖曳到這裡', examples: [
-    ['PDF', '河川水質調查', '在工作室試用 PDF 範例'],
-    ['多頁文件', '採樣計畫', '在工作室試用文件範例'],
-    ['影片影格', '影格引用', '在工作室試用影片範例'],
+  { home: '/zh-TW', studio: '/zh-TW/studio', preview: '預覽', copy: '複製 Markdown', drop: '將文件拖曳到這裡', examples: [
+    ['PDF', '河川水質調查', '在工作室轉換 sample.pdf'],
+    ['多頁文件', '採樣計畫', '在工作室轉換 brief.html'],
+    ['影片影格', '影格引用', '在工作室開啟 demo.mp4'],
   ] },
 ];
 const samples = [
@@ -24,6 +24,61 @@ async function expectNoOverflow(page: Page) {
 }
 
 for (const locale of locales) {
+  test(locale.home + ' offers the real sample before the illustrative output without scrolling', async ({ page, context, hasTouch }) => {
+    await page.route('**/cdn-cgi/trace', route => route.fulfill({ body: 'loc=DE\n' }));
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto(locale.home);
+    await expect(page.locator('.cookie-panel')).toBeVisible();
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    const demo = page.locator('.home-conversion-demo');
+    const panel = demo.getByRole('tabpanel', { name: 'PDF' });
+    const link = panel.getByRole('link', { name: locale.examples[0][2], exact: true });
+    await expect(link).toHaveAttribute('href', locale.studio + '?sample=pdf');
+    const geometry = await link.evaluate(el => {
+      const { top, right, bottom, left, width, height } = el.getBoundingClientRect();
+      const preview = el.parentElement!.querySelector('.home-conversion-demo-output')!.getBoundingClientRect();
+      const cookie = document.querySelector('.cookie-panel')!.getBoundingClientRect();
+      return {
+        height,
+        abovePreview: bottom <= preview.top,
+        withinBounds: left >= 0 && right <= innerWidth && top >= 0 && bottom <= Math.min(innerHeight, cookie.top),
+        hit: el.contains(document.elementFromPoint(left + width / 2, top + height / 2)),
+      };
+    });
+    expect(geometry).toEqual({ height: expect.any(Number), abovePreview: true, withinBounds: true, hit: true });
+    expect(geometry.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+
+    const asset = page.waitForResponse(response => new URL(response.url()).pathname === '/samples/sample.pdf');
+    if (hasTouch) await link.tap();
+    else {
+      await demo.getByRole('tab', { name: 'PDF', exact: true }).focus();
+      await page.keyboard.press('Tab');
+      await expect(panel).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(link).toBeFocused();
+      await expect(link).toHaveCSS('outline-style', 'solid');
+      await page.keyboard.press('Enter');
+    }
+    expect((await asset).ok()).toBe(true);
+    await expect(page).toHaveURL(locale.studio + '?sample=pdf');
+    const studio = page.locator('.studio');
+    await expect(studio.locator('.studio-label')).toContainText('sample.pdf');
+    const output = studio.locator('.studio-code');
+    await expect(output).toContainText('Quarterly Field Report');
+    await expect(output).toContainText('<!-- page 1 -->');
+    await expect(output).toContainText('<!-- page 2 -->');
+    const copy = studio.getByRole('button', { name: locale.copy, exact: true });
+    if (hasTouch) await copy.tap();
+    else {
+      await copy.focus();
+      await page.keyboard.press('Enter');
+    }
+    const markdown = await output.textContent();
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(markdown);
+    await expectNoOverflow(page);
+  });
+
   test(locale.home + ' previews all formats and opens each matching Studio sample', async ({ page, hasTouch }) => {
     const errors: string[] = [];
     const signal: string[] = [];

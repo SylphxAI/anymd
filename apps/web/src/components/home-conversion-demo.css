@@ -92,7 +92,8 @@
 
 .home-conversion-demo-tabs button:focus-visible,
 .home-conversion-demo-panel:focus-visible,
-.home-conversion-demo-copy:focus-visible {
+.home-conversion-demo-copy:focus-visible,
+.home-conversion-demo-link:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
@@ -227,13 +228,12 @@
 }
 
 .home-conversion-demo-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  margin-inline: 2px;
+  min-height: 44px;
+  max-width: 100%;
+  margin-bottom: 8px;
   font-size: .8rem;
-  font-weight: 650;
+  text-align: start;
+  overflow-wrap: anywhere;
 }
 
 .home-conversion-demo-link svg {

@@ -108,6 +108,9 @@ export function HomeConversionDemo(props: { locale: Locale; copySurface?: 'home_
               </div>
               <p>{example().description}</p>
             </div>
+            <CampaignLink class="button home-conversion-demo-link" href={(props.locale === 'zh-TW' ? translatedPaths['/studio'] + '?sample=' : '/studio?sample=') + key}>
+              {example().trySample} <ArrowRight size={14} aria-hidden="true" />
+            </CampaignLink>
             <div class="home-conversion-demo-output">
               <div class="home-conversion-demo-output-bar">
                 <MarkdownViewToggle locale={props.locale} view={view()} onViewChange={setView} />
@@ -131,9 +134,6 @@ export function HomeConversionDemo(props: { locale: Locale; copySurface?: 'home_
                 </Show>
               </div>
             </div>
-            <CampaignLink class="home-conversion-demo-link inline-link" href={(props.locale === 'zh-TW' ? translatedPaths['/studio'] + '?sample=' : '/studio?sample=') + key}>
-              {example().trySample} <ArrowRight size={14} aria-hidden="true" />
-            </CampaignLink>
           </div>
         );
       }}</For>
