@@ -6,6 +6,10 @@ use super::{convert, convert_with_limits};
 use crate::{ConvertError, Options, Section};
 
 pub(crate) fn build_epub(files: &[(&str, &str)]) -> Vec<u8> {
+    zip_epub(files.iter().map(|&(name, body)| (name, body.as_bytes())))
+}
+
+fn zip_epub<'a>(files: impl IntoIterator<Item = (&'a str, &'a [u8])>) -> Vec<u8> {
     let mut out = Cursor::new(Vec::new());
     {
         let mut zip = zip::ZipWriter::new(&mut out);
@@ -16,8 +20,8 @@ pub(crate) fn build_epub(files: &[(&str, &str)]) -> Vec<u8> {
         zip.start_file("mimetype", stored).unwrap();
         zip.write_all(b"application/epub+zip").unwrap();
         for (name, body) in files {
-            zip.start_file(*name, deflated).unwrap();
-            zip.write_all(body.as_bytes()).unwrap();
+            zip.start_file(name, deflated).unwrap();
+            zip.write_all(body).unwrap();
         }
         zip.finish().unwrap();
     }
@@ -148,7 +152,7 @@ const OPF: &str = r#"<?xml version="1.0" encoding="utf-8"?>
     <item id="c2" href="text/c2.xhtml" media-type="application/xhtml+xml"/>
     <item id="css" href="style.css" media-type="text/css"/>
   </manifest>
-  <spine><itemref idref="nav"/><itemref idref="cover"/><itemref idref="c2"/><itemref idref="c1"/><itemref idref="missing"/></spine>
+  <spine><itemref idref="nav" linear="no"/><itemref idref="cover"/><itemref idref="c2"/><itemref idref="c1"/><itemref idref="missing"/></spine>
 </package>"#;
 
 #[test]
@@ -195,6 +199,126 @@ fn follows_spine_order_and_labels_chapters() {
         converted.sections[1].markdown,
         "# The Road\n\nIt was *long*. See note."
     );
+}
+
+const VISIBLE_NAV: &str = r#"<html><body>
+<nav epub:type="toc" role="navigation" class="nav">
+  <h2>Paths through this book</h2>
+  <ol>
+    <li><a href="text/c2.xhtml#arrival">Read the arrival first</a></li>
+    <li><a href="text/chapter%201.xhtml#road">Return to the road</a></li>
+  </ol>
+</nav>
+<nav epub:type="landmarks" hidden="hidden"><p>Hidden landmark</p></nav>
+<nav epub:type="page-list" style="display: none"><p>Hidden page list</p></nav>
+<p>A note from the editor. See <a href="https://example.org/guide">the guide</a>.</p>
+</body></html>"#;
+
+const ROAD: &str =
+    "<h1 id='road'>The Road</h1><p>A winding road.</p><img src='../image.png' alt='Route map'>";
+const ARRIVAL: &str =
+    "<h1 id='arrival'>The Arrival</h1><p>Safe at last.</p><img src='../image.png' alt='Route map'>";
+
+fn nav_book(nav_entry: &str, nav: &str, image: &[u8]) -> Vec<u8> {
+    let opf = OPF.replace(
+        "<itemref idref=\"nav\" linear=\"no\"/><itemref idref=\"cover\"/><itemref idref=\"c2\"/><itemref idref=\"c1\"/><itemref idref=\"missing\"/>",
+        &format!("<itemref idref='c1'/>{nav_entry}<itemref idref='c2'/>"),
+    );
+    zip_epub([
+        ("META-INF/container.xml", CONTAINER.as_bytes()),
+        ("OEBPS/content.opf", opf.as_bytes()),
+        ("OEBPS/nav.xhtml", nav.as_bytes()),
+        ("OEBPS/text/chapter 1.xhtml", ROAD.as_bytes()),
+        ("OEBPS/text/c2.xhtml", ARRIVAL.as_bytes()),
+        ("OEBPS/image.png", image),
+    ])
+}
+
+#[test]
+fn renders_visible_linear_navigation_in_spine_order() {
+    for entry in [
+        "<itemref idref='nav'/>",
+        "<itemref idref='nav' linear='yes'/>",
+    ] {
+        let epub = nav_book(entry, VISIBLE_NAV, &[]);
+        let converted = convert(&epub, &Options::default()).unwrap();
+        let body: Vec<_> = converted
+            .sections
+            .iter()
+            .map(|s| s.markdown.as_str())
+            .collect();
+        assert_eq!(body, [
+            "# The Road\n\nA winding road.\n\n![Route map](../image.png)",
+            "## Paths through this book\n\n1. Read the arrival first\n2. Return to the road\n\nA note from the editor. See [the guide](https://example.org/guide).",
+            "# The Arrival\n\nSafe at last.\n\n![Route map](../image.png)",
+        ]);
+        assert_eq!(
+            converted.outline,
+            vec![
+                (0, "Read the arrival first".into(), Some(3)),
+                (0, "Return to the road".into(), Some(1)),
+            ]
+        );
+    }
+}
+
+#[test]
+fn outline_only_navigation_does_not_create_a_body_section() {
+    let hidden = "<nav epub:type='toc' hidden><h2>Hidden contents</h2><ol><li><a href='text/c2.xhtml#arrival'>The Arrival</a></li></ol></nav>";
+    for (entry, nav, label) in [
+        ("", VISIBLE_NAV, "Read the arrival first"),
+        (
+            "<itemref idref='nav' linear='no'/>",
+            VISIBLE_NAV,
+            "Read the arrival first",
+        ),
+        ("<itemref idref='nav'/>", hidden, "The Arrival"),
+    ] {
+        let converted = convert(&nav_book(entry, nav, &[]), &Options::default()).unwrap();
+        let labels: Vec<_> = converted
+            .sections
+            .iter()
+            .map(|s| s.label.as_str())
+            .collect();
+        assert_eq!(labels, ["chapter 1: The Road", "chapter 2: The Arrival"]);
+        assert_eq!(converted.outline[0], (0, label.into(), Some(2)));
+    }
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn exports_chapter_image_with_linear_navigation_in_the_spine() {
+    let dir = tempfile::tempdir().unwrap();
+    let bytes = crate::images::tests::png(64, 64);
+    let nav = VISIBLE_NAV.replace("</body>", "<img src='image.png' alt='Route map'></body>");
+    let epub = nav_book("<itemref idref='nav'/>", &nav, &bytes);
+    let converted = convert(
+        &epub,
+        &Options {
+            images: Some(crate::images::ImageStore::at(dir.path())),
+            ..Options::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(converted.sections.len(), 3);
+    let image = std::fs::read_dir(dir.path())
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    assert_eq!(std::fs::read(&image).unwrap(), bytes);
+    for (i, section) in converted.sections.iter().enumerate() {
+        let chapter = i + 1;
+        assert!(
+            section.markdown.ends_with(&format!(
+                "![Route map]({})\n<!-- image: 64x64, chapter {chapter} -->",
+                image.display()
+            )),
+            "{}",
+            section.markdown
+        );
+    }
 }
 
 #[test]

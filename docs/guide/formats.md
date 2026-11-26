@@ -75,7 +75,7 @@ CSV and TSV accept UTF-8 (with or without a BOM) and UTF-16LE or UTF-16BE with a
 
 ## EPUB
 
-One section per chapter in spine order, plus title and author, with images [exported as files](#embedded-images). `pages` selects chapters.
+One section per chapter in spine order, plus title and author, with images [exported as files](#embedded-images). Visible navigation in the book’s main reading order is included; hidden navigation can still supply the outline. `pages` selects chapters.
 
 ## HTML and URLs
 

@@ -76,6 +76,11 @@ pub(super) struct ManifestItem {
     pub(super) properties: String,
 }
 
+pub(super) struct SpineItem {
+    pub(super) idref: String,
+    pub(super) linear: bool,
+}
+
 #[derive(Default)]
 pub(super) struct Package {
     pub(super) title: Option<String>,
@@ -84,7 +89,7 @@ pub(super) struct Package {
     pub(super) date: Option<String>,
     pub(super) language: Option<String>,
     pub(super) manifest: HashMap<String, ManifestItem>,
-    pub(super) spine: Vec<String>,
+    pub(super) spine: Vec<SpineItem>,
 }
 
 pub(super) fn parse_opf(opf: &str) -> Result<Package, ConvertError> {
@@ -162,7 +167,10 @@ fn opf_element(e: &quick_xml::events::BytesStart<'_>, package: &mut Package) {
         }
         "itemref" => {
             if let Some(idref) = attr(e, "idref") {
-                package.spine.push(idref);
+                package.spine.push(SpineItem {
+                    idref,
+                    linear: attr(e, "linear").as_deref() != Some("no"),
+                });
             }
         }
         _ => {}
