@@ -7,5 +7,13 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   build: { target: 'es2022' },
-  plugins: [tailwindcss(), solidStart({ middleware: './src/middleware.ts' }), nitro({ preset: 'node-server' })],
+  plugins: [
+    tailwindcss(),
+    solidStart({ middleware: './src/middleware.ts' }),
+    nitro({
+      preset: 'node-server',
+      // Nitro serves static files before SolidStart's request middleware.
+      routeRules: { '/**': { headers: { 'Strict-Transport-Security': 'max-age=63072000; includeSubDomains' } } },
+    }),
+  ],
 });
