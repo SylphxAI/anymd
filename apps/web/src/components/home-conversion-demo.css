@@ -270,7 +270,12 @@
   .home-conversion-demo-panel { margin-top:6px; }
   .home-conversion-demo-source { padding-bottom:5px; }
   .home-conversion-demo-source p { min-height: 2.7em; }
-  .home-conversion-demo-pane { height: 10rem; }
+  .home-conversion-demo-pane { height: 6rem; }
+  .home-conversion-demo-output-bar .studio-view button { min-height: 2.25rem; }
+}
+
+@media (375px <= width <= 690px) {
+  .home-conversion-demo-source p { min-height: 1.35em; }
 }
 
 @media (max-width:420px) {

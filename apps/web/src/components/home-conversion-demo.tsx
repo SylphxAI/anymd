@@ -1,6 +1,6 @@
 import { CampaignLink } from '@/lib/attribution-link';
 import { homeDemoCopy, homeDemoExamples, type HomeDemoExample } from '@/lib/home-demo-copy';
-import { localizedPath, type Locale } from '@/lib/marketing-locale';
+import { translatedPaths, type Locale } from '@/lib/marketing-locale';
 import { ArrowRight, Braces, Check, Clapperboard, Copy, Files, FileText } from 'lucide-solid';
 import { createSignal, createUniqueId, For, onCleanup, Show } from 'solid-js';
 import { useCookieConsent } from './cookie-consent';
@@ -131,7 +131,7 @@ export function HomeConversionDemo(props: { locale: Locale }) {
                 </Show>
               </div>
             </div>
-            <CampaignLink class="home-conversion-demo-link inline-link" href={localizedPath('/studio', props.locale) + '?sample=' + key}>
+            <CampaignLink class="home-conversion-demo-link inline-link" href={(props.locale === 'zh-TW' ? translatedPaths['/studio'] + '?sample=' : '/studio?sample=') + key}>
               {example().trySample} <ArrowRight size={14} aria-hidden="true" />
             </CampaignLink>
           </div>

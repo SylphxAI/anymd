@@ -50,6 +50,14 @@ for (const locale of locales) {
     const activate = (control: typeof markdown) => hasTouch ? control.tap() : control.click();
 
     await page.goto(home);
+    const skip = page.locator('.skip-link');
+    await expect(skip).toHaveCSS('clip-path', 'inset(50%)');
+    await page.keyboard.press('Tab');
+    await expect(skip).toBeFocused();
+    await expect(skip).toHaveCSS('clip-path', 'none');
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(home + '#main');
+    await expect(skip).toHaveCSS('clip-path', 'inset(50%)');
     await expect(markdown).toHaveAttribute('aria-pressed', 'true');
     await expect(raw).toContainText('## ' + locale.examples[0][1]);
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
