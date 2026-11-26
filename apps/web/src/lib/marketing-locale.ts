@@ -56,13 +56,16 @@ export function pricingSwitchQuery(search: string) {
   return pricingQuery('/pricing', search);
 }
 
-export function languageSwitchHref(pathname: string, search: string, locale: Locale) {
-  const target = languageSwitchTarget(pathname, locale) ?? localizedPath('/', locale);
-  if (localizedPath(pathname, 'en') === '/sign-in') {
-    return new URLSearchParams(search).has('next') ? target + '?next=' + encodeURIComponent(signInReturnPath(pathname, search)) : target;
+export function signInPath(locale: Locale) {
+  return locale === 'zh-TW' ? translatedPaths['/sign-in'] : '/sign-in' as const;
+}
+
+export function languageSwitchQuery(pathname: string, search: string) {
+  const target = languageSwitchTarget(pathname, 'en');
+  if (target === '/sign-in' && new URLSearchParams(search).has('next')) {
+    return 'next=' + encodeURIComponent(signInReturnPath(pathname, search));
   }
-  const query = target === localizedPath('/pricing', locale) && pricingSwitchQuery(search);
-  return query ? target + '?' + query : target;
+  return target === '/pricing' ? pricingSwitchQuery(search) : '';
 }
 
 export function pricingReturnPath(pathname: string, search: string) {

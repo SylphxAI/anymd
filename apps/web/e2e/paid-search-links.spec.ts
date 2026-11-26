@@ -21,9 +21,9 @@ async function isolate(page: Page) {
   return hits;
 }
 
-for (const [home, pricing, signIn] of [
-  ['/', '/pricing', 'Sign in to buy Pro'],
-  ['/zh-TW', '/zh-TW/pricing', '登入以購買 Pro'],
+for (const [home, pricing, signInPath, signIn] of [
+  ['/', '/pricing', '/sign-in', 'Sign in to buy Pro'],
+  ['/zh-TW', '/zh-TW/pricing', '/zh-TW/sign-in', '登入以購買 Pro'],
 ]) {
   test(home + ' Pro links preserve their own entry surface and campaign through pricing and sign-in', async ({ page }) => {
     const hits = await isolate(page);
@@ -42,7 +42,7 @@ for (const [home, pricing, signIn] of [
         await cta.click();
         await expect(page).toHaveURL(href);
         await expect(page.getByRole('link', {name:signIn, exact:true})).toHaveAttribute(
-          'href', '/sign-in?next=' + encodeURIComponent(checkout) + '&' + touch,
+          'href', signInPath + '?next=' + encodeURIComponent(checkout) + '&' + touch,
         );
       });
     }
