@@ -1,7 +1,7 @@
 import { Braces, Download, FileText, LockKeyhole, Upload } from 'lucide-solid';
 import { A, useLocation } from '@solidjs/router';
 import CitePreview, { citeHeadingId } from './cite-preview';
-import { createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { createMemo, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import MarkdownPreview, { MarkdownViewToggle, type MarkdownView } from './markdown-preview';
 import QuoteSearch from './quote-search';
 import type { ConversionSource } from '@/lib/analytics';
@@ -38,10 +38,22 @@ export default function DocumentStudio(props: { locale: Locale }) {
   const t = () => studioCopy[props.locale];
   const consent = useCookieConsent();
   const [result, setResult] = createSignal<Result | null>(null);
-  const noSelectableText = () => {
+  const pdfTextCoverage = createMemo(() => {
     const output = result();
-    return output?.format === 'pdf' && !output.source_units.some(unit => unit.text.trim());
+    if (output?.format !== 'pdf') return;
+    const missing = output.source_units.filter(unit => !unit.text.trim()).map(unit => unit.label);
+    return { pages: output.source_units.length, missing };
+  });
+  const noSelectableText = () => {
+    const coverage = pdfTextCoverage();
+    return coverage !== undefined && coverage.missing.length === coverage.pages;
   };
+  const pdfTextNotice = createMemo(() => {
+    const coverage = pdfTextCoverage();
+    if (!coverage) return;
+    if (noSelectableText()) return t().emptyPdf;
+    if (coverage.missing.length) return t().partialPdf(coverage.missing, coverage.pages);
+  });
   const [file, setFile] = createSignal<string | null>(null);
   const [hydrated, setHydrated] = createSignal(false);
   const [pending, setPending] = createSignal(false);
@@ -150,11 +162,17 @@ export default function DocumentStudio(props: { locale: Locale }) {
           </div>
         </div>}</Show>
       </div>
-      {pending() ? <div class="studio-empty" role="status">{t().converting} <button type="button" class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>{t().cancel}</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : noSelectableText() ? <div class="studio-empty" role="status"><strong>{t().scanned}</strong><span class="muted">{t().ocr}<A href="/docs/cli" class="inline-link">{t().ocrLink}</A>{t().ocrEnd}</span></div> : result() ? <div class="studio-output-pane">
+      <div role="status" classList={{ 'studio-empty': noSelectableText(), 'studio-pdf-partial': !!pdfTextNotice() && !noSelectableText() }}>
+        <Show when={pdfTextNotice()}>{message => <>
+          <strong>{message()}</strong>
+          <p class="muted">{t().ocr}<A href="/docs/cli#local-document-ocr" class="inline-link">{t().ocrLink}</A>{t().ocrEnd}</p>
+        </>}</Show>
+      </div>
+      {pending() ? <div class="studio-empty" role="status">{t().converting} <button type="button" class="inline-link" onClick={()=>{stop();setPending(false);setFile(null);}}>{t().cancel}</button></div> : notice() ? <p class="studio-empty" role="alert">{notice()}</p> : result() && !noSelectableText() ? <div class="studio-output-pane">
         <Show when={view() === 'preview'} fallback={<pre class="studio-code" tabIndex={0} aria-label={t().markdown}>{result()?.markdown}</pre>}>
           <MarkdownPreview markdown={result()?.markdown ?? ''} locale={props.locale} />
         </Show>
-      </div> : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{hydrated() ? t().drop : t().loading}</strong><span class="muted">{t().formats}</span></div>}
+      </div> : noSelectableText() ? null : videoUrl() ? <div class="studio-media"><video ref={(element) => { video = element; }} controls playsinline preload="metadata" src={videoUrl() ?? undefined} aria-label={t().video}/><button type="button" class="button" onClick={()=>{ if (video?.readyState) setStamp(`[${file()} @ ${video.currentTime.toFixed(3)}s]`); }}>{t().mark}</button>{stamp() && <div class="flex flex-wrap gap-2"><code>{stamp()}</code><CopyButton text={stamp() ?? ''} label={t().copyTimestamp} copied={t().copied} copyFailed={t().copyFailed} analytics={{surface:'studio_timestamp'}} /></div>}</div> : <div class="studio-empty"><Upload size={24} /><strong>{hydrated() ? t().drop : t().loading}</strong><span class="muted">{t().formats}</span></div>}
     </div>
     <div class="studio-bottom"><span>{t().localMarkdown}</span><span>RUST / WASM</span></div>
     <Show keyed when={noSelectableText() ? null : result()}>{output => <QuoteSearch locale={props.locale} output={output} />}</Show>

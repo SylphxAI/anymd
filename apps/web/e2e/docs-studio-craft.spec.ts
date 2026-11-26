@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { studioAsset } from './studio-assets';
 
 test('Studio exports are in the first viewport above the consent bar immediately after PDF conversion', async ({ page }, info) => {
   await page.route('**/cdn-cgi/trace', route => route.fulfill({body:'loc=DE\n'}));
@@ -22,16 +25,100 @@ test('Studio exports are in the first viewport above the consent bar immediately
   await page.screenshot({path:info.outputPath('studio-first-viewport.png')});
 });
 
-test('shows a useful OCR state and no empty exports or quote search for a scanned PDF', async ({ page }) => {
-  await page.goto('/studio');
-  await page.locator('input[type=file]').setInputFiles({ name: 'image-only.pdf', mimeType: 'application/pdf', buffer: imageOnlyPdf() });
-  await expect(page.getByRole('status').filter({ hasText: 'No selectable text found in this PDF.' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Use OCR in the native CLI' })).toHaveAttribute('href', '/docs/cli');
-  for (const label of ['Copy Markdown', 'Download .md', 'Find quote']) await expect(page.getByRole('button', { name: label, exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Sample document' }).click();
-  await expect(page.getByLabel('Markdown output')).toContainText('Field Notes');
-  await expect(page.getByRole('button', { name: 'Find quote' })).toBeVisible();
-});
+const pdfCases = [
+  {
+    route: '/studio', open: 'Open a file', sample: 'Sample PDF', output: 'Markdown output', preview: 'Preview',
+    previewOutput: 'Markdown preview', copy: 'Copy Markdown', copied: 'Copied', download: 'Download .md',
+    quote: 'Quote from the document', find: 'Find quote', found: 'Found in page 2.', pages: ['page 1', 'page 2'],
+    partial: 'Partial conversion: No selectable text found on page 1.', empty: 'No selectable text found in this PDF.',
+    ocr: 'local OCR instructions',
+  },
+  {
+    route: '/zh-TW/studio', open: '開啟檔案', sample: '範例 PDF', output: 'Markdown 輸出', preview: '預覽',
+    previewOutput: 'Markdown 預覽', copy: '複製 Markdown', copied: '已複製', download: '下載 .md',
+    quote: '文件中的引文', find: '查找引文', found: '找到引文：第 2 頁。', pages: ['第 1 頁', '第 2 頁'],
+    partial: '部分轉檔結果：第 1 頁未找到可選取的文字。', empty: '這份 PDF 沒有可選取的文字。',
+    ocr: '本機 OCR 操作說明',
+  },
+];
+const mixedText = 'This page has a real text layer over its background picture.';
+const mixedMarkdown = '---\nsource: scanned-page.pdf\npages: 2\n---\n\n<!-- page 1 -->\n\n\n\n<!-- page 2 -->\n\n' + mixedText + '\n';
+const ocrPath = '/docs/cli#local-document-ocr';
+
+for (const locale of pdfCases) {
+  test(locale.route + ' discloses partial PDF text without changing output or sending the file', async ({ page, context }, info) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.addInitScript(() => localStorage.setItem('anymd.cookie-settings.v1', 'reject'));
+    await page.route('**/cdn-cgi/trace', route => route.fulfill({ body: 'loc=DE\n' }));
+    const response = await page.goto(locale.route);
+    expect(response?.ok()).toBe(true);
+    if (process.env.PLAYWRIGHT_BASE_URL) {
+      const rev = response?.headers()['x-sylphx-revision-sha'];
+      expect(rev).toMatch(/^[a-f0-9]{40}$/);
+      console.log(JSON.stringify({ studio: response?.url(), revision: rev, project: info.project.name }));
+    }
+    const origin = new URL(page.url()).origin;
+    await expect(page.getByRole('button', { name: locale.open })).toBeEnabled();
+    const unexpected: string[] = [];
+    context.on('request', request => {
+      const url = new URL(request.url());
+      const converter = studioAsset(origin, request.url());
+      const publicSample = url.origin === origin && url.pathname === '/samples/sample.pdf' && !url.search;
+      if (request.postData() !== null || !['GET', 'HEAD'].includes(request.method()) ||
+        (['fetch', 'xhr'].includes(request.resourceType()) && !converter && !publicSample) || url.href.includes('scanned-page.pdf')) {
+        unexpected.push(request.method() + ' ' + request.url());
+      }
+    });
+
+    const input = page.locator('input[type=file]');
+    const status = page.getByRole('status');
+    const output = page.getByLabel(locale.output);
+    const ocr = page.getByRole('link', { name: locale.ocr, exact: true });
+    await input.setInputFiles(fileURLToPath(new URL('../../../test/fixtures/scanned-page.pdf', import.meta.url)));
+    const partial = status.filter({ hasText: locale.partial });
+    await expect(partial).toBeInViewport({ ratio: 1 });
+    await expect(partial.getByRole('link', { name: locale.ocr })).toHaveAttribute('href', ocrPath);
+    await expect.poll(() => output.textContent()).toBe(mixedMarkdown);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+    await page.screenshot({ path: info.outputPath('studio-pdf-partial.png') });
+
+    await page.getByRole('button', { name: locale.preview, exact: true }).click();
+    const preview = page.getByRole('region', { name: locale.previewOutput });
+    for (const marker of locale.pages) await expect(preview.getByText(marker, { exact: true })).toBeVisible();
+    await expect(preview.getByText(mixedText, { exact: true })).toBeVisible();
+    await expect(partial).toBeVisible();
+    await page.getByRole('button', { name: locale.copy, exact: true }).click();
+    await expect(page.getByRole('button', { name: locale.copied, exact: true })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(mixedMarkdown);
+    const completed = page.waitForEvent('download');
+    await page.getByRole('button', { name: locale.download, exact: true }).click();
+    const download = await completed;
+    expect(download.suggestedFilename()).toBe('scanned-page.md');
+    expect(await readFile((await download.path())!, 'utf8')).toBe(mixedMarkdown);
+    await page.getByLabel(locale.quote).fill(mixedText);
+    await page.getByRole('button', { name: locale.find }).click();
+    await expect(status.filter({ hasText: locale.found })).toBeVisible();
+
+    await page.getByRole('button', { name: locale.sample, exact: true }).click();
+    await expect(output).toContainText('Quarterly Field Report');
+    await expect(ocr).toHaveCount(0);
+    await expect(page.getByRole('button', { name: locale.download, exact: true })).toBeVisible();
+
+    await input.setInputFiles({ name: 'image-only.pdf', mimeType: 'application/pdf', buffer: imageOnlyPdf() });
+    const empty = status.filter({ hasText: locale.empty });
+    await expect(empty).toBeVisible();
+    await expect(partial).toHaveCount(0);
+    await expect(empty.getByRole('link', { name: locale.ocr })).toHaveAttribute('href', ocrPath);
+    await expect(output).toHaveCount(0);
+    for (const label of [locale.copy, locale.download, locale.find]) {
+      await expect(page.getByRole('button', { name: label, exact: true })).toHaveCount(0);
+    }
+    expect(unexpected).toEqual([]);
+    await ocr.press('Enter');
+    await expect(page).toHaveURL(ocrPath);
+    await expect(page.getByRole('heading', { name: 'Local document OCR', exact: true })).toBeInViewport();
+  });
+}
 
 test('copies code exactly and exposes Python API in the reference nav', async ({ page }) => {
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);

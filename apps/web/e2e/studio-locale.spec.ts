@@ -43,10 +43,10 @@ test('Traditional Chinese Studio converts, copies, downloads and finds a quote e
   const find = studio.getByRole('button', { name: '查找引文' });
   await quote.fill('No such exact quote');
   await find.click();
-  await expect(studio.getByRole('status')).toHaveText('未在同一頁、投影片或章節內找到完全相符的文字。');
+  await expect(studio.getByRole('status').filter({ hasText: '未在同一頁、投影片或章節內找到完全相符的文字。' })).toBeVisible();
   await quote.fill('Field Notes');
   await find.click();
-  await expect(studio.getByRole('status')).toHaveText('找到引文：文件。');
+  await expect(studio.getByRole('status').filter({ hasText: '找到引文：文件。' })).toBeVisible();
   await studio.getByText('查看 sample.pdf 中已核對的引文', { exact: true }).click();
   await expect(studio.getByRole('img', { name: /^第 1 頁局部畫面/ })).toBeVisible();
   await expect(studio.getByText('引文已逐字核對')).toBeVisible();
