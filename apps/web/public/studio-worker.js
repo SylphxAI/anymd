@@ -3,8 +3,8 @@ let engine;
 self.onmessage = async ({data: {id, name, bytes}}) => {
   let mod;
   try {
-    engine ??= import('/wasm/anymd_wasm.js').then(async (mod) => {
-      await mod.default({module_or_path:'/wasm/anymd_wasm_bg.wasm'});
+    engine ??= import('./wasm/anymd_wasm.js').then(async (mod) => {
+      await mod.default();
       return mod;
     });
     mod = await engine;
