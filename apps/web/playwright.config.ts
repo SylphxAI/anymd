@@ -21,6 +21,7 @@ function loopbackTls() {
 const baseURL = live || fixtureApp;
 export default defineConfig({
   testDir: './e2e',
+  preserveOutput: live ? 'never' : 'always',
   use: { baseURL, ignoreHTTPSErrors: !live, launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }, trace: 'retain-on-failure' },
   projects: [
     ...(['light', 'dark'] as const).flatMap((colorScheme) => [
