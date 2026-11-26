@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { captureStudioAssets, studioAsset } from './studio-assets';
 
 const live = Boolean(process.env.PLAYWRIGHT_BASE_URL);
-const modulePath = '/wasm/anymd_wasm.js';
-const enginePaths = ['/studio-worker.js', modulePath, '/wasm/anymd_wasm_bg.wasm'];
 const locales = [
   {
     path: '/studio', sample: 'Sample PDF', output: 'Markdown output',
@@ -25,22 +24,14 @@ test.use({
 for (const locale of locales) {
   test(locale.path + ' distinguishes converter startup from an unreadable PDF and recovers on retry', async ({ page, context, hasTouch, baseURL }) => {
     const origin = new URL(baseURL!).origin;
-    let failedImports = 0;
-    await context.route(origin + modulePath, route => {
-      failedImports++;
+    const assets = captureStudioAssets(origin);
+    await context.route(url => Boolean(studioAsset(origin, url.href)), route => assets.capture(route));
+    const isModule = (url: URL) => studioAsset(origin, url.href)?.file === 'wasm/anymd_wasm.js';
+    let failedImport: string | undefined;
+    await context.route(isModule, route => {
+      failedImport = route.request().url();
       return route.abort('failed');
     }, { times: 1 });
-
-    const engineRevisions = new Map<string, Set<string | undefined>>();
-    if (live) {
-      context.on('response', response => {
-        const url = new URL(response.url());
-        if (url.origin !== origin || !enginePaths.includes(url.pathname)) return;
-        const revisions = engineRevisions.get(url.pathname) ?? new Set();
-        revisions.add(response.headers()['x-sylphx-revision-sha']);
-        engineRevisions.set(url.pathname, revisions);
-      });
-    }
 
     const document = await page.goto(locale.path);
     expect(document?.status()).toBe(200);
@@ -54,7 +45,7 @@ for (const locale of locales) {
     await trySample();
     await expect(alert).toHaveText(locale.start, { timeout: 15_000 });
     await expect(alert).toBeVisible();
-    expect(failedImports).toBe(1);
+    expect(failedImport).toBeDefined();
     await expect(output).toHaveCount(0);
 
     // A nonempty, truncated PDF reaches the real reader, not the size check.
@@ -71,13 +62,6 @@ for (const locale of locales) {
     await expect(output).toContainText('<!-- page 1 -->');
     await expect(output).toContainText('<!-- page 2 -->');
     await expect(alert).toHaveCount(0);
-    expect(failedImports).toBe(1);
-
-    if (live) {
-      const revision = document?.headers()['x-sylphx-revision-sha'];
-      expect(revision).toMatch(/^[a-f0-9]{40}$/);
-      for (const path of enginePaths) expect(engineRevisions.get(path), path).toEqual(new Set([revision]));
-      console.log('Studio and converter revision: %s', revision);
-    }
+    assets.prove(document, live, failedImport);
   });
 }

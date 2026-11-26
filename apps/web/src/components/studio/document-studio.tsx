@@ -11,6 +11,8 @@ import type { SourceUnit } from '@/lib/studio-quote';
 import { CopyButton } from '../copy';
 import { useCookieConsent } from '../cookie-consent';
 
+declare const __STUDIO_WORKER_URL__: string;
+
 type WorkerResult = {markdown:string; format:string; tokens:number; unit_noun:string; units:number; source_units:SourceUnit[]; ms:number};
 type WorkerMessage = {id:number} & ({outcome:'ok'; result:WorkerResult} | {outcome:'start-error' | 'read-error'});
 type Result = WorkerResult & {sourceKind: ConversionSource; sourceBytes: number; markdownBytes: number};
@@ -94,7 +96,7 @@ export default function DocumentStudio(props: { locale: Locale }) {
       const content = typeof source === 'string' ? await fetch(source, {signal:controller.signal}).then((r) => { if (!r.ok) throw new Error(); return r.arrayBuffer(); }) : await source.arrayBuffer();
       if (generation !== run) return;
       const sourceBytes = content.byteLength;
-      const w = new Worker('/studio-worker.js', {type:'module'}); worker = w;
+      const w = new Worker(__STUDIO_WORKER_URL__, {type:'module'}); worker = w;
       w.onmessage = ({data}: MessageEvent<WorkerMessage>) => {
         if (run !== generation || data.id !== run) return;
         if (data.outcome !== 'ok') { fail(data.outcome === 'start-error' ? t().startError : t().readError); return; }
