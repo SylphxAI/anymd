@@ -119,11 +119,11 @@ const fileFormats = new Set(['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'tsv', 'epub'
 export type ConversionSource = 'sample' | 'local_file';
 type Conversion = { file_format: string; source_kind: ConversionSource };
 export type CopyDetails =
-  | { surface: 'studio_output' | 'studio_timestamp' | 'home_demo' | 'docs_code' }
+  | { surface: 'studio_output' | 'studio_timestamp' | 'home_demo' | 'markdownify_mcp_demo' | 'docs_code' }
   | { surface: 'home_install'; command_kind: 'npm' | 'pip' | 'uvx' }
   | { surface: 'dashboard_mcp'; command_kind: 'mcp_config' }
   | { surface: 'dashboard_cli'; command_kind: 'cli_login' }
-  | { surface: 'markdownify_mcp'; command_kind: 'convert_command' | 'cli_install' | 'mcp_config' };
+  | { surface: 'markdownify_mcp'; command_kind: 'convert_command' | 'cli_install' | 'mcp_config' | 'uvx' };
 
 export type BehavioralEvent =
   | [name: 'document_converted', payload: Conversion & { unit_count: number; token_count: number; duration_ms: number }]
@@ -148,11 +148,11 @@ export function behavioralParameters(...[name, payload]: BehavioralEvent) {
     case 'output_downloaded': return conversion(payload);
     case 'output_copied': {
       switch (payload.surface) {
-        case 'studio_output': case 'studio_timestamp': case 'home_demo': case 'docs_code': return {surface:payload.surface};
+        case 'studio_output': case 'studio_timestamp': case 'home_demo': case 'markdownify_mcp_demo': case 'docs_code': return {surface:payload.surface};
         case 'home_install': return {surface:'home_install', command_kind:['npm', 'pip', 'uvx'].find(kind => kind === payload.command_kind)};
         case 'dashboard_mcp': return {surface:'dashboard_mcp', command_kind:'mcp_config'};
         case 'markdownify_mcp': {
-          const kind = ['convert_command', 'cli_install', 'mcp_config'].find(value => value === payload.command_kind);
+          const kind = ['convert_command', 'cli_install', 'mcp_config', 'uvx'].find(value => value === payload.command_kind);
           return kind ? {surface:payload.surface, command_kind:kind} : undefined;
         }
         case 'dashboard_cli': return {surface:'dashboard_cli', command_kind:'cli_login'};
