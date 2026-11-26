@@ -162,6 +162,7 @@ export function behavioralParameters(...[name, payload]: BehavioralEvent) {
     case 'quote_searched': return {matched:payload.matched === true};
     case 'paywall_view': return {entry_surface:'studio_cite_preview'};
     case 'pro_cta_clicked': {
+      // Share the product-owned registry with checkout attribution.
       const surface = knownProCtaSurface(payload.entry_surface);
       return surface ? {entry_surface:surface} : undefined;
     }

@@ -1,4 +1,4 @@
-type SourceUnit = { label: string; text: string };
+export type SourceUnit = { label: string; text: string };
 export type QuoteMatch = { label: string; before: string; matched: string; after: string };
 
 const clean = (text: string) => text.normalize('NFKC').replace(/\s+/g, ' ').trim();

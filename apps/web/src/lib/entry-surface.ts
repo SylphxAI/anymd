@@ -1,6 +1,6 @@
 // Only product-owned labels may reach analytics or checkout metadata.
 const proCtaSurfaces = [
-  'home_hero', 'home_pro_panel', 'article_bridge', 'studio_cite_preview',
+  'home_hero', 'home_pro_panel', 'article_bridge', 'studio_cite_preview', 'studio_quote_match',
   'task_build_video_timeline', 'task_check_pdf_citation', 'task_extract_video_frame',
   'seo_pdf-and-office-to-markdown-mcp', 'seo_verifiable-video-and-cite-check-ai-agents',
   'seo_vs-docling', 'seo_vs-hub', 'seo_vs-kreuzberg', 'seo_vs-llamaparse',

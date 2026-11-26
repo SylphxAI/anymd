@@ -7,22 +7,25 @@ import { useCookieConsent } from '../cookie-consent';
 import { PdfQuoteCrop } from './pdf-quote-crop';
 import proof from './sample-cite-proof.json';
 
+export const citeHeadingId = 'studio-cite-heading';
+export const citeProofId = 'studio-cite-proof';
+
 export default function CitePreview(props: { locale: Locale }) {
   const consent = useCookieConsent();
   const t = () => studioCopy[props.locale].proof;
   const price = () => formatPrice(proAmount(defaultCurrency), defaultCurrency, props.locale);
   const surface = {entry_surface:'studio_cite_preview'} as const;
   return (
-    <section class="cite-preview" aria-labelledby="studio-cite-heading">
+    <section class="cite-preview" aria-labelledby={citeHeadingId}>
       <div class="cite-preview-intro">
         <div class="stack">
           <span class="eyebrow"><ScanLine size={16} aria-hidden="true" /> {t().eyebrow}</span>
-          <h2 id="studio-cite-heading">{t().heading}</h2>
+          <h2 id={citeHeadingId} tabIndex={-1}>{t().heading}</h2>
         </div>
         <CampaignLink class="button button-primary" href={(props.locale === 'zh-TW' ? translatedPaths['/pricing'] : '/pricing') + '?entry_surface=studio_cite_preview'} onClick={() => consent.trackBehavioral('pro_cta_clicked', surface)}>{t().upgrade(price())} <ArrowRight size={16} aria-hidden="true" /></CampaignLink>
       </div>
       <p class="muted">{t().helpStart}<code>cite_check</code>{t().helpEnd}</p>
-      <details class="cite-preview-details" onToggle={event => {
+      <details id={citeProofId} class="cite-preview-details" onToggle={event => {
         if (event.currentTarget.open) consent.trackBehavioral('paywall_view', surface);
       }}>
         <summary>{t().see}</summary>

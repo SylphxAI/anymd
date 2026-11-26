@@ -28,6 +28,10 @@ export const studioCopy = {
     quoteLabel: 'Quote from the document', quotePlaceholder: 'Paste a phrase to find…', find: 'Find quote',
     found: (labels: string[]) => 'Found in ' + labels.join(', ') + '.',
     noMatch: 'No exact match within a single source unit.',
+    quoteSamples: 'Try a quote from this sample',
+    quoteProofStart: 'Studio matches text on this device. Anymd Pro’s ',
+    quoteProofEnd: ' shows the exact PDF page, bounding-box coordinates, and a crop you can check.',
+    quoteSeeProof: 'See the sample proof', quoteSeePro: 'View Anymd Pro pricing',
     proof: {
       eyebrow: 'PRO PREVIEW', heading: 'Verify a quote on the exact PDF page crop',
       upgrade: (price: string) => 'Get Anymd Pro — ' + price + ' once',
@@ -67,6 +71,10 @@ export const studioCopy = {
     quoteLabel: '文件中的引文', quotePlaceholder: '貼上要查找的片語…', find: '查找引文',
     found: (labels: string[]) => '找到引文：' + labels.map(zhSourceLabel).join('、') + '。',
     noMatch: '未在同一頁、投影片或章節內找到完全相符的文字。',
+    quoteSamples: '試查範例中的引文',
+    quoteProofStart: '工作室在這台裝置上比對文字。Anymd Pro 的 ',
+    quoteProofEnd: ' 會標示引文的 PDF 頁碼和方框座標，並提供局部畫面供你核對。',
+    quoteSeeProof: '查看範例引文證據', quoteSeePro: '查看 Anymd Pro 價格',
     proof: {
       eyebrow: 'PRO 功能預覽', heading: '在 PDF 原頁的局部畫面核對引文',
       upgrade: (price: string) => '購買 Anymd Pro · 一次付費 ' + price,
