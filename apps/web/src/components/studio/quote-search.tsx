@@ -25,7 +25,7 @@ function revealProof() {
 
 export default function QuoteSearch(props: {
   locale: Locale;
-  output: { format: string; sourceKind: ConversionSource; source_units: SourceUnit[] };
+  output: { format: string; sourceKind: ConversionSource; source_units?: SourceUnit[] };
 }) {
   const t = () => studioCopy[props.locale];
   const consent = useCookieConsent();
@@ -38,13 +38,14 @@ export default function QuoteSearch(props: {
 
   function search(text: string) {
     const needle = normalizeQuote(text);
-    if (needle.length < 3) return;
-    const matches = findQuoteMatches(props.output.source_units, needle);
+    const units = props.output.source_units;
+    if (!units || needle.length < 3) return;
+    const matches = findQuoteMatches(units, needle);
     setMatch(matches);
     consent.trackBehavioral('quote_searched', { matched: matches.length > 0 });
   }
 
-  return <form class="studio-quote stack" onSubmit={event => { event.preventDefault(); search(quote()); }}>
+  return <form class="studio-quote stack" inert={!props.output.source_units} onSubmit={event => { event.preventDefault(); search(quote()); }}>
     <div><h2>{t().quoteTitle}</h2><p class="muted">{t().quoteHelp}</p></div>
     <label class="field-label">{t().quoteLabel}
       <input class="field" required minLength={3} maxLength={500} placeholder={t().quotePlaceholder}

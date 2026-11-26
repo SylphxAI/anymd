@@ -215,6 +215,7 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .studio-export { display:flex; flex-wrap:wrap; gap:6px; }
 .studio-export .copy-button { min-height:36px; }
 .studio-quote { border-top: 1px solid var(--line); padding: 1rem; }
+.studio-output-actions[inert], .studio-quote[inert] { opacity: .75; }
 .studio-quote h2 { font-size: 1.42rem; }
 .studio-quote-samples { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .55rem; }
 .studio-quote-samples p { flex-basis: 100%; font-size: .85rem; }
