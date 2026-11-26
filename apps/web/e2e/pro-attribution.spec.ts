@@ -111,7 +111,7 @@ test('header and checkout sign-in share the safe pricing return before consent w
   ] as const) {
     const response = await page.goto(incoming + '&utm_campaign=qa_sentinel');
     expect(response?.status()).toBe(200);
-    const href = '/sign-in?next=' + encodeURIComponent(next);
+    const href = (incoming.startsWith('/zh-TW/') ? '/zh-TW' : '') + '/sign-in?next=' + encodeURIComponent(next);
     const signIn = page.locator('.site-header').getByRole('link', {name:label, exact:true});
     await expect(signIn).toBeVisible();
     await expect(signIn).toHaveAttribute('href', href);

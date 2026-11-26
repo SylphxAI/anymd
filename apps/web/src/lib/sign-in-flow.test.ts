@@ -16,6 +16,10 @@ test('legacy sign-in aliases cannot become post-auth redirect loops', () => {
     assert(signInAlias(route));
     assert.equal(safeNext(route + '?next=/billing'), '/dashboard');
   }
+  for (const route of ['/zh-TW/sign-in', '/ZH-tw/sign-in/', '/zh-TW//sign-in', '/zh-Hant/sign-in']) {
+    assert.equal(safeNext(route + '?next=/billing'), '/dashboard');
+  }
   assert.equal(safeNext('/cli-auth?state=example#top'), '/cli-auth?state=example#top');
+  assert.equal(safeNext('/zh-TW/pricing?entry_surface=home_hero&currency=TWD'), '/zh-TW/pricing?entry_surface=home_hero&currency=TWD');
   assert.equal(safeNext('//example.invalid'), '/dashboard');
 });

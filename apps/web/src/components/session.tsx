@@ -31,12 +31,13 @@ export function GoogleMark() {
 export function SessionAction() {
   const session = useSession();
   const route = useLocation();
-  const zh = () => localeFromPath(route.pathname) === 'zh-TW';
+  const locale = () => localeFromPath(route.pathname);
+  const zh = () => locale() === 'zh-TW';
   const signedIn = () => {
     const state = session();
     return state && state !== 'error' && state.user;
   };
-  return <Show when={signedIn()} fallback={<CampaignLink class="button sign-in-button" href={'/sign-in?next=' + encodeURIComponent(signInReturnPath(route.pathname, route.search))}>{zh() ? '登入' : 'Sign in'}</CampaignLink>}>
+  return <Show when={signedIn()} fallback={<CampaignLink class="button sign-in-button" href={localizedPath('/sign-in', locale()) + '?next=' + encodeURIComponent(signInReturnPath(route.pathname, route.search))}>{zh() ? '登入' : 'Sign in'}</CampaignLink>}>
     <Show when={zh()} fallback={<CampaignLink href="/dashboard" class="button">Dashboard</CampaignLink>}>
       <details class="session-menu">
         <summary class="button sign-in-button">帳號</summary>

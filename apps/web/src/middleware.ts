@@ -1,6 +1,6 @@
 import { createMiddleware } from '@solidjs/start/middleware';
 import { isCanonicalHost, noindexTag } from './lib/indexing';
-import { signInAlias } from './lib/sign-in-flow';
+import { isSignInPath, signInAlias } from './lib/sign-in-flow';
 import { safeNext } from './lib/safe-next';
 import { legacyRedirect } from './lib/legacy-redirect';
 
@@ -19,11 +19,11 @@ export default createMiddleware({ onRequest({ request, response }) {
     if (legacy) return new Response(null, { status: 301, headers: { Location: legacy } });
   }
   const path = url.pathname.replace(/\/+$/, '');
-  if (['/sign-in', '/recover', '/pro/thanks'].includes(path)) response.headers.set('Referrer-Policy', 'strict-origin');
+  if (isSignInPath(path) || ['/recover', '/pro/thanks'].includes(path)) response.headers.set('Referrer-Policy', 'strict-origin');
   if ((request.method === 'GET' || request.method === 'HEAD') && signInAlias(path)) {
     const next = url.searchParams.get('next');
     const query = next ? '?' + new URLSearchParams({ next: safeNext(next) }) : '';
     return new Response(null, { status: 308, headers: { Location: '/sign-in' + query, 'Cache-Control': 'private, no-store' } });
   }
-  if (['/cli-auth', '/sign-in', '/pro/thanks'].includes(path)) response.headers.set('Cache-Control', 'private, no-store');
+  if (isSignInPath(path) || ['/cli-auth', '/pro/thanks'].includes(path)) response.headers.set('Cache-Control', 'private, no-store');
 } });
