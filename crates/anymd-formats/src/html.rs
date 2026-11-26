@@ -37,6 +37,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
             base,
             keep_relative_links: true,
             select_main: true,
+            keep_nav: false,
             images: None,
         },
     )?;
@@ -62,7 +63,7 @@ pub fn convert(bytes: &[u8], options: &Options) -> Result<Converted, ConvertErro
     })
 }
 
-type ImageRenderer<'a> = dyn Fn(&str, &str) -> Embed + 'a;
+pub(crate) type ImageRenderer<'a> = dyn Fn(&str, &str) -> Embed + 'a;
 
 /// Rendering knobs shared with the EPUB converter.
 pub(crate) struct RenderOptions<'a> {
@@ -72,6 +73,8 @@ pub(crate) struct RenderOptions<'a> {
     pub keep_relative_links: bool,
     /// Narrow to `<main>`/`<article>` when the page has one.
     pub select_main: bool,
+    /// Keep visible `<nav>` in an authored EPUB spine navigation page.
+    pub keep_nav: bool,
     /// Decides what an `<img>` becomes, given its `src` and alt text: an
     /// exported file, nothing, or the default alt-text form (EPUB).
     pub images: Option<&'a ImageRenderer<'a>>,

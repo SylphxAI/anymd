@@ -71,6 +71,12 @@ fn extracts_article_and_drops_chrome() {
 }
 
 #[test]
+fn web_html_still_drops_navigation_without_a_main_wrapper() {
+    let markdown = md("<body><nav epub:type='toc'><h2>Contents</h2><ol><li>Index</li></ol></nav><p>Body text.</p></body>");
+    assert_eq!(markdown, "Body text.");
+}
+
+#[test]
 fn tables_become_pipe_tables() {
     let md = md(
         "<table><caption>Scores</caption><thead><tr><th>Name</th><th>Score</th></tr></thead>\

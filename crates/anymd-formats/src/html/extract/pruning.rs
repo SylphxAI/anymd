@@ -10,7 +10,7 @@ use super::elements::element_name;
 const DROP_TAGS: &[&str] = &[
     "script", "style", "noscript", "template", "svg", "canvas", "iframe", "object", "embed",
     "button", "input", "select", "textarea", "option", "head", "meta", "link", "map", "audio",
-    "video", "source", "track", "dialog", "nav", "aside", "footer", "menu", "title",
+    "video", "source", "track", "dialog", "aside", "footer", "menu", "title",
 ];
 
 const NOISE_TOKENS: &[&str] = &[
@@ -100,6 +100,9 @@ pub(in crate::html) fn is_dropped(node: NodeRef<'_, Node>, ctx: &Ctx<'_>) -> boo
         if style.contains("display:none") || style.contains("visibility:hidden") {
             return true;
         }
+    }
+    if name == "nav" {
+        return !ctx.options.keep_nav;
     }
     if let Some(role) = el.attr("role") {
         if DROP_ROLES.contains(&role.to_ascii_lowercase().as_str()) {

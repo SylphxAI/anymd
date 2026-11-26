@@ -6,7 +6,7 @@ use std::io::Cursor;
 
 use zip::ZipArchive;
 
-use crate::html::{render_html, RenderOptions};
+use crate::html::{render_html, ImageRenderer, RenderOptions};
 use crate::images::{self, Embed, ImageStore};
 use crate::{ConvertError, Converted, Options, Section};
 
@@ -78,12 +78,15 @@ fn convert_with_limits(
     let opf_dir = opf_path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
 
     // Retain paths, not one inflated copy per spine reference.
-    let mut chapters: Vec<String> = Vec::new();
-    for idref in &package.spine {
-        let Some(item) = package.manifest.get(idref) else {
+    let mut chapters = Vec::new();
+    for entry in &package.spine {
+        let Some(item) = package.manifest.get(&entry.idref) else {
             continue;
         };
-        if item.properties.split_whitespace().any(|p| p == "nav")
+        let navigation = item.properties.split_whitespace().any(|p| p == "nav");
+        // A navigation document in the linear spine is also an authored page.
+        // The native outline reads manifest navigation independently.
+        if (navigation && !entry.linear)
             || !(item.media_type.contains("html") || item.media_type.is_empty())
         {
             continue;
@@ -92,7 +95,7 @@ fn convert_with_limits(
             opf_dir,
             &percent_decode(item.href.split('#').next().unwrap_or("")),
         );
-        chapters.push(path);
+        chapters.push(Chapter { path, navigation });
     }
 
     let store = options.images.as_ref();
@@ -105,7 +108,8 @@ fn convert_with_limits(
     archive.borrow().limits.check()?;
     let mut sections = Vec::new();
     let mut section_paths = Vec::new();
-    for path in &chapters {
+    for chapter in &chapters {
+        let path = &chapter.path;
         let result = read_entry(&mut archive.borrow_mut(), path);
         let xhtml = match result {
             Ok(xhtml) => xhtml,
@@ -122,12 +126,7 @@ fn convert_with_limits(
             None => Embed::Fallback,
         };
         let decide: &dyn Fn(&str, &str) -> Embed = &decide;
-        let render = RenderOptions {
-            base: None,
-            keep_relative_links: false,
-            select_main: false,
-            images: store.map(|_| decide),
-        };
+        let render = chapter.render_options(store.map(|_| decide));
         let markdown = render_html(&xhtml, &render)?;
         archive.borrow_mut().limits.output(&markdown)?;
         if !has_text(&markdown) && !markdown.contains("<!-- image:") {
@@ -169,6 +168,23 @@ fn convert_with_limits(
     })
 }
 
+struct Chapter {
+    path: String,
+    navigation: bool,
+}
+
+impl Chapter {
+    fn render_options<'a>(&self, images: Option<&'a ImageRenderer<'a>>) -> RenderOptions<'a> {
+        RenderOptions {
+            base: None,
+            keep_relative_links: false,
+            select_main: false,
+            keep_nav: self.navigation,
+            images,
+        }
+    }
+}
+
 /// The bytes of the image an `<img src>` in a chapter in `dir` names.
 fn chapter_bytes(archive: &SharedArchive<'_>, dir: &str, src: &str) -> Option<Vec<u8>> {
     if src.contains("://") || src.starts_with("data:") {
@@ -195,9 +211,12 @@ fn chapter_image(
 }
 
 /// Pictures that appear in three or more chapters: ornaments and publisher marks.
-fn repeated_pictures(archive: &SharedArchive<'_>, chapters: &[String]) -> HashSet<u64> {
+fn repeated_pictures(archive: &SharedArchive<'_>, chapters: &[Chapter]) -> HashSet<u64> {
     let mut counts: HashMap<u64, usize> = HashMap::new();
-    for path in chapters {
+    for chapter in chapters.iter().filter(|chapter| !chapter.navigation) {
+        // Including an authored TOC must not turn illustrations in existing
+        // chapters into repeated ornaments.
+        let path = &chapter.path;
         let result = read_entry(&mut archive.borrow_mut(), path);
         let xhtml = match result {
             Ok(xhtml) => xhtml,
@@ -217,12 +236,7 @@ fn repeated_pictures(archive: &SharedArchive<'_>, chapters: &[String]) -> HashSe
             Embed::Skip
         };
         let collect: &dyn Fn(&str, &str) -> Embed = &collect;
-        let render = RenderOptions {
-            base: None,
-            keep_relative_links: false,
-            select_main: false,
-            images: Some(collect),
-        };
+        let render = chapter.render_options(Some(collect));
         // Prepass reads share the same cumulative container accounting.
         if render_html(&xhtml, &render).is_err() {
             break;
