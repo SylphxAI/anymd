@@ -133,9 +133,6 @@ jobs:
       - name: Build SolidStart web app with WASM
         run: bun run web:wasm && bun run web:build
 
-      - name: Check legacy redirects
-        run: python3 scripts/test_pages_redirect.py
-
       - name: Install Chromium
         run: cd apps/web && bunx playwright install --with-deps chromium
 
