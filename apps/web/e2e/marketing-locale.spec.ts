@@ -143,6 +143,8 @@ for (const prefix of ['/zh-TW', '/zh-Hant']) {
         }
       } else {
         const pro = page.locator('.pro-plan');
+        // Full-width punctuation takes no space before the price.
+        await expect(pro.locator('.pro-claim')).toHaveText('在原始頁面核對 PDF 引文。US$29 一次付清。');
         await expect(pro.getByRole('link', { name: '登入以購買 Pro', exact: true })).toBeVisible();
         await expect(pro.getByRole('link', { name: 'Pro 條款' })).toHaveAttribute('href', '/legal/pro-terms');
         await expect(pro).toContainText('詳閱 Pro 條款以了解授權、交付與取消說明。');
