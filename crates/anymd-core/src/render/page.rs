@@ -55,34 +55,14 @@ pub(super) fn rasterize_page(
         *coefficient *= f64::from(scale);
     }
 
-    // hayro's scale-only helper truncates fractional dimensions. Keep the
-    // preflight's rounded-up viewport so allocation and PNG dimensions agree.
-    let mut context = RenderContext::new(viewport_width, viewport_height);
-    let transform = hayro::kurbo::Affine::new(pdf_to_pixel);
-    render_into(
+    let pixmap = rasterize_on_white(
         page,
-        &RenderCache::new(),
-        &InterpreterSettings::default(),
-        &RenderSettings::default(),
-        &mut context,
-        transform,
-    );
-    context.flush();
-    let mut pixmap = Pixmap::new(viewport_width, viewport_height);
-    context.render_with(
-        &mut pixmap,
-        &mut Resources::default(),
-        RasterizerSettings {
-            target_init: TargetInit::Clear(WHITE),
-            ..Default::default()
-        },
+        pdf_to_pixel,
+        (viewport_width, viewport_height),
+        &render_settings(),
     );
     let rgba = pixmap.data_as_u8_slice();
-    if rgba.as_chunks::<4>().0.iter().any(|pixel| pixel[3] != 255) {
-        return Err(RenderError::encode_failed(
-            "White-background render unexpectedly contained transparent pixels.",
-        ));
-    }
+    ensure_opaque(rgba)?;
     let png = encode_rgba_png_bounded(rgba, width, height, max_output_bytes)?;
 
     Ok(RenderedPage {
@@ -102,6 +82,59 @@ pub(super) fn rasterize_page(
         png,
         pdf_to_pixel,
     })
+}
+
+/// hayro's glyph cache paints text as anti-aliased bitmaps snapped to whole
+/// pixels vertically and quarter pixels horizontally. vello_cpu 0.3's u8
+/// compositor drops one alpha step where such a translucent bitmap pixel meets
+/// partial clip coverage, so opaque text crossing an anti-aliased clip edge
+/// left alpha-254 pixels on the white page. Filling the glyph outlines keeps
+/// text at its source position and the page opaque.
+pub(super) fn render_settings() -> RenderSettings {
+    RenderSettings {
+        glyph_caching: false,
+        ..RenderSettings::default()
+    }
+}
+
+pub(super) fn rasterize_on_white(
+    page: &Page<'_>,
+    pdf_to_pixel: [f64; 6],
+    (width, height): (u16, u16),
+    settings: &RenderSettings,
+) -> Pixmap {
+    // hayro's scale-only helper truncates fractional dimensions. Keep the
+    // preflight's rounded-up viewport so allocation and PNG dimensions agree.
+    let mut context = RenderContext::new(width, height);
+    render_into(
+        page,
+        &RenderCache::new(),
+        &InterpreterSettings::default(),
+        settings,
+        &mut context,
+        hayro::kurbo::Affine::new(pdf_to_pixel),
+    );
+    context.flush();
+    let mut pixmap = Pixmap::new(width, height);
+    context.render_with(
+        &mut pixmap,
+        &mut Resources::default(),
+        RasterizerSettings {
+            target_init: TargetInit::Clear(WHITE),
+            ..Default::default()
+        },
+    );
+    pixmap
+}
+
+/// Every pixel of a render composited onto opaque white must stay opaque.
+pub(super) fn ensure_opaque(rgba: &[u8]) -> Result<(), RenderError> {
+    if rgba.as_chunks::<4>().0.iter().any(|pixel| pixel[3] != 255) {
+        return Err(RenderError::encode_failed(
+            "White-background render unexpectedly contained transparent pixels.",
+        ));
+    }
+    Ok(())
 }
 
 fn rotation_degrees(rotation: Rotation) -> i32 {

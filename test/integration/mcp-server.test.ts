@@ -77,7 +77,10 @@ describe('MCP Server Integration', () => {
         PDF_READER_ENGINE_MODE: 'pure-rust',
         PDF_READER_MCP_TRANSPORT: '',
         MCP_TRANSPORT: '',
-        MCP_PDF_ALLOWED_DIRS: path.join(repoRoot, 'test/fixtures'),
+        MCP_PDF_ALLOWED_DIRS: [
+          path.join(repoRoot, 'test/fixtures'),
+          path.join(repoRoot, 'apps/web/public/samples'),
+        ].join(','),
       },
     });
 
@@ -271,6 +274,46 @@ describe('MCP Server Integration', () => {
     expect(payload.results?.[0]?.rendered_pages?.[0]?.byte_length).toBe(
       Buffer.from(imageData, 'base64').byteLength
     );
+  });
+
+  mcpIt('should render the public Studio sample on an opaque white page', async () => {
+    // Text in this Chrome-printed PDF crosses an anti-aliased page clip edge,
+    // which once left alpha-254 pixels and failed the white-page check.
+    const samplePath = path.join(repoRoot, 'apps/web/public/samples/sample.pdf');
+
+    sendMessage(
+      serverProc,
+      createRequest(16, 'tools/call', {
+        name: 'pdf_evidence',
+        arguments: {
+          operation: 'render_page',
+          sources: [{ path: samplePath, pages: [1, 2] }],
+          include_image: false,
+        },
+      })
+    );
+    const response = (await readResponse(serverProc, 10000)) as {
+      id: number;
+      result?: { content?: Array<{ type: string; text?: string }>; isError?: boolean };
+      error?: { message: string };
+    };
+
+    expect(response.id).toBe(16);
+    expect(response.error).toBeUndefined();
+    expect(response.result?.isError).not.toBe(true);
+    const payload = JSON.parse(response.result?.content?.[0]?.text ?? '{}') as {
+      results?: Array<{
+        success?: boolean;
+        rendered_pages?: Array<{ page?: number; width?: number; height?: number }>;
+      }>;
+    };
+    expect(payload.results?.[0]?.success).toBe(true);
+    expect(
+      payload.results?.[0]?.rendered_pages?.map(({ page, width, height }) => [page, width, height])
+    ).toEqual([
+      [1, 1224, 1584],
+      [2, 1224, 1584],
+    ]);
   });
 
   mcpIt('should crop bounded PNG evidence through pdf_evidence extract_regions', async () => {

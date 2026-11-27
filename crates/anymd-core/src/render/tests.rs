@@ -59,7 +59,6 @@ fn fixture_pdf(rotation: i32) -> Vec<u8> {
 }
 
 fn fixture_pdf_with_crop_box(rotation: i32, crop_box: Option<&str>) -> Vec<u8> {
-    let content = "0.1 0.2 0.8 rg\n10 10 100 60 re f\n";
     let media_box = if crop_box.is_some() {
         "0 0 200 200"
     } else {
@@ -68,12 +67,26 @@ fn fixture_pdf_with_crop_box(rotation: i32, crop_box: Option<&str>) -> Vec<u8> {
     let crop_box = crop_box
         .map(|value| format!(" /CropBox [{value}]"))
         .unwrap_or_default();
+    single_page_pdf(
+        &format!("/MediaBox [{media_box}]{crop_box} /Rotate {rotation} /Resources << >>"),
+        "0.1 0.2 0.8 rg\n10 10 100 60 re f\n",
+    )
+}
+
+/// One 24pt Helvetica "W" whose left edge straddles a clip edge at x=10.25,
+/// so cached glyph-bitmap pixels meet partial clip coverage.
+fn text_across_clip_edge_pdf() -> Vec<u8> {
+    single_page_pdf(
+        "/MediaBox [0 0 120 80] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>",
+        "q 10.25 0 100 80 re W n BT /F1 24 Tf 9.6 30 Td (W) Tj ET Q\n",
+    )
+}
+
+fn single_page_pdf(page_entries: &str, content: &str) -> Vec<u8> {
     let objects = [
         "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
-        format!(
-            "<< /Type /Page /Parent 2 0 R /MediaBox [{media_box}]{crop_box} /Rotate {rotation} /Resources << >> /Contents 4 0 R >>"
-        ),
+        format!("<< /Type /Page /Parent 2 0 R {page_entries} /Contents 4 0 R >>"),
         format!(
             "<< /Length {} >>\nstream\n{content}endstream",
             content.len()
@@ -122,6 +135,71 @@ fn fractional_page_dimensions_keep_the_planned_white_viewport() {
             .code,
         RenderErrorCode::LimitExceeded
     );
+}
+
+#[test]
+fn opaque_text_across_an_antialiased_clip_edge_renders_on_opaque_white() {
+    for scale in [1.0, 2.0, 3.0] {
+        let rendered = render_pdf_page(
+            text_across_clip_edge_pdf(),
+            1,
+            scale,
+            DEFAULT_MAX_RENDER_PIXELS,
+        )
+        .unwrap();
+        let image = image::load_from_memory(&rendered.png).unwrap().to_rgba8();
+        assert!(image.pixels().all(|pixel| pixel.0[3] == 255));
+        assert_eq!(image.get_pixel(0, 0).0, [255, 255, 255, 255]);
+        let clip_left = (10.25 * scale).floor() as u32;
+        let ink: Vec<_> = image
+            .enumerate_pixels()
+            .filter(|(_, _, pixel)| pixel.0[0] < 128)
+            .collect();
+        assert!(
+            !ink.is_empty(),
+            "the glyph must be painted at scale {scale}"
+        );
+        assert!(ink.iter().all(|(x, _, _)| *x >= clip_left));
+    }
+}
+
+#[test]
+fn white_page_check_still_rejects_the_glyph_cache_alpha_loss() {
+    // Negative control: hayro's default glyph cache reproduces the alpha-254
+    // pixels on this fixture, and the white-page check still fails closed.
+    let pdf = hayro::hayro_interpret::hayro_syntax::Pdf::new(text_across_clip_edge_pdf()).unwrap();
+    let page = &pdf.pages()[0];
+    let mut pdf_to_pixel = page.initial_transform(true).as_coeffs();
+    for coefficient in &mut pdf_to_pixel {
+        *coefficient *= 2.0;
+    }
+    let cached = super::page::rasterize_on_white(
+        page,
+        pdf_to_pixel,
+        (240, 160),
+        &hayro::RenderSettings::default(),
+    );
+    let translucent = cached
+        .data_as_u8_slice()
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .filter(|pixel| pixel[3] != 255)
+        .count();
+    assert!(
+        translucent > 0,
+        "fixture no longer reproduces the glyph-cache alpha loss"
+    );
+    let error = super::page::ensure_opaque(cached.data_as_u8_slice()).unwrap_err();
+    assert_eq!(error.code, RenderErrorCode::EncodeFailed);
+
+    let outlined = super::page::rasterize_on_white(
+        page,
+        pdf_to_pixel,
+        (240, 160),
+        &super::page::render_settings(),
+    );
+    super::page::ensure_opaque(outlined.data_as_u8_slice()).unwrap();
 }
 
 #[test]
