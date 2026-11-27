@@ -1,6 +1,6 @@
 import { guideAliasTarget } from './docs-source';
 
-// Clean up the top-level HTML aliases emitted by scripts/build-pages-redirect.py.
+// Clean up the top-level HTML aliases the old GitHub Pages site published.
 const oldHtmlPages = new Set([
   '/index.html', '/pricing.html', '/docs.html', '/playground.html',
   '/pro.html', '/recover.html', '/vs.html', '/vision.html',
