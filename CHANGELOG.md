@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.5.18
+
+### Patch Changes
+
+- Render PDF pages whose text crosses an anti-aliased clip edge, such as the Studio sample PDF, instead of failing with "White-background render unexpectedly contained transparent pixels". `render_page`, `extract_regions` and local OCR now draw glyph outlines, so text stays at its source position on an opaque white page.
+- Keep authored EPUB navigation in the reading order.
+- Point the alias and Python package READMEs at the canonical anymd docs pages.
+
 ## 8.5.17
 
 ### Patch Changes
