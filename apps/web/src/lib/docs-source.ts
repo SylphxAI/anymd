@@ -12,13 +12,21 @@ export function canonicalDocPath(slug: string): string {
   return slug.startsWith('guide/') ? '/docs/' + slug.slice('guide/'.length) : '/' + slug;
 }
 
+// The old docs site served guides at /guide/<slug>. Map only guides that exist;
+// any other /guide path keeps its 404.
+export function guideAliasTarget(pathname: string): string | null {
+  const slug = /^\/guide\/([a-z0-9-]+)\/?$/.exec(pathname)?.[1];
+  return slug && docs.has('guide/' + slug) ? canonicalDocPath('guide/' + slug) : null;
+}
+
 function localUrl(href: string, slug: string) {
   href = href.replace(/^https?:\/\/sylphxai\.github\.io\/anymd(?=\/|$)/, '').replace(/^\/anymd(?=\/|$)/, '');
   if (!href) return '/';
   if (href.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) return href;
   const url = new URL(href, canonicalOrigin + '/' + slug);
   if (url.origin !== canonicalOrigin) return href;
-  return url.pathname.replace(/\/(?:index\.md|index\.html)$/, '/').replace(/\.(?:md|html)$/, '') + url.search + url.hash;
+  const path = url.pathname.replace(/\/(?:index\.md|index\.html)$/, '/').replace(/\.(?:md|html)$/, '');
+  return (guideAliasTarget(path) ?? path) + url.search + url.hash;
 }
 
 type RenderContext = { slug: string; headings: Map<string, number> };
