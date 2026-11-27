@@ -55,12 +55,13 @@ pub(super) fn rasterize_page(
         *coefficient *= f64::from(scale);
     }
 
-    let pixmap = rasterize_on_white(
+    let mut pixmap = rasterize_on_white(
         page,
         pdf_to_pixel,
         (viewport_width, viewport_height),
         &render_settings(),
     );
+    flatten_onto_white(pixmap.data_as_u8_slice_mut());
     let rgba = pixmap.data_as_u8_slice();
     ensure_opaque(rgba)?;
     let png = encode_rgba_png_bounded(rgba, width, height, max_output_bytes)?;
@@ -125,6 +126,22 @@ pub(super) fn rasterize_on_white(
         },
     );
     pixmap
+}
+
+/// vello_cpu 0.3's u8 compositor loses up to one alpha step per translucent
+/// paint at partial coverage, so a page with semi-transparent fills comes back
+/// with alpha just below 255 along anti-aliased edges, and lower where such
+/// edges overlap. Composite the finished premultiplied page over opaque white:
+/// `c + 255 * (255 - a) / 255` is exact in integers, opaque pixels stay
+/// byte-identical, and any missing background comes out white.
+pub(super) fn flatten_onto_white(rgba: &mut [u8]) {
+    for pixel in rgba.as_chunks_mut::<4>().0 {
+        let background = 255 - pixel[3];
+        for channel in &mut pixel[..3] {
+            *channel = channel.saturating_add(background);
+        }
+        pixel[3] = 255;
+    }
 }
 
 /// Every pixel of a render composited onto opaque white must stay opaque.

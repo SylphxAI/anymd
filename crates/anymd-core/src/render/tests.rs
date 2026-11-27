@@ -202,6 +202,127 @@ fn white_page_check_still_rejects_the_glyph_cache_alpha_loss() {
     super::page::ensure_opaque(outlined.data_as_u8_slice()).unwrap();
 }
 
+const HALF_OPACITY_RESOURCES: &str =
+    "/MediaBox [0 0 120 80] /Resources << /ExtGState << /H << /ca 0.5 >> >> >>";
+
+fn translucent_triangles_pdf(count: usize) -> Vec<u8> {
+    let mut content = String::from("/H gs\n");
+    for index in 0..count {
+        let offset = index as f64 * 0.37;
+        let colour = [index % 3, (index + 1) % 3, (index + 2) % 3].map(|part| part as f64 / 2.0);
+        content.push_str(&format!(
+            "{} {} {} rg {:.2} {:.2} m {:.2} {:.2} l {:.2} {:.2} l h f\n",
+            colour[0],
+            colour[1],
+            colour[2],
+            10.3 + offset,
+            10.3 + offset,
+            100.7 - offset,
+            20.1 + offset,
+            40.9 + offset,
+            70.6 - offset,
+        ));
+    }
+    single_page_pdf(HALF_OPACITY_RESOURCES, &content)
+}
+
+fn decoded_rgba(rendered: &RenderedPage) -> image::RgbaImage {
+    image::load_from_memory(&rendered.png).unwrap().to_rgba8()
+}
+
+#[test]
+fn translucent_fills_render_on_opaque_white() {
+    for count in [1, 24] {
+        for scale in [1.0, 2.0, 3.0] {
+            let rendered = render_pdf_page(
+                translucent_triangles_pdf(count),
+                1,
+                scale,
+                DEFAULT_MAX_RENDER_PIXELS,
+            )
+            .unwrap();
+            let image = decoded_rgba(&rendered);
+            assert!(image.pixels().all(|pixel| pixel.0[3] == 255));
+            assert_eq!(image.get_pixel(0, 0).0, [255, 255, 255, 255]);
+        }
+    }
+}
+
+#[test]
+fn translucent_fill_stays_within_one_of_an_exact_composite_over_white() {
+    // 50% red over white, with every edge on a fractional pixel.
+    let (left, bottom, right, top) = (10.3, 20.2, 50.7, 40.9);
+    let pdf = single_page_pdf(
+        HALF_OPACITY_RESOURCES,
+        &format!(
+            "/H gs 1 0 0 rg {left} {bottom} {} {} re f\n",
+            right - left,
+            top - bottom
+        ),
+    );
+    let scale = 2.0;
+    let image =
+        decoded_rgba(&render_pdf_page(pdf, 1, scale as f32, DEFAULT_MAX_RENDER_PIXELS).unwrap());
+    let overlap = |a0: f64, a1: f64, b0: f64, b1: f64| (a1.min(b1) - a0.max(b0)).max(0.0);
+    for (x, y, pixel) in image.enumerate_pixels() {
+        let (x, y) = (f64::from(x), f64::from(y));
+        let coverage = overlap(x, x + 1.0, left * scale, right * scale)
+            * overlap(y, y + 1.0, (80.0 - top) * scale, (80.0 - bottom) * scale);
+        let paint = 0.5 * coverage;
+        let expected = [255.0, 255.0 * (1.0 - paint), 255.0 * (1.0 - paint)];
+        for (channel, want) in pixel.0[..3].iter().zip(expected) {
+            assert!(
+                (f64::from(*channel) - want).abs() <= 1.0,
+                "pixel ({x}, {y}) is {:?}, expected {expected:?}",
+                pixel.0
+            );
+        }
+        assert_eq!(pixel.0[3], 255);
+    }
+}
+
+#[test]
+fn flatten_matches_an_exact_composite_over_white() {
+    for alpha in 0..=255u8 {
+        for colour in 0..=alpha {
+            let mut pixel = [colour, colour / 2, 0, alpha];
+            super::page::flatten_onto_white(&mut pixel);
+            let over_white =
+                |value: u8| (f64::from(value) + 255.0 * (1.0 - f64::from(alpha) / 255.0)).round();
+            assert_eq!(
+                pixel.map(f64::from),
+                [
+                    over_white(colour),
+                    over_white(colour / 2),
+                    over_white(0),
+                    255.0
+                ]
+            );
+        }
+    }
+}
+
+#[test]
+fn white_page_check_rejects_translucent_fills_without_the_flatten() {
+    // Negative control: the raw renderer output still carries the alpha loss.
+    let pdf = hayro::hayro_interpret::hayro_syntax::Pdf::new(translucent_triangles_pdf(1)).unwrap();
+    let page = &pdf.pages()[0];
+    let mut pdf_to_pixel = page.initial_transform(true).as_coeffs();
+    for coefficient in &mut pdf_to_pixel {
+        *coefficient *= 2.0;
+    }
+    let mut pixmap = super::page::rasterize_on_white(
+        page,
+        pdf_to_pixel,
+        (240, 160),
+        &super::page::render_settings(),
+    );
+    let error = super::page::ensure_opaque(pixmap.data_as_u8_slice()).unwrap_err();
+    assert_eq!(error.code, RenderErrorCode::EncodeFailed);
+    super::page::flatten_onto_white(pixmap.data_as_u8_slice_mut());
+    super::page::ensure_opaque(pixmap.data_as_u8_slice()).unwrap();
+}
+
 #[test]
 fn renders_fixture_page_to_bounded_png_at_scale_two() {
     let bytes = fixture_pdf(0);
