@@ -75,3 +75,24 @@ for (const next of ['//example.invalid/pricing', '/pricing?currency=ZZZ', '/pric
     await expect(page.getByText('YOUR PURCHASE')).toHaveCount(0);
   });
 }
+
+for (const [locale, path, back] of [['en', '/sign-in', 'Back to pricing'], ['zh-TW', '/zh-TW/sign-in', '返回價格頁面']] as const) {
+  test(locale + ' Back to pricing keeps its arrow on the same line as the label at 1920px', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto(path + '?next=' + encodeURIComponent('/pricing?currency=EUR'));
+    const link = summary(page).getByRole('link', { name: back });
+    const boxes = await link.evaluate(node => {
+      const text = [...node.childNodes].find(child => child.nodeType === Node.TEXT_NODE && child.textContent?.trim());
+      const range = document.createRange();
+      range.selectNodeContents(text!);
+      const words = [...range.getClientRects()];
+      const icon = node.querySelector('svg')!.getBoundingClientRect();
+      return { icon: { top: icon.top, bottom: icon.bottom, right: icon.right }, lines: new Set(words.map(rect => Math.round(rect.top))).size, text: { top: words[0].top, bottom: words[0].bottom, left: words[0].left } };
+    });
+    // One line box: the label doesn't wrap, the icon sits vertically within it and precedes the text.
+    expect(boxes.lines).toBe(1);
+    expect(boxes.icon.top).toBeGreaterThanOrEqual(boxes.text.top - 2);
+    expect(boxes.icon.bottom).toBeLessThanOrEqual(boxes.text.bottom + 2);
+    expect(boxes.icon.right).toBeLessThanOrEqual(boxes.text.left);
+  });
+}
