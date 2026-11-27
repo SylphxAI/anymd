@@ -19,6 +19,6 @@ export function PurchaseSummary(props: { purchase: PurchaseResume; locale: Local
       ? '登入後會回到價格頁面。確認授權條款並按下「前往安全結帳」前，不會收取任何費用。'
       : 'After you sign in, you return to pricing. Nothing is charged until you confirm the licence terms and choose Continue to secure checkout.'}</p>
     <p>{zh() ? '付款後，授權會連結到這個帳號。在你的電腦執行 ' : 'After payment, your licence is linked to this account. Run '}<code>{cliLogin}</code>{zh() ? ' 即可啟用 Pro。' : ' on your machine to activate Pro.'}</p>
-    <A class="inline-link justify-self-start" href={props.purchase.query ? props.purchase.path + '?' + props.purchase.query : props.purchase.path}><ArrowLeft size={15} aria-hidden="true" /> {zh() ? '返回價格頁面' : 'Back to pricing'}</A>
+    <A class="inline-link inline-flex items-center gap-1 whitespace-nowrap justify-self-start" href={props.purchase.query ? props.purchase.path + '?' + props.purchase.query : props.purchase.path}><ArrowLeft size={15} aria-hidden="true" class="shrink-0" />{zh() ? '返回價格頁面' : 'Back to pricing'}</A>
   </section>;
 }
