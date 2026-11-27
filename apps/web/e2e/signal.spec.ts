@@ -59,6 +59,9 @@ for (const mode of ['unconsented US', 'denied', 'HTTP GPC', 'browser GPC'] as co
     await page.getByRole('button', {name:'Close without changing'}).click();
     await page.locator('.hero-actions').getByRole('link', {name:/Anymd Pro/}).click();
     await expect(page).toHaveURL(/\/pricing/);
+    // Measurement stays off while the Buy path keeps working.
+    await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
+    await expect(page).toHaveURL(/\/sign-in/);
     if (mode !== 'unconsented US') expect(await page.evaluate(key => localStorage.getItem(key + '.touch'), signalStorage)).toBeNull();
     expect(hits).toEqual([]);
   });
@@ -86,9 +89,18 @@ test('analytics-only promotes the current route once, keeps all nine UTMs and se
   await expect.poll(views).toEqual(['/', '/pricing']);
   await page.getByLabel('Billing currency').selectOption('EUR');
   await expect(page).toHaveURL(/currency=EUR/);
-  await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
+  const buy = page.getByRole('link', {name:'Sign in to buy Pro'});
+  // A script click is not a Buy activation; the real click below must be the only event.
+  await buy.evaluate(link => {
+    link.addEventListener('click', event => event.preventDefault(), {once:true});
+    (link as HTMLAnchorElement).click();
+  });
+  expect(events('pricing_buy_clicked')).toEqual([]);
+  await buy.click();
   await expect.poll(views).toEqual(['/', '/pricing', '/sign-in']);
   expect(events('pricing_view')).toHaveLength(1);
+  // Intent only: one event for the click, nothing for the render or the sign-in page.
+  await expect.poll(() => events('pricing_buy_clicked').map(event => event.properties)).toEqual([{...utms, path:'/pricing', entry_surface:'home_hero', currency:'EUR', locale:'en'}]);
   expect(bodies.every(body => body.consent === 'granted')).toBe(true);
   expect(JSON.stringify(bodies)).not.toMatch(/gclid|gbraid|wbraid|fbclid|DO_NOT_SEND|PRIVATE_FRAGMENT/);
 });
@@ -107,6 +119,8 @@ test('full grant sends nine UTMs and four click IDs, then binds the verified che
   await page.getByRole('checkbox').check();
   await page.getByRole('button', {name:'Continue to secure checkout'}).click();
   await expect(page).toHaveURL(/^https:\/\/checkout\.stripe\.com/);
+  // Signed-in Continue is the checkout stage, not a second Buy intent.
+  expect(events('pricing_buy_clicked')).toEqual([]);
   const expectedLocation = 'https://anymd.sylphx.com/pricing?' + new URLSearchParams(utms);
   expect(bindings.bodies).toEqual([{
     checkout_session_id:checkout, consent:{analytics_storage:'granted', ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted'},

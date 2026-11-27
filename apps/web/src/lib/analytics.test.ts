@@ -83,6 +83,19 @@ test('comparison copy and Pro CTA events accept only known labels and never send
   ]);
 }));
 
+test('Buy intent projection keeps only a commerce entry surface, currency and locale', () => {
+  for (const entry_surface of ['pricing', 'pro', 'cli_pdf', 'npm_citra', 'home_hero', 'seo_vs-docling'] as const) {
+    const params = {entry_surface, currency:'HKD', locale:'zh-TW'} as const;
+    const extra = {...params, email:'private@example.com', next:'/pricing?token=private', gclid:'private click id'};
+    assert.deepEqual(behavioralParameters('pricing_buy_clicked', extra as never), params);
+  }
+  const params = {entry_surface:'pricing', currency:'USD', locale:'en'};
+  for (const invalid of [{entry_surface:''}, {entry_surface:'checkout'}, {entry_surface:'https://anymd.sylphx.com/pricing'},
+    {entry_surface:'PRICING'}, {currency:'XXX'}, {currency:'usd'}, {currency:undefined}, {locale:'fr'}, {locale:undefined}]) {
+    assert.equal(behavioralParameters(...(['pricing_buy_clicked', {...params, ...invalid}] as BehavioralEvent)), undefined);
+  }
+});
+
 test('Pro CTA projection accepts product-owned labels and rejects non-CTA or arbitrary values', () => {
   for (const entry_surface of ['seo_vs-hub', 'seo_verifiable-video-and-cite-check-ai-agents', 'task_check_pdf_citation', 'studio_quote_match'] as const) {
     assert.deepEqual(behavioralParameters('pro_cta_clicked', {entry_surface}), {entry_surface});
