@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { carryCampaign } from './campaign';
 import { explicitAnalytics } from './consent';
-import { checkoutParameters, checkoutSurface } from './funnel';
+import { checkoutParameters, checkoutSurface, proPricingTarget } from './funnel';
+import { signupSignal } from './signup';
 
 test('conversion requires an explicit choice and GPC always wins', () => {
   const headers = new Headers();
@@ -49,4 +50,24 @@ test('checkout uses the selected catalogue price and currency scale', () => {
   });
   assert.equal(checkoutParameters('JPY','pricing')?.value, 4639);
   assert.equal(checkoutParameters('toString','pricing'), undefined);
+});
+
+test('the /pro alias keeps checkout and sign-up attribution on /pricing', () => {
+  const searches = ['', '?currency=HKD&utm_source=x', '?entry_surface=cli_pdf', '?utm_source=docs+nav&entry_surface=npm_citra&gclid=Ab%2bc',
+    '?entry_surface=pro', '?entry_surface=pricing', '?entry_surface=private@example.invalid', '?entry_surface=cli_unrecognized&currency=EUR',
+    '?entry_surface=seo_vs-marker&entry_surface=npm_citra', '?entry_surface=pro&entry_surface=pro', '?entry_surface=', '?entry_surface',
+    '?entry%5Fsurface=npm_citra&entry_surface=cli_pdf', '?tag=one&tag=two&next=https%3A%2F%2Fexample.invalid', '?a=1&&b=2'];
+  for (const search of searches) {
+    const target = proPricingTarget(search);
+    const url = new URL(target, 'https://anymd.sylphx.com');
+    assert.equal(url.pathname, '/pricing', search);
+    assert.ok(url.searchParams.getAll('entry_surface').length === 1, search);
+    assert.equal(checkoutSurface(url.pathname, url.search), checkoutSurface('/pro', search), search);
+    assert.deepEqual(signupSignal(true, 'analytics', undefined, 'google', target), signupSignal(true, 'analytics', undefined, 'google', '/pro' + search), search);
+  }
+  assert.equal(proPricingTarget(''), '/pricing?entry_surface=pro');
+  assert.equal(proPricingTarget('?currency=HKD&utm_source=x'), '/pricing?currency=HKD&utm_source=x&entry_surface=pro');
+  assert.equal(proPricingTarget('?entry_surface=cli_pdf&currency=EUR'), '/pricing?entry_surface=cli_pdf&currency=EUR');
+  assert.equal(proPricingTarget('?entry_surface=private@example.invalid&utm_source=x'), '/pricing?utm_source=x&entry_surface=pro');
+  assert.equal(proPricingTarget('?entry_surface=seo_vs-marker&gclid=Ab%2bc&entry_surface=npm_citra'), '/pricing?gclid=Ab%2bc&entry_surface=pro');
 });

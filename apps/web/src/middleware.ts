@@ -1,4 +1,5 @@
 import { createMiddleware } from '@solidjs/start/middleware';
+import { proPricingTarget } from './lib/funnel';
 import { isCanonicalHost, noindexTag } from './lib/indexing';
 import { isSignInPath, signInAlias } from './lib/sign-in-flow';
 import { safeNext } from './lib/safe-next';
@@ -15,6 +16,7 @@ export default createMiddleware({ onRequest({ request, response }) {
   // Keep auth and payment proof URLs out of outbound referrers.
   const url = new URL(request.url);
   if (request.method === 'GET' || request.method === 'HEAD') {
+    if (/^\/pro\/?$/.test(url.pathname)) return new Response(null, { status: 308, headers: { Location: proPricingTarget(url.search) } });
     const legacy = legacyRedirect(url);
     if (legacy === false) return new Response(null, { status: 400 });
     if (legacy) return new Response(null, { status: 301, headers: { Location: legacy } });

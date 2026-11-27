@@ -46,7 +46,7 @@ test('ambiguous legacy paths are rejected without a Location', async ({ request 
 });
 
 test('canonical pages, API and unrelated paths are not rewritten', async ({ request }) => {
-  for (const path of ['/', '/pro', '/pricing', '/docs', '/studio', '/vs', '/api/health']) {
+  for (const path of ['/', '/pricing', '/pro/thanks', '/docs', '/studio', '/vs', '/api/health']) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status(), path).toBe(200);
     expect(response.headers().location, path).toBeUndefined();

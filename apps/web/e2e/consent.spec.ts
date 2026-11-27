@@ -465,10 +465,11 @@ test('email OTP signup uses the redeemed ticket and drops private entry surfaces
   await page.getByLabel('Email address').fill('test@example.invalid');
   await page.getByRole('button', {name:'Continue', exact:true}).click();
   await page.getByLabel('6-digit code').fill('123456');
-  await expect(page).toHaveURL('/pro?entry_surface=private@example.invalid');
+  // /pro is a 308 alias of /pricing that replaces the unknown surface with pro.
+  await expect(page).toHaveURL('/pricing?entry_surface=pro');
   const origin = new URL(page.url()).origin;
   await expect.poll(() => events(page, 'sign_up')).toEqual([['event', 'sign_up', {
-    method:'email_otp', entry_surface:'pro', page_location:origin + '/pro', page_referrer:'', page_title:'Anymd', send_to:'G-R4TD2Z8RR7',
+    method:'email_otp', entry_surface:'pro', page_location:origin + '/pricing', page_referrer:'', page_title:'Anymd', send_to:'G-R4TD2Z8RR7',
   }]]);
   await page.reload();
   await expect.poll(async () => (await events(page, 'page_view')).length).toBe(1);
