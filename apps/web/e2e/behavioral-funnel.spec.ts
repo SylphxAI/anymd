@@ -161,19 +161,35 @@ test('task guide copies exact code without page overflow and measures only after
 
   const article = page.locator('article');
   const code = article.locator('pre > code');
-  await expect(code.first()).toContainText('python3 make-citation-pdf.py');
+  // Setup, find, box, expected box, crop, Studio sample, Pro check: in page order.
+  const blocks = [
+    'python3 make-citation-pdf.py',
+    'node mcp-call.mjs search',
+    '"operation":"structure","sources":[{"path":"citation.pdf"',
+    '1 {"bottom":700,"left":50,"right":152.696,"top":712}',
+    '"operation":"extract_regions"',
+    'sha256',
+    '"operation":"cite_check"',
+  ];
   const buttons = article.getByRole('button', {name:'Copy code', exact:true});
-  await expect(code).toHaveCount(3);
-  await expect(buttons).toHaveCount(3);
+  await expect(code).toHaveCount(blocks.length);
+  await expect(buttons).toHaveCount(blocks.length);
+  for (const [index, text] of blocks.entries()) await expect(code.nth(index)).toContainText(text);
   for (const button of await buttons.all()) await expect(button).toBeVisible();
   // The Playwright projects exercise both 390px and 1440px widths.
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 
   const optIn = page.getByRole('button', {name:'Analytics only', exact:true});
   await expect(optIn).toBeEnabled();
-  const first = article.locator('.doc-code').first();
-  await first.getByRole('button', {name:'Copy code', exact:true}).click();
-  await expect(first.getByRole('button', {name:'Copied', exact:true})).toBeVisible();
+  // Every block but the last copies exactly before opt-in; the last is copied after it.
+  for (const index of blocks.keys()) {
+    if (index === blocks.length - 1) break;
+    const block = article.locator('.doc-code').nth(index);
+    await block.getByRole('button', {name:'Copy code', exact:true}).click();
+    await expect(block.getByRole('button', {name:'Copied', exact:true})).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await code.nth(index).textContent());
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
   expect(await readQueue(page)).toEqual([]);
   expect(hits).toEqual([]);
 
