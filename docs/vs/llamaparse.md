@@ -98,7 +98,7 @@ Converting a file is free. When an agent quotes a PDF or a video, [anymd Pro](/p
 
 **One-time US$29 purchase. No subscription.** Sign in, pay securely, then run `anymd login` with the same account to activate Pro on your machine. After activation, Pro works offline.
 
-**[See Anymd Pro](/pricing?entry_surface=seo_vs-llamaparse)**
+**[See the recorded PDF quote check](/studio?sample=pdf&entry_surface=seo_vs-llamaparse#studio-cite-heading)** &nbsp;&nbsp; **[See Anymd Pro](/pricing?entry_surface=seo_vs-llamaparse)**
 
 ## FAQ
 
