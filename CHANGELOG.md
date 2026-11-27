@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.5.19
+
+### Patch Changes
+
+- Render PDF pages with semi-transparent fills instead of failing with "White-background render unexpectedly contained transparent pixels". `render_page`, `extract_regions` and local OCR now composite the finished page over opaque white, so translucent shapes keep their colour and pages that were already opaque render byte-identically.
+
 ## 8.5.18
 
 ### Patch Changes
