@@ -339,7 +339,6 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
 .pro-proof { border-top:1px solid var(--line); padding-top:16px; margin-top:6px; }
 .pro-proof h3 { display:flex; align-items:center; gap:8px; font-size:20px; margin-bottom:12px; }
 .pro-proof h3 svg { color:var(--accent); }
-.proof-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .proof-tile { min-width:0; margin:0; padding:10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px; font-size:13px; }
 .proof-tile figcaption { display:grid; gap:2px; margin-bottom:8px; }
 .proof-tile strong { color:var(--ink); font-size:15px; }
@@ -351,6 +350,32 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
 .proof-detail { color:var(--muted); margin-block:3px 5px; }
 .proof-hash summary { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
 .proof-hash code { display:block; overflow-wrap:anywhere; font-size:11px; }
+/* The claim, its recorded PDF crop and the Free/Pro difference sit beside Buy. */
+.pro-buy { display:grid; gap:10px; }
+.pro-claim { margin:0; color:var(--ink); font-size:17px; font-weight:700; line-height:1.3; letter-spacing:-.02em; }
+.pro-claim span { white-space:nowrap; }
+.pdf-evidence { display:grid; gap:4px; margin:0; }
+.pdf-evidence-crop { padding:4px 6px; background:#fff; border:1px solid var(--line); border-radius:6px; }
+.pdf-evidence-crop > svg { display:block; width:100%; height:auto; }
+.pdf-evidence-crop rect { fill:#d6f69155; stroke:#24573d; stroke-width:1.6; vector-effect:non-scaling-stroke; }
+.pdf-evidence figcaption { display:flex; flex-wrap:wrap; align-items:center; gap:0 10px; color:var(--muted); font-size:13px; line-height:1.4; }
+.pdf-evidence-verdict { display:inline-flex; align-items:center; gap:5px; color:var(--accent); font-weight:700; }
+.plan-diff { display:grid; gap:2px; margin:0; font-size:13.5px; line-height:1.35; }
+.plan-diff div { display:grid; grid-template-columns:4.6em minmax(0,1fr); gap:8px; }
+.plan-diff dt { color:var(--accent); font:700 .72rem/1.9 var(--mono); text-transform:uppercase; }
+.plan-diff dd { margin:0; }
+.pdf-evidence-more { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 16px; font-size:13px; }
+.proof-tile-row { display:grid; gap:4px 16px; }
+@media(min-width:1024px) {
+  .pro-buy { grid-template-columns:minmax(0,1.08fr) minmax(0,1fr); grid-template-areas:"claim claim" "proof buy" "diff buy" "more buy"; grid-template-rows:auto auto auto 1fr; gap:10px 28px; }
+  .pro-claim { grid-area:claim; font-size:21px; }
+  .pdf-evidence { grid-area:proof; }
+  .plan-diff { grid-area:diff; }
+  .pdf-evidence-more { grid-area:more; align-self:start; }
+  .pro-buy > .checkout-stack { grid-area:buy; }
+  .proof-tile-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .proof-tile-row > .proof-image { grid-row:1 / span 4; margin:0; }
+}
 @media(max-width:690px) {
   .pricing-page .columns { grid-template-columns:minmax(0,1fr); }
   .pricing-page { padding-top:24px; }
@@ -358,7 +383,6 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
   .pricing-page .page-heading h1 { font-size:clamp(32px, 9vw, 42px); margin-block:4px 8px; }
   .pricing-page .page-heading p { font-size:16px; line-height:1.35; }
 }
-@media(max-width:350px) { .proof-grid { grid-template-columns:1fr; } }
 .language-switch { color:var(--muted); display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; font-size:.85rem; font-weight:650; min-height:44px; }
 .language-switch:hover { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
 .marketing-shell:lang(zh-TW) :is(h1,h2,h3) { letter-spacing:-.025em; line-height:1.15; }
