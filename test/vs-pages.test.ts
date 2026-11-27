@@ -21,7 +21,9 @@ test('published comparison corpus and index retain commercial and benchmark refe
     const copy = read(`../docs/vs/${tool}.md`);
     expect(copy).toContain(`/pricing?entry_surface=seo_vs-${tool}`);
     if (['docling', 'llamaparse', 'markitdown'].includes(tool)) {
-      expect(copy).toContain(`**[See the recorded PDF quote check](/studio?sample=pdf&entry_surface=seo_vs-${tool}#studio-cite-heading)**`);
+      expect(copy).toContain(
+        `**[See the recorded PDF quote check](/studio?sample=pdf&entry_surface=seo_vs-${tool}#studio-cite-heading)**`
+      );
     }
     expect(copy).toContain('US$29');
     expect(copy).toMatch(/^description: ".{120,160}"$/m);
