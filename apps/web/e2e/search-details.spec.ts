@@ -17,12 +17,32 @@ for (const route of ['/', '/pricing', comparison]) {
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
     const graph = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent() ?? '')['@graph'];
     const [software, faq] = graph;
-    expect(software).toMatchObject({ '@type': 'SoftwareApplication', name: 'Anymd' });
+    expect(software).toMatchObject({
+      '@type': 'SoftwareApplication', name: 'Anymd', alternateName: 'Anymd by Sylphx',
+      publisher: { '@type': 'Organization', name: 'Sylphx Limited', url: 'https://sylphx.com' },
+    });
+    expect(software.description).toMatch(/PDF and Office .*CLI and MCP/);
     expect(software.offers.map((offer: {price: number}) => offer.price)).toEqual(route === comparison ? [0] : [0, 29]);
     expect(software.offers.every((offer: {'@type': string; priceCurrency: string}) => offer['@type'] === 'Offer' && offer.priceCurrency === 'USD')).toBe(true);
     expect(faq).toMatchObject({ '@type': 'FAQPage' });
     const entries = faq.mainEntity.map(({ name, acceptedAnswer }: { name: string; acceptedAnswer: { text: string } }) => [name, acceptedAnswer.text]).flat();
     await expect(page.locator('.faq-list').locator('dt, dd')).toHaveText(entries);
+  });
+}
+
+for (const [route, title, description] of [
+  ['/', 'Anymd by Sylphx — local PDF & Office to Markdown CLI and MCP', /^Anymd by Sylphx converts PDF, Office .* on your machine\. Free, MIT-licensed CLI and MCP server/],
+  ['/zh-TW', 'Anymd by Sylphx — 在本機把 PDF、Office 轉成 Markdown 的 CLI 與 MCP', /^Anymd 由 Sylphx 開發，在你的電腦上把 PDF、Office 文件.*CLI 與 MCP 伺服器/],
+] as const) {
+  test(route + ' names Anymd by Sylphx and the local PDF/Office CLI and MCP in its snippet', async ({ page }) => {
+    await page.goto(route);
+    await expect(page).toHaveTitle(title);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', title);
+    for (const selector of ['meta[name="description"]', 'meta[property="og:description"]']) {
+      await expect(page.locator(selector)).toHaveAttribute('content', description);
+    }
+    expect((await page.locator('meta[name="description"]').getAttribute('content'))!.length).toBeLessThanOrEqual(160);
+    await expect(page.locator('link[rel="alternate"][hreflang="zh-TW"]')).toHaveAttribute('href', 'https://anymd.sylphx.com/zh-TW');
   });
 }
 

@@ -14,14 +14,18 @@ export const freeOffer = (currency: Currency = defaultCurrency) => offer('Free O
 export const proOffer = (currency: Currency = defaultCurrency, path = '/pricing') => offer('Anymd Pro', proAmount(currency),
   currency === defaultCurrency ? path : path + '?currency=' + currency, currency);
 
+const organization = { '@type': 'Organization', name: 'Sylphx Limited', url: 'https://sylphx.com' };
+
 export function softwareSchema(...offers: ReturnType<typeof offer>[]) {
   return {
     '@type': 'SoftwareApplication',
     name: 'Anymd',
+    alternateName: 'Anymd by Sylphx',
     url: canonicalOrigin + '/',
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'macOS, Linux, Windows',
-    description: 'Convert documents to Markdown locally with the Anymd CLI and MCP server.',
+    description: 'Convert PDF and Office documents to Markdown locally with the Anymd CLI and MCP server.',
+    publisher: organization,
     offers,
   };
 }
@@ -45,7 +49,6 @@ export function collectionPageSchema(path: string, name: string, entries: readon
 
 export function techArticleSchema(path: string, headline: string, description?: string) {
   const url = canonicalOrigin + path;
-  const organization = { '@type': 'Organization', name: 'Sylphx Limited', url: 'https://sylphx.com' };
   return {
     '@type': 'TechArticle',
     headline,
