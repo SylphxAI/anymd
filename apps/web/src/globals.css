@@ -151,6 +151,7 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 
 .auth-shell { max-width: 45rem; }
 .auth-panel { max-width: 31rem; }
+.purchase-resume { max-width: 31rem; margin-bottom: 16px; }
 .auth-rule { display: flex; gap: .8rem; align-items: center; color: var(--muted); font-size: .85rem; }
 .auth-rule::before, .auth-rule::after { content: ''; height: 1px; background: var(--line); flex: 1; }
 .field-label { display: grid; gap: .375rem; font-size: .875rem; font-weight: 600; }
