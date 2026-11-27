@@ -239,7 +239,10 @@ h1,h2,h3 { font-weight:750; letter-spacing:-.058em; line-height:1.04; margin:0; 
 .cite-preview-evidence { display:grid; grid-template-columns:minmax(0, 1.15fr) minmax(0, 1fr); align-items:center; gap:14px 20px; padding:14px; border-top:1px solid var(--line); }
 .cite-preview-figure { min-width:0; padding:8px; border:1px solid var(--line); border-radius:6px; background:var(--soft); }
 .cite-preview-figure figcaption { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; padding:2px 3px 7px; color:var(--muted); font: .72rem var(--mono); }
-.cite-preview-figure svg { display:block; width:100%; height:auto; background:#fff; border-radius:3px; }
+.pdf-quote-crop { position:relative; width:100%; }
+.pdf-quote-crop img { display:block; width:100%; height:auto; }
+.pdf-quote-crop svg { position:absolute; inset:0; width:100%; height:100%; }
+.cite-preview-figure .pdf-quote-crop { background:#fff; border-radius:3px; overflow:hidden; }
 .cite-preview-figure rect { fill:#cee16e; fill-opacity:.18; stroke:#3a690d; stroke-width:1.5; vector-effect:non-scaling-stroke; }
 .cite-preview-badge { display:inline-flex; align-items:center; gap:6px; color:var(--accent); font:700 .75rem var(--mono); }
 .cite-preview-match blockquote { font-size:clamp(1.05rem, 2vw, 1.45rem); font-weight:700; margin:4px 0; }
@@ -342,7 +345,6 @@ html { scroll-padding-bottom:var(--cookie-space, 0px); }
 .proof-tile strong { color:var(--ink); font-size:15px; }
 .proof-image { display:grid; place-items:center; overflow:hidden; aspect-ratio:1.85; margin-bottom:7px; border-radius:4px; border:1px solid var(--line); }
 .proof-pdf { background:#f5f2e7; }
-.proof-pdf svg { width:100%; }
 .proof-pdf rect { fill:#d6f69155; stroke:#24573d; stroke-width:1.6; vector-effect:non-scaling-stroke; }
 .proof-video { background:#1b211d; }
 .proof-video img { width:100%; height:100%; object-fit:contain; }

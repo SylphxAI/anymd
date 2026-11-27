@@ -4,8 +4,8 @@ import { signalChoiceKey } from '../src/lib/consent';
 const fragment = '#studio-cite-heading';
 const campaign = 'gclid=fixture&utm_source=pricing&utm_campaign=PDF+Proof';
 const locales = [
-  { prefix: '', link: 'Inspect citation proof', reject: 'Reject optional', verified: 'Exact quote verified' },
-  { prefix: '/zh-TW', link: '查看引文座標', reject: '拒絕選用項目', verified: '引文已逐字核對' },
+  { prefix: '', link: 'Inspect citation proof', reject: 'Reject optional', verified: 'Exact quote verified', disclosure: 'See the verified quote in sample.pdf', crop: 'Page 1 crop highlighting “Quarterly Field Report”' },
+  { prefix: '/zh-TW', link: '查看引文座標', reject: '拒絕選用項目', verified: '引文已逐字核對', disclosure: '查看 sample.pdf 中已核對的引文', crop: '第 1 頁局部畫面，方框標示「Quarterly Field Report」' },
 ];
 const google = /(?:^|\.)(?:googletagmanager|google-analytics|googleadservices|google|doubleclick)\.(?:com|net)$/;
 
@@ -14,6 +14,7 @@ async function proofIsReady(page: Page, verified: string) {
   await expect(proof).toHaveJSProperty('open', true);
   await expect(proof.getByText(verified, { exact: true })).toBeVisible();
   await expect(proof.locator('svg rect')).toBeVisible();
+  await expect(proof.locator('.pdf-quote-crop img')).toHaveJSProperty('naturalWidth', 790);
   await expect(page.locator('.studio-label')).toContainText('sample.pdf');
   await expect(page.locator('.studio-code')).toContainText('Quarterly Field Report', { timeout: 15_000 });
 }
@@ -25,7 +26,32 @@ async function expectCleanLayout(page: Page) {
   expect(viewport).toBe(page.viewportSize()?.width);
 }
 
-for (const { prefix, link, reject, verified } of locales) {
+for (const { prefix, link, reject, verified, disclosure, crop } of locales) {
+  test((prefix || 'EN') + ' loads the PDF crop only when the Studio proof is opened', async ({ page, context }) => {
+    await context.setExtraHTTPHeaders({ 'Sec-GPC': '1' });
+    const cropRequests: string[] = [];
+    page.on('request', request => {
+      if (/\/sample-cite-crop-[^/]+\.png$/.test(new URL(request.url()).pathname)) cropRequests.push(request.url());
+    });
+
+    // An eager raster starts before the document's load event, even in closed details.
+    await page.goto(prefix + '/studio', { waitUntil: 'load' });
+    const proof = page.locator('.cite-preview-details');
+    const summary = proof.locator(':scope > summary');
+    await expect(summary).toHaveText(disclosure);
+    await expect(proof).toHaveJSProperty('open', false);
+    expect(cropRequests).toEqual([]);
+
+    await summary.press('Enter');
+    await expect(summary).toBeFocused();
+    await expect(proof).toHaveJSProperty('open', true);
+    const image = proof.getByRole('img', { name: crop, exact: true });
+    await expect(image.locator('svg rect')).toBeVisible();
+    await expect(image.locator('img')).toHaveJSProperty('naturalWidth', 790);
+    expect(cropRequests).toHaveLength(1);
+    await expectCleanLayout(page);
+  });
+
   test((prefix || 'EN') + ' pricing opens converted PDF and crop proof before consent', async ({ page, context, hasTouch }) => {
     const unexpected: string[] = [];
     context.on('request', request => {

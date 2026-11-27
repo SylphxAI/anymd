@@ -45,7 +45,7 @@ export default function CitePreview(props: { locale: Locale }) {
         <div class="cite-preview-evidence">
           <figure class="cite-preview-figure">
             <figcaption><span>sample.pdf · {t().page(proof.page)}</span><span>{t().crop}</span></figcaption>
-            <PdfQuoteCrop label={t().image(proof.page, proof.quote)} />
+            <PdfQuoteCrop lazy label={t().image(proof.page, proof.quote)} />
           </figure>
           <div class="cite-preview-match">
             <span class="cite-preview-badge"><ShieldCheck size={16} aria-hidden="true" /> {t().verified}</span>
