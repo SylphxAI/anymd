@@ -3,6 +3,7 @@ import { isCanonicalHost, noindexTag } from './lib/indexing';
 import { isSignInPath, signInAlias } from './lib/sign-in-flow';
 import { safeNext } from './lib/safe-next';
 import { legacyRedirect } from './lib/legacy-redirect';
+import { guideAliasTarget } from './lib/docs-source';
 
 export default createMiddleware({ onRequest({ request, response }) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -17,6 +18,8 @@ export default createMiddleware({ onRequest({ request, response }) {
     const legacy = legacyRedirect(url);
     if (legacy === false) return new Response(null, { status: 400 });
     if (legacy) return new Response(null, { status: 301, headers: { Location: legacy } });
+    const guide = guideAliasTarget(url.pathname);
+    if (guide) return new Response(null, { status: 308, headers: { Location: guide + url.search } });
   }
   const path = url.pathname.replace(/\/+$/, '');
   if (isSignInPath(path) || ['/recover', '/pro/thanks'].includes(path)) response.headers.set('Referrer-Policy', 'strict-origin');

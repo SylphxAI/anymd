@@ -26,6 +26,14 @@ test('Google sign-in returns to billing with the existing account', async ({ pag
   expect((await (await page.request.get('/api/auth/session')).json()).user).toMatchObject({email:'test@example.invalid'});
 });
 
+test('sign-in resuming a legacy guide lands on its canonical doc', async ({ page }) => {
+  test.skip(fixtureOnly, 'Requires the local Auth fixture');
+  await page.goto('/sign-in?next=' + encodeURIComponent('/guide/cli?utm_source=docs#install'));
+  await page.getByRole('link', {name:'Continue with Google'}).click();
+  await expect(page).toHaveURL('/docs/cli?utm_source=docs#install');
+  await expect(page.getByRole('heading', {level:1})).toBeVisible();
+});
+
 test('legacy aliases redirect permanently, preserving only the safe return path', async ({ request }) => {
   const next = '/cli-auth?client_id=desktop&state=example#details';
   for (const alias of ['login', 'signup', 'sign-up', 'register', 'forgot-password']) {
