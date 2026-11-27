@@ -5,12 +5,12 @@ import { purchaseResume } from './purchase-resume';
 
 test('describes the pricing return with the catalogue price', () => {
   assert.deepEqual(purchaseResume('/pricing?entry_surface=home_hero&currency=HKD', 'en'), {
-    currency: 'HKD', price: 'HK$229', pricing: '/pricing?entry_surface=home_hero&currency=HKD',
+    currency: 'HKD', price: 'HK$229', path: '/pricing', query: 'entry_surface=home_hero&currency=HKD',
   });
   assert.deepEqual(purchaseResume('/zh-TW/pricing?entry_surface=pricing&currency=TWD', 'zh-TW'), {
-    currency: 'TWD', price: 'NT$959', pricing: '/zh-TW/pricing?entry_surface=pricing&currency=TWD',
+    currency: 'TWD', price: 'NT$959', path: '/zh-TW/pricing', query: 'entry_surface=pricing&currency=TWD',
   });
-  assert.deepEqual(purchaseResume('/pricing', 'en'), { currency: 'USD', price: '$29', pricing: '/pricing' });
+  assert.deepEqual(purchaseResume('/pricing', 'en'), { currency: 'USD', price: '$29', path: '/pricing', query: '' });
   assert.equal(purchaseResume('/pricing?currency=JPY', 'en')?.price, '¥4,639');
 });
 
