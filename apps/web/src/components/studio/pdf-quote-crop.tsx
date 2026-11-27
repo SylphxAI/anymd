@@ -10,9 +10,11 @@ const cropWidth = 395;
 const cropHeight = 91;
 const { left, right, top, bottom } = proof.bbox;
 
-export function PdfQuoteCrop(props: { label: string }) {
-  return <svg viewBox={`0 0 ${cropWidth} ${cropHeight}`} role="img" aria-label={props.label}>
-      <image href={crop} width={cropWidth} height={cropHeight} />
+export function PdfQuoteCrop(props: { label: string; lazy?: boolean }) {
+  return <div class="pdf-quote-crop" role="img" aria-label={props.label}>
+    <img src={crop} width={cropWidth * 2} height={cropHeight * 2} loading={props.lazy ? 'lazy' : undefined} alt="" />
+    <svg viewBox={`0 0 ${cropWidth} ${cropHeight}`} aria-hidden="true">
       <rect x={left - cropLeft} y={pageHeight - top - cropTop} width={right - left} height={top - bottom} rx="1" />
-    </svg>;
+    </svg>
+  </div>;
 }
