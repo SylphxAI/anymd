@@ -108,6 +108,10 @@ test('header and checkout sign-in share the safe pricing return before consent w
     ['/zh-TW/pricing?entry_surface=home_hero&currency=HKD', '/zh-TW/pricing?entry_surface=home_hero&currency=HKD', '登入', '登入以購買 Pro'],
     ['/pricing?entry_surface=injected_bad&currency=ZZZ&email=private', '/pricing', 'Sign in', 'Sign in to buy Pro'],
     ['/zh-TW/pricing?entry_surface=home_hero&entry_surface=home_hero&currency=HKD&currency=USD', '/zh-TW/pricing?entry_surface=pricing', '登入', '登入以購買 Pro'],
+    // The /pro alias redirects to /pricing and must return to the same pro attribution as before.
+    ['/pro?currency=HKD', '/pricing?entry_surface=pro&currency=HKD', 'Sign in', 'Sign in to buy Pro'],
+    ['/pro?entry_surface=injected_bad&entry_surface=npm_citra&currency=HKD', '/pricing?entry_surface=pro&currency=HKD', 'Sign in', 'Sign in to buy Pro'],
+    ['/pro?entry_surface=cli_pdf&currency=HKD', '/pricing?entry_surface=cli_pdf&currency=HKD', 'Sign in', 'Sign in to buy Pro'],
   ] as const) {
     const response = await page.goto(incoming + '&utm_campaign=qa_sentinel');
     expect(response?.status()).toBe(200);

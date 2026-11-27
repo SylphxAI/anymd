@@ -181,3 +181,16 @@ test('OAuth refuses a callback with no bound flow and issues no session', async 
   expect(response.headers().location).toContain('/sign-in?error=');
   expect(response.headersArray().filter(header => header.name.toLowerCase() === 'set-cookie').map(header => header.value)).not.toContainEqual(expect.stringMatching(/^__Host-auth_session=/));
 });
+
+test('sign-in resuming the /pro alias lands on Pricing with the same entry surface', async ({ page }) => {
+  test.skip(fixtureOnly, 'Requires the local Auth fixture');
+  for (const [next, landing] of [
+    ['/pro?entry_surface=cli_pdf&currency=EUR#plans', '/pricing?entry_surface=cli_pdf&currency=EUR#plans'],
+    ['/pro?entry_surface=private@example.invalid', '/pricing?entry_surface=pro'],
+  ]) {
+    await page.goto('/sign-in?next=' + encodeURIComponent(next));
+    await page.getByRole('link', {name:'Continue with Google'}).click();
+    await expect(page).toHaveURL(landing);
+    await expect(page.getByRole('heading', {name:'Anymd Pro', exact:true})).toBeVisible();
+  }
+});
