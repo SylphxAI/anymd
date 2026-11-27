@@ -44,7 +44,11 @@ test('enforces a per-response CSP without blocking the public purchase journey',
 
 test('Pricing puts the Pro price and action above the compact cookie dock', async ({ page }) => {
   await frenchRegion(page);
-  await page.goto('/pricing');
+  const cropRequests: string[] = [];
+  page.on('request', request => {
+    if (/\/sample-cite-crop-[^/]+\.png$/.test(new URL(request.url()).pathname)) cropRequests.push(request.url());
+  });
+  await page.goto('/pricing', {waitUntil:'load'});
   const dock = page.getByRole('complementary', {name:'Cookie settings'});
   await expect(dock).toBeVisible();
   const plans = page.locator('.pricing-page .columns > article');
@@ -70,10 +74,29 @@ test('Pricing puts the Pro price and action above the compact cookie dock', asyn
     const {width, height} = (await button.boundingBox())!;
     expect(Math.min(width, height)).toBeGreaterThanOrEqual(44);
   }
-  const proof = plans.first().getByRole('region', {name:'See the source evidence'});
-  const pdf = proof.getByRole('img', {name:/Page 1 of the sample PDF/});
-  await expect(pdf.locator('rect')).toBeVisible();
-  await expect(proof.getByRole('link', {name:'sample.pdf'})).toHaveAttribute('href', '/samples/sample.pdf#page=1');
+  // The recorded PDF proof and the Free/Pro difference sit beside Buy, from one crop download.
+  const buy = plans.first().locator('.pro-buy');
+  await expect(buy.locator('.pro-claim')).toHaveText('Verify a PDF quote on the original page. $29 once.');
+  const pdf = buy.getByRole('img', {name:'Page 1 of the sample PDF with “Quarterly Field Report” boxed', exact:true});
+  await expect(pdf.locator('rect')).toBeInViewport({ratio:1});
+  const crop = (await pdf.boundingBox())!;
+  expect(crop.y + crop.height + 8).toBeLessThanOrEqual(bar.y);
+  await expect(buy.getByText('Exact quote verified', {exact:true})).toBeInViewport({ratio:1});
+  await expect(buy.getByRole('link', {name:'sample.pdf'})).toHaveAttribute('href', '/samples/sample.pdf#page=1');
+  const actionBox = (await action.boundingBox())!;
+  if (viewport.width === 390) expect(crop.y + crop.height).toBeLessThanOrEqual(actionBox.y);
+  else {
+    expect(crop.x + crop.width).toBeLessThanOrEqual(actionBox.x);
+    expect(crop.y).toBeLessThan(actionBox.y + actionBox.height);
+  }
+  await expect(buy.locator('.plan-diff dt')).toHaveText(['Free OSS', 'Pro']);
+  await expect(buy.locator('.plan-diff dd')).toHaveText(['Converts PDF and Office files to Markdown.', 'Checks quotes in your own PDFs locally, in the CLI or MCP server.']);
+  const sample = await page.request.get('/samples/sample.pdf');
+  await buy.getByText('PDF SHA-256', {exact:true}).click();
+  await expect(buy.locator('details code')).toHaveText(createHash('sha256').update(await sample.body()).digest('hex'));
+  expect(cropRequests).toHaveLength(1);
+  await expect(page.locator('.pricing-page [role=img][aria-label*="Quarterly Field Report"]')).toHaveCount(1);
+  const proof = plans.first().getByRole('region', {name:'Video frames too'});
   const frame = proof.getByRole('img', {name:/Actual frame decoded/});
   await frame.scrollIntoViewIfNeeded();
   await expect.poll(() => frame.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1078);

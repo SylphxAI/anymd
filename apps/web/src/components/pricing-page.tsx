@@ -4,7 +4,7 @@ import { A, useLocation, useSearchParams } from '@solidjs/router';
 import { For } from 'solid-js';
 import { single } from '@/lib/request-query';
 import { Check } from 'lucide-solid';
-import { ProProof } from '@/components/pro-proof';
+import { PdfQuoteEvidence, PdfQuoteEvidenceDetails, ProProof } from '@/components/pro-proof';
 import { Checkout } from '@/components/commerce';
 import { Faq, StructuredData, faqSchema, softwareSchema, freeOffer, proOffer } from '@/components/search-details';
 import { useBrowserLocales } from '@/lib/browser-locales';
@@ -38,7 +38,16 @@ export function Pricing(props: { title?: string }) {
     <div class="columns">
       <article class="panel stack pro-plan">
         <div class="pro-plan-title"><span class="eyebrow">{t().proLabel}</span><h2>{t().pro}</h2></div>
-        <Checkout currency={currency()} locales={locales()} locale={locale()} />
+        <div class="pro-buy">
+          <p class="pro-claim">{t().claim} <span>{t().claimPrice(formatPrice(proAmount(currency()), currency(), locales()))}</span></p>
+          <PdfQuoteEvidence zh={locale() === 'zh-TW'} />
+          <Checkout currency={currency()} locales={locales()} locale={locale()} />
+          <dl class="plan-diff">
+            <div><dt>{t().free}</dt><dd>{t().diffFree}</dd></div>
+            <div><dt>Pro</dt><dd>{t().diffPro}</dd></div>
+          </dl>
+          <PdfQuoteEvidenceDetails zh={locale() === 'zh-TW'} />
+        </div>
         <ProProof zh={locale() === 'zh-TW'} />
         <PlanFeatures points={t().proFeatures} />
       </article>
