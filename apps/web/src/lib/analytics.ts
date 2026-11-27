@@ -3,7 +3,8 @@ import type { checkoutParameters } from './funnel';
 import { knownEntrySurface, knownProCtaSurface, type EntrySurface, type ProCtaSurface } from './entry-surface';
 import { fullAdConsent, googleAdsConfig, type PurchaseConversion } from './google-ads';
 import type { SignupSignal } from './signup';
-import { localeFromPath, localizedPath } from './marketing-locale';
+import { isCurrency, type Currency } from './catalog';
+import { localeFromPath, localizedPath, locales, type Locale } from './marketing-locale';
 
 export const measurementId = 'G-R4TD2Z8RR7';
 export const gaDisable = `ga-disable-${measurementId}` as const;
@@ -133,7 +134,7 @@ export type BehavioralEvent =
   | [name: 'paywall_view', payload: { entry_surface: 'studio_cite_preview' }]
   | [name: 'pro_cta_clicked', payload: { entry_surface: ProCtaSurface }]
   // A signed-out click on the real Buy control: intent only, not checkout or payment.
-  | [name: 'pricing_buy_clicked', payload: { entry_surface: EntrySurface }]
+  | [name: 'pricing_buy_clicked', payload: { entry_surface: EntrySurface; currency: Currency; locale: Locale }]
   | [name: 'cli_authorized', payload: { entry_surface: 'cli_auth' }];
 
 const count = (value: number) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -169,8 +170,10 @@ export function behavioralParameters(...[name, payload]: BehavioralEvent) {
       return surface ? {entry_surface:surface} : undefined;
     }
     case 'pricing_buy_clicked': {
+      // The same three fields as the Lockdocs Buy event; anything unknown drops it.
       const surface = knownEntrySurface(payload.entry_surface);
-      return surface ? {entry_surface:surface} : undefined;
+      const locale = locales.find(value => value === payload.locale);
+      return surface && isCurrency(payload.currency) && locale ? {entry_surface:surface, currency:payload.currency, locale} : undefined;
     }
     case 'cli_authorized': return {entry_surface:'cli_auth'};
   }

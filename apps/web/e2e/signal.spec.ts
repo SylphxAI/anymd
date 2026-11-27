@@ -89,12 +89,18 @@ test('analytics-only promotes the current route once, keeps all nine UTMs and se
   await expect.poll(views).toEqual(['/', '/pricing']);
   await page.getByLabel('Billing currency').selectOption('EUR');
   await expect(page).toHaveURL(/currency=EUR/);
+  const buy = page.getByRole('link', {name:'Sign in to buy Pro'});
+  // A script click is not a Buy activation; the real click below must be the only event.
+  await buy.evaluate(link => {
+    link.addEventListener('click', event => event.preventDefault(), {once:true});
+    (link as HTMLAnchorElement).click();
+  });
   expect(events('pricing_buy_clicked')).toEqual([]);
-  await page.getByRole('link', {name:'Sign in to buy Pro'}).click();
+  await buy.click();
   await expect.poll(views).toEqual(['/', '/pricing', '/sign-in']);
   expect(events('pricing_view')).toHaveLength(1);
   // Intent only: one event for the click, nothing for the render or the sign-in page.
-  await expect.poll(() => events('pricing_buy_clicked').map(event => event.properties)).toEqual([{...utms, path:'/pricing', entry_surface:'home_hero'}]);
+  await expect.poll(() => events('pricing_buy_clicked').map(event => event.properties)).toEqual([{...utms, path:'/pricing', entry_surface:'home_hero', currency:'EUR', locale:'en'}]);
   expect(bodies.every(body => body.consent === 'granted')).toBe(true);
   expect(JSON.stringify(bodies)).not.toMatch(/gclid|gbraid|wbraid|fbclid|DO_NOT_SEND|PRIVATE_FRAGMENT/);
 });

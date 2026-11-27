@@ -83,12 +83,16 @@ test('comparison copy and Pro CTA events accept only known labels and never send
   ]);
 }));
 
-test('Buy intent projection keeps only commerce entry surfaces', () => {
+test('Buy intent projection keeps only a commerce entry surface, currency and locale', () => {
   for (const entry_surface of ['pricing', 'pro', 'cli_pdf', 'npm_citra', 'home_hero', 'seo_vs-docling'] as const) {
-    assert.deepEqual(behavioralParameters('pricing_buy_clicked', {entry_surface, email:'private@example.com'} as never), {entry_surface});
+    const params = {entry_surface, currency:'HKD', locale:'zh-TW'} as const;
+    const extra = {...params, email:'private@example.com', next:'/pricing?token=private', gclid:'private click id'};
+    assert.deepEqual(behavioralParameters('pricing_buy_clicked', extra as never), params);
   }
-  for (const entry_surface of ['', 'checkout', 'https://anymd.sylphx.com/pricing', 'private-input', 'PRICING']) {
-    assert.equal(behavioralParameters(...(['pricing_buy_clicked', {entry_surface}] as BehavioralEvent)), undefined);
+  const params = {entry_surface:'pricing', currency:'USD', locale:'en'};
+  for (const invalid of [{entry_surface:''}, {entry_surface:'checkout'}, {entry_surface:'https://anymd.sylphx.com/pricing'},
+    {entry_surface:'PRICING'}, {currency:'XXX'}, {currency:'usd'}, {currency:undefined}, {locale:'fr'}, {locale:undefined}]) {
+    assert.equal(behavioralParameters(...(['pricing_buy_clicked', {...params, ...invalid}] as BehavioralEvent)), undefined);
   }
 });
 
