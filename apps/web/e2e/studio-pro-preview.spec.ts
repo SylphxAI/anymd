@@ -28,15 +28,9 @@ test('Studio shows source-backed Pro proof without gating the free PDF quote sea
   await toggle.press('Enter');
   await expect(crop).toBeVisible();
   await expect(preview.getByText('Exact quote verified', { exact: true })).toBeVisible();
-  const asset = await crop.locator('image').getAttribute('href');
-  expect(asset).toBeTruthy();
-  const imageSize = await crop.locator('image').evaluate(async element => {
-    const image = new Image();
-    image.src = element.getAttribute('href') ?? '';
-    await image.decode();
-    return [image.naturalWidth, image.naturalHeight];
-  });
-  expect(imageSize).toEqual([790, 182]);
+  const image = crop.locator('img');
+  await expect(image).toHaveJSProperty('naturalWidth', 790);
+  await expect(image).toHaveJSProperty('naturalHeight', 182);
   await checkWidth();
   await preview.screenshot({ path: testInfo.outputPath('studio-cite-preview.png') });
 
