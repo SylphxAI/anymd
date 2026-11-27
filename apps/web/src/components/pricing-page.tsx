@@ -39,7 +39,7 @@ export function Pricing(props: { title?: string }) {
       <article class="panel stack pro-plan">
         <div class="pro-plan-title"><span class="eyebrow">{t().proLabel}</span><h2>{t().pro}</h2></div>
         <div class="pro-buy">
-          <p class="pro-claim">{t().claim} <span>{t().claimPrice(formatPrice(proAmount(currency()), currency(), locales()))}</span></p>
+          <p class="pro-claim">{t().claim}{locale() === 'zh-TW' ? '' : ' '}<span>{t().claimPrice(formatPrice(proAmount(currency()), currency(), locales()))}</span></p>
           <PdfQuoteEvidence zh={locale() === 'zh-TW'} />
           <Checkout currency={currency()} locales={locales()} locale={locale()} />
           <dl class="plan-diff">
