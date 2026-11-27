@@ -1,6 +1,6 @@
 import type { SignalConsent } from '@sylphx/sdk/signal';
 import type { checkoutParameters } from './funnel';
-import { knownProCtaSurface, type ProCtaSurface } from './entry-surface';
+import { knownEntrySurface, knownProCtaSurface, type EntrySurface, type ProCtaSurface } from './entry-surface';
 import { fullAdConsent, googleAdsConfig, type PurchaseConversion } from './google-ads';
 import type { SignupSignal } from './signup';
 import { localeFromPath, localizedPath } from './marketing-locale';
@@ -132,6 +132,8 @@ export type BehavioralEvent =
   | [name: 'quote_searched', payload: { matched: boolean }]
   | [name: 'paywall_view', payload: { entry_surface: 'studio_cite_preview' }]
   | [name: 'pro_cta_clicked', payload: { entry_surface: ProCtaSurface }]
+  // A signed-out click on the real Buy control: intent only, not checkout or payment.
+  | [name: 'pricing_buy_clicked', payload: { entry_surface: EntrySurface }]
   | [name: 'cli_authorized', payload: { entry_surface: 'cli_auth' }];
 
 const count = (value: number) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -164,6 +166,10 @@ export function behavioralParameters(...[name, payload]: BehavioralEvent) {
     case 'pro_cta_clicked': {
       // Share the product-owned registry with checkout attribution.
       const surface = knownProCtaSurface(payload.entry_surface);
+      return surface ? {entry_surface:surface} : undefined;
+    }
+    case 'pricing_buy_clicked': {
+      const surface = knownEntrySurface(payload.entry_surface);
       return surface ? {entry_surface:surface} : undefined;
     }
     case 'cli_authorized': return {entry_surface:'cli_auth'};
