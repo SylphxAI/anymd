@@ -3,6 +3,7 @@ import { resolveEffectiveConsent } from '@sylphx/sdk/signal';
 import { isCurrency, price, product } from '@/lib/catalog';
 import { knownEntrySurface } from '@/lib/entry-surface';
 import { consentText, consentVersion } from '@/lib/money-public.generated';
+import { reportCheckoutFailed } from '@/lib/checkout-failure-signal';
 import { appOrigin, failure, field, HttpError, json, sameOriginJson } from '@/lib/http';
 import { checkoutKey, entitlement, moneyConfig, moneyContext, processorUrl, readTokens } from '@/lib/money';
 import { purchaseConversion } from '@/lib/purchase-conversion';
@@ -62,7 +63,10 @@ export async function POST({request, params}: APIEvent) {
         success_url:`${origin}/pro/thanks?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url:`${origin}/pricing?${cancel}`,
         consent_collection:{terms_required:true, terms_text:consentText, terms_version:consentVersion},
-      }, undefined, `anymd-${ctx.user.id}-${key}`, true);
+      }, undefined, `anymd-${ctx.user.id}-${key}`, true).catch((error: unknown) => {
+        void reportCheckoutFailed(request, data.analyticsGranted, key, entrySurface, error);
+        throw error;
+      });
       const url = processorUrl(result.url, 'checkout');
       const prefix = ctx.money.parent + '/checkout_sessions/';
       const id = typeof result.name === 'string' && result.name.startsWith(prefix) ? result.name.slice(prefix.length) : '';
